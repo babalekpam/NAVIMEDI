@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { Activity, Heart, Thermometer, Wind, Weight, Ruler } from "lucide-react";
 
@@ -90,6 +91,7 @@ export function VitalSignsForm({
   existingVitalSigns
 }: VitalSignsFormProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [bmi, setBMI] = useState<number | null>(null);
   const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">("kg");
@@ -173,20 +175,51 @@ export function VitalSignsForm({
     console.log("Form submitted with data:", data);
     console.log("Weight unit:", weightUnit, "Height unit:", heightUnit);
     
-    // Convert form data to API format with proper numeric values
-    const processedData = {
+    // Convert form data to API format - server handles recordedById and tenantId
+    // Only include fields that have values (not empty strings)
+    const processedData: any = {
       patientId: data.patientId,
-      appointmentId: data.appointmentId,
-      bloodPressureSystolic: data.bloodPressureSystolic ? Number(data.bloodPressureSystolic) : undefined,
-      bloodPressureDiastolic: data.bloodPressureDiastolic ? Number(data.bloodPressureDiastolic) : undefined,
-      heartRate: data.heartRate ? Number(data.heartRate) : undefined,
-      temperature: data.temperature ? Number(data.temperature) : undefined,
-      oxygenSaturation: data.oxygenSaturation ? Number(data.oxygenSaturation) : undefined,
-      respiratoryRate: data.respiratoryRate ? Number(data.respiratoryRate) : undefined,
-      weight: data.weight ? convertWeightToKg(Number(data.weight), weightUnit) : undefined,
-      height: data.height ? convertHeightToCm(Number(data.height), heightUnit) : undefined,
-      notes: data.notes,
     };
+
+    if (data.appointmentId && data.appointmentId.trim()) {
+      processedData.appointmentId = data.appointmentId;
+    }
+    
+    if (data.bloodPressureSystolic && data.bloodPressureSystolic.trim()) {
+      processedData.bloodPressureSystolic = parseInt(data.bloodPressureSystolic);
+    }
+    
+    if (data.bloodPressureDiastolic && data.bloodPressureDiastolic.trim()) {
+      processedData.bloodPressureDiastolic = parseInt(data.bloodPressureDiastolic);
+    }
+    
+    if (data.heartRate && data.heartRate.trim()) {
+      processedData.heartRate = parseInt(data.heartRate);
+    }
+    
+    if (data.temperature && data.temperature.trim()) {
+      processedData.temperature = data.temperature;
+    }
+    
+    if (data.oxygenSaturation && data.oxygenSaturation.trim()) {
+      processedData.oxygenSaturation = parseInt(data.oxygenSaturation);
+    }
+    
+    if (data.respiratoryRate && data.respiratoryRate.trim()) {
+      processedData.respiratoryRate = parseInt(data.respiratoryRate);
+    }
+    
+    if (data.weight && data.weight.trim()) {
+      processedData.weight = convertWeightToKg(Number(data.weight), weightUnit).toString();
+    }
+    
+    if (data.height && data.height.trim()) {
+      processedData.height = convertHeightToCm(Number(data.height), heightUnit).toString();
+    }
+    
+    if (data.notes && data.notes.trim()) {
+      processedData.notes = data.notes;
+    }
 
     console.log("Processed data being sent to API:", processedData);
 
