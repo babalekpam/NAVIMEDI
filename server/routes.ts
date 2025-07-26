@@ -338,8 +338,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/appointments", requireRole(["physician", "nurse", "receptionist", "tenant_admin", "director"]), async (req, res) => {
+  app.post("/api/appointments", requireRole(["physician", "nurse", "receptionist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
+      console.log("[DEBUG] Creating appointment - User:", req.user?.role, "Tenant:", req.tenant?.id);
+      console.log("[DEBUG] Request body:", req.body);
+      
       const appointmentData = insertAppointmentSchema.parse({
         ...req.body,
         tenantId: req.tenant!.id
