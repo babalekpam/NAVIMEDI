@@ -9,7 +9,7 @@ import { InsuranceClaim, Patient, insertInsuranceClaimSchema } from "@shared/sch
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -53,11 +53,8 @@ export default function Billing() {
 
   const createClaimMutation = useMutation({
     mutationFn: async (claimData: any) => {
-      return apiRequest("/api/insurance-claims", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(claimData),
-      });
+      const response = await apiRequest("POST", "/api/insurance-claims", claimData);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/insurance-claims"] });
@@ -158,6 +155,9 @@ export default function Billing() {
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Create Insurance Claim</DialogTitle>
+                <DialogDescription>
+                  Create a new insurance claim for a patient. Fill in all required information below.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
