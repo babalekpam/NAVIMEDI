@@ -46,6 +46,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
   getUsersByTenant(tenantId: string): Promise<User[]>;
+  getUsersByRole(role: string, tenantId: string): Promise<User[]>;
   getAllUsers(): Promise<User[]>;
 
   // Tenant management
@@ -176,6 +177,12 @@ export class DatabaseStorage implements IStorage {
 
   async getUsersByTenant(tenantId: string): Promise<User[]> {
     return await db.select().from(users).where(eq(users.tenantId, tenantId));
+  }
+
+  async getUsersByRole(role: string, tenantId: string): Promise<User[]> {
+    return await db.select().from(users).where(
+      and(eq(users.role, role), eq(users.tenantId, tenantId), eq(users.isActive, true))
+    );
   }
 
   // Tenant management

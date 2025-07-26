@@ -42,7 +42,7 @@ export default function Appointments() {
   });
 
   const { data: providers = [] } = useQuery<User[]>({
-    queryKey: ["/api/users", { role: "physician" }],
+    queryKey: ["/api/users?role=physician"],
     enabled: !!user && !!tenant,
   });
 

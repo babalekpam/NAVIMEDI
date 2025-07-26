@@ -191,6 +191,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get users by role (for fetching providers, etc.)
+  app.get("/api/users", requireTenant, async (req, res) => {
+    try {
+      const { role } = req.query;
+      const tenantId = req.tenant!.id;
+      
+      if (role) {
+        const users = await storage.getUsersByRole(role as string, tenantId);
+        res.json(users);
+      } else {
+        const users = await storage.getUsersByTenant(tenantId);
+        res.json(users);
+      }
+    } catch (error) {
+      console.error("Get users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Tenant management routes
   app.get("/api/tenants", requireRole(["super_admin"]), async (req, res) => {
     try {
