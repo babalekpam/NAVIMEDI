@@ -440,7 +440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/prescriptions", requireRole(["physician", "nurse"]), async (req, res) => {
     try {
       console.log("[DEBUG] Creating prescription - User:", req.user?.role, "User ID:", req.user?.userId, "Tenant:", req.tenant?.id);
-      console.log("[DEBUG] Request body:", req.body);
+      console.log("[DEBUG] Request body:", JSON.stringify(req.body, null, 2));
       
       // Convert string dates to Date objects
       const requestData = { ...req.body };

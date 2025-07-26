@@ -20,6 +20,8 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients }: Pres
       providerId: true, 
       expiryDate: true,
       prescribedDate: true,
+      appointmentId: true,
+      pharmacyTenantId: true,
       id: true,
       createdAt: true,
       updatedAt: true
@@ -37,13 +39,17 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients }: Pres
   });
 
   const handleSubmit = (data: any) => {
+    console.log("[DEBUG] Form data being submitted:", data);
     const expiryDate = new Date();
     expiryDate.setFullYear(expiryDate.getFullYear() + 1); // Default 1 year expiry
     
-    onSubmit({
+    const submissionData = {
       ...data,
       expiryDate: expiryDate.toISOString(),
-    });
+    };
+    console.log("[DEBUG] Final submission data:", submissionData);
+    
+    onSubmit(submissionData);
   };
 
   return (
