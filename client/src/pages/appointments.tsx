@@ -24,7 +24,11 @@ const statusColors = {
 };
 
 export default function Appointments() {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    // Set to today's date by default
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { user } = useAuth();
@@ -59,8 +63,11 @@ export default function Appointments() {
       if (!response.ok) throw new Error("Failed to create appointment");
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (newAppointment) => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      // Update selected date to the appointment date to show the new appointment
+      const appointmentDate = new Date(newAppointment.appointmentDate);
+      setSelectedDate(appointmentDate.toISOString().split('T')[0]);
       setIsFormOpen(false);
     }
   });
@@ -132,6 +139,14 @@ export default function Appointments() {
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+                className="text-xs"
+              >
+                Today
+              </Button>
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48">
