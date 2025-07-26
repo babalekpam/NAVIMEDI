@@ -845,7 +845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: targetTenantId,
-        userId: req.user?.userId || '',
+        userId: req.user?.userId || null,
         entityType: "user",
         entityId: newUser.id,
         action: "create",
