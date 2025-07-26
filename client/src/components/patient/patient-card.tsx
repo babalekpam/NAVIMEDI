@@ -165,7 +165,7 @@ export const PatientCard = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={onViewDetails}
+              onClick={() => onViewDetails?.()}
               className="text-blue-600 hover:text-blue-700"
             >
               View EHR
@@ -173,7 +173,7 @@ export const PatientCard = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={onScheduleAppointment}
+              onClick={() => onScheduleAppointment?.()}
               className="text-green-600 hover:text-green-700"
             >
               Schedule

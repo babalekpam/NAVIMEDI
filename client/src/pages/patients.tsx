@@ -11,6 +11,7 @@ import { Patient } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { PatientForm } from "@/components/forms/patient-form";
+import { useLocation } from "wouter";
 
 export default function Patients() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,6 +19,7 @@ export default function Patients() {
   const { user } = useAuth();
   const { tenant } = useTenant();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const { data: patients = [], isLoading } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
@@ -53,6 +55,17 @@ export default function Patients() {
 
   const getPatientInitials = (firstName: string, lastName: string) => {
     return `${firstName[0]}${lastName[0]}`.toUpperCase();
+  };
+
+  const handleViewEHR = (patient: Patient) => {
+    // Navigate to patient EHR/details page
+    // For now, we'll show an alert with patient information
+    alert(`Opening EHR for ${patient.firstName} ${patient.lastName}\nMRN: ${patient.mrn}\nDOB: ${formatDate(patient.dateOfBirth)}`);
+  };
+
+  const handleScheduleAppointment = (patient: Patient) => {
+    // Navigate to appointment creation with pre-filled patient info
+    setLocation(`/appointments?patientId=${patient.id}&patientName=${encodeURIComponent(patient.firstName + ' ' + patient.lastName)}`);
   };
 
   return (
@@ -184,10 +197,20 @@ export default function Patients() {
                     </Badge>
                     
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-blue-600 hover:text-blue-700"
+                        onClick={() => handleViewEHR(patient)}
+                      >
                         View EHR
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-teal-600 hover:text-teal-700">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-teal-600 hover:text-teal-700"
+                        onClick={() => handleScheduleAppointment(patient)}
+                      >
                         Schedule
                       </Button>
                       <Button variant="ghost" size="sm">
