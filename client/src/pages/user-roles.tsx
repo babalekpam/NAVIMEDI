@@ -35,13 +35,14 @@ const userFormSchema = z.object({
   email: z.string().email("Invalid email address"),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  role: z.enum(["physician", "nurse", "pharmacist", "lab_technician", "receptionist", "billing_staff", "tenant_admin"]),
+  role: z.enum(["director", "physician", "nurse", "pharmacist", "lab_technician", "receptionist", "billing_staff", "tenant_admin"]),
   password: z.string().min(6, "Password must be at least 6 characters").optional(),
 });
 
 type UserFormData = z.infer<typeof userFormSchema>;
 
 const roleDescriptions = {
+  director: "Executive oversight of healthcare operations, strategic planning, and organizational management",
   physician: "Full access to patient records, prescriptions, and clinical data",
   nurse: "Access to patient care, medication administration, and clinical workflows",
   pharmacist: "Prescription management, drug interactions, and pharmacy operations",
@@ -52,6 +53,7 @@ const roleDescriptions = {
 };
 
 const roleTooltips = {
+  director: "Directors have executive-level access to view organizational metrics, strategic reports, and operational oversight but limited direct patient data access for privacy compliance.",
   physician: "Physicians have the highest level of clinical access and can view/edit all patient data, prescribe medications, and order lab tests.",
   nurse: "Nurses can access patient care information, administer medications, and update clinical notes but cannot prescribe medications.",
   pharmacist: "Pharmacists manage prescriptions, check drug interactions, and handle pharmacy inventory but have limited patient data access.",
@@ -62,6 +64,7 @@ const roleTooltips = {
 };
 
 const roleColors = {
+  director: "bg-indigo-100 text-indigo-800 border-indigo-200",
   physician: "bg-blue-100 text-blue-800 border-blue-200",
   nurse: "bg-green-100 text-green-800 border-green-200",
   pharmacist: "bg-purple-100 text-purple-800 border-purple-200",
@@ -197,10 +200,10 @@ export default function UserRoles() {
   // Define available roles based on user's permissions
   const getAvailableRoles = () => {
     if (user?.role === 'super_admin') {
-      return ['physician', 'nurse', 'pharmacist', 'lab_technician', 'receptionist', 'billing_staff', 'tenant_admin'];
+      return ['director', 'physician', 'nurse', 'pharmacist', 'lab_technician', 'receptionist', 'billing_staff', 'tenant_admin'];
     } else if (user?.role === 'tenant_admin') {
       // Tenant admins can only create clinical and operational staff, not other admins
-      return ['physician', 'nurse', 'pharmacist', 'lab_technician', 'receptionist', 'billing_staff'];
+      return ['director', 'physician', 'nurse', 'pharmacist', 'lab_technician', 'receptionist', 'billing_staff'];
     }
     return [];
   };
@@ -435,6 +438,7 @@ export default function UserRoles() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="director">Director</SelectItem>
                   <SelectItem value="physician">Physician</SelectItem>
                   <SelectItem value="nurse">Nurse</SelectItem>
                   <SelectItem value="pharmacist">Pharmacist</SelectItem>

@@ -7,6 +7,7 @@ import { z } from "zod";
 export const roleEnum = pgEnum("role", [
   "super_admin",
   "tenant_admin", 
+  "director",
   "physician",
   "nurse",
   "pharmacist",
