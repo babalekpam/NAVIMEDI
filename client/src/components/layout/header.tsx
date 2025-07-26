@@ -54,36 +54,63 @@ export const Header = () => {
             >
               Dashboard
             </button>
-            <button 
-              onClick={() => setLocation("/patients")}
-              className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
-            >
-              Patients
-            </button>
-            <button 
-              onClick={() => setLocation("/appointments")}
-              className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
-            >
-              Appointments
-            </button>
-            <button 
-              onClick={() => setLocation("/prescriptions")}
-              className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
-            >
-              Prescriptions
-            </button>
-            <button 
-              onClick={() => setLocation("/lab-orders")}
-              className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
-            >
-              Lab Orders
-            </button>
-            <button 
-              onClick={() => setLocation("/billing")}
-              className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
-            >
-              Billing
-            </button>
+            {user.role === "super_admin" ? (
+              // Platform Owner Navigation
+              <>
+                <button 
+                  onClick={() => setLocation("/tenant-management")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  Tenants
+                </button>
+                <button 
+                  onClick={() => setLocation("/user-roles")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  Users
+                </button>
+                <button 
+                  onClick={() => setLocation("/audit-logs")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  Audit
+                </button>
+              </>
+            ) : (
+              // Clinical/Tenant User Navigation
+              <>
+                <button 
+                  onClick={() => setLocation("/patients")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  Patients
+                </button>
+                <button 
+                  onClick={() => setLocation("/appointments")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  Appointments
+                </button>
+                <button 
+                  onClick={() => setLocation("/prescriptions")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  Prescriptions
+                </button>
+                <button 
+                  onClick={() => setLocation("/lab-orders")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  Lab Orders
+                </button>
+                <button 
+                  onClick={() => setLocation("/billing")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  Billing
+                </button>
+              </>
+            )}
           </nav>
 
           {/* User Menu */}
