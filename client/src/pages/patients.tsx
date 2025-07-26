@@ -1,23 +1,46 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Search, Plus, MoreHorizontal, UserCircle } from "lucide-react";
 import { Patient } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
+import { PatientForm } from "@/components/forms/patient-form";
 
 export default function Patients() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const { user } = useAuth();
   const { tenant } = useTenant();
+  const queryClient = useQueryClient();
 
   const { data: patients = [], isLoading } = useQuery<Patient[]>({
-    queryKey: ["/api/patients", { search: searchQuery }],
+    queryKey: ["/api/patients"],
     enabled: !!user && !!tenant,
+  });
+
+  const createPatientMutation = useMutation({
+    mutationFn: async (patientData: any) => {
+      const response = await fetch("/api/patients", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+        },
+        body: JSON.stringify(patientData)
+      });
+      if (!response.ok) throw new Error("Failed to create patient");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      setIsFormOpen(false);
+    }
   });
 
   if (!user || !tenant) {
@@ -40,10 +63,23 @@ export default function Patients() {
           <h1 className="text-3xl font-bold text-gray-900">Patient Records</h1>
           <p className="text-gray-600 mt-1">Manage patient information and medical records</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Patient
-        </Button>
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Patient
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add New Patient</DialogTitle>
+            </DialogHeader>
+            <PatientForm
+              onSubmit={(data) => createPatientMutation.mutate(data)}
+              isLoading={createPatientMutation.isPending}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Search and Filters */}
