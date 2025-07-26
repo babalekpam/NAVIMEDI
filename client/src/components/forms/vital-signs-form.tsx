@@ -21,6 +21,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -36,10 +43,31 @@ const vitalSignsSchema = z.object({
   temperature: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(95).max(110).optional()),
   oxygenSaturation: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(70).max(100).optional()),
   respiratoryRate: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(8).max(40).optional()),
-  weight: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(1).max(1000).optional()),
-  height: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(12).max(96).optional()),
+  weight: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(0.1).max(1000).optional()),
+  height: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(1).max(300).optional()),
   notes: z.string().optional(),
 });
+
+// Unit conversion functions
+const convertWeightToKg = (value: number, fromUnit: string) => {
+  if (fromUnit === "lbs") return value * 0.453592;
+  return value; // already in kg
+};
+
+const convertHeightToCm = (value: number, fromUnit: string) => {
+  if (fromUnit === "inches") return value * 2.54;
+  return value; // already in cm
+};
+
+const convertWeightFromKg = (value: number, toUnit: string) => {
+  if (toUnit === "lbs") return value / 0.453592;
+  return value; // keep in kg
+};
+
+const convertHeightFromCm = (value: number, toUnit: string) => {
+  if (toUnit === "inches") return value / 2.54;
+  return value; // keep in cm
+};
 
 type VitalSignsFormData = z.infer<typeof vitalSignsSchema>;
 
@@ -63,6 +91,8 @@ export function VitalSignsForm({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [bmi, setBMI] = useState<number | null>(null);
+  const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">("kg");
+  const [heightUnit, setHeightUnit] = useState<"cm" | "inches">("cm");
 
   const form = useForm<VitalSignsFormData>({
     resolver: zodResolver(vitalSignsSchema),
@@ -75,8 +105,8 @@ export function VitalSignsForm({
       temperature: existingVitalSigns?.temperature || "",
       oxygenSaturation: existingVitalSigns?.oxygenSaturation || "",
       respiratoryRate: existingVitalSigns?.respiratoryRate || "",
-      weight: existingVitalSigns?.weight || "",
-      height: existingVitalSigns?.height || "",
+      weight: existingVitalSigns?.weight ? convertWeightFromKg(existingVitalSigns.weight, weightUnit).toFixed(1) : "",
+      height: existingVitalSigns?.height ? convertHeightFromCm(existingVitalSigns.height, heightUnit).toFixed(1) : "",
       notes: existingVitalSigns?.notes || "",
     },
   });
@@ -87,14 +117,14 @@ export function VitalSignsForm({
 
   useEffect(() => {
     if (watchWeight && watchHeight) {
-      const weightKg = watchWeight * 0.453592; // lbs to kg
-      const heightM = watchHeight * 0.0254; // inches to meters
+      const weightKg = convertWeightToKg(Number(watchWeight), weightUnit);
+      const heightM = convertHeightToCm(Number(watchHeight), heightUnit) / 100; // cm to meters
       const calculatedBMI = weightKg / (heightM * heightM);
       setBMI(Math.round(calculatedBMI * 10) / 10);
     } else {
       setBMI(null);
     }
-  }, [watchWeight, watchHeight]);
+  }, [watchWeight, watchHeight, weightUnit, heightUnit]);
 
   const createMutation = useMutation({
     mutationFn: (data: VitalSignsFormData) => 
@@ -140,10 +170,17 @@ export function VitalSignsForm({
   });
 
   const onSubmit = (data: VitalSignsFormData) => {
+    // Convert units to standard units (kg for weight, cm for height) before sending to API
+    const processedData = {
+      ...data,
+      weight: data.weight ? convertWeightToKg(Number(data.weight), weightUnit) : undefined,
+      height: data.height ? convertHeightToCm(Number(data.height), heightUnit) : undefined,
+    };
+
     if (existingVitalSigns) {
-      updateMutation.mutate(data);
+      updateMutation.mutate(processedData);
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(processedData);
     }
   };
 
@@ -361,44 +398,70 @@ export function VitalSignsForm({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="weight"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Weight (lbs)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="0.1"
-                            placeholder="150"
-                            {...field}
-                            onChange={(e) => field.onChange(e.target.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="height"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Height (inches)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="0.1"
-                            placeholder="68"
-                            {...field}
-                            onChange={(e) => field.onChange(e.target.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="space-y-3">
+                    <FormField
+                      control={form.control}
+                      name="weight"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Weight ({weightUnit})</FormLabel>
+                          <div className="flex gap-2">
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                placeholder={weightUnit === "kg" ? "70" : "150"}
+                                {...field}
+                                onChange={(e) => field.onChange(e.target.value)}
+                                className="flex-1"
+                              />
+                            </FormControl>
+                            <Select value={weightUnit} onValueChange={(value: "kg" | "lbs") => setWeightUnit(value)}>
+                              <SelectTrigger className="w-20">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="kg">kg</SelectItem>
+                                <SelectItem value="lbs">lbs</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="height"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Height ({heightUnit})</FormLabel>
+                          <div className="flex gap-2">
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                placeholder={heightUnit === "cm" ? "170" : "68"}
+                                {...field}
+                                onChange={(e) => field.onChange(e.target.value)}
+                                className="flex-1"
+                              />
+                            </FormControl>
+                            <Select value={heightUnit} onValueChange={(value: "cm" | "inches") => setHeightUnit(value)}>
+                              <SelectTrigger className="w-24">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="cm">cm</SelectItem>
+                                <SelectItem value="inches">inches</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   {bmi && (
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">BMI: {bmi}</span>
