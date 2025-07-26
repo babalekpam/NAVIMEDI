@@ -39,7 +39,8 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
     const mockTenant: Tenant = {
       id: user.tenantId,
       name: user.role === 'super_admin' ? 'ARGILETTE Platform' : 'Healthcare Organization',
-      slug: 'platform',
+      type: 'hospital',
+      subdomain: 'platform',
       settings: {},
       isActive: true,
       createdAt: new Date(),

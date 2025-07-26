@@ -31,7 +31,7 @@ export const TenantSwitcher = () => {
             {tenant.name}
           </p>
           <p className="text-xs text-gray-500 capitalize">
-            {tenant.type.replace('_', ' ')}
+            {tenant.type?.replace('_', ' ') || 'Organization'}
           </p>
         </div>
       </div>
@@ -48,7 +48,7 @@ export const TenantSwitcher = () => {
               {tenant.name}
             </p>
             <p className="text-xs text-gray-500 capitalize">
-              {tenant.type.replace('_', ' ')}
+              {tenant.type?.replace('_', ' ') || 'Organization'}
             </p>
           </div>
           <ChevronDown className="h-4 w-4 text-gray-400" />
