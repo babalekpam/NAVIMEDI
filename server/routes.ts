@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema } from "@shared/schema";
 import { authenticateToken, requireRole } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -1848,6 +1848,188 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error rejecting laboratory application:", error);
       res.status(500).json({ message: "Failed to reject laboratory application" });
+    }
+  });
+
+  // Vital Signs routes
+  app.get("/api/vital-signs", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const vitalSigns = await storage.getVitalSignsByTenant(req.tenantId!);
+      res.json(vitalSigns);
+    } catch (error) {
+      console.error("Error fetching vital signs:", error);
+      res.status(500).json({ message: "Failed to fetch vital signs" });
+    }
+  });
+
+  app.get("/api/vital-signs/patient/:patientId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const vitalSigns = await storage.getVitalSignsByPatient(req.params.patientId, req.tenantId!);
+      res.json(vitalSigns);
+    } catch (error) {
+      console.error("Error fetching patient vital signs:", error);
+      res.status(500).json({ message: "Failed to fetch patient vital signs" });
+    }
+  });
+
+  app.get("/api/vital-signs/appointment/:appointmentId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const vitalSigns = await storage.getVitalSignsByAppointment(req.params.appointmentId, req.tenantId!);
+      res.json(vitalSigns);
+    } catch (error) {
+      console.error("Error fetching appointment vital signs:", error);
+      res.status(500).json({ message: "Failed to fetch appointment vital signs" });
+    }
+  });
+
+  app.post("/api/vital-signs", authenticateToken, requireTenant, requireRole(["super_admin", "tenant_admin", "doctor", "nurse", "receptionist"]), async (req, res) => {
+    try {
+      const validatedData = insertVitalSignsSchema.parse({
+        ...req.body,
+        tenantId: req.tenantId,
+        recordedById: req.userId
+      });
+
+      const vitalSigns = await storage.createVitalSigns(validatedData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        userId: req.userId!,
+        tenantId: req.tenantId!,
+        action: "vital_signs_created",
+        resourceType: "vital_signs",
+        resourceId: vitalSigns.id,
+        details: { patientId: vitalSigns.patientId, appointmentId: vitalSigns.appointmentId }
+      });
+
+      res.status(201).json(vitalSigns);
+    } catch (error) {
+      console.error("Error creating vital signs:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create vital signs" });
+    }
+  });
+
+  app.patch("/api/vital-signs/:id", authenticateToken, requireTenant, requireRole(["super_admin", "tenant_admin", "doctor", "nurse", "receptionist"]), async (req, res) => {
+    try {
+      const vitalSigns = await storage.updateVitalSigns(req.params.id, req.body, req.tenantId!);
+      
+      if (!vitalSigns) {
+        return res.status(404).json({ message: "Vital signs not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        userId: req.userId!,
+        tenantId: req.tenantId!,
+        action: "vital_signs_updated",
+        resourceType: "vital_signs",
+        resourceId: vitalSigns.id,
+        details: { changes: req.body }
+      });
+
+      res.json(vitalSigns);
+    } catch (error) {
+      console.error("Error updating vital signs:", error);
+      res.status(500).json({ message: "Failed to update vital signs" });
+    }
+  });
+
+  // Visit Summary routes
+  app.get("/api/visit-summaries", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const visitSummaries = await storage.getVisitSummariesByTenant(req.tenantId!);
+      res.json(visitSummaries);
+    } catch (error) {
+      console.error("Error fetching visit summaries:", error);
+      res.status(500).json({ message: "Failed to fetch visit summaries" });
+    }
+  });
+
+  app.get("/api/visit-summaries/patient/:patientId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const visitSummaries = await storage.getVisitSummariesByPatient(req.params.patientId, req.tenantId!);
+      res.json(visitSummaries);
+    } catch (error) {
+      console.error("Error fetching patient visit summaries:", error);
+      res.status(500).json({ message: "Failed to fetch patient visit summaries" });
+    }
+  });
+
+  app.get("/api/visit-summaries/provider/:providerId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const visitSummaries = await storage.getVisitSummariesByProvider(req.params.providerId, req.tenantId!);
+      res.json(visitSummaries);
+    } catch (error) {
+      console.error("Error fetching provider visit summaries:", error);
+      res.status(500).json({ message: "Failed to fetch provider visit summaries" });
+    }
+  });
+
+  app.get("/api/visit-summaries/appointment/:appointmentId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const visitSummary = await storage.getVisitSummaryByAppointment(req.params.appointmentId, req.tenantId!);
+      res.json(visitSummary);
+    } catch (error) {
+      console.error("Error fetching appointment visit summary:", error);
+      res.status(500).json({ message: "Failed to fetch appointment visit summary" });
+    }
+  });
+
+  app.post("/api/visit-summaries", authenticateToken, requireTenant, requireRole(["super_admin", "tenant_admin", "doctor", "nurse"]), async (req, res) => {
+    try {
+      const validatedData = insertVisitSummarySchema.parse({
+        ...req.body,
+        tenantId: req.tenantId,
+        providerId: req.userId
+      });
+
+      const visitSummary = await storage.createVisitSummary(validatedData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        userId: req.userId!,
+        tenantId: req.tenantId!,
+        action: "visit_summary_created",
+        resourceType: "visit_summary",
+        resourceId: visitSummary.id,
+        details: { patientId: visitSummary.patientId, appointmentId: visitSummary.appointmentId }
+      });
+
+      res.status(201).json(visitSummary);
+    } catch (error) {
+      console.error("Error creating visit summary:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create visit summary" });
+    }
+  });
+
+  app.patch("/api/visit-summaries/:id", authenticateToken, requireTenant, requireRole(["super_admin", "tenant_admin", "doctor", "nurse"]), async (req, res) => {
+    try {
+      const visitSummary = await storage.updateVisitSummary(req.params.id, req.body, req.tenantId!);
+      
+      if (!visitSummary) {
+        return res.status(404).json({ message: "Visit summary not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        userId: req.userId!,
+        tenantId: req.tenantId!,
+        action: "visit_summary_updated",
+        resourceType: "visit_summary",
+        resourceId: visitSummary.id,
+        details: { changes: req.body }
+      });
+
+      res.json(visitSummary);
+    } catch (error) {
+      console.error("Error updating visit summary:", error);
+      res.status(500).json({ message: "Failed to update visit summary" });
     }
   });
 

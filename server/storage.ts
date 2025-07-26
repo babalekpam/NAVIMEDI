@@ -23,6 +23,8 @@ import {
   labResults,
   labOrderAssignments,
   laboratoryApplications,
+  vitalSigns,
+  visitSummaries,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -69,7 +71,11 @@ import {
   type LabOrderAssignment,
   type InsertLabOrderAssignment,
   type LaboratoryApplication,
-  type InsertLaboratoryApplication
+  type InsertLaboratoryApplication,
+  type VitalSigns,
+  type InsertVitalSigns,
+  type VisitSummary,
+  type InsertVisitSummary
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or } from "drizzle-orm";
@@ -255,6 +261,23 @@ export interface IStorage {
   getLaboratoryApplicationsByStatus(status: string): Promise<LaboratoryApplication[]>;
   approveLaboratoryApplication(id: string, reviewedBy: string, reviewNotes?: string): Promise<{ laboratory: Laboratory; application: LaboratoryApplication } | undefined>;
   rejectLaboratoryApplication(id: string, reviewedBy: string, reviewNotes: string): Promise<LaboratoryApplication | undefined>;
+
+  // Vital Signs Management
+  getVitalSigns(id: string, tenantId: string): Promise<VitalSigns | undefined>;
+  createVitalSigns(vitalSigns: InsertVitalSigns): Promise<VitalSigns>;
+  updateVitalSigns(id: string, updates: Partial<VitalSigns>, tenantId: string): Promise<VitalSigns | undefined>;
+  getVitalSignsByPatient(patientId: string, tenantId: string): Promise<VitalSigns[]>;
+  getVitalSignsByAppointment(appointmentId: string, tenantId: string): Promise<VitalSigns | undefined>;
+  getVitalSignsByTenant(tenantId: string): Promise<VitalSigns[]>;
+
+  // Visit Summary Management
+  getVisitSummary(id: string, tenantId: string): Promise<VisitSummary | undefined>;
+  createVisitSummary(visitSummary: InsertVisitSummary): Promise<VisitSummary>;
+  updateVisitSummary(id: string, updates: Partial<VisitSummary>, tenantId: string): Promise<VisitSummary | undefined>;
+  getVisitSummariesByPatient(patientId: string, tenantId: string): Promise<VisitSummary[]>;
+  getVisitSummaryByAppointment(appointmentId: string, tenantId: string): Promise<VisitSummary | undefined>;
+  getVisitSummariesByProvider(providerId: string, tenantId: string): Promise<VisitSummary[]>;
+  getVisitSummariesByTenant(tenantId: string): Promise<VisitSummary[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1225,6 +1248,115 @@ export class DatabaseStorage implements IStorage {
       reviewNotes,
       reviewedBy
     });
+  }
+
+  // Vital Signs Management Implementation
+  async getVitalSigns(id: string, tenantId: string): Promise<VitalSigns | undefined> {
+    const [vitalSign] = await db.select().from(vitalSigns).where(
+      and(eq(vitalSigns.id, id), eq(vitalSigns.tenantId, tenantId))
+    );
+    return vitalSign || undefined;
+  }
+
+  async createVitalSigns(insertVitalSigns: InsertVitalSigns): Promise<VitalSigns> {
+    // Auto-calculate BMI if height and weight are provided
+    const vitalSignsWithBMI = { ...insertVitalSigns };
+    if (insertVitalSigns.weight && insertVitalSigns.height) {
+      const weightKg = parseFloat(insertVitalSigns.weight.toString()) * 0.453592; // lbs to kg
+      const heightM = parseFloat(insertVitalSigns.height.toString()) * 0.0254; // inches to meters
+      const bmi = weightKg / (heightM * heightM);
+      vitalSignsWithBMI.bodyMassIndex = bmi.toFixed(1);
+    }
+    
+    const [vitalSign] = await db.insert(vitalSigns).values(vitalSignsWithBMI).returning();
+    return vitalSign;
+  }
+
+  async updateVitalSigns(id: string, updates: Partial<VitalSigns>, tenantId: string): Promise<VitalSigns | undefined> {
+    // Recalculate BMI if height or weight is updated
+    const updatedData = { ...updates };
+    if (updates.weight || updates.height) {
+      const current = await this.getVitalSigns(id, tenantId);
+      if (current) {
+        const weight = updates.weight || current.weight;
+        const height = updates.height || current.height;
+        if (weight && height) {
+          const weightKg = parseFloat(weight.toString()) * 0.453592;
+          const heightM = parseFloat(height.toString()) * 0.0254;
+          const bmi = weightKg / (heightM * heightM);
+          updatedData.bodyMassIndex = bmi.toFixed(1);
+        }
+      }
+    }
+
+    const [vitalSign] = await db.update(vitalSigns)
+      .set(updatedData)
+      .where(and(eq(vitalSigns.id, id), eq(vitalSigns.tenantId, tenantId)))
+      .returning();
+    return vitalSign || undefined;
+  }
+
+  async getVitalSignsByPatient(patientId: string, tenantId: string): Promise<VitalSigns[]> {
+    return await db.select().from(vitalSigns).where(
+      and(eq(vitalSigns.patientId, patientId), eq(vitalSigns.tenantId, tenantId))
+    ).orderBy(desc(vitalSigns.recordedAt));
+  }
+
+  async getVitalSignsByAppointment(appointmentId: string, tenantId: string): Promise<VitalSigns | undefined> {
+    const [vitalSign] = await db.select().from(vitalSigns).where(
+      and(eq(vitalSigns.appointmentId, appointmentId), eq(vitalSigns.tenantId, tenantId))
+    );
+    return vitalSign || undefined;
+  }
+
+  async getVitalSignsByTenant(tenantId: string): Promise<VitalSigns[]> {
+    return await db.select().from(vitalSigns).where(eq(vitalSigns.tenantId, tenantId))
+      .orderBy(desc(vitalSigns.recordedAt));
+  }
+
+  // Visit Summary Management Implementation
+  async getVisitSummary(id: string, tenantId: string): Promise<VisitSummary | undefined> {
+    const [visitSummary] = await db.select().from(visitSummaries).where(
+      and(eq(visitSummaries.id, id), eq(visitSummaries.tenantId, tenantId))
+    );
+    return visitSummary || undefined;
+  }
+
+  async createVisitSummary(insertVisitSummary: InsertVisitSummary): Promise<VisitSummary> {
+    const [visitSummary] = await db.insert(visitSummaries).values(insertVisitSummary).returning();
+    return visitSummary;
+  }
+
+  async updateVisitSummary(id: string, updates: Partial<VisitSummary>, tenantId: string): Promise<VisitSummary | undefined> {
+    const [visitSummary] = await db.update(visitSummaries)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(visitSummaries.id, id), eq(visitSummaries.tenantId, tenantId)))
+      .returning();
+    return visitSummary || undefined;
+  }
+
+  async getVisitSummariesByPatient(patientId: string, tenantId: string): Promise<VisitSummary[]> {
+    return await db.select().from(visitSummaries).where(
+      and(eq(visitSummaries.patientId, patientId), eq(visitSummaries.tenantId, tenantId))
+    ).orderBy(desc(visitSummaries.visitDate));
+  }
+
+  async getVisitSummaryByAppointment(appointmentId: string, tenantId: string): Promise<VisitSummary | undefined> {
+    const [visitSummary] = await db.select().from(visitSummaries).where(
+      and(eq(visitSummaries.appointmentId, appointmentId), eq(visitSummaries.tenantId, tenantId))
+    );
+    return visitSummary || undefined;
+  }
+
+  async getVisitSummariesByProvider(providerId: string, tenantId: string): Promise<VisitSummary[]> {
+    return await db.select().from(visitSummaries).where(
+      and(eq(visitSummaries.providerId, providerId), eq(visitSummaries.tenantId, tenantId))
+    ).orderBy(desc(visitSummaries.visitDate));
+  }
+
+  async getVisitSummariesByTenant(tenantId: string): Promise<VisitSummary[]> {
+    return await db.select().from(visitSummaries).where(eq(visitSummaries.tenantId, tenantId))
+      .orderBy(desc(visitSummaries.visitDate));
   }
 }
 

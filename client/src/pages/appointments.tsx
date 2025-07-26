@@ -4,11 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, Clock, Plus, Search, Filter, MoreHorizontal, Eye, Edit, Phone, Mail, User as UserIcon } from "lucide-react";
+import { Calendar, Clock, Plus, Search, Filter, MoreHorizontal, Eye, Edit, Phone, Mail, User as UserIcon, Activity, FileText } from "lucide-react";
 import { Appointment, Patient, User } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { AppointmentForm } from "@/components/forms/appointment-form";
+import { VitalSignsForm } from "@/components/forms/vital-signs-form";
+import { VisitSummaryForm } from "@/components/forms/visit-summary-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,6 +35,8 @@ export default function Appointments() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [isVitalSignsFormOpen, setIsVitalSignsFormOpen] = useState(false);
+  const [isVisitSummaryFormOpen, setIsVisitSummaryFormOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [newStatus, setNewStatus] = useState<string>("");
   const [statusNotes, setStatusNotes] = useState<string>("");
@@ -131,6 +135,16 @@ export default function Appointments() {
       status: newStatus,
       notes: statusNotes
     });
+  };
+
+  const handleVitalSigns = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setIsVitalSignsFormOpen(true);
+  };
+
+  const handleVisitSummary = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setIsVisitSummaryFormOpen(true);
   };
 
   const formatTime = (dateString: string) => {
@@ -340,6 +354,28 @@ export default function Appointments() {
                         <Eye className="h-4 w-4 mr-1" />
                         View Details
                       </Button>
+                      {(user?.role === "receptionist" || user?.role === "nurse" || user?.role === "tenant_admin" || user?.role === "super_admin") && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-green-600 hover:text-green-700"
+                          onClick={() => handleVitalSigns(appointment)}
+                        >
+                          <Activity className="h-4 w-4 mr-1" />
+                          Vital Signs
+                        </Button>
+                      )}
+                      {(user?.role === "doctor" || user?.role === "physician" || user?.role === "nurse" || user?.role === "tenant_admin" || user?.role === "super_admin") && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-purple-600 hover:text-purple-700"
+                          onClick={() => handleVisitSummary(appointment)}
+                        >
+                          <FileText className="h-4 w-4 mr-1" />
+                          Visit Summary
+                        </Button>
+                      )}
                       <Button 
                         variant="ghost" 
                         size="sm" 
@@ -525,6 +561,28 @@ export default function Appointments() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Vital Signs Form */}
+      {selectedAppointment && (
+        <VitalSignsForm
+          isOpen={isVitalSignsFormOpen}
+          onClose={() => setIsVitalSignsFormOpen(false)}
+          patientId={selectedAppointment.patientId}
+          patientName={getPatientName(selectedAppointment.patientId)}
+          appointmentId={selectedAppointment.id}
+        />
+      )}
+
+      {/* Visit Summary Form */}
+      {selectedAppointment && (
+        <VisitSummaryForm
+          isOpen={isVisitSummaryFormOpen}
+          onClose={() => setIsVisitSummaryFormOpen(false)}
+          patientId={selectedAppointment.patientId}
+          patientName={getPatientName(selectedAppointment.patientId)}
+          appointmentId={selectedAppointment.id}
+        />
+      )}
     </div>
   );
 }

@@ -311,6 +311,68 @@ export const claimLineItems = pgTable("claim_line_items", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Vital Signs captured at reception
+export const vitalSigns = pgTable("vital_signs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  appointmentId: uuid("appointment_id").references(() => appointments.id),
+  recordedById: uuid("recorded_by_id").references(() => users.id).notNull(), // Reception staff
+  bloodPressureSystolic: integer("blood_pressure_systolic"),
+  bloodPressureDiastolic: integer("blood_pressure_diastolic"),
+  heartRate: integer("heart_rate"), // BPM
+  temperature: decimal("temperature", { precision: 4, scale: 1 }), // Fahrenheit
+  oxygenSaturation: integer("oxygen_saturation"), // Percentage
+  respiratoryRate: integer("respiratory_rate"), // Breaths per minute
+  weight: decimal("weight", { precision: 5, scale: 2 }), // Pounds
+  height: decimal("height", { precision: 5, scale: 2 }), // Inches
+  bodyMassIndex: decimal("body_mass_index", { precision: 4, scale: 1 }), // Auto-calculated
+  notes: text("notes"),
+  recordedAt: timestamp("recorded_at").default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Visit Summaries created during consultation
+export const visitSummaries = pgTable("visit_summaries", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  appointmentId: uuid("appointment_id").references(() => appointments.id).notNull(),
+  providerId: uuid("provider_id").references(() => users.id).notNull(),
+  vitalSignsId: uuid("vital_signs_id").references(() => vitalSigns.id),
+  
+  // Chief Complaint and History
+  chiefComplaint: text("chief_complaint").notNull(),
+  historyOfPresentIllness: text("history_of_present_illness"),
+  reviewOfSystems: jsonb("review_of_systems").default('{}'),
+  
+  // Physical Examination
+  physicalExamination: text("physical_examination"),
+  symptoms: jsonb("symptoms").default('[]'), // Array of symptom objects
+  
+  // Assessment and Plan
+  assessment: text("assessment"),
+  clinicalImpression: text("clinical_impression"),
+  differentialDiagnosis: jsonb("differential_diagnosis").default('[]'),
+  finalDiagnosis: jsonb("final_diagnosis").default('[]'),
+  treatmentPlan: text("treatment_plan"),
+  
+  // Follow-up and Instructions
+  patientInstructions: text("patient_instructions"),
+  followUpInstructions: text("follow_up_instructions"),
+  returnVisitRecommended: boolean("return_visit_recommended").default(false),
+  returnVisitTimeframe: text("return_visit_timeframe"),
+  
+  // Provider Notes
+  providerNotes: text("provider_notes"),
+  
+  // Status and Timestamps
+  status: text("status").default('draft'), // draft, finalized
+  visitDate: timestamp("visit_date").default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 export const insuranceClaims = pgTable("insurance_claims", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
@@ -595,7 +657,9 @@ export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   reports: many(reports),
   laboratories: many(laboratories),
   labResults: many(labResults),
-  labOrderAssignments: many(labOrderAssignments)
+  labOrderAssignments: many(labOrderAssignments),
+  vitalSigns: many(vitalSigns),
+  visitSummaries: many(visitSummaries)
 }));
 
 export const insuranceProvidersRelations = relations(insuranceProviders, ({ one, many }) => ({
@@ -788,7 +852,9 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   labOrders: many(labOrders),
   auditLogs: many(auditLogs),
   labResults: many(labResults),
-  labOrderAssignments: many(labOrderAssignments)
+  labOrderAssignments: many(labOrderAssignments),
+  vitalSignsRecorded: many(vitalSigns, { relationName: "recordedBy" }),
+  visitSummariesAsProvider: many(visitSummaries, { relationName: "providerSummaries" })
 }));
 
 export const patientsRelations = relations(patients, ({ one, many }) => ({
@@ -800,7 +866,9 @@ export const patientsRelations = relations(patients, ({ one, many }) => ({
   prescriptions: many(prescriptions),
   labOrders: many(labOrders),
   insuranceClaims: many(insuranceClaims),
-  labResults: many(labResults)
+  labResults: many(labResults),
+  vitalSigns: many(vitalSigns),
+  visitSummaries: many(visitSummaries)
 }));
 
 // Laboratory Relations
@@ -882,7 +950,55 @@ export const appointmentsRelations = relations(appointments, ({ one, many }) => 
   }),
   prescriptions: many(prescriptions),
   labOrders: many(labOrders),
-  insuranceClaims: many(insuranceClaims)
+  insuranceClaims: many(insuranceClaims),
+  vitalSigns: many(vitalSigns),
+  visitSummaries: many(visitSummaries)
+}));
+
+// Vital Signs Relations
+export const vitalSignsRelations = relations(vitalSigns, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [vitalSigns.tenantId],
+    references: [tenants.id]
+  }),
+  patient: one(patients, {
+    fields: [vitalSigns.patientId],
+    references: [patients.id]
+  }),
+  appointment: one(appointments, {
+    fields: [vitalSigns.appointmentId],
+    references: [appointments.id]
+  }),
+  recordedBy: one(users, {
+    fields: [vitalSigns.recordedById],
+    references: [users.id],
+    relationName: "recordedBy"
+  })
+}));
+
+// Visit Summaries Relations
+export const visitSummariesRelations = relations(visitSummaries, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [visitSummaries.tenantId],
+    references: [tenants.id]
+  }),
+  patient: one(patients, {
+    fields: [visitSummaries.patientId],
+    references: [patients.id]
+  }),
+  appointment: one(appointments, {
+    fields: [visitSummaries.appointmentId],
+    references: [appointments.id]
+  }),
+  provider: one(users, {
+    fields: [visitSummaries.providerId],
+    references: [users.id],
+    relationName: "providerSummaries"
+  }),
+  vitalSigns: one(vitalSigns, {
+    fields: [visitSummaries.vitalSignsId],
+    references: [vitalSigns.id]
+  })
 }));
 
 // Insert Schemas
@@ -955,6 +1071,17 @@ export const insertInsurancePlanCoverageSchema = createInsertSchema(insurancePla
 });
 
 export const insertClaimLineItemSchema = createInsertSchema(claimLineItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertVitalSignsSchema = createInsertSchema(vitalSigns).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertVisitSummarySchema = createInsertSchema(visitSummaries).omit({
   id: true,
   createdAt: true,
   updatedAt: true
@@ -1105,3 +1232,10 @@ export type InsertLabOrderAssignment = z.infer<typeof insertLabOrderAssignmentSc
 
 export type LaboratoryApplication = typeof laboratoryApplications.$inferSelect;
 export type InsertLaboratoryApplication = z.infer<typeof insertLaboratoryApplicationSchema>;
+
+// Vital Signs and Visit Summary Types
+export type VitalSigns = typeof vitalSigns.$inferSelect;
+export type InsertVitalSigns = z.infer<typeof insertVitalSignsSchema>;
+
+export type VisitSummary = typeof visitSummaries.$inferSelect;
+export type InsertVisitSummary = z.infer<typeof insertVisitSummarySchema>;
