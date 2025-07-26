@@ -481,9 +481,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Lab order management routes
-  app.use("/api/lab-orders", requireTenant);
-
-  app.get("/api/lab-orders", async (req, res) => {
+  app.get("/api/lab-orders", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { patientId, pending } = req.query;
       const tenantId = req.tenant!.id;
@@ -504,15 +502,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/lab-orders", requireRole(["physician", "nurse"]), async (req, res) => {
+  app.post("/api/lab-orders", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
-      const labOrderData = insertLabOrderSchema.parse({
-        ...req.body,
+      // Convert string dates to Date objects and prepare data
+      const requestData = { ...req.body };
+      if (requestData.requestDate && typeof requestData.requestDate === 'string') {
+        requestData.requestDate = new Date(requestData.requestDate);
+      }
+      
+      const labOrderData = {
+        ...requestData,
         tenantId: req.tenant!.id,
-        providerId: req.user!.userId
-      });
+        providerId: req.user!.userId,
+        requestDate: requestData.requestDate || new Date(),
+        appointmentId: requestData.appointmentId || null,
+        labTenantId: requestData.labTenantId || null
+      };
 
-      const labOrder = await storage.createLabOrder(labOrderData);
+      const validatedData = insertLabOrderSchema.parse(labOrderData);
+
+      const labOrder = await storage.createLabOrder(validatedData);
 
       // Create audit log
       await storage.createAuditLog({
