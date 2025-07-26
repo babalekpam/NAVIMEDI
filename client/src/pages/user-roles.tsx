@@ -77,9 +77,14 @@ export default function UserRoles() {
     },
   });
 
-  const { data: users, isLoading } = useQuery({
+  const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["/api/users", tenant?.id],
     enabled: !!user && !!tenant,
+    queryFn: () => fetch(`/api/users/${tenant?.id}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+      }
+    }).then(res => res.json())
   });
 
   const createUserMutation = useMutation({
@@ -88,7 +93,7 @@ export default function UserRoles() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
       setIsCreateDialogOpen(false);
       form.reset();
       toast({
@@ -111,8 +116,9 @@ export default function UserRoles() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
       setEditingUser(null);
+      setIsCreateDialogOpen(false);
       form.reset();
       toast({
         title: "Success",
@@ -130,14 +136,27 @@ export default function UserRoles() {
 
   const toggleUserStatusMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const response = await apiRequest("PATCH", `/api/users/${id}`, { isActive });
+      const response = await fetch(`/api/users/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+        },
+        body: JSON.stringify({ isActive })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update user status");
+      }
+      
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+    onSuccess: (_, { isActive }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
       toast({
         title: "Success",
-        description: "User status updated successfully",
+        description: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
       });
     },
     onError: (error: Error) => {
@@ -149,41 +168,10 @@ export default function UserRoles() {
     },
   });
 
-  // Mock data for demonstration
-  const mockUsers: User[] = [
-    {
-      id: "1",
-      tenantId: tenant?.id || "",
-      username: "dr.smith",
-      email: "dr.smith@example.com",
-      role: "physician",
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: "2",
-      tenantId: tenant?.id || "",
-      username: "nurse.johnson",
-      email: "nurse.johnson@example.com",
-      role: "nurse",
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: "3",
-      tenantId: tenant?.id || "",
-      username: "pharm.wilson",
-      email: "pharm.wilson@example.com",
-      role: "pharmacist",
-      isActive: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ];
+  // Use real users data from API or empty array if loading
+  const usersData = users || [];
 
-  const filteredUsers = mockUsers.filter(userItem => {
+  const filteredUsers = usersData.filter(userItem => {
     const matchesSearch = userItem.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          userItem.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === "all" || userItem.role === roleFilter;

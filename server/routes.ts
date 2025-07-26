@@ -701,6 +701,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user (for user management)
+  app.patch("/api/users/:id", authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      
+      // Get the user to check permissions
+      const existingUser = await storage.getUser(id);
+      if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if user has permission to update this user
+      const hasPermission = req.user.role === 'super_admin' || 
+                           (req.user.role === 'tenant_admin' && existingUser.tenantId === req.tenant?.id) ||
+                           (req.user.userId === id); // User updating themselves
+
+      if (!hasPermission) {
+        return res.status(403).json({ message: "Access denied. Cannot update this user." });
+      }
+
+      // Update the user
+      const updatedUser = await storage.updateUser(id, updateData);
+      
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: existingUser.tenantId,
+        userId: req.user.userId,
+        entityType: "user",
+        entityId: id,
+        action: "update",
+        oldData: { isActive: existingUser.isActive, role: existingUser.role },
+        newData: updateData,
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      res.json({
+        message: "User updated successfully",
+        user: {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          role: updatedUser.role,
+          isActive: updatedUser.isActive,
+          tenantId: updatedUser.tenantId
+        }
+      });
+    } catch (error) {
+      console.error("User update error:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
   // Get all reports across platform for super admin
   app.get("/api/platform/reports", authenticateToken, async (req, res) => {
     try {
