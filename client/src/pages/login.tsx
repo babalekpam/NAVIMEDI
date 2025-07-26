@@ -28,6 +28,10 @@ export default function Login() {
     setError("");
 
     try {
+      // Clear any existing tokens first
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
+      
       // For super admin login, pass empty string if tenantId is not provided
       await login(username, password, tenantId || "");
       setLocation("/dashboard");
