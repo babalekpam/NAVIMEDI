@@ -498,22 +498,33 @@ export default function Dashboard() {
                   const timeString = appointmentDate.toLocaleTimeString('en-US', { 
                     hour: '2-digit', 
                     minute: '2-digit',
-                    hour12: false 
+                    hour12: true 
                   });
+                  const dateString = appointmentDate.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                  });
+                  const isToday = appointmentDate.toDateString() === new Date().toDateString();
                   const isUrgent = appointment.status === 'urgent' || appointment.type === 'emergency';
                   
                   return (
-                    <div key={appointment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div key={appointment.id} className={`flex items-center justify-between p-3 border rounded-lg ${isToday ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'}`}>
                       <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full ${isUrgent ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                        <div className={`w-3 h-3 rounded-full ${isUrgent ? 'bg-red-500' : isToday ? 'bg-blue-500' : 'bg-green-500'}`}></div>
                         <div>
-                          <p className="font-medium">{timeString} - {appointment.patient?.firstName} {appointment.patient?.lastName}</p>
-                          <p className="text-sm text-gray-600">{appointment.type} • {appointment.chiefComplaint}</p>
+                          <p className="font-medium">
+                            {timeString} {!isToday && `(${dateString})`} - {appointment.patient?.firstName || 'Unknown'} {appointment.patient?.lastName || 'Patient'}
+                          </p>
+                          <p className="text-sm text-gray-600">{appointment.type} • {appointment.chiefComplaint || 'No complaint noted'}</p>
+                          {isToday && <p className="text-xs text-blue-600 font-medium">TODAY'S APPOINTMENT</p>}
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
                         {isUrgent && (
                           <Badge variant="destructive" className="text-xs">Urgent</Badge>
+                        )}
+                        {isToday && (
+                          <Badge variant="default" className="text-xs bg-blue-600">Today</Badge>
                         )}
                         <Badge variant="outline" className="text-xs">{appointment.status}</Badge>
                       </div>
@@ -524,7 +535,15 @@ export default function Dashboard() {
                 <div className="text-center py-8 text-gray-500">
                   <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                   <p>No appointments scheduled</p>
-                  <p className="text-sm">Your schedule is clear for today</p>
+                  <p className="text-sm">Your schedule is clear</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-3"
+                    onClick={() => window.location.href = '/appointments'}
+                  >
+                    View All Appointments
+                  </Button>
                 </div>
               )}
             </div>
