@@ -1,0 +1,190 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+
+  /* Healthcare-specific colors */
+  --medical-blue: hsl(207, 90%, 54%);
+  --medical-blue-foreground: hsl(211, 100%, 99%);
+  --healthcare-teal: hsl(174, 100%, 20%);
+  --healthcare-teal-foreground: hsl(0, 0%, 100%);
+  --alert-orange: hsl(36, 100%, 50%);
+  --alert-orange-foreground: hsl(0, 0%, 0%);
+  --medical-gray: hsl(0, 0%, 96%);
+  --medical-gray-foreground: hsl(20, 14.3%, 4.1%);
+  --success-green: hsl(122, 39%, 49%);
+  --success-green-foreground: hsl(0, 0%, 100%);
+  --warning-amber: hsl(43, 96%, 56%);
+  --warning-amber-foreground: hsl(0, 0%, 0%);
+  --error-red: hsl(4, 90%, 58%);
+  --error-red-foreground: hsl(0, 0%, 100%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+
+  /* Dark mode healthcare colors */
+  --medical-blue: hsl(207, 90%, 54%);
+  --medical-blue-foreground: hsl(211, 100%, 99%);
+  --healthcare-teal: hsl(174, 100%, 25%);
+  --healthcare-teal-foreground: hsl(0, 0%, 100%);
+  --alert-orange: hsl(36, 100%, 50%);
+  --alert-orange-foreground: hsl(0, 0%, 0%);
+  --medical-gray: hsl(240, 3.7%, 15.9%);
+  --medical-gray-foreground: hsl(0, 0%, 98%);
+  --success-green: hsl(122, 39%, 49%);
+  --success-green-foreground: hsl(0, 0%, 100%);
+  --warning-amber: hsl(43, 96%, 56%);
+  --warning-amber-foreground: hsl(0, 0%, 0%);
+  --error-red: hsl(4, 90%, 58%);
+  --error-red-foreground: hsl(0, 0%, 100%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+
+  /* Healthcare-specific utility classes */
+  .medical-blue {
+    background-color: hsl(var(--medical-blue));
+    color: hsl(var(--medical-blue-foreground));
+  }
+
+  .healthcare-teal {
+    background-color: hsl(var(--healthcare-teal));
+    color: hsl(var(--healthcare-teal-foreground));
+  }
+
+  .alert-orange {
+    background-color: hsl(var(--alert-orange));
+    color: hsl(var(--alert-orange-foreground));
+  }
+
+  .success-green {
+    background-color: hsl(var(--success-green));
+    color: hsl(var(--success-green-foreground));
+  }
+
+  .warning-amber {
+    background-color: hsl(var(--warning-amber));
+    color: hsl(var(--warning-amber-foreground));
+  }
+
+  .error-red {
+    background-color: hsl(var(--error-red));
+    color: hsl(var(--error-red-foreground));
+  }
+
+  /* Professional medical form styling */
+  .medical-form {
+    @apply space-y-6 bg-white p-6 rounded-lg border border-gray-200 shadow-sm;
+  }
+
+  .medical-form-section {
+    @apply space-y-4 pb-6 border-b border-gray-100 last:border-b-0 last:pb-0;
+  }
+
+  .medical-form-title {
+    @apply text-lg font-semibold text-gray-900 mb-4;
+  }
+
+  .medical-input-group {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+  }
+
+  /* HIPAA compliance indicators */
+  .hipaa-secure {
+    @apply relative;
+  }
+
+  .hipaa-secure::after {
+    content: "🔒";
+    @apply absolute -top-1 -right-1 text-xs;
+  }
+
+  /* Professional healthcare color palette */
+  .bg-medical-blue {
+    background-color: hsl(var(--medical-blue));
+  }
+
+  .text-medical-blue {
+    color: hsl(var(--medical-blue));
+  }
+
+  .bg-healthcare-teal {
+    background-color: hsl(var(--healthcare-teal));
+  }
+
+  .text-healthcare-teal {
+    color: hsl(var(--healthcare-teal));
+  }
+
+  .bg-success-green {
+    background-color: hsl(var(--success-green));
+  }
+
+  .text-success-green {
+    color: hsl(var(--success-green));
+  }
+
+  .bg-warning-amber {
+    background-color: hsl(var(--warning-amber));
+  }
+
+  .text-warning-amber {
+    color: hsl(var(--warning-amber));
+  }
+
+  .bg-error-red {
+    background-color: hsl(var(--error-red));
+  }
+
+  .text-error-red {
+    color: hsl(var(--error-red));
+  }
+}
