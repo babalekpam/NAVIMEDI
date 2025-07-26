@@ -126,13 +126,10 @@ export function VisitSummaryForm({
 
   const createMutation = useMutation({
     mutationFn: (data: VisitSummaryFormData) => 
-      apiRequest("/api/visit-summaries", {
-        method: "POST",
-        body: JSON.stringify({
-          ...data,
-          symptoms: selectedSymptoms,
-          finalDiagnosis: selectedDiagnoses,
-        }),
+      apiRequest("/api/visit-summaries", "POST", {
+        ...data,
+        symptoms: selectedSymptoms,
+        finalDiagnosis: selectedDiagnoses,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/visit-summaries"] });
@@ -157,13 +154,10 @@ export function VisitSummaryForm({
 
   const updateMutation = useMutation({
     mutationFn: (data: VisitSummaryFormData) => 
-      apiRequest(`/api/visit-summaries/${existingVisitSummary.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          ...data,
-          symptoms: selectedSymptoms,
-          finalDiagnosis: selectedDiagnoses,
-        }),
+      apiRequest(`/api/visit-summaries/${existingVisitSummary?.id}`, "PATCH", {
+        ...data,
+        symptoms: selectedSymptoms,
+        finalDiagnosis: selectedDiagnoses,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/visit-summaries"] });

@@ -30,14 +30,14 @@ import { Activity, Heart, Thermometer, Wind, Weight, Ruler } from "lucide-react"
 const vitalSignsSchema = z.object({
   patientId: z.string().min(1, "Patient is required"),
   appointmentId: z.string().optional(),
-  bloodPressureSystolic: z.number().min(50).max(250).optional(),
-  bloodPressureDiastolic: z.number().min(30).max(150).optional(),
-  heartRate: z.number().min(30).max(220).optional(),
-  temperature: z.number().min(95).max(110).optional(),
-  oxygenSaturation: z.number().min(70).max(100).optional(),
-  respiratoryRate: z.number().min(8).max(40).optional(),
-  weight: z.number().min(1).max(1000).optional(),
-  height: z.number().min(12).max(96).optional(),
+  bloodPressureSystolic: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(50).max(250).optional()),
+  bloodPressureDiastolic: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(30).max(150).optional()),
+  heartRate: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(30).max(220).optional()),
+  temperature: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(95).max(110).optional()),
+  oxygenSaturation: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(70).max(100).optional()),
+  respiratoryRate: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(8).max(40).optional()),
+  weight: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(1).max(1000).optional()),
+  height: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(12).max(96).optional()),
   notes: z.string().optional(),
 });
 
@@ -69,14 +69,14 @@ export function VitalSignsForm({
     defaultValues: {
       patientId,
       appointmentId: appointmentId || "",
-      bloodPressureSystolic: existingVitalSigns?.bloodPressureSystolic || undefined,
-      bloodPressureDiastolic: existingVitalSigns?.bloodPressureDiastolic || undefined,
-      heartRate: existingVitalSigns?.heartRate || undefined,
-      temperature: existingVitalSigns?.temperature || undefined,
-      oxygenSaturation: existingVitalSigns?.oxygenSaturation || undefined,
-      respiratoryRate: existingVitalSigns?.respiratoryRate || undefined,
-      weight: existingVitalSigns?.weight || undefined,
-      height: existingVitalSigns?.height || undefined,
+      bloodPressureSystolic: existingVitalSigns?.bloodPressureSystolic || "",
+      bloodPressureDiastolic: existingVitalSigns?.bloodPressureDiastolic || "",
+      heartRate: existingVitalSigns?.heartRate || "",
+      temperature: existingVitalSigns?.temperature || "",
+      oxygenSaturation: existingVitalSigns?.oxygenSaturation || "",
+      respiratoryRate: existingVitalSigns?.respiratoryRate || "",
+      weight: existingVitalSigns?.weight || "",
+      height: existingVitalSigns?.height || "",
       notes: existingVitalSigns?.notes || "",
     },
   });
@@ -98,10 +98,7 @@ export function VitalSignsForm({
 
   const createMutation = useMutation({
     mutationFn: (data: VitalSignsFormData) => 
-      apiRequest("/api/vital-signs", {
-        method: "POST",
-        body: JSON.stringify(data),
-      }),
+      apiRequest("/api/vital-signs", "POST", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vital-signs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
@@ -123,10 +120,7 @@ export function VitalSignsForm({
 
   const updateMutation = useMutation({
     mutationFn: (data: VitalSignsFormData) => 
-      apiRequest(`/api/vital-signs/${existingVitalSigns.id}`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
-      }),
+      apiRequest(`/api/vital-signs/${existingVitalSigns?.id}`, "PATCH", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vital-signs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
@@ -204,7 +198,7 @@ export function VitalSignsForm({
                               type="number"
                               placeholder="120"
                               {...field}
-                              onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                              onChange={(e) => field.onChange(e.target.value)}
                             />
                           </FormControl>
                           <FormMessage />
@@ -222,7 +216,7 @@ export function VitalSignsForm({
                               type="number"
                               placeholder="80"
                               {...field}
-                              onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                              onChange={(e) => field.onChange(e.target.value)}
                             />
                           </FormControl>
                           <FormMessage />
@@ -265,7 +259,7 @@ export function VitalSignsForm({
                             type="number"
                             placeholder="72"
                             {...field}
-                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         {field.value && (() => {
@@ -288,7 +282,7 @@ export function VitalSignsForm({
                             step="0.1"
                             placeholder="98.6"
                             {...field}
-                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         {field.value && (() => {
@@ -322,7 +316,7 @@ export function VitalSignsForm({
                             type="number"
                             placeholder="98"
                             {...field}
-                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         {field.value && (() => {
@@ -344,7 +338,7 @@ export function VitalSignsForm({
                             type="number"
                             placeholder="16"
                             {...field}
-                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         {field.value && (() => {
@@ -379,7 +373,7 @@ export function VitalSignsForm({
                             step="0.1"
                             placeholder="150"
                             {...field}
-                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -398,7 +392,7 @@ export function VitalSignsForm({
                             step="0.1"
                             placeholder="68"
                             {...field}
-                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         <FormMessage />
