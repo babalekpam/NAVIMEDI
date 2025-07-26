@@ -291,13 +291,19 @@ export default function Patients() {
                     <div>
                       <span className="font-medium">Address:</span>
                       <p className="text-sm text-gray-600 mt-1">
-                        {selectedPatient.address || 'No address on file'}
+                        {selectedPatient.address && typeof selectedPatient.address === 'object' 
+                          ? `${(selectedPatient.address as any).street || ''} ${(selectedPatient.address as any).city || ''} ${(selectedPatient.address as any).state || ''} ${(selectedPatient.address as any).zipCode || ''}`.trim() || 'No address on file'
+                          : selectedPatient.address || 'No address on file'
+                        }
                       </p>
                     </div>
                     <div>
                       <span className="font-medium">Emergency Contact:</span>
                       <p className="text-sm text-gray-600 mt-1">
-                        {selectedPatient.emergencyContact || 'No emergency contact on file'}
+                        {selectedPatient.emergencyContact && typeof selectedPatient.emergencyContact === 'object' 
+                          ? `${(selectedPatient.emergencyContact as any).name || 'N/A'} (${(selectedPatient.emergencyContact as any).relationship || 'N/A'}) - ${(selectedPatient.emergencyContact as any).phone || 'N/A'}`
+                          : selectedPatient.emergencyContact || 'No emergency contact on file'
+                        }
                       </p>
                     </div>
                   </CardContent>
@@ -357,13 +363,25 @@ export default function Patients() {
                   <CardHeader>
                     <CardTitle className="text-lg">Insurance Information</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-600">
-                      {typeof selectedPatient.insuranceInfo === 'object' && selectedPatient.insuranceInfo
-                        ? JSON.stringify(selectedPatient.insuranceInfo, null, 2)
-                        : selectedPatient.insuranceInfo
-                      }
-                    </p>
+                  <CardContent className="space-y-2">
+                    {typeof selectedPatient.insuranceInfo === 'object' && selectedPatient.insuranceInfo ? (
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Provider:</span>
+                          <span>{(selectedPatient.insuranceInfo as any).provider || 'Not specified'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Policy Number:</span>
+                          <span>{(selectedPatient.insuranceInfo as any).policyNumber || 'Not specified'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Group Number:</span>
+                          <span>{(selectedPatient.insuranceInfo as any).groupNumber || 'Not specified'}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-600">{selectedPatient.insuranceInfo}</p>
+                    )}
                   </CardContent>
                 </Card>
               )}
