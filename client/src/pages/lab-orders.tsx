@@ -46,17 +46,22 @@ export default function LabOrders() {
   });
 
   const createLabOrderMutation = useMutation({
-    mutationFn: async (labOrderData: any) => {
-      const response = await fetch("/api/lab-orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
-        },
-        body: JSON.stringify(labOrderData)
-      });
-      if (!response.ok) throw new Error("Failed to create lab order");
-      return response.json();
+    mutationFn: async (data: any) => {
+      const { apiRequest } = await import("@/lib/queryClient");
+      
+      if (data.labOrders && Array.isArray(data.labOrders)) {
+        // Handle multiple lab orders
+        const results = await Promise.all(
+          data.labOrders.map((labOrder: any) => 
+            apiRequest("POST", "/api/lab-orders", labOrder).then(res => res.json())
+          )
+        );
+        return results;
+      } else {
+        // Handle single lab order (backward compatibility)
+        const response = await apiRequest("POST", "/api/lab-orders", data);
+        return response.json();
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/lab-orders"] });
@@ -110,12 +115,12 @@ export default function LabOrders() {
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="h-4 w-4 mr-2" />
-                Order Lab Test
+                Order Lab Tests
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Create Lab Order</DialogTitle>
+                <DialogTitle>Order Lab Tests</DialogTitle>
               </DialogHeader>
               <LabOrderForm
                 onSubmit={(data) => createLabOrderMutation.mutate(data)}

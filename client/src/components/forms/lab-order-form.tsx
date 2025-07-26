@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertLabOrderSchema, Patient } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,21 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Trash2 } from "lucide-react";
+import { z } from "zod";
+
+// Schema for multiple lab orders
+const multipleLabOrderSchema = z.object({
+  patientId: z.string().min(1, "Please select a patient"),
+  orders: z.array(z.object({
+    testName: z.string().min(1, "Test name is required"),
+    testCode: z.string().optional(),
+    instructions: z.string().optional(),
+    priority: z.enum(["routine", "urgent", "stat"]).default("routine"),
+  })).min(1, "At least one test is required"),
+  generalInstructions: z.string().optional(),
+});
 
 interface LabOrderFormProps {
   onSubmit: (data: any) => void;
@@ -13,22 +28,63 @@ interface LabOrderFormProps {
   patients: Patient[];
 }
 
+const commonLabTests = [
+  "Complete Blood Count (CBC)",
+  "Basic Metabolic Panel (BMP)", 
+  "Comprehensive Metabolic Panel (CMP)",
+  "Lipid Panel",
+  "Thyroid Function Tests",
+  "Liver Function Tests",
+  "Hemoglobin A1C",
+  "Urinalysis",
+  "Chest X-Ray",
+  "EKG",
+  "Blood Culture",
+  "Urine Culture",
+  "Vitamin D",
+  "B12 and Folate",
+  "Iron Studies",
+  "Coagulation Panel (PT/INR)",
+  "Inflammatory Markers (CRP, ESR)"
+];
+
 export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrderFormProps) => {
   const form = useForm({
-    resolver: zodResolver(insertLabOrderSchema.omit({ tenantId: true, providerId: true })),
+    resolver: zodResolver(multipleLabOrderSchema),
     defaultValues: {
       patientId: "",
-      testName: "",
-      testCode: "",
-      instructions: "",
-      priority: "routine" as const,
-      status: "ordered" as const,
+      orders: [{
+        testName: "",
+        testCode: "",
+        instructions: "",
+        priority: "routine" as const,
+      }],
+      generalInstructions: "",
     }
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "orders"
+  });
+
+  const handleSubmit = (data: any) => {
+    // Transform data to create multiple lab orders
+    const labOrders = data.orders.map((order: any) => ({
+      patientId: data.patientId,
+      testName: order.testName,
+      testCode: order.testCode || "",
+      instructions: `${order.instructions || ""} ${data.generalInstructions || ""}`.trim(),
+      priority: order.priority,
+      status: "ordered"
+    }));
+    
+    onSubmit({ labOrders });
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="patientId"
@@ -54,86 +110,140 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
           )}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="testName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Test Name</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select test" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Complete Blood Count (CBC)">Complete Blood Count (CBC)</SelectItem>
-                    <SelectItem value="Basic Metabolic Panel (BMP)">Basic Metabolic Panel (BMP)</SelectItem>
-                    <SelectItem value="Comprehensive Metabolic Panel (CMP)">Comprehensive Metabolic Panel (CMP)</SelectItem>
-                    <SelectItem value="Lipid Panel">Lipid Panel</SelectItem>
-                    <SelectItem value="Thyroid Function Tests">Thyroid Function Tests</SelectItem>
-                    <SelectItem value="Liver Function Tests">Liver Function Tests</SelectItem>
-                    <SelectItem value="Hemoglobin A1C">Hemoglobin A1C</SelectItem>
-                    <SelectItem value="Urinalysis">Urinalysis</SelectItem>
-                    <SelectItem value="Chest X-Ray">Chest X-Ray</SelectItem>
-                    <SelectItem value="EKG">EKG</SelectItem>
-                    <SelectItem value="Blood Culture">Blood Culture</SelectItem>
-                    <SelectItem value="Urine Culture">Urine Culture</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium">Lab Tests</h3>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => append({
+                testName: "",
+                testCode: "",
+                instructions: "",
+                priority: "routine"
+              })}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Test
+            </Button>
+          </div>
 
-          <FormField
-            control={form.control}
-            name="testCode"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Test Code (Optional)</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., LAB001" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {fields.map((field, index) => (
+            <Card key={field.id}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Test {index + 1}</CardTitle>
+                  {fields.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => remove(index)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name={`orders.${index}.testName`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Test Name</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select test" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {commonLabTests.map((test) => (
+                              <SelectItem key={test} value={test}>
+                                {test}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`orders.${index}.testCode`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Test Code (Optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., LAB001" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name={`orders.${index}.priority`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Priority</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select priority" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="routine">Routine</SelectItem>
+                            <SelectItem value="urgent">Urgent</SelectItem>
+                            <SelectItem value="stat">STAT</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`orders.${index}.instructions`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Test-Specific Instructions</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="e.g., Fasting required"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         <FormField
           control={form.control}
-          name="priority"
+          name="generalInstructions"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Priority</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="routine">Routine</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
-                  <SelectItem value="stat">STAT</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="instructions"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Special Instructions</FormLabel>
+              <FormLabel>General Instructions (applies to all tests)</FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="e.g., Fasting required, collect in morning"
+                  placeholder="e.g., Patient should be fasting for 12 hours, collect in morning"
                   {...field} 
                 />
               </FormControl>
@@ -151,7 +261,7 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
             disabled={isLoading}
             className="bg-blue-600 hover:bg-blue-700"
           >
-            {isLoading ? "Ordering..." : "Order Lab Test"}
+            {isLoading ? "Ordering..." : `Order ${fields.length} Lab Test${fields.length > 1 ? 's' : ''}`}
           </Button>
         </div>
       </form>
