@@ -24,6 +24,8 @@ export default function Prescriptions() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const { user } = useAuth();
   const { tenant } = useTenant();
   const queryClient = useQueryClient();
@@ -259,7 +261,15 @@ export default function Prescriptions() {
                     </Badge>
                     
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-blue-600 hover:text-blue-700"
+                        onClick={() => {
+                          setSelectedPrescription(prescription);
+                          setIsDetailsOpen(true);
+                        }}
+                      >
                         View Details
                       </Button>
                       {user.role === "pharmacist" && (
@@ -278,6 +288,136 @@ export default function Prescriptions() {
           )}
         </CardContent>
       </Card>
+
+      {/* Prescription Details Dialog */}
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Pill className="h-5 w-5 mr-2" />
+              Prescription Details
+            </DialogTitle>
+          </DialogHeader>
+          {selectedPrescription && (
+            <div className="space-y-6">
+              {/* Patient Information */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-2">Patient Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Patient Name</p>
+                    <p className="font-medium">{getPatientName(selectedPrescription.patientId)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Prescription Date</p>
+                    <p className="font-medium">{new Date(selectedPrescription.prescribedDate).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Medication Details */}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-2">Medication Details</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Medication Name</p>
+                    <p className="font-medium text-lg">{selectedPrescription.medicationName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Dosage</p>
+                    <p className="font-medium">{selectedPrescription.dosage}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Frequency</p>
+                    <p className="font-medium">{selectedPrescription.frequency}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Route</p>
+                    <p className="font-medium">{selectedPrescription.route}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Quantity</p>
+                    <p className="font-medium">{selectedPrescription.quantity}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Refills</p>
+                    <p className="font-medium">{selectedPrescription.refills}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Instructions */}
+              {selectedPrescription.instructions && (
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-900 mb-2">Instructions for Use</h3>
+                  <p className="text-gray-700">{selectedPrescription.instructions}</p>
+                </div>
+              )}
+
+              {/* Status and Dates */}
+              <div className="bg-yellow-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-2">Prescription Status</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Current Status</p>
+                    <Badge 
+                      variant="secondary"
+                      className={`${statusColors[selectedPrescription.status] || statusColors.prescribed} font-medium`}
+                    >
+                      {selectedPrescription.status.replace('_', ' ').toUpperCase()}
+                    </Badge>
+                  </div>
+                  {selectedPrescription.expiryDate && (
+                    <div>
+                      <p className="text-sm text-gray-600">Expiry Date</p>
+                      <p className={`font-medium ${
+                        isExpired(selectedPrescription) ? 'text-red-600' : 
+                        isExpiring(selectedPrescription) ? 'text-yellow-600' : 'text-gray-900'
+                      }`}>
+                        {new Date(selectedPrescription.expiryDate).toLocaleDateString()}
+                        {isExpired(selectedPrescription) && ' (EXPIRED)'}
+                        {isExpiring(selectedPrescription) && ' (EXPIRING SOON)'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Prescribing Physician */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-2">Prescribing Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Prescribing Physician</p>
+                    <p className="font-medium">{selectedPrescription.physicianName || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Prescription ID</p>
+                    <p className="font-mono text-sm text-gray-600">{selectedPrescription.id.slice(-8)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>
+                  Close
+                </Button>
+                {user.role === "pharmacist" && selectedPrescription.status === "prescribed" && (
+                  <Button className="bg-green-600 hover:bg-green-700">
+                    Fill Prescription
+                  </Button>
+                )}
+                {(user.role === "physician" || user.role === "nurse") && (
+                  <Button variant="outline">
+                    Edit Prescription
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

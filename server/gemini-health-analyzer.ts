@@ -151,9 +151,9 @@ export class GeminiHealthAnalyzer {
     PATIENT PROFILE:
     - Age: ${age} years
     - Gender: ${patient.gender}
-    - Medical History: ${patient.medicalHistory?.length > 0 ? patient.medicalHistory.join(', ') : "No significant history reported"}
-    - Current Medications: ${patient.medications?.length > 0 ? patient.medications.join(', ') : "No current medications"}
-    - Known Allergies: ${patient.allergies?.length > 0 ? patient.allergies.join(', ') : "No known allergies"}
+    - Medical History: ${patient.medicalHistory && Array.isArray(patient.medicalHistory) ? patient.medicalHistory.join(', ') : (patient.medicalHistory || "No significant history reported")}
+    - Current Medications: ${patient.medications && Array.isArray(patient.medications) ? patient.medications.join(', ') : (patient.medications || "No current medications")}
+    - Known Allergies: ${patient.allergies && Array.isArray(patient.allergies) ? patient.allergies.join(', ') : (patient.allergies || "No known allergies")}
 
     CURRENT VITAL SIGNS:
     ${latestVitals ? `
