@@ -41,6 +41,44 @@ export default function Reports() {
   
   const isSuperAdmin = user?.role === 'super_admin';
 
+  // Download function with authentication
+  const downloadReport = async (fileUrl: string, title: string, format: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(fileUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Download Started",
+        description: `${title} is downloading...`
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Could not download the report. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Get reports for current tenant or all reports for super admin
   const { data: reports = [], isLoading: reportsLoading, refetch } = useQuery<Report[]>({
     queryKey: isSuperAdmin ? ["/api/platform/reports"] : ["/api/reports"],
@@ -313,7 +351,7 @@ export default function Reports() {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => window.open(report.fileUrl, '_blank')}
+                        onClick={() => downloadReport(report.fileUrl!, report.title, report.format)}
                       >
                         <Download className="h-4 w-4 mr-2" />
                         Download
