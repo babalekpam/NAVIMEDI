@@ -10,7 +10,8 @@ import {
   UserCheck, 
   ClipboardList,
   Settings,
-  Plus
+  Plus,
+  Languages
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
@@ -32,6 +33,7 @@ const sidebarItems: SidebarItem[] = [
   { id: "appointments", label: "Appointments", icon: Calendar, path: "/appointments", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "prescriptions", label: "Prescriptions", icon: Pill, path: "/prescriptions", roles: ["physician", "nurse", "pharmacist", "tenant_admin", "director"] },
   { id: "lab-orders", label: "Lab Results", icon: TestTube, path: "/lab-orders", roles: ["physician", "nurse", "lab_technician", "tenant_admin", "director"] },
+  { id: "medical-communications", label: "Medical Communications", icon: Languages, path: "/medical-communications", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   
   // Operations Section (only for tenant users)
   { id: "billing", label: "Billing & Claims", icon: FileText, path: "/billing", roles: ["billing_staff", "physician", "tenant_admin", "director"] },

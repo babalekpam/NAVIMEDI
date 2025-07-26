@@ -84,6 +84,32 @@ export const reportStatusEnum = pgEnum("report_status", [
   "failed"
 ]);
 
+export const communicationTypeEnum = pgEnum("communication_type", [
+  "medical_instruction",
+  "prescription_note",
+  "discharge_summary",
+  "appointment_reminder",
+  "lab_result",
+  "general_message",
+  "emergency_alert"
+]);
+
+export const translationStatusEnum = pgEnum("translation_status", [
+  "pending",
+  "translating",
+  "completed",
+  "failed",
+  "manual_review"
+]);
+
+export const priorityLevelEnum = pgEnum("priority_level", [
+  "low",
+  "normal", 
+  "high",
+  "urgent",
+  "emergency"
+]);
+
 // Core Tables
 export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -293,6 +319,78 @@ export const reports = pgTable("reports", {
   completedAt: timestamp("completed_at")
 });
 
+// Multilingual Communication Tables
+export const medicalCommunications = pgTable("medical_communications", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  senderId: uuid("sender_id").references(() => users.id).notNull(),
+  recipientId: uuid("recipient_id").references(() => users.id),
+  type: communicationTypeEnum("type").notNull(),
+  priority: priorityLevelEnum("priority").default('normal'),
+  originalLanguage: text("original_language").notNull().default('en'),
+  targetLanguages: jsonb("target_languages").default('["en"]'),
+  originalContent: jsonb("original_content").notNull(),
+  metadata: jsonb("metadata").default('{}'),
+  appointmentId: uuid("appointment_id").references(() => appointments.id),
+  prescriptionId: uuid("prescription_id").references(() => prescriptions.id),
+  labOrderId: uuid("lab_order_id").references(() => labOrders.id),
+  isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const communicationTranslations = pgTable("communication_translations", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  communicationId: uuid("communication_id").references(() => medicalCommunications.id).notNull(),
+  languageCode: text("language_code").notNull(),
+  translatedContent: jsonb("translated_content").notNull(),
+  status: translationStatusEnum("status").default('pending'),
+  translationEngine: text("translation_engine"),
+  confidence: decimal("confidence", { precision: 3, scale: 2 }),
+  reviewedBy: uuid("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const supportedLanguages = pgTable("supported_languages", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  languageCode: text("language_code").notNull(),
+  languageName: text("language_name").notNull(),
+  nativeName: text("native_name").notNull(),
+  isActive: boolean("is_active").default(true),
+  isPrimary: boolean("is_primary").default(false),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const medicalPhrases = pgTable("medical_phrases", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  category: text("category").notNull(),
+  phraseKey: text("phrase_key").notNull(),
+  originalLanguage: text("original_language").notNull().default('en'),
+  originalText: text("original_text").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const phraseTranslations = pgTable("phrase_translations", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  phraseId: uuid("phrase_id").references(() => medicalPhrases.id).notNull(),
+  languageCode: text("language_code").notNull(),
+  translatedText: text("translated_text").notNull(),
+  translatedBy: uuid("translated_by").references(() => users.id),
+  verifiedBy: uuid("verified_by").references(() => users.id),
+  isVerified: boolean("is_verified").default(false),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Relations
 export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   users: many(users),
@@ -347,6 +445,84 @@ export const reportsRelations = relations(reports, ({ one }) => ({
   generatedByUser: one(users, {
     fields: [reports.generatedBy],
     references: [users.id]
+  })
+}));
+
+// Multilingual Communication Relations
+export const medicalCommunicationsRelations = relations(medicalCommunications, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [medicalCommunications.tenantId],
+    references: [tenants.id]
+  }),
+  patient: one(patients, {
+    fields: [medicalCommunications.patientId],
+    references: [patients.id]
+  }),
+  sender: one(users, {
+    fields: [medicalCommunications.senderId],
+    references: [users.id],
+    relationName: "senderCommunications"
+  }),
+  recipient: one(users, {
+    fields: [medicalCommunications.recipientId],
+    references: [users.id],
+    relationName: "recipientCommunications"
+  }),
+  appointment: one(appointments, {
+    fields: [medicalCommunications.appointmentId],
+    references: [appointments.id]
+  }),
+  prescription: one(prescriptions, {
+    fields: [medicalCommunications.prescriptionId],
+    references: [prescriptions.id]
+  }),
+  labOrder: one(labOrders, {
+    fields: [medicalCommunications.labOrderId],
+    references: [labOrders.id]
+  }),
+  translations: many(communicationTranslations)
+}));
+
+export const communicationTranslationsRelations = relations(communicationTranslations, ({ one }) => ({
+  communication: one(medicalCommunications, {
+    fields: [communicationTranslations.communicationId],
+    references: [medicalCommunications.id]
+  }),
+  reviewedByUser: one(users, {
+    fields: [communicationTranslations.reviewedBy],
+    references: [users.id]
+  })
+}));
+
+export const supportedLanguagesRelations = relations(supportedLanguages, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [supportedLanguages.tenantId],
+    references: [tenants.id]
+  })
+}));
+
+export const medicalPhrasesRelations = relations(medicalPhrases, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [medicalPhrases.tenantId],
+    references: [tenants.id]
+  }),
+  translations: many(phraseTranslations)
+}));
+
+export const phraseTranslationsRelations = relations(phraseTranslations, ({ one }) => ({
+  phrase: one(medicalPhrases, {
+    fields: [phraseTranslations.phraseId],
+    references: [medicalPhrases.id]
+  }),
+  translatedByUser: one(users, {
+    fields: [phraseTranslations.translatedBy],
+    references: [users.id],
+    relationName: "translatedPhrases"
+  }),
+  verifiedByUser: one(users, {
+    fields: [phraseTranslations.verifiedBy],
+    references: [users.id],
+    relationName: "verifiedPhrases"
   })
 }));
 
@@ -460,6 +636,39 @@ export const insertReportSchema = createInsertSchema(reports).omit({
   completedAt: true
 });
 
+// Multilingual Communication Insert Schemas
+export const insertMedicalCommunicationSchema = createInsertSchema(medicalCommunications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  readAt: true
+});
+
+export const insertCommunicationTranslationSchema = createInsertSchema(communicationTranslations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  reviewedAt: true
+});
+
+export const insertSupportedLanguageSchema = createInsertSchema(supportedLanguages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertMedicalPhraseSchema = createInsertSchema(medicalPhrases).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertPhraseTranslationSchema = createInsertSchema(phraseTranslations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Types
 export type Tenant = typeof tenants.$inferSelect;
 export type InsertTenant = z.infer<typeof insertTenantSchema>;
@@ -495,3 +704,19 @@ export type Report = typeof reports.$inferSelect;
 export type InsertReport = z.infer<typeof insertReportSchema>;
 
 export type AuditLog = typeof auditLogs.$inferSelect;
+
+// Multilingual Communication Types
+export type MedicalCommunication = typeof medicalCommunications.$inferSelect;
+export type InsertMedicalCommunication = z.infer<typeof insertMedicalCommunicationSchema>;
+
+export type CommunicationTranslation = typeof communicationTranslations.$inferSelect;
+export type InsertCommunicationTranslation = z.infer<typeof insertCommunicationTranslationSchema>;
+
+export type SupportedLanguage = typeof supportedLanguages.$inferSelect;
+export type InsertSupportedLanguage = z.infer<typeof insertSupportedLanguageSchema>;
+
+export type MedicalPhrase = typeof medicalPhrases.$inferSelect;
+export type InsertMedicalPhrase = z.infer<typeof insertMedicalPhraseSchema>;
+
+export type PhraseTranslation = typeof phraseTranslations.$inferSelect;
+export type InsertPhraseTranslation = z.infer<typeof insertPhraseTranslationSchema>;

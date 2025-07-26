@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertSubscriptionSchema, insertReportSchema } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema } from "@shared/schema";
 import { authenticateToken, requireRole } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -1138,6 +1138,279 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Platform report download error:", error);
       res.status(500).json({ message: "Failed to download report" });
+    }
+  });
+
+  // ==================== MULTILINGUAL COMMUNICATION ROUTES ====================
+
+  // Medical Communications routes
+  app.get("/api/medical-communications", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const communications = await storage.getMedicalCommunicationsByTenant(req.user.tenantId);
+      res.json(communications);
+    } catch (error) {
+      console.error("Failed to fetch communications:", error);
+      res.status(500).json({ message: "Failed to fetch communications" });
+    }
+  });
+
+  app.get("/api/medical-communications/:id", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const communication = await storage.getMedicalCommunication(id, req.user.tenantId);
+      
+      if (!communication) {
+        return res.status(404).json({ message: "Communication not found" });
+      }
+      
+      res.json(communication);
+    } catch (error) {
+      console.error("Failed to fetch communication:", error);
+      res.status(500).json({ message: "Failed to fetch communication" });
+    }
+  });
+
+  app.post("/api/medical-communications", authenticateToken, requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const validatedData = insertMedicalCommunicationSchema.parse({
+        ...req.body,
+        tenantId: req.user.tenantId,
+        senderId: req.user.userId,
+      });
+
+      const communication = await storage.createMedicalCommunication(validatedData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId,
+        userId: req.user.userId,
+        entityType: "medical_communication",
+        entityId: communication.id,
+        action: "CREATE",
+        newData: communication,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.status(201).json(communication);
+    } catch (error) {
+      console.error("Failed to create communication:", error);
+      res.status(500).json({ message: "Failed to create communication" });
+    }
+  });
+
+  app.patch("/api/medical-communications/:id", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      const communication = await storage.updateMedicalCommunication(id, updates, req.user.tenantId);
+      
+      if (!communication) {
+        return res.status(404).json({ message: "Communication not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId,
+        userId: req.user.userId,
+        entityType: "medical_communication",
+        entityId: communication.id,
+        action: "UPDATE",
+        newData: communication,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json(communication);
+    } catch (error) {
+      console.error("Failed to update communication:", error);
+      res.status(500).json({ message: "Failed to update communication" });
+    }
+  });
+
+  // Communication Translations routes
+  app.get("/api/communication-translations/:communicationId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { communicationId } = req.params;
+      const translations = await storage.getCommunicationTranslations(communicationId);
+      res.json(translations);
+    } catch (error) {
+      console.error("Failed to fetch translations:", error);
+      res.status(500).json({ message: "Failed to fetch translations" });
+    }
+  });
+
+  app.post("/api/communication-translations", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const validatedData = insertCommunicationTranslationSchema.parse(req.body);
+      const translation = await storage.createCommunicationTranslation(validatedData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId,
+        userId: req.user.userId,
+        entityType: "communication_translation",
+        entityId: translation.id,
+        action: "CREATE",
+        newData: translation,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.status(201).json(translation);
+    } catch (error) {
+      console.error("Failed to create translation:", error);
+      res.status(500).json({ message: "Failed to create translation" });
+    }
+  });
+
+  // Supported Languages routes
+  app.get("/api/supported-languages", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const languages = await storage.getSupportedLanguages(req.user.tenantId);
+      res.json(languages);
+    } catch (error) {
+      console.error("Failed to fetch languages:", error);
+      res.status(500).json({ message: "Failed to fetch languages" });
+    }
+  });
+
+  app.post("/api/supported-languages", authenticateToken, requireTenant, requireRole(["tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const validatedData = insertSupportedLanguageSchema.parse({
+        ...req.body,
+        tenantId: req.user.tenantId,
+      });
+
+      const language = await storage.createSupportedLanguage(validatedData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId,
+        userId: req.user.userId,
+        entityType: "supported_language",
+        entityId: language.id,
+        action: "CREATE",
+        newData: language,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.status(201).json(language);
+    } catch (error) {
+      console.error("Failed to create language:", error);
+      res.status(500).json({ message: "Failed to create language" });
+    }
+  });
+
+  app.patch("/api/supported-languages/:id", authenticateToken, requireTenant, requireRole(["tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      const language = await storage.updateSupportedLanguage(id, updates, req.user.tenantId);
+      
+      if (!language) {
+        return res.status(404).json({ message: "Language not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId,
+        userId: req.user.userId,
+        entityType: "supported_language",
+        entityId: language.id,
+        action: "UPDATE",
+        newData: language,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json(language);
+    } catch (error) {
+      console.error("Failed to update language:", error);
+      res.status(500).json({ message: "Failed to update language" });
+    }
+  });
+
+  // Medical Phrases routes
+  app.get("/api/medical-phrases", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { category } = req.query;
+      const phrases = await storage.getMedicalPhrases(req.user.tenantId, category as string);
+      res.json(phrases);
+    } catch (error) {
+      console.error("Failed to fetch phrases:", error);
+      res.status(500).json({ message: "Failed to fetch phrases" });
+    }
+  });
+
+  app.post("/api/medical-phrases", authenticateToken, requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const validatedData = insertMedicalPhraseSchema.parse({
+        ...req.body,
+        tenantId: req.user.tenantId,
+      });
+
+      const phrase = await storage.createMedicalPhrase(validatedData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId,
+        userId: req.user.userId,
+        entityType: "medical_phrase",
+        entityId: phrase.id,
+        action: "CREATE",
+        newData: phrase,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.status(201).json(phrase);
+    } catch (error) {
+      console.error("Failed to create phrase:", error);
+      res.status(500).json({ message: "Failed to create phrase" });
+    }
+  });
+
+  // Phrase Translations routes
+  app.get("/api/phrase-translations/:phraseId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { phraseId } = req.params;
+      const translations = await storage.getPhraseTranslations(phraseId);
+      res.json(translations);
+    } catch (error) {
+      console.error("Failed to fetch phrase translations:", error);
+      res.status(500).json({ message: "Failed to fetch phrase translations" });
+    }
+  });
+
+  app.post("/api/phrase-translations", authenticateToken, requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const validatedData = insertPhraseTranslationSchema.parse({
+        ...req.body,
+        translatedBy: req.user.userId,
+      });
+
+      const translation = await storage.createPhraseTranslation(validatedData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId,
+        userId: req.user.userId,
+        entityType: "phrase_translation",
+        entityId: translation.id,
+        action: "CREATE",
+        newData: translation,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.status(201).json(translation);
+    } catch (error) {
+      console.error("Failed to create phrase translation:", error);
+      res.status(500).json({ message: "Failed to create phrase translation" });
     }
   });
 

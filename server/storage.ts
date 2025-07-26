@@ -11,6 +11,11 @@ import {
   auditLogs,
   subscriptions,
   reports,
+  medicalCommunications,
+  communicationTranslations,
+  supportedLanguages,
+  medicalPhrases,
+  phraseTranslations,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -33,7 +38,17 @@ import {
   type InsertSubscription,
   type Report,
   type InsertReport,
-  type AuditLog
+  type AuditLog,
+  type MedicalCommunication,
+  type InsertMedicalCommunication,
+  type CommunicationTranslation,
+  type InsertCommunicationTranslation,
+  type SupportedLanguage,
+  type InsertSupportedLanguage,
+  type MedicalPhrase,
+  type InsertMedicalPhrase,
+  type PhraseTranslation,
+  type InsertPhraseTranslation
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or } from "drizzle-orm";
@@ -135,6 +150,30 @@ export interface IStorage {
     totalUsers: number;
     totalPatients: number;
   }>;
+
+  // Multilingual Communication management
+  getMedicalCommunication(id: string, tenantId: string): Promise<MedicalCommunication | undefined>;
+  createMedicalCommunication(communication: InsertMedicalCommunication): Promise<MedicalCommunication>;
+  updateMedicalCommunication(id: string, updates: Partial<MedicalCommunication>, tenantId: string): Promise<MedicalCommunication | undefined>;
+  getMedicalCommunicationsByPatient(patientId: string, tenantId: string): Promise<MedicalCommunication[]>;
+  getMedicalCommunicationsByTenant(tenantId: string): Promise<MedicalCommunication[]>;
+  
+  // Communication Translation management
+  createCommunicationTranslation(translation: InsertCommunicationTranslation): Promise<CommunicationTranslation>;
+  getCommunicationTranslations(communicationId: string): Promise<CommunicationTranslation[]>;
+  
+  // Supported Languages management
+  getSupportedLanguages(tenantId: string): Promise<SupportedLanguage[]>;
+  createSupportedLanguage(language: InsertSupportedLanguage): Promise<SupportedLanguage>;
+  updateSupportedLanguage(id: string, updates: Partial<SupportedLanguage>, tenantId: string): Promise<SupportedLanguage | undefined>;
+  
+  // Medical Phrases management
+  getMedicalPhrases(tenantId: string, category?: string): Promise<MedicalPhrase[]>;
+  createMedicalPhrase(phrase: InsertMedicalPhrase): Promise<MedicalPhrase>;
+  
+  // Phrase Translation management
+  getPhraseTranslations(phraseId: string): Promise<PhraseTranslation[]>;
+  createPhraseTranslation(translation: InsertPhraseTranslation): Promise<PhraseTranslation>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -631,6 +670,97 @@ export class DatabaseStorage implements IStorage {
       totalUsers: Number(usersResult.count),
       totalPatients: Number(patientsResult.count)
     };
+  }
+
+  // Multilingual Communication management
+  async getMedicalCommunication(id: string, tenantId: string): Promise<MedicalCommunication | undefined> {
+    const [communication] = await db.select().from(medicalCommunications).where(
+      and(eq(medicalCommunications.id, id), eq(medicalCommunications.tenantId, tenantId))
+    );
+    return communication || undefined;
+  }
+
+  async createMedicalCommunication(insertCommunication: InsertMedicalCommunication): Promise<MedicalCommunication> {
+    const [communication] = await db.insert(medicalCommunications).values(insertCommunication).returning();
+    return communication;
+  }
+
+  async updateMedicalCommunication(id: string, updates: Partial<MedicalCommunication>, tenantId: string): Promise<MedicalCommunication | undefined> {
+    const [communication] = await db.update(medicalCommunications)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(medicalCommunications.id, id), eq(medicalCommunications.tenantId, tenantId)))
+      .returning();
+    return communication || undefined;
+  }
+
+  async getMedicalCommunicationsByPatient(patientId: string, tenantId: string): Promise<MedicalCommunication[]> {
+    return await db.select().from(medicalCommunications).where(
+      and(eq(medicalCommunications.patientId, patientId), eq(medicalCommunications.tenantId, tenantId))
+    ).orderBy(desc(medicalCommunications.createdAt));
+  }
+
+  async getMedicalCommunicationsByTenant(tenantId: string): Promise<MedicalCommunication[]> {
+    return await db.select().from(medicalCommunications).where(
+      eq(medicalCommunications.tenantId, tenantId)
+    ).orderBy(desc(medicalCommunications.createdAt));
+  }
+
+  // Communication Translation management
+  async createCommunicationTranslation(insertTranslation: InsertCommunicationTranslation): Promise<CommunicationTranslation> {
+    const [translation] = await db.insert(communicationTranslations).values(insertTranslation).returning();
+    return translation;
+  }
+
+  async getCommunicationTranslations(communicationId: string): Promise<CommunicationTranslation[]> {
+    return await db.select().from(communicationTranslations).where(
+      eq(communicationTranslations.communicationId, communicationId)
+    );
+  }
+
+  // Supported Languages management
+  async getSupportedLanguages(tenantId: string): Promise<SupportedLanguage[]> {
+    return await db.select().from(supportedLanguages).where(
+      and(eq(supportedLanguages.tenantId, tenantId), eq(supportedLanguages.isActive, true))
+    ).orderBy(supportedLanguages.languageName);
+  }
+
+  async createSupportedLanguage(insertLanguage: InsertSupportedLanguage): Promise<SupportedLanguage> {
+    const [language] = await db.insert(supportedLanguages).values(insertLanguage).returning();
+    return language;
+  }
+
+  async updateSupportedLanguage(id: string, updates: Partial<SupportedLanguage>, tenantId: string): Promise<SupportedLanguage | undefined> {
+    const [language] = await db.update(supportedLanguages)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(supportedLanguages.id, id), eq(supportedLanguages.tenantId, tenantId)))
+      .returning();
+    return language || undefined;
+  }
+
+  // Medical Phrases management
+  async getMedicalPhrases(tenantId: string, category?: string): Promise<MedicalPhrase[]> {
+    const conditions = [eq(medicalPhrases.tenantId, tenantId), eq(medicalPhrases.isActive, true)];
+    if (category) {
+      conditions.push(eq(medicalPhrases.category, category));
+    }
+    return await db.select().from(medicalPhrases).where(and(...conditions)).orderBy(medicalPhrases.category, medicalPhrases.phraseKey);
+  }
+
+  async createMedicalPhrase(insertPhrase: InsertMedicalPhrase): Promise<MedicalPhrase> {
+    const [phrase] = await db.insert(medicalPhrases).values(insertPhrase).returning();
+    return phrase;
+  }
+
+  // Phrase Translation management
+  async getPhraseTranslations(phraseId: string): Promise<PhraseTranslation[]> {
+    return await db.select().from(phraseTranslations).where(
+      eq(phraseTranslations.phraseId, phraseId)
+    ).orderBy(phraseTranslations.languageCode);
+  }
+
+  async createPhraseTranslation(insertTranslation: InsertPhraseTranslation): Promise<PhraseTranslation> {
+    const [translation] = await db.insert(phraseTranslations).values(insertTranslation).returning();
+    return translation;
   }
 }
 
