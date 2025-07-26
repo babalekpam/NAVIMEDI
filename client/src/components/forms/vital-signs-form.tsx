@@ -139,6 +139,7 @@ export function VitalSignsForm({
       onClose();
     },
     onError: (error: any) => {
+      console.error("Create vital signs error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to record vital signs",
@@ -159,6 +160,7 @@ export function VitalSignsForm({
       onClose();
     },
     onError: (error: any) => {
+      console.error("Update vital signs error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to update vital signs",
@@ -168,6 +170,9 @@ export function VitalSignsForm({
   });
 
   const onSubmit = (data: VitalSignsFormData) => {
+    console.log("Form submitted with data:", data);
+    console.log("Weight unit:", weightUnit, "Height unit:", heightUnit);
+    
     // Convert form data to API format with proper numeric values
     const processedData = {
       patientId: data.patientId,
@@ -183,9 +188,13 @@ export function VitalSignsForm({
       notes: data.notes,
     };
 
+    console.log("Processed data being sent to API:", processedData);
+
     if (existingVitalSigns) {
+      console.log("Updating existing vital signs:", existingVitalSigns.id);
       updateMutation.mutate(processedData);
     } else {
+      console.log("Creating new vital signs");
       createMutation.mutate(processedData);
     }
   };
