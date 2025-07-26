@@ -60,6 +60,28 @@ export const claimStatusEnum = pgEnum("claim_status", [
   "paid"
 ]);
 
+export const subscriptionStatusEnum = pgEnum("subscription_status", [
+  "active",
+  "suspended",
+  "cancelled",
+  "expired"
+]);
+
+export const reportTypeEnum = pgEnum("report_type", [
+  "financial",
+  "operational",
+  "clinical",
+  "compliance",
+  "custom"
+]);
+
+export const reportStatusEnum = pgEnum("report_status", [
+  "pending",
+  "generating",
+  "completed",
+  "failed"
+]);
+
 // Core Tables
 export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -199,15 +221,68 @@ export const auditLogs = pgTable("audit_logs", {
   timestamp: timestamp("timestamp").default(sql`CURRENT_TIMESTAMP`)
 });
 
+export const subscriptions = pgTable("subscriptions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  planName: text("plan_name").notNull(),
+  monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }).notNull(),
+  maxUsers: integer("max_users").notNull(),
+  maxPatients: integer("max_patients"),
+  features: jsonb("features").default('[]'),
+  status: subscriptionStatusEnum("status").default('active'),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  lastPaymentDate: timestamp("last_payment_date"),
+  nextPaymentDate: timestamp("next_payment_date"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const reports = pgTable("reports", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  generatedBy: uuid("generated_by").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  type: reportTypeEnum("type").notNull(),
+  parameters: jsonb("parameters").default('{}'),
+  data: jsonb("data"),
+  status: reportStatusEnum("status").default('pending'),
+  fileUrl: text("file_url"),
+  dateFrom: timestamp("date_from"),
+  dateTo: timestamp("date_to"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  completedAt: timestamp("completed_at")
+});
+
 // Relations
-export const tenantsRelations = relations(tenants, ({ many }) => ({
+export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   users: many(users),
   patients: many(patients),
   appointments: many(appointments),
   prescriptions: many(prescriptions),
   labOrders: many(labOrders),
   insuranceClaims: many(insuranceClaims),
-  auditLogs: many(auditLogs)
+  auditLogs: many(auditLogs),
+  subscription: one(subscriptions),
+  reports: many(reports)
+}));
+
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [subscriptions.tenantId],
+    references: [tenants.id]
+  })
+}));
+
+export const reportsRelations = relations(reports, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [reports.tenantId],
+    references: [tenants.id]
+  }),
+  generatedByUser: one(users, {
+    fields: [reports.generatedBy],
+    references: [users.id]
+  })
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -295,6 +370,18 @@ export const insertInsuranceClaimSchema = createInsertSchema(insuranceClaims).om
   updatedAt: true
 });
 
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertReportSchema = createInsertSchema(reports).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true
+});
+
 // Types
 export type Tenant = typeof tenants.$inferSelect;
 export type InsertTenant = z.infer<typeof insertTenantSchema>;
@@ -316,5 +403,11 @@ export type InsertLabOrder = z.infer<typeof insertLabOrderSchema>;
 
 export type InsuranceClaim = typeof insuranceClaims.$inferSelect;
 export type InsertInsuranceClaim = z.infer<typeof insertInsuranceClaimSchema>;
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+
+export type Report = typeof reports.$inferSelect;
+export type InsertReport = z.infer<typeof insertReportSchema>;
 
 export type AuditLog = typeof auditLogs.$inferSelect;

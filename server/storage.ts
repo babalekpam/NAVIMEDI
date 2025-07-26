@@ -7,6 +7,8 @@ import {
   labOrders, 
   insuranceClaims, 
   auditLogs,
+  subscriptions,
+  reports,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -21,6 +23,10 @@ import {
   type InsertLabOrder,
   type InsuranceClaim,
   type InsertInsuranceClaim,
+  type Subscription,
+  type InsertSubscription,
+  type Report,
+  type InsertReport,
   type AuditLog
 } from "@shared/schema";
 import { db } from "./db";
@@ -85,12 +91,34 @@ export interface IStorage {
   createAuditLog(log: Omit<AuditLog, "id" | "timestamp">): Promise<AuditLog>;
   getAuditLogs(tenantId: string, limit?: number, offset?: number): Promise<AuditLog[]>;
 
+  // Subscription management
+  getSubscription(tenantId: string): Promise<Subscription | undefined>;
+  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  updateSubscription(tenantId: string, updates: Partial<Subscription>): Promise<Subscription | undefined>;
+  getAllSubscriptions(): Promise<Subscription[]>;
+
+  // Report management
+  getReport(id: string, tenantId: string): Promise<Report | undefined>;
+  createReport(report: InsertReport): Promise<Report>;
+  updateReport(id: string, updates: Partial<Report>, tenantId: string): Promise<Report | undefined>;
+  getReportsByTenant(tenantId: string): Promise<Report[]>;
+
   // Dashboard metrics
   getDashboardMetrics(tenantId: string): Promise<{
     todayAppointments: number;
     pendingLabResults: number;
     activePrescriptions: number;
     monthlyClaimsTotal: number;
+  }>;
+
+  // Platform metrics for super admin
+  getPlatformMetrics(): Promise<{
+    totalTenants: number;
+    activeTenants: number;
+    totalSubscriptionRevenue: number;
+    monthlyRevenue: number;
+    totalUsers: number;
+    totalPatients: number;
   }>;
 }
 
@@ -458,6 +486,100 @@ export class DatabaseStorage implements IStorage {
       pendingLabResults: pendingLabResultsResult.count,
       activePrescriptions: activePrescriptionsResult.count,
       monthlyClaimsTotal: monthlyClaimsResult.total
+    };
+  }
+
+  // Subscription management
+  async getSubscription(tenantId: string): Promise<Subscription | undefined> {
+    const [subscription] = await db.select().from(subscriptions).where(eq(subscriptions.tenantId, tenantId));
+    return subscription || undefined;
+  }
+
+  async createSubscription(insertSubscription: InsertSubscription): Promise<Subscription> {
+    const [subscription] = await db.insert(subscriptions).values(insertSubscription).returning();
+    return subscription;
+  }
+
+  async updateSubscription(tenantId: string, updates: Partial<Subscription>): Promise<Subscription | undefined> {
+    const [subscription] = await db.update(subscriptions)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(subscriptions.tenantId, tenantId))
+      .returning();
+    return subscription || undefined;
+  }
+
+  async getAllSubscriptions(): Promise<Subscription[]> {
+    return await db.select().from(subscriptions).orderBy(desc(subscriptions.createdAt));
+  }
+
+  // Report management
+  async getReport(id: string, tenantId: string): Promise<Report | undefined> {
+    const [report] = await db.select().from(reports).where(
+      and(eq(reports.id, id), eq(reports.tenantId, tenantId))
+    );
+    return report || undefined;
+  }
+
+  async createReport(insertReport: InsertReport): Promise<Report> {
+    const [report] = await db.insert(reports).values(insertReport).returning();
+    return report;
+  }
+
+  async updateReport(id: string, updates: Partial<Report>, tenantId: string): Promise<Report | undefined> {
+    const [report] = await db.update(reports)
+      .set(updates)
+      .where(and(eq(reports.id, id), eq(reports.tenantId, tenantId)))
+      .returning();
+    return report || undefined;
+  }
+
+  async getReportsByTenant(tenantId: string): Promise<Report[]> {
+    return await db.select().from(reports).where(eq(reports.tenantId, tenantId))
+      .orderBy(desc(reports.createdAt));
+  }
+
+  // Platform metrics for super admin
+  async getPlatformMetrics(): Promise<{
+    totalTenants: number;
+    activeTenants: number;
+    totalSubscriptionRevenue: number;
+    monthlyRevenue: number;
+    totalUsers: number;
+    totalPatients: number;
+  }> {
+    const [tenantsResult] = await db.select({ 
+      total: sql<number>`count(*)`,
+      active: sql<number>`count(case when ${tenants.isActive} then 1 end)`
+    }).from(tenants);
+
+    const [usersResult] = await db.select({ count: sql<number>`count(*)` }).from(users);
+    
+    const [patientsResult] = await db.select({ count: sql<number>`count(*)` }).from(patients);
+
+    const [subscriptionsResult] = await db.select({ 
+      totalRevenue: sql<number>`COALESCE(SUM(${subscriptions.monthlyPrice}), 0)` 
+    }).from(subscriptions).where(eq(subscriptions.status, 'active'));
+
+    const firstDayOfMonth = new Date();
+    firstDayOfMonth.setDate(1);
+    firstDayOfMonth.setHours(0, 0, 0, 0);
+
+    const [monthlyRevenueResult] = await db.select({ 
+      monthlyRevenue: sql<number>`COALESCE(SUM(${subscriptions.monthlyPrice}), 0)` 
+    }).from(subscriptions).where(
+      and(
+        eq(subscriptions.status, 'active'),
+        sql`${subscriptions.lastPaymentDate} >= ${firstDayOfMonth}`
+      )
+    );
+
+    return {
+      totalTenants: tenantsResult.total,
+      activeTenants: tenantsResult.active,
+      totalSubscriptionRevenue: subscriptionsResult.totalRevenue,
+      monthlyRevenue: monthlyRevenueResult.monthlyRevenue,
+      totalUsers: usersResult.count,
+      totalPatients: patientsResult.count
     };
   }
 }
