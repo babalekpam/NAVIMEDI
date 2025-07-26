@@ -11,10 +11,7 @@ import { z } from "zod";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Apply tenant context middleware
-  app.use("/api", setTenantContext);
-
-  // Authentication routes
+  // Authentication routes (before tenant middleware)
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { username, password, tenantId } = req.body;
@@ -75,6 +72,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
+
+  // Apply tenant context middleware to all other API routes
+  app.use("/api", setTenantContext);
 
   app.post("/api/auth/register", async (req, res) => {
     try {
