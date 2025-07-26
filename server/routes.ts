@@ -264,7 +264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/patients", requireRole(["physician", "nurse", "receptionist", "tenant_admin"]), async (req, res) => {
+  app.post("/api/patients", requireRole(["physician", "nurse", "receptionist", "tenant_admin", "director"]), async (req, res) => {
     try {
       const patientData = insertPatientSchema.parse({
         ...req.body,
@@ -319,7 +319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/appointments", requireRole(["physician", "nurse", "receptionist", "tenant_admin"]), async (req, res) => {
+  app.post("/api/appointments", requireRole(["physician", "nurse", "receptionist", "tenant_admin", "director"]), async (req, res) => {
     try {
       const appointmentData = insertAppointmentSchema.parse({
         ...req.body,
@@ -482,7 +482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/insurance-claims", requireRole(["billing_staff", "physician", "tenant_admin"]), async (req, res) => {
+  app.post("/api/insurance-claims", requireRole(["billing_staff", "physician", "tenant_admin", "director"]), async (req, res) => {
     try {
       const claimData = insertInsuranceClaimSchema.parse({
         ...req.body,
@@ -530,7 +530,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Audit logs
-  app.get("/api/audit-logs", requireRole(["tenant_admin", "super_admin"]), requireTenant, async (req, res) => {
+  app.get("/api/audit-logs", requireRole(["tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
     try {
       const { limit = "50", offset = "0" } = req.query;
       const auditLogs = await storage.getAuditLogs(
@@ -711,8 +711,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.user?.role === 'super_admin') {
         const users = await storage.getUsersByTenant(tenantId);
         res.json(users);
-      } else if (req.user?.role === 'tenant_admin' && req.user.tenantId === tenantId) {
-        // Tenant admin can view users from their own tenant
+      } else if ((req.user?.role === 'tenant_admin' || req.user?.role === 'director') && req.user.tenantId === tenantId) {
+        // Tenant admin and director can view users from their own tenant
         const users = await storage.getUsersByTenant(tenantId);
         res.json(users);
       } else if (req.user?.tenantId === tenantId) {
@@ -742,7 +742,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if user has permission to update this user
       const hasPermission = req.user.role === 'super_admin' || 
-                           (req.user.role === 'tenant_admin' && existingUser.tenantId === req.user.tenantId) ||
+                           ((req.user.role === 'tenant_admin' || req.user.role === 'director') && existingUser.tenantId === req.user.tenantId) ||
                            (req.user.userId === id); // User updating themselves
 
       if (!hasPermission) {
@@ -804,18 +804,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "All fields are required" });
       }
 
-      // Check permissions - only super admin and tenant admin can create users
-      if (req.user?.role !== 'super_admin' && req.user?.role !== 'tenant_admin') {
+      // Check permissions - only super admin, tenant admin, and director can create users
+      if (req.user?.role !== 'super_admin' && req.user?.role !== 'tenant_admin' && req.user?.role !== 'director') {
         return res.status(403).json({ message: "Access denied. Admin privileges required to create users." });
       }
 
       // Tenant admin can only create users in their own organization
       const targetTenantId = req.user.role === 'super_admin' ? (req.body.tenantId || req.user.tenantId) : req.user.tenantId;
 
-      // Validate that tenant admin cannot create super admin or other tenant admin users
-      if (req.user?.role === 'tenant_admin') {
-        if (role === 'super_admin' || role === 'tenant_admin') {
-          return res.status(403).json({ message: "Tenant admins cannot create admin-level users. Only clinical and operational staff roles are allowed." });
+      // Validate that tenant admin and director cannot create super admin or other admin users
+      if (req.user?.role === 'tenant_admin' || req.user?.role === 'director') {
+        if (role === 'super_admin' || role === 'tenant_admin' || role === 'director') {
+          return res.status(403).json({ message: "Tenant admins and directors cannot create admin-level users. Only clinical and operational staff roles are allowed." });
         }
       }
 
