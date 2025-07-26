@@ -20,8 +20,8 @@ interface Report {
   status: string;
   createdAt: Date;
   completedAt?: Date;
-  downloadUrl?: string;
-  createdBy: string;
+  fileUrl?: string;
+  generatedBy: string;
 }
 
 interface Tenant {
