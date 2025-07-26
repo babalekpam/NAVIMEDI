@@ -594,6 +594,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Platform-wide report generation for super admin
+  app.post("/api/platform/reports/generate", authenticateToken, async (req, res) => {
+    try {
+      if (req.user.role !== 'super_admin') {
+        return res.status(403).json({ message: "Access denied. Super admin role required." });
+      }
+
+      const { targetTenantId, ...reportParams } = req.body;
+      
+      if (!targetTenantId) {
+        return res.status(400).json({ message: "Target tenant ID is required for cross-tenant reports" });
+      }
+
+      // Verify target tenant exists
+      const targetTenant = await storage.getTenant(targetTenantId);
+      if (!targetTenant) {
+        return res.status(404).json({ message: "Target tenant not found" });
+      }
+
+      const reportData = insertReportSchema.parse({
+        ...reportParams,
+        tenantId: targetTenantId,
+        createdBy: req.user.id,
+        status: 'generating',
+        parameters: { 
+          ...reportParams.parameters, 
+          crossTenantGeneration: true, 
+          generatedBy: 'super_admin' 
+        }
+      });
+
+      const report = await storage.createReport(reportData);
+
+      // Create audit log for both platform and target tenant
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId, // Platform tenant
+        userId: req.user.id,
+        entityType: "cross_tenant_report",
+        entityId: report.id,
+        action: "create",
+        newData: { 
+          title: report.title, 
+          type: report.type, 
+          targetTenant: targetTenant.name,
+          targetTenantId: targetTenantId 
+        },
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      await storage.createAuditLog({
+        tenantId: targetTenantId, // Target tenant
+        userId: req.user.id,
+        entityType: "report",
+        entityId: report.id,
+        action: "platform_generate",
+        newData: { 
+          title: report.title, 
+          type: report.type, 
+          generatedBy: 'platform_admin' 
+        },
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      // Simulate async report generation
+      setTimeout(async () => {
+        try {
+          await storage.updateReport(report.id, {
+            status: 'completed',
+            completedAt: new Date(),
+            downloadUrl: `/api/platform/reports/${report.id}/download`
+          }, targetTenantId);
+        } catch (error) {
+          console.error("Cross-tenant report completion error:", error);
+        }
+      }, 4000);
+
+      res.status(201).json(report);
+    } catch (error) {
+      console.error("Cross-tenant report creation error:", error);
+      res.status(500).json({ message: "Failed to create cross-tenant report" });
+    }
+  });
+
+  // Get all reports across platform for super admin
+  app.get("/api/platform/reports", authenticateToken, async (req, res) => {
+    try {
+      if (req.user.role !== 'super_admin') {
+        return res.status(403).json({ message: "Access denied. Super admin role required." });
+      }
+
+      const reports = await storage.getAllReports();
+      res.json(reports);
+    } catch (error) {
+      console.error("Platform reports fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch platform reports" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

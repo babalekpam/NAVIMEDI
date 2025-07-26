@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, FileText, Download, Plus, Filter, RefreshCw } from "lucide-react";
+import { Calendar, FileText, Download, Plus, Filter, RefreshCw, Building2, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -24,29 +24,52 @@ interface Report {
   createdBy: string;
 }
 
+interface Tenant {
+  id: string;
+  name: string;
+  type: string;
+  isActive: boolean;
+}
+
 export default function Reports() {
   const { user } = useAuth();
   const { tenant } = useTenant();
   const { toast } = useToast();
   const [selectedType, setSelectedType] = useState<string>("");
   const [selectedFormat, setSelectedFormat] = useState<string>("pdf");
+  const [selectedTenant, setSelectedTenant] = useState<string>("");
+  
+  const isSuperAdmin = user?.role === 'super_admin';
 
+  // Get reports for current tenant or all reports for super admin
   const { data: reports = [], isLoading: reportsLoading, refetch } = useQuery<Report[]>({
-    queryKey: ["/api/reports"],
-    enabled: !!user && !!tenant,
+    queryKey: isSuperAdmin ? ["/api/platform/reports"] : ["/api/reports"],
+    enabled: !!user && (!!tenant || isSuperAdmin),
+  });
+
+  // Get all tenants for super admin
+  const { data: tenants = [], isLoading: tenantsLoading } = useQuery<Tenant[]>({
+    queryKey: ["/api/tenants"],
+    enabled: !!user && isSuperAdmin,
   });
 
   const generateReportMutation = useMutation({
-    mutationFn: async (reportData: { type: string; format: string; title: string }) => {
-      return await apiRequest("/api/reports", "POST", reportData);
+    mutationFn: async (reportData: { type: string; format: string; title: string; targetTenantId?: string }) => {
+      const endpoint = isSuperAdmin && reportData.targetTenantId 
+        ? "/api/platform/reports/generate" 
+        : "/api/reports";
+      return await apiRequest(endpoint, "POST", reportData);
     },
     onSuccess: () => {
       toast({
         title: "Report Generated",
-        description: "Your report has been created successfully and will be available shortly.",
+        description: isSuperAdmin && selectedTenant 
+          ? "Cross-tenant report has been created successfully and will be available shortly."
+          : "Your report has been created successfully and will be available shortly.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
+      queryClient.invalidateQueries({ queryKey: isSuperAdmin ? ["/api/platform/reports"] : ["/api/reports"] });
       setSelectedType("");
+      setSelectedTenant("");
     },
     onError: () => {
       toast({
@@ -68,14 +91,24 @@ export default function Reports() {
 
   const handleGenerateReport = () => {
     if (!selectedType) return;
+    if (isSuperAdmin && !selectedTenant && !tenant) return;
 
     const reportType = reportTypes.find(type => type.value === selectedType);
     if (!reportType) return;
 
+    const targetTenant = isSuperAdmin && selectedTenant 
+      ? tenants.find(t => t.id === selectedTenant) 
+      : null;
+
+    const titleSuffix = targetTenant 
+      ? ` - ${targetTenant.name} - ${new Date().toLocaleDateString()}`
+      : ` - ${new Date().toLocaleDateString()}`;
+
     generateReportMutation.mutate({
       type: selectedType,
       format: selectedFormat,
-      title: `${reportType.label} - ${new Date().toLocaleDateString()}`
+      title: `${reportType.label}${titleSuffix}`,
+      targetTenantId: isSuperAdmin ? selectedTenant : undefined
     });
   };
 
@@ -92,7 +125,7 @@ export default function Reports() {
     }
   };
 
-  if (!user || !tenant) {
+  if (!user || (!tenant && !isSuperAdmin)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -108,9 +141,14 @@ export default function Reports() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Reports & Analytics</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {isSuperAdmin ? "Platform Reports & Analytics" : "Reports & Analytics"}
+          </h1>
           <p className="text-gray-600 mt-1">
-            Generate comprehensive reports for your healthcare organization
+            {isSuperAdmin 
+              ? "Generate comprehensive reports for any healthcare organization on the platform"
+              : "Generate comprehensive reports for your healthcare organization"
+            }
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -130,15 +168,42 @@ export default function Reports() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Plus className="h-5 w-5" />
-            <span>Generate New Report</span>
+            {isSuperAdmin ? <Shield className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+            <span>{isSuperAdmin ? "Generate Cross-Tenant Report" : "Generate New Report"}</span>
           </CardTitle>
           <CardDescription>
-            Create custom reports for your healthcare operations and analytics
+            {isSuperAdmin 
+              ? "Create custom reports for any healthcare organization on the platform"
+              : "Create custom reports for your healthcare operations and analytics"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className={`grid grid-cols-1 gap-4 mb-6 ${isSuperAdmin ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
+            {isSuperAdmin && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Target Organization</label>
+                <Select value={selectedTenant} onValueChange={setSelectedTenant}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select organization" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tenants.map((tenant) => (
+                      <SelectItem key={tenant.id} value={tenant.id}>
+                        <div className="flex items-center space-x-2">
+                          <Building2 className="h-4 w-4" />
+                          <span>{tenant.name}</span>
+                          <Badge variant={tenant.isActive ? "default" : "secondary"}>
+                            {tenant.type}
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Report Type</label>
               <Select value={selectedType} onValueChange={setSelectedType}>
@@ -172,7 +237,7 @@ export default function Reports() {
             <div className="flex items-end">
               <Button 
                 onClick={handleGenerateReport}
-                disabled={!selectedType || generateReportMutation.isPending}
+                disabled={!selectedType || (isSuperAdmin && !selectedTenant && !tenant) || generateReportMutation.isPending}
                 className="w-full"
               >
                 {generateReportMutation.isPending ? (

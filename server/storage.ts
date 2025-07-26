@@ -538,6 +538,11 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(reports.createdAt));
   }
 
+  async getAllReports(): Promise<Report[]> {
+    return await db.select().from(reports)
+      .orderBy(desc(reports.createdAt));
+  }
+
   // Platform metrics for super admin
   async getPlatformMetrics(): Promise<{
     totalTenants: number;
