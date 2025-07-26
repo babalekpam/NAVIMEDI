@@ -44,10 +44,18 @@ export default function Reports() {
   // Download function with authentication
   const downloadReport = async (fileUrl: string, title: string, format: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      console.log('Download token:', token.substring(0, 20) + '...');
+      
       const response = await fetch(fileUrl, {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 

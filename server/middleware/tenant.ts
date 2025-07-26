@@ -14,10 +14,16 @@ interface AuthenticatedRequest extends Request {
 export const tenantMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     // Extract tenant context from JWT token
-    const token = req.headers.authorization?.split(' ')[1];
+    const authHeader = req.headers.authorization;
     
-    if (!token) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ message: 'Authorization token required' });
+    }
+    
+    const token = authHeader.split(' ')[1];
+    
+    if (!token || token === 'undefined' || token === 'null') {
+      return res.status(401).json({ message: 'Invalid authorization token' });
     }
 
     try {
