@@ -18,6 +18,7 @@ interface PlatformMetrics {
   activeTenants: number;
   totalUsers: number;
   totalPatients: number;
+  totalSubscriptionRevenue: number;
   monthlyRevenue: number;
   systemUptime: number;
   tenantBreakdown: {
@@ -126,15 +127,15 @@ export default function Dashboard() {
         </div>
 
         {/* Platform Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Organizations</p>
-                  <p className="text-3xl font-bold text-gray-900">{mockPlatformMetrics.totalTenants}</p>
+                  <p className="text-3xl font-bold text-gray-900">{platformMetrics?.totalTenants || 0}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {mockPlatformMetrics.activeTenants} active
+                    {platformMetrics?.activeTenants || 0} active
                   </p>
                 </div>
                 <Building2 className="h-8 w-8 text-blue-600" />
@@ -147,10 +148,10 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Platform Users</p>
-                  <p className="text-3xl font-bold text-gray-900">{mockPlatformMetrics.totalUsers.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-gray-900">{platformMetrics?.totalUsers?.toLocaleString() || 0}</p>
                   <p className="text-xs text-green-600 mt-1 flex items-center">
                     <TrendingUp className="h-3 w-3 mr-1" />
-                    +12% this month
+                    All tenants
                   </p>
                 </div>
                 <Users className="h-8 w-8 text-green-600" />
@@ -163,10 +164,10 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Patients</p>
-                  <p className="text-3xl font-bold text-gray-900">{mockPlatformMetrics.totalPatients.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-gray-900">{platformMetrics?.totalPatients?.toLocaleString() || 0}</p>
                   <p className="text-xs text-green-600 mt-1 flex items-center">
                     <TrendingUp className="h-3 w-3 mr-1" />
-                    +8% this month
+                    Cross-platform data
                   </p>
                 </div>
                 <Activity className="h-8 w-8 text-purple-600" />
@@ -179,13 +180,29 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
-                  <p className="text-3xl font-bold text-gray-900">${mockPlatformMetrics.monthlyRevenue.toLocaleString()}</p>
-                  <p className="text-xs text-green-600 mt-1 flex items-center">
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                    +15% this month
+                  <p className="text-3xl font-bold text-gray-900">${platformMetrics?.monthlyRevenue?.toLocaleString() || 0}</p>
+                  <p className="text-xs text-blue-600 mt-1 flex items-center">
+                    <DollarSign className="h-3 w-3 mr-1" />
+                    Subscription income
                   </p>
                 </div>
                 <DollarSign className="h-8 w-8 text-orange-600" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Subscriptions</p>
+                  <p className="text-3xl font-bold text-gray-900">${platformMetrics?.totalSubscriptionRevenue?.toLocaleString() || 0}</p>
+                  <p className="text-xs text-purple-600 mt-1 flex items-center">
+                    <DollarSign className="h-3 w-3 mr-1" />
+                    All active plans
+                  </p>
+                </div>
+                <DollarSign className="h-8 w-8 text-purple-600" />
               </div>
             </CardContent>
           </Card>

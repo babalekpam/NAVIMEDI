@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertSubscriptionSchema, insertReportSchema } from "@shared/schema";
 import { authenticateToken, requireRole } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -521,6 +521,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get audit logs error:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Platform metrics route for super admin
+  app.get("/api/platform/metrics", authenticateToken, async (req, res) => {
+    try {
+      if (req.user.role !== 'super_admin') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const metrics = await storage.getPlatformMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error("Platform metrics error:", error);
+      res.status(500).json({ message: "Failed to fetch platform metrics" });
+    }
+  });
+
+  // Reports routes
+  app.get("/api/reports", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const reports = await storage.getReportsByTenant(req.tenant.id);
+      res.json(reports);
+    } catch (error) {
+      console.error("Reports fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch reports" });
+    }
+  });
+
+  app.post("/api/reports", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const reportData = insertReportSchema.parse({
+        ...req.body,
+        tenantId: req.tenant.id,
+        createdBy: req.user.id,
+        status: 'generating'
+      });
+
+      const report = await storage.createReport(reportData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenant.id,
+        userId: req.user.id,
+        entityType: "report",
+        entityId: report.id,
+        action: "create",
+        newData: { title: report.title, type: report.type },
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      // In a real implementation, you would trigger async report generation here
+      // For now, we'll simulate completion
+      setTimeout(async () => {
+        try {
+          await storage.updateReport(report.id, {
+            status: 'completed',
+            completedAt: new Date(),
+            downloadUrl: `/api/reports/${report.id}/download`
+          }, req.tenant.id);
+        } catch (error) {
+          console.error("Report completion error:", error);
+        }
+      }, 3000);
+
+      res.status(201).json(report);
+    } catch (error) {
+      console.error("Report creation error:", error);
+      res.status(500).json({ message: "Failed to create report" });
     }
   });
 

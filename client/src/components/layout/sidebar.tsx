@@ -35,6 +35,7 @@ const sidebarItems: SidebarItem[] = [
   
   // Operations Section (only for tenant users)
   { id: "billing", label: "Billing & Claims", icon: FileText, path: "/billing", roles: ["billing_staff", "physician", "tenant_admin"] },
+  { id: "reports", label: "Reports & Analytics", icon: BarChart3, path: "/reports", roles: ["physician", "nurse", "pharmacist", "lab_technician", "billing_staff", "tenant_admin"] },
   
   // Platform Administration Section (only for super admins)
   { id: "tenant-management", label: "Tenant Management", icon: Building, path: "/tenant-management", roles: ["super_admin"] },
@@ -96,8 +97,8 @@ export const Sidebar = () => {
 
   // For regular tenant users
   const clinicalItems = filteredItems.slice(0, 5);
-  const operationItems = filteredItems.slice(5, 6);
-  const adminItems = filteredItems.slice(6);
+  const operationItems = filteredItems.slice(5, 7);
+  const adminItems = filteredItems.slice(7);
 
   return (
     <aside className="w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto">

@@ -262,24 +262,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAppointmentsByTenant(tenantId: string, date?: Date): Promise<Appointment[]> {
-    let query = db.select().from(appointments).where(eq(appointments.tenantId, tenantId));
-    
     if (date) {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
       
-      query = query.where(
+      return await db.select().from(appointments).where(
         and(
           eq(appointments.tenantId, tenantId),
           sql`${appointments.appointmentDate} >= ${startOfDay}`,
           sql`${appointments.appointmentDate} <= ${endOfDay}`
         )
-      );
+      ).orderBy(appointments.appointmentDate);
     }
     
-    return await query.orderBy(appointments.appointmentDate);
+    return await db.select().from(appointments)
+      .where(eq(appointments.tenantId, tenantId))
+      .orderBy(appointments.appointmentDate);
   }
 
   async getAppointmentsByProvider(providerId: string, tenantId: string, date?: Date): Promise<Appointment[]> {
@@ -581,6 +581,32 @@ export class DatabaseStorage implements IStorage {
       totalUsers: usersResult.count,
       totalPatients: patientsResult.count
     };
+  }
+  // Report management
+  async getReportsByTenant(tenantId: string): Promise<Report[]> {
+    return await db.select().from(reports)
+      .where(eq(reports.tenantId, tenantId))
+      .orderBy(sql`${reports.createdAt} DESC`);
+  }
+
+  async getReport(id: string, tenantId: string): Promise<Report | undefined> {
+    const [report] = await db.select().from(reports).where(
+      and(eq(reports.id, id), eq(reports.tenantId, tenantId))
+    );
+    return report || undefined;
+  }
+
+  async createReport(insertReport: InsertReport): Promise<Report> {
+    const [report] = await db.insert(reports).values(insertReport).returning();
+    return report;
+  }
+
+  async updateReport(id: string, updates: Partial<Report>, tenantId: string): Promise<Report | undefined> {
+    const [report] = await db.update(reports)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(reports.id, id), eq(reports.tenantId, tenantId)))
+      .returning();
+    return report || undefined;
   }
 }
 
