@@ -8,6 +8,9 @@ import {
   insuranceClaims, 
   insuranceProviders,
   patientInsurance,
+  servicePrices,
+  insurancePlanCoverage,
+  claimLineItems,
   auditLogs,
   subscriptions,
   reports,
@@ -38,6 +41,12 @@ import {
   type InsertInsuranceProvider,
   type PatientInsurance,
   type InsertPatientInsurance,
+  type ServicePrice,
+  type InsertServicePrice,
+  type InsurancePlanCoverage,
+  type InsertInsurancePlanCoverage,
+  type ClaimLineItem,
+  type InsertClaimLineItem,
   type Subscription,
   type InsertSubscription,
   type Report,
@@ -128,6 +137,33 @@ export interface IStorage {
   // Patient Insurance management
   getPatientInsurance(patientId: string, tenantId: string): Promise<PatientInsurance[]>;
   createPatientInsurance(insurance: InsertPatientInsurance): Promise<PatientInsurance>;
+
+  // Service Pricing management
+  getServicePrices(tenantId: string): Promise<ServicePrice[]>;
+  getServicePrice(id: string, tenantId: string): Promise<ServicePrice | undefined>;
+  createServicePrice(servicePrice: InsertServicePrice): Promise<ServicePrice>;
+  updateServicePrice(id: string, updates: Partial<ServicePrice>, tenantId: string): Promise<ServicePrice | undefined>;
+  getServicePriceByCode(serviceCode: string, tenantId: string): Promise<ServicePrice | undefined>;
+
+  // Insurance Plan Coverage management
+  getInsurancePlanCoverages(tenantId: string): Promise<InsurancePlanCoverage[]>;
+  getInsurancePlanCoverageByServiceAndProvider(servicePriceId: string, insuranceProviderId: string, tenantId: string): Promise<InsurancePlanCoverage | undefined>;
+  createInsurancePlanCoverage(coverage: InsertInsurancePlanCoverage): Promise<InsurancePlanCoverage>;
+  updateInsurancePlanCoverage(id: string, updates: Partial<InsurancePlanCoverage>, tenantId: string): Promise<InsurancePlanCoverage | undefined>;
+
+  // Claim Line Items management
+  getClaimLineItems(claimId: string, tenantId: string): Promise<ClaimLineItem[]>;
+  createClaimLineItem(lineItem: InsertClaimLineItem): Promise<ClaimLineItem>;
+  updateClaimLineItem(id: string, updates: Partial<ClaimLineItem>, tenantId: string): Promise<ClaimLineItem | undefined>;
+  deleteClaimLineItem(id: string, tenantId: string): Promise<boolean>;
+
+  // Pricing calculations
+  calculateCopayAndInsuranceAmount(servicePriceId: string, insuranceProviderId: string, patientInsuranceId: string, tenantId: string): Promise<{
+    unitPrice: number;
+    copayAmount: number;
+    insuranceAmount: number;
+    deductibleAmount: number;
+  }>;
 
   // Audit logging
   createAuditLog(log: Omit<AuditLog, "id" | "timestamp">): Promise<AuditLog>;
@@ -545,6 +581,181 @@ export class DatabaseStorage implements IStorage {
   async createPatientInsurance(insurance: InsertPatientInsurance): Promise<PatientInsurance> {
     const [patientIns] = await db.insert(patientInsurance).values(insurance).returning();
     return patientIns;
+  }
+
+  // Service Pricing management
+  async getServicePrices(tenantId: string): Promise<ServicePrice[]> {
+    return await db.select().from(servicePrices).where(
+      and(eq(servicePrices.tenantId, tenantId), eq(servicePrices.isActive, true))
+    ).orderBy(servicePrices.serviceName);
+  }
+
+  async getServicePrice(id: string, tenantId: string): Promise<ServicePrice | undefined> {
+    const [servicePrice] = await db.select().from(servicePrices).where(
+      and(eq(servicePrices.id, id), eq(servicePrices.tenantId, tenantId))
+    );
+    return servicePrice || undefined;
+  }
+
+  async createServicePrice(servicePrice: InsertServicePrice): Promise<ServicePrice> {
+    const [newServicePrice] = await db.insert(servicePrices).values(servicePrice).returning();
+    return newServicePrice;
+  }
+
+  async updateServicePrice(id: string, updates: Partial<ServicePrice>, tenantId: string): Promise<ServicePrice | undefined> {
+    const [servicePrice] = await db.update(servicePrices)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(servicePrices.id, id), eq(servicePrices.tenantId, tenantId)))
+      .returning();
+    return servicePrice || undefined;
+  }
+
+  async getServicePriceByCode(serviceCode: string, tenantId: string): Promise<ServicePrice | undefined> {
+    const [servicePrice] = await db.select().from(servicePrices).where(
+      and(
+        eq(servicePrices.serviceCode, serviceCode), 
+        eq(servicePrices.tenantId, tenantId),
+        eq(servicePrices.isActive, true)
+      )
+    );
+    return servicePrice || undefined;
+  }
+
+  // Insurance Plan Coverage management
+  async getInsurancePlanCoverages(tenantId: string): Promise<InsurancePlanCoverage[]> {
+    return await db.select().from(insurancePlanCoverage).where(
+      and(eq(insurancePlanCoverage.tenantId, tenantId), eq(insurancePlanCoverage.isActive, true))
+    ).orderBy(insurancePlanCoverage.effectiveDate);
+  }
+
+  async getInsurancePlanCoverageByServiceAndProvider(servicePriceId: string, insuranceProviderId: string, tenantId: string): Promise<InsurancePlanCoverage | undefined> {
+    const [coverage] = await db.select().from(insurancePlanCoverage).where(
+      and(
+        eq(insurancePlanCoverage.servicePriceId, servicePriceId),
+        eq(insurancePlanCoverage.insuranceProviderId, insuranceProviderId),
+        eq(insurancePlanCoverage.tenantId, tenantId),
+        eq(insurancePlanCoverage.isActive, true)
+      )
+    );
+    return coverage || undefined;
+  }
+
+  async createInsurancePlanCoverage(coverage: InsertInsurancePlanCoverage): Promise<InsurancePlanCoverage> {
+    const [newCoverage] = await db.insert(insurancePlanCoverage).values(coverage).returning();
+    return newCoverage;
+  }
+
+  async updateInsurancePlanCoverage(id: string, updates: Partial<InsurancePlanCoverage>, tenantId: string): Promise<InsurancePlanCoverage | undefined> {
+    const [coverage] = await db.update(insurancePlanCoverage)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(insurancePlanCoverage.id, id), eq(insurancePlanCoverage.tenantId, tenantId)))
+      .returning();
+    return coverage || undefined;
+  }
+
+  // Claim Line Items management
+  async getClaimLineItems(claimId: string, tenantId: string): Promise<ClaimLineItem[]> {
+    return await db.select().from(claimLineItems).where(
+      and(eq(claimLineItems.claimId, claimId), eq(claimLineItems.tenantId, tenantId))
+    ).orderBy(claimLineItems.createdAt);
+  }
+
+  async createClaimLineItem(lineItem: InsertClaimLineItem): Promise<ClaimLineItem> {
+    const [newLineItem] = await db.insert(claimLineItems).values(lineItem).returning();
+    return newLineItem;
+  }
+
+  async updateClaimLineItem(id: string, updates: Partial<ClaimLineItem>, tenantId: string): Promise<ClaimLineItem | undefined> {
+    const [lineItem] = await db.update(claimLineItems)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(claimLineItems.id, id), eq(claimLineItems.tenantId, tenantId)))
+      .returning();
+    return lineItem || undefined;
+  }
+
+  async deleteClaimLineItem(id: string, tenantId: string): Promise<boolean> {
+    const result = await db.delete(claimLineItems)
+      .where(and(eq(claimLineItems.id, id), eq(claimLineItems.tenantId, tenantId)));
+    return result.rowCount > 0;
+  }
+
+  // Pricing calculations
+  async calculateCopayAndInsuranceAmount(servicePriceId: string, insuranceProviderId: string, patientInsuranceId: string, tenantId: string): Promise<{
+    unitPrice: number;
+    copayAmount: number;
+    insuranceAmount: number;
+    deductibleAmount: number;
+  }> {
+    // Get service price
+    const servicePrice = await this.getServicePrice(servicePriceId, tenantId);
+    if (!servicePrice) {
+      throw new Error('Service price not found');
+    }
+
+    const unitPrice = parseFloat(servicePrice.basePrice);
+
+    // Get insurance plan coverage
+    const coverage = await this.getInsurancePlanCoverageByServiceAndProvider(
+      servicePriceId, 
+      insuranceProviderId, 
+      tenantId
+    );
+
+    if (!coverage) {
+      // No specific coverage found, use patient's default copay
+      const [patientIns] = await db.select().from(patientInsurance).where(
+        and(eq(patientInsurance.id, patientInsuranceId), eq(patientInsurance.tenantId, tenantId))
+      );
+
+      if (patientIns && patientIns.copayAmount) {
+        const copayAmount = Math.min(parseFloat(patientIns.copayAmount), unitPrice);
+        return {
+          unitPrice,
+          copayAmount,
+          insuranceAmount: unitPrice - copayAmount,
+          deductibleAmount: 0
+        };
+      }
+
+      // Default: 20% patient copay
+      const copayAmount = unitPrice * 0.20;
+      return {
+        unitPrice,
+        copayAmount,
+        insuranceAmount: unitPrice - copayAmount,
+        deductibleAmount: 0
+      };
+    }
+
+    // Calculate based on coverage rules
+    let copayAmount = 0;
+    let deductibleAmount = 0;
+
+    if (coverage.copayAmount) {
+      // Fixed copay amount
+      copayAmount = Math.min(parseFloat(coverage.copayAmount), unitPrice);
+    } else if (coverage.copayPercentage) {
+      // Percentage-based copay
+      copayAmount = unitPrice * (parseFloat(coverage.copayPercentage) / 100);
+    }
+
+    // Apply maximum coverage limit if set
+    let insuranceAmount = unitPrice - copayAmount - deductibleAmount;
+    if (coverage.maxCoverageAmount) {
+      const maxCoverage = parseFloat(coverage.maxCoverageAmount);
+      if (insuranceAmount > maxCoverage) {
+        const excess = insuranceAmount - maxCoverage;
+        insuranceAmount = maxCoverage;
+        copayAmount += excess; // Patient pays the excess
+      }
+    }
+
+    return {
+      unitPrice,
+      copayAmount,
+      insuranceAmount,
+      deductibleAmount
+    };
   }
 
   // Audit logging

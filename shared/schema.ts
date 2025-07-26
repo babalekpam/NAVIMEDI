@@ -110,6 +110,18 @@ export const priorityLevelEnum = pgEnum("priority_level", [
   "emergency"
 ]);
 
+export const serviceTypeEnum = pgEnum("service_type", [
+  "procedure",
+  "consultation", 
+  "diagnostic",
+  "treatment",
+  "laboratory",
+  "imaging",
+  "therapy",
+  "medication",
+  "emergency"
+]);
+
 // Core Tables
 export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -250,6 +262,55 @@ export const labOrders = pgTable("lab_orders", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Predefined Service Prices
+export const servicePrices = pgTable("service_prices", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  serviceCode: text("service_code").notNull(), // CPT, HCPCS, or internal code
+  serviceName: text("service_name").notNull(),
+  serviceDescription: text("service_description"),
+  serviceType: serviceTypeEnum("service_type").notNull(),
+  basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
+  isActive: boolean("is_active").default(true),
+  effectiveDate: timestamp("effective_date").default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Insurance Plan Service Coverage
+export const insurancePlanCoverage = pgTable("insurance_plan_coverage", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  insuranceProviderId: uuid("insurance_provider_id").references(() => insuranceProviders.id).notNull(),
+  servicePriceId: uuid("service_price_id").references(() => servicePrices.id).notNull(),
+  copayAmount: decimal("copay_amount", { precision: 10, scale: 2 }), // Fixed copay
+  copayPercentage: decimal("copay_percentage", { precision: 5, scale: 2 }), // Percentage copay (0-100)
+  deductibleApplies: boolean("deductible_applies").default(false),
+  maxCoverageAmount: decimal("max_coverage_amount", { precision: 10, scale: 2 }), // Maximum insurance will pay
+  preAuthRequired: boolean("pre_auth_required").default(false),
+  isActive: boolean("is_active").default(true),
+  effectiveDate: timestamp("effective_date").default(sql`CURRENT_TIMESTAMP`),
+  expirationDate: timestamp("expiration_date"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Service Line Items for Claims
+export const claimLineItems = pgTable("claim_line_items", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  claimId: uuid("claim_id").references(() => insuranceClaims.id).notNull(),
+  servicePriceId: uuid("service_price_id").references(() => servicePrices.id).notNull(),
+  quantity: integer("quantity").default(1),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  patientCopay: decimal("patient_copay", { precision: 10, scale: 2 }).notNull(),
+  insuranceAmount: decimal("insurance_amount", { precision: 10, scale: 2 }).notNull(),
+  deductibleAmount: decimal("deductible_amount", { precision: 10, scale: 2 }).default('0'),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 export const insuranceClaims = pgTable("insurance_claims", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
@@ -260,6 +321,8 @@ export const insuranceClaims = pgTable("insurance_claims", {
   procedureCodes: jsonb("procedure_codes").default('[]'),
   diagnosisCodes: jsonb("diagnosis_codes").default('[]'),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  totalPatientCopay: decimal("total_patient_copay", { precision: 10, scale: 2 }).default('0').notNull(),
+  totalInsuranceAmount: decimal("total_insurance_amount", { precision: 10, scale: 2 }).default('0').notNull(),
   approvedAmount: decimal("approved_amount", { precision: 10, scale: 2 }),
   paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }),
   status: claimStatusEnum("status").default('draft'),
@@ -524,6 +587,9 @@ export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   insuranceClaims: many(insuranceClaims),
   insuranceProviders: many(insuranceProviders),
   patientInsurance: many(patientInsurance),
+  servicePrices: many(servicePrices),
+  insurancePlanCoverage: many(insurancePlanCoverage),
+  claimLineItems: many(claimLineItems),
   auditLogs: many(auditLogs),
   subscription: one(subscriptions),
   reports: many(reports),
@@ -537,7 +603,8 @@ export const insuranceProvidersRelations = relations(insuranceProviders, ({ one,
     fields: [insuranceProviders.tenantId],
     references: [tenants.id]
   }),
-  patientInsurance: many(patientInsurance)
+  patientInsurance: many(patientInsurance),
+  coverages: many(insurancePlanCoverage)
 }));
 
 export const patientInsuranceRelations = relations(patientInsurance, ({ one, many }) => ({
@@ -554,6 +621,65 @@ export const patientInsuranceRelations = relations(patientInsurance, ({ one, man
     references: [insuranceProviders.id]
   }),
   claims: many(insuranceClaims)
+}));
+
+export const servicePricesRelations = relations(servicePrices, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [servicePrices.tenantId],
+    references: [tenants.id]
+  }),
+  coverages: many(insurancePlanCoverage),
+  claimLineItems: many(claimLineItems)
+}));
+
+export const insurancePlanCoverageRelations = relations(insurancePlanCoverage, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [insurancePlanCoverage.tenantId],
+    references: [tenants.id]
+  }),
+  insuranceProvider: one(insuranceProviders, {
+    fields: [insurancePlanCoverage.insuranceProviderId],
+    references: [insuranceProviders.id]
+  }),
+  servicePrice: one(servicePrices, {
+    fields: [insurancePlanCoverage.servicePriceId],
+    references: [servicePrices.id]
+  })
+}));
+
+export const claimLineItemsRelations = relations(claimLineItems, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [claimLineItems.tenantId],
+    references: [tenants.id]
+  }),
+  claim: one(insuranceClaims, {
+    fields: [claimLineItems.claimId],
+    references: [insuranceClaims.id]
+  }),
+  servicePrice: one(servicePrices, {
+    fields: [claimLineItems.servicePriceId],
+    references: [servicePrices.id]
+  })
+}));
+
+export const insuranceClaimsRelations = relations(insuranceClaims, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [insuranceClaims.tenantId],
+    references: [tenants.id]
+  }),
+  patient: one(patients, {
+    fields: [insuranceClaims.patientId],
+    references: [patients.id]
+  }),
+  appointment: one(appointments, {
+    fields: [insuranceClaims.appointmentId],
+    references: [appointments.id]
+  }),
+  patientInsurance: one(patientInsurance, {
+    fields: [insuranceClaims.patientInsuranceId],
+    references: [patientInsurance.id]
+  }),
+  lineItems: many(claimLineItems)
 }));
 
 export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
@@ -816,6 +942,24 @@ export const insertInsuranceClaimSchema = createInsertSchema(insuranceClaims).om
   updatedAt: true
 });
 
+export const insertServicePriceSchema = createInsertSchema(servicePrices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertInsurancePlanCoverageSchema = createInsertSchema(insurancePlanCoverage).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertClaimLineItemSchema = createInsertSchema(claimLineItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
   id: true,
   createdAt: true,
@@ -915,6 +1059,15 @@ export type InsertPatientInsurance = z.infer<typeof insertPatientInsuranceSchema
 
 export type InsuranceClaim = typeof insuranceClaims.$inferSelect;
 export type InsertInsuranceClaim = z.infer<typeof insertInsuranceClaimSchema>;
+
+export type ServicePrice = typeof servicePrices.$inferSelect;
+export type InsertServicePrice = z.infer<typeof insertServicePriceSchema>;
+
+export type InsurancePlanCoverage = typeof insurancePlanCoverage.$inferSelect;
+export type InsertInsurancePlanCoverage = z.infer<typeof insertInsurancePlanCoverageSchema>;
+
+export type ClaimLineItem = typeof claimLineItems.$inferSelect;
+export type InsertClaimLineItem = z.infer<typeof insertClaimLineItemSchema>;
 
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;

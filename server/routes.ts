@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema } from "@shared/schema";
 import { authenticateToken, requireRole } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -661,6 +661,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(insuranceList);
     } catch (error) {
       console.error("Get patient insurance error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Service Pricing routes
+  app.get("/api/service-prices", requireTenant, async (req, res) => {
+    try {
+      const servicePrices = await storage.getServicePrices(req.tenant!.id);
+      res.json(servicePrices);
+    } catch (error) {
+      console.error("Get service prices error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/service-prices", requireRole(["tenant_admin", "director", "billing_staff"]), async (req, res) => {
+    try {
+      const servicePriceData = insertServicePriceSchema.parse({
+        ...req.body,
+        tenantId: req.tenant!.id
+      });
+
+      const servicePrice = await storage.createServicePrice(servicePriceData);
+      res.json(servicePrice);
+    } catch (error) {
+      console.error("Create service price error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/service-prices/:id", requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const servicePrice = await storage.getServicePrice(id, req.tenant!.id);
+      
+      if (!servicePrice) {
+        return res.status(404).json({ message: "Service price not found" });
+      }
+
+      res.json(servicePrice);
+    } catch (error) {
+      console.error("Get service price error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Insurance Plan Coverage routes
+  app.get("/api/insurance-plan-coverage", requireTenant, async (req, res) => {
+    try {
+      const coverages = await storage.getInsurancePlanCoverages(req.tenant!.id);
+      res.json(coverages);
+    } catch (error) {
+      console.error("Get insurance plan coverages error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/insurance-plan-coverage", requireRole(["tenant_admin", "director", "billing_staff"]), async (req, res) => {
+    try {
+      const coverageData = insertInsurancePlanCoverageSchema.parse({
+        ...req.body,
+        tenantId: req.tenant!.id
+      });
+
+      const coverage = await storage.createInsurancePlanCoverage(coverageData);
+      res.json(coverage);
+    } catch (error) {
+      console.error("Create insurance plan coverage error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Pricing calculation endpoint
+  app.post("/api/calculate-pricing", requireTenant, async (req, res) => {
+    try {
+      const { servicePriceId, insuranceProviderId, patientInsuranceId } = req.body;
+
+      if (!servicePriceId || !insuranceProviderId || !patientInsuranceId) {
+        return res.status(400).json({ 
+          message: "servicePriceId, insuranceProviderId, and patientInsuranceId are required" 
+        });
+      }
+
+      const pricing = await storage.calculateCopayAndInsuranceAmount(
+        servicePriceId,
+        insuranceProviderId, 
+        patientInsuranceId,
+        req.tenant!.id
+      );
+
+      res.json(pricing);
+    } catch (error) {
+      console.error("Calculate pricing error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Claim Line Items routes
+  app.get("/api/claim-line-items/:claimId", requireTenant, async (req, res) => {
+    try {
+      const { claimId } = req.params;
+      const lineItems = await storage.getClaimLineItems(claimId, req.tenant!.id);
+      res.json(lineItems);
+    } catch (error) {
+      console.error("Get claim line items error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/claim-line-items", requireRole(["billing_staff", "physician", "tenant_admin", "director"]), async (req, res) => {
+    try {
+      const lineItemData = insertClaimLineItemSchema.parse({
+        ...req.body,
+        tenantId: req.tenant!.id
+      });
+
+      const lineItem = await storage.createClaimLineItem(lineItemData);
+      res.json(lineItem);
+    } catch (error) {
+      console.error("Create claim line item error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

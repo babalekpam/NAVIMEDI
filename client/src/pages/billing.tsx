@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Plus, Search, Filter, MoreHorizontal, FileText, CreditCard, X, Eye, Send, Calendar, CheckCircle, Clock, AlertCircle, Trash2 } from "lucide-react";
-import { InsuranceClaim, Patient, insertInsuranceClaimSchema } from "@shared/schema";
+import { DollarSign, Plus, Search, Filter, MoreHorizontal, FileText, CreditCard, X, Eye, Send, Calendar, CheckCircle, Clock, AlertCircle, Trash2, Calculator } from "lucide-react";
+import { InsuranceClaim, Patient, ServicePrice, InsuranceProvider, PatientInsurance, ClaimLineItem, insertInsuranceClaimSchema, insertClaimLineItemSchema } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
 
 const statusColors = {
   draft: "bg-gray-100 text-gray-800",
@@ -30,15 +32,27 @@ export default function Billing() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedClaim, setSelectedClaim] = useState<InsuranceClaim | null>(null);
+  const [selectedLineItems, setSelectedLineItems] = useState<ClaimLineItem[]>([]);
+  const [isAddServiceDialogOpen, setIsAddServiceDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     patientId: "",
     patientInsuranceId: "",
     claimNumber: "",
-    procedureCodes: "",
     diagnosisCodes: "",
-    totalAmount: "",
-    appointmentId: ""
+    appointmentId: "",
+    notes: ""
   });
+  const [serviceFormData, setServiceFormData] = useState({
+    servicePriceId: "",
+    quantity: "1",
+    notes: ""
+  });
+  const [calculatedPricing, setCalculatedPricing] = useState<{
+    unitPrice: number;
+    copayAmount: number;
+    insuranceAmount: number;
+    deductibleAmount: number;
+  } | null>(null);
   const { user } = useAuth();
   const { tenant } = useTenant();
   const queryClient = useQueryClient();
@@ -57,10 +71,50 @@ export default function Billing() {
     enabled: !!user && !!tenant,
   });
 
+  const { data: servicePrices = [] } = useQuery<ServicePrice[]>({
+    queryKey: ["/api/service-prices"],
+    enabled: !!user && !!tenant,
+  });
+
+  const { data: insuranceProviders = [] } = useQuery<InsuranceProvider[]>({
+    queryKey: ["/api/insurance-providers"],
+    enabled: !!user && !!tenant,
+  });
+
   // Get patient insurance when a patient is selected
-  const { data: patientInsurance = [] } = useQuery({
+  const { data: patientInsurance = [] } = useQuery<PatientInsurance[]>({
     queryKey: ["/api/patient-insurance", formData.patientId],
     enabled: !!formData.patientId,
+  });
+
+  // Get claim line items when a claim is selected
+  const { data: claimLineItems = [] } = useQuery<ClaimLineItem[]>({
+    queryKey: ["/api/claim-line-items", selectedClaim?.id],
+    enabled: !!selectedClaim?.id,
+  });
+
+  const calculatePricingMutation = useMutation({
+    mutationFn: async ({ servicePriceId, patientInsuranceId }: { servicePriceId: string; patientInsuranceId: string }) => {
+      const selectedInsurance = patientInsurance.find(pi => pi.id === patientInsuranceId);
+      if (!selectedInsurance) throw new Error("Patient insurance not found");
+
+      const response = await apiRequest("POST", "/api/calculate-pricing", {
+        servicePriceId,
+        insuranceProviderId: selectedInsurance.insuranceProviderId,
+        patientInsuranceId
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setCalculatedPricing(data);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to calculate pricing.",
+        variant: "destructive",
+      });
+    },
   });
 
   const createClaimMutation = useMutation({
@@ -71,14 +125,14 @@ export default function Billing() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/insurance-claims"] });
       setIsCreateDialogOpen(false);
+      setSelectedLineItems([]);
       setFormData({
         patientId: "",
         patientInsuranceId: "",
         claimNumber: "",
-        procedureCodes: "",
         diagnosisCodes: "",
-        totalAmount: "",
-        appointmentId: ""
+        appointmentId: "",
+        notes: ""
       });
       toast({
         title: "Claim Created",
@@ -90,6 +144,43 @@ export default function Billing() {
         title: "Error",
         description: error.message || "Failed to create insurance claim.",
         variant: "destructive",
+      });
+    },
+  });
+
+  const addServiceMutation = useMutation({
+    mutationFn: async (serviceData: any) => {
+      if (!calculatedPricing) throw new Error("Please calculate pricing first");
+      
+      const quantity = parseInt(serviceData.quantity);
+      const totalPrice = calculatedPricing.unitPrice * quantity;
+      const totalCopay = calculatedPricing.copayAmount * quantity;
+      const totalInsurance = calculatedPricing.insuranceAmount * quantity;
+
+      const lineItem = {
+        servicePriceId: serviceData.servicePriceId,
+        quantity,
+        unitPrice: calculatedPricing.unitPrice,
+        totalPrice,
+        copayAmount: totalCopay,
+        insuranceAmount: totalInsurance,
+        notes: serviceData.notes
+      };
+
+      setSelectedLineItems(prev => [...prev, lineItem as any]);
+      return lineItem;
+    },
+    onSuccess: () => {
+      setIsAddServiceDialogOpen(false);
+      setServiceFormData({
+        servicePriceId: "",
+        quantity: "1",
+        notes: ""
+      });
+      setCalculatedPricing(null);
+      toast({
+        title: "Service Added",
+        description: "Service has been added to the claim.",
       });
     },
   });
@@ -133,39 +224,82 @@ export default function Billing() {
     return patient ? `${patient.firstName} ${patient.lastName}` : `Patient ${patientId.slice(-4)}`;
   };
 
-  const handleCreateClaim = () => {
-    if (!formData.patientId || !formData.patientInsuranceId || !formData.totalAmount) {
+  const handleCreateClaim = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      if (selectedLineItems.length === 0) {
+        toast({
+          title: "Error",
+          description: "Please add at least one service to the claim.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const totalPatientCopay = selectedLineItems.reduce((sum, item) => sum + item.copayAmount, 0);
+      const totalInsuranceAmount = selectedLineItems.reduce((sum, item) => sum + item.insuranceAmount, 0);
+      const totalAmount = totalPatientCopay + totalInsuranceAmount;
+
+      // Generate unique claim number if not provided
+      const claimNumber = formData.claimNumber || `CLM-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+
+      const claimData = insertInsuranceClaimSchema.parse({
+        patientId: formData.patientId,
+        patientInsuranceId: formData.patientInsuranceId,
+        claimNumber,
+        diagnosisCodes: formData.diagnosisCodes.split(',').map(code => code.trim()).filter(Boolean),
+        totalAmount,
+        totalPatientCopay,
+        totalInsuranceAmount,
+        status: 'draft',
+        appointmentId: formData.appointmentId || undefined,
+        notes: formData.notes
+      });
+
+      await createClaimMutation.mutateAsync(claimData);
+    } catch (error: any) {
       toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields including insurance provider.",
+        title: "Error",
+        description: error.message || "Failed to create insurance claim.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!serviceFormData.servicePriceId || !formData.patientInsuranceId) {
+      toast({
+        title: "Error",
+        description: "Please select a service and patient insurance.",
         variant: "destructive",
       });
       return;
     }
 
-    try {
-      // Generate unique claim number if not provided
-      const claimNumber = formData.claimNumber || `CLM-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
-      
-      const claimData = {
-        patientId: formData.patientId,
-        patientInsuranceId: formData.patientInsuranceId,
-        claimNumber,
-        procedureCodes: formData.procedureCodes ? formData.procedureCodes.split(',').map(code => code.trim()) : [],
-        diagnosisCodes: formData.diagnosisCodes ? formData.diagnosisCodes.split(',').map(code => code.trim()) : [],
-        totalAmount: formData.totalAmount,
-        appointmentId: formData.appointmentId || undefined,
-        status: 'draft'
-      };
+    await addServiceMutation.mutateAsync(serviceFormData);
+  };
 
-      createClaimMutation.mutate(claimData);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields correctly.",
-        variant: "destructive",
+  const handleCalculatePricing = () => {
+    if (serviceFormData.servicePriceId && formData.patientInsuranceId) {
+      calculatePricingMutation.mutate({
+        servicePriceId: serviceFormData.servicePriceId,
+        patientInsuranceId: formData.patientInsuranceId
       });
     }
+  };
+
+  // Auto-calculate pricing when service or insurance changes
+  useEffect(() => {
+    if (serviceFormData.servicePriceId && formData.patientInsuranceId) {
+      handleCalculatePricing();
+    }
+  }, [serviceFormData.servicePriceId, formData.patientInsuranceId]);
+
+  const removeLineItem = (index: number) => {
+    setSelectedLineItems(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleViewClaim = (claim: InsuranceClaim) => {
