@@ -296,9 +296,30 @@ export default function TenantManagement() {
 
                 {viewDetailsTenant.settings && Object.keys(viewDetailsTenant.settings).length > 0 && (
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Configuration</label>
-                    <div className="mt-1 bg-gray-50 p-3 rounded text-xs font-mono text-gray-700">
-                      {JSON.stringify(viewDetailsTenant.settings, null, 2)}
+                    <label className="text-sm font-medium text-gray-600">
+                      {viewDetailsTenant.name === 'ARGILETTE Platform' ? 'Platform Features' : 'Organization Settings'}
+                    </label>
+                    <div className="mt-1 bg-gray-50 p-3 rounded">
+                      {viewDetailsTenant.name === 'ARGILETTE Platform' ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center text-sm text-gray-700">
+                            <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            Platform Owner & Super Admin Access
+                          </div>
+                          <div className="flex items-center text-sm text-gray-700">
+                            <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            Multi-Tenant Management
+                          </div>
+                          <div className="flex items-center text-sm text-gray-700">
+                            <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+                            Cross-Tenant Reporting
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-xs font-mono text-gray-700">
+                          {JSON.stringify(viewDetailsTenant.settings, null, 2)}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
