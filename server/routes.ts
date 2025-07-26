@@ -416,9 +416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Prescription management routes
-  app.use("/api/prescriptions", requireTenant);
-
-  app.get("/api/prescriptions", async (req, res) => {
+  app.get("/api/prescriptions", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { patientId } = req.query;
       const tenantId = req.tenant!.id;

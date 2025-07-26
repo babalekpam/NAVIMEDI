@@ -40,15 +40,8 @@ export default function Prescriptions() {
 
   const createPrescriptionMutation = useMutation({
     mutationFn: async (prescriptionData: any) => {
-      const response = await fetch("/api/prescriptions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
-        },
-        body: JSON.stringify(prescriptionData)
-      });
-      if (!response.ok) throw new Error("Failed to create prescription");
+      const { apiRequest } = await import("@/lib/queryClient");
+      const response = await apiRequest("POST", "/api/prescriptions", prescriptionData);
       return response.json();
     },
     onSuccess: () => {
