@@ -39,8 +39,7 @@ const sidebarItems: SidebarItem[] = [
   // Administration Section
   { id: "tenant-management", label: "Tenant Management", icon: Building, path: "/tenant-management", roles: ["super_admin", "tenant_admin"] },
   { id: "user-roles", label: "User Roles", icon: UserCheck, path: "/user-roles", roles: ["tenant_admin", "super_admin"] },
-  { id: "audit-logs", label: "Audit Logs", icon: ClipboardList, path: "/audit-logs", roles: ["tenant_admin", "super_admin"] },
-  { id: "compliance", label: "HIPAA Compliance", icon: Shield, path: "/compliance", roles: ["tenant_admin", "super_admin"] },
+  { id: "audit-logs", label: "Audit & HIPAA", icon: Shield, path: "/audit-logs", roles: ["tenant_admin", "super_admin"] },
 ];
 
 export const Sidebar = () => {
