@@ -1,0 +1,525 @@
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { UserCheck, Users, Shield, Plus, Edit, Trash2, Search, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
+import { useTenant } from "@/contexts/tenant-context";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
+interface User {
+  id: string;
+  tenantId: string;
+  username: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const userFormSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  email: z.string().email("Invalid email address"),
+  role: z.enum(["physician", "nurse", "pharmacist", "lab_technician", "receptionist", "billing_staff", "tenant_admin"]),
+  password: z.string().min(6, "Password must be at least 6 characters").optional(),
+});
+
+type UserFormData = z.infer<typeof userFormSchema>;
+
+const roleDescriptions = {
+  physician: "Full access to patient records, prescriptions, and clinical data",
+  nurse: "Access to patient care, medication administration, and clinical workflows",
+  pharmacist: "Prescription management, drug interactions, and pharmacy operations",
+  lab_technician: "Laboratory orders, test results, and diagnostic data management",
+  receptionist: "Patient scheduling, registration, and basic administrative tasks",
+  billing_staff: "Insurance claims, billing processes, and financial data",
+  tenant_admin: "Full tenant management, user administration, and system configuration"
+};
+
+const roleColors = {
+  physician: "bg-blue-100 text-blue-800 border-blue-200",
+  nurse: "bg-green-100 text-green-800 border-green-200",
+  pharmacist: "bg-purple-100 text-purple-800 border-purple-200",
+  lab_technician: "bg-orange-100 text-orange-800 border-orange-200",
+  receptionist: "bg-pink-100 text-pink-800 border-pink-200",
+  billing_staff: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  tenant_admin: "bg-red-100 text-red-800 border-red-200"
+};
+
+export default function UserRoles() {
+  const { user } = useAuth();
+  const { tenant } = useTenant();
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
+
+  const form = useForm<UserFormData>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      username: "",
+      email: "",
+      role: "receptionist",
+      password: "",
+    },
+  });
+
+  const { data: users, isLoading } = useQuery({
+    queryKey: ["/api/users", tenant?.id],
+    enabled: !!user && !!tenant,
+  });
+
+  const createUserMutation = useMutation({
+    mutationFn: async (data: UserFormData) => {
+      const response = await apiRequest("POST", "/api/users", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setIsCreateDialogOpen(false);
+      form.reset();
+      toast({
+        title: "Success",
+        description: "User created successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<UserFormData> }) => {
+      const response = await apiRequest("PATCH", `/api/users/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setEditingUser(null);
+      form.reset();
+      toast({
+        title: "Success",
+        description: "User updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const toggleUserStatusMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const response = await apiRequest("PATCH", `/api/users/${id}`, { isActive });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Success",
+        description: "User status updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mock data for demonstration
+  const mockUsers: User[] = [
+    {
+      id: "1",
+      tenantId: tenant?.id || "",
+      username: "dr.smith",
+      email: "dr.smith@example.com",
+      role: "physician",
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: "2",
+      tenantId: tenant?.id || "",
+      username: "nurse.johnson",
+      email: "nurse.johnson@example.com",
+      role: "nurse",
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: "3",
+      tenantId: tenant?.id || "",
+      username: "pharm.wilson",
+      email: "pharm.wilson@example.com",
+      role: "pharmacist",
+      isActive: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+
+  const filteredUsers = mockUsers.filter(userItem => {
+    const matchesSearch = userItem.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         userItem.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = roleFilter === "all" || userItem.role === roleFilter;
+    const matchesStatus = statusFilter === "all" || 
+                         (statusFilter === "active" && userItem.isActive) ||
+                         (statusFilter === "inactive" && !userItem.isActive);
+    
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  const onSubmit = (data: UserFormData) => {
+    if (editingUser) {
+      updateUserMutation.mutate({ id: editingUser.id, data });
+    } else {
+      createUserMutation.mutate(data);
+    }
+  };
+
+  const handleEdit = (userItem: User) => {
+    setEditingUser(userItem);
+    form.reset({
+      username: userItem.username,
+      email: userItem.email,
+      role: userItem.role as any,
+      password: "",
+    });
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleToggleStatus = (userItem: User) => {
+    toggleUserStatusMutation.mutate({
+      id: userItem.id,
+      isActive: !userItem.isActive,
+    });
+  };
+
+  const togglePasswordVisibility = (userId: string) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [userId]: !prev[userId]
+    }));
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">User Role Management</h1>
+          <p className="text-gray-600 mt-2">
+            Manage healthcare team members and their access permissions
+          </p>
+        </div>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => {
+                setEditingUser(null);
+                form.reset();
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add User
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {editingUser ? "Edit User" : "Create New User"}
+              </DialogTitle>
+              <DialogDescription>
+                {editingUser ? "Update user information and role" : "Add a new team member to your healthcare organization"}
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter username" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="Enter email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a role" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="physician">Physician</SelectItem>
+                          <SelectItem value="nurse">Nurse</SelectItem>
+                          <SelectItem value="pharmacist">Pharmacist</SelectItem>
+                          <SelectItem value="lab_technician">Lab Technician</SelectItem>
+                          <SelectItem value="receptionist">Receptionist</SelectItem>
+                          <SelectItem value="billing_staff">Billing Staff</SelectItem>
+                          <SelectItem value="tenant_admin">Tenant Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {editingUser ? "New Password (leave blank to keep current)" : "Password"}
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder={editingUser ? "Leave blank to keep current" : "Enter password"} 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="submit" disabled={createUserMutation.isPending || updateUserMutation.isPending}>
+                    {createUserMutation.isPending || updateUserMutation.isPending ? "Saving..." : editingUser ? "Update User" : "Create User"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Role Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-gray-900">{filteredUsers.length}</div>
+            <div className="text-sm text-gray-600">Total Users</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <UserCheck className="h-8 w-8 text-green-600 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-gray-900">
+              {filteredUsers.filter(u => u.isActive).length}
+            </div>
+            <div className="text-sm text-gray-600">Active Users</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Shield className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-gray-900">
+              {Object.keys(roleDescriptions).length}
+            </div>
+            <div className="text-sm text-gray-600">Role Types</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Eye className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-gray-900">
+              {filteredUsers.filter(u => u.role === "tenant_admin").length}
+            </div>
+            <div className="text-sm text-gray-600">Admins</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle>User Filters</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search by username or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="Role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="physician">Physician</SelectItem>
+                <SelectItem value="nurse">Nurse</SelectItem>
+                <SelectItem value="pharmacist">Pharmacist</SelectItem>
+                <SelectItem value="lab_technician">Lab Tech</SelectItem>
+                <SelectItem value="receptionist">Receptionist</SelectItem>
+                <SelectItem value="billing_staff">Billing</SelectItem>
+                <SelectItem value="tenant_admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full md:w-32">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Users List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Team Members</CardTitle>
+          <CardDescription>
+            Healthcare professionals and staff with access to the system
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-500 mt-2">Loading users...</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredUsers.map((userItem) => (
+                <div key={userItem.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Users className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h3 className="font-medium text-gray-900">{userItem.username}</h3>
+                          <Badge className={roleColors[userItem.role as keyof typeof roleColors]}>
+                            {userItem.role.replace('_', ' ').toUpperCase()}
+                          </Badge>
+                          <Badge variant={userItem.isActive ? "default" : "secondary"}>
+                            {userItem.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
+                        <p className="text-gray-600 text-sm">{userItem.email}</p>
+                        <p className="text-gray-500 text-xs mt-1">
+                          {roleDescriptions[userItem.role as keyof typeof roleDescriptions]}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(userItem)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant={userItem.isActive ? "destructive" : "default"}
+                        size="sm"
+                        onClick={() => handleToggleStatus(userItem)}
+                        disabled={toggleUserStatusMutation.isPending}
+                      >
+                        {userItem.isActive ? "Deactivate" : "Activate"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {filteredUsers.length === 0 && (
+                <div className="text-center py-8">
+                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">No users match your criteria</p>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Role Permissions Reference */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Role Permissions Reference</CardTitle>
+          <CardDescription>
+            Understanding access levels for each healthcare role
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {Object.entries(roleDescriptions).map(([role, description]) => (
+              <div key={role} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                <Badge className={roleColors[role as keyof typeof roleColors]}>
+                  {role.replace('_', ' ').toUpperCase()}
+                </Badge>
+                <p className="text-sm text-gray-600 flex-1">{description}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
