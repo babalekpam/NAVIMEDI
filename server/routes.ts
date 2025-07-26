@@ -506,15 +506,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Convert string dates to Date objects and prepare data
       const requestData = { ...req.body };
-      if (requestData.requestDate && typeof requestData.requestDate === 'string') {
-        requestData.requestDate = new Date(requestData.requestDate);
+      if (requestData.orderedDate && typeof requestData.orderedDate === 'string') {
+        requestData.orderedDate = new Date(requestData.orderedDate);
       }
       
       const labOrderData = {
         ...requestData,
         tenantId: req.tenant!.id,
         providerId: req.user!.userId,
-        requestDate: requestData.requestDate || new Date(),
+        orderedDate: requestData.orderedDate || new Date(),
         appointmentId: requestData.appointmentId || null,
         labTenantId: requestData.labTenantId || null
       };
