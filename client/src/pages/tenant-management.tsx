@@ -17,14 +17,16 @@ import { Switch } from "@/components/ui/switch";
 import OrganizationUsers from "./organization-users";
 
 const tenantTypeLabels = {
+  platform: "Platform Owner",
   hospital: "Hospital",
-  clinic: "Clinic",
+  clinic: "Clinic", 
   pharmacy: "Pharmacy",
   laboratory: "Laboratory",
   insurance_provider: "Insurance Provider",
 };
 
 const tenantTypeColors = {
+  platform: "bg-indigo-100 text-indigo-800",
   hospital: "bg-blue-100 text-blue-800",
   clinic: "bg-green-100 text-green-800",
   pharmacy: "bg-purple-100 text-purple-800",

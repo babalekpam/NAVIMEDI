@@ -12,11 +12,12 @@ export async function createPlatformAdmin() {
     if (existingTenant.length === 0) {
       const [tenant] = await db.insert(tenants).values({
         name: "ARGILETTE Platform",
-        type: "hospital", // Main platform type
+        type: "platform", // Platform owner type
         subdomain: "argilette",
         settings: {
           isPlatformOwner: true,
-          features: ["super_admin", "tenant_management", "multi_tenant"]
+          features: ["super_admin", "tenant_management", "multi_tenant", "cross_tenant_reporting"],
+          description: "Healthcare technology platform provider and multi-tenant system owner"
         },
         isActive: true
       }).returning();

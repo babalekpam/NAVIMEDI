@@ -18,6 +18,7 @@ export const roleEnum = pgEnum("role", [
 ]);
 
 export const tenantTypeEnum = pgEnum("tenant_type", [
+  "platform",
   "hospital",
   "clinic", 
   "pharmacy",
