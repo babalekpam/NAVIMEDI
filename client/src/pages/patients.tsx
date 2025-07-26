@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Search, Plus, MoreHorizontal, UserCircle } from "lucide-react";
+import { Search, Plus, MoreHorizontal, UserCircle, Calendar, Phone, Mail, MapPin, Heart, AlertTriangle } from "lucide-react";
 import { Patient } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
@@ -16,6 +16,8 @@ import { useLocation } from "wouter";
 export default function Patients() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [isEHROpen, setIsEHROpen] = useState(false);
   const { user } = useAuth();
   const { tenant } = useTenant();
   const queryClient = useQueryClient();
@@ -58,9 +60,8 @@ export default function Patients() {
   };
 
   const handleViewEHR = (patient: Patient) => {
-    // Navigate to patient EHR/details page
-    // For now, we'll show an alert with patient information
-    alert(`Opening EHR for ${patient.firstName} ${patient.lastName}\nMRN: ${patient.mrn}\nDOB: ${formatDate(patient.dateOfBirth)}`);
+    setSelectedPatient(patient);
+    setIsEHROpen(true);
   };
 
   const handleScheduleAppointment = (patient: Patient) => {
@@ -224,6 +225,166 @@ export default function Patients() {
           )}
         </CardContent>
       </Card>
+
+      {/* Patient EHR Modal */}
+      <Dialog open={isEHROpen} onOpenChange={setIsEHROpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-3">
+              <Avatar className="h-12 w-12">
+                <AvatarFallback className="bg-blue-100 text-blue-700 text-lg font-medium">
+                  {selectedPatient && getPatientInitials(selectedPatient.firstName, selectedPatient.lastName)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h2 className="text-xl font-bold">
+                  {selectedPatient?.firstName} {selectedPatient?.lastName}
+                </h2>
+                <p className="text-sm text-gray-600">Electronic Health Record</p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedPatient && (
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Patient Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="font-medium">MRN:</span>
+                      <span>{selectedPatient.mrn}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Date of Birth:</span>
+                      <span>{formatDate(selectedPatient.dateOfBirth)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Gender:</span>
+                      <span>{selectedPatient.gender || 'Not specified'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Phone:</span>
+                      <span>{selectedPatient.phone || 'Not provided'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Email:</span>
+                      <span>{selectedPatient.email || 'Not provided'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Status:</span>
+                      <Badge variant={selectedPatient.isActive ? "default" : "secondary"}>
+                        {selectedPatient.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Contact Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <span className="font-medium">Address:</span>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {selectedPatient.address || 'No address on file'}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Emergency Contact:</span>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {selectedPatient.emergencyContact || 'No emergency contact on file'}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Medical Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <AlertTriangle className="h-5 w-5 mr-2 text-red-500" />
+                      Allergies
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedPatient.allergies && Array.isArray(selectedPatient.allergies) && selectedPatient.allergies.length > 0 ? (
+                      <div className="space-y-2">
+                        {selectedPatient.allergies.map((allergy, index) => (
+                          <Badge key={index} variant="destructive" className="mr-2">
+                            {allergy}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-600">No known allergies</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <Heart className="h-5 w-5 mr-2 text-blue-500" />
+                      Medical History
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedPatient.medicalHistory && Array.isArray(selectedPatient.medicalHistory) && selectedPatient.medicalHistory.length > 0 ? (
+                      <div className="space-y-2">
+                        {selectedPatient.medicalHistory.map((condition, index) => (
+                          <div key={index} className="p-2 bg-gray-50 rounded text-sm">
+                            {condition}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-600">No medical history recorded</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Insurance Information */}
+              {selectedPatient.insuranceInfo && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Insurance Information</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600">
+                      {typeof selectedPatient.insuranceInfo === 'object' && selectedPatient.insuranceInfo
+                        ? JSON.stringify(selectedPatient.insuranceInfo, null, 2)
+                        : selectedPatient.insuranceInfo
+                      }
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button 
+                  variant="outline"
+                  onClick={() => handleScheduleAppointment(selectedPatient)}
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Schedule Appointment
+                </Button>
+                <Button onClick={() => setIsEHROpen(false)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
