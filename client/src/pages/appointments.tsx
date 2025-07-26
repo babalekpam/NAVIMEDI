@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Calendar, Clock, Plus, Search, Filter, MoreHorizontal, Eye, Edit, Phone, Mail, User as UserIcon, Activity, FileText } from "lucide-react";
-import { Appointment, Patient, User } from "@shared/schema";
+import { Appointment, Patient, User, VitalSigns } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { AppointmentForm } from "@/components/forms/appointment-form";
@@ -58,6 +58,12 @@ export default function Appointments() {
 
   const { data: providers = [] } = useQuery<User[]>({
     queryKey: ["/api/users?role=physician"],
+    enabled: !!user && !!tenant,
+  });
+
+  // Get all vital signs to check which appointments have them
+  const { data: allVitalSigns = [] } = useQuery<VitalSigns[]>({
+    queryKey: ["/api/vital-signs"],
     enabled: !!user && !!tenant,
   });
 
@@ -163,6 +169,10 @@ export default function Appointments() {
   const getProviderName = (providerId: string) => {
     const provider = providers.find(p => p.id === providerId);
     return provider ? `Dr. ${provider.firstName} ${provider.lastName}` : `Provider ${providerId.slice(-4)}`;
+  };
+
+  const getVitalSignsForAppointment = (appointmentId: string) => {
+    return allVitalSigns.find(vs => vs.appointmentId === appointmentId);
   };
 
   if (!user || !tenant) {
@@ -329,6 +339,12 @@ export default function Appointments() {
                           <strong>Notes:</strong> {appointment.notes}
                         </p>
                       )}
+                      {getVitalSignsForAppointment(appointment.id) && (
+                        <div className="flex items-center mt-2 text-xs text-green-600">
+                          <Activity className="h-3 w-3 mr-1" />
+                          <span>Vital signs recorded</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   
@@ -471,6 +487,73 @@ export default function Appointments() {
                   <p className="font-medium">{getProviderName(selectedAppointment.providerId)}</p>
                 </div>
               </div>
+
+              {/* Vital Signs Information */}
+              {(() => {
+                const vitalSigns = getVitalSignsForAppointment(selectedAppointment.id);
+                return vitalSigns ? (
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="text-sm font-semibold text-green-900 mb-3 flex items-center">
+                      <Activity className="h-4 w-4 mr-2" />
+                      Vital Signs
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      {vitalSigns.bloodPressureSystolic && vitalSigns.bloodPressureDiastolic && (
+                        <div>
+                          <Label className="text-green-700">Blood Pressure</Label>
+                          <p className="font-medium">{vitalSigns.bloodPressureSystolic}/{vitalSigns.bloodPressureDiastolic} mmHg</p>
+                        </div>
+                      )}
+                      {vitalSigns.heartRate && (
+                        <div>
+                          <Label className="text-green-700">Heart Rate</Label>
+                          <p className="font-medium">{vitalSigns.heartRate} bpm</p>
+                        </div>
+                      )}
+                      {vitalSigns.temperature && (
+                        <div>
+                          <Label className="text-green-700">Temperature</Label>
+                          <p className="font-medium">{vitalSigns.temperature}°F</p>
+                        </div>
+                      )}
+                      {vitalSigns.oxygenSaturation && (
+                        <div>
+                          <Label className="text-green-700">Oxygen Saturation</Label>
+                          <p className="font-medium">{vitalSigns.oxygenSaturation}%</p>
+                        </div>
+                      )}
+                      {vitalSigns.weight && (
+                        <div>
+                          <Label className="text-green-700">Weight</Label>
+                          <p className="font-medium">{vitalSigns.weight} kg</p>
+                        </div>
+                      )}
+                      {vitalSigns.height && (
+                        <div>
+                          <Label className="text-green-700">Height</Label>
+                          <p className="font-medium">{vitalSigns.height} cm</p>
+                        </div>
+                      )}
+                      {vitalSigns.weight && vitalSigns.height && (
+                        <div>
+                          <Label className="text-green-700">BMI</Label>
+                          <p className="font-medium">
+                            {(() => {
+                              const weightKg = parseFloat(vitalSigns.weight);
+                              const heightM = parseFloat(vitalSigns.height) / 100;
+                              const bmi = weightKg / (heightM * heightM);
+                              return Math.round(bmi * 10) / 10;
+                            })()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-3 text-xs text-green-600">
+                      Recorded on {vitalSigns.recordedAt ? new Date(vitalSigns.recordedAt).toLocaleString() : 'Unknown'}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
 
               {/* Clinical Information */}
               {(selectedAppointment.chiefComplaint || selectedAppointment.notes) && (
