@@ -32,6 +32,7 @@ export default function Billing() {
   const [selectedClaim, setSelectedClaim] = useState<InsuranceClaim | null>(null);
   const [formData, setFormData] = useState({
     patientId: "",
+    patientInsuranceId: "",
     claimNumber: "",
     procedureCodes: "",
     diagnosisCodes: "",
@@ -53,6 +54,12 @@ export default function Billing() {
     enabled: !!user && !!tenant,
   });
 
+  // Get patient insurance when a patient is selected
+  const { data: patientInsurance = [] } = useQuery({
+    queryKey: ["/api/patient-insurance", formData.patientId],
+    enabled: !!formData.patientId,
+  });
+
   const createClaimMutation = useMutation({
     mutationFn: async (claimData: any) => {
       const response = await apiRequest("POST", "/api/insurance-claims", claimData);
@@ -63,6 +70,7 @@ export default function Billing() {
       setIsCreateDialogOpen(false);
       setFormData({
         patientId: "",
+        patientInsuranceId: "",
         claimNumber: "",
         procedureCodes: "",
         diagnosisCodes: "",
@@ -123,12 +131,22 @@ export default function Billing() {
   };
 
   const handleCreateClaim = () => {
+    if (!formData.patientId || !formData.patientInsuranceId || !formData.totalAmount) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields including insurance provider.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       // Generate claim number if not provided
       const claimNumber = formData.claimNumber || `CLM-${Date.now()}`;
       
       const claimData = {
         patientId: formData.patientId,
+        patientInsuranceId: formData.patientInsuranceId,
         claimNumber,
         procedureCodes: formData.procedureCodes ? formData.procedureCodes.split(',').map(code => code.trim()) : [],
         diagnosisCodes: formData.diagnosisCodes ? formData.diagnosisCodes.split(',').map(code => code.trim()) : [],
@@ -222,6 +240,33 @@ export default function Billing() {
                     />
                   </div>
                 </div>
+
+                {/* Insurance Provider Selection */}
+                {formData.patientId && (
+                  <div className="space-y-2">
+                    <Label htmlFor="patientInsuranceId">Insurance Provider *</Label>
+                    <Select
+                      value={formData.patientInsuranceId}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, patientInsuranceId: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select insurance provider" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {patientInsurance.map((insurance: any) => (
+                          <SelectItem key={insurance.id} value={insurance.id}>
+                            {insurance.insuranceProvider?.name || 'Unknown Provider'} - {insurance.policyNumber}
+                            {insurance.isPrimary && ' (Primary)'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {patientInsurance.length === 0 && (
+                      <p className="text-sm text-red-600">No insurance coverage found for this patient</p>
+                    )}
+                  </div>
+                )}
+                
                 <div className="space-y-2">
                   <Label htmlFor="totalAmount">Total Amount</Label>
                   <Input
@@ -258,7 +303,7 @@ export default function Billing() {
                 </Button>
                 <Button 
                   onClick={handleCreateClaim} 
-                  disabled={createClaimMutation.isPending || !formData.patientId || !formData.totalAmount}
+                  disabled={createClaimMutation.isPending || !formData.patientId || !formData.patientInsuranceId || !formData.totalAmount}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   {createClaimMutation.isPending ? "Creating..." : "Create Claim"}

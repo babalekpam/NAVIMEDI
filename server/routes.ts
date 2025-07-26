@@ -547,6 +547,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Insurance Provider routes
+  app.get("/api/insurance-providers", requireTenant, async (req, res) => {
+    try {
+      const providers = await storage.getInsuranceProviders(req.tenant!.id);
+      res.json(providers);
+    } catch (error) {
+      console.error("Get insurance providers error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Patient Insurance routes
+  app.get("/api/patient-insurance/:patientId", requireTenant, async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const insuranceList = await storage.getPatientInsurance(patientId, req.tenant!.id);
+      res.json(insuranceList);
+    } catch (error) {
+      console.error("Get patient insurance error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Dashboard metrics
   app.get("/api/dashboard/metrics", requireTenant, async (req, res) => {
     try {

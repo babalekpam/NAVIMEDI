@@ -170,6 +170,41 @@ export const prescriptions = pgTable("prescriptions", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Insurance Providers
+export const insuranceProviders = pgTable("insurance_providers", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  name: text("name").notNull(),
+  code: text("code").notNull(),
+  type: text("type").notNull(), // HMO, PPO, Medicare, Medicaid, etc.
+  contactInfo: jsonb("contact_info"),
+  claimsAddress: text("claims_address"),
+  electronicSubmission: boolean("electronic_submission").default(false),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Patient Insurance Coverage
+export const patientInsurance = pgTable("patient_insurance", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  insuranceProviderId: uuid("insurance_provider_id").references(() => insuranceProviders.id).notNull(),
+  policyNumber: text("policy_number").notNull(),
+  groupNumber: text("group_number"),
+  subscriberName: text("subscriber_name"),
+  subscriberRelationship: text("subscriber_relationship"), // self, spouse, child, other
+  effectiveDate: timestamp("effective_date").notNull(),
+  expirationDate: timestamp("expiration_date"),
+  copayAmount: decimal("copay_amount", { precision: 10, scale: 2 }),
+  deductibleAmount: decimal("deductible_amount", { precision: 10, scale: 2 }),
+  isPrimary: boolean("is_primary").default(true),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 export const labOrders = pgTable("lab_orders", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
@@ -194,8 +229,8 @@ export const insuranceClaims = pgTable("insurance_claims", {
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   patientId: uuid("patient_id").references(() => patients.id).notNull(),
   appointmentId: uuid("appointment_id").references(() => appointments.id),
+  patientInsuranceId: uuid("patient_insurance_id").references(() => patientInsurance.id).notNull(),
   claimNumber: text("claim_number").unique().notNull(),
-  insuranceTenantId: uuid("insurance_tenant_id").references(() => tenants.id),
   procedureCodes: jsonb("procedure_codes").default('[]'),
   diagnosisCodes: jsonb("diagnosis_codes").default('[]'),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
@@ -205,6 +240,7 @@ export const insuranceClaims = pgTable("insurance_claims", {
   submittedDate: timestamp("submitted_date"),
   processedDate: timestamp("processed_date"),
   paidDate: timestamp("paid_date"),
+  notes: text("notes"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
@@ -265,9 +301,35 @@ export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   prescriptions: many(prescriptions),
   labOrders: many(labOrders),
   insuranceClaims: many(insuranceClaims),
+  insuranceProviders: many(insuranceProviders),
+  patientInsurance: many(patientInsurance),
   auditLogs: many(auditLogs),
   subscription: one(subscriptions),
   reports: many(reports)
+}));
+
+export const insuranceProvidersRelations = relations(insuranceProviders, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [insuranceProviders.tenantId],
+    references: [tenants.id]
+  }),
+  patientInsurance: many(patientInsurance)
+}));
+
+export const patientInsuranceRelations = relations(patientInsurance, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [patientInsurance.tenantId],
+    references: [tenants.id]
+  }),
+  patient: one(patients, {
+    fields: [patientInsurance.patientId],
+    references: [patients.id]
+  }),
+  insuranceProvider: one(insuranceProviders, {
+    fields: [patientInsurance.insuranceProviderId],
+    references: [insuranceProviders.id]
+  }),
+  claims: many(insuranceClaims)
 }));
 
 export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
@@ -367,6 +429,19 @@ export const insertLabOrderSchema = createInsertSchema(labOrders).omit({
   updatedAt: true
 });
 
+// Insurance Provider and Patient Insurance schemas
+export const insertInsuranceProviderSchema = createInsertSchema(insuranceProviders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertPatientInsuranceSchema = createInsertSchema(patientInsurance).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 export const insertInsuranceClaimSchema = createInsertSchema(insuranceClaims).omit({
   id: true,
   createdAt: true,
@@ -403,6 +478,12 @@ export type InsertPrescription = z.infer<typeof insertPrescriptionSchema>;
 
 export type LabOrder = typeof labOrders.$inferSelect;
 export type InsertLabOrder = z.infer<typeof insertLabOrderSchema>;
+
+export type InsuranceProvider = typeof insuranceProviders.$inferSelect;
+export type InsertInsuranceProvider = z.infer<typeof insertInsuranceProviderSchema>;
+
+export type PatientInsurance = typeof patientInsurance.$inferSelect;
+export type InsertPatientInsurance = z.infer<typeof insertPatientInsuranceSchema>;
 
 export type InsuranceClaim = typeof insuranceClaims.$inferSelect;
 export type InsertInsuranceClaim = z.infer<typeof insertInsuranceClaimSchema>;

@@ -6,6 +6,8 @@ import {
   prescriptions, 
   labOrders, 
   insuranceClaims, 
+  insuranceProviders,
+  patientInsurance,
   auditLogs,
   subscriptions,
   reports,
@@ -23,6 +25,10 @@ import {
   type InsertLabOrder,
   type InsuranceClaim,
   type InsertInsuranceClaim,
+  type InsuranceProvider,
+  type InsertInsuranceProvider,
+  type PatientInsurance,
+  type InsertPatientInsurance,
   type Subscription,
   type InsertSubscription,
   type Report,
@@ -86,6 +92,14 @@ export interface IStorage {
   updateInsuranceClaim(id: string, updates: Partial<InsuranceClaim>, tenantId: string): Promise<InsuranceClaim | undefined>;
   getInsuranceClaimsByTenant(tenantId: string): Promise<InsuranceClaim[]>;
   getInsuranceClaimsByPatient(patientId: string, tenantId: string): Promise<InsuranceClaim[]>;
+  
+  // Insurance Provider management
+  getInsuranceProviders(tenantId: string): Promise<InsuranceProvider[]>;
+  createInsuranceProvider(provider: InsertInsuranceProvider): Promise<InsuranceProvider>;
+  
+  // Patient Insurance management
+  getPatientInsurance(patientId: string, tenantId: string): Promise<PatientInsurance[]>;
+  createPatientInsurance(insurance: InsertPatientInsurance): Promise<PatientInsurance>;
 
   // Audit logging
   createAuditLog(log: Omit<AuditLog, "id" | "timestamp">): Promise<AuditLog>;
@@ -412,6 +426,30 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(insuranceClaims).where(
       and(eq(insuranceClaims.patientId, patientId), eq(insuranceClaims.tenantId, tenantId))
     ).orderBy(desc(insuranceClaims.createdAt));
+  }
+
+  // Insurance Provider management
+  async getInsuranceProviders(tenantId: string): Promise<InsuranceProvider[]> {
+    return await db.select().from(insuranceProviders).where(
+      and(eq(insuranceProviders.tenantId, tenantId), eq(insuranceProviders.isActive, true))
+    ).orderBy(insuranceProviders.name);
+  }
+
+  async createInsuranceProvider(provider: InsertInsuranceProvider): Promise<InsuranceProvider> {
+    const [insuranceProvider] = await db.insert(insuranceProviders).values(provider).returning();
+    return insuranceProvider;
+  }
+
+  // Patient Insurance management
+  async getPatientInsurance(patientId: string, tenantId: string): Promise<PatientInsurance[]> {
+    return await db.select().from(patientInsurance).where(
+      and(eq(patientInsurance.patientId, patientId), eq(patientInsurance.tenantId, tenantId))
+    ).orderBy(desc(patientInsurance.isPrimary), patientInsurance.effectiveDate);
+  }
+
+  async createPatientInsurance(insurance: InsertPatientInsurance): Promise<PatientInsurance> {
+    const [patientIns] = await db.insert(patientInsurance).values(insurance).returning();
+    return patientIns;
   }
 
   // Audit logging
