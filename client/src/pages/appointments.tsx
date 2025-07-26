@@ -4,14 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, Clock, Plus, Search, Filter, MoreHorizontal } from "lucide-react";
+import { Calendar, Clock, Plus, Search, Filter, MoreHorizontal, Eye, Edit, Phone, Mail, User as UserIcon } from "lucide-react";
 import { Appointment, Patient, User } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { AppointmentForm } from "@/components/forms/appointment-form";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 const statusColors = {
   scheduled: "bg-gray-100 text-gray-800",
@@ -27,9 +31,15 @@ export default function Appointments() {
   const [selectedDate, setSelectedDate] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [newStatus, setNewStatus] = useState<string>("");
+  const [statusNotes, setStatusNotes] = useState<string>("");
   const { user } = useAuth();
   const { tenant } = useTenant();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Get all appointments if "all" is selected, otherwise filter by date
   const { data: appointments = [], isLoading } = useQuery<Appointment[]>({
@@ -69,9 +79,59 @@ export default function Appointments() {
     }
   });
 
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status, notes }: { id: string; status: string; notes?: string }) => {
+      const response = await apiRequest("PATCH", `/api/appointments/${id}`, {
+        status,
+        notes: notes || undefined
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      setIsStatusDialogOpen(false);
+      setSelectedAppointment(null);
+      setNewStatus("");
+      setStatusNotes("");
+      toast({
+        title: "Status Updated",
+        description: "The appointment status has been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update appointment status.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const filteredAppointments = appointments.filter(appointment => 
     statusFilter === "all" || appointment.status === statusFilter
   );
+
+  const handleViewDetails = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleUpdateStatus = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setNewStatus(appointment.status);
+    setStatusNotes("");
+    setIsStatusDialogOpen(true);
+  };
+
+  const handleStatusSubmit = () => {
+    if (!selectedAppointment || !newStatus) return;
+    
+    updateStatusMutation.mutate({
+      id: selectedAppointment.id,
+      status: newStatus,
+      notes: statusNotes
+    });
+  };
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('en-US', {
@@ -271,10 +331,22 @@ export default function Appointments() {
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-blue-600 hover:text-blue-700"
+                        onClick={() => handleViewDetails(appointment)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
                         View Details
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-teal-600 hover:text-teal-700">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-teal-600 hover:text-teal-700"
+                        onClick={() => handleUpdateStatus(appointment)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
                         Update Status
                       </Button>
                       <Button variant="ghost" size="sm">
@@ -288,6 +360,171 @@ export default function Appointments() {
           )}
         </CardContent>
       </Card>
+
+      {/* View Appointment Details Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Eye className="h-5 w-5 mr-2" />
+              Appointment Details
+            </DialogTitle>
+            <DialogDescription>
+              Complete information for this appointment
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedAppointment && (
+            <div className="space-y-6">
+              {/* Patient Information */}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="text-sm font-semibold text-blue-900 mb-3 flex items-center">
+                  <UserIcon className="h-4 w-4 mr-2" />
+                  Patient Information
+                </h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <Label className="text-blue-700">Patient Name</Label>
+                    <p className="font-medium">{getPatientName(selectedAppointment.patientId)}</p>
+                  </div>
+                  <div>
+                    <Label className="text-blue-700">Patient ID</Label>
+                    <p className="font-mono text-xs">{selectedAppointment.patientId.slice(-8).toUpperCase()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Appointment Information */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Appointment Information
+                </h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <Label className="text-gray-700">Date & Time</Label>
+                    <p className="font-medium">
+                      {new Date(selectedAppointment.appointmentDate).toLocaleDateString()} at {formatTime(selectedAppointment.appointmentDate)}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-700">Duration</Label>
+                    <p className="font-medium">{selectedAppointment.duration} minutes</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-700">Appointment Type</Label>
+                    <p className="font-medium capitalize">{selectedAppointment.type}</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-700">Status</Label>
+                    <Badge className={`${statusColors[selectedAppointment.status as keyof typeof statusColors] || statusColors.scheduled} mt-1`}>
+                      {selectedAppointment.status?.replace('_', ' ').toUpperCase() || 'SCHEDULED'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Provider Information */}
+              <div className="bg-green-50 p-4 rounded-lg">
+                <h3 className="text-sm font-semibold text-green-900 mb-3 flex items-center">
+                  <UserIcon className="h-4 w-4 mr-2" />
+                  Provider Information
+                </h3>
+                <div className="text-sm">
+                  <Label className="text-green-700">Attending Provider</Label>
+                  <p className="font-medium">{getProviderName(selectedAppointment.providerId)}</p>
+                </div>
+              </div>
+
+              {/* Clinical Information */}
+              {(selectedAppointment.chiefComplaint || selectedAppointment.notes) && (
+                <div className="bg-yellow-50 p-4 rounded-lg">
+                  <h3 className="text-sm font-semibold text-yellow-900 mb-3">
+                    Clinical Information
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    {selectedAppointment.chiefComplaint && (
+                      <div>
+                        <Label className="text-yellow-700">Chief Complaint</Label>
+                        <p className="font-medium">{selectedAppointment.chiefComplaint}</p>
+                      </div>
+                    )}
+                    {selectedAppointment.notes && (
+                      <div>
+                        <Label className="text-yellow-700">Additional Notes</Label>
+                        <p className="font-medium">{selectedAppointment.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Update Status Dialog */}
+      <Dialog open={isStatusDialogOpen} onOpenChange={setIsStatusDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Edit className="h-5 w-5 mr-2" />
+              Update Appointment Status
+            </DialogTitle>
+            <DialogDescription>
+              Update the status for {selectedAppointment && getPatientName(selectedAppointment.patientId)}'s appointment
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="status">New Status</Label>
+              <Select value={newStatus} onValueChange={setNewStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select new status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="scheduled">Scheduled</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="checked_in">Checked In</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="no_show">No Show</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="notes">Status Notes (Optional)</Label>
+              <Textarea
+                id="notes"
+                placeholder="Add any notes about the status change..."
+                value={statusNotes}
+                onChange={(e) => setStatusNotes(e.target.value)}
+                className="min-h-[80px]"
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsStatusDialogOpen(false)}
+                disabled={updateStatusMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleStatusSubmit}
+                disabled={!newStatus || updateStatusMutation.isPending}
+                className="bg-teal-600 hover:bg-teal-700"
+              >
+                {updateStatusMutation.isPending ? "Updating..." : "Update Status"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

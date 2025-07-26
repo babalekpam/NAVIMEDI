@@ -415,6 +415,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update appointment (PATCH)
+  app.patch("/api/appointments/:id", authenticateToken, requireRole(["physician", "nurse", "receptionist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = { ...req.body };
+
+      // Handle date fields properly if they exist
+      if (updateData.appointmentDate && typeof updateData.appointmentDate === 'string') {
+        updateData.appointmentDate = new Date(updateData.appointmentDate);
+      }
+
+      const updatedAppointment = await storage.updateAppointment(id, updateData, req.tenant!.id);
+      
+      if (!updatedAppointment) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenant!.id,
+        userId: req.user!.userId,
+        entityType: "appointment",
+        entityId: id,
+        action: "update",
+        newData: updatedAppointment,
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      res.json(updatedAppointment);
+    } catch (error) {
+      console.error("Update appointment error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Prescription management routes
   app.get("/api/prescriptions", authenticateToken, requireTenant, async (req, res) => {
     try {
