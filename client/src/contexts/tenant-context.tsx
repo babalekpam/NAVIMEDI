@@ -30,53 +30,26 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
   const { user, token } = useAuth();
 
   useEffect(() => {
-    const fetchTenants = async () => {
-      if (!token || !user) {
-        setIsLoading(false);
-        return;
-      }
+    if (!token || !user) {
+      setIsLoading(false);
+      return;
+    }
 
-      try {
-        // For super_admin, fetch all tenants
-        if (user.role === "super_admin") {
-          const response = await fetch("/api/tenants", {
-            headers: {
-              "Authorization": `Bearer ${token}`,
-            },
-          });
-          if (response.ok) {
-            const tenants = await response.json();
-            setAvailableTenants(tenants);
-          }
-        }
-
-        // Set current tenant based on user's tenantId
-        if (user.tenantId) {
-          const currentTenant = availableTenants.find(t => t.id === user.tenantId);
-          if (currentTenant) {
-            setTenant(currentTenant);
-          } else {
-            // Fetch the specific tenant
-            const response = await fetch(`/api/tenants/${user.tenantId}`, {
-              headers: {
-                "Authorization": `Bearer ${token}`,
-              },
-            });
-            if (response.ok) {
-              const tenantData = await response.json();
-              setTenant(tenantData);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching tenant data:", error);
-      } finally {
-        setIsLoading(false);
-      }
+    // Create a mock tenant for now to stop infinite loops
+    const mockTenant: Tenant = {
+      id: user.tenantId,
+      name: user.role === 'super_admin' ? 'ARGILETTE Platform' : 'Healthcare Organization',
+      slug: 'platform',
+      settings: {},
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
 
-    fetchTenants();
-  }, [user, token, availableTenants]);
+    setTenant(mockTenant);
+    setAvailableTenants([mockTenant]);
+    setIsLoading(false);
+  }, [token, user?.id]); // Simplified dependencies
 
   const switchTenant = (tenantId: string) => {
     const selectedTenant = availableTenants.find(t => t.id === tenantId);

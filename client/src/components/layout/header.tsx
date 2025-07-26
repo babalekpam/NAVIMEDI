@@ -25,7 +25,7 @@ export const Header = () => {
     setLocation("/login");
   };
 
-  if (!user || !tenant) return null;
+  if (!user) return null;
 
   const userInitials = `${user.firstName[0]}${user.lastName[0]}`;
 
@@ -41,7 +41,7 @@ export const Header = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-blue-600">NAVIMED</h1>
-                <p className="text-xs text-gray-500">{tenant.name}</p>
+                <p className="text-xs text-gray-500">{tenant?.name || 'Loading...'}</p>
               </div>
             </div>
           </div>
