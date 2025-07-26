@@ -36,6 +36,7 @@ export default function TenantManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const [viewDetailsTenant, setViewDetailsTenant] = useState<Tenant | null>(null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -85,9 +86,7 @@ export default function TenantManagement() {
   };
 
   const handleViewDetails = (tenant: Tenant) => {
-    // For now, show an alert with tenant details
-    // In a full implementation, this would open a detailed modal or navigate to a detail page
-    alert(`Organization Details:\n\nName: ${tenant.name}\nType: ${tenantTypeLabels[tenant.type as keyof typeof tenantTypeLabels]}\nSubdomain: ${tenant.subdomain}\nStatus: ${tenant.isActive ? 'Active' : 'Inactive'}\nCreated: ${new Date(tenant.createdAt).toLocaleDateString()}`);
+    setViewDetailsTenant(tenant);
   };
 
   const handleManageUsers = (tenant: Tenant) => {
@@ -230,6 +229,100 @@ export default function TenantManagement() {
                 </div>
               </form>
             </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* View Details Dialog */}
+        <Dialog open={!!viewDetailsTenant} onOpenChange={() => setViewDetailsTenant(null)}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <Building className="h-5 w-5 mr-2" />
+                Organization Details
+              </DialogTitle>
+            </DialogHeader>
+            {viewDetailsTenant && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Organization Name</label>
+                    <p className="text-lg font-semibold text-gray-900">{viewDetailsTenant.name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Type</label>
+                    <div className="mt-1">
+                      <Badge 
+                        variant="secondary"
+                        className={tenantTypeColors[viewDetailsTenant.type as keyof typeof tenantTypeColors]}
+                      >
+                        {tenantTypeLabels[viewDetailsTenant.type as keyof typeof tenantTypeLabels]}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Subdomain</label>
+                    <p className="text-sm text-gray-900 font-mono bg-gray-50 px-2 py-1 rounded">
+                      {viewDetailsTenant.subdomain}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Status</label>
+                    <div className="mt-1">
+                      <Badge 
+                        variant={viewDetailsTenant.isActive ? "default" : "secondary"}
+                        className={viewDetailsTenant.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}
+                      >
+                        {viewDetailsTenant.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Created Date</label>
+                  <p className="text-sm text-gray-900">
+                    {new Date(viewDetailsTenant.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+
+                {viewDetailsTenant.settings && Object.keys(viewDetailsTenant.settings).length > 0 && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Configuration</label>
+                    <div className="mt-1 bg-gray-50 p-3 rounded text-xs font-mono text-gray-700">
+                      {JSON.stringify(viewDetailsTenant.settings, null, 2)}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setViewDetailsTenant(null)}
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setViewDetailsTenant(null);
+                      handleManageUsers(viewDetailsTenant);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Manage Users
+                  </Button>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
