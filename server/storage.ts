@@ -24,7 +24,7 @@ import {
   type AuditLog
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, like, or } from "drizzle-orm";
 
 export interface IStorage {
   // User management

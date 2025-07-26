@@ -8,6 +8,13 @@ NAVIMED is a comprehensive multi-tenant EHR/EMR/CRM system designed to serve mul
 
 Preferred communication style: Simple, everyday language.
 
+## Super Admin Account
+- Email: abel@argilette.com
+- Password: Serrega1208@
+- Role: Platform Super Admin
+- Tenant: ARGILETTE Platform (platform owner)
+- Access: Can view all tenant accounts and activities
+
 ## System Architecture
 
 ### Frontend Architecture
@@ -129,3 +136,13 @@ Preferred communication style: Simple, everyday language.
 - **HIPAA compliance**: Audit logging and data encryption
 - **Role-based access**: Healthcare-specific permission system
 - **JWT security**: Short-lived tokens with secure secret management
+
+## Recent Changes
+
+### January 26, 2025
+- ✓ Created modern landing page with NAVIMED logo showcasing multilingual platform features
+- ✓ Implemented strict tenant isolation architecture with super admin oversight
+- ✓ Set up platform super admin account (abel@argilette.com) with access to all tenant data  
+- ✓ Created ARGILETTE platform tenant as the master organizational unit
+- ✓ Fixed database connection and schema deployment issues
+- ✓ Added comprehensive healthcare workflow features (EHR/EMR/CRM integration)
