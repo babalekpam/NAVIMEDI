@@ -664,6 +664,7 @@ export default function Appointments() {
           patientId={selectedAppointment.patientId}
           patientName={getPatientName(selectedAppointment.patientId)}
           appointmentId={selectedAppointment.id}
+          vitalSignsId={getVitalSignsForAppointment(selectedAppointment.id)?.id}
         />
       )}
     </div>

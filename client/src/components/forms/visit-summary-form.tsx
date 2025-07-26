@@ -27,7 +27,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { FileText, Stethoscope, ClipboardList, UserCheck, Calendar } from "lucide-react";
+import { FileText, Stethoscope, ClipboardList, UserCheck, Calendar, Activity } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 const visitSummarySchema = z.object({
   patientId: z.string().min(1, "Patient is required"),
@@ -102,6 +103,13 @@ export function VisitSummaryForm({
   const [selectedDiagnoses, setSelectedDiagnoses] = useState<string[]>(
     existingVisitSummary?.finalDiagnosis || []
   );
+
+  // Fetch vital signs data if vitalSignsId is provided
+  const { data: vitalSigns } = useQuery({
+    queryKey: ["/api/vital-signs", vitalSignsId],
+    queryFn: () => vitalSignsId ? apiRequest("GET", `/api/vital-signs/appointment/${appointmentId}`) : null,
+    enabled: !!vitalSignsId,
+  });
 
   const form = useForm<VisitSummaryFormData>({
     resolver: zodResolver(visitSummarySchema),
@@ -216,6 +224,88 @@ export function VisitSummaryForm({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Vital Signs Section - Show data from reception */}
+            {vitalSigns && (
+              <Card className="bg-green-50 border-green-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-green-600" />
+                    Vital Signs (Recorded at Reception)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    {vitalSigns.bloodPressureSystolic && vitalSigns.bloodPressureDiastolic && (
+                      <div className="bg-white p-3 rounded-lg border">
+                        <div className="text-green-700 font-medium">Blood Pressure</div>
+                        <div className="text-lg font-semibold">{vitalSigns.bloodPressureSystolic}/{vitalSigns.bloodPressureDiastolic}</div>
+                        <div className="text-xs text-gray-500">mmHg</div>
+                      </div>
+                    )}
+                    {vitalSigns.heartRate && (
+                      <div className="bg-white p-3 rounded-lg border">
+                        <div className="text-green-700 font-medium">Heart Rate</div>
+                        <div className="text-lg font-semibold">{vitalSigns.heartRate}</div>
+                        <div className="text-xs text-gray-500">bpm</div>
+                      </div>
+                    )}
+                    {vitalSigns.temperature && (
+                      <div className="bg-white p-3 rounded-lg border">
+                        <div className="text-green-700 font-medium">Temperature</div>
+                        <div className="text-lg font-semibold">{vitalSigns.temperature}</div>
+                        <div className="text-xs text-gray-500">°F</div>
+                      </div>
+                    )}
+                    {vitalSigns.oxygenSaturation && (
+                      <div className="bg-white p-3 rounded-lg border">
+                        <div className="text-green-700 font-medium">O2 Saturation</div>
+                        <div className="text-lg font-semibold">{vitalSigns.oxygenSaturation}</div>
+                        <div className="text-xs text-gray-500">%</div>
+                      </div>
+                    )}
+                    {vitalSigns.weight && (
+                      <div className="bg-white p-3 rounded-lg border">
+                        <div className="text-green-700 font-medium">Weight</div>
+                        <div className="text-lg font-semibold">{vitalSigns.weight}</div>
+                        <div className="text-xs text-gray-500">kg</div>
+                      </div>
+                    )}
+                    {vitalSigns.height && (
+                      <div className="bg-white p-3 rounded-lg border">
+                        <div className="text-green-700 font-medium">Height</div>
+                        <div className="text-lg font-semibold">{vitalSigns.height}</div>
+                        <div className="text-xs text-gray-500">cm</div>
+                      </div>
+                    )}
+                    {vitalSigns.weight && vitalSigns.height && (
+                      <div className="bg-white p-3 rounded-lg border">
+                        <div className="text-green-700 font-medium">BMI</div>
+                        <div className="text-lg font-semibold">
+                          {(() => {
+                            const weightKg = parseFloat(vitalSigns.weight);
+                            const heightM = parseFloat(vitalSigns.height) / 100;
+                            const bmi = weightKg / (heightM * heightM);
+                            return Math.round(bmi * 10) / 10;
+                          })()}
+                        </div>
+                        <div className="text-xs text-gray-500">kg/m²</div>
+                      </div>
+                    )}
+                    {vitalSigns.respiratoryRate && (
+                      <div className="bg-white p-3 rounded-lg border">
+                        <div className="text-green-700 font-medium">Respiratory Rate</div>
+                        <div className="text-lg font-semibold">{vitalSigns.respiratoryRate}</div>
+                        <div className="text-xs text-gray-500">breaths/min</div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-3 text-xs text-green-600">
+                    Recorded on {vitalSigns.recordedAt ? new Date(vitalSigns.recordedAt).toLocaleString() : 'Unknown'}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Chief Complaint & History */}
               <Card>
