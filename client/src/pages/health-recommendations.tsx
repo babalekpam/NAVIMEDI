@@ -68,7 +68,7 @@ const typeIcons = {
 
 export default function HealthRecommendations() {
   const { user } = useAuth();
-  const { currentTenant } = useTenant();
+  const { tenant: currentTenant } = useTenant();
   const queryClient = useQueryClient();
   const [selectedPatient, setSelectedPatient] = useState<string>("");
   const [selectedRecommendation, setSelectedRecommendation] = useState<HealthRecommendation | null>(null);
@@ -78,7 +78,7 @@ export default function HealthRecommendations() {
     enabled: !!user && !!currentTenant
   });
 
-  console.log("Patients data:", patients, "Loading:", patientsLoading);
+
 
   const { data: recommendations = [], isLoading: recommendationsLoading, refetch: refetchRecommendations } = useQuery({
     queryKey: ["/api/health-recommendations/patient", selectedPatient],
@@ -158,7 +158,7 @@ export default function HealthRecommendations() {
                 <SelectValue placeholder="Select a patient" />
               </SelectTrigger>
               <SelectContent>
-                {patients.map((patient: Patient) => (
+                {(patients as Patient[]).map((patient: Patient) => (
                   <SelectItem key={patient.id} value={patient.id}>
                     {patient.firstName} {patient.lastName} (MRN: {patient.mrn})
                   </SelectItem>
@@ -203,7 +203,7 @@ export default function HealthRecommendations() {
               <div className="flex items-center justify-center h-32">
                 Loading recommendations...
               </div>
-            ) : recommendations.length === 0 ? (
+            ) : (recommendations as HealthRecommendation[]).length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center h-32 text-center">
                   <Brain className="h-12 w-12 text-muted-foreground mb-2" />
@@ -214,7 +214,7 @@ export default function HealthRecommendations() {
               </Card>
             ) : (
               <div className="grid gap-4">
-                {recommendations.map((rec: HealthRecommendation) => {
+                {(recommendations as HealthRecommendation[]).map((rec: HealthRecommendation) => {
                   const TypeIcon = typeIcons[rec.type];
                   return (
                     <Card key={rec.id} className="hover:shadow-md transition-shadow">
@@ -346,7 +346,7 @@ export default function HealthRecommendations() {
               <div className="flex items-center justify-center h-32">
                 Loading health analysis...
               </div>
-            ) : !latestAnalysis ? (
+            ) : !latestAnalysis || Object.keys(latestAnalysis).length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center h-32 text-center">
                   <Activity className="h-12 w-12 text-muted-foreground mb-2" />
@@ -368,14 +368,14 @@ export default function HealthRecommendations() {
                   <CardContent>
                     <div className="flex items-center space-x-6">
                       <div className="text-center">
-                        <div className={`text-4xl font-bold ${getHealthScoreColor(latestAnalysis.overallHealthScore)}`}>
-                          {latestAnalysis.overallHealthScore}
+                        <div className={`text-4xl font-bold ${getHealthScoreColor((latestAnalysis as HealthAnalysis)?.overallHealthScore || 0)}`}>
+                          {(latestAnalysis as HealthAnalysis)?.overallHealthScore || 0}
                         </div>
                         <div className="text-sm text-muted-foreground">out of 100</div>
                       </div>
                       <div className="flex-1">
                         <Progress 
-                          value={latestAnalysis.overallHealthScore} 
+                          value={(latestAnalysis as HealthAnalysis)?.overallHealthScore || 0} 
                           className="w-full h-3"
                         />
                         <div className="flex justify-between text-xs text-muted-foreground mt-1">
@@ -399,11 +399,11 @@ export default function HealthRecommendations() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {latestAnalysis.trends.improving.length === 0 ? (
+                      {((latestAnalysis as HealthAnalysis)?.trends?.improving || []).length === 0 ? (
                         <p className="text-sm text-muted-foreground">No improvements detected</p>
                       ) : (
                         <ul className="space-y-1">
-                          {latestAnalysis.trends.improving.map((trend, index) => (
+                          {((latestAnalysis as HealthAnalysis)?.trends?.improving || []).map((trend: string, index: number) => (
                             <li key={index} className="text-sm flex items-center space-x-2">
                               <span className="text-green-600">•</span>
                               <span>{trend}</span>
@@ -422,11 +422,11 @@ export default function HealthRecommendations() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {latestAnalysis.trends.stable.length === 0 ? (
+                      {((latestAnalysis as HealthAnalysis)?.trends?.stable || []).length === 0 ? (
                         <p className="text-sm text-muted-foreground">No stable indicators</p>
                       ) : (
                         <ul className="space-y-1">
-                          {latestAnalysis.trends.stable.map((trend, index) => (
+                          {((latestAnalysis as HealthAnalysis)?.trends?.stable || []).map((trend: string, index: number) => (
                             <li key={index} className="text-sm flex items-center space-x-2">
                               <span className="text-blue-600">•</span>
                               <span>{trend}</span>
@@ -445,11 +445,11 @@ export default function HealthRecommendations() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {latestAnalysis.trends.concerning.length === 0 ? (
+                      {((latestAnalysis as HealthAnalysis)?.trends?.concerning || []).length === 0 ? (
                         <p className="text-sm text-muted-foreground">No concerning trends</p>
                       ) : (
                         <ul className="space-y-1">
-                          {latestAnalysis.trends.concerning.map((trend, index) => (
+                          {((latestAnalysis as HealthAnalysis)?.trends?.concerning || []).map((trend: string, index: number) => (
                             <li key={index} className="text-sm flex items-center space-x-2">
                               <span className="text-orange-600">•</span>
                               <span>{trend}</span>
@@ -462,7 +462,7 @@ export default function HealthRecommendations() {
                 </div>
 
                 {/* Risk Factors */}
-                {latestAnalysis.riskFactors.length > 0 && (
+                {((latestAnalysis as HealthAnalysis)?.riskFactors || []).length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center space-x-2 text-red-600">
@@ -472,7 +472,7 @@ export default function HealthRecommendations() {
                     </CardHeader>
                     <CardContent>
                       <div className="grid md:grid-cols-2 gap-3">
-                        {latestAnalysis.riskFactors.map((risk, index) => (
+                        {((latestAnalysis as HealthAnalysis)?.riskFactors || []).map((risk: string, index: number) => (
                           <Alert key={index} className="border-red-200">
                             <AlertTriangle className="h-4 w-4" />
                             <AlertDescription>{risk}</AlertDescription>
@@ -484,7 +484,7 @@ export default function HealthRecommendations() {
                 )}
 
                 {/* Next Appointment Suggestion */}
-                {latestAnalysis.nextAppointmentSuggestion && (
+                {(latestAnalysis as HealthAnalysis)?.nextAppointmentSuggestion && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center space-x-2">
@@ -493,7 +493,7 @@ export default function HealthRecommendations() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm">{latestAnalysis.nextAppointmentSuggestion}</p>
+                      <p className="text-sm">{(latestAnalysis as HealthAnalysis)?.nextAppointmentSuggestion}</p>
                     </CardContent>
                   </Card>
                 )}
