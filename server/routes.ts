@@ -1897,8 +1897,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user?.id!,
         tenantId: req.tenantId!,
         action: "vital_signs_created",
-        resourceType: "vital_signs",
-        resourceId: vitalSigns.id,
+        entityType: "vital_signs",
+        entityId: vitalSigns.id,
         details: { patientId: vitalSigns.patientId, appointmentId: vitalSigns.appointmentId }
       });
 

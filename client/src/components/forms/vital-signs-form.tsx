@@ -142,7 +142,6 @@ export function VitalSignsForm({
     },
     onError: (error: any) => {
       console.error("Create vital signs error:", error);
-      console.error("Full error response:", error.response);
       toast({
         title: "Error",
         description: error.message || "Failed to record vital signs",
