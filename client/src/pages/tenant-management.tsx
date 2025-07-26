@@ -297,10 +297,10 @@ export default function TenantManagement() {
                 {viewDetailsTenant.settings && Object.keys(viewDetailsTenant.settings).length > 0 && (
                   <div>
                     <label className="text-sm font-medium text-gray-600">
-                      {viewDetailsTenant.name === 'ARGILETTE Platform' ? 'Platform Features' : 'Organization Settings'}
+                      {viewDetailsTenant.settings.isPlatformOwner ? 'Platform Features' : 'Organization Settings'}
                     </label>
                     <div className="mt-1 bg-gray-50 p-3 rounded">
-                      {viewDetailsTenant.name === 'ARGILETTE Platform' ? (
+                      {viewDetailsTenant.settings.isPlatformOwner ? (
                         <div className="space-y-2">
                           <div className="flex items-center text-sm text-gray-700">
                             <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
@@ -316,8 +316,18 @@ export default function TenantManagement() {
                           </div>
                         </div>
                       ) : (
-                        <div className="text-xs font-mono text-gray-700">
-                          {JSON.stringify(viewDetailsTenant.settings, null, 2)}
+                        <div className="space-y-2">
+                          {Object.entries(viewDetailsTenant.settings).map(([key, value]) => (
+                            <div key={key} className="flex items-start text-sm text-gray-700">
+                              <span className="w-2 h-2 bg-gray-400 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                              <div>
+                                <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}: </span>
+                                <span className="text-gray-600">
+                                  {Array.isArray(value) ? value.join(', ') : String(value)}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
