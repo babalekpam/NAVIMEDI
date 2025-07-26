@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, Pill, TestTube, DollarSign, AlertTriangle, CheckCircle, Clock, RefreshCw, Building2, Activity, TrendingUp, Database } from "lucide-react";
+import { Calendar, Users, Pill, TestTube, DollarSign, AlertTriangle, CheckCircle, Clock, RefreshCw, Building2, Activity, TrendingUp, Database, Stethoscope, Heart, UserCheck, Package, Shield, ShieldCheck, FileText } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 
@@ -314,8 +314,903 @@ export default function Dashboard() {
     );
   }
 
-  // Regular tenant dashboard
-  return (
+  // Role-specific dashboards for healthcare professionals
+  const renderRoleSpecificDashboard = () => {
+    switch (user.role) {
+      case 'physician':
+        return renderPhysicianDashboard();
+      case 'nurse':
+        return renderNurseDashboard();
+      case 'pharmacist':
+        return renderPharmacistDashboard();
+      case 'lab_technician':
+        return renderLabTechnicianDashboard();
+      case 'receptionist':
+        return renderReceptionistDashboard();
+      case 'billing_staff':
+        return renderBillingStaffDashboard();
+      case 'insurance_manager':
+        return renderInsuranceManagerDashboard();
+      case 'patient':
+        return renderPatientDashboard();
+      case 'tenant_admin':
+        return renderTenantAdminDashboard();
+      default:
+        return renderDefaultDashboard();
+    }
+  };
+
+  // Physician Dashboard
+  const renderPhysicianDashboard = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Physician Dashboard</h1>
+          <p className="text-gray-600 mt-1">
+            Welcome back, Dr. {user.lastName}. Your clinical overview for today.
+          </p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Badge className="bg-blue-100 text-blue-800">
+            <Stethoscope className="h-3 w-3 mr-1" />
+            On Duty
+          </Badge>
+        </div>
+      </div>
+
+      {/* Physician Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Today's Appointments</p>
+                <p className="text-3xl font-bold text-gray-900">12</p>
+                <p className="text-xs text-blue-600 mt-1">3 urgent cases</p>
+              </div>
+              <Calendar className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Patients</p>
+                <p className="text-3xl font-bold text-gray-900">247</p>
+                <p className="text-xs text-green-600 mt-1">8 new this week</p>
+              </div>
+              <Users className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pending Reviews</p>
+                <p className="text-3xl font-bold text-gray-900">8</p>
+                <p className="text-xs text-orange-600 mt-1">Lab results & reports</p>
+              </div>
+              <FileText className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Prescriptions</p>
+                <p className="text-3xl font-bold text-gray-900">23</p>
+                <p className="text-xs text-purple-600 mt-1">Written today</p>
+              </div>
+              <Pill className="h-8 w-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Button className="h-24 flex flex-col items-center justify-center space-y-2">
+              <Calendar className="h-6 w-6" />
+              <span>View Schedule</span>
+            </Button>
+            <Button variant="outline" className="h-24 flex flex-col items-center justify-center space-y-2">
+              <Users className="h-6 w-6" />
+              <span>Patient List</span>
+            </Button>
+            <Button variant="outline" className="h-24 flex flex-col items-center justify-center space-y-2">
+              <Pill className="h-6 w-6" />
+              <span>Prescriptions</span>
+            </Button>
+            <Button variant="outline" className="h-24 flex flex-col items-center justify-center space-y-2">
+              <TestTube className="h-6 w-6" />
+              <span>Lab Orders</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Today's Schedule & Urgent Items */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Today's Schedule</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { time: "09:00", patient: "John Smith", type: "Consultation", urgent: false },
+                { time: "09:30", patient: "Sarah Johnson", type: "Follow-up", urgent: true },
+                { time: "10:00", patient: "Mike Wilson", type: "Physical", urgent: false },
+                { time: "10:30", patient: "Emma Davis", type: "Emergency", urgent: true },
+                { time: "11:00", patient: "Robert Brown", type: "Consultation", urgent: false }
+              ].map((appointment, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-3 h-3 rounded-full ${appointment.urgent ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                    <div>
+                      <p className="font-medium">{appointment.time} - {appointment.patient}</p>
+                      <p className="text-sm text-gray-600">{appointment.type}</p>
+                    </div>
+                  </div>
+                  {appointment.urgent && (
+                    <Badge variant="destructive" className="text-xs">Urgent</Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Lab Results</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[
+                { patient: "John Smith", test: "Blood Panel", ordered: "2 days ago", urgent: true },
+                { patient: "Sarah Johnson", test: "X-Ray Chest", ordered: "1 day ago", urgent: false },
+                { patient: "Mike Wilson", test: "Cardiac Stress Test", ordered: "3 hours ago", urgent: true },
+                { patient: "Emma Davis", test: "Urine Analysis", ordered: "1 day ago", urgent: false }
+              ].map((result, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{result.patient}</p>
+                    <p className="text-sm text-gray-600">{result.test} • {result.ordered}</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {result.urgent && (
+                      <Badge variant="destructive" className="text-xs">Urgent</Badge>
+                    )}
+                    <Button size="sm" variant="outline">Review</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  // Nurse Dashboard
+  const renderNurseDashboard = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Nurse Dashboard</h1>
+          <p className="text-gray-600 mt-1">
+            Welcome back, {user.firstName}. Your patient care overview for today.
+          </p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Badge className="bg-green-100 text-green-800">
+            <Heart className="h-3 w-3 mr-1" />
+            Active Shift
+          </Badge>
+        </div>
+      </div>
+
+      {/* Nurse Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Assigned Patients</p>
+                <p className="text-3xl font-bold text-gray-900">18</p>
+                <p className="text-xs text-blue-600 mt-1">Ward 3A & 3B</p>
+              </div>
+              <UserCheck className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Medications Due</p>
+                <p className="text-3xl font-bold text-gray-900">7</p>
+                <p className="text-xs text-orange-600 mt-1">Next 2 hours</p>
+              </div>
+              <Pill className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Vital Checks</p>
+                <p className="text-3xl font-bold text-gray-900">12</p>
+                <p className="text-xs text-green-600 mt-1">Completed today</p>
+              </div>
+              <Activity className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Alerts</p>
+                <p className="text-3xl font-bold text-gray-900">3</p>
+                <p className="text-xs text-red-600 mt-1">Immediate attention</p>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Patient Rounds & Medication Schedule */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Patient Rounds</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[
+                { room: "301A", patient: "Mary Johnson", status: "stable", lastRound: "2 hours ago", nextDue: "In 1 hour" },
+                { room: "302B", patient: "Robert Davis", status: "monitoring", lastRound: "30 min ago", nextDue: "In 1.5 hours" },
+                { room: "303A", patient: "Linda Wilson", status: "recovery", lastRound: "1 hour ago", nextDue: "In 1 hour" },
+                { room: "304B", patient: "James Brown", status: "critical", lastRound: "15 min ago", nextDue: "In 45 min" }
+              ].map((patient, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <span className="font-bold text-blue-600">{patient.room}</span>
+                    </div>
+                    <div>
+                      <p className="font-medium">{patient.patient}</p>
+                      <p className="text-sm text-gray-600">Last: {patient.lastRound} • Next: {patient.nextDue}</p>
+                    </div>
+                  </div>
+                  <Badge 
+                    variant={patient.status === 'critical' ? 'destructive' : patient.status === 'monitoring' ? 'secondary' : 'default'}
+                    className={patient.status === 'stable' ? 'bg-green-100 text-green-800' : ''}
+                  >
+                    {patient.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Medication Schedule</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[
+                { time: "14:00", patient: "Mary Johnson", medication: "Metformin 500mg", room: "301A", urgent: false },
+                { time: "14:30", patient: "Robert Davis", medication: "Lisinopril 10mg", room: "302B", urgent: true },
+                { time: "15:00", patient: "Linda Wilson", medication: "Aspirin 81mg", room: "303A", urgent: false },
+                { time: "15:30", patient: "James Brown", medication: "Morphine 5mg", room: "304B", urgent: true }
+              ].map((med, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{med.time} - {med.patient} ({med.room})</p>
+                    <p className="text-sm text-gray-600">{med.medication}</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {med.urgent && (
+                      <Badge variant="destructive" className="text-xs">Urgent</Badge>
+                    )}
+                    <Button size="sm" variant="outline">Administer</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  // Pharmacist Dashboard
+  const renderPharmacistDashboard = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Pharmacist Dashboard</h1>
+          <p className="text-gray-600 mt-1">
+            Welcome back, {user.firstName}. Your pharmacy operations overview for today.
+          </p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Badge className="bg-purple-100 text-purple-800">
+            <Pill className="h-3 w-3 mr-1" />
+            Pharmacy Open
+          </Badge>
+        </div>
+      </div>
+
+      {/* Pharmacist Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pending Prescriptions</p>
+                <p className="text-3xl font-bold text-gray-900">15</p>
+                <p className="text-xs text-orange-600 mt-1">2 urgent</p>
+              </div>
+              <FileText className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Filled Today</p>
+                <p className="text-3xl font-bold text-gray-900">47</p>
+                <p className="text-xs text-green-600 mt-1">Above average</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Low Stock Items</p>
+                <p className="text-3xl font-bold text-gray-900">8</p>
+                <p className="text-xs text-red-600 mt-1">Need reorder</p>
+              </div>
+              <Package className="h-8 w-8 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Insurance Reviews</p>
+                <p className="text-3xl font-bold text-gray-900">6</p>
+                <p className="text-xs text-blue-600 mt-1">Pending approval</p>
+              </div>
+              <Shield className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Prescription Queue & Inventory Alerts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Prescription Queue</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[
+                { id: "RX001", patient: "John Smith", medication: "Metformin 500mg", physician: "Dr. Johnson", urgent: true, time: "30 min ago" },
+                { id: "RX002", patient: "Sarah Wilson", medication: "Lisinopril 10mg", physician: "Dr. Davis", urgent: false, time: "1 hour ago" },
+                { id: "RX003", patient: "Mike Brown", medication: "Insulin 100 units", physician: "Dr. Miller", urgent: true, time: "45 min ago" },
+                { id: "RX004", patient: "Emma Jones", medication: "Aspirin 81mg", physician: "Dr. Johnson", urgent: false, time: "2 hours ago" }
+              ].map((rx, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <p className="font-medium">{rx.id} - {rx.patient}</p>
+                      {rx.urgent && <Badge variant="destructive" className="text-xs">Urgent</Badge>}
+                    </div>
+                    <p className="text-sm text-gray-600">{rx.medication}</p>
+                    <p className="text-xs text-gray-500">{rx.physician} • {rx.time}</p>
+                  </div>
+                  <Button size="sm">Fill</Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Inventory Alerts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[
+                { medication: "Metformin 500mg", current: "12", minimum: "50", status: "critical" },
+                { medication: "Lisinopril 10mg", current: "25", minimum: "30", status: "low" },
+                { medication: "Insulin 100 units", current: "8", minimum: "20", status: "critical" },
+                { medication: "Aspirin 81mg", current: "35", minimum: "40", status: "low" }
+              ].map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{item.medication}</p>
+                    <p className="text-sm text-gray-600">Current: {item.current} • Minimum: {item.minimum}</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge 
+                      variant={item.status === 'critical' ? 'destructive' : 'secondary'}
+                      className={item.status === 'low' ? 'bg-yellow-100 text-yellow-800' : ''}
+                    >
+                      {item.status}
+                    </Badge>
+                    <Button size="sm" variant="outline">Reorder</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  // Lab Technician Dashboard
+  const renderLabTechnicianDashboard = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Lab Technician Dashboard</h1>
+          <p className="text-gray-600 mt-1">
+            Welcome back, {user.firstName}. Your laboratory operations overview for today.
+          </p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Badge className="bg-purple-100 text-purple-800">
+            <TestTube className="h-3 w-3 mr-1" />
+            Lab Active
+          </Badge>
+        </div>
+      </div>
+
+      {/* Lab Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pending Tests</p>
+                <p className="text-3xl font-bold text-gray-900">23</p>
+                <p className="text-xs text-orange-600 mt-1">5 urgent</p>
+              </div>
+              <TestTube className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Completed Today</p>
+                <p className="text-3xl font-bold text-gray-900">67</p>
+                <p className="text-xs text-green-600 mt-1">Above target</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Quality Control</p>
+                <p className="text-3xl font-bold text-gray-900">98.5%</p>
+                <p className="text-xs text-blue-600 mt-1">Pass rate</p>
+              </div>
+              <ShieldCheck className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Equipment Alerts</p>
+                <p className="text-3xl font-bold text-gray-900">2</p>
+                <p className="text-xs text-red-600 mt-1">Needs attention</p>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Test Queue & Equipment Status */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Test Queue</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[
+                { id: "LAB001", patient: "John Smith", test: "Complete Blood Count", physician: "Dr. Johnson", urgent: true, collected: "30 min ago" },
+                { id: "LAB002", patient: "Sarah Wilson", test: "Lipid Panel", physician: "Dr. Davis", urgent: false, collected: "1 hour ago" },
+                { id: "LAB003", patient: "Mike Brown", test: "Glucose Test", physician: "Dr. Miller", urgent: true, collected: "45 min ago" },
+                { id: "LAB004", patient: "Emma Jones", test: "Thyroid Function", physician: "Dr. Johnson", urgent: false, collected: "2 hours ago" }
+              ].map((test, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <p className="font-medium">{test.id} - {test.patient}</p>
+                      {test.urgent && <Badge variant="destructive" className="text-xs">Urgent</Badge>}
+                    </div>
+                    <p className="text-sm text-gray-600">{test.test}</p>
+                    <p className="text-xs text-gray-500">{test.physician} • Collected {test.collected}</p>
+                  </div>
+                  <Button size="sm">Process</Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Equipment Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[
+                { equipment: "Hematology Analyzer", status: "operational", lastMaintenance: "2 days ago", nextDue: "In 5 days" },
+                { equipment: "Chemistry Analyzer", status: "maintenance", lastMaintenance: "Today", nextDue: "In 7 days" },
+                { equipment: "Microscope Station 1", status: "operational", lastMaintenance: "1 week ago", nextDue: "In 2 weeks" },
+                { equipment: "Centrifuge Unit", status: "alert", lastMaintenance: "3 weeks ago", nextDue: "Overdue" }
+              ].map((equip, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{equip.equipment}</p>
+                    <p className="text-sm text-gray-600">Last: {equip.lastMaintenance} • Next: {equip.nextDue}</p>
+                  </div>
+                  <Badge 
+                    variant={equip.status === 'alert' ? 'destructive' : equip.status === 'maintenance' ? 'secondary' : 'default'}
+                    className={equip.status === 'operational' ? 'bg-green-100 text-green-800' : ''}
+                  >
+                    {equip.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  // Simplified dashboards for other roles
+  const renderReceptionistDashboard = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Reception Dashboard</h1>
+          <p className="text-gray-600 mt-1">Welcome back, {user.firstName}. Patient registration and appointment management.</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Today's Check-ins</p>
+                <p className="text-3xl font-bold text-gray-900">34</p>
+              </div>
+              <UserCheck className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Appointments Scheduled</p>
+                <p className="text-3xl font-bold text-gray-900">67</p>
+              </div>
+              <Calendar className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">New Patients</p>
+                <p className="text-3xl font-bold text-gray-900">8</p>
+              </div>
+              <Users className="h-8 w-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Waiting Room</p>
+                <p className="text-3xl font-bold text-gray-900">5</p>
+              </div>
+              <Clock className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  const renderBillingStaffDashboard = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Billing Dashboard</h1>
+          <p className="text-gray-600 mt-1">Welcome back, {user.firstName}. Financial operations and insurance claims.</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pending Claims</p>
+                <p className="text-3xl font-bold text-gray-900">23</p>
+              </div>
+              <FileText className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Today's Revenue</p>
+                <p className="text-3xl font-bold text-gray-900">$8,450</p>
+              </div>
+              <DollarSign className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Outstanding Balance</p>
+                <p className="text-3xl font-bold text-gray-900">$12,340</p>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Processed Claims</p>
+                <p className="text-3xl font-bold text-gray-900">156</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  const renderInsuranceManagerDashboard = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Insurance Management Dashboard</h1>
+          <p className="text-gray-600 mt-1">Welcome back, {user.firstName}. Claims processing and coverage management.</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Claims Under Review</p>
+                <p className="text-3xl font-bold text-gray-900">45</p>
+              </div>
+              <Shield className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Approved Today</p>
+                <p className="text-3xl font-bold text-gray-900">78</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Denied Claims</p>
+                <p className="text-3xl font-bold text-gray-900">12</p>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Coverage Verification</p>
+                <p className="text-3xl font-bold text-gray-900">23</p>
+              </div>
+              <ShieldCheck className="h-8 w-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  const renderPatientDashboard = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Patient Portal</h1>
+          <p className="text-gray-600 mt-1">Welcome back, {user.firstName}. Your health information and appointments.</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Upcoming Appointments</p>
+                <p className="text-3xl font-bold text-gray-900">2</p>
+              </div>
+              <Calendar className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Prescriptions</p>
+                <p className="text-3xl font-bold text-gray-900">4</p>
+              </div>
+              <Pill className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Lab Results</p>
+                <p className="text-3xl font-bold text-gray-900">1</p>
+              </div>
+              <TestTube className="h-8 w-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Outstanding Balance</p>
+                <p className="text-3xl font-bold text-gray-900">$245</p>
+              </div>
+              <DollarSign className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  const renderTenantAdminDashboard = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Organization Admin Dashboard</h1>
+          <p className="text-gray-600 mt-1">Welcome back, {user.firstName}. Organization management and overview.</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Staff</p>
+                <p className="text-3xl font-bold text-gray-900">127</p>
+              </div>
+              <Users className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Patients</p>
+                <p className="text-3xl font-bold text-gray-900">2,456</p>
+              </div>
+              <UserCheck className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
+                <p className="text-3xl font-bold text-gray-900">$485K</p>
+              </div>
+              <DollarSign className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">System Alerts</p>
+                <p className="text-3xl font-bold text-gray-900">5</p>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  // Default dashboard for roles not specifically handled
+  const renderDefaultDashboard = () => (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
@@ -467,4 +1362,7 @@ export default function Dashboard() {
       </div>
     </div>
   );
+
+  // Return the appropriate dashboard based on user role
+  return renderRoleSpecificDashboard();
 }
