@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { z } from "zod";
 
 interface AppointmentFormProps {
   onSubmit: (data: any) => void;
@@ -15,8 +16,12 @@ interface AppointmentFormProps {
 }
 
 export const AppointmentForm = ({ onSubmit, isLoading = false, patients, providers }: AppointmentFormProps) => {
+  const appointmentFormSchema = insertAppointmentSchema.omit({ tenantId: true }).extend({
+    appointmentDate: z.string().min(1, "Appointment date is required")
+  });
+
   const form = useForm({
-    resolver: zodResolver(insertAppointmentSchema.omit({ tenantId: true })),
+    resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
       patientId: "",
       providerId: "",
@@ -30,11 +35,11 @@ export const AppointmentForm = ({ onSubmit, isLoading = false, patients, provide
   });
 
   const handleSubmit = (data: any) => {
-    // Ensure appointmentDate is properly formatted
-    const appointmentDate = data.appointmentDate ? new Date(data.appointmentDate) : new Date();
+    // Convert string to Date object for database
+    const appointmentDate = new Date(data.appointmentDate);
     onSubmit({
       ...data,
-      appointmentDate: appointmentDate.toISOString(),
+      appointmentDate,
     });
   };
 
