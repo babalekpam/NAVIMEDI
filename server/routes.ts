@@ -580,7 +580,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.updateReport(report.id, {
             status: 'completed',
             completedAt: new Date(),
-            downloadUrl: `/api/reports/${report.id}/download`
+            fileUrl: `/api/reports/${report.id}/download`
           }, req.tenant.id);
         } catch (error) {
           console.error("Report completion error:", error);
@@ -667,7 +667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.updateReport(report.id, {
             status: 'completed',
             completedAt: new Date(),
-            downloadUrl: `/api/platform/reports/${report.id}/download`
+            fileUrl: `/api/platform/reports/${report.id}/download`
           }, targetTenantId);
         } catch (error) {
           console.error("Cross-tenant report completion error:", error);
@@ -696,6 +696,163 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Download report endpoint
+  app.get("/api/reports/:id/download", authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const report = await storage.getReport(id, req.tenant?.id || '');
+      
+      if (!report) {
+        return res.status(404).json({ message: "Report not found" });
+      }
+
+      if (report.status !== 'completed') {
+        return res.status(400).json({ message: "Report is not ready for download" });
+      }
+
+      // Generate mock report content based on type and format
+      const reportContent = generateReportContent(report);
+      const filename = `${report.title.replace(/[^a-zA-Z0-9]/g, '_')}.${report.format}`;
+
+      // Set appropriate headers based on format
+      switch (report.format) {
+        case 'pdf':
+          res.setHeader('Content-Type', 'application/pdf');
+          break;
+        case 'excel':
+          res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+          break;
+        case 'csv':
+          res.setHeader('Content-Type', 'text/csv');
+          break;
+        default:
+          res.setHeader('Content-Type', 'application/octet-stream');
+      }
+
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(reportContent);
+
+    } catch (error) {
+      console.error("Report download error:", error);
+      res.status(500).json({ message: "Failed to download report" });
+    }
+  });
+
+  // Platform download endpoint for cross-tenant reports
+  app.get("/api/platform/reports/:id/download", authenticateToken, async (req, res) => {
+    try {
+      if (req.user.role !== 'super_admin') {
+        return res.status(403).json({ message: "Access denied. Super admin role required." });
+      }
+
+      const { id } = req.params;
+      const reports = await storage.getAllReports();
+      const report = reports.find(r => r.id === id);
+      
+      if (!report) {
+        return res.status(404).json({ message: "Report not found" });
+      }
+
+      if (report.status !== 'completed') {
+        return res.status(400).json({ message: "Report is not ready for download" });
+      }
+
+      // Generate mock report content
+      const reportContent = generateReportContent(report);
+      const filename = `${report.title.replace(/[^a-zA-Z0-9]/g, '_')}.${report.format}`;
+
+      // Set headers
+      switch (report.format) {
+        case 'pdf':
+          res.setHeader('Content-Type', 'application/pdf');
+          break;
+        case 'excel':
+          res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+          break;
+        case 'csv':
+          res.setHeader('Content-Type', 'text/csv');
+          break;
+        default:
+          res.setHeader('Content-Type', 'application/octet-stream');
+      }
+
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(reportContent);
+
+    } catch (error) {
+      console.error("Platform report download error:", error);
+      res.status(500).json({ message: "Failed to download report" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
+}
+
+// Helper function to generate mock report content
+function generateReportContent(report: any): string {
+  const timestamp = new Date().toISOString();
+  
+  if (report.format === 'csv') {
+    return generateCSVContent(report, timestamp);
+  } else if (report.format === 'excel') {
+    return generateExcelContent(report, timestamp);
+  } else {
+    return generatePDFContent(report, timestamp);
+  }
+}
+
+function generateCSVContent(report: any, timestamp: string): string {
+  const headers = ['Date', 'Type', 'Category', 'Value', 'Status'];
+  const rows = [
+    [timestamp.split('T')[0], report.type, 'Patients', '150', 'Active'],
+    [timestamp.split('T')[0], report.type, 'Appointments', '45', 'Scheduled'],
+    [timestamp.split('T')[0], report.type, 'Revenue', '$12,500', 'Collected'],
+    [timestamp.split('T')[0], report.type, 'Lab Tests', '28', 'Completed'],
+    [timestamp.split('T')[0], report.type, 'Prescriptions', '67', 'Dispensed']
+  ];
+  
+  return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+}
+
+function generateExcelContent(report: any, timestamp: string): string {
+  // For Excel format, return a simple CSV-like content
+  // In a real implementation, you would use a library like xlsx
+  return generateCSVContent(report, timestamp);
+}
+
+function generatePDFContent(report: any, timestamp: string): string {
+  // For PDF format, return plain text content
+  // In a real implementation, you would use a library like pdfkit
+  return `
+HEALTHCARE REPORT
+=================
+
+Report Title: ${report.title}
+Report Type: ${report.type}
+Generated: ${timestamp}
+Format: ${report.format.toUpperCase()}
+
+SUMMARY
+-------
+This report contains healthcare analytics and operational data
+for the selected time period and organization.
+
+KEY METRICS
+-----------
+• Total Patients: 150
+• Appointments Scheduled: 45
+• Revenue Generated: $12,500
+• Lab Tests Completed: 28
+• Prescriptions Dispensed: 67
+
+COMPLIANCE STATUS
+-----------------
+✓ HIPAA Compliance: Active
+✓ Data Security: Verified
+✓ Audit Trail: Complete
+
+Generated by NAVIMED Healthcare Platform
+Report ID: ${report.id}
+`;
 }

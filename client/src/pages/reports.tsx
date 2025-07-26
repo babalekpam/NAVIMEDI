@@ -309,8 +309,12 @@ export default function Reports() {
                   </div>
                   <div className="flex items-center space-x-3">
                     {getStatusBadge(report.status)}
-                    {report.status === 'completed' && report.downloadUrl && (
-                      <Button size="sm" variant="outline">
+                    {report.status === 'completed' && report.fileUrl && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => window.open(report.fileUrl, '_blank')}
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         Download
                       </Button>
