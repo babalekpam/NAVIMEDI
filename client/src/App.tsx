@@ -8,6 +8,7 @@ import { TenantProvider } from "@/contexts/tenant-context";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { ProtectedRoute } from "@/components/layout/protected-route";
+import LandingPage from "@/pages/landing";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
@@ -18,11 +19,9 @@ import LabOrders from "@/pages/lab-orders";
 import Billing from "@/pages/billing";
 import TenantManagement from "@/pages/tenant-management";
 
-function Router() {
+function DashboardRouter() {
   return (
     <Switch>
-      <Route path="/login" component={Login} />
-      <Route path="/" component={() => <ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/dashboard" component={() => <ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/patients" component={() => <ProtectedRoute><Patients /></ProtectedRoute>} />
       <Route path="/appointments" component={() => <ProtectedRoute><Appointments /></ProtectedRoute>} />
@@ -37,24 +36,30 @@ function Router() {
 
 function AppContent() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Switch>
-        <Route path="/login">
-          <Login />
-        </Route>
-        <Route>
+        <Route path="/" component={LandingPage} />
+        <Route path="/login" component={Login} />
+        <Route path="/dashboard/*">
           <ProtectedRoute>
-            <div className="flex flex-col h-screen">
+            <div className="flex flex-col h-screen bg-gray-50">
               <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Router />
+                  <DashboardRouter />
                 </main>
               </div>
             </div>
           </ProtectedRoute>
         </Route>
+        <Route path="/patients" component={() => <ProtectedRoute><div className="flex flex-col h-screen bg-gray-50"><Header /><div className="flex flex-1 overflow-hidden"><Sidebar /><main className="flex-1 overflow-y-auto p-6"><Patients /></main></div></div></ProtectedRoute>} />
+        <Route path="/appointments" component={() => <ProtectedRoute><div className="flex flex-col h-screen bg-gray-50"><Header /><div className="flex flex-1 overflow-hidden"><Sidebar /><main className="flex-1 overflow-y-auto p-6"><Appointments /></main></div></div></ProtectedRoute>} />
+        <Route path="/prescriptions" component={() => <ProtectedRoute><div className="flex flex-col h-screen bg-gray-50"><Header /><div className="flex flex-1 overflow-hidden"><Sidebar /><main className="flex-1 overflow-y-auto p-6"><Prescriptions /></main></div></div></ProtectedRoute>} />
+        <Route path="/lab-orders" component={() => <ProtectedRoute><div className="flex flex-col h-screen bg-gray-50"><Header /><div className="flex flex-1 overflow-hidden"><Sidebar /><main className="flex-1 overflow-y-auto p-6"><LabOrders /></main></div></div></ProtectedRoute>} />
+        <Route path="/billing" component={() => <ProtectedRoute><div className="flex flex-col h-screen bg-gray-50"><Header /><div className="flex flex-1 overflow-hidden"><Sidebar /><main className="flex-1 overflow-y-auto p-6"><Billing /></main></div></div></ProtectedRoute>} />
+        <Route path="/tenant-management" component={() => <ProtectedRoute><div className="flex flex-col h-screen bg-gray-50"><Header /><div className="flex flex-1 overflow-hidden"><Sidebar /><main className="flex-1 overflow-y-auto p-6"><TenantManagement /></main></div></div></ProtectedRoute>} />
+        <Route component={NotFound} />
       </Switch>
     </div>
   );

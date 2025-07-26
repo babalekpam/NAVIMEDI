@@ -1,57 +1,51 @@
-import { Request, Response, NextFunction } from "express";
-import { storage } from "../storage";
-import { Tenant } from "@shared/schema";
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 
-declare global {
-  namespace Express {
-    interface Request {
-      tenant?: Tenant;
-    }
-  }
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    tenantId: string;
+    role: string;
+    username: string;
+  };
+  tenantId?: string;
 }
 
-export const setTenantContext = async (req: Request, res: Response, next: NextFunction) => {
+export const tenantMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    // Try to get tenant from subdomain first
-    const host = req.get("host");
-    if (host) {
-      const subdomain = host.split(".")[0];
-      if (subdomain && subdomain !== "localhost" && subdomain !== "127") {
-        const tenant = await storage.getTenantBySubdomain(subdomain);
-        if (tenant) {
-          req.tenant = tenant;
-          return next();
-        }
-      }
+    // Extract tenant context from JWT token
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+      req.tenantId = decoded.tenantId;
+      req.user = decoded;
     }
 
-    // If authenticated, try to get tenant from user context
-    if (req.user?.tenantId) {
-      const tenant = await storage.getTenant(req.user.tenantId);
-      if (tenant) {
-        req.tenant = tenant;
-        return next();
-      }
+    // For super admin, allow access to all tenants
+    if (req.user?.role === 'super_admin') {
+      return next();
     }
 
-    // For tenant-specific routes, we'll require tenant context
+    // For other users, ensure they can only access their tenant's data
+    if (!req.tenantId) {
+      return res.status(401).json({ message: 'Tenant context required' });
+    }
+
     next();
   } catch (error) {
-    console.error("Tenant context error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error('Tenant middleware error:', error);
+    return res.status(401).json({ message: 'Invalid tenant context' });
   }
 };
 
-export const requireTenant = (req: Request, res: Response, next: NextFunction) => {
-  if (!req.tenant) {
-    return res.status(400).json({ 
-      message: "Tenant context required. Please specify subdomain or ensure proper authentication." 
-    });
+export const requireSuperAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  if (req.user?.role !== 'super_admin') {
+    return res.status(403).json({ message: 'Super admin access required' });
   }
-
-  if (!req.tenant.isActive) {
-    return res.status(403).json({ message: "Tenant is inactive" });
-  }
-
   next();
 };
+
+// Alias exports for compatibility
+export const setTenantContext = tenantMiddleware;
+export const requireTenant = tenantMiddleware;
