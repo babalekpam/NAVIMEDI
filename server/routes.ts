@@ -555,7 +555,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const reportData = insertReportSchema.parse({
         ...req.body,
         tenantId: req.tenant.id,
-        generatedBy: req.user.id,
+        generatedBy: req.user.userId,
         status: 'generating'
       });
 
@@ -564,7 +564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant.id,
-        userId: req.user.id,
+        userId: req.user.userId,
         entityType: "report",
         entityId: report.id,
         action: "create",
@@ -597,6 +597,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Platform-wide report generation for super admin
   app.post("/api/platform/reports/generate", authenticateToken, async (req, res) => {
     try {
+      console.log("Cross-tenant report - User:", req.user);
+      
       if (req.user.role !== 'super_admin') {
         return res.status(403).json({ message: "Access denied. Super admin role required." });
       }
@@ -616,7 +618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const reportData = insertReportSchema.parse({
         ...reportParams,
         tenantId: targetTenantId,
-        generatedBy: req.user.id,
+        generatedBy: req.user.userId,
         status: 'generating',
         parameters: { 
           ...reportParams.parameters, 
@@ -630,7 +632,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log for both platform and target tenant
       await storage.createAuditLog({
         tenantId: req.user.tenantId, // Platform tenant
-        userId: req.user.id,
+        userId: req.user.userId,
         entityType: "cross_tenant_report",
         entityId: report.id,
         action: "create",
@@ -646,7 +648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.createAuditLog({
         tenantId: targetTenantId, // Target tenant
-        userId: req.user.id,
+        userId: req.user.userId,
         entityType: "report",
         entityId: report.id,
         action: "platform_generate",
