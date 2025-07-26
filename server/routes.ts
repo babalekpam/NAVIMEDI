@@ -16,11 +16,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, password, tenantId } = req.body;
       
-      if (!username || !password || !tenantId) {
-        return res.status(400).json({ message: "Username, password, and tenant ID are required" });
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
       }
 
-      const user = await storage.getUserByUsername(username, tenantId);
+      let user;
+      
+      // For super admin, allow login with email or username and find tenant automatically
+      if (username === 'abel@argilette.com' || username === 'abel_admin') {
+        // Get all users with this username/email across all tenants
+        const allUsers = await storage.getAllUsers();
+        user = allUsers.find(u => 
+          (u.email === 'abel@argilette.com' || u.username === 'abel_admin') && 
+          u.role === 'super_admin'
+        );
+      } else if (tenantId) {
+        // Regular tenant user login
+        user = await storage.getUserByUsername(username, tenantId);
+      } else {
+        return res.status(400).json({ message: "Tenant ID is required for regular users" });
+      }
+
       if (!user || !await bcrypt.compare(password, user.password)) {
         return res.status(401).json({ message: "Invalid credentials" });
       }

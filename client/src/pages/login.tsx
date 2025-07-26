@@ -19,8 +19,8 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password || !tenantId) {
-      setError("All fields are required");
+    if (!username || !password) {
+      setError("Username and password are required");
       return;
     }
 
@@ -69,10 +69,9 @@ export default function Login() {
               <Input
                 id="tenantId"
                 type="text"
-                placeholder="Enter your organization ID"
+                placeholder="Enter organization ID (leave blank for super admin)"
                 value={tenantId}
                 onChange={(e) => setTenantId(e.target.value)}
-                required
               />
             </div>
 
