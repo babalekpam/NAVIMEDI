@@ -69,12 +69,12 @@ export default function Login() {
             <div className="space-y-2">
               <Label htmlFor="tenantId">
                 <Building2 className="w-4 h-4 inline mr-2" />
-                Organization ID
+                Organization Name
               </Label>
               <Input
                 id="tenantId"
                 type="text"
-                placeholder="Enter organization ID (leave blank for super admin)"
+                placeholder="e.g., Metro General Hospital (leave blank for super admin)"
                 value={tenantId}
                 onChange={(e) => setTenantId(e.target.value)}
               />

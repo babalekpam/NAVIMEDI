@@ -31,8 +31,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           u.role === 'super_admin'
         );
       } else if (tenantId) {
-        // Regular tenant user login
-        user = await storage.getUserByUsername(username, tenantId);
+        // Regular tenant user login - support both tenant UUID and tenant name
+        let actualTenantId = tenantId;
+        
+        // Check if tenantId is a UUID pattern or tenant name
+        const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        
+        if (!uuidPattern.test(tenantId)) {
+          // If not a UUID, try to find tenant by name
+          const tenants = await storage.getAllTenants();
+          const tenant = tenants.find(t => t.name.toLowerCase() === tenantId.toLowerCase());
+          if (tenant) {
+            actualTenantId = tenant.id;
+          } else {
+            return res.status(400).json({ message: "Organization not found" });
+          }
+        }
+        
+        user = await storage.getUserByUsername(username, actualTenantId);
       } else {
         return res.status(400).json({ message: "Tenant ID is required for regular users" });
       }
