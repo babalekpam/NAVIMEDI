@@ -78,6 +78,8 @@ export default function HealthRecommendations() {
     enabled: !!user && !!currentTenant
   });
 
+  console.log("Patients data:", patients, "Loading:", patientsLoading);
+
   const { data: recommendations = [], isLoading: recommendationsLoading, refetch: refetchRecommendations } = useQuery({
     queryKey: ["/api/health-recommendations/patient", selectedPatient],
     enabled: !!selectedPatient
