@@ -82,6 +82,18 @@ export default function TenantManagement() {
     createTenantMutation.mutate(data);
   };
 
+  const handleViewDetails = (tenant: Tenant) => {
+    // For now, show an alert with tenant details
+    // In a full implementation, this would open a detailed modal or navigate to a detail page
+    alert(`Organization Details:\n\nName: ${tenant.name}\nType: ${tenantTypeLabels[tenant.type as keyof typeof tenantTypeLabels]}\nSubdomain: ${tenant.subdomain}\nStatus: ${tenant.isActive ? 'Active' : 'Inactive'}\nCreated: ${new Date(tenant.createdAt).toLocaleDateString()}`);
+  };
+
+  const handleManageUsers = (tenant: Tenant) => {
+    // For now, show information about user management
+    // In a full implementation, this would navigate to the user management page for this tenant
+    alert(`User Management for ${tenant.name}\n\nThis would open the user management interface where you can:\n- Add new users to this organization\n- Assign roles and permissions\n- Manage user access\n- View user activity\n\nFeature coming soon!`);
+  };
+
   if (!user || user.role !== "super_admin") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -360,10 +372,20 @@ export default function TenantManagement() {
                     </Badge>
                     
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-blue-600 hover:text-blue-700"
+                        onClick={() => handleViewDetails(tenant)}
+                      >
                         View Details
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-700">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-gray-600 hover:text-gray-700"
+                        onClick={() => handleManageUsers(tenant)}
+                      >
                         Manage Users
                       </Button>
                       <Button variant="ghost" size="sm">
