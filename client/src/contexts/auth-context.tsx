@@ -71,11 +71,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     const data = await response.json();
     
-    setToken(data.token);
-    setUser(data.user);
-    
+    // Store authentication data immediately to prevent multiple login attempts
     localStorage.setItem("auth_token", data.token);
     localStorage.setItem("auth_user", JSON.stringify(data.user));
+    
+    setToken(data.token);
+    setUser(data.user);
   };
 
   const logout = () => {

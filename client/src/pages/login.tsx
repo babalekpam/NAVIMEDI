@@ -34,7 +34,11 @@ export default function Login() {
       
       // For super admin login, pass empty string if tenantId is not provided
       await login(username, password, tenantId || "");
-      setLocation("/dashboard");
+      
+      // Add a small delay to ensure state is properly set
+      setTimeout(() => {
+        setLocation("/dashboard");
+      }, 100);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
