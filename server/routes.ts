@@ -555,7 +555,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const reportData = insertReportSchema.parse({
         ...req.body,
         tenantId: req.tenant.id,
-        createdBy: req.user.id,
+        generatedBy: req.user.id,
         status: 'generating'
       });
 
@@ -616,12 +616,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const reportData = insertReportSchema.parse({
         ...reportParams,
         tenantId: targetTenantId,
-        createdBy: req.user.id,
+        generatedBy: req.user.id,
         status: 'generating',
         parameters: { 
           ...reportParams.parameters, 
           crossTenantGeneration: true, 
-          generatedBy: 'super_admin' 
+          generatedByRole: 'super_admin' 
         }
       });
 

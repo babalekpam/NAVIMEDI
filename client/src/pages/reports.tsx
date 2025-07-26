@@ -81,12 +81,12 @@ export default function Reports() {
   });
 
   const reportTypes = [
-    { value: "patient_summary", label: "Patient Summary Report", description: "Overview of all patient records and demographics" },
-    { value: "appointment_analytics", label: "Appointment Analytics", description: "Appointment trends, no-shows, and scheduling patterns" },
-    { value: "prescription_report", label: "Prescription Report", description: "Prescription volumes, popular medications, and pharmacy data" },
-    { value: "financial_summary", label: "Financial Summary", description: "Revenue, billing, and insurance claim analysis" },
-    { value: "lab_results_report", label: "Lab Results Report", description: "Laboratory testing volumes and result patterns" },
-    { value: "compliance_audit", label: "Compliance Audit", description: "HIPAA compliance and security audit trail" },
+    { value: "clinical", label: "Patient Summary Report", description: "Overview of all patient records and demographics", key: "patient_summary" },
+    { value: "operational", label: "Appointment Analytics", description: "Appointment trends, no-shows, and scheduling patterns", key: "appointment_analytics" },
+    { value: "clinical", label: "Prescription Report", description: "Prescription volumes, popular medications, and pharmacy data", key: "prescription_report" },
+    { value: "financial", label: "Financial Summary", description: "Revenue, billing, and insurance claim analysis", key: "financial_summary" },
+    { value: "clinical", label: "Lab Results Report", description: "Laboratory testing volumes and result patterns", key: "lab_results" },
+    { value: "compliance", label: "Compliance Audit", description: "HIPAA compliance and security audit trail", key: "compliance_audit" },
   ];
 
   const handleGenerateReport = () => {
@@ -212,7 +212,7 @@ export default function Reports() {
                 </SelectTrigger>
                 <SelectContent>
                   {reportTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
+                    <SelectItem key={type.key} value={type.value}>
                       {type.label}
                     </SelectItem>
                   ))}
