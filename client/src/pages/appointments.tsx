@@ -354,20 +354,17 @@ export default function Appointments() {
                         <Eye className="h-4 w-4 mr-1" />
                         View Details
                       </Button>
-                      {/* Vital Signs Button - Always show for debugging */}
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-green-600 hover:text-green-700"
-                        onClick={() => {
-                          console.log("Vital Signs clicked for appointment:", appointment.id);
-                          console.log("User role:", user?.role);
-                          handleVitalSigns(appointment);
-                        }}
-                      >
-                        <Activity className="h-4 w-4 mr-1" />
-                        Vital Signs
-                      </Button>
+                      {(user?.role === "receptionist" || user?.role === "nurse" || user?.role === "tenant_admin" || user?.role === "super_admin") && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-green-600 hover:text-green-700"
+                          onClick={() => handleVitalSigns(appointment)}
+                        >
+                          <Activity className="h-4 w-4 mr-1" />
+                          Vital Signs
+                        </Button>
+                      )}
                       {(user?.role === "doctor" || user?.role === "physician" || user?.role === "nurse" || user?.role === "tenant_admin" || user?.role === "super_admin") && (
                         <Button 
                           variant="ghost" 

@@ -128,7 +128,7 @@ export function VitalSignsForm({
   }, [watchWeight, watchHeight, weightUnit, heightUnit]);
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("/api/vital-signs", "POST", data),
+    mutationFn: (data: any) => apiRequest("POST", "/api/vital-signs", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vital-signs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
@@ -149,7 +149,7 @@ export function VitalSignsForm({
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => apiRequest(`/api/vital-signs/${existingVitalSigns?.id}`, "PATCH", data),
+    mutationFn: (data: any) => apiRequest("PATCH", `/api/vital-signs/${existingVitalSigns?.id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vital-signs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
