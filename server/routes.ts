@@ -289,11 +289,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate MRN automatically
       const mrn = `MRN${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
       
-      const patientData = insertPatientSchema.parse({
+      // Prepare patient data with proper date conversion
+      const requestData = {
         ...req.body,
         tenantId: req.tenant!.id,
-        mrn: mrn
-      });
+        mrn: mrn,
+        // Convert dateOfBirth string to Date if it's a string
+        dateOfBirth: typeof req.body.dateOfBirth === 'string' 
+          ? new Date(req.body.dateOfBirth) 
+          : req.body.dateOfBirth
+      };
+
+      const patientData = insertPatientSchema.parse(requestData);
 
       const patient = await storage.createPatient(patientData);
 

@@ -75,23 +75,23 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
   });
 
   const handleSubmit = (data: any) => {
-    // Convert dateOfBirth string to Date object and clean up empty optional fields
+    // Send dateOfBirth as string - server will handle the conversion
     const patientData = {
       firstName: data.firstName,
       lastName: data.lastName,
-      dateOfBirth: new Date(data.dateOfBirth),
-      gender: data.gender || null,
-      phone: data.phone || null,
-      email: data.email || null,
+      dateOfBirth: data.dateOfBirth, // Keep as string
+      gender: data.gender || undefined,
+      phone: data.phone || undefined,
+      email: data.email || undefined,
       address: data.address && (data.address.street || data.address.city || data.address.state || data.address.zipCode) 
         ? data.address 
-        : null,
+        : undefined,
       emergencyContact: data.emergencyContact && (data.emergencyContact.name || data.emergencyContact.phone) 
         ? data.emergencyContact 
-        : null,
+        : undefined,
       insuranceInfo: data.insuranceInfo && (data.insuranceInfo.provider || data.insuranceInfo.policyNumber) 
         ? data.insuranceInfo 
-        : null,
+        : undefined,
       medicalHistory: data.medicalHistory || [],
       allergies: data.allergies || [],
       medications: data.medications || []
