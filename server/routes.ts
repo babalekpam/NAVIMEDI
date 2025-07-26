@@ -416,12 +416,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Prescription management routes
-  app.use("/api/prescriptions", (req, res, next) => {
-    console.log(`[DEBUG] Prescription route hit: ${req.method} ${req.url}`);
-    console.log(`[DEBUG] Headers:`, req.headers.authorization ? `Bearer ${req.headers.authorization.substring(7, 20)}...` : 'No auth header');
-    next();
-  });
-
   app.get("/api/prescriptions", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { patientId } = req.query;
@@ -441,21 +435,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/prescriptions", authenticateToken, requireTenant, async (req, res) => {
+  app.post("/api/prescriptions", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
       console.log("[DEBUG] Creating prescription - User:", req.user?.role, "User ID:", req.user?.userId, "Tenant:", req.tenant?.id);
       console.log("[DEBUG] Request body:", JSON.stringify(req.body, null, 2));
-      
-      // Check if user has permission to create prescriptions
-      const allowedRoles = ["physician", "nurse", "tenant_admin", "director", "super_admin"];
-      if (!allowedRoles.includes(req.user!.role)) {
-        console.log("[DEBUG] Permission denied for role:", req.user!.role);
-        return res.status(403).json({ 
-          message: "Insufficient permissions to create prescriptions",
-          required: allowedRoles,
-          current: req.user!.role
-        });
-      }
       
       // Convert string dates to Date objects
       const requestData = { ...req.body };
@@ -463,13 +446,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         requestData.expiryDate = new Date(requestData.expiryDate);
       }
       
-      // Prepare prescription data with all required fields
+      // Prepare prescription data with all required fields including dates
       const prescriptionData = {
         ...requestData,
         tenantId: req.tenant!.id,
         providerId: req.user!.userId,
         appointmentId: requestData.appointmentId || null,
-        pharmacyTenantId: requestData.pharmacyTenantId || null
+        pharmacyTenantId: requestData.pharmacyTenantId || null,
+        prescribedDate: new Date(),
+        expiryDate: requestData.expiryDate ? new Date(requestData.expiryDate) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // Default 1 year
       };
       
       console.log("[DEBUG] Prescription data before validation:", JSON.stringify(prescriptionData, null, 2));
