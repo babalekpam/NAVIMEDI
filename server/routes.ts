@@ -416,6 +416,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Prescription management routes
+  app.use("/api/prescriptions", (req, res, next) => {
+    console.log(`[DEBUG] Prescription route hit: ${req.method} ${req.url}`);
+    console.log(`[DEBUG] Headers:`, req.headers.authorization ? `Bearer ${req.headers.authorization.substring(7, 20)}...` : 'No auth header');
+    next();
+  });
+
   app.get("/api/prescriptions", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { patientId } = req.query;
@@ -488,6 +494,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Create prescription error:", error);
       if (error instanceof z.ZodError) {
+        console.log("[DEBUG] Zod validation errors:", JSON.stringify(error.errors, null, 2));
+        error.errors.forEach((err, index) => {
+          console.log(`[DEBUG] Error ${index + 1}: Field '${err.path.join('.')}' - ${err.message} (received: ${err.received}, expected: ${err.expected})`);
+        });
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
       res.status(500).json({ message: "Internal server error" });
