@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { UserCheck, Users, Shield, Plus, Edit, Trash2, Search, Eye, EyeOff } from "lucide-react";
+import { UserCheck, Users, Shield, Plus, Edit, Trash2, Search, Eye, EyeOff, HelpCircle, Info } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -44,6 +45,16 @@ const roleDescriptions = {
   receptionist: "Patient scheduling, registration, and basic administrative tasks",
   billing_staff: "Insurance claims, billing processes, and financial data",
   tenant_admin: "Full tenant management, user administration, and system configuration"
+};
+
+const roleTooltips = {
+  physician: "Physicians have the highest level of clinical access and can view/edit all patient data, prescribe medications, and order lab tests.",
+  nurse: "Nurses can access patient care information, administer medications, and update clinical notes but cannot prescribe medications.",
+  pharmacist: "Pharmacists manage prescriptions, check drug interactions, and handle pharmacy inventory but have limited patient data access.",
+  lab_technician: "Lab technicians process lab orders, enter test results, and manage diagnostic equipment but cannot access full patient records.",
+  receptionist: "Receptionists handle front desk operations like scheduling and patient check-in but have minimal access to clinical data.",
+  billing_staff: "Billing staff process insurance claims and handle financial transactions but cannot access clinical patient information.",
+  tenant_admin: "Tenant admins have full administrative control over the organization including user management and system settings."
 };
 
 const roleColors = {
@@ -216,27 +227,45 @@ export default function UserRoles() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">User Role Management</h1>
-          <p className="text-gray-600 mt-2">
-            Manage healthcare team members and their access permissions
-          </p>
-        </div>
+    <TooltipProvider>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center space-x-2">
+              <h1 className="text-3xl font-bold text-gray-900">User Role Management</h1>
+              <Tooltip>
+                <TooltipTrigger>
+                  <HelpCircle className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">Manage your healthcare team members and assign appropriate roles based on their responsibilities. Each role has specific permissions designed for healthcare workflows.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <p className="text-gray-600 mt-2">
+              Manage healthcare team members and their access permissions
+            </p>
+          </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button 
-              className="bg-blue-600 hover:bg-blue-700"
-              onClick={() => {
-                setEditingUser(null);
-                form.reset();
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add User
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => {
+                    setEditingUser(null);
+                    form.reset();
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add User
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Create a new user account and assign them a healthcare role</p>
+              </TooltipContent>
+            </Tooltip>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -280,7 +309,17 @@ export default function UserRoles() {
                   name="role"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Role</FormLabel>
+                      <div className="flex items-center space-x-2">
+                        <FormLabel>Role</FormLabel>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Info className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">Choose a role that matches the user's responsibilities. Each role has specific permissions for healthcare operations.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -288,13 +327,20 @@ export default function UserRoles() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="physician">Physician</SelectItem>
-                          <SelectItem value="nurse">Nurse</SelectItem>
-                          <SelectItem value="pharmacist">Pharmacist</SelectItem>
-                          <SelectItem value="lab_technician">Lab Technician</SelectItem>
-                          <SelectItem value="receptionist">Receptionist</SelectItem>
-                          <SelectItem value="billing_staff">Billing Staff</SelectItem>
-                          <SelectItem value="tenant_admin">Tenant Admin</SelectItem>
+                          {Object.entries(roleTooltips).map(([role, tooltip]) => (
+                            <Tooltip key={role}>
+                              <TooltipTrigger asChild>
+                                <SelectItem value={role}>
+                                  {role.replace('_', ' ').split(' ').map(word => 
+                                    word.charAt(0).toUpperCase() + word.slice(1)
+                                  ).join(' ')}
+                                </SelectItem>
+                              </TooltipTrigger>
+                              <TooltipContent side="right">
+                                <p className="max-w-xs">{tooltip}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -333,85 +379,144 @@ export default function UserRoles() {
 
       {/* Role Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">{filteredUsers.length}</div>
-            <div className="text-sm text-gray-600">Total Users</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <UserCheck className="h-8 w-8 text-green-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">
-              {filteredUsers.filter(u => u.isActive).length}
-            </div>
-            <div className="text-sm text-gray-600">Active Users</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Shield className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">
-              {Object.keys(roleDescriptions).length}
-            </div>
-            <div className="text-sm text-gray-600">Role Types</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Eye className="h-8 w-8 text-orange-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">
-              {filteredUsers.filter(u => u.role === "tenant_admin").length}
-            </div>
-            <div className="text-sm text-gray-600">Admins</div>
-          </CardContent>
-        </Card>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card className="hover:shadow-md transition-shadow cursor-help">
+              <CardContent className="p-4 text-center">
+                <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-900">{filteredUsers.length}</div>
+                <div className="text-sm text-gray-600">Total Users</div>
+              </CardContent>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Total number of user accounts in your healthcare organization</p>
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card className="hover:shadow-md transition-shadow cursor-help">
+              <CardContent className="p-4 text-center">
+                <UserCheck className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-900">
+                  {filteredUsers.filter(u => u.isActive).length}
+                </div>
+                <div className="text-sm text-gray-600">Active Users</div>
+              </CardContent>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Number of users currently active and able to access the system</p>
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card className="hover:shadow-md transition-shadow cursor-help">
+              <CardContent className="p-4 text-center">
+                <Shield className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-900">
+                  {Object.keys(roleDescriptions).length}
+                </div>
+                <div className="text-sm text-gray-600">Role Types</div>
+              </CardContent>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Different healthcare roles available for assignment in your organization</p>
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card className="hover:shadow-md transition-shadow cursor-help">
+              <CardContent className="p-4 text-center">
+                <Eye className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-900">
+                  {filteredUsers.filter(u => u.role === "tenant_admin").length}
+                </div>
+                <div className="text-sm text-gray-600">Admins</div>
+              </CardContent>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Number of administrators with full management privileges</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>User Filters</CardTitle>
+          <div className="flex items-center space-x-2">
+            <CardTitle>User Filters</CardTitle>
+            <Tooltip>
+              <TooltipTrigger>
+                <HelpCircle className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">Use these filters to quickly find specific users in your organization by name, role, or account status.</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search by username or email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Search by username or email..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Search for users by typing their username or email address</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="Role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="physician">Physician</SelectItem>
-                <SelectItem value="nurse">Nurse</SelectItem>
-                <SelectItem value="pharmacist">Pharmacist</SelectItem>
-                <SelectItem value="lab_technician">Lab Tech</SelectItem>
-                <SelectItem value="receptionist">Receptionist</SelectItem>
-                <SelectItem value="billing_staff">Billing</SelectItem>
-                <SelectItem value="tenant_admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-32">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-full md:w-40">
+                    <SelectValue placeholder="Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    <SelectItem value="physician">Physician</SelectItem>
+                    <SelectItem value="nurse">Nurse</SelectItem>
+                    <SelectItem value="pharmacist">Pharmacist</SelectItem>
+                    <SelectItem value="lab_technician">Lab Tech</SelectItem>
+                    <SelectItem value="receptionist">Receptionist</SelectItem>
+                    <SelectItem value="billing_staff">Billing</SelectItem>
+                    <SelectItem value="tenant_admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Filter users by their assigned healthcare role</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full md:w-32">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Filter by user account status (active/inactive)</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </CardContent>
       </Card>
@@ -442,9 +547,16 @@ export default function UserRoles() {
                       <div>
                         <div className="flex items-center space-x-2 mb-1">
                           <h3 className="font-medium text-gray-900">{userItem.username}</h3>
-                          <Badge className={roleColors[userItem.role as keyof typeof roleColors]}>
-                            {userItem.role.replace('_', ' ').toUpperCase()}
-                          </Badge>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge className={roleColors[userItem.role as keyof typeof roleColors]}>
+                                {userItem.role.replace('_', ' ').toUpperCase()}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs">{roleTooltips[userItem.role as keyof typeof roleTooltips]}</p>
+                            </TooltipContent>
+                          </Tooltip>
                           <Badge variant={userItem.isActive ? "default" : "secondary"}>
                             {userItem.isActive ? "Active" : "Inactive"}
                           </Badge>
@@ -456,26 +568,52 @@ export default function UserRoles() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(userItem)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(userItem)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Edit user information and role assignments</p>
+                        </TooltipContent>
+                      </Tooltip>
                       {userItem.role !== 'super_admin' ? (
-                        <Button
-                          variant={userItem.isActive ? "destructive" : "default"}
-                          size="sm"
-                          onClick={() => handleToggleStatus(userItem)}
-                          disabled={toggleUserStatusMutation.isPending}
-                        >
-                          {userItem.isActive ? "Deactivate" : "Activate"}
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant={userItem.isActive ? "destructive" : "default"}
+                              size="sm"
+                              onClick={() => handleToggleStatus(userItem)}
+                              disabled={toggleUserStatusMutation.isPending}
+                            >
+                              {userItem.isActive ? "Deactivate" : "Activate"}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>
+                              {userItem.isActive 
+                                ? "Deactivate user to revoke access while preserving account data" 
+                                : "Activate user to restore access to the system"
+                              }
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
                       ) : (
-                        <Badge variant="outline" className="text-xs px-2 py-1">
-                          Permanent Role
-                        </Badge>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge variant="outline" className="text-xs px-2 py-1">
+                              Permanent Role
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Super admin accounts cannot be deactivated for platform security</p>
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                     </div>
                   </div>
@@ -496,7 +634,17 @@ export default function UserRoles() {
       {/* Role Permissions Reference */}
       <Card>
         <CardHeader>
-          <CardTitle>Role Permissions Reference</CardTitle>
+          <div className="flex items-center space-x-2">
+            <CardTitle>Role Permissions Reference</CardTitle>
+            <Tooltip>
+              <TooltipTrigger>
+                <HelpCircle className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">Reference guide showing detailed permissions and responsibilities for each healthcare role in your organization.</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <CardDescription>
             Understanding access levels for each healthcare role
           </CardDescription>
@@ -504,16 +652,24 @@ export default function UserRoles() {
         <CardContent>
           <div className="space-y-4">
             {Object.entries(roleDescriptions).map(([role, description]) => (
-              <div key={role} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                <Badge className={roleColors[role as keyof typeof roleColors]}>
-                  {role.replace('_', ' ').toUpperCase()}
-                </Badge>
-                <p className="text-sm text-gray-600 flex-1">{description}</p>
-              </div>
+              <Tooltip key={role}>
+                <TooltipTrigger asChild>
+                  <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-help">
+                    <Badge className={roleColors[role as keyof typeof roleColors]}>
+                      {role.replace('_', ' ').toUpperCase()}
+                    </Badge>
+                    <p className="text-sm text-gray-600 flex-1">{description}</p>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">{roleTooltips[role as keyof typeof roleTooltips]}</p>
+                </TooltipContent>
+              </Tooltip>
             ))}
           </div>
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }
