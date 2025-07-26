@@ -2127,6 +2127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/health-analyses/generate/:patientId", authenticateToken, requireTenant, requireRole(['physician', 'nurse', 'tenant_admin', 'super_admin']), async (req, res) => {
     try {
+      console.log("Health analysis generation started for patient:", req.params.patientId);
       const { patientId } = req.params;
       const { tenantId, userId } = req.user;
       
@@ -2148,6 +2149,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const labResults = await storage.getLabResultsByPatient(patientId, tenantId);
       const recentLabResults = labResults.slice(0, 10);
       
+      console.log(`Patient data summary: Vital signs: ${recentVitalSigns.length}, Appointments: ${recentAppointments.length}, Lab results: ${recentLabResults.length}`);
+      
       if (recentVitalSigns.length === 0 && recentLabResults.length === 0) {
         return res.status(400).json({ 
           message: "No vital signs or lab results data available for health analysis. Please record vital signs or lab results first." 
@@ -2155,12 +2158,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Generate AI health analysis
+      console.log("Generating AI health analysis...");
       const analysisResult = await aiHealthAnalyzer.analyzePatientHealth(
         patient,
         recentVitalSigns,
         recentAppointments,
         recentLabResults
       );
+      console.log("AI analysis completed successfully");
       
       // Save health analysis to database
       const healthAnalysis = await storage.createHealthAnalysis({

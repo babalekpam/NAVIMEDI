@@ -62,7 +62,11 @@ export class AIHealthAnalyzer {
       return this.processAnalysisResult(analysisResult);
     } catch (error) {
       console.error("AI Health Analysis Error:", error);
-      throw new Error("Failed to generate health recommendations");
+      console.error("Error details:", error.message, error.response?.data);
+      if (error.response?.status === 401) {
+        throw new Error("OpenAI API authentication failed. Please check API key configuration.");
+      }
+      throw new Error(`Failed to generate health recommendations: ${error.message}`);
     }
   }
 
