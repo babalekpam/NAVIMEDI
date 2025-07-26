@@ -338,6 +338,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET appointments by provider ID (specific route for doctor dashboard)
+  app.get("/api/appointments/provider/:providerId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { providerId } = req.params;
+      console.log("[DEBUG] Getting appointments for provider:", providerId);
+      
+      const appointments = await storage.getAppointmentsByProvider(providerId, req.tenant!.id);
+      res.json(appointments);
+    } catch (error) {
+      console.error("Get provider appointments error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/appointments", authenticateToken, requireTenant, async (req, res) => {
     try {
       console.log("[DEBUG] Creating appointment - User:", req.user?.role, "User ID:", req.user?.userId, "Tenant:", req.tenant?.id);

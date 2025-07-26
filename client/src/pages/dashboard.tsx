@@ -59,6 +59,21 @@ export default function Dashboard() {
     enabled: !!user && !!tenant && !isSuperAdmin,
   });
 
+  // Get doctor's specific appointments if user is a physician
+  const { data: doctorAppointments = [], isLoading: doctorAppointmentsLoading } = useQuery({
+    queryKey: ["/api/appointments", { providerId: user?.userId }],
+    enabled: !!user && !!tenant && user?.role === 'physician',
+    queryFn: async () => {
+      const response = await fetch(`/api/appointments?providerId=${user?.userId}`, {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+        }
+      });
+      if (!response.ok) throw new Error("Failed to fetch appointments");
+      return response.json();
+    }
+  });
+
   const { data: pendingLabOrders = [], isLoading: labOrdersLoading } = useQuery({
     queryKey: ["/api/lab-orders", "pending", "true"],
     enabled: !!user && !!tenant && !isSuperAdmin,
@@ -449,26 +464,50 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { time: "09:00", patient: "John Smith", type: "Consultation", urgent: false },
-                { time: "09:30", patient: "Sarah Johnson", type: "Follow-up", urgent: true },
-                { time: "10:00", patient: "Mike Wilson", type: "Physical", urgent: false },
-                { time: "10:30", patient: "Emma Davis", type: "Emergency", urgent: true },
-                { time: "11:00", patient: "Robert Brown", type: "Consultation", urgent: false }
-              ].map((appointment, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-3 h-3 rounded-full ${appointment.urgent ? 'bg-red-500' : 'bg-green-500'}`}></div>
-                    <div>
-                      <p className="font-medium">{appointment.time} - {appointment.patient}</p>
-                      <p className="text-sm text-gray-600">{appointment.type}</p>
+              {doctorAppointmentsLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="animate-pulse p-3 border rounded-lg">
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                     </div>
-                  </div>
-                  {appointment.urgent && (
-                    <Badge variant="destructive" className="text-xs">Urgent</Badge>
-                  )}
+                  ))}
                 </div>
-              ))}
+              ) : doctorAppointments.length > 0 ? (
+                doctorAppointments.map((appointment: any, index: number) => {
+                  const appointmentDate = new Date(appointment.appointmentDate);
+                  const timeString = appointmentDate.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false 
+                  });
+                  const isUrgent = appointment.status === 'urgent' || appointment.type === 'emergency';
+                  
+                  return (
+                    <div key={appointment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-3 h-3 rounded-full ${isUrgent ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                        <div>
+                          <p className="font-medium">{timeString} - {appointment.patient?.firstName} {appointment.patient?.lastName}</p>
+                          <p className="text-sm text-gray-600">{appointment.type} • {appointment.chiefComplaint}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {isUrgent && (
+                          <Badge variant="destructive" className="text-xs">Urgent</Badge>
+                        )}
+                        <Badge variant="outline" className="text-xs">{appointment.status}</Badge>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                  <p>No appointments scheduled</p>
+                  <p className="text-sm">Your schedule is clear for today</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
