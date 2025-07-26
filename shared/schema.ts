@@ -162,6 +162,7 @@ export const patients = pgTable("patients", {
   address: jsonb("address"),
   emergencyContact: jsonb("emergency_contact"),
   insuranceInfo: jsonb("insurance_info"),
+  preferredPharmacyId: uuid("preferred_pharmacy_id").references(() => pharmacies.id),
   medicalHistory: jsonb("medical_history").default('[]'),
   allergies: jsonb("allergies").default('[]'),
   medications: jsonb("medications").default('[]'),
@@ -550,6 +551,42 @@ export const phraseTranslations = pgTable("phrase_translations", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Pharmacy Management Tables
+export const pharmacies = pgTable("pharmacies", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  name: text("name").notNull(),
+  licenseNumber: text("license_number"),
+  npiNumber: text("npi_number"), // National Provider Identifier
+  contactPerson: text("contact_person"),
+  phone: text("phone").notNull(),
+  email: text("email"),
+  faxNumber: text("fax_number"),
+  address: jsonb("address").notNull().$type<{
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  }>(),
+  isActive: boolean("is_active").default(true),
+  acceptsInsurance: boolean("accepts_insurance").default(true),
+  deliveryService: boolean("delivery_service").default(false),
+  operatingHours: jsonb("operating_hours").$type<{
+    monday?: { open: string; close: string };
+    tuesday?: { open: string; close: string };
+    wednesday?: { open: string; close: string };
+    thursday?: { open: string; close: string };
+    friday?: { open: string; close: string };
+    saturday?: { open: string; close: string };
+    sunday?: { open: string; close: string };
+  }>(),
+  specializations: text("specializations").array().default([]), // specialty medications, compounding, etc.
+  websiteUrl: text("website_url"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Laboratory Management Tables
 export const laboratories = pgTable("laboratories", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -891,10 +928,22 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   visitSummariesAsProvider: many(visitSummaries, { relationName: "providerSummaries" })
 }));
 
+export const pharmaciesRelations = relations(pharmacies, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [pharmacies.tenantId],
+    references: [tenants.id]
+  }),
+  patients: many(patients)
+}));
+
 export const patientsRelations = relations(patients, ({ one, many }) => ({
   tenant: one(tenants, {
     fields: [patients.tenantId],
     references: [tenants.id]
+  }),
+  preferredPharmacy: one(pharmacies, {
+    fields: [patients.preferredPharmacyId],
+    references: [pharmacies.id]
   }),
   appointments: many(appointments),
   prescriptions: many(prescriptions),
@@ -1073,6 +1122,12 @@ export const insertLabOrderSchema = createInsertSchema(labOrders).omit({
   updatedAt: true
 });
 
+export const insertPharmacySchema = createInsertSchema(pharmacies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Insurance Provider and Patient Insurance schemas
 export const insertInsuranceProviderSchema = createInsertSchema(insuranceProviders).omit({
   id: true,
@@ -1226,6 +1281,9 @@ export type InsertPrescription = z.infer<typeof insertPrescriptionSchema>;
 
 export type LabOrder = typeof labOrders.$inferSelect;
 export type InsertLabOrder = z.infer<typeof insertLabOrderSchema>;
+
+export type Pharmacy = typeof pharmacies.$inferSelect;
+export type InsertPharmacy = z.infer<typeof insertPharmacySchema>;
 
 export type InsuranceProvider = typeof insuranceProviders.$inferSelect;
 export type InsertInsuranceProvider = z.infer<typeof insertInsuranceProviderSchema>;

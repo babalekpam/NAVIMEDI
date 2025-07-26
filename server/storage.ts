@@ -39,6 +39,9 @@ import {
   type InsertPrescription,
   type LabOrder,
   type InsertLabOrder,
+  pharmacies,
+  type Pharmacy,
+  type InsertPharmacy,
   type InsuranceClaim,
   type InsertInsuranceClaim,
   type InsuranceProvider,
@@ -134,6 +137,13 @@ export interface IStorage {
   getLabOrdersByPatient(patientId: string, tenantId: string): Promise<LabOrder[]>;
   getLabOrdersByTenant(tenantId: string): Promise<LabOrder[]>;
   getPendingLabOrders(tenantId: string): Promise<LabOrder[]>;
+
+  // Pharmacy management
+  getPharmacy(id: string, tenantId: string): Promise<Pharmacy | undefined>;
+  createPharmacy(pharmacy: InsertPharmacy): Promise<Pharmacy>;
+  updatePharmacy(id: string, updates: Partial<Pharmacy>, tenantId: string): Promise<Pharmacy | undefined>;
+  getPharmaciesByTenant(tenantId: string): Promise<Pharmacy[]>;
+  getActivePharmacies(tenantId: string): Promise<Pharmacy[]>;
 
   // Insurance claims management
   getInsuranceClaim(id: string, tenantId: string): Promise<InsuranceClaim | undefined>;
@@ -571,6 +581,38 @@ export class DatabaseStorage implements IStorage {
         sql`${labOrders.status} IN ('ordered', 'collected', 'processing')`
       )
     ).orderBy(labOrders.orderedDate);
+  }
+
+  // Pharmacy management
+  async getPharmacy(id: string, tenantId: string): Promise<Pharmacy | undefined> {
+    const [pharmacy] = await db.select().from(pharmacies).where(
+      and(eq(pharmacies.id, id), eq(pharmacies.tenantId, tenantId))
+    );
+    return pharmacy || undefined;
+  }
+
+  async createPharmacy(insertPharmacy: InsertPharmacy): Promise<Pharmacy> {
+    const [pharmacy] = await db.insert(pharmacies).values(insertPharmacy).returning();
+    return pharmacy;
+  }
+
+  async updatePharmacy(id: string, updates: Partial<Pharmacy>, tenantId: string): Promise<Pharmacy | undefined> {
+    const [pharmacy] = await db.update(pharmacies)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(pharmacies.id, id), eq(pharmacies.tenantId, tenantId)))
+      .returning();
+    return pharmacy || undefined;
+  }
+
+  async getPharmaciesByTenant(tenantId: string): Promise<Pharmacy[]> {
+    return await db.select().from(pharmacies).where(eq(pharmacies.tenantId, tenantId))
+      .orderBy(pharmacies.name);
+  }
+
+  async getActivePharmacies(tenantId: string): Promise<Pharmacy[]> {
+    return await db.select().from(pharmacies).where(
+      and(eq(pharmacies.tenantId, tenantId), eq(pharmacies.isActive, true))
+    ).orderBy(pharmacies.name);
   }
 
   // Insurance claims management

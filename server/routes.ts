@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertPharmacySchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema } from "@shared/schema";
 import { authenticateToken, requireRole } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -518,6 +518,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Pharmacy routes
+  app.get("/api/pharmacies", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const pharmacies = await storage.getActivePharmacies(req.tenantId!);
+      res.json(pharmacies);
+    } catch (error) {
+      console.error("Error fetching pharmacies:", error);
+      res.status(500).json({ message: "Failed to fetch pharmacies" });
+    }
+  });
+
+  app.post("/api/pharmacies", authenticateToken, requireRole(["tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
+    try {
+      const pharmacyData = insertPharmacySchema.parse({
+        ...req.body,
+        tenantId: req.tenantId
+      });
+
+      const pharmacy = await storage.createPharmacy(pharmacyData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenantId!,
+        userId: req.userId!,
+        entityType: "pharmacy",
+        entityId: pharmacy.id,
+        action: "CREATE",
+        newData: pharmacy,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.status(201).json(pharmacy);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid pharmacy data", errors: error.errors });
+      }
+      console.error("Error creating pharmacy:", error);
+      res.status(500).json({ message: "Failed to create pharmacy" });
     }
   });
 
