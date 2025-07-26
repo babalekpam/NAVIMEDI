@@ -303,7 +303,7 @@ export default function Reports() {
                         <Calendar className="h-3 w-3" />
                         <span>Created {new Date(report.createdAt).toLocaleDateString()}</span>
                         <span>•</span>
-                        <span className="capitalize">{report.format.toUpperCase()}</span>
+                        <span className="capitalize">{report.format?.toUpperCase() || 'PDF'}</span>
                       </div>
                     </div>
                   </div>

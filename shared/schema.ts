@@ -244,6 +244,7 @@ export const reports = pgTable("reports", {
   generatedBy: uuid("generated_by").references(() => users.id).notNull(),
   title: text("title").notNull(),
   type: reportTypeEnum("type").notNull(),
+  format: text("format").default('pdf'),
   parameters: jsonb("parameters").default('{}'),
   data: jsonb("data"),
   status: reportStatusEnum("status").default('pending'),
