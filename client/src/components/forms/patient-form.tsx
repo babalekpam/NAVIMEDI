@@ -14,8 +14,32 @@ interface PatientFormProps {
 }
 
 export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) => {
-  const patientFormSchema = insertPatientSchema.omit({ tenantId: true, mrn: true }).extend({
-    dateOfBirth: z.string().min(1, "Date of birth is required")
+  const patientFormSchema = insertPatientSchema.omit({ 
+    tenantId: true, 
+    mrn: true,
+    dateOfBirth: true 
+  }).extend({
+    dateOfBirth: z.string().min(1, "Date of birth is required"),
+    gender: z.string().optional(),
+    phone: z.string().optional(),
+    email: z.string().optional(),
+    address: z.object({
+      street: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().optional(),
+      zipCode: z.string().optional(),
+      country: z.string().optional()
+    }).optional(),
+    emergencyContact: z.object({
+      name: z.string().optional(),
+      relationship: z.string().optional(),
+      phone: z.string().optional()
+    }).optional(),
+    insuranceInfo: z.object({
+      provider: z.string().optional(),
+      policyNumber: z.string().optional(),
+      groupNumber: z.string().optional()
+    }).optional()
   });
 
   const form = useForm({
@@ -51,10 +75,26 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
   });
 
   const handleSubmit = (data: any) => {
-    // Convert dateOfBirth string to Date object
+    // Convert dateOfBirth string to Date object and clean up empty optional fields
     const patientData = {
-      ...data,
-      dateOfBirth: new Date(data.dateOfBirth)
+      firstName: data.firstName,
+      lastName: data.lastName,
+      dateOfBirth: new Date(data.dateOfBirth),
+      gender: data.gender || null,
+      phone: data.phone || null,
+      email: data.email || null,
+      address: data.address && (data.address.street || data.address.city || data.address.state || data.address.zipCode) 
+        ? data.address 
+        : null,
+      emergencyContact: data.emergencyContact && (data.emergencyContact.name || data.emergencyContact.phone) 
+        ? data.emergencyContact 
+        : null,
+      insuranceInfo: data.insuranceInfo && (data.insuranceInfo.provider || data.insuranceInfo.policyNumber) 
+        ? data.insuranceInfo 
+        : null,
+      medicalHistory: data.medicalHistory || [],
+      allergies: data.allergies || [],
+      medications: data.medications || []
     };
     onSubmit(patientData);
   };
