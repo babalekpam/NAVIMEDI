@@ -354,8 +354,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Convert appointmentDate string to Date object
+      const requestData = { ...req.body };
+      if (requestData.appointmentDate && typeof requestData.appointmentDate === 'string') {
+        requestData.appointmentDate = new Date(requestData.appointmentDate);
+      }
+      
       const appointmentData = insertAppointmentSchema.parse({
-        ...req.body,
+        ...requestData,
         tenantId: req.tenant!.id
       });
 
