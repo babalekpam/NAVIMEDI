@@ -681,6 +681,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get users for a specific tenant (for super admin user management)
+  app.get("/api/users/:tenantId", authenticateToken, async (req, res) => {
+    try {
+      const { tenantId } = req.params;
+      
+      // Super admin can view users from any tenant
+      if (req.user.role === 'super_admin') {
+        const users = await storage.getUsersByTenant(tenantId);
+        res.json(users);
+      } else {
+        // Regular users can only view users from their own tenant
+        const users = await storage.getUsersByTenant(req.tenant.id);
+        res.json(users);
+      }
+    } catch (error) {
+      console.error("Get users error:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
   // Get all reports across platform for super admin
   app.get("/api/platform/reports", authenticateToken, async (req, res) => {
     try {

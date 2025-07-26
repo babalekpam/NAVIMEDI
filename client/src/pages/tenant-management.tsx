@@ -14,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import OrganizationUsers from "./organization-users";
 
 const tenantTypeLabels = {
   hospital: "Hospital",
@@ -34,6 +35,7 @@ const tenantTypeColors = {
 export default function TenantManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -89,9 +91,7 @@ export default function TenantManagement() {
   };
 
   const handleManageUsers = (tenant: Tenant) => {
-    // For now, show information about user management
-    // In a full implementation, this would navigate to the user management page for this tenant
-    alert(`User Management for ${tenant.name}\n\nThis would open the user management interface where you can:\n- Add new users to this organization\n- Assign roles and permissions\n- Manage user access\n- View user activity\n\nFeature coming soon!`);
+    setSelectedTenant(tenant);
   };
 
   if (!user || user.role !== "super_admin") {
@@ -102,6 +102,17 @@ export default function TenantManagement() {
           <p className="text-gray-600">You don't have permission to access tenant management.</p>
         </div>
       </div>
+    );
+  }
+
+  // If a tenant is selected for user management, show the user management component
+  if (selectedTenant) {
+    return (
+      <OrganizationUsers
+        tenantId={selectedTenant.id}
+        tenantName={selectedTenant.name}
+        onBack={() => setSelectedTenant(null)}
+      />
     );
   }
 
