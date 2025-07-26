@@ -15,7 +15,15 @@ interface PrescriptionFormProps {
 
 export const PrescriptionForm = ({ onSubmit, isLoading = false, patients }: PrescriptionFormProps) => {
   const form = useForm({
-    resolver: zodResolver(insertPrescriptionSchema.omit({ tenantId: true, providerId: true })),
+    resolver: zodResolver(insertPrescriptionSchema.omit({ 
+      tenantId: true, 
+      providerId: true, 
+      expiryDate: true,
+      prescribedDate: true,
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    })),
     defaultValues: {
       patientId: "",
       medicationName: "",

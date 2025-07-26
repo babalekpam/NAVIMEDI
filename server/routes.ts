@@ -439,8 +439,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/prescriptions", requireRole(["physician", "nurse"]), async (req, res) => {
     try {
+      console.log("[DEBUG] Creating prescription - User:", req.user?.role, "User ID:", req.user?.userId, "Tenant:", req.tenant?.id);
+      console.log("[DEBUG] Request body:", req.body);
+      
+      // Convert string dates to Date objects
+      const requestData = { ...req.body };
+      if (requestData.expiryDate && typeof requestData.expiryDate === 'string') {
+        requestData.expiryDate = new Date(requestData.expiryDate);
+      }
+      
       const prescriptionData = insertPrescriptionSchema.parse({
-        ...req.body,
+        ...requestData,
         tenantId: req.tenant!.id,
         providerId: req.user!.userId
       });
