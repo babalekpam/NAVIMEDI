@@ -55,12 +55,12 @@ export default function Dashboard() {
   });
 
   const { data: todayAppointments = [], isLoading: appointmentsLoading } = useQuery({
-    queryKey: ["/api/appointments", { date: new Date().toISOString().split('T')[0] }],
+    queryKey: ["/api/appointments", "date", new Date().toISOString().split('T')[0]],
     enabled: !!user && !!tenant && !isSuperAdmin,
   });
 
   const { data: pendingLabOrders = [], isLoading: labOrdersLoading } = useQuery({
-    queryKey: ["/api/lab-orders", { pending: "true" }],
+    queryKey: ["/api/lab-orders", "pending", "true"],
     enabled: !!user && !!tenant && !isSuperAdmin,
   });
 
@@ -334,6 +334,7 @@ export default function Dashboard() {
       case 'patient':
         return renderPatientDashboard();
       case 'tenant_admin':
+      case 'director':
         return renderTenantAdminDashboard();
       default:
         return renderDefaultDashboard();

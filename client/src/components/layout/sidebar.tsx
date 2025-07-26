@@ -27,20 +27,20 @@ interface SidebarItem {
 
 const sidebarItems: SidebarItem[] = [
   // Clinical Section (only for tenant users)
-  { id: "dashboard", label: "Overview", icon: BarChart3, path: "/dashboard", roles: ["physician", "nurse", "pharmacist", "lab_technician", "receptionist", "billing_staff", "tenant_admin", "super_admin"] },
-  { id: "patients", label: "Patient Records", icon: Users, path: "/patients", roles: ["physician", "nurse", "receptionist", "tenant_admin"] },
-  { id: "appointments", label: "Appointments", icon: Calendar, path: "/appointments", roles: ["physician", "nurse", "receptionist", "tenant_admin"] },
-  { id: "prescriptions", label: "Prescriptions", icon: Pill, path: "/prescriptions", roles: ["physician", "nurse", "pharmacist", "tenant_admin"] },
-  { id: "lab-orders", label: "Lab Results", icon: TestTube, path: "/lab-orders", roles: ["physician", "nurse", "lab_technician", "tenant_admin"] },
+  { id: "dashboard", label: "Overview", icon: BarChart3, path: "/dashboard", roles: ["physician", "nurse", "pharmacist", "lab_technician", "receptionist", "billing_staff", "tenant_admin", "director", "super_admin"] },
+  { id: "patients", label: "Patient Records", icon: Users, path: "/patients", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
+  { id: "appointments", label: "Appointments", icon: Calendar, path: "/appointments", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
+  { id: "prescriptions", label: "Prescriptions", icon: Pill, path: "/prescriptions", roles: ["physician", "nurse", "pharmacist", "tenant_admin", "director"] },
+  { id: "lab-orders", label: "Lab Results", icon: TestTube, path: "/lab-orders", roles: ["physician", "nurse", "lab_technician", "tenant_admin", "director"] },
   
   // Operations Section (only for tenant users)
-  { id: "billing", label: "Billing & Claims", icon: FileText, path: "/billing", roles: ["billing_staff", "physician", "tenant_admin"] },
-  { id: "reports", label: "Reports & Analytics", icon: BarChart3, path: "/reports", roles: ["physician", "nurse", "pharmacist", "lab_technician", "billing_staff", "tenant_admin", "super_admin"] },
+  { id: "billing", label: "Billing & Claims", icon: FileText, path: "/billing", roles: ["billing_staff", "physician", "tenant_admin", "director"] },
+  { id: "reports", label: "Reports & Analytics", icon: BarChart3, path: "/reports", roles: ["physician", "nurse", "pharmacist", "lab_technician", "billing_staff", "tenant_admin", "director", "super_admin"] },
   
   // Platform Administration Section (only for super admins)
   { id: "tenant-management", label: "Tenant Management", icon: Building, path: "/tenant-management", roles: ["super_admin"] },
-  { id: "user-roles", label: "User Roles", icon: UserCheck, path: "/user-roles", roles: ["tenant_admin", "super_admin"] },
-  { id: "audit-logs", label: "Audit & HIPAA", icon: Shield, path: "/audit-logs", roles: ["tenant_admin", "super_admin"] },
+  { id: "user-roles", label: "User Roles", icon: UserCheck, path: "/user-roles", roles: ["tenant_admin", "director", "super_admin"] },
+  { id: "audit-logs", label: "Audit & HIPAA", icon: Shield, path: "/audit-logs", roles: ["tenant_admin", "director", "super_admin"] },
 ];
 
 export const Sidebar = () => {
