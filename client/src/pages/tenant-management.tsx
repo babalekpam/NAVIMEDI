@@ -349,7 +349,7 @@ export default function TenantManagement() {
                     className="bg-blue-600 hover:bg-blue-700"
                   >
                     <Users className="h-4 w-4 mr-2" />
-                    Manage Users
+                    View Users
                   </Button>
                 </div>
               </div>
@@ -521,7 +521,7 @@ export default function TenantManagement() {
                         className="text-gray-600 hover:text-gray-700"
                         onClick={() => handleManageUsers(tenant)}
                       >
-                        Manage Users
+                        View Users
                       </Button>
                       <Button variant="ghost" size="sm">
                         <MoreHorizontal className="h-4 w-4" />
