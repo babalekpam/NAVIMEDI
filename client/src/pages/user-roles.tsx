@@ -91,11 +91,18 @@ export default function UserRoles() {
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["/api/users", tenant?.id],
     enabled: !!user && !!tenant,
-    queryFn: () => fetch(`/api/users/${tenant?.id}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+    queryFn: async () => {
+      const response = await fetch(`/api/users/${tenant?.id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
       }
-    }).then(res => res.json())
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    }
   });
 
   const createUserMutation = useMutation({
@@ -180,7 +187,20 @@ export default function UserRoles() {
   });
 
   // Use real users data from API or empty array if loading
-  const usersData = users || [];
+  const usersData = Array.isArray(users) ? users : [];
+  
+  // Define available roles based on user's permissions
+  const getAvailableRoles = () => {
+    if (user?.role === 'super_admin') {
+      return ['physician', 'nurse', 'pharmacist', 'lab_technician', 'receptionist', 'billing_staff', 'tenant_admin'];
+    } else if (user?.role === 'tenant_admin') {
+      // Tenant admins can only create clinical and operational staff, not other admins
+      return ['physician', 'nurse', 'pharmacist', 'lab_technician', 'receptionist', 'billing_staff'];
+    }
+    return [];
+  };
+
+  const availableRoles = getAvailableRoles();
 
   const filteredUsers = usersData.filter(userItem => {
     const matchesSearch = userItem.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -247,26 +267,29 @@ export default function UserRoles() {
               Manage healthcare team members and their access permissions
             </p>
           </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  className="bg-blue-600 hover:bg-blue-700"
-                  onClick={() => {
-                    setEditingUser(null);
-                    form.reset();
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add User
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Create a new user account and assign them a healthcare role</p>
-              </TooltipContent>
-            </Tooltip>
-          </DialogTrigger>
+        
+        {/* Show Create User button only for super admin and tenant admin */}
+        {(user?.role === 'super_admin' || user?.role === 'tenant_admin') && (
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => {
+                      setEditingUser(null);
+                      form.reset();
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add User
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Create a new user account and assign them a healthcare role</p>
+                </TooltipContent>
+              </Tooltip>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>
@@ -327,7 +350,7 @@ export default function UserRoles() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {Object.entries(roleTooltips).map(([role, tooltip]) => (
+                          {availableRoles.map((role) => (
                             <Tooltip key={role}>
                               <TooltipTrigger asChild>
                                 <SelectItem value={role}>
@@ -337,7 +360,7 @@ export default function UserRoles() {
                                 </SelectItem>
                               </TooltipTrigger>
                               <TooltipContent side="right">
-                                <p className="max-w-xs">{tooltip}</p>
+                                <p className="max-w-xs">{roleTooltips[role as keyof typeof roleTooltips]}</p>
                               </TooltipContent>
                             </Tooltip>
                           ))}
@@ -374,7 +397,8 @@ export default function UserRoles() {
               </form>
             </Form>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        )}
       </div>
 
       {/* Role Statistics */}

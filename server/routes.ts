@@ -697,19 +697,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get users for a specific tenant (for super admin user management)
-  app.get("/api/users/:tenantId", authenticateToken, async (req, res) => {
+  // Get users for a specific tenant (for super admin and tenant admin user management)
+  app.get("/api/users/:tenantId", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { tenantId } = req.params;
       
       // Super admin can view users from any tenant
-      if (req.user.role === 'super_admin') {
+      if (req.user?.role === 'super_admin') {
+        const users = await storage.getUsersByTenant(tenantId);
+        res.json(users);
+      } else if (req.user?.role === 'tenant_admin' && req.user.tenantId === tenantId) {
+        // Tenant admin can view users from their own tenant
+        const users = await storage.getUsersByTenant(tenantId);
+        res.json(users);
+      } else if (req.user?.tenantId === tenantId) {
+        // Regular users can only view users from their own tenant (limited info)
         const users = await storage.getUsersByTenant(tenantId);
         res.json(users);
       } else {
-        // Regular users can only view users from their own tenant
-        const users = await storage.getUsersByTenant(req.tenant.id);
-        res.json(users);
+        return res.status(403).json({ message: "Access denied. Cannot view users from this organization." });
       }
     } catch (error) {
       console.error("Get users error:", error);
@@ -780,6 +786,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("User update error:", error);
       res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Create new user (for tenant admin user management)
+  app.post("/api/users", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { username, email, password, firstName, lastName, role } = req.body;
+      
+      // Validate required fields
+      if (!username || !email || !password || !firstName || !lastName || !role) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+
+      // Check permissions - only super admin and tenant admin can create users
+      if (req.user?.role !== 'super_admin' && req.user?.role !== 'tenant_admin') {
+        return res.status(403).json({ message: "Access denied. Admin privileges required to create users." });
+      }
+
+      // Tenant admin can only create users in their own organization
+      const targetTenantId = req.user.role === 'super_admin' ? (req.body.tenantId || req.user.tenantId) : req.user.tenantId;
+
+      // Validate that tenant admin cannot create super admin or other tenant admin users
+      if (req.user?.role === 'tenant_admin') {
+        if (role === 'super_admin' || role === 'tenant_admin') {
+          return res.status(403).json({ message: "Tenant admins cannot create admin-level users. Only clinical and operational staff roles are allowed." });
+        }
+      }
+
+      // Check if username or email already exists in this tenant
+      const existingUserByUsername = await storage.getUserByUsername(username, targetTenantId);
+      if (existingUserByUsername) {
+        return res.status(400).json({ message: "Username already exists in this organization" });
+      }
+
+      const existingUserByEmail = await storage.getUserByEmail(email, targetTenantId);
+      if (existingUserByEmail) {
+        return res.status(400).json({ message: "Email already exists in this organization" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create user
+      const newUser = await storage.createUser({
+        username,
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        role: role as any, // Cast to UserRole type
+        tenantId: targetTenantId,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: targetTenantId,
+        userId: req.user?.userId || '',
+        entityType: "user",
+        entityId: newUser.id,
+        action: "create",
+        newData: { 
+          username, 
+          email, 
+          firstName, 
+          lastName, 
+          role,
+          tenantId: targetTenantId
+        },
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.status(201).json({
+        message: "User created successfully",
+        user: {
+          id: newUser.id,
+          username: newUser.username,
+          email: newUser.email,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          role: newUser.role,
+          isActive: newUser.isActive,
+          tenantId: newUser.tenantId
+        }
+      });
+    } catch (error) {
+      console.error("User creation error:", error);
+      res.status(500).json({ message: "Failed to create user" });
     }
   });
 
