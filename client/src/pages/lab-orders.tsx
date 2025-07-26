@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { TestTube, Plus, Search, Filter, MoreHorizontal, AlertCircle, CheckCircle } from "lucide-react";
-import { LabOrder, Patient } from "@shared/schema";
+import { TestTube, Plus, Search, Filter, MoreHorizontal, AlertCircle, CheckCircle, FileText, Calendar, User } from "lucide-react";
+import { LabOrder, Patient, LabResult } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { LabOrderForm } from "@/components/forms/lab-order-form";
@@ -31,6 +31,9 @@ export default function LabOrders() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedLabOrder, setSelectedLabOrder] = useState<LabOrder | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isResultsOpen, setIsResultsOpen] = useState(false);
   const { user } = useAuth();
   const { tenant } = useTenant();
   const queryClient = useQueryClient();
@@ -42,6 +45,11 @@ export default function LabOrders() {
 
   const { data: patients = [] } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
+    enabled: !!user && !!tenant,
+  });
+
+  const { data: labResults = [] } = useQuery<LabResult[]>({
+    queryKey: ["/api/lab-results"],
     enabled: !!user && !!tenant,
   });
 
@@ -309,11 +317,27 @@ export default function LabOrders() {
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-blue-600 hover:text-blue-700"
+                        onClick={() => {
+                          setSelectedLabOrder(labOrder);
+                          setIsDetailsOpen(true);
+                        }}
+                      >
                         View Details
                       </Button>
-                      {labOrder.status === 'completed' && labOrder.results && (
-                        <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700">
+                      {labOrder.status === 'completed' && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-green-600 hover:text-green-700"
+                          onClick={() => {
+                            setSelectedLabOrder(labOrder);
+                            setIsResultsOpen(true);
+                          }}
+                        >
                           View Results
                         </Button>
                       )}
@@ -333,6 +357,279 @@ export default function LabOrders() {
           )}
         </CardContent>
       </Card>
+
+      {/* Lab Order Details Dialog */}
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <TestTube className="h-5 w-5 mr-2" />
+              Lab Order Details
+            </DialogTitle>
+          </DialogHeader>
+          {selectedLabOrder && (
+            <div className="space-y-6">
+              {/* Patient Information */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-2">Patient Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Patient Name</p>
+                    <p className="font-medium">{getPatientName(selectedLabOrder.patientId)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Order Date</p>
+                    <p className="font-medium">{new Date(selectedLabOrder.orderedDate || '').toLocaleDateString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Test Information */}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-2">Test Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Test Name</p>
+                    <p className="font-medium text-lg">{selectedLabOrder.testName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Test Code</p>
+                    <p className="font-medium">{selectedLabOrder.testCode || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Priority</p>
+                    <Badge 
+                      variant="secondary"
+                      className={`${priorityColors[selectedLabOrder.priority as keyof typeof priorityColors] || priorityColors.routine} font-medium`}
+                    >
+                      {(selectedLabOrder.priority || 'routine').toUpperCase()}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Status</p>
+                    <Badge 
+                      variant="secondary"
+                      className={`${statusColors[selectedLabOrder.status as keyof typeof statusColors] || statusColors.ordered} font-medium`}
+                    >
+                      {(selectedLabOrder.status || 'ordered').replace('_', ' ').toUpperCase()}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Clinical Information */}
+              <div className="bg-green-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-2">Clinical Information</h3>
+                <div className="space-y-3">
+                  {selectedLabOrder.clinicalHistory && (
+                    <div>
+                      <p className="text-sm text-gray-600">Clinical History</p>
+                      <p className="text-gray-700">{selectedLabOrder.clinicalHistory}</p>
+                    </div>
+                  )}
+                  {selectedLabOrder.instructions && (
+                    <div>
+                      <p className="text-sm text-gray-600">Special Instructions</p>
+                      <p className="text-gray-700">{selectedLabOrder.instructions}</p>
+                    </div>
+                  )}
+                  {selectedLabOrder.diagnosis && (
+                    <div>
+                      <p className="text-sm text-gray-600">Provisional Diagnosis</p>
+                      <p className="text-gray-700">{selectedLabOrder.diagnosis}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Ordering Information */}
+              <div className="bg-yellow-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-2">Ordering Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Ordering Physician</p>
+                    <p className="font-medium">{selectedLabOrder.orderingPhysician || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Order ID</p>
+                    <p className="font-mono text-sm text-gray-600">{selectedLabOrder.id.slice(-8)}</p>
+                  </div>
+                  {selectedLabOrder.expectedDate && (
+                    <div>
+                      <p className="text-sm text-gray-600">Expected Completion</p>
+                      <p className="font-medium">{new Date(selectedLabOrder.expectedDate).toLocaleDateString()}</p>
+                    </div>
+                  )}
+                  {selectedLabOrder.resultDate && (
+                    <div>
+                      <p className="text-sm text-gray-600">Results Available</p>
+                      <p className="font-medium text-green-600">{new Date(selectedLabOrder.resultDate).toLocaleDateString()}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>
+                  Close
+                </Button>
+                {selectedLabOrder.status === 'completed' && (
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => {
+                      setIsDetailsOpen(false);
+                      setIsResultsOpen(true);
+                    }}
+                  >
+                    View Results
+                  </Button>
+                )}
+                {user.role === "lab_technician" && selectedLabOrder.status !== 'completed' && (
+                  <Button variant="outline">
+                    Update Status
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Lab Results Dialog */}
+      <Dialog open={isResultsOpen} onOpenChange={setIsResultsOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <FileText className="h-5 w-5 mr-2" />
+              Laboratory Results - {selectedLabOrder?.testName}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedLabOrder && (
+            <div className="space-y-6">
+              {/* Patient & Test Header */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Patient</p>
+                    <p className="font-medium">{getPatientName(selectedLabOrder.patientId)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Test Ordered</p>
+                    <p className="font-medium">{selectedLabOrder.testName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Completed</p>
+                    <p className="font-medium">{selectedLabOrder.resultDate ? new Date(selectedLabOrder.resultDate).toLocaleDateString() : 'Pending'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lab Results */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-gray-900">Test Results</h3>
+                {labResults
+                  .filter(result => result.labOrderId === selectedLabOrder.id)
+                  .map((result, index) => (
+                    <div key={result.id} className="border rounded-lg overflow-hidden">
+                      <div className={`p-4 ${
+                        result.abnormalFlag === 'critical' ? 'bg-red-50 border-l-4 border-l-red-500' :
+                        result.abnormalFlag === 'high' ? 'bg-orange-50 border-l-4 border-l-orange-500' :
+                        result.abnormalFlag === 'low' ? 'bg-yellow-50 border-l-4 border-l-yellow-500' :
+                        'bg-green-50 border-l-4 border-l-green-500'
+                      }`}>
+                        <div className="grid grid-cols-4 gap-4">
+                          <div>
+                            <p className="text-sm text-gray-600">Test Component</p>
+                            <p className="font-medium">{result.testName}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Result</p>
+                            <p className={`font-bold text-lg ${
+                              result.abnormalFlag === 'critical' ? 'text-red-600' :
+                              result.abnormalFlag === 'high' ? 'text-orange-600' :
+                              result.abnormalFlag === 'low' ? 'text-yellow-600' :
+                              'text-green-600'
+                            }`}>
+                              {result.result} {result.unit && <span className="text-sm font-normal text-gray-600">({result.unit})</span>}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Reference Range</p>
+                            <p className="font-medium text-gray-700">{result.normalRange || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Flag</p>
+                            <Badge 
+                              variant="secondary"
+                              className={
+                                result.abnormalFlag === 'critical' ? 'bg-red-100 text-red-800' :
+                                result.abnormalFlag === 'high' ? 'bg-orange-100 text-orange-800' :
+                                result.abnormalFlag === 'low' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-green-100 text-green-800'
+                              }
+                            >
+                              {result.abnormalFlag?.toUpperCase() || 'NORMAL'}
+                            </Badge>
+                          </div>
+                        </div>
+                        {result.notes && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <p className="text-sm text-gray-600">Notes</p>
+                            <p className="text-gray-700">{result.notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                {labResults.filter(result => result.labOrderId === selectedLabOrder.id).length === 0 && (
+                  <div className="text-center py-8">
+                    <TestTube className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Results Available</h3>
+                    <p className="text-gray-600">Lab results are not yet available for this order.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Laboratory Information */}
+              {labResults.filter(result => result.labOrderId === selectedLabOrder.id).length > 0 && (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-900 mb-2">Laboratory Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Performed By</p>
+                      <p className="font-medium">{labResults.find(r => r.labOrderId === selectedLabOrder.id)?.performedBy || 'Lab Technician'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Completed At</p>
+                      <p className="font-medium">{labResults.find(r => r.labOrderId === selectedLabOrder.id)?.completedAt ? new Date(labResults.find(r => r.labOrderId === selectedLabOrder.id)!.completedAt!).toLocaleDateString() : 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button variant="outline" onClick={() => setIsResultsOpen(false)}>
+                  Close
+                </Button>
+                {labResults.filter(result => result.labOrderId === selectedLabOrder.id).length > 0 && (
+                  <Button variant="outline">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Print Report
+                  </Button>
+                )}
+                {(user.role === "physician" || user.role === "nurse") && (
+                  <Button variant="outline">
+                    Add to Patient Notes
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
