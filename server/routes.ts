@@ -484,8 +484,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/insurance-claims", requireRole(["billing_staff", "physician", "tenant_admin", "director"]), async (req, res) => {
     try {
+      const requestData = { ...req.body };
+      
+      // Generate unique claim number if not provided
+      if (!requestData.claimNumber) {
+        requestData.claimNumber = `CLM-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      }
+
       const claimData = insertInsuranceClaimSchema.parse({
-        ...req.body,
+        ...requestData,
         tenantId: req.tenant!.id
       });
 
@@ -508,6 +515,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Create insurance claim error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
+      if (error.code === '23505' && error.constraint === 'insurance_claims_claim_number_unique') {
+        return res.status(400).json({ message: "Claim number already exists. Please use a different claim number." });
       }
       res.status(500).json({ message: "Internal server error" });
     }
