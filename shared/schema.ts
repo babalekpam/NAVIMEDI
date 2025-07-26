@@ -391,6 +391,70 @@ export const phraseTranslations = pgTable("phrase_translations", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Laboratory Management Tables
+export const laboratories = pgTable("laboratories", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  name: text("name").notNull(),
+  licenseNumber: text("license_number"),
+  contactPerson: text("contact_person"),
+  phone: text("phone"),
+  email: text("email"),
+  address: jsonb("address").$type<{
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  }>(),
+  specializations: text("specializations").array(),
+  isActive: boolean("is_active").default(true),
+  apiEndpoint: text("api_endpoint"), // For external lab integration
+  apiKey: text("api_key"), // Encrypted API key for lab integration
+  averageTurnaroundTime: integer("average_turnaround_time"), // Hours
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const labResults = pgTable("lab_results", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  labOrderId: uuid("lab_order_id").references(() => labOrders.id).notNull(),
+  laboratoryId: uuid("laboratory_id").references(() => laboratories.id).notNull(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  testName: text("test_name").notNull(),
+  result: text("result"),
+  normalRange: text("normal_range"),
+  unit: text("unit"),
+  status: text("status").notNull().default('pending'), // pending, in_progress, completed, cancelled
+  abnormalFlag: text("abnormal_flag"), // normal, high, low, critical
+  notes: text("notes"),
+  performedBy: text("performed_by"), // Lab technician name
+  reviewedBy: uuid("reviewed_by").references(() => users.id), // Doctor who reviewed
+  completedAt: timestamp("completed_at"),
+  reportedAt: timestamp("reported_at"),
+  externalLabId: text("external_lab_id"), // ID from external lab system
+  rawData: jsonb("raw_data"), // Raw data from lab system
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const labOrderAssignments = pgTable("lab_order_assignments", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  labOrderId: uuid("lab_order_id").references(() => labOrders.id).notNull(),
+  laboratoryId: uuid("laboratory_id").references(() => laboratories.id).notNull(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  assignedBy: uuid("assigned_by").references(() => users.id).notNull(),
+  status: text("status").notNull().default('assigned'), // assigned, sent, received, processing, completed
+  sentAt: timestamp("sent_at"),
+  estimatedCompletionTime: timestamp("estimated_completion_time"),
+  actualCompletionTime: timestamp("actual_completion_time"),
+  trackingNumber: text("tracking_number"), // For tracking samples
+  notes: text("notes"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Relations
 export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   users: many(users),
@@ -403,7 +467,10 @@ export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   patientInsurance: many(patientInsurance),
   auditLogs: many(auditLogs),
   subscription: one(subscriptions),
-  reports: many(reports)
+  reports: many(reports),
+  laboratories: many(laboratories),
+  labResults: many(labResults),
+  labOrderAssignments: many(labOrderAssignments)
 }));
 
 export const insuranceProvidersRelations = relations(insuranceProviders, ({ one, many }) => ({
@@ -534,7 +601,9 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   appointmentsAsProvider: many(appointments, { relationName: "providerAppointments" }),
   prescriptions: many(prescriptions),
   labOrders: many(labOrders),
-  auditLogs: many(auditLogs)
+  auditLogs: many(auditLogs),
+  labResults: many(labResults),
+  labOrderAssignments: many(labOrderAssignments)
 }));
 
 export const patientsRelations = relations(patients, ({ one, many }) => ({
@@ -545,7 +614,60 @@ export const patientsRelations = relations(patients, ({ one, many }) => ({
   appointments: many(appointments),
   prescriptions: many(prescriptions),
   labOrders: many(labOrders),
-  insuranceClaims: many(insuranceClaims)
+  insuranceClaims: many(insuranceClaims),
+  labResults: many(labResults)
+}));
+
+// Laboratory Relations
+export const laboratoriesRelations = relations(laboratories, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [laboratories.tenantId],
+    references: [tenants.id]
+  }),
+  labResults: many(labResults),
+  labOrderAssignments: many(labOrderAssignments)
+}));
+
+export const labResultsRelations = relations(labResults, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [labResults.tenantId],
+    references: [tenants.id]
+  }),
+  patient: one(patients, {
+    fields: [labResults.patientId],
+    references: [patients.id]
+  }),
+  labOrder: one(labOrders, {
+    fields: [labResults.labOrderId],
+    references: [labOrders.id]
+  }),
+  laboratory: one(laboratories, {
+    fields: [labResults.laboratoryId],
+    references: [laboratories.id]
+  }),
+  reviewedByUser: one(users, {
+    fields: [labResults.reviewedBy],
+    references: [users.id]
+  })
+}));
+
+export const labOrderAssignmentsRelations = relations(labOrderAssignments, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [labOrderAssignments.tenantId],
+    references: [tenants.id]
+  }),
+  labOrder: one(labOrders, {
+    fields: [labOrderAssignments.labOrderId],
+    references: [labOrders.id]
+  }),
+  laboratory: one(laboratories, {
+    fields: [labOrderAssignments.laboratoryId],
+    references: [laboratories.id]
+  }),
+  assignedByUser: one(users, {
+    fields: [labOrderAssignments.assignedBy],
+    references: [users.id]
+  })
 }));
 
 export const appointmentsRelations = relations(appointments, ({ one, many }) => ({
@@ -669,6 +791,25 @@ export const insertPhraseTranslationSchema = createInsertSchema(phraseTranslatio
   updatedAt: true
 });
 
+// Laboratory Insert Schemas
+export const insertLaboratorySchema = createInsertSchema(laboratories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertLabResultSchema = createInsertSchema(labResults).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertLabOrderAssignmentSchema = createInsertSchema(labOrderAssignments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Types
 export type Tenant = typeof tenants.$inferSelect;
 export type InsertTenant = z.infer<typeof insertTenantSchema>;
@@ -720,3 +861,13 @@ export type InsertMedicalPhrase = z.infer<typeof insertMedicalPhraseSchema>;
 
 export type PhraseTranslation = typeof phraseTranslations.$inferSelect;
 export type InsertPhraseTranslation = z.infer<typeof insertPhraseTranslationSchema>;
+
+// Laboratory Types
+export type Laboratory = typeof laboratories.$inferSelect;
+export type InsertLaboratory = z.infer<typeof insertLaboratorySchema>;
+
+export type LabResult = typeof labResults.$inferSelect;
+export type InsertLabResult = z.infer<typeof insertLabResultSchema>;
+
+export type LabOrderAssignment = typeof labOrderAssignments.$inferSelect;
+export type InsertLabOrderAssignment = z.infer<typeof insertLabOrderAssignmentSchema>;

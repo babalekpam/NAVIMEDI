@@ -16,6 +16,9 @@ import {
   supportedLanguages,
   medicalPhrases,
   phraseTranslations,
+  laboratories,
+  labResults,
+  labOrderAssignments,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -48,7 +51,13 @@ import {
   type MedicalPhrase,
   type InsertMedicalPhrase,
   type PhraseTranslation,
-  type InsertPhraseTranslation
+  type InsertPhraseTranslation,
+  type Laboratory,
+  type InsertLaboratory,
+  type LabResult,
+  type InsertLabResult,
+  type LabOrderAssignment,
+  type InsertLabOrderAssignment
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or } from "drizzle-orm";
@@ -174,6 +183,30 @@ export interface IStorage {
   // Phrase Translation management
   getPhraseTranslations(phraseId: string): Promise<PhraseTranslation[]>;
   createPhraseTranslation(translation: InsertPhraseTranslation): Promise<PhraseTranslation>;
+
+  // Laboratory Management
+  getLaboratory(id: string, tenantId: string): Promise<Laboratory | undefined>;
+  createLaboratory(laboratory: InsertLaboratory): Promise<Laboratory>;
+  updateLaboratory(id: string, updates: Partial<Laboratory>, tenantId: string): Promise<Laboratory | undefined>;
+  getLaboratoriesByTenant(tenantId: string): Promise<Laboratory[]>;
+  getActiveLaboratoriesByTenant(tenantId: string): Promise<Laboratory[]>;
+
+  // Lab Results Management
+  getLabResult(id: string, tenantId: string): Promise<LabResult | undefined>;
+  createLabResult(labResult: InsertLabResult): Promise<LabResult>;
+  updateLabResult(id: string, updates: Partial<LabResult>, tenantId: string): Promise<LabResult | undefined>;
+  getLabResultsByOrder(labOrderId: string, tenantId: string): Promise<LabResult[]>;
+  getLabResultsByPatient(patientId: string, tenantId: string): Promise<LabResult[]>;
+  getLabResultsByTenant(tenantId: string): Promise<LabResult[]>;
+  getPendingLabResults(tenantId: string): Promise<LabResult[]>;
+
+  // Lab Order Assignment Management
+  getLabOrderAssignment(id: string, tenantId: string): Promise<LabOrderAssignment | undefined>;
+  createLabOrderAssignment(assignment: InsertLabOrderAssignment): Promise<LabOrderAssignment>;
+  updateLabOrderAssignment(id: string, updates: Partial<LabOrderAssignment>, tenantId: string): Promise<LabOrderAssignment | undefined>;
+  getLabOrderAssignmentByOrder(labOrderId: string, tenantId: string): Promise<LabOrderAssignment | undefined>;
+  getLabOrderAssignmentsByLaboratory(laboratoryId: string, tenantId: string): Promise<LabOrderAssignment[]>;
+  getLabOrderAssignmentsByTenant(tenantId: string): Promise<LabOrderAssignment[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -220,7 +253,11 @@ export class DatabaseStorage implements IStorage {
 
   async getUsersByRole(role: string, tenantId: string): Promise<User[]> {
     return await db.select().from(users).where(
-      and(eq(users.role, role), eq(users.tenantId, tenantId), eq(users.isActive, true))
+      and(
+        sql`${users.role} = ${role}`, 
+        eq(users.tenantId, tenantId), 
+        eq(users.isActive, true)
+      )
     );
   }
 
@@ -761,6 +798,124 @@ export class DatabaseStorage implements IStorage {
   async createPhraseTranslation(insertTranslation: InsertPhraseTranslation): Promise<PhraseTranslation> {
     const [translation] = await db.insert(phraseTranslations).values(insertTranslation).returning();
     return translation;
+  }
+
+  // Laboratory Management
+  async getLaboratory(id: string, tenantId: string): Promise<Laboratory | undefined> {
+    const [laboratory] = await db.select().from(laboratories).where(
+      and(eq(laboratories.id, id), eq(laboratories.tenantId, tenantId))
+    );
+    return laboratory || undefined;
+  }
+
+  async createLaboratory(insertLaboratory: InsertLaboratory): Promise<Laboratory> {
+    const [laboratory] = await db.insert(laboratories).values(insertLaboratory).returning();
+    return laboratory;
+  }
+
+  async updateLaboratory(id: string, updates: Partial<Laboratory>, tenantId: string): Promise<Laboratory | undefined> {
+    const [laboratory] = await db.update(laboratories)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(laboratories.id, id), eq(laboratories.tenantId, tenantId)))
+      .returning();
+    return laboratory || undefined;
+  }
+
+  async getLaboratoriesByTenant(tenantId: string): Promise<Laboratory[]> {
+    return await db.select().from(laboratories).where(
+      eq(laboratories.tenantId, tenantId)
+    ).orderBy(laboratories.name);
+  }
+
+  async getActiveLaboratoriesByTenant(tenantId: string): Promise<Laboratory[]> {
+    return await db.select().from(laboratories).where(
+      and(eq(laboratories.tenantId, tenantId), eq(laboratories.isActive, true))
+    ).orderBy(laboratories.name);
+  }
+
+  // Lab Results Management
+  async getLabResult(id: string, tenantId: string): Promise<LabResult | undefined> {
+    const [labResult] = await db.select().from(labResults).where(
+      and(eq(labResults.id, id), eq(labResults.tenantId, tenantId))
+    );
+    return labResult || undefined;
+  }
+
+  async createLabResult(insertLabResult: InsertLabResult): Promise<LabResult> {
+    const [labResult] = await db.insert(labResults).values(insertLabResult).returning();
+    return labResult;
+  }
+
+  async updateLabResult(id: string, updates: Partial<LabResult>, tenantId: string): Promise<LabResult | undefined> {
+    const [labResult] = await db.update(labResults)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(labResults.id, id), eq(labResults.tenantId, tenantId)))
+      .returning();
+    return labResult || undefined;
+  }
+
+  async getLabResultsByOrder(labOrderId: string, tenantId: string): Promise<LabResult[]> {
+    return await db.select().from(labResults).where(
+      and(eq(labResults.labOrderId, labOrderId), eq(labResults.tenantId, tenantId))
+    ).orderBy(labResults.testName);
+  }
+
+  async getLabResultsByPatient(patientId: string, tenantId: string): Promise<LabResult[]> {
+    return await db.select().from(labResults).where(
+      and(eq(labResults.patientId, patientId), eq(labResults.tenantId, tenantId))
+    ).orderBy(desc(labResults.createdAt));
+  }
+
+  async getLabResultsByTenant(tenantId: string): Promise<LabResult[]> {
+    return await db.select().from(labResults).where(
+      eq(labResults.tenantId, tenantId)
+    ).orderBy(desc(labResults.createdAt));
+  }
+
+  async getPendingLabResults(tenantId: string): Promise<LabResult[]> {
+    return await db.select().from(labResults).where(
+      and(eq(labResults.tenantId, tenantId), eq(labResults.status, 'pending'))
+    ).orderBy(labResults.createdAt);
+  }
+
+  // Lab Order Assignment Management
+  async getLabOrderAssignment(id: string, tenantId: string): Promise<LabOrderAssignment | undefined> {
+    const [assignment] = await db.select().from(labOrderAssignments).where(
+      and(eq(labOrderAssignments.id, id), eq(labOrderAssignments.tenantId, tenantId))
+    );
+    return assignment || undefined;
+  }
+
+  async createLabOrderAssignment(insertAssignment: InsertLabOrderAssignment): Promise<LabOrderAssignment> {
+    const [assignment] = await db.insert(labOrderAssignments).values(insertAssignment).returning();
+    return assignment;
+  }
+
+  async updateLabOrderAssignment(id: string, updates: Partial<LabOrderAssignment>, tenantId: string): Promise<LabOrderAssignment | undefined> {
+    const [assignment] = await db.update(labOrderAssignments)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(labOrderAssignments.id, id), eq(labOrderAssignments.tenantId, tenantId)))
+      .returning();
+    return assignment || undefined;
+  }
+
+  async getLabOrderAssignmentByOrder(labOrderId: string, tenantId: string): Promise<LabOrderAssignment | undefined> {
+    const [assignment] = await db.select().from(labOrderAssignments).where(
+      and(eq(labOrderAssignments.labOrderId, labOrderId), eq(labOrderAssignments.tenantId, tenantId))
+    );
+    return assignment || undefined;
+  }
+
+  async getLabOrderAssignmentsByLaboratory(laboratoryId: string, tenantId: string): Promise<LabOrderAssignment[]> {
+    return await db.select().from(labOrderAssignments).where(
+      and(eq(labOrderAssignments.laboratoryId, laboratoryId), eq(labOrderAssignments.tenantId, tenantId))
+    ).orderBy(desc(labOrderAssignments.createdAt));
+  }
+
+  async getLabOrderAssignmentsByTenant(tenantId: string): Promise<LabOrderAssignment[]> {
+    return await db.select().from(labOrderAssignments).where(
+      eq(labOrderAssignments.tenantId, tenantId)
+    ).orderBy(desc(labOrderAssignments.createdAt));
   }
 }
 

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema } from "@shared/schema";
 import { authenticateToken, requireRole } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -1411,6 +1411,217 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Failed to create phrase translation:", error);
       res.status(500).json({ message: "Failed to create phrase translation" });
+    }
+  });
+
+  // Laboratory Management Routes
+  app.get("/api/laboratories", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const laboratories = await storage.getLaboratoriesByTenant(req.tenantId!);
+      res.json(laboratories);
+    } catch (error) {
+      console.error("Error fetching laboratories:", error);
+      res.status(500).json({ message: "Failed to fetch laboratories" });
+    }
+  });
+
+  app.get("/api/laboratories/active", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const laboratories = await storage.getActiveLaboratoriesByTenant(req.tenantId!);
+      res.json(laboratories);
+    } catch (error) {
+      console.error("Error fetching active laboratories:", error);
+      res.status(500).json({ message: "Failed to fetch active laboratories" });
+    }
+  });
+
+  app.post("/api/laboratories", authenticateToken, requireRole(["tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
+    try {
+      const laboratoryData = insertLaboratorySchema.parse({
+        ...req.body,
+        tenantId: req.tenantId
+      });
+
+      const laboratory = await storage.createLaboratory(laboratoryData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenantId!,
+        userId: req.userId!,
+        entityType: "laboratory",
+        entityId: laboratory.id,
+        action: "create",
+        newData: laboratory,
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      res.status(201).json(laboratory);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid laboratory data", errors: error.errors });
+      }
+      console.error("Error creating laboratory:", error);
+      res.status(500).json({ message: "Failed to create laboratory" });
+    }
+  });
+
+  // Lab Results Routes
+  app.get("/api/lab-results", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const labResults = await storage.getLabResultsByTenant(req.tenantId!);
+      res.json(labResults);
+    } catch (error) {
+      console.error("Error fetching lab results:", error);
+      res.status(500).json({ message: "Failed to fetch lab results" });
+    }
+  });
+
+  app.get("/api/lab-results/patient/:patientId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const labResults = await storage.getLabResultsByPatient(req.params.patientId, req.tenantId!);
+      res.json(labResults);
+    } catch (error) {
+      console.error("Error fetching patient lab results:", error);
+      res.status(500).json({ message: "Failed to fetch patient lab results" });
+    }
+  });
+
+  app.get("/api/lab-results/order/:labOrderId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const labResults = await storage.getLabResultsByOrder(req.params.labOrderId, req.tenantId!);
+      res.json(labResults);
+    } catch (error) {
+      console.error("Error fetching lab order results:", error);
+      res.status(500).json({ message: "Failed to fetch lab order results" });
+    }
+  });
+
+  app.post("/api/lab-results", authenticateToken, requireRole(["lab_technician", "physician", "tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
+    try {
+      const labResultData = insertLabResultSchema.parse({
+        ...req.body,
+        tenantId: req.tenantId
+      });
+
+      const labResult = await storage.createLabResult(labResultData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenantId!,
+        userId: req.userId!,
+        entityType: "lab_result",
+        entityId: labResult.id,
+        action: "create",
+        newData: labResult,
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      res.status(201).json(labResult);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid lab result data", errors: error.errors });
+      }
+      console.error("Error creating lab result:", error);
+      res.status(500).json({ message: "Failed to create lab result" });
+    }
+  });
+
+  // Lab Order Assignment Routes
+  app.post("/api/lab-order-assignments", authenticateToken, requireRole(["physician", "nurse", "lab_technician", "tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
+    try {
+      const assignmentData = insertLabOrderAssignmentSchema.parse({
+        ...req.body,
+        tenantId: req.tenantId,
+        assignedBy: req.userId
+      });
+
+      const assignment = await storage.createLabOrderAssignment(assignmentData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenantId!,
+        userId: req.userId!,
+        entityType: "lab_order_assignment",
+        entityId: assignment.id,
+        action: "create",
+        newData: assignment,
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      res.status(201).json(assignment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid assignment data", errors: error.errors });
+      }
+      console.error("Error creating lab order assignment:", error);
+      res.status(500).json({ message: "Failed to create lab order assignment" });
+    }
+  });
+
+  // External Lab Integration Endpoint for receiving results
+  app.post("/api/external-lab/results", async (req, res) => {
+    try {
+      const { 
+        externalLabId, 
+        labOrderId, 
+        results, 
+        laboratoryApiKey 
+      } = req.body;
+
+      // Find laboratory by API key across all tenants
+      const allTenants = await storage.getAllTenants();
+      let laboratory;
+      
+      for (const tenant of allTenants) {
+        const labs = await storage.getLaboratoriesByTenant(tenant.id);
+        laboratory = labs.find(lab => lab.apiKey === laboratoryApiKey);
+        if (laboratory) break;
+      }
+
+      if (!laboratory) {
+        return res.status(401).json({ message: "Invalid laboratory API key" });
+      }
+
+      // Process each result
+      for (const result of results) {
+        const labResultData = insertLabResultSchema.parse({
+          labOrderId: labOrderId,
+          laboratoryId: laboratory.id,
+          tenantId: laboratory.tenantId,
+          patientId: result.patientId,
+          testName: result.testName,
+          result: result.result,
+          normalRange: result.normalRange,
+          unit: result.unit,
+          status: 'completed',
+          abnormalFlag: result.abnormalFlag,
+          notes: result.notes,
+          performedBy: result.performedBy,
+          completedAt: new Date(result.completedAt),
+          reportedAt: new Date(),
+          externalLabId: externalLabId,
+          rawData: result.rawData
+        });
+
+        await storage.createLabResult(labResultData);
+      }
+
+      // Update the lab order assignment status
+      const assignment = await storage.getLabOrderAssignmentByOrder(labOrderId, laboratory.tenantId);
+      if (assignment) {
+        await storage.updateLabOrderAssignment(assignment.id, {
+          status: 'completed',
+          actualCompletionTime: new Date()
+        }, laboratory.tenantId);
+      }
+
+      res.json({ message: "Results received successfully", processed: results.length });
+    } catch (error) {
+      console.error("Error processing external lab results:", error);
+      res.status(500).json({ message: "Failed to process lab results" });
     }
   });
 

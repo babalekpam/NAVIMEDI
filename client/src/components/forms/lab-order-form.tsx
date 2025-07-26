@@ -1,18 +1,21 @@
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertLabOrderSchema, Patient } from "@shared/schema";
+import { insertLabOrderSchema, Patient, type Laboratory } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Trash2, Clock, MapPin, Phone } from "lucide-react";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
 
-// Schema for multiple lab orders
+// Schema for multiple lab orders with laboratory assignment
 const multipleLabOrderSchema = z.object({
   patientId: z.string().min(1, "Please select a patient"),
+  laboratoryId: z.string().min(1, "Please select a laboratory"),
   orders: z.array(z.object({
     testName: z.string().min(1, "Test name is required"),
     testCode: z.string().optional(),
@@ -49,10 +52,16 @@ const commonLabTests = [
 ];
 
 export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrderFormProps) => {
+  // Fetch available laboratories
+  const { data: laboratories = [], isLoading: labsLoading } = useQuery<Laboratory[]>({
+    queryKey: ["/api/laboratories/active"],
+  });
+
   const form = useForm({
     resolver: zodResolver(multipleLabOrderSchema),
     defaultValues: {
       patientId: "",
+      laboratoryId: "",
       orders: [{
         testName: "",
         testCode: "",
@@ -69,7 +78,7 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
   });
 
   const handleSubmit = (data: any) => {
-    // Transform data to create multiple lab orders
+    // Transform data to create multiple lab orders with laboratory assignment
     const labOrders = data.orders.map((order: any) => ({
       patientId: data.patientId,
       testName: order.testName,
@@ -79,7 +88,11 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
       status: "ordered"
     }));
     
-    onSubmit({ labOrders });
+    onSubmit({ 
+      labOrders, 
+      laboratoryId: data.laboratoryId,
+      assignmentNotes: data.generalInstructions 
+    });
   };
 
   return (
@@ -101,6 +114,41 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
                   {patients.map((patient) => (
                     <SelectItem key={patient.id} value={patient.id}>
                       {patient.firstName} {patient.lastName} (MRN: {patient.mrn})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="laboratoryId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Assigned Laboratory</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select laboratory" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {laboratories.map((lab) => (
+                    <SelectItem key={lab.id} value={lab.id}>
+                      <div className="flex flex-col">
+                        <div className="font-medium">{lab.name}</div>
+                        <div className="text-sm text-muted-foreground flex items-center gap-2">
+                          <Clock className="h-3 w-3" />
+                          {lab.averageTurnaroundTime}h turnaround
+                          <span className="mx-1">•</span>
+                          <Badge variant="outline" className="text-xs">
+                            {lab.specializations?.[0] || 'General'}
+                          </Badge>
+                        </div>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>

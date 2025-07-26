@@ -50,12 +50,28 @@ export default function LabOrders() {
       const { apiRequest } = await import("@/lib/queryClient");
       
       if (data.labOrders && Array.isArray(data.labOrders)) {
-        // Handle multiple lab orders
+        // Handle multiple lab orders with laboratory assignment
         const results = await Promise.all(
           data.labOrders.map((labOrder: any) => 
             apiRequest("POST", "/api/lab-orders", labOrder).then(res => res.json())
           )
         );
+        
+        // Create laboratory assignments for each lab order
+        if (data.laboratoryId && results.length > 0) {
+          await Promise.all(
+            results.map((labOrder: any) => 
+              apiRequest("POST", "/api/lab-order-assignments", {
+                labOrderId: labOrder.id,
+                laboratoryId: data.laboratoryId,
+                expectedCompletionTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Default 24 hours
+                status: 'assigned',
+                assignmentNotes: data.assignmentNotes || ''
+              }).then(res => res.json())
+            )
+          );
+        }
+        
         return results;
       } else {
         // Handle single lab order (backward compatibility)
@@ -65,6 +81,7 @@ export default function LabOrders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/lab-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/lab-order-assignments"] });
       setIsFormOpen(false);
     }
   });
@@ -95,7 +112,7 @@ export default function LabOrders() {
       return bPriority - aPriority;
     }
     
-    return new Date(b.orderedDate).getTime() - new Date(a.orderedDate).getTime();
+    return new Date(b.orderedDate || '').getTime() - new Date(a.orderedDate || '').getTime();
   });
 
   if (!user || !tenant) {
@@ -254,14 +271,14 @@ export default function LabOrders() {
                           variant="secondary"
                           className={priorityColors[labOrder.priority as keyof typeof priorityColors] || priorityColors.routine}
                         >
-                          {labOrder.priority.toUpperCase()}
+                          {(labOrder.priority || 'routine').toUpperCase()}
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-500">
                         Patient: {getPatientName(labOrder.patientId)}
                       </p>
                       <p className="text-xs text-gray-400">
-                        Ordered: {new Date(labOrder.orderedDate).toLocaleDateString()}
+                        Ordered: {new Date(labOrder.orderedDate || '').toLocaleDateString()}
                       </p>
                       {labOrder.instructions && (
                         <p className="text-xs text-gray-600 mt-1 max-w-md truncate">
@@ -280,9 +297,9 @@ export default function LabOrders() {
                     <div className="text-right">
                       <Badge 
                         variant="secondary"
-                        className={statusColors[labOrder.status] || statusColors.ordered}
+                        className={statusColors[labOrder.status as keyof typeof statusColors] || statusColors.ordered}
                       >
-                        {labOrder.status.replace('_', ' ')}
+                        {(labOrder.status || 'ordered').replace('_', ' ')}
                       </Badge>
                       {labOrder.results && (
                         <p className="text-xs text-green-600 mt-1">
