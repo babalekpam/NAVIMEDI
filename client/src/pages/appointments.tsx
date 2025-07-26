@@ -122,7 +122,7 @@ export default function Appointments() {
 
   const handleUpdateStatus = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
-    setNewStatus(appointment.status);
+    setNewStatus(appointment.status || "");
     setStatusNotes("");
     setIsStatusDialogOpen(true);
   };
@@ -335,7 +335,7 @@ export default function Appointments() {
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
                       <p className="text-sm font-medium text-gray-900">
-                        {formatTime(appointment.appointmentDate)}
+                        {formatTime(appointment.appointmentDate.toString())}
                       </p>
                       <Badge 
                         className={`text-xs ${statusColors[appointment.status as keyof typeof statusColors] || statusColors.scheduled}`}
@@ -440,7 +440,7 @@ export default function Appointments() {
                   <div>
                     <Label className="text-gray-700">Date & Time</Label>
                     <p className="font-medium">
-                      {new Date(selectedAppointment.appointmentDate).toLocaleDateString()} at {formatTime(selectedAppointment.appointmentDate)}
+                      {new Date(selectedAppointment.appointmentDate).toLocaleDateString()} at {formatTime(selectedAppointment.appointmentDate.toString())}
                     </p>
                   </div>
                   <div>
