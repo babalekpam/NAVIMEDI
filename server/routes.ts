@@ -437,9 +437,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/prescriptions", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
-      console.log("[DEBUG] Creating prescription - User:", req.user?.role, "User ID:", req.user?.userId, "Tenant:", req.tenant?.id);
-      console.log("[DEBUG] Request body:", JSON.stringify(req.body, null, 2));
-      
       // Convert string dates to Date objects
       const requestData = { ...req.body };
       if (requestData.expiryDate && typeof requestData.expiryDate === 'string') {
@@ -456,8 +453,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         prescribedDate: new Date(),
         expiryDate: requestData.expiryDate ? new Date(requestData.expiryDate) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // Default 1 year
       };
-      
-      console.log("[DEBUG] Prescription data before validation:", JSON.stringify(prescriptionData, null, 2));
       
       const validatedData = insertPrescriptionSchema.parse(prescriptionData);
 
@@ -479,10 +474,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Create prescription error:", error);
       if (error instanceof z.ZodError) {
-        console.log("[DEBUG] Zod validation errors:", JSON.stringify(error.errors, null, 2));
-        error.errors.forEach((err, index) => {
-          console.log(`[DEBUG] Error ${index + 1}: Field '${err.path.join('.')}' - ${err.message} (received: ${err.received}, expected: ${err.expected})`);
-        });
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
       res.status(500).json({ message: "Internal server error" });
