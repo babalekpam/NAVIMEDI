@@ -50,12 +50,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const login = async (username: string, password: string, tenantId: string) => {
+    const loginData: any = { username, password };
+    // Only include tenantId if it's not empty (for regular users)
+    if (tenantId && tenantId.trim() !== "") {
+      loginData.tenantId = tenantId;
+    }
+
     const response = await fetch("/api/auth/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ username, password, tenantId }),
+      body: JSON.stringify(loginData),
     });
 
     if (!response.ok) {
