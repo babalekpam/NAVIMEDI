@@ -24,19 +24,16 @@ const statusColors = {
 };
 
 export default function Appointments() {
-  const [selectedDate, setSelectedDate] = useState(() => {
-    // Set to today's date by default
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
+  const [selectedDate, setSelectedDate] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { user } = useAuth();
   const { tenant } = useTenant();
   const queryClient = useQueryClient();
 
+  // Get all appointments if "all" is selected, otherwise filter by date
   const { data: appointments = [], isLoading } = useQuery<Appointment[]>({
-    queryKey: ["/api/appointments", selectedDate],
+    queryKey: selectedDate === "all" ? ["/api/appointments"] : ["/api/appointments", selectedDate],
     enabled: !!user && !!tenant,
   });
 
@@ -133,20 +130,25 @@ export default function Appointments() {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <Calendar className="h-4 w-4 text-gray-500" />
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-                className="text-xs"
-              >
-                Today
-              </Button>
+              <Select value={selectedDate} onValueChange={setSelectedDate}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Select date range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Appointments</SelectItem>
+                  <SelectItem value={new Date().toISOString().split('T')[0]}>Today</SelectItem>
+                  <SelectItem value={new Date(Date.now() + 86400000).toISOString().split('T')[0]}>Tomorrow</SelectItem>
+                  <SelectItem value="this_week">This Week</SelectItem>
+                  <SelectItem value="custom">Custom Date</SelectItem>
+                </SelectContent>
+              </Select>
+              {selectedDate === "custom" && (
+                <input
+                  type="date"
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              )}
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48">
@@ -169,9 +171,19 @@ export default function Appointments() {
       {/* Appointments List */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Calendar className="h-5 w-5 mr-2" />
-            Appointments for {new Date(selectedDate).toLocaleDateString()}
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Calendar className="h-5 w-5 mr-2" />
+              {selectedDate === "all" 
+                ? "All Appointments" 
+                : selectedDate === "this_week" 
+                ? "This Week's Appointments"
+                : `Appointments for ${new Date(selectedDate).toLocaleDateString()}`
+              }
+            </div>
+            <Badge variant="outline" className="text-xs">
+              {filteredAppointments.length} appointment{filteredAppointments.length !== 1 ? 's' : ''}
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -230,12 +242,17 @@ export default function Appointments() {
                       <p className="text-sm text-gray-500">
                         Provider: {getProviderName(appointment.providerId)}
                       </p>
-                      <p className="text-xs text-gray-400">
-                        Duration: {appointment.duration} minutes
+                      <p className="text-xs text-gray-600">
+                        {new Date(appointment.appointmentDate).toLocaleDateString()} • Duration: {appointment.duration} minutes
                       </p>
                       {appointment.chiefComplaint && (
-                        <p className="text-xs text-gray-600 mt-1">
-                          Chief Complaint: {appointment.chiefComplaint}
+                        <p className="text-xs text-blue-600 mt-1">
+                          <strong>Chief Complaint:</strong> {appointment.chiefComplaint}
+                        </p>
+                      )}
+                      {appointment.notes && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          <strong>Notes:</strong> {appointment.notes}
                         </p>
                       )}
                     </div>
@@ -244,13 +261,12 @@ export default function Appointments() {
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
                       <p className="text-sm font-medium text-gray-900">
-                        {formatTime(appointment.appointmentDate.toString())}
+                        {formatTime(appointment.appointmentDate)}
                       </p>
                       <Badge 
-                        variant="secondary"
-                        className={statusColors[appointment.status as keyof typeof statusColors] || statusColors.scheduled}
+                        className={`text-xs ${statusColors[appointment.status as keyof typeof statusColors] || statusColors.scheduled}`}
                       >
-                        {appointment.status?.replace('_', ' ') || 'scheduled'}
+                        {appointment.status?.replace('_', ' ').toUpperCase() || 'SCHEDULED'}
                       </Badge>
                     </div>
                     
