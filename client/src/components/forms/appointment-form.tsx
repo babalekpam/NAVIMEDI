@@ -30,7 +30,8 @@ export const AppointmentForm = ({ onSubmit, isLoading = false, patients, provide
   });
 
   const handleSubmit = (data: any) => {
-    const appointmentDate = new Date(data.appointmentDate);
+    // Ensure appointmentDate is properly formatted
+    const appointmentDate = data.appointmentDate ? new Date(data.appointmentDate) : new Date();
     onSubmit({
       ...data,
       appointmentDate: appointmentDate.toISOString(),

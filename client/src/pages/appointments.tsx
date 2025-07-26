@@ -32,7 +32,7 @@ export default function Appointments() {
   const queryClient = useQueryClient();
 
   const { data: appointments = [], isLoading } = useQuery<Appointment[]>({
-    queryKey: ["/api/appointments", { date: selectedDate }],
+    queryKey: ["/api/appointments", selectedDate],
     enabled: !!user && !!tenant,
   });
 
@@ -229,13 +229,13 @@ export default function Appointments() {
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
                       <p className="text-sm font-medium text-gray-900">
-                        {formatTime(appointment.appointmentDate)}
+                        {formatTime(appointment.appointmentDate.toString())}
                       </p>
                       <Badge 
                         variant="secondary"
-                        className={statusColors[appointment.status] || statusColors.scheduled}
+                        className={statusColors[appointment.status as keyof typeof statusColors] || statusColors.scheduled}
                       >
-                        {appointment.status.replace('_', ' ')}
+                        {appointment.status?.replace('_', ' ') || 'scheduled'}
                       </Badge>
                     </div>
                     
