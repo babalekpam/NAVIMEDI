@@ -737,7 +737,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if user has permission to update this user
       const hasPermission = req.user.role === 'super_admin' || 
-                           (req.user.role === 'tenant_admin' && existingUser.tenantId === req.tenant?.id) ||
+                           (req.user.role === 'tenant_admin' && existingUser.tenantId === req.user.tenantId) ||
                            (req.user.userId === id); // User updating themselves
 
       if (!hasPermission) {
@@ -760,14 +760,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: existingUser.tenantId,
-        userId: req.user.userId,
+        userId: req.user.userId || null,
         entityType: "user",
         entityId: id,
         action: "update",
         oldData: { isActive: existingUser.isActive, role: existingUser.role },
         newData: updateData,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.json({
