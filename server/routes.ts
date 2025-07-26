@@ -516,7 +516,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard metrics
   app.get("/api/dashboard/metrics", requireTenant, async (req, res) => {
     try {
-      const metrics = await storage.getDashboardMetrics(req.tenant!.id);
+      const tenantId = req.tenant?.id || req.user?.tenantId;
+      if (!tenantId) {
+        return res.status(400).json({ message: "Tenant context required" });
+      }
+      
+      const metrics = await storage.getDashboardMetrics(tenantId);
       res.json(metrics);
     } catch (error) {
       console.error("Get dashboard metrics error:", error);

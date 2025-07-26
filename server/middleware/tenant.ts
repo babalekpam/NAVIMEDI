@@ -35,6 +35,7 @@ export const tenantMiddleware = (req: AuthenticatedRequest, res: Response, next:
         role: decoded.role,
         username: decoded.username
       };
+      req.tenant = { id: decoded.tenantId };
 
       // For super admin, allow access to all tenants
       if (req.user?.role === 'super_admin') {
