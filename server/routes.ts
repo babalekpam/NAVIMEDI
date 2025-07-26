@@ -91,6 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         token,
         user: {
           id: user.id,
+          userId: user.id, // Add userId for compatibility
           username: user.username,
           email: user.email,
           firstName: user.firstName,

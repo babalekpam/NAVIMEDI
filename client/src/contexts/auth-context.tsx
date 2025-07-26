@@ -3,6 +3,7 @@ import { User } from "@shared/schema";
 
 interface AuthUser {
   id: string;
+  userId: string;
   username: string;
   email: string;
   firstName: string;

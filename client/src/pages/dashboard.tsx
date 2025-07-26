@@ -61,10 +61,14 @@ export default function Dashboard() {
 
   // Get doctor's specific appointments if user is a physician
   const { data: doctorAppointments = [], isLoading: doctorAppointmentsLoading } = useQuery({
-    queryKey: ["/api/appointments", { providerId: user?.userId }],
-    enabled: !!user && !!tenant && user?.role === 'physician',
+    queryKey: ["/api/appointments", "provider", user?.id || user?.userId],
+    enabled: !!user && !!tenant && user?.role === 'physician' && !!(user?.id || user?.userId),
     queryFn: async () => {
-      const response = await fetch(`/api/appointments?providerId=${user?.userId}`, {
+      const providerId = user?.id || user?.userId;
+      if (!providerId) {
+        throw new Error("User ID not available");
+      }
+      const response = await fetch(`/api/appointments?providerId=${providerId}`, {
         headers: {
           "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
         }
@@ -436,19 +440,34 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button className="h-24 flex flex-col items-center justify-center space-y-2">
+            <Button 
+              className="h-24 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/appointments'}
+            >
               <Calendar className="h-6 w-6" />
               <span>View Schedule</span>
             </Button>
-            <Button variant="outline" className="h-24 flex flex-col items-center justify-center space-y-2">
+            <Button 
+              variant="outline" 
+              className="h-24 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/patients'}
+            >
               <Users className="h-6 w-6" />
               <span>Patient List</span>
             </Button>
-            <Button variant="outline" className="h-24 flex flex-col items-center justify-center space-y-2">
+            <Button 
+              variant="outline" 
+              className="h-24 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/prescriptions'}
+            >
               <Pill className="h-6 w-6" />
               <span>Prescriptions</span>
             </Button>
-            <Button variant="outline" className="h-24 flex flex-col items-center justify-center space-y-2">
+            <Button 
+              variant="outline" 
+              className="h-24 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/lab-orders'}
+            >
               <TestTube className="h-6 w-6" />
               <span>Lab Orders</span>
             </Button>

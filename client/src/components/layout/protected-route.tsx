@@ -14,6 +14,13 @@ export const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps)
   const { tenant, isLoading: tenantLoading } = useTenant();
   const [, setLocation] = useLocation();
 
+  // Always call useEffect hook
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setLocation("/login");
+    }
+  }, [authLoading, user, setLocation]);
+
   if (authLoading || tenantLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -25,12 +32,6 @@ export const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps)
       </div>
     );
   }
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      setLocation("/login");
-    }
-  }, [authLoading, user, setLocation]);
 
   if (!user) {
     return null;
