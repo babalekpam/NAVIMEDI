@@ -80,21 +80,13 @@ export default function Dashboard() {
     );
   }
 
-  // Mock platform data for super admin
-  const mockPlatformMetrics: PlatformMetrics = {
-    totalTenants: 47,
-    activeTenants: 43,
-    totalUsers: 1248,
-    totalPatients: 15632,
-    monthlyRevenue: 284750,
-    systemUptime: 99.9,
-    tenantBreakdown: {
-      hospitals: 12,
-      clinics: 18,
-      pharmacies: 8,
-      laboratories: 6,
-      insurance: 3
-    }
+  // Fallback data for tenant breakdown (until we have real data)
+  const fallbackTenantBreakdown = {
+    hospitals: 12,
+    clinics: 18,
+    pharmacies: 8,
+    laboratories: 6,
+    insurance: 3
   };
 
   if (isSuperAdmin) {
@@ -219,7 +211,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {Object.entries(mockPlatformMetrics.tenantBreakdown).map(([type, count]) => (
+                {Object.entries(fallbackTenantBreakdown).map(([type, count]) => (
                   <div key={type} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -230,7 +222,7 @@ export default function Dashboard() {
                     <div className="text-right">
                       <div className="font-bold text-gray-900">{count}</div>
                       <div className="text-xs text-gray-500">
-                        {((count / mockPlatformMetrics.totalTenants) * 100).toFixed(1)}%
+                        {((count / (platformMetrics?.totalTenants || 47)) * 100).toFixed(1)}%
                       </div>
                     </div>
                   </div>
@@ -251,7 +243,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-600">System Uptime</span>
                   <div className="text-right">
-                    <div className="font-bold text-green-600">{mockPlatformMetrics.systemUptime}%</div>
+                    <div className="font-bold text-green-600">99.9%</div>
                     <div className="text-xs text-gray-500">Last 30 days</div>
                   </div>
                 </div>
@@ -415,8 +407,8 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-3">
-                {todayAppointments.length > 0 ? (
-                  todayAppointments.slice(0, 5).map((appointment: any, index: number) => (
+                {(todayAppointments as any[]).length > 0 ? (
+                  (todayAppointments as any[]).slice(0, 5).map((appointment: any, index: number) => (
                     <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                       <div className="flex items-center space-x-3">
                         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">

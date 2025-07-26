@@ -548,16 +548,16 @@ export class DatabaseStorage implements IStorage {
     totalPatients: number;
   }> {
     const [tenantsResult] = await db.select({ 
-      total: sql<number>`count(*)`,
-      active: sql<number>`count(case when ${tenants.isActive} then 1 end)`
+      total: sql<number>`count(*)::int`,
+      active: sql<number>`count(case when ${tenants.isActive} then 1 end)::int`
     }).from(tenants);
 
-    const [usersResult] = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const [usersResult] = await db.select({ count: sql<number>`count(*)::int` }).from(users);
     
-    const [patientsResult] = await db.select({ count: sql<number>`count(*)` }).from(patients);
+    const [patientsResult] = await db.select({ count: sql<number>`count(*)::int` }).from(patients);
 
     const [subscriptionsResult] = await db.select({ 
-      totalRevenue: sql<number>`COALESCE(SUM(${subscriptions.monthlyPrice}), 0)` 
+      totalRevenue: sql<number>`COALESCE(SUM(${subscriptions.monthlyPrice}), 0)::numeric` 
     }).from(subscriptions).where(eq(subscriptions.status, 'active'));
 
     const firstDayOfMonth = new Date();
@@ -565,7 +565,7 @@ export class DatabaseStorage implements IStorage {
     firstDayOfMonth.setHours(0, 0, 0, 0);
 
     const [monthlyRevenueResult] = await db.select({ 
-      monthlyRevenue: sql<number>`COALESCE(SUM(${subscriptions.monthlyPrice}), 0)` 
+      monthlyRevenue: sql<number>`COALESCE(SUM(${subscriptions.monthlyPrice}), 0)::numeric` 
     }).from(subscriptions).where(
       and(
         eq(subscriptions.status, 'active'),
@@ -574,39 +574,13 @@ export class DatabaseStorage implements IStorage {
     );
 
     return {
-      totalTenants: tenantsResult.total,
-      activeTenants: tenantsResult.active,
-      totalSubscriptionRevenue: subscriptionsResult.totalRevenue,
-      monthlyRevenue: monthlyRevenueResult.monthlyRevenue,
-      totalUsers: usersResult.count,
-      totalPatients: patientsResult.count
+      totalTenants: Number(tenantsResult.total),
+      activeTenants: Number(tenantsResult.active),
+      totalSubscriptionRevenue: Number(subscriptionsResult.totalRevenue),
+      monthlyRevenue: Number(monthlyRevenueResult.monthlyRevenue),
+      totalUsers: Number(usersResult.count),
+      totalPatients: Number(patientsResult.count)
     };
-  }
-  // Report management
-  async getReportsByTenant(tenantId: string): Promise<Report[]> {
-    return await db.select().from(reports)
-      .where(eq(reports.tenantId, tenantId))
-      .orderBy(sql`${reports.createdAt} DESC`);
-  }
-
-  async getReport(id: string, tenantId: string): Promise<Report | undefined> {
-    const [report] = await db.select().from(reports).where(
-      and(eq(reports.id, id), eq(reports.tenantId, tenantId))
-    );
-    return report || undefined;
-  }
-
-  async createReport(insertReport: InsertReport): Promise<Report> {
-    const [report] = await db.insert(reports).values(insertReport).returning();
-    return report;
-  }
-
-  async updateReport(id: string, updates: Partial<Report>, tenantId: string): Promise<Report | undefined> {
-    const [report] = await db.update(reports)
-      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
-      .where(and(eq(reports.id, id), eq(reports.tenantId, tenantId)))
-      .returning();
-    return report || undefined;
   }
 }
 
