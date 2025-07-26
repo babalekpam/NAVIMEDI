@@ -56,7 +56,7 @@ export const Sidebar = () => {
   // For super admin, show only platform management items
   if (user.role === "super_admin") {
     const platformItems = filteredItems.filter(item => 
-      ["dashboard", "tenant-management", "user-roles", "audit-logs"].includes(item.id)
+      ["dashboard", "tenant-management", "user-roles", "audit-logs", "reports"].includes(item.id)
     );
     
     return (
