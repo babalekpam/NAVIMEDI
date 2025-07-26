@@ -338,10 +338,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/appointments", requireRole(["physician", "nurse", "receptionist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+  app.post("/api/appointments", authenticateToken, requireTenant, async (req, res) => {
     try {
-      console.log("[DEBUG] Creating appointment - User:", req.user?.role, "Tenant:", req.tenant?.id);
+      console.log("[DEBUG] Creating appointment - User:", req.user?.role, "User ID:", req.user?.userId, "Tenant:", req.tenant?.id);
       console.log("[DEBUG] Request body:", req.body);
+      
+      // Check if user has permission to create appointments
+      const allowedRoles = ["physician", "nurse", "receptionist", "tenant_admin", "director", "super_admin", "billing_staff", "pharmacist"];
+      if (!allowedRoles.includes(req.user!.role)) {
+        console.log("[DEBUG] Permission denied for role:", req.user!.role);
+        return res.status(403).json({ 
+          message: "Insufficient permissions to create appointments",
+          required: allowedRoles,
+          current: req.user!.role
+        });
+      }
       
       const appointmentData = insertAppointmentSchema.parse({
         ...req.body,

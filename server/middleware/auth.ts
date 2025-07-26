@@ -42,7 +42,10 @@ export const requireRole = (allowedRoles: string[]) => {
       return res.status(401).json({ message: "Authentication required" });
     }
 
+    console.log("[DEBUG] Role check - User role:", req.user.role, "Allowed roles:", allowedRoles);
+
     if (!allowedRoles.includes(req.user.role)) {
+      console.log("[DEBUG] Permission denied for role:", req.user.role);
       return res.status(403).json({ 
         message: "Insufficient permissions",
         required: allowedRoles,
@@ -50,6 +53,7 @@ export const requireRole = (allowedRoles: string[]) => {
       });
     }
 
+    console.log("[DEBUG] Permission granted for role:", req.user.role);
     next();
   };
 };
