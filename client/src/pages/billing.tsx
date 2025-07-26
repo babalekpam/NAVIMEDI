@@ -44,6 +44,9 @@ export default function Billing() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Check if user is a physician (read-only access)
+  const isPhysician = user?.role === 'physician';
+
   const { data: claims = [], isLoading } = useQuery<InsuranceClaim[]>({
     queryKey: ["/api/insurance-claims"],
     enabled: !!user && !!tenant,
@@ -174,15 +177,25 @@ export default function Billing() {
     submitClaimMutation.mutate(claimId);
   };
 
-  // Calculate summary statistics
-  const totalClaimsAmount = filteredClaims.reduce((sum, claim) => sum + parseFloat(claim.totalAmount), 0);
-  const approvedAmount = filteredClaims
+  // Filter claims for physicians to show only their related claims
+  const physicianFilteredClaims = isPhysician 
+    ? filteredClaims.filter(claim => {
+        // For now, show all claims for physicians - this can be refined later
+        // to filter based on appointment provider when that relationship is available
+        return true;
+      })
+    : filteredClaims;
+
+  // Calculate summary statistics based on user role
+  const statsData = physicianFilteredClaims;
+  const totalClaimsAmount = statsData.reduce((sum, claim) => sum + parseFloat(claim.totalAmount), 0);
+  const approvedAmount = statsData
     .filter(claim => claim.status === 'approved' || claim.status === 'paid')
     .reduce((sum, claim) => sum + parseFloat(claim.approvedAmount || '0'), 0);
-  const paidAmount = filteredClaims
+  const paidAmount = statsData
     .filter(claim => claim.status === 'paid')
     .reduce((sum, claim) => sum + parseFloat(claim.paidAmount || '0'), 0);
-  const pendingClaims = filteredClaims.filter(claim => 
+  const pendingClaims = statsData.filter(claim => 
     claim.status === 'submitted' || claim.status === 'processing'
   ).length;
 
@@ -190,15 +203,24 @@ export default function Billing() {
     return <div>Loading...</div>;
   }
 
+  const displayClaims = physicianFilteredClaims;
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Billing & Claims</h1>
-          <p className="text-gray-600 mt-1">Manage insurance claims and billing operations</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {isPhysician ? "My Billing Summary" : "Billing & Claims"}
+          </h1>
+          <p className="text-gray-600 mt-1">
+            {isPhysician 
+              ? "View your service billing information and revenue summary" 
+              : "Manage insurance claims and billing operations"
+            }
+          </p>
         </div>
-        {(user.role === "billing_staff" || user.role === "physician" || user.role === "tenant_admin" || user.role === "director") && (
+        {!isPhysician && (user.role === "billing_staff" || user.role === "tenant_admin" || user.role === "director") && (
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700">
@@ -320,9 +342,13 @@ export default function Billing() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Claims</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {isPhysician ? "My Service Revenue" : "Total Claims"}
+                </p>
                 <p className="text-3xl font-bold text-gray-900">${totalClaimsAmount.toLocaleString()}</p>
-                <p className="text-sm text-gray-500">{filteredClaims.length} claims</p>
+                <p className="text-sm text-gray-500">
+                  {statsData.length} {isPhysician ? "services billed" : "claims"}
+                </p>
               </div>
               <div className="p-3 bg-blue-50 rounded-lg">
                 <DollarSign className="h-6 w-6 text-blue-600" />
@@ -352,9 +378,13 @@ export default function Billing() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Paid Amount</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {isPhysician ? "Payments Received" : "Paid Amount"}
+                </p>
                 <p className="text-3xl font-bold text-gray-900">${paidAmount.toLocaleString()}</p>
-                <p className="text-sm text-gray-500">Received payments</p>
+                <p className="text-sm text-gray-500">
+                  {isPhysician ? "For your services" : "Received payments"}
+                </p>
               </div>
               <div className="p-3 bg-teal-50 rounded-lg">
                 <CreditCard className="h-6 w-6 text-teal-600" />
@@ -415,7 +445,7 @@ export default function Billing() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <DollarSign className="h-5 w-5 mr-2" />
-            Insurance Claims
+            {isPhysician ? "My Service Claims" : "Insurance Claims"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -434,14 +464,16 @@ export default function Billing() {
                 </div>
               ))}
             </div>
-          ) : filteredClaims.length === 0 ? (
+          ) : displayClaims.length === 0 ? (
             <div className="text-center py-12">
               <DollarSign className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No claims found</h3>
               <p className="text-gray-600 mb-4">
-                {searchQuery ? "No claims match your search criteria" : "No insurance claims have been created yet"}
+                {searchQuery ? "No claims match your search criteria" : 
+                 isPhysician ? "No billing information available for your services yet" : 
+                 "No insurance claims have been created yet"}
               </p>
-              {(user.role === "billing_staff" || user.role === "physician" || user.role === "tenant_admin" || user.role === "director") && (
+              {!isPhysician && (user.role === "billing_staff" || user.role === "tenant_admin" || user.role === "director") && (
                 <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsCreateDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Claim
@@ -450,7 +482,7 @@ export default function Billing() {
             </div>
           ) : (
             <div className="space-y-0">
-              {filteredClaims.map((claim) => (
+              {displayClaims.map((claim) => (
                 <div 
                   key={claim.id}
                   className="flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
@@ -526,7 +558,7 @@ export default function Billing() {
                         <Eye className="h-4 w-4 mr-1" />
                         View
                       </Button>
-                      {claim.status === 'draft' && (
+                      {!isPhysician && claim.status === 'draft' && (
                         <Button 
                           variant="outline" 
                           size="sm" 
@@ -538,14 +570,16 @@ export default function Billing() {
                           Submit
                         </Button>
                       )}
-                      {claim.status === 'approved' && !claim.paidAmount && (
+                      {!isPhysician && claim.status === 'approved' && !claim.paidAmount && (
                         <Button variant="ghost" size="sm" className="text-teal-600 hover:text-teal-700">
                           Record Payment
                         </Button>
                       )}
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      {!isPhysician && (
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

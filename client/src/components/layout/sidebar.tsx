@@ -11,7 +11,8 @@ import {
   ClipboardList,
   Settings,
   Plus,
-  Languages
+  Languages,
+  DollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
@@ -36,7 +37,8 @@ const sidebarItems: SidebarItem[] = [
   { id: "medical-communications", label: "Medical Communications", icon: Languages, path: "/medical-communications", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   
   // Operations Section (only for tenant users)
-  { id: "billing", label: "Billing & Claims", icon: FileText, path: "/billing", roles: ["billing_staff", "physician", "tenant_admin", "director"] },
+  { id: "billing", label: "Billing & Claims", icon: FileText, path: "/billing", roles: ["billing_staff", "tenant_admin", "director"] },
+  { id: "billing", label: "My Billing Summary", icon: DollarSign, path: "/billing", roles: ["physician"] },
   { id: "reports", label: "Reports & Analytics", icon: BarChart3, path: "/reports", roles: ["physician", "nurse", "pharmacist", "lab_technician", "billing_staff", "tenant_admin", "director", "super_admin"] },
   
   // Platform Administration Section (only for super admins)
