@@ -8,6 +8,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { aiHealthAnalyzer } from "./ai-health-analyzer";
+import { geminiHealthAnalyzer } from "./gemini-health-analyzer";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
@@ -2159,12 +2160,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Generate AI health analysis
       console.log("Generating AI health analysis...");
-      const analysisResult = await aiHealthAnalyzer.analyzePatientHealth(
-        patient,
-        recentVitalSigns,
-        recentAppointments,
-        recentLabResults
-      );
+      // Try Gemini first, fall back to OpenAI system if needed
+      let analysisResult;
+      try {
+        if (process.env.GEMINI_API_KEY) {
+          console.log("Using Gemini AI for health analysis...");
+          analysisResult = await geminiHealthAnalyzer.analyzePatientHealth(
+            patient,
+            recentVitalSigns,
+            recentAppointments,
+            recentLabResults
+          );
+        } else {
+          throw new Error("Gemini API key not available, using fallback");
+        }
+      } catch (error) {
+        console.log("Falling back to intelligent analysis system...");
+        analysisResult = await aiHealthAnalyzer.analyzePatientHealth(
+          patient,
+          recentVitalSigns,
+          recentAppointments,
+          recentLabResults
+        );
+      }
       console.log("AI analysis completed successfully");
       
       // Save health analysis to database
@@ -2197,19 +2215,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Log audit trail
-      await storage.logAuditAction(
+      await storage.createAuditLog({
         tenantId,
         userId,
-        'health_analysis',
-        healthAnalysis.id,
-        'generate',
-        null,
-        { 
+        entityType: 'health_analysis',
+        entityId: healthAnalysis.id,
+        action: 'generate',
+        newData: { 
           patientId,
           analysisScore: analysisResult.overallHealthScore,
           recommendationsCount: savedRecommendations.length
-        }
-      );
+        },
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
       
       res.json({
         analysis: healthAnalysis,
