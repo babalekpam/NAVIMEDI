@@ -412,6 +412,65 @@ export const laboratories = pgTable("laboratories", {
   apiEndpoint: text("api_endpoint"), // For external lab integration
   apiKey: text("api_key"), // Encrypted API key for lab integration
   averageTurnaroundTime: integer("average_turnaround_time"), // Hours
+  isExternal: boolean("is_external").default(false), // true for external labs registering on platform
+  registrationStatus: text("registration_status").default("approved"), // pending, approved, rejected
+  registrationNotes: text("registration_notes"),
+  approvedBy: uuid("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  websiteUrl: text("website_url"),
+  accreditations: text("accreditations").array().default([]),
+  operatingHours: jsonb("operating_hours").$type<{
+    monday?: { open: string; close: string };
+    tuesday?: { open: string; close: string };
+    wednesday?: { open: string; close: string };
+    thursday?: { open: string; close: string };
+    friday?: { open: string; close: string };
+    saturday?: { open: string; close: string };
+    sunday?: { open: string; close: string };
+  }>(),
+  servicesOffered: text("services_offered").array().default([]),
+  equipmentDetails: text("equipment_details"),
+  certificationDocuments: text("certification_documents").array().default([]),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Laboratory registration applications for external labs to join platform
+export const laboratoryApplications = pgTable("laboratory_applications", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  laboratoryName: text("laboratory_name").notNull(),
+  licenseNumber: text("license_number").notNull(),
+  contactPerson: text("contact_person").notNull(),
+  contactEmail: text("contact_email").notNull(),
+  contactPhone: text("contact_phone").notNull(),
+  address: jsonb("address").notNull().$type<{
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  }>(),
+  specializations: text("specializations").array().notNull().default([]),
+  description: text("description"),
+  websiteUrl: text("website_url"),
+  accreditations: text("accreditations").array().default([]),
+  averageTurnaroundTime: integer("average_turnaround_time").default(24),
+  operatingHours: jsonb("operating_hours").$type<{
+    monday?: { open: string; close: string };
+    tuesday?: { open: string; close: string };
+    wednesday?: { open: string; close: string };
+    thursday?: { open: string; close: string };
+    friday?: { open: string; close: string };
+    saturday?: { open: string; close: string };
+    sunday?: { open: string; close: string };
+  }>(),
+  servicesOffered: text("services_offered").array().default([]),
+  equipmentDetails: text("equipment_details"),
+  certificationDocuments: text("certification_documents").array().default([]),
+  status: text("status").default("pending"), // pending, under_review, approved, rejected
+  reviewNotes: text("review_notes"),
+  reviewedBy: uuid("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
@@ -625,7 +684,18 @@ export const laboratoriesRelations = relations(laboratories, ({ one, many }) => 
     references: [tenants.id]
   }),
   labResults: many(labResults),
-  labOrderAssignments: many(labOrderAssignments)
+  labOrderAssignments: many(labOrderAssignments),
+  approvedByUser: one(users, {
+    fields: [laboratories.approvedBy],
+    references: [users.id]
+  })
+}));
+
+export const laboratoryApplicationsRelations = relations(laboratoryApplications, ({ one }) => ({
+  reviewedByUser: one(users, {
+    fields: [laboratoryApplications.reviewedBy],
+    references: [users.id]
+  })
 }));
 
 export const labResultsRelations = relations(labResults, ({ one }) => ({
@@ -795,7 +865,8 @@ export const insertPhraseTranslationSchema = createInsertSchema(phraseTranslatio
 export const insertLaboratorySchema = createInsertSchema(laboratories).omit({
   id: true,
   createdAt: true,
-  updatedAt: true
+  updatedAt: true,
+  approvedAt: true
 });
 
 export const insertLabResultSchema = createInsertSchema(labResults).omit({
@@ -808,6 +879,13 @@ export const insertLabOrderAssignmentSchema = createInsertSchema(labOrderAssignm
   id: true,
   createdAt: true,
   updatedAt: true
+});
+
+export const insertLaboratoryApplicationSchema = createInsertSchema(laboratoryApplications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  reviewedAt: true
 });
 
 // Types
@@ -871,3 +949,6 @@ export type InsertLabResult = z.infer<typeof insertLabResultSchema>;
 
 export type LabOrderAssignment = typeof labOrderAssignments.$inferSelect;
 export type InsertLabOrderAssignment = z.infer<typeof insertLabOrderAssignmentSchema>;
+
+export type LaboratoryApplication = typeof laboratoryApplications.$inferSelect;
+export type InsertLaboratoryApplication = z.infer<typeof insertLaboratoryApplicationSchema>;

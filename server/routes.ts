@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema } from "@shared/schema";
 import { authenticateToken, requireRole } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -1622,6 +1622,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error processing external lab results:", error);
       res.status(500).json({ message: "Failed to process lab results" });
+    }
+  });
+
+  // Laboratory application routes (external lab registration) - Public endpoint
+  app.post("/api/laboratory-applications", async (req, res) => {
+    try {
+      const applicationData = insertLaboratoryApplicationSchema.parse(req.body);
+      
+      const application = await storage.createLaboratoryApplication(applicationData);
+      
+      res.status(201).json(application);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid application data", errors: error.errors });
+      }
+      console.error("Error creating laboratory application:", error);
+      res.status(500).json({ message: "Failed to create laboratory application" });
+    }
+  });
+
+  app.get("/api/laboratory-applications", authenticateToken, requireRole(["super_admin"]), async (req, res) => {
+    try {
+      const status = req.query.status as string;
+      const applications = status 
+        ? await storage.getLaboratoryApplicationsByStatus(status)
+        : await storage.getAllLaboratoryApplications();
+      res.json(applications);
+    } catch (error) {
+      console.error("Error fetching laboratory applications:", error);
+      res.status(500).json({ message: "Failed to fetch laboratory applications" });
+    }
+  });
+
+  app.post("/api/laboratory-applications/:id/approve", authenticateToken, requireRole(["super_admin"]), async (req, res) => {
+    try {
+      const { reviewNotes } = req.body;
+      const result = await storage.approveLaboratoryApplication(req.params.id, req.userId!, reviewNotes);
+      
+      if (!result) {
+        return res.status(404).json({ message: "Laboratory application not found" });
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error approving laboratory application:", error);
+      res.status(500).json({ message: "Failed to approve laboratory application" });
+    }
+  });
+
+  app.post("/api/laboratory-applications/:id/reject", authenticateToken, requireRole(["super_admin"]), async (req, res) => {
+    try {
+      const { reviewNotes } = req.body;
+      
+      if (!reviewNotes) {
+        return res.status(400).json({ message: "Review notes are required for rejection" });
+      }
+
+      const application = await storage.rejectLaboratoryApplication(req.params.id, req.userId!, reviewNotes);
+      
+      if (!application) {
+        return res.status(404).json({ message: "Laboratory application not found" });
+      }
+
+      res.json(application);
+    } catch (error) {
+      console.error("Error rejecting laboratory application:", error);
+      res.status(500).json({ message: "Failed to reject laboratory application" });
     }
   });
 

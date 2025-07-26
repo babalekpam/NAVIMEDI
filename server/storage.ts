@@ -19,6 +19,7 @@ import {
   laboratories,
   labResults,
   labOrderAssignments,
+  laboratoryApplications,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -57,7 +58,9 @@ import {
   type LabResult,
   type InsertLabResult,
   type LabOrderAssignment,
-  type InsertLabOrderAssignment
+  type InsertLabOrderAssignment,
+  type LaboratoryApplication,
+  type InsertLaboratoryApplication
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or } from "drizzle-orm";
@@ -207,6 +210,15 @@ export interface IStorage {
   getLabOrderAssignmentByOrder(labOrderId: string, tenantId: string): Promise<LabOrderAssignment | undefined>;
   getLabOrderAssignmentsByLaboratory(laboratoryId: string, tenantId: string): Promise<LabOrderAssignment[]>;
   getLabOrderAssignmentsByTenant(tenantId: string): Promise<LabOrderAssignment[]>;
+
+  // Laboratory Application Management
+  getLaboratoryApplication(id: string): Promise<LaboratoryApplication | undefined>;
+  createLaboratoryApplication(application: InsertLaboratoryApplication): Promise<LaboratoryApplication>;
+  updateLaboratoryApplication(id: string, updates: Partial<LaboratoryApplication>): Promise<LaboratoryApplication | undefined>;
+  getAllLaboratoryApplications(): Promise<LaboratoryApplication[]>;
+  getLaboratoryApplicationsByStatus(status: string): Promise<LaboratoryApplication[]>;
+  approveLaboratoryApplication(id: string, reviewedBy: string, reviewNotes?: string): Promise<{ laboratory: Laboratory; application: LaboratoryApplication } | undefined>;
+  rejectLaboratoryApplication(id: string, reviewedBy: string, reviewNotes: string): Promise<LaboratoryApplication | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -916,6 +928,92 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(labOrderAssignments).where(
       eq(labOrderAssignments.tenantId, tenantId)
     ).orderBy(desc(labOrderAssignments.createdAt));
+  }
+
+  // Laboratory Application Management
+  async getLaboratoryApplication(id: string): Promise<LaboratoryApplication | undefined> {
+    const [application] = await db.select().from(laboratoryApplications).where(
+      eq(laboratoryApplications.id, id)
+    );
+    return application || undefined;
+  }
+
+  async createLaboratoryApplication(insertApplication: InsertLaboratoryApplication): Promise<LaboratoryApplication> {
+    const [application] = await db.insert(laboratoryApplications).values(insertApplication).returning();
+    return application;
+  }
+
+  async updateLaboratoryApplication(id: string, updates: Partial<LaboratoryApplication>): Promise<LaboratoryApplication | undefined> {
+    const [application] = await db.update(laboratoryApplications)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(laboratoryApplications.id, id))
+      .returning();
+    return application || undefined;
+  }
+
+  async getAllLaboratoryApplications(): Promise<LaboratoryApplication[]> {
+    return await db.select().from(laboratoryApplications)
+      .orderBy(desc(laboratoryApplications.createdAt));
+  }
+
+  async getLaboratoryApplicationsByStatus(status: string): Promise<LaboratoryApplication[]> {
+    return await db.select().from(laboratoryApplications).where(
+      eq(laboratoryApplications.status, status)
+    ).orderBy(desc(laboratoryApplications.createdAt));
+  }
+
+  async approveLaboratoryApplication(id: string, reviewedBy: string, reviewNotes?: string): Promise<{ laboratory: Laboratory; application: LaboratoryApplication } | undefined> {
+    const application = await this.getLaboratoryApplication(id);
+    if (!application) return undefined;
+
+    // Create a tenant for the external lab
+    const labTenant = await this.createTenant({
+      name: application.laboratoryName,
+      subdomain: application.laboratoryName.toLowerCase().replace(/[^a-z0-9]/g, ''),
+      type: "laboratory",
+      isActive: true
+    });
+
+    // Create the laboratory record
+    const laboratory = await this.createLaboratory({
+      tenantId: labTenant.id,
+      name: application.laboratoryName,
+      licenseNumber: application.licenseNumber,
+      contactPerson: application.contactPerson,
+      phone: application.contactPhone,
+      email: application.contactEmail,
+      address: application.address,
+      specializations: application.specializations,
+      isActive: true,
+      isExternal: true,
+      registrationStatus: "approved",
+      registrationNotes: reviewNotes,
+      approvedBy: reviewedBy,
+      websiteUrl: application.websiteUrl,
+      accreditations: application.accreditations,
+      operatingHours: application.operatingHours,
+      servicesOffered: application.servicesOffered,
+      equipmentDetails: application.equipmentDetails,
+      certificationDocuments: application.certificationDocuments,
+      averageTurnaroundTime: application.averageTurnaroundTime
+    });
+
+    // Update the application status
+    const updatedApplication = await this.updateLaboratoryApplication(id, {
+      status: "approved",
+      reviewNotes,
+      reviewedBy
+    });
+
+    return updatedApplication ? { laboratory, application: updatedApplication } : undefined;
+  }
+
+  async rejectLaboratoryApplication(id: string, reviewedBy: string, reviewNotes: string): Promise<LaboratoryApplication | undefined> {
+    return await this.updateLaboratoryApplication(id, {
+      status: "rejected",
+      reviewNotes,
+      reviewedBy
+    });
   }
 }
 

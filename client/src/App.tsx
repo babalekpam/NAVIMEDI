@@ -22,6 +22,7 @@ import AuditLogs from "@/pages/audit-logs";
 import UserRoles from "@/pages/user-roles";
 import Reports from "@/pages/reports";
 import MedicalCommunications from "@/pages/medical-communications";
+import LaboratoryRegistration from "@/pages/laboratory-registration";
 
 
 
@@ -174,6 +175,7 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
+        <Route path="/laboratory-registration" component={LaboratoryRegistration} />
         <Route component={NotFound} />
       </Switch>
     </div>
