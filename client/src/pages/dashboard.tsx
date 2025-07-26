@@ -34,6 +34,12 @@ export default function Dashboard() {
   const { tenant } = useTenant();
 
   const isSuperAdmin = user?.role === 'super_admin';
+  
+  console.log('Dashboard Debug:', {
+    user: user?.role,
+    isSuperAdmin,
+    tenantType: tenant?.type
+  });
 
   // Platform metrics for super admin
   const { data: platformMetrics, isLoading: platformLoading, refetch: refetchPlatform } = useQuery<PlatformMetrics>({
