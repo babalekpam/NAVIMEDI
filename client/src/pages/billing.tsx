@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Plus, Search, Filter, MoreHorizontal, FileText, CreditCard, X } from "lucide-react";
+import { DollarSign, Plus, Search, Filter, MoreHorizontal, FileText, CreditCard, X, Eye, Send, Calendar, CheckCircle, Clock, AlertCircle, Trash2 } from "lucide-react";
 import { InsuranceClaim, Patient, insertInsuranceClaimSchema } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
@@ -28,6 +28,8 @@ export default function Billing() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [selectedClaim, setSelectedClaim] = useState<InsuranceClaim | null>(null);
   const [formData, setFormData] = useState({
     patientId: "",
     claimNumber: "",
@@ -81,6 +83,31 @@ export default function Billing() {
     },
   });
 
+  const submitClaimMutation = useMutation({
+    mutationFn: async (claimId: string) => {
+      const response = await apiRequest("PATCH", `/api/insurance-claims/${claimId}`, {
+        status: 'submitted',
+        submittedDate: new Date().toISOString()
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/insurance-claims"] });
+      setIsViewDialogOpen(false);
+      toast({
+        title: "Claim Submitted",
+        description: "Insurance claim has been submitted successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit insurance claim.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const filteredClaims = claims.filter(claim => {
     const patient = patients.find(p => p.id === claim.patientId);
     const patientName = patient ? `${patient.firstName} ${patient.lastName}` : "";
@@ -118,6 +145,15 @@ export default function Billing() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleViewClaim = (claim: InsuranceClaim) => {
+    setSelectedClaim(claim);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleSubmitClaim = (claimId: string) => {
+    submitClaimMutation.mutate(claimId);
   };
 
   // Calculate summary statistics
@@ -436,12 +472,25 @@ export default function Billing() {
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
-                        View Details
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-blue-600 hover:text-blue-700"
+                        onClick={() => handleViewClaim(claim)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
                       </Button>
                       {claim.status === 'draft' && (
-                        <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700">
-                          Submit Claim
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-green-600 hover:text-green-700 border-green-300 hover:border-green-400"
+                          onClick={() => handleSubmitClaim(claim.id)}
+                          disabled={submitClaimMutation.isPending}
+                        >
+                          <Send className="h-4 w-4 mr-1" />
+                          Submit
                         </Button>
                       )}
                       {claim.status === 'approved' && !claim.paidAmount && (
@@ -460,6 +509,97 @@ export default function Billing() {
           )}
         </CardContent>
       </Card>
+
+      {/* View Claim Details Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Claim Details - {selectedClaim?.claimNumber}</DialogTitle>
+            <DialogDescription>
+              View complete insurance claim information and submit for processing.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedClaim && (
+            <div className="space-y-6">
+              {/* Patient Information */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Patient Information</h3>
+                  <div className="space-y-2">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Patient Name</Label>
+                      <p className="text-sm text-gray-900">{getPatientName(selectedClaim.patientId)}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Claim Information</h3>
+                  <div className="space-y-2">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Claim Number</Label>
+                      <p className="text-sm text-gray-900">{selectedClaim.claimNumber}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Status</Label>
+                      <Badge variant="secondary" className={statusColors[selectedClaim.status]}>
+                        {selectedClaim.status.replace('_', ' ')}
+                      </Badge>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Total Amount</Label>
+                      <p className="text-sm text-gray-900">${parseFloat(selectedClaim.totalAmount).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Medical Codes */}
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Procedure Codes</Label>
+                  <div className="mt-2 space-y-1">
+                    {selectedClaim.procedureCodes.map((code, index) => (
+                      <Badge key={index} variant="outline" className="mr-2 mb-1">
+                        {code}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Diagnosis Codes</Label>
+                  <div className="mt-2 space-y-1">
+                    {selectedClaim.diagnosisCodes.map((code, index) => (
+                      <Badge key={index} variant="outline" className="mr-2 mb-1">
+                        {code}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-between pt-4 border-t">
+                <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+                  Close
+                </Button>
+                
+                {selectedClaim.status === 'draft' && (
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => handleSubmitClaim(selectedClaim.id)}
+                    disabled={submitClaimMutation.isPending}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    {submitClaimMutation.isPending ? 'Submitting...' : 'Submit Claim'}
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

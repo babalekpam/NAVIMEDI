@@ -513,6 +513,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/insurance-claims/:id", requireRole(["billing_staff", "physician", "tenant_admin", "director"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+
+      const updatedClaim = await storage.updateInsuranceClaim(id, updateData, req.tenant!.id);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenant!.id,
+        userId: req.user!.userId,
+        entityType: "insurance_claim",
+        entityId: id,
+        action: "update",
+        newData: updateData,
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      res.json(updatedClaim);
+    } catch (error) {
+      console.error("Update insurance claim error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Dashboard metrics
   app.get("/api/dashboard/metrics", requireTenant, async (req, res) => {
     try {
