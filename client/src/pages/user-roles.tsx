@@ -463,14 +463,20 @@ export default function UserRoles() {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant={userItem.isActive ? "destructive" : "default"}
-                        size="sm"
-                        onClick={() => handleToggleStatus(userItem)}
-                        disabled={toggleUserStatusMutation.isPending}
-                      >
-                        {userItem.isActive ? "Deactivate" : "Activate"}
-                      </Button>
+                      {userItem.role !== 'super_admin' ? (
+                        <Button
+                          variant={userItem.isActive ? "destructive" : "default"}
+                          size="sm"
+                          onClick={() => handleToggleStatus(userItem)}
+                          disabled={toggleUserStatusMutation.isPending}
+                        >
+                          {userItem.isActive ? "Deactivate" : "Activate"}
+                        </Button>
+                      ) : (
+                        <Badge variant="outline" className="text-xs px-2 py-1">
+                          Permanent Role
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>

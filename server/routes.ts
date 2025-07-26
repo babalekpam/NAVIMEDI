@@ -722,6 +722,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied. Cannot update this user." });
       }
 
+      // Prevent deactivation of super admin users
+      if (existingUser.role === 'super_admin' && updateData.isActive === false) {
+        return res.status(403).json({ message: "Cannot deactivate super admin users. This role is permanent for platform security." });
+      }
+
+      // Prevent users from deactivating themselves
+      if (req.user.userId === id && updateData.isActive === false) {
+        return res.status(403).json({ message: "You cannot deactivate your own account." });
+      }
+
       // Update the user
       const updatedUser = await storage.updateUser(id, updateData);
       
