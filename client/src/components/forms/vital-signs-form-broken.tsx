@@ -18,6 +18,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -25,31 +28,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Activity, Heart, Thermometer, Wind, Weight, Ruler } from "lucide-react";
 
-// Simple form schema that accepts strings and converts them
-const vitalSignsFormSchema = z.object({
+const vitalSignsSchema = z.object({
   patientId: z.string().min(1, "Patient is required"),
   appointmentId: z.string().optional(),
-  bloodPressureSystolic: z.string().optional(),
-  bloodPressureDiastolic: z.string().optional(),
-  heartRate: z.string().optional(),
-  temperature: z.string().optional(),
-  oxygenSaturation: z.string().optional(),
-  respiratoryRate: z.string().optional(),
-  weight: z.string().optional(),
-  height: z.string().optional(),
+  bloodPressureSystolic: z.union([z.string(), z.number()]).optional().transform(val => val === "" || val === undefined ? undefined : Number(val)),
+  bloodPressureDiastolic: z.union([z.string(), z.number()]).optional().transform(val => val === "" || val === undefined ? undefined : Number(val)),
+  heartRate: z.union([z.string(), z.number()]).optional().transform(val => val === "" || val === undefined ? undefined : Number(val)),
+  temperature: z.union([z.string(), z.number()]).optional().transform(val => val === "" || val === undefined ? undefined : Number(val)),
+  oxygenSaturation: z.union([z.string(), z.number()]).optional().transform(val => val === "" || val === undefined ? undefined : Number(val)),
+  respiratoryRate: z.union([z.string(), z.number()]).optional().transform(val => val === "" || val === undefined ? undefined : Number(val)),
+  weight: z.union([z.string(), z.number()]).optional().transform(val => val === "" || val === undefined ? undefined : Number(val)),
+  height: z.union([z.string(), z.number()]).optional().transform(val => val === "" || val === undefined ? undefined : Number(val)),
   notes: z.string().optional(),
 });
-
-type VitalSignsFormData = z.infer<typeof vitalSignsFormSchema>;
 
 // Unit conversion functions
 const convertWeightToKg = (value: number, fromUnit: string) => {
@@ -71,6 +68,8 @@ const convertHeightFromCm = (value: number, toUnit: string) => {
   if (toUnit === "inches") return value / 2.54;
   return value; // keep in cm
 };
+
+type VitalSignsFormData = z.infer<typeof vitalSignsSchema>;
 
 interface VitalSignsFormProps {
   isOpen: boolean;
@@ -96,18 +95,18 @@ export function VitalSignsForm({
   const [heightUnit, setHeightUnit] = useState<"cm" | "inches">("cm");
 
   const form = useForm<VitalSignsFormData>({
-    resolver: zodResolver(vitalSignsFormSchema),
+    resolver: zodResolver(vitalSignsSchema),
     defaultValues: {
       patientId,
       appointmentId: appointmentId || "",
-      bloodPressureSystolic: existingVitalSigns?.bloodPressureSystolic?.toString() || "",
-      bloodPressureDiastolic: existingVitalSigns?.bloodPressureDiastolic?.toString() || "",
-      heartRate: existingVitalSigns?.heartRate?.toString() || "",
-      temperature: existingVitalSigns?.temperature?.toString() || "",
-      oxygenSaturation: existingVitalSigns?.oxygenSaturation?.toString() || "",
-      respiratoryRate: existingVitalSigns?.respiratoryRate?.toString() || "",
-      weight: existingVitalSigns?.weight ? convertWeightFromKg(existingVitalSigns.weight, weightUnit).toFixed(1) : "",
-      height: existingVitalSigns?.height ? convertHeightFromCm(existingVitalSigns.height, heightUnit).toFixed(1) : "",
+      bloodPressureSystolic: existingVitalSigns?.bloodPressureSystolic || "",
+      bloodPressureDiastolic: existingVitalSigns?.bloodPressureDiastolic || "",
+      heartRate: existingVitalSigns?.heartRate || "",
+      temperature: existingVitalSigns?.temperature || "",
+      oxygenSaturation: existingVitalSigns?.oxygenSaturation || "",
+      respiratoryRate: existingVitalSigns?.respiratoryRate || "",
+      weight: existingVitalSigns?.weight ? convertWeightFromKg(existingVitalSigns.weight, weightUnit).toFixed(1) : undefined,
+      height: existingVitalSigns?.height ? convertHeightFromCm(existingVitalSigns.height, heightUnit).toFixed(1) : undefined,
       notes: existingVitalSigns?.notes || "",
     },
   });
@@ -117,7 +116,7 @@ export function VitalSignsForm({
   const watchHeight = form.watch("height");
 
   useEffect(() => {
-    if (watchWeight && watchHeight && !isNaN(Number(watchWeight)) && !isNaN(Number(watchHeight))) {
+    if (watchWeight && watchHeight) {
       const weightKg = convertWeightToKg(Number(watchWeight), weightUnit);
       const heightM = convertHeightToCm(Number(watchHeight), heightUnit) / 100; // cm to meters
       const calculatedBMI = weightKg / (heightM * heightM);
@@ -128,7 +127,8 @@ export function VitalSignsForm({
   }, [watchWeight, watchHeight, weightUnit, heightUnit]);
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("/api/vital-signs", "POST", data),
+    mutationFn: (data: VitalSignsFormData) => 
+      apiRequest("/api/vital-signs", "POST", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vital-signs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
@@ -137,6 +137,7 @@ export function VitalSignsForm({
         description: "Vital signs recorded successfully",
       });
       onClose();
+      form.reset();
     },
     onError: (error: any) => {
       toast({
@@ -148,7 +149,8 @@ export function VitalSignsForm({
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => apiRequest(`/api/vital-signs/${existingVitalSigns?.id}`, "PATCH", data),
+    mutationFn: (data: VitalSignsFormData) => 
+      apiRequest(`/api/vital-signs/${existingVitalSigns?.id}`, "PATCH", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vital-signs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
@@ -168,19 +170,11 @@ export function VitalSignsForm({
   });
 
   const onSubmit = (data: VitalSignsFormData) => {
-    // Convert form data to API format with proper numeric values
+    // Convert units to standard units (kg for weight, cm for height) before sending to API
     const processedData = {
-      patientId: data.patientId,
-      appointmentId: data.appointmentId,
-      bloodPressureSystolic: data.bloodPressureSystolic ? Number(data.bloodPressureSystolic) : undefined,
-      bloodPressureDiastolic: data.bloodPressureDiastolic ? Number(data.bloodPressureDiastolic) : undefined,
-      heartRate: data.heartRate ? Number(data.heartRate) : undefined,
-      temperature: data.temperature ? Number(data.temperature) : undefined,
-      oxygenSaturation: data.oxygenSaturation ? Number(data.oxygenSaturation) : undefined,
-      respiratoryRate: data.respiratoryRate ? Number(data.respiratoryRate) : undefined,
+      ...data,
       weight: data.weight ? convertWeightToKg(Number(data.weight), weightUnit) : undefined,
       height: data.height ? convertHeightToCm(Number(data.height), heightUnit) : undefined,
-      notes: data.notes,
     };
 
     if (existingVitalSigns) {
@@ -197,11 +191,10 @@ export function VitalSignsForm({
     return { label: "Obese", color: "bg-red-100 text-red-800" };
   };
 
-  const getVitalStatus = (value: string | undefined, ranges: { low: number; high: number }) => {
-    if (!value || isNaN(Number(value))) return null;
-    const numValue = Number(value);
-    if (numValue < ranges.low) return { status: "Low", color: "text-blue-600" };
-    if (numValue > ranges.high) return { status: "High", color: "text-red-600" };
+  const getVitalStatus = (value: number | undefined, ranges: { low: number; high: number }) => {
+    if (!value) return null;
+    if (value < ranges.low) return { status: "Low", color: "text-blue-600" };
+    if (value > ranges.high) return { status: "High", color: "text-red-600" };
     return { status: "Normal", color: "text-green-600" };
   };
 
@@ -242,12 +235,9 @@ export function VitalSignsForm({
                               type="number"
                               placeholder="120"
                               {...field}
+                              onChange={(e) => field.onChange(e.target.value)}
                             />
                           </FormControl>
-                          {field.value && (() => {
-                            const status = getVitalStatus(field.value, { low: 90, high: 140 });
-                            return status && <div className={`text-xs ${status.color}`}>{status.status}</div>;
-                          })()}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -263,17 +253,26 @@ export function VitalSignsForm({
                               type="number"
                               placeholder="80"
                               {...field}
+                              onChange={(e) => field.onChange(e.target.value)}
                             />
                           </FormControl>
-                          {field.value && (() => {
-                            const status = getVitalStatus(field.value, { low: 60, high: 90 });
-                            return status && <div className={`text-xs ${status.color}`}>{status.status}</div>;
-                          })()}
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
+                  {form.watch("bloodPressureSystolic") && form.watch("bloodPressureDiastolic") && (
+                    <div className="text-sm">
+                      <span className="font-medium">Reading: </span>
+                      {form.watch("bloodPressureSystolic")}/{form.watch("bloodPressureDiastolic")} mmHg
+                      {(() => {
+                        const sys = form.watch("bloodPressureSystolic")!;
+                        const dia = form.watch("bloodPressureDiastolic")!;
+                        const status = getVitalStatus(sys, { low: 90, high: 140 });
+                        return status && <span className={`ml-2 ${status.color}`}>({status.status})</span>;
+                      })()}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -281,8 +280,8 @@ export function VitalSignsForm({
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-pink-500" />
-                    Heart Rate & Temperature
+                    <Thermometer className="h-4 w-4 text-orange-500" />
+                    Vitals
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -291,12 +290,13 @@ export function VitalSignsForm({
                     name="heartRate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Heart Rate (bpm)</FormLabel>
+                        <FormLabel>Heart Rate (BPM)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             placeholder="72"
                             {...field}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         {field.value && (() => {
@@ -319,10 +319,11 @@ export function VitalSignsForm({
                             step="0.1"
                             placeholder="98.6"
                             {...field}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         {field.value && (() => {
-                          const status = getVitalStatus(field.value, { low: 97, high: 99 });
+                          const status = getVitalStatus(field.value, { low: 97, high: 99.5 });
                           return status && <div className={`text-xs ${status.color}`}>{status.status}</div>;
                         })()}
                         <FormMessage />
@@ -332,12 +333,12 @@ export function VitalSignsForm({
                 </CardContent>
               </Card>
 
-              {/* Oxygen & Respiratory */}
+              {/* Respiratory */}
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
                     <Wind className="h-4 w-4 text-blue-500" />
-                    Oxygen & Respiratory
+                    Respiratory
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -352,6 +353,7 @@ export function VitalSignsForm({
                             type="number"
                             placeholder="98"
                             {...field}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         {field.value && (() => {
@@ -373,6 +375,7 @@ export function VitalSignsForm({
                             type="number"
                             placeholder="16"
                             {...field}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         {field.value && (() => {
@@ -409,6 +412,7 @@ export function VitalSignsForm({
                                 step="0.1"
                                 placeholder={weightUnit === "kg" ? "70" : "150"}
                                 {...field}
+                                onChange={(e) => field.onChange(e.target.value)}
                                 className="flex-1"
                               />
                             </FormControl>
@@ -439,6 +443,7 @@ export function VitalSignsForm({
                                 step="0.1"
                                 placeholder={heightUnit === "cm" ? "170" : "68"}
                                 {...field}
+                                onChange={(e) => field.onChange(e.target.value)}
                                 className="flex-1"
                               />
                             </FormControl>
@@ -496,7 +501,7 @@ export function VitalSignsForm({
                 type="submit" 
                 disabled={createMutation.isPending || updateMutation.isPending}
               >
-                {(createMutation.isPending || updateMutation.isPending) ? "Saving..." : existingVitalSigns ? "Update" : "Save"} Vital Signs
+                {createMutation.isPending || updateMutation.isPending ? "Saving..." : existingVitalSigns ? "Update" : "Record"} Vital Signs
               </Button>
             </div>
           </form>
