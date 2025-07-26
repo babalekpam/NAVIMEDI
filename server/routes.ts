@@ -437,10 +437,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/prescriptions", requireRole(["physician", "nurse"]), async (req, res) => {
+  app.post("/api/prescriptions", authenticateToken, requireTenant, async (req, res) => {
     try {
       console.log("[DEBUG] Creating prescription - User:", req.user?.role, "User ID:", req.user?.userId, "Tenant:", req.tenant?.id);
       console.log("[DEBUG] Request body:", JSON.stringify(req.body, null, 2));
+      
+      // Check if user has permission to create prescriptions
+      const allowedRoles = ["physician", "nurse", "tenant_admin", "director", "super_admin"];
+      if (!allowedRoles.includes(req.user!.role)) {
+        console.log("[DEBUG] Permission denied for role:", req.user!.role);
+        return res.status(403).json({ 
+          message: "Insufficient permissions to create prescriptions",
+          required: allowedRoles,
+          current: req.user!.role
+        });
+      }
       
       // Convert string dates to Date objects
       const requestData = { ...req.body };
@@ -448,13 +459,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         requestData.expiryDate = new Date(requestData.expiryDate);
       }
       
-      const prescriptionData = insertPrescriptionSchema.parse({
+      // Prepare prescription data with all required fields
+      const prescriptionData = {
         ...requestData,
         tenantId: req.tenant!.id,
-        providerId: req.user!.userId
-      });
+        providerId: req.user!.userId,
+        appointmentId: requestData.appointmentId || null,
+        pharmacyTenantId: requestData.pharmacyTenantId || null
+      };
+      
+      console.log("[DEBUG] Prescription data before validation:", JSON.stringify(prescriptionData, null, 2));
+      
+      const validatedData = insertPrescriptionSchema.parse(prescriptionData);
 
-      const prescription = await storage.createPrescription(prescriptionData);
+      const prescription = await storage.createPrescription(validatedData);
 
       // Create audit log
       await storage.createAuditLog({
