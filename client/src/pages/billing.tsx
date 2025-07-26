@@ -4,11 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Plus, Search, Filter, MoreHorizontal, FileText, CreditCard } from "lucide-react";
-import { InsuranceClaim, Patient } from "@shared/schema";
+import { DollarSign, Plus, Search, Filter, MoreHorizontal, FileText, CreditCard, X } from "lucide-react";
+import { InsuranceClaim, Patient, insertInsuranceClaimSchema } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 const statusColors = {
   draft: "bg-gray-100 text-gray-800",
@@ -22,9 +27,19 @@ const statusColors = {
 export default function Billing() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    patientId: "",
+    claimNumber: "",
+    procedureCodes: "",
+    diagnosisCodes: "",
+    totalAmount: "",
+    appointmentId: ""
+  });
   const { user } = useAuth();
   const { tenant } = useTenant();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: claims = [], isLoading } = useQuery<InsuranceClaim[]>({
     queryKey: ["/api/insurance-claims"],
@@ -34,6 +49,39 @@ export default function Billing() {
   const { data: patients = [] } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
     enabled: !!user && !!tenant,
+  });
+
+  const createClaimMutation = useMutation({
+    mutationFn: async (claimData: any) => {
+      return apiRequest("/api/insurance-claims", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(claimData),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/insurance-claims"] });
+      setIsCreateDialogOpen(false);
+      setFormData({
+        patientId: "",
+        claimNumber: "",
+        procedureCodes: "",
+        diagnosisCodes: "",
+        totalAmount: "",
+        appointmentId: ""
+      });
+      toast({
+        title: "Claim Created",
+        description: "Insurance claim has been successfully created.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create insurance claim.",
+        variant: "destructive",
+      });
+    },
   });
 
   const filteredClaims = claims.filter(claim => {
@@ -48,6 +96,31 @@ export default function Billing() {
   const getPatientName = (patientId: string) => {
     const patient = patients.find(p => p.id === patientId);
     return patient ? `${patient.firstName} ${patient.lastName}` : `Patient ${patientId.slice(-4)}`;
+  };
+
+  const handleCreateClaim = () => {
+    try {
+      // Generate claim number if not provided
+      const claimNumber = formData.claimNumber || `CLM-${Date.now()}`;
+      
+      const claimData = {
+        patientId: formData.patientId,
+        claimNumber,
+        procedureCodes: formData.procedureCodes ? formData.procedureCodes.split(',').map(code => code.trim()) : [],
+        diagnosisCodes: formData.diagnosisCodes ? formData.diagnosisCodes.split(',').map(code => code.trim()) : [],
+        totalAmount: formData.totalAmount,
+        appointmentId: formData.appointmentId || undefined,
+        status: 'draft'
+      };
+
+      createClaimMutation.mutate(claimData);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields correctly.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Calculate summary statistics
@@ -74,11 +147,89 @@ export default function Billing() {
           <h1 className="text-3xl font-bold text-gray-900">Billing & Claims</h1>
           <p className="text-gray-600 mt-1">Manage insurance claims and billing operations</p>
         </div>
-        {(user.role === "billing_staff" || user.role === "physician" || user.role === "tenant_admin") && (
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Claim
-          </Button>
+        {(user.role === "billing_staff" || user.role === "physician" || user.role === "tenant_admin" || user.role === "director") && (
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Claim
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Create Insurance Claim</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="patientId">Patient</Label>
+                    <Select value={formData.patientId} onValueChange={(value) => setFormData({...formData, patientId: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select patient" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {patients.map((patient) => (
+                          <SelectItem key={patient.id} value={patient.id}>
+                            {patient.firstName} {patient.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="claimNumber">Claim Number (Optional)</Label>
+                    <Input
+                      id="claimNumber"
+                      placeholder="Auto-generated if empty"
+                      value={formData.claimNumber}
+                      onChange={(e) => setFormData({...formData, claimNumber: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="totalAmount">Total Amount</Label>
+                  <Input
+                    id="totalAmount"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={formData.totalAmount}
+                    onChange={(e) => setFormData({...formData, totalAmount: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="procedureCodes">Procedure Codes (comma-separated)</Label>
+                  <Input
+                    id="procedureCodes"
+                    placeholder="e.g., 99213, 99214"
+                    value={formData.procedureCodes}
+                    onChange={(e) => setFormData({...formData, procedureCodes: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="diagnosisCodes">Diagnosis Codes (comma-separated)</Label>
+                  <Input
+                    id="diagnosisCodes"
+                    placeholder="e.g., Z00.00, M25.50"
+                    value={formData.diagnosisCodes}
+                    onChange={(e) => setFormData({...formData, diagnosisCodes: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleCreateClaim} 
+                  disabled={createClaimMutation.isPending || !formData.patientId || !formData.totalAmount}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {createClaimMutation.isPending ? "Creating..." : "Create Claim"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 
@@ -209,8 +360,8 @@ export default function Billing() {
               <p className="text-gray-600 mb-4">
                 {searchQuery ? "No claims match your search criteria" : "No insurance claims have been created yet"}
               </p>
-              {(user.role === "billing_staff" || user.role === "physician" || user.role === "tenant_admin") && (
-                <Button className="bg-blue-600 hover:bg-blue-700">
+              {(user.role === "billing_staff" || user.role === "physician" || user.role === "tenant_admin" || user.role === "director") && (
+                <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsCreateDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Claim
                 </Button>
