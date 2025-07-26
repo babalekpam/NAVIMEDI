@@ -25,6 +25,8 @@ import {
   laboratoryApplications,
   vitalSigns,
   visitSummaries,
+  healthRecommendations,
+  healthAnalyses,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -75,7 +77,11 @@ import {
   type VitalSigns,
   type InsertVitalSigns,
   type VisitSummary,
-  type InsertVisitSummary
+  type InsertVisitSummary,
+  type HealthRecommendation,
+  type InsertHealthRecommendation,
+  type HealthAnalysis,
+  type InsertHealthAnalysis
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or } from "drizzle-orm";
@@ -278,6 +284,23 @@ export interface IStorage {
   getVisitSummaryByAppointment(appointmentId: string, tenantId: string): Promise<VisitSummary | undefined>;
   getVisitSummariesByProvider(providerId: string, tenantId: string): Promise<VisitSummary[]>;
   getVisitSummariesByTenant(tenantId: string): Promise<VisitSummary[]>;
+
+  // AI Health Recommendations Management
+  getHealthRecommendation(id: string, tenantId: string): Promise<HealthRecommendation | undefined>;
+  createHealthRecommendation(recommendation: InsertHealthRecommendation): Promise<HealthRecommendation>;
+  updateHealthRecommendation(id: string, updates: Partial<HealthRecommendation>, tenantId: string): Promise<HealthRecommendation | undefined>;
+  getHealthRecommendationsByPatient(patientId: string, tenantId: string): Promise<HealthRecommendation[]>;
+  getActiveHealthRecommendationsByPatient(patientId: string, tenantId: string): Promise<HealthRecommendation[]>;
+  getHealthRecommendationsByTenant(tenantId: string): Promise<HealthRecommendation[]>;
+  acknowledgeHealthRecommendation(id: string, acknowledgedBy: string, tenantId: string): Promise<HealthRecommendation | undefined>;
+
+  // AI Health Analysis Management
+  getHealthAnalysis(id: string, tenantId: string): Promise<HealthAnalysis | undefined>;
+  createHealthAnalysis(analysis: InsertHealthAnalysis): Promise<HealthAnalysis>;
+  updateHealthAnalysis(id: string, updates: Partial<HealthAnalysis>, tenantId: string): Promise<HealthAnalysis | undefined>;
+  getHealthAnalysesByPatient(patientId: string, tenantId: string): Promise<HealthAnalysis[]>;
+  getLatestHealthAnalysis(patientId: string, tenantId: string): Promise<HealthAnalysis | undefined>;
+  getHealthAnalysesByTenant(tenantId: string): Promise<HealthAnalysis[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1357,6 +1380,99 @@ export class DatabaseStorage implements IStorage {
   async getVisitSummariesByTenant(tenantId: string): Promise<VisitSummary[]> {
     return await db.select().from(visitSummaries).where(eq(visitSummaries.tenantId, tenantId))
       .orderBy(desc(visitSummaries.visitDate));
+  }
+
+  // AI Health Recommendations Management Implementation
+  async getHealthRecommendation(id: string, tenantId: string): Promise<HealthRecommendation | undefined> {
+    const [recommendation] = await db.select().from(healthRecommendations).where(
+      and(eq(healthRecommendations.id, id), eq(healthRecommendations.tenantId, tenantId))
+    );
+    return recommendation || undefined;
+  }
+
+  async createHealthRecommendation(insertRecommendation: InsertHealthRecommendation): Promise<HealthRecommendation> {
+    const [recommendation] = await db.insert(healthRecommendations).values(insertRecommendation).returning();
+    return recommendation;
+  }
+
+  async updateHealthRecommendation(id: string, updates: Partial<HealthRecommendation>, tenantId: string): Promise<HealthRecommendation | undefined> {
+    const [recommendation] = await db.update(healthRecommendations)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(healthRecommendations.id, id), eq(healthRecommendations.tenantId, tenantId)))
+      .returning();
+    return recommendation || undefined;
+  }
+
+  async getHealthRecommendationsByPatient(patientId: string, tenantId: string): Promise<HealthRecommendation[]> {
+    return await db.select().from(healthRecommendations).where(
+      and(eq(healthRecommendations.patientId, patientId), eq(healthRecommendations.tenantId, tenantId))
+    ).orderBy(desc(healthRecommendations.createdAt));
+  }
+
+  async getActiveHealthRecommendationsByPatient(patientId: string, tenantId: string): Promise<HealthRecommendation[]> {
+    return await db.select().from(healthRecommendations).where(
+      and(
+        eq(healthRecommendations.patientId, patientId), 
+        eq(healthRecommendations.tenantId, tenantId),
+        eq(healthRecommendations.status, 'active')
+      )
+    ).orderBy(desc(healthRecommendations.createdAt));
+  }
+
+  async getHealthRecommendationsByTenant(tenantId: string): Promise<HealthRecommendation[]> {
+    return await db.select().from(healthRecommendations).where(eq(healthRecommendations.tenantId, tenantId))
+      .orderBy(desc(healthRecommendations.createdAt));
+  }
+
+  async acknowledgeHealthRecommendation(id: string, acknowledgedBy: string, tenantId: string): Promise<HealthRecommendation | undefined> {
+    const [recommendation] = await db.update(healthRecommendations)
+      .set({ 
+        acknowledgedAt: sql`CURRENT_TIMESTAMP`,
+        acknowledgedBy: acknowledgedBy,
+        updatedAt: sql`CURRENT_TIMESTAMP`
+      })
+      .where(and(eq(healthRecommendations.id, id), eq(healthRecommendations.tenantId, tenantId)))
+      .returning();
+    return recommendation || undefined;
+  }
+
+  // AI Health Analysis Management Implementation
+  async getHealthAnalysis(id: string, tenantId: string): Promise<HealthAnalysis | undefined> {
+    const [analysis] = await db.select().from(healthAnalyses).where(
+      and(eq(healthAnalyses.id, id), eq(healthAnalyses.tenantId, tenantId))
+    );
+    return analysis || undefined;
+  }
+
+  async createHealthAnalysis(insertAnalysis: InsertHealthAnalysis): Promise<HealthAnalysis> {
+    const [analysis] = await db.insert(healthAnalyses).values(insertAnalysis).returning();
+    return analysis;
+  }
+
+  async updateHealthAnalysis(id: string, updates: Partial<HealthAnalysis>, tenantId: string): Promise<HealthAnalysis | undefined> {
+    const [analysis] = await db.update(healthAnalyses)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(healthAnalyses.id, id), eq(healthAnalyses.tenantId, tenantId)))
+      .returning();
+    return analysis || undefined;
+  }
+
+  async getHealthAnalysesByPatient(patientId: string, tenantId: string): Promise<HealthAnalysis[]> {
+    return await db.select().from(healthAnalyses).where(
+      and(eq(healthAnalyses.patientId, patientId), eq(healthAnalyses.tenantId, tenantId))
+    ).orderBy(desc(healthAnalyses.createdAt));
+  }
+
+  async getLatestHealthAnalysis(patientId: string, tenantId: string): Promise<HealthAnalysis | undefined> {
+    const [analysis] = await db.select().from(healthAnalyses).where(
+      and(eq(healthAnalyses.patientId, patientId), eq(healthAnalyses.tenantId, tenantId))
+    ).orderBy(desc(healthAnalyses.createdAt)).limit(1);
+    return analysis || undefined;
+  }
+
+  async getHealthAnalysesByTenant(tenantId: string): Promise<HealthAnalysis[]> {
+    return await db.select().from(healthAnalyses).where(eq(healthAnalyses.tenantId, tenantId))
+      .orderBy(desc(healthAnalyses.createdAt));
   }
 }
 

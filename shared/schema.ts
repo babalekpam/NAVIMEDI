@@ -473,6 +473,40 @@ export const communicationTranslations = pgTable("communication_translations", {
   translatedContent: jsonb("translated_content").notNull(),
   status: translationStatusEnum("status").default('pending'),
   translationEngine: text("translation_engine"),
+  reviewedBy: uuid("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// AI Health Recommendations Tables
+export const healthRecommendations = pgTable("health_recommendations", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  type: text("type").notNull(), // lifestyle, medical, preventive, risk_alert
+  priority: text("priority").notNull(), // low, medium, high, urgent
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  recommendations: jsonb("recommendations").default('[]'),
+  reasoning: text("reasoning"),
+  followUpRequired: boolean("follow_up_required").default(false),
+  status: text("status").default('active'), // active, dismissed, completed
+  acknowledgedAt: timestamp("acknowledged_at"),
+  acknowledgedBy: uuid("acknowledged_by").references(() => users.id),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const healthAnalyses = pgTable("health_analyses", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  overallHealthScore: integer("overall_health_score").notNull(),
+  riskFactors: jsonb("risk_factors").default('[]'),
+  trends: jsonb("trends").default('{}'),
+  nextAppointmentSuggestion: text("next_appointment_suggestion"),
+  analysisData: jsonb("analysis_data"),
   confidence: decimal("confidence", { precision: 3, scale: 2 }),
   reviewedBy: uuid("reviewed_by").references(() => users.id),
   reviewedAt: timestamp("reviewed_at"),
@@ -1159,6 +1193,21 @@ export const insertLaboratoryApplicationSchema = createInsertSchema(laboratoryAp
   reviewedAt: true
 });
 
+// AI Health Recommendations Insert Schemas
+export const insertHealthRecommendationSchema = createInsertSchema(healthRecommendations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  acknowledgedAt: true
+});
+
+export const insertHealthAnalysisSchema = createInsertSchema(healthAnalyses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  reviewedAt: true
+});
+
 // Types
 export type Tenant = typeof tenants.$inferSelect;
 export type InsertTenant = z.infer<typeof insertTenantSchema>;
@@ -1239,3 +1288,10 @@ export type InsertVitalSigns = z.infer<typeof insertVitalSignsSchema>;
 
 export type VisitSummary = typeof visitSummaries.$inferSelect;
 export type InsertVisitSummary = z.infer<typeof insertVisitSummarySchema>;
+
+// AI Health Recommendations Types
+export type HealthRecommendation = typeof healthRecommendations.$inferSelect;
+export type InsertHealthRecommendation = z.infer<typeof insertHealthRecommendationSchema>;
+
+export type HealthAnalysis = typeof healthAnalyses.$inferSelect;
+export type InsertHealthAnalysis = z.infer<typeof insertHealthAnalysisSchema>;
