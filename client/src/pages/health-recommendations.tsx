@@ -140,7 +140,7 @@ export default function HealthRecommendations() {
           <div>
             <h1 className="text-3xl font-bold">AI Health Recommendations</h1>
             <p className="text-muted-foreground">
-              Personalized health insights powered by artificial intelligence
+              Personalized health insights powered by AI using vital signs, appointments, and lab results
             </p>
           </div>
         </div>
@@ -196,7 +196,7 @@ export default function HealthRecommendations() {
               <Alert>
                 <Brain className="h-4 w-4" />
                 <AlertDescription>
-                  AI is analyzing patient data and generating personalized health recommendations...
+                  AI is analyzing patient data including vital signs, appointments, and lab results to generate personalized health recommendations...
                 </AlertDescription>
               </Alert>
             )}
@@ -353,7 +353,7 @@ export default function HealthRecommendations() {
                 <CardContent className="flex flex-col items-center justify-center h-32 text-center">
                   <Activity className="h-12 w-12 text-muted-foreground mb-2" />
                   <p className="text-muted-foreground">
-                    No health analysis available. Generate an AI analysis to get comprehensive health insights.
+                    No health analysis available. Generate an AI analysis to get comprehensive health insights based on vital signs, appointments, and lab results.
                   </p>
                 </CardContent>
               </Card>

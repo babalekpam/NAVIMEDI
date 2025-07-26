@@ -2144,9 +2144,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const appointments = await storage.getAppointmentsByPatient(patientId, tenantId);
       const recentAppointments = appointments.slice(0, 5);
       
-      if (recentVitalSigns.length === 0) {
+      // Get lab results (latest 10 records)
+      const labResults = await storage.getLabResultsByPatient(patientId, tenantId);
+      const recentLabResults = labResults.slice(0, 10);
+      
+      if (recentVitalSigns.length === 0 && recentLabResults.length === 0) {
         return res.status(400).json({ 
-          message: "No vital signs data available for health analysis. Please record vital signs first." 
+          message: "No vital signs or lab results data available for health analysis. Please record vital signs or lab results first." 
         });
       }
       
@@ -2154,7 +2158,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const analysisResult = await aiHealthAnalyzer.analyzePatientHealth(
         patient,
         recentVitalSigns,
-        recentAppointments
+        recentAppointments,
+        recentLabResults
       );
       
       // Save health analysis to database

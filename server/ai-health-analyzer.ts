@@ -32,10 +32,11 @@ export class AIHealthAnalyzer {
   async analyzePatientHealth(
     patient: Patient,
     vitalSigns: VitalSigns[],
-    recentAppointments: Appointment[]
+    recentAppointments: Appointment[],
+    labResults: any[] = []
   ): Promise<HealthAnalysisResult> {
     try {
-      const analysisPrompt = this.buildAnalysisPrompt(patient, vitalSigns, recentAppointments);
+      const analysisPrompt = this.buildAnalysisPrompt(patient, vitalSigns, recentAppointments, labResults);
       
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -68,7 +69,8 @@ export class AIHealthAnalyzer {
   private buildAnalysisPrompt(
     patient: Patient,
     vitalSigns: VitalSigns[],
-    recentAppointments: Appointment[]
+    recentAppointments: Appointment[],
+    labResults: any[] = []
   ): string {
     const latestVitals = vitalSigns[0]; // Most recent vital signs
     const vitalsTrends = this.calculateVitalsTrends(vitalSigns);
@@ -108,6 +110,16 @@ export class AIHealthAnalyzer {
     - Chief Complaint: ${apt.chiefComplaint || "Not specified"}
     - Status: ${apt.status}
     `).join("")}
+
+    LABORATORY RESULTS:
+    ${labResults.length > 0 ? labResults.map(lab => `
+    - Test: ${lab.testName}
+    - Result: ${lab.result}
+    - Reference Range: ${lab.referenceRange || "Not specified"}
+    - Status: ${lab.status}
+    - Date: ${lab.resultDate}
+    - Notes: ${lab.notes || "None"}
+    `).join("") : "No recent lab results available"}
 
     Please provide a comprehensive health analysis in this exact JSON format:
     {
