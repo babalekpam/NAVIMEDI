@@ -516,7 +516,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/insurance-claims/:id", requireRole(["billing_staff", "physician", "tenant_admin", "director"]), async (req, res) => {
     try {
       const { id } = req.params;
-      const updateData = req.body;
+      const updateData = { ...req.body };
+
+      // Handle date fields properly
+      if (updateData.submittedDate) {
+        updateData.submittedDate = new Date(updateData.submittedDate);
+      }
+      if (updateData.processedDate) {
+        updateData.processedDate = new Date(updateData.processedDate);
+      }
 
       const updatedClaim = await storage.updateInsuranceClaim(id, updateData, req.tenant!.id);
 
