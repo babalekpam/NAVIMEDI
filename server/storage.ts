@@ -329,6 +329,22 @@ export interface IStorage {
   getMedicationCopaysByPharmacist(pharmacistId: string, tenantId: string): Promise<MedicationCopay[]>;
   getMedicationCopaysByTenant(tenantId: string): Promise<MedicationCopay[]>;
   getActiveMedicationCopaysByPatient(patientId: string, tenantId: string): Promise<MedicationCopay[]>;
+
+  // Pricing Plans
+  getPricingPlans(): Promise<any[]>;
+  createPricingPlan(data: any): Promise<any>;
+  updatePricingPlan(id: string, data: any): Promise<any>;
+
+  // White Label Settings
+  updateTenantWhiteLabel(tenantId: string, settings: any): Promise<Tenant | null>;
+
+  // Offline Sync
+  syncOfflineData(syncData: any): Promise<any>;
+  getOfflineData(tenantId: string): Promise<any>;
+
+  // Translations
+  getTranslations(tenantId: string, language: string): Promise<any[]>;
+  createTranslation(data: any): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1748,6 +1764,125 @@ export class DatabaseStorage implements IStorage {
         eq(medicationCopays.isActive, true)
       )
     ).orderBy(desc(medicationCopays.createdAt));
+  }
+
+  // Pricing Plans Implementation
+  async getPricingPlans(): Promise<any[]> {
+    // Return mock pricing plans for now
+    return [
+      {
+        id: 'basic',
+        name: 'Basic',
+        price: 99,
+        interval: 'month',
+        features: ['Up to 100 patients', 'Basic reporting', 'Email support']
+      },
+      {
+        id: 'professional',
+        name: 'Professional',
+        price: 299,
+        interval: 'month',
+        features: ['Up to 1000 patients', 'Advanced reporting', 'Phone support', 'API access']
+      },
+      {
+        id: 'enterprise',
+        name: 'Enterprise',
+        price: 999,
+        interval: 'month',
+        features: ['Unlimited patients', 'Custom reporting', 'Dedicated support', 'White label', 'Multi-language']
+      },
+      {
+        id: 'white_label',
+        name: 'White Label',
+        price: 1999,
+        interval: 'month',
+        features: ['Everything in Enterprise', 'Full white labeling', 'Custom branding', 'Offline sync']
+      }
+    ];
+  }
+
+  async createPricingPlan(data: any): Promise<any> {
+    // Mock implementation
+    return { id: 'new-plan', ...data };
+  }
+
+  async updatePricingPlan(id: string, data: any): Promise<any> {
+    // Mock implementation
+    return { id, ...data };
+  }
+
+  // White Label Settings Implementation
+  async updateTenantWhiteLabel(tenantId: string, settings: any): Promise<Tenant | null> {
+    try {
+      const [tenant] = await db.update(tenants)
+        .set({ 
+          brandName: settings.brandName,
+          updatedAt: sql`CURRENT_TIMESTAMP` 
+        })
+        .where(eq(tenants.id, tenantId))
+        .returning();
+      return tenant || null;
+    } catch (error) {
+      console.error('Error updating white label settings:', error);
+      return null;
+    }
+  }
+
+  // Offline Sync Implementation
+  async syncOfflineData(syncData: any): Promise<any> {
+    // Mock implementation for offline sync
+    console.log('Syncing offline data:', syncData);
+    return { success: true, syncedAt: new Date().toISOString() };
+  }
+
+  async getOfflineData(tenantId: string): Promise<any> {
+    // Mock implementation - return essential data for offline use
+    return {
+      patients: await this.getPatientsByTenant(tenantId, 50),
+      appointments: await this.getAppointmentsByTenant(tenantId),
+      prescriptions: await this.getPrescriptionsByTenant(tenantId),
+      lastSync: new Date().toISOString()
+    };
+  }
+
+  // Translations Implementation
+  async getTranslations(tenantId: string, language: string): Promise<any[]> {
+    // Mock implementation for translations
+    const commonTranslations = {
+      'en': {
+        'welcome': 'Welcome',
+        'patient': 'Patient',
+        'doctor': 'Doctor',
+        'appointment': 'Appointment',
+        'prescription': 'Prescription'
+      },
+      'es': {
+        'welcome': 'Bienvenido',
+        'patient': 'Paciente',
+        'doctor': 'Doctor',
+        'appointment': 'Cita',
+        'prescription': 'Receta'
+      },
+      'fr': {
+        'welcome': 'Bienvenue',
+        'patient': 'Patient',
+        'doctor': 'Docteur',
+        'appointment': 'Rendez-vous',
+        'prescription': 'Prescription'
+      }
+    };
+
+    return Object.entries(commonTranslations[language as keyof typeof commonTranslations] || commonTranslations.en).map(([key, value]) => ({
+      key,
+      value,
+      language,
+      tenantId
+    }));
+  }
+
+  async createTranslation(data: any): Promise<any> {
+    // Mock implementation
+    return { id: 'new-translation', ...data, createdAt: new Date().toISOString() };
   }
 }
 

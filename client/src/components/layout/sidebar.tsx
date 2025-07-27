@@ -47,6 +47,9 @@ const sidebarItems: SidebarItem[] = [
   { id: "billing", label: "My Billing Summary", icon: DollarSign, path: "/billing", roles: ["physician"] },
   { id: "reports", label: "Reports & Analytics", icon: BarChart3, path: "/reports", roles: ["physician", "nurse", "pharmacist", "lab_technician", "billing_staff", "tenant_admin", "director", "super_admin"] },
   
+  // Advanced Features (White Label & Enterprise)
+  { id: "white-label-settings", label: "White Label Settings", icon: Settings, path: "/white-label-settings", roles: ["tenant_admin", "director", "super_admin"] },
+  
   // Platform Administration Section (only for super admins)
   { id: "tenant-management", label: "Tenant Management", icon: Building, path: "/tenant-management", roles: ["super_admin"] },
   { id: "user-roles", label: "User Roles", icon: UserCheck, path: "/user-roles", roles: ["tenant_admin", "director", "super_admin"] },

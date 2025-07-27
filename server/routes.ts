@@ -3062,4 +3062,66 @@ Report ID: ${report.id}
       });
     }
   });
+
+  // Pricing Plans routes
+  app.get('/api/pricing-plans', async (req, res) => {
+    try {
+      const plans = await storage.getPricingPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error('Error fetching pricing plans:', error);
+      res.status(500).json({ error: 'Failed to fetch pricing plans' });
+    }
+  });
+
+  // White Label Settings routes  
+  app.patch('/api/tenants/:tenantId/white-label', authenticateToken, async (req, res) => {
+    try {
+      const { tenantId } = req.params;
+      const whitelabelSettings = req.body;
+      
+      const updatedTenant = await storage.updateTenantWhiteLabel(tenantId, whitelabelSettings);
+      res.json(updatedTenant);
+    } catch (error) {
+      console.error('Error updating white label settings:', error);
+      res.status(500).json({ error: 'Failed to update white label settings' });
+    }
+  });
+
+  // Offline Sync routes
+  app.post('/api/offline-sync', authenticateToken, async (req, res) => {
+    try {
+      const syncData = req.body;
+      const result = await storage.syncOfflineData(syncData);
+      res.json(result);
+    } catch (error) {
+      console.error('Error syncing offline data:', error);
+      res.status(500).json({ error: 'Failed to sync offline data' });
+    }
+  });
+
+  // Translation routes
+  app.get('/api/translations/:tenantId/:language', async (req, res) => {
+    try {
+      const { tenantId, language } = req.params;
+      const translations = await storage.getTranslations(tenantId, language);
+      res.json(translations);
+    } catch (error) {
+      console.error('Error fetching translations:', error);
+      res.status(500).json({ error: 'Failed to fetch translations' });
+    }
+  });
+
+  app.post('/api/translations', authenticateToken, async (req, res) => {
+    try {
+      const translation = req.body;
+      const result = await storage.createTranslation(translation);
+      res.json(result);
+    } catch (error) {
+      console.error('Error creating translation:', error);
+      res.status(500).json({ error: 'Failed to create translation' });
+    }
+  });
+
+  return server;
 }

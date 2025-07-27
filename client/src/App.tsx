@@ -27,6 +27,8 @@ import LaboratoryRegistration from "@/pages/laboratory-registration";
 import HealthRecommendations from "@/pages/health-recommendations";
 import PharmacyDashboard from "@/pages/pharmacy-dashboard";
 import PharmacyRegistration from "@/pages/pharmacy-registration";
+import PricingPage from "@/pages/pricing";
+import WhiteLabelSettingsPage from "@/pages/white-label-settings";
 
 
 
@@ -210,6 +212,20 @@ function AppContent() {
 
         <Route path="/laboratory-registration" component={LaboratoryRegistration} />
         <Route path="/pharmacy-registration" component={PharmacyRegistration} />
+        <Route path="/pricing" component={PricingPage} />
+        <Route path="/white-label-settings">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <WhiteLabelSettingsPage />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
         <Route component={NotFound} />
       </Switch>
     </div>

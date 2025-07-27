@@ -64,10 +64,25 @@ export const claimStatusEnum = pgEnum("claim_status", [
 ]);
 
 export const subscriptionStatusEnum = pgEnum("subscription_status", [
+  "trial",
   "active",
   "suspended",
   "cancelled",
   "expired"
+]);
+
+export const subscriptionPlanEnum = pgEnum("subscription_plan", [
+  "starter",
+  "professional", 
+  "enterprise",
+  "white_label",
+  "custom"
+]);
+
+export const billingIntervalEnum = pgEnum("billing_interval", [
+  "monthly",
+  "quarterly",
+  "yearly"
 ]);
 
 export const reportTypeEnum = pgEnum("report_type", [
@@ -131,6 +146,24 @@ export const tenants = pgTable("tenants", {
   subdomain: text("subdomain").unique().notNull(),
   settings: jsonb("settings").default('{}'),
   isActive: boolean("is_active").default(true),
+  // White-label branding
+  brandName: text("brand_name"),
+  logoUrl: text("logo_url"),
+  primaryColor: varchar("primary_color", { length: 7 }).default("#10b981"), // hex color
+  secondaryColor: varchar("secondary_color", { length: 7 }).default("#3b82f6"),
+  customDomain: text("custom_domain"),
+  customCss: text("custom_css"),
+  // Multi-language settings
+  defaultLanguage: varchar("default_language", { length: 10 }).default("en"),
+  supportedLanguages: jsonb("supported_languages").default(['en']),
+  // Offline settings
+  offlineEnabled: boolean("offline_enabled").default(false),
+  offlineStorageMb: integer("offline_storage_mb").default(100),
+  syncFrequencyMinutes: integer("sync_frequency_minutes").default(15),
+  // Phone and address (moved from top level)
+  phoneNumber: text("phone_number"),
+  address: text("address"),
+  description: text("description"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
@@ -456,14 +489,23 @@ export const auditLogs = pgTable("audit_logs", {
 export const subscriptions = pgTable("subscriptions", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  pricingPlanId: uuid("pricing_plan_id").references(() => pricingPlans.id),
   planName: text("plan_name").notNull(),
+  plan: subscriptionPlanEnum("plan").notNull().default('starter'),
+  status: subscriptionStatusEnum("status").default('trial'),
+  billingInterval: billingIntervalEnum("billing_interval").default('monthly'),
   monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }).notNull(),
   maxUsers: integer("max_users").notNull(),
   maxPatients: integer("max_patients"),
   features: jsonb("features").default('[]'),
-  status: subscriptionStatusEnum("status").default('active'),
+  trialEndsAt: timestamp("trial_ends_at"),
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date"),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  customerId: text("customer_id"), // Stripe customer ID
+  subscriptionId: text("subscription_id"), // Stripe subscription ID
   lastPaymentDate: timestamp("last_payment_date"),
   nextPaymentDate: timestamp("next_payment_date"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
@@ -764,6 +806,64 @@ export const labResults = pgTable("lab_results", {
   reportedAt: timestamp("reported_at"),
   externalLabId: text("external_lab_id"), // ID from external lab system
   rawData: jsonb("raw_data"), // Raw data from lab system
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Pricing Plans Table
+export const pricingPlans = pgTable("pricing_plans", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(), // Starter, Professional, Enterprise, White Label
+  plan: subscriptionPlanEnum("plan").notNull(),
+  displayName: text("display_name").notNull(),
+  description: text("description"),
+  monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }).notNull(),
+  yearlyPrice: decimal("yearly_price", { precision: 10, scale: 2 }),
+  currency: text("currency").default('USD'),
+  trialDays: integer("trial_days").default(14),
+  // Feature limits
+  maxUsers: integer("max_users").default(5),
+  maxPatients: integer("max_patients").default(100),
+  maxStorageGb: integer("max_storage_gb").default(1),
+  apiCallsPerMonth: integer("api_calls_per_month").default(1000),
+  // Feature flags
+  whitelabelEnabled: boolean("whitelabel_enabled").default(false),
+  offlineEnabled: boolean("offline_enabled").default(false),
+  multiLanguageEnabled: boolean("multi_language_enabled").default(false),
+  advancedReportsEnabled: boolean("advanced_reports_enabled").default(false),
+  customIntegrationsEnabled: boolean("custom_integrations_enabled").default(false),
+  prioritySupport: boolean("priority_support").default(false),
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Offline Sync Data
+export const offlineSyncData = pgTable("offline_sync_data", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  entityType: text("entity_type").notNull(), // patients, appointments, prescriptions, etc.
+  entityId: uuid("entity_id").notNull(),
+  action: text("action").notNull(), // create, update, delete
+  data: jsonb("data").notNull(),
+  timestamp: timestamp("timestamp").default(sql`CURRENT_TIMESTAMP`),
+  syncedAt: timestamp("synced_at"),
+  conflictResolved: boolean("conflict_resolved").default(false),
+  deviceId: text("device_id"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Multi-language content table
+export const translations = pgTable("translations", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id),
+  key: text("key").notNull(), // translation key like "dashboard.welcome"
+  language: varchar("language", { length: 10 }).notNull(), // en, es, fr, etc.
+  value: text("value").notNull(), // translated text
+  context: text("context"), // additional context for translators
+  isDefault: boolean("is_default").default(false),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
@@ -1372,6 +1472,24 @@ export const insertHealthAnalysisSchema = createInsertSchema(healthAnalyses).omi
   reviewedAt: true
 });
 
+// New Insert Schemas for advanced features
+export const insertPricingPlanSchema = createInsertSchema(pricingPlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertOfflineSyncDataSchema = createInsertSchema(offlineSyncData).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertTranslationSchema = createInsertSchema(translations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Types
 export type Tenant = typeof tenants.$inferSelect;
 export type InsertTenant = z.infer<typeof insertTenantSchema>;
@@ -1422,6 +1540,16 @@ export type Report = typeof reports.$inferSelect;
 export type InsertReport = z.infer<typeof insertReportSchema>;
 
 export type AuditLog = typeof auditLogs.$inferSelect;
+
+// New types for advanced features
+export type PricingPlan = typeof pricingPlans.$inferSelect;
+export type InsertPricingPlan = z.infer<typeof insertPricingPlanSchema>;
+
+export type OfflineSyncData = typeof offlineSyncData.$inferSelect;
+export type InsertOfflineSyncData = z.infer<typeof insertOfflineSyncDataSchema>;
+
+export type Translation = typeof translations.$inferSelect;
+export type InsertTranslation = z.infer<typeof insertTranslationSchema>;
 
 // Multilingual Communication Types
 export type MedicalCommunication = typeof medicalCommunications.$inferSelect;
