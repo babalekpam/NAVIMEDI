@@ -752,21 +752,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const basePrice = medicationService?.price || 25.00; // Default medication dispensing fee
       const totalAmount = basePrice * (quantity || 1);
 
-      // Create insurance claim
+      // Calculate insurance coverage (80% coverage, 20% patient copay as standard)
+      const coveragePercentage = 0.80; // 80% insurance coverage
+      const insuranceAmount = Math.round(totalAmount * coveragePercentage * 100) / 100;
+      const patientCopay = Math.round(totalAmount * (1 - coveragePercentage) * 100) / 100;
+
+      // Create insurance claim with proper breakdown
       const claimData = {
         tenantId: tenantId,
         patientId: patientId,
         claimNumber: `RX-${Date.now()}`,
-        claimType: "medication" as const,
-        serviceDate: new Date(),
-        submissionDate: new Date(),
         totalAmount: totalAmount,
-        insurancePayable: totalAmount * 0.8, // Assume 80% coverage
-        patientResponsibility: totalAmount * 0.2, // 20% copay
+        totalInsuranceAmount: insuranceAmount,
+        totalPatientCopay: patientCopay,
         status: "submitted" as const,
-        diagnosis: "Prescription filling",
-        notes: `Insurance claim for ${medicationName} ${dosage} - Qty: ${quantity}`,
-        prescriptionId: prescriptionId
+        notes: `Insurance claim for ${medicationName} ${dosage} - Qty: ${quantity}. Insurance covers $${insuranceAmount} (80%), Patient pays $${patientCopay} (20%)`
       };
 
       const insuranceClaim = await storage.createInsuranceClaim(claimData);

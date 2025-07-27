@@ -726,6 +726,17 @@ export default function Billing() {
                       <p className="text-sm text-gray-500">
                         Patient: {getPatientName(claim.patientId)}
                       </p>
+                      {/* Show insurance coverage breakdown for prescription claims */}
+                      {(claim as any).totalInsuranceAmount && (claim as any).totalPatientCopay && (
+                        <div className="flex space-x-4 text-xs mt-1">
+                          <span className="text-green-600 bg-green-50 px-2 py-1 rounded">
+                            Insurance: ${parseFloat((claim as any).totalInsuranceAmount || "0").toFixed(2)}
+                          </span>
+                          <span className="text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                            Patient: ${parseFloat((claim as any).totalPatientCopay || "0").toFixed(2)}
+                          </span>
+                        </div>
+                      )}
                       <p className="text-xs text-gray-400">
                         Submitted: {claim.submittedDate ? new Date(claim.submittedDate).toLocaleDateString() : 'Not submitted'}
                       </p>
