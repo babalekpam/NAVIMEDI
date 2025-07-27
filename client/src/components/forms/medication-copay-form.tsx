@@ -26,7 +26,8 @@ const copayFormSchema = insertMedicationCopaySchema.extend({
   patientCopay: z.string().min(1, "Patient copay is required"),
   quantityLimit: z.string().optional(),
   daySupplyLimit: z.string().optional(),
-  copayPercentage: z.string().optional()
+  copayPercentage: z.string().optional(),
+  prescriptionId: z.string().optional() // Make prescriptionId optional since it's not always provided
 });
 
 type CopayFormData = z.infer<typeof copayFormSchema>;
@@ -55,7 +56,7 @@ export default function MedicationCopayForm({
     resolver: zodResolver(copayFormSchema),
     defaultValues: {
       tenantId: tenant?.id || "",
-      prescriptionId: prescriptionId || "",
+      prescriptionId: prescriptionId || undefined, // Use undefined instead of empty string for optional UUID
       patientId: selectedPatientId,
       patientInsuranceId: selectedInsuranceId,
       medicationName: "",
