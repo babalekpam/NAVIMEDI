@@ -428,7 +428,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update appointment (PATCH) - Allow receptionists and doctors to update appointments
-  app.patch("/api/appointments/:id", authenticateToken, requireTenant, requireRole(["physician", "nurse", "receptionist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+  app.patch("/api/appointments/:id", requireTenant, authenticateToken, requireRole(["physician", "nurse", "receptionist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
       console.log("[APPOINTMENT UPDATE] User role:", req.user?.role, "Tenant type:", req.tenant?.type, "User ID:", req.user?.id);
       const { id } = req.params;

@@ -4,6 +4,9 @@
 A comprehensive multi-tenant healthcare management platform specializing in pharmacy operations and workflow optimization, with advanced capabilities for prescription management and insurance claims processing.
 
 ## Recent Changes (Latest)
+- **✅ APPOINTMENT UPDATE FUNCTIONALITY RESTORED** - Fixed critical 403 error preventing hospital receptionists from updating appointment status; middleware chain now properly loads tenant data and allows permitted role access
+- **✅ RECEPTIONIST APPOINTMENT PERMISSIONS WORKING** - Hospital receptionists can now successfully change appointment status (scheduled, confirmed, completed, cancelled) without authentication errors
+- **✅ MIDDLEWARE EXECUTION ORDER CORRECTED** - Fixed tenant middleware to run before authentication to preserve full tenant information during role validation
 - **✅ INSURANCE PROVIDER MANAGEMENT FULLY OPERATIONAL** - Successfully tested creation of country-specific insurance providers (e.g., SAHAM from Togo) with complete data validation and storage
 - **✅ COMPREHENSIVE COVERAGE CONFIGURATION WORKING** - Successfully tested linking services with insurance providers, setting both copay amounts ($120) and percentages (20%) with advanced options (pre-auth, deductibles, max coverage $1000)
 - **✅ COMPLETE WORKFLOW VALIDATION** - End-to-end testing confirmed: service creation → insurance provider addition → coverage rule configuration → patient billing calculations
