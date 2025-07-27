@@ -232,18 +232,21 @@ export default function Billing() {
     e.preventDefault();
     
     try {
-      if (selectedLineItems.length === 0) {
+      // For pharmacy claims, we don't require line items - we work with medication costs directly
+      const totalAmount = parseFloat(formData.totalAmount) || 0;
+      
+      if (totalAmount <= 0) {
         toast({
           title: "Error",
-          description: "Please add at least one service to the claim.",
+          description: "Please enter a valid total amount for the medication claim.",
           variant: "destructive",
         });
         return;
       }
 
-      const totalPatientCopay = selectedLineItems.reduce((sum, item) => sum + parseFloat(item.patientCopay || "0"), 0);
-      const totalInsuranceAmount = selectedLineItems.reduce((sum, item) => sum + parseFloat(item.insuranceAmount || "0"), 0);
-      const totalAmount = totalPatientCopay + totalInsuranceAmount;
+      // For pharmacy, calculate typical copay (assume 20% patient copay, 80% insurance)
+      const totalPatientCopay = totalAmount * 0.2;
+      const totalInsuranceAmount = totalAmount * 0.8;
 
       // Generate unique claim number if not provided
       const claimNumber = formData.claimNumber || `CLM-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
@@ -253,12 +256,13 @@ export default function Billing() {
         patientInsuranceId: formData.patientInsuranceId,
         claimNumber,
         diagnosisCodes: formData.diagnosisCodes.split(',').map(code => code.trim()).filter(Boolean),
+        procedureCodes: formData.procedureCodes.split(',').map(code => code.trim()).filter(Boolean),
         totalAmount,
         totalPatientCopay,
         totalInsuranceAmount,
         status: 'draft',
         appointmentId: formData.appointmentId || undefined,
-        notes: formData.notes
+        notes: formData.notes || `Pharmacy medication claim for ${totalAmount}`
       });
 
       await createClaimMutation.mutateAsync(claimData);
@@ -368,9 +372,9 @@ export default function Billing() {
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Create Insurance Claim</DialogTitle>
+                <DialogTitle>Create Medication Insurance Claim</DialogTitle>
                 <DialogDescription>
-                  Create a new insurance claim for a patient. Fill in all required information below.
+                  Create a new insurance claim for medication dispensing. Enter the medication cost and patient information.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
@@ -428,33 +432,56 @@ export default function Billing() {
                 )}
                 
                 <div className="space-y-2">
-                  <Label htmlFor="totalAmount">Total Amount</Label>
+                  <Label htmlFor="totalAmount">Medication Cost *</Label>
                   <Input
                     id="totalAmount"
                     type="number"
                     step="0.01"
-                    placeholder="0.00"
+                    placeholder="Enter total cost of medication"
                     value={formData.totalAmount}
                     onChange={(e) => setFormData({...formData, totalAmount: e.target.value})}
                   />
+                  <p className="text-xs text-gray-500">
+                    Total medication cost (patient copay will be calculated automatically)
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="procedureCodes">Procedure Codes (comma-separated)</Label>
+                  <Label htmlFor="procedureCodes">NDC/Medication Codes (comma-separated)</Label>
                   <Input
                     id="procedureCodes"
-                    placeholder="e.g., 99213, 99214"
+                    placeholder="e.g., 0069-2587-68, RX001"
                     value={formData.procedureCodes}
                     onChange={(e) => setFormData({...formData, procedureCodes: e.target.value})}
                   />
+                  <p className="text-xs text-gray-500">
+                    NDC numbers or pharmacy dispensing codes for this medication
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="diagnosisCodes">Diagnosis Codes (comma-separated)</Label>
                   <Input
                     id="diagnosisCodes"
-                    placeholder="e.g., Z00.00, M25.50"
+                    placeholder="e.g., I10, E11.9, M79.3"
                     value={formData.diagnosisCodes}
                     onChange={(e) => setFormData({...formData, diagnosisCodes: e.target.value})}
                   />
+                  <p className="text-xs text-gray-500">
+                    ICD-10 diagnosis codes from the prescribing physician
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Medication Notes (Optional)</Label>
+                  <textarea 
+                    id="notes"
+                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="e.g., Lisinopril 10mg, 30 tablets, prescribed by Dr. Smith"
+                    value={formData.notes}
+                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Medication name, dosage, quantity, and prescriber information
+                  </p>
                 </div>
               </div>
               <div className="flex justify-end space-x-2">
