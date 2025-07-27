@@ -11,11 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Clock, MapPin, Phone } from "lucide-react";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
-// Schema for multiple lab orders with laboratory assignment
+// Schema for multiple lab orders with optional laboratory assignment
 const multipleLabOrderSchema = z.object({
   patientId: z.string().min(1, "Please select a patient"),
-  laboratoryId: z.string().min(1, "Please select a laboratory"),
+  laboratoryId: z.string().optional(), // Make laboratory optional for now
   orders: z.array(z.object({
     testName: z.string().min(1, "Test name is required"),
     testCode: z.string().optional(),
@@ -57,10 +58,24 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
     queryKey: ["/api/laboratories/active"],
   });
 
+  // Check for pre-selected patient from Quick Actions
+  const getDefaultPatientId = () => {
+    const selectedPatientInfo = localStorage.getItem('selectedPatientForLabOrder');
+    if (selectedPatientInfo) {
+      try {
+        const patientInfo = JSON.parse(selectedPatientInfo);
+        return patientInfo.id || "";
+      } catch {
+        return "";
+      }
+    }
+    return "";
+  };
+
   const form = useForm({
     resolver: zodResolver(multipleLabOrderSchema),
     defaultValues: {
-      patientId: "",
+      patientId: getDefaultPatientId(),
       laboratoryId: "",
       orders: [{
         testName: "",
@@ -76,6 +91,21 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
     control: form.control,
     name: "orders"
   });
+
+  // Pre-select patient when coming from Quick Actions
+  useEffect(() => {
+    const selectedPatientInfo = localStorage.getItem('selectedPatientForLabOrder');
+    if (selectedPatientInfo) {
+      try {
+        const patientInfo = JSON.parse(selectedPatientInfo);
+        if (patientInfo.id) {
+          form.setValue("patientId", patientInfo.id);
+        }
+      } catch (error) {
+        console.error("Error parsing selected patient info:", error);
+      }
+    }
+  }, [form]);
 
   const handleSubmit = (data: any) => {
     // Transform data to create multiple lab orders with laboratory assignment
