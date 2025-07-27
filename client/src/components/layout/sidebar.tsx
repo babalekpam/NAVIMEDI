@@ -69,10 +69,10 @@ export const Sidebar = () => {
     item.roles.includes(user.role)
   );
 
-  // For super admin, show only platform management items
+  // For super admin, show platform management and enterprise features
   if (user.role === "super_admin") {
     const platformItems = filteredItems.filter(item => 
-      ["dashboard", "tenant-management", "user-roles", "audit-logs", "reports"].includes(item.id)
+      ["dashboard", "tenant-management", "user-roles", "audit-logs", "reports", "white-label-settings", "offline-mode"].includes(item.id)
     );
     
     return (
