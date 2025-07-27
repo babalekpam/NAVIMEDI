@@ -85,12 +85,12 @@ export default function Patients() {
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Patient
+                {t('add-patient')}
               </Button>
             </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Patient</DialogTitle>
+              <DialogTitle>{t('add-patient')}</DialogTitle>
             </DialogHeader>
             <PatientForm
               onSubmit={(data) => createPatientMutation.mutate(data)}
@@ -108,7 +108,7 @@ export default function Patients() {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 h-4 w-4 text-gray-400 transform -translate-y-1/2" />
               <Input
-                placeholder="Search patients by name or MRN..."
+                placeholder={t('search-patients')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -121,7 +121,7 @@ export default function Patients() {
       {/* Patient List */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Patient Activity</CardTitle>
+          <CardTitle>{t('recent-patient-activity')}</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -142,16 +142,16 @@ export default function Patients() {
           ) : patients.length === 0 ? (
             <div className="text-center py-12">
               <UserCircle className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No patients found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('no-patients-found')}</h3>
               <p className="text-gray-600 mb-4">
                 {searchQuery 
-                  ? "No patients match your search criteria" 
-                  : "Get started by adding your first patient"
+                  ? t('no-patients-match-search')
+                  : t('get-started-add-first-patient')
                 }
               </p>
               <Button className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Patient
+                {t('add-patient')}
               </Button>
             </div>
           ) : (
