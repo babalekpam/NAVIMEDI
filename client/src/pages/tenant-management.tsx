@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Building, Plus, Search, Settings, Users, Activity, MoreHorizontal } from "lucide-react";
 import { Tenant, insertTenantSchema } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
+import { useTranslation } from "@/contexts/translation-context";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -40,6 +41,7 @@ export default function TenantManagement() {
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [viewDetailsTenant, setViewDetailsTenant] = useState<Tenant | null>(null);
   const { user } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data: tenants = [], isLoading } = useQuery<Tenant[]>({
@@ -99,8 +101,8 @@ export default function TenantManagement() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-          <p className="text-gray-600">You don't have permission to access tenant management.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('access-denied')}</h2>
+          <p className="text-gray-600">{t('no-permission-tenant-management')}</p>
         </div>
       </div>
     );
@@ -122,14 +124,14 @@ export default function TenantManagement() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Tenant Management</h1>
-          <p className="text-gray-600 mt-1">Manage healthcare organizations and multi-tenant access</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('tenant-management')}</h1>
+          <p className="text-gray-600 mt-1">{t('manage-healthcare-organizations')}</p>
         </div>
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
             <Button className="bg-blue-600 hover:bg-blue-700">
               <Plus className="h-4 w-4 mr-2" />
-              Add Organization
+              {t('add-organization')}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">

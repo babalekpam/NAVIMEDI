@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, Search, Shield, FileText, Clock, User, Activity } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
+import { useTranslation } from "@/contexts/translation-context";
 
 interface AuditLog {
   id: string;
@@ -25,6 +26,7 @@ interface AuditLog {
 
 export default function AuditLogs() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
   const [entityFilter, setEntityFilter] = useState("all");
@@ -112,15 +114,15 @@ export default function AuditLogs() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Audit Logs & HIPAA Compliance</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('audit-logs')}</h1>
           <p className="text-gray-600 mt-2">
-            Comprehensive audit trail for all healthcare data access and modifications
+            {t('comprehensive-audit-trail')}
           </p>
         </div>
         <div className="flex items-center space-x-2">
           <Shield className="h-8 w-8 text-green-600" />
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            HIPAA Compliant
+{t('hipaa-compliant')}
           </Badge>
         </div>
       </div>

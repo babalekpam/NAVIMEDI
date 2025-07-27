@@ -14,6 +14,7 @@ import { z } from "zod";
 import { UserCheck, Users, Plus, Edit, HelpCircle, Info } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
+import { useTranslation } from "@/contexts/translation-context";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -77,6 +78,7 @@ const roleColors = {
 export default function UserRoles() {
   const { user } = useAuth();
   const { tenant } = useTenant();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -256,7 +258,7 @@ export default function UserRoles() {
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-3xl font-bold text-gray-900">User Role Management</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{t('user-roles')}</h1>
               <Tooltip>
                 <TooltipTrigger>
                   <HelpCircle className="h-5 w-5 text-gray-400 hover:text-gray-600" />
@@ -267,7 +269,7 @@ export default function UserRoles() {
               </Tooltip>
             </div>
             <p className="text-gray-600 mt-2">
-              Manage healthcare team members and their access permissions
+{t('manage-healthcare-team-permissions')}
             </p>
           </div>
           
@@ -282,7 +284,7 @@ export default function UserRoles() {
               className="bg-blue-600 hover:bg-blue-700"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add User
+{t('add-user')}
             </Button>
           )}
         </div>
