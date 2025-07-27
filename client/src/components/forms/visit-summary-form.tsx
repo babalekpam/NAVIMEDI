@@ -170,12 +170,17 @@ export function VisitSummaryForm({
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: VisitSummaryFormData) => 
-      apiRequest("PATCH", `/api/visit-summaries/${existingVisitSummary?.id}`, {
+    mutationFn: (data: VisitSummaryFormData) => {
+      // Clean up empty string fields that should be null for UUID validation
+      const cleanedData = {
         ...data,
         symptoms: selectedSymptoms,
         finalDiagnosis: selectedDiagnoses,
-      }),
+        vitalSignsId: data.vitalSignsId || null, // Convert empty string to null
+        returnVisitTimeframe: data.returnVisitTimeframe || null, // Handle empty timeframe
+      };
+      return apiRequest("PATCH", `/api/visit-summaries/${existingVisitSummary?.id}`, cleanedData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/visit-summaries"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
