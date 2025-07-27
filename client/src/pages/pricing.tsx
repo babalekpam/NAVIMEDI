@@ -25,8 +25,8 @@ const pricingPlans = [
     id: "starter",
     name: "Starter",
     description: "Perfect for small clinics and practices",
-    monthlyPrice: 29,
-    yearlyPrice: 290,
+    monthlyPrice: 49.99,
+    yearlyPrice: 510.99,
     savings: "17%",
     features: {
       maxUsers: 5,
@@ -48,8 +48,8 @@ const pricingPlans = [
     id: "professional", 
     name: "Professional",
     description: "Ideal for growing healthcare organizations",
-    monthlyPrice: 99,
-    yearlyPrice: 990,
+    monthlyPrice: 119.99,
+    yearlyPrice: 1210.99,
     savings: "17%",
     features: {
       maxUsers: 25,
@@ -71,8 +71,8 @@ const pricingPlans = [
     id: "enterprise",
     name: "Enterprise", 
     description: "For large hospitals and health systems",
-    monthlyPrice: 299,
-    yearlyPrice: 2990,
+    monthlyPrice: 319.99,
+    yearlyPrice: 3210.99,
     savings: "17%",
     features: {
       maxUsers: 100,
@@ -94,8 +94,8 @@ const pricingPlans = [
     id: "white_label",
     name: "White Label",
     description: "Full customization and branding control",
-    monthlyPrice: 999,
-    yearlyPrice: 9990,
+    monthlyPrice: 1019.99,
+    yearlyPrice: 10210.99,
     savings: "17%",
     features: {
       maxUsers: "Unlimited",
