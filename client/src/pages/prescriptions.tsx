@@ -127,7 +127,7 @@ export default function Prescriptions() {
   };
 
   if (!user || !tenant) {
-    return <div>Loading...</div>;
+    return <div>{t('loading')}</div>;
   }
 
   return (
@@ -135,8 +135,8 @@ export default function Prescriptions() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Prescriptions</h1>
-          <p className="text-gray-600 mt-1">Manage patient prescriptions and e-prescribing</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('prescriptions')}</h1>
+          <p className="text-gray-600 mt-1">{t('manage-prescriptions-medications')}</p>
         </div>
         {(user.role === "physician" || user.role === "nurse") && (
           <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>

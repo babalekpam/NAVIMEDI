@@ -178,7 +178,7 @@ export default function Appointments() {
   };
 
   if (!user || !tenant) {
-    return <div>Loading...</div>;
+    return <div>{t('loading')}</div>;
   }
 
   return (
@@ -186,14 +186,14 @@ export default function Appointments() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Appointments</h1>
-          <p className="text-gray-600 mt-1">Manage patient appointments and scheduling</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('appointments')}</h1>
+          <p className="text-gray-600 mt-1">{t('schedule-manage-appointments')}</p>
         </div>
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
             <Button className="bg-blue-600 hover:bg-blue-700">
               <Plus className="h-4 w-4 mr-2" />
-              Schedule Appointment
+              {t('schedule-appointment')}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
