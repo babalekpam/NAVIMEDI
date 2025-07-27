@@ -79,6 +79,11 @@ export const Header = () => {
                   {t('audit-logs')}
                 </button>
               </>
+            ) : user.role === "receptionist" ? (
+              // Receptionist Navigation - Minimal header, full sidebar navigation
+              <>
+                {/* Receptionists use sidebar navigation exclusively */}
+              </>
             ) : (
               // Clinical/Tenant User Navigation
               <>

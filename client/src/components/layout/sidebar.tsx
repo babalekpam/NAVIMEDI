@@ -36,20 +36,18 @@ interface SidebarItem {
 const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   // Clinical Section (only for tenant users)
   { id: "dashboard", label: t("dashboard"), icon: BarChart3, path: "/dashboard", roles: ["physician", "nurse", "pharmacist", "lab_technician", "receptionist", "billing_staff", "tenant_admin", "director", "super_admin"] },
-  { id: "prescriptions", label: t("prescriptions"), icon: Pill, path: "/prescriptions", roles: ["physician", "nurse", "pharmacist", "tenant_admin", "director"] },
-  { id: "pharmacy-dashboard", label: t("pharmacy-dashboard"), icon: Building2, path: "/pharmacy-dashboard", roles: ["pharmacist", "tenant_admin", "director"] },
-
   { id: "patients", label: t("patients"), icon: Users, path: "/patients", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
-  // Removed appointments from pharmacist role - they will use top navigation instead
-  { id: "lab-orders", label: t("lab-orders"), icon: TestTube, path: "/lab-orders", roles: ["physician", "nurse", "lab_technician", "tenant_admin", "director"] },
+  { id: "appointments", label: t("appointments"), icon: Calendar, path: "/appointments", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
+  { id: "prescriptions", label: t("prescriptions"), icon: Pill, path: "/prescriptions", roles: ["physician", "nurse", "pharmacist", "receptionist", "tenant_admin", "director"] },
+  { id: "lab-orders", label: t("lab-orders"), icon: TestTube, path: "/lab-orders", roles: ["physician", "nurse", "lab_technician", "receptionist", "tenant_admin", "director"] },
+  { id: "lab-results", label: t("lab-results"), icon: TestTube, path: "/lab-results", roles: ["physician", "nurse", "lab_technician", "receptionist", "tenant_admin", "director"] },
+  { id: "pharmacy-dashboard", label: t("pharmacy-dashboard"), icon: Building2, path: "/pharmacy-dashboard", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "health-recommendations", label: t("health-recommendations"), icon: Brain, path: "/health-recommendations", roles: ["physician", "nurse", "tenant_admin", "director"] },
   { id: "medical-communications", label: t("medical-communications"), icon: Languages, path: "/medical-communications", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   
   // Operations Section (only for tenant users)
-  { id: "billing", label: t("billing"), icon: FileText, path: "/billing", roles: ["billing_staff", "tenant_admin", "director"] },
-  // Hospital billing access (receptionist only for hospitals)
-  { id: "hospital-billing", label: t("billing"), icon: FileText, path: "/billing", roles: ["receptionist"] },
-  { id: "billing", label: t("billing"), icon: DollarSign, path: "/billing", roles: ["physician"] },
+  { id: "billing", label: t("billing"), icon: DollarSign, path: "/billing", roles: ["billing_staff", "receptionist", "physician", "tenant_admin", "director"] },
+  { id: "service-prices", label: t("service-prices"), icon: ClipboardList, path: "/pricing", roles: ["receptionist", "billing_staff", "tenant_admin", "director"] },
   { id: "reports", label: t("reports"), icon: BarChart3, path: "/reports", roles: ["physician", "nurse", "pharmacist", "lab_technician", "billing_staff", "tenant_admin", "director", "super_admin"] },
   
   // Advanced Features (White Label & Enterprise)
