@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Filter, Calendar, FileText, Pill, Activity, Heart, AlertTriangle, Stethoscope, Clock, User, Building, Edit, Save, X, Plus } from "lucide-react";
+import { Search, Filter, Calendar, FileText, Pill, Activity, Heart, AlertTriangle, Stethoscope, Clock, User, Building, Edit, Save, X, Plus, TestTube, Zap } from "lucide-react";
 import { Patient, Appointment, Prescription, LabOrder, VitalSigns, VisitSummary } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
@@ -375,6 +375,69 @@ export default function PatientMedicalRecords() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Quick Actions */}
+                {user?.role === "physician" && (
+                  <Card className="mb-6">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center">
+                        <Zap className="h-5 w-5 mr-2 text-yellow-500" />
+                        Quick Actions
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <Button
+                          onClick={() => {
+                            // Navigate to appointments page with patient pre-selected
+                            window.location.href = `/appointments?patientId=${selectedPatient.id}&action=schedule`;
+                          }}
+                          className="flex flex-col items-center p-4 h-auto"
+                          variant="outline"
+                        >
+                          <Calendar className="h-6 w-6 mb-2 text-blue-500" />
+                          <span className="text-sm">Schedule Appointment</span>
+                        </Button>
+                        
+                        <Button
+                          onClick={() => {
+                            // Navigate to prescriptions page with patient pre-selected
+                            window.location.href = `/prescriptions?patientId=${selectedPatient.id}&action=new`;
+                          }}
+                          className="flex flex-col items-center p-4 h-auto"
+                          variant="outline"
+                        >
+                          <Pill className="h-6 w-6 mb-2 text-green-500" />
+                          <span className="text-sm">New Prescription</span>
+                        </Button>
+                        
+                        <Button
+                          onClick={() => {
+                            // Navigate to lab orders page with patient pre-selected
+                            window.location.href = `/lab-orders?patientId=${selectedPatient.id}&action=new`;
+                          }}
+                          className="flex flex-col items-center p-4 h-auto"
+                          variant="outline"
+                        >
+                          <TestTube className="h-6 w-6 mb-2 text-purple-500" />
+                          <span className="text-sm">Order Lab Test</span>
+                        </Button>
+                        
+                        <Button
+                          onClick={() => {
+                            // Navigate to consultation/visit summary with patient pre-selected
+                            window.location.href = `/appointments?patientId=${selectedPatient.id}&action=consultation`;
+                          }}
+                          className="flex flex-col items-center p-4 h-auto"
+                          variant="outline"
+                        >
+                          <FileText className="h-6 w-6 mb-2 text-orange-500" />
+                          <span className="text-sm">Add Note</span>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <Tabs defaultValue="overview" className="w-full">
                   <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -437,32 +500,7 @@ export default function PatientMedicalRecords() {
                       </Card>
                     </div>
 
-                    {/* Quick Actions */}
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm">Quick Actions</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex flex-wrap gap-2">
-                          <Button size="sm" variant="outline">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            Schedule Appointment
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Pill className="h-4 w-4 mr-2" />
-                            New Prescription
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Activity className="h-4 w-4 mr-2" />
-                            Order Lab Test
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <FileText className="h-4 w-4 mr-2" />
-                            Add Note
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+
                   </TabsContent>
 
                   <TabsContent value="history" className="space-y-4 mt-6">
