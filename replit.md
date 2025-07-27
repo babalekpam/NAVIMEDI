@@ -14,6 +14,8 @@ A comprehensive multi-tenant healthcare management platform specializing in phar
 - **ENHANCED CLAIM FILING WORKFLOW** - One-click insurance claim filing for received prescriptions
 - **FIXED INSURANCE COVERAGE BREAKDOWN** - Claims now show insurance vs patient responsibility (80%/20% split)
 - **FIXED ORGANIZATION CREATION** - Added proper authentication to tenant management routes
+- **ADDED PUBLIC ORGANIZATION REGISTRATION** - Organizations can register directly from landing page
+- **FIXED LOGIN FOR NEW ORGANIZATIONS** - Users can login with just email/username without tenant ID
 
 ## User Preferences
 - Simple, everyday language for communication (user is non-technical)
@@ -32,6 +34,8 @@ A comprehensive multi-tenant healthcare management platform specializing in phar
 - Insurance coverage breakdown (80% insurance / 20% patient copay)
 - Organization/tenant creation and management
 - Prescription routing from hospitals to pharmacies
+- Public organization registration (no admin intervention required)
+- Simplified login system for new organizations
 
 ⚠️ **Known Issues:**
 - 122 TypeScript diagnostics remain in server routes (non-blocking for functionality)

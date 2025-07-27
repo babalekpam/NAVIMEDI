@@ -52,7 +52,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         user = await storage.getUserByUsername(username, actualTenantId);
       } else {
-        return res.status(400).json({ message: "Tenant ID is required for regular users" });
+        // No tenant ID provided - search for user by email/username across all tenants
+        const allUsers = await storage.getAllUsers();
+        user = allUsers.find(u => 
+          (u.email === username || u.username === username) && 
+          u.role !== 'super_admin' // Exclude super admin from this search
+        );
+        
+        if (!user) {
+          return res.status(401).json({ message: "Invalid credentials" });
+        }
       }
 
       if (!user || !await bcrypt.compare(password, user.password)) {
