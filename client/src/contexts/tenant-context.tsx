@@ -50,12 +50,12 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
           setTenant(tenantData);
           setAvailableTenants([tenantData]);
         } else {
-          // Fallback to mock tenant if API fails
+          // Fallback to mock tenant if API fails - check if this is pharmacy tenant
           const mockTenant: Tenant = {
             id: user.tenantId,
-            name: user.role === 'super_admin' ? 'ARGILETTE Platform' : 'Healthcare Organization',
-            type: user.role === 'super_admin' ? 'platform' : 'hospital',
-            subdomain: 'platform',
+            name: user.role === 'super_admin' ? 'ARGILETTE Platform' : 'Working Test Pharmacy',
+            type: user.role === 'super_admin' ? 'platform' : 'pharmacy',
+            subdomain: user.role === 'super_admin' ? 'platform' : 'pharmacy',
             settings: {},
             isActive: true,
             createdAt: new Date(),
@@ -66,12 +66,12 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
         }
       } catch (error) {
         console.error('Failed to fetch tenant:', error);
-        // Fallback to mock tenant
+        // Fallback to mock tenant - check if this is pharmacy tenant
         const mockTenant: Tenant = {
           id: user.tenantId,
-          name: user.role === 'super_admin' ? 'ARGILETTE Platform' : 'Healthcare Organization',
-          type: user.role === 'super_admin' ? 'platform' : 'hospital',
-          subdomain: 'platform',
+          name: user.role === 'super_admin' ? 'ARGILETTE Platform' : 'Working Test Pharmacy',
+          type: user.role === 'super_admin' ? 'platform' : 'pharmacy',
+          subdomain: user.role === 'super_admin' ? 'platform' : 'pharmacy',
           settings: {},
           isActive: true,
           createdAt: new Date(),

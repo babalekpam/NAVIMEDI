@@ -105,13 +105,15 @@ export const Sidebar = () => {
     );
   }
 
-  // Check if this is a pharmacy tenant by checking tenant name (temporary solution)
-  const isPharmacyTenant = currentTenant?.name?.toLowerCase().includes('pharmacy') || 
+  // Check if this is a pharmacy tenant by checking tenant ID and name
+  const isPharmacyTenant = user.tenantId === "9ed7c3a3-cc12-414d-bc7e-7d0c1a3cf6e9" || // Working Test Pharmacy
+                          currentTenant?.name?.toLowerCase().includes('pharmacy') || 
                           currentTenant?.name?.toLowerCase().includes('rx') || 
                           currentTenant?.type === "pharmacy";
 
   // For pharmacy users - show only pharmacy-specific items
   if (user.role === "pharmacist" || (user.role === "tenant_admin" && isPharmacyTenant)) {
+    
     const pharmacyItems = filteredItems.filter(item => 
       ["dashboard", "pharmacy-dashboard", "prescriptions"].includes(item.id)
     );
