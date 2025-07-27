@@ -282,6 +282,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
+
+  // Enhanced patient medical records endpoint for healthcare professionals - MUST be before the parameterized route
+  app.get("/api/patients/medical-records", requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const tenantId = req.tenant!.id;
+      console.log("Medical records request for tenant:", tenantId, "by user role:", req.user.role);
+      const medicalRecords = await storage.getPatientsWithMedicalRecords(tenantId);
+      res.json(medicalRecords);
+    } catch (error) {
+      console.error("Get patient medical records error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.get("/api/patients/:id", async (req, res) => {
     try {
       const patient = await storage.getPatient(req.params.id, req.tenant!.id);
@@ -337,24 +352,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Enhanced patient medical records endpoint for healthcare professionals
-  app.get("/api/patients/medical-records", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
-    try {
-      const tenantId = req.tenant!.id;
-      const medicalRecords = await storage.getPatientsWithMedicalRecords(tenantId);
-      res.json(medicalRecords);
-    } catch (error) {
-      console.error("Get patient medical records error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
   // Complete patient record with all medical data
-  app.get("/api/patients/:id/complete-record", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+  app.get("/api/patients/:id/complete-record", requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
       const { id } = req.params;
       const tenantId = req.tenant!.id;
       
+      console.log("Complete record request for patient:", id, "tenant:", tenantId);
       const completeRecord = await storage.getCompletePatientRecord(id, tenantId);
       if (!completeRecord) {
         return res.status(404).json({ message: "Patient not found" });
