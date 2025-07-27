@@ -2294,7 +2294,7 @@ Report ID: ${report.id}
 
   // ==================== PATIENT CHECK-IN ROUTES ====================
 
-  // Get all patient check-ins for today  
+  // Get all patient check-ins for today
   app.get("/api/patient-check-ins", authenticateToken, requireTenant, async (req, res) => {
     try {
       const checkIns = await storage.getPatientCheckInsByTenant(req.tenant!.id);
@@ -2365,6 +2365,42 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Failed to create patient check-in:", error);
       res.status(500).json({ message: "Failed to create patient check-in" });
+    }
+  });
+
+  // Update patient check-in (for vital signs, status changes, etc.)
+  app.patch("/api/patient-check-ins/:id", authenticateToken, requireTenant, requireRole(["receptionist", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      const originalCheckIn = await storage.getPatientCheckIn(id, req.tenant!.id);
+      if (!originalCheckIn) {
+        return res.status(404).json({ message: "Patient check-in not found" });
+      }
+
+      const updatedCheckIn = await storage.updatePatientCheckIn(id, updates, req.tenant!.id);
+      if (!updatedCheckIn) {
+        return res.status(404).json({ message: "Patient check-in not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenant!.id,
+        userId: req.user!.id,
+        entityType: "patient_check_in",
+        entityId: id,
+        action: "UPDATE",
+        previousData: originalCheckIn,
+        newData: updatedCheckIn,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      res.json(updatedCheckIn);
+    } catch (error) {
+      console.error("Failed to update patient check-in:", error);
+      res.status(500).json({ message: "Failed to update patient check-in" });
     }
   });
 

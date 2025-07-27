@@ -1,21 +1,29 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema } from "@shared/schema";
-import { authenticateToken, requireRole } from "./middleware/auth";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertPharmacySchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertMedicationCopaySchema, insertPatientCheckInSchema } from "@shared/schema";
+import { authenticateToken, requireRole, AuthenticatedRequest } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
+import QRCode from "qrcode";
+import speakeasy from "speakeasy";
 import { aiHealthAnalyzer } from "./ai-health-analyzer";
+import { geminiHealthAnalyzer } from "./gemini-health-analyzer";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  console.log("DEBUG: registerRoutes called - starting route registration");
+  const server = createServer(app);
+  
   // Authentication routes (before tenant middleware)
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { username, password, tenantId } = req.body;
+      
+      console.log("[LOGIN DEBUG] Login attempt:", { username, tenantId: tenantId || 'none', hasPassword: !!password });
       
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
@@ -41,25 +49,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!uuidPattern.test(tenantId)) {
           // If not a UUID, try to find tenant by name
           const tenants = await storage.getAllTenants();
+          console.log("[LOGIN DEBUG] Looking for tenant:", tenantId);
+          console.log("[LOGIN DEBUG] Available tenants:", tenants.map(t => t.name));
           const tenant = tenants.find(t => t.name.toLowerCase() === tenantId.toLowerCase());
           if (tenant) {
             actualTenantId = tenant.id;
+            console.log("[LOGIN DEBUG] Found tenant ID:", actualTenantId);
           } else {
+            console.log("[LOGIN DEBUG] Tenant not found:", tenantId);
             return res.status(400).json({ message: "Organization not found" });
           }
         }
         
-        user = await storage.getUserByUsername(username, actualTenantId);
+        console.log("[LOGIN DEBUG] Getting user by email/username:", username, "tenant:", actualTenantId);
+        user = await storage.getUserByEmailOrUsername(username, actualTenantId);
+        console.log("[LOGIN DEBUG] Found user in tenant:", user ? { id: user.id, email: user.email } : 'none');
       } else {
-        return res.status(400).json({ message: "Tenant ID is required for regular users" });
+        // No tenant ID provided - search for user by email/username across all tenants
+        const allUsers = await storage.getAllUsers();
+        console.log("[LOGIN DEBUG] Searching all users for:", username);
+        user = allUsers.find(u => 
+          (u.email === username || u.username === username) && 
+          u.role !== 'super_admin' // Exclude super admin from this search
+        );
+        
+        console.log("[LOGIN DEBUG] Found user:", user ? { id: user.id, email: user.email, username: user.username } : 'none');
+        
+        if (!user) {
+          return res.status(401).json({ message: "Invalid credentials" });
+        }
       }
 
-      if (!user || !await bcrypt.compare(password, user.password)) {
+      if (!user) {
+        console.log("[LOGIN DEBUG] No user found");
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      console.log("[LOGIN DEBUG] About to verify password for user:", user.email);
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      console.log("[LOGIN DEBUG] Password match result:", passwordMatch);
+
+      if (!passwordMatch) {
+        console.log("[LOGIN DEBUG] Login failed - password mismatch");
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       if (!user.isActive) {
         return res.status(401).json({ message: "Account is disabled" });
+      }
+
+      // Check if tenant is suspended (except for super_admin and ARGILETTE platform owner)
+      if (user.role !== 'super_admin') {
+        const tenant = await storage.getTenant(user.tenantId);
+        if (tenant && (tenant.subscriptionStatus === 'suspended' || !tenant.isActive)) {
+          // ARGILETTE platform owner has unlimited access - never suspend
+          if (tenant.name === 'ARGILETTE' || tenant.type === 'platform') {
+            console.log('[AUTH DEBUG] ARGILETTE platform owner - unlimited access granted');
+          } else {
+            return res.status(403).json({ 
+              message: "Account suspended - Trial period expired. Please upgrade to continue using the service.",
+              suspensionReason: tenant.suspensionReason || "Trial period expired",
+              trialExpired: true
+            });
+          }
+        }
       }
 
       // Update last login
@@ -83,9 +136,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "user",
         entityId: user.id,
         action: "login",
+        previousData: null,
         newData: { loginTime: new Date() },
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.json({
@@ -107,10 +161,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Apply tenant context middleware to all other API routes
-  app.use("/api", setTenantContext);
+  // Laboratory registration endpoint (public)
+  app.post("/api/laboratory-registration", async (req, res) => {
+    try {
+      const { tenant: labData, admin } = req.body;
+      
+      if (!labData || !admin) {
+        return res.status(400).json({ 
+          message: "Laboratory and admin information are required" 
+        });
+      }
 
-  app.post("/api/auth/register", async (req, res) => {
+      // Create the laboratory tenant
+      const tenantData = {
+        name: labData.name,
+        type: "laboratory" as const,
+        subdomain: labData.subdomain,
+        settings: labData.settings || {}
+      };
+
+      console.log("Creating laboratory tenant:", tenantData);
+      const tenant = await storage.createTenant(tenantData);
+      
+      // Generate a temporary password for the admin
+      const tempPassword = Math.random().toString(36).slice(-8);
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      
+      // Create the admin user
+      const adminData = {
+        tenantId: tenant.id,
+        username: admin.email,
+        email: admin.email,
+        password: hashedPassword,
+        firstName: admin.firstName,
+        lastName: admin.lastName,
+        role: "tenant_admin" as const,
+        isActive: true
+      };
+
+      console.log("Creating lab admin user:", { ...adminData, password: "[HIDDEN]" });
+      const adminUser = await storage.createUser(adminData);
+
+      console.log(`Laboratory registered successfully. Admin credentials: ${admin.email} / ${tempPassword}`);
+
+      res.status(201).json({
+        message: "Laboratory registered successfully",
+        tenant: {
+          id: tenant.id,
+          name: tenant.name,
+          subdomain: tenant.subdomain
+        },
+        admin: {
+          id: adminUser.id,
+          email: adminUser.email,
+          tempPassword: tempPassword
+        }
+      });
+
+    } catch (error) {
+      console.error("Laboratory registration error:", error);
+      res.status(500).json({ 
+        message: "Registration failed", 
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Pharmacy registration endpoint (public) - Auto-approve and create tenant
+  app.post("/api/pharmacy-registration", async (req, res) => {
+    try {
+      console.log("Pharmacy registration request:", JSON.stringify(req.body, null, 2));
+      
+      const { tenant: pharmacyData, admin } = req.body;
+      
+      if (!pharmacyData || !admin) {
+        return res.status(400).json({ 
+          message: "Pharmacy and admin information are required" 
+        });
+      }
+
+      // Create the pharmacy tenant immediately (auto-approved)
+      const tenantData = {
+        name: pharmacyData.name || "Unnamed Pharmacy",
+        type: "pharmacy" as const,
+        subdomain: pharmacyData.subdomain,
+        settings: pharmacyData.settings || {}
+      };
+
+      console.log("Creating pharmacy tenant (auto-approved):", tenantData);
+      const tenant = await storage.createTenant(tenantData);
+      
+      // Generate a temporary password for the admin
+      const tempPassword = Math.random().toString(36).slice(-8);
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      
+      // Create the admin user
+      const adminData = {
+        tenantId: tenant.id,
+        username: admin.email,
+        email: admin.email,
+        password: hashedPassword,
+        firstName: admin.firstName,
+        lastName: admin.lastName,
+        role: "tenant_admin" as const,
+        isActive: true
+      };
+
+      console.log("Creating pharmacy admin user:", { ...adminData, password: "[HIDDEN]" });
+      const adminUser = await storage.createUser(adminData);
+
+      console.log(`Pharmacy registered successfully. Admin credentials: ${admin.email} / ${tempPassword}`);
+
+      res.status(201).json({
+        message: "Pharmacy registered and approved successfully",
+        tenant: {
+          id: tenant.id,
+          name: tenant.name,
+          subdomain: tenant.subdomain,
+          status: "approved"
+        },
+        admin: {
+          id: adminUser.id,
+          email: adminUser.email,
+          tempPassword: tempPassword
+        },
+        loginInfo: {
+          message: "Your pharmacy is now active! You can login with these credentials:",
+          email: admin.email,
+          tempPassword: tempPassword,
+          loginUrl: `${req.protocol}://${req.get('host')}/login`
+        }
+      });
+
+    } catch (error) {
+      console.error("Pharmacy registration error:", error);
+      res.status(500).json({ 
+        message: "Registration failed", 
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // NOTE: Individual routes handle their own tenant context middleware
+
+  app.post("/api/auth/register", authenticateToken, requireTenant, async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
       
@@ -140,9 +334,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "user",
         entityId: user.id,
         action: "register",
+        previousData: null,
         newData: { username: user.username, email: user.email, role: user.role },
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json({
@@ -167,12 +362,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Protected routes - require authentication
-  app.use("/api", authenticateToken);
+  // NOTE: Individual routes handle their own authentication middleware
 
   // User profile
-  app.get("/api/user/profile", async (req, res) => {
+  app.get("/api/user/profile", authenticateToken, async (req, res) => {
     try {
-      const user = await storage.getUser(req.user!.userId);
+      const user = await storage.getUser(req.user!.id);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -193,8 +388,436 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User profile routes
+  app.get("/api/users/profile", authenticateToken, async (req, res) => {
+    try {
+      // Return current user's profile
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Remove sensitive data before sending
+      const { password, ...userProfile } = user;
+      res.json(userProfile);
+    } catch (error) {
+      console.error("Get user profile error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/users/profile", authenticateToken, async (req, res) => {
+    try {
+      const { firstName, lastName, email, phone, bio, profileImage } = req.body;
+      
+      // Validate input
+      if (!firstName || !lastName || !email) {
+        return res.status(400).json({ message: "First name, last name, and email are required" });
+      }
+
+      const updateData = {
+        firstName,
+        lastName,
+        email,
+        phone: phone || null,
+        bio: bio || null,
+        profileImage: profileImage || null
+      };
+
+      const updatedUser = await storage.updateUser(req.user!.id, updateData);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user!.tenantId,
+        userId: req.user!.id,
+        entityType: "user",
+        entityId: req.user!.id,
+        action: "update_profile",
+        previousData: null,
+        newData: updateData,
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      // Remove sensitive data before sending
+      const { password, ...userProfile } = updatedUser;
+      res.json(userProfile);
+    } catch (error) {
+      console.error("Update user profile error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/users/change-password", authenticateToken, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Current password and new password are required" });
+      }
+
+      if (newPassword.length < 8) {
+        return res.status(400).json({ message: "New password must be at least 8 characters long" });
+      }
+
+      // Get current user
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Verify current password
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isCurrentPasswordValid) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+
+      // Hash new password
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password
+      const updatedUser = await storage.updateUser(req.user!.id, { password: hashedNewPassword });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "Failed to update password" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user!.tenantId,
+        userId: req.user!.id,
+        entityType: "user",
+        entityId: req.user!.id,
+        action: "change_password",
+        previousData: null,
+        newData: { message: "Password changed successfully" },
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Change password error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Security settings routes
+  app.get("/api/users/security", authenticateToken, async (req, res) => {
+    try {
+      // For now, return mock security settings
+      res.json({
+        twoFactorEnabled: false,
+        backupCodesCount: 0,
+        lastPasswordChange: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Get security settings error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // 2FA setup routes
+  app.post("/api/users/2fa/setup", authenticateToken, async (req, res) => {
+    try {
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Generate secret for 2FA
+      const secret = speakeasy.generateSecret({
+        name: `${user.firstName} ${user.lastName} (${user.email})`,
+        issuer: 'Healthcare Platform',
+        length: 32
+      });
+
+      // Generate QR code
+      const qrCodeUrl = secret.otpauth_url;
+      const qrCodeImage = await QRCode.toDataURL(qrCodeUrl!);
+
+      // Generate backup codes
+      const backupCodes = [];
+      for (let i = 0; i < 8; i++) {
+        const code = Math.random().toString(36).substr(2, 5).toUpperCase() + 
+                    '-' + 
+                    Math.random().toString(36).substr(2, 5).toUpperCase();
+        backupCodes.push(code);
+      }
+
+      // Store the secret temporarily (in production, you'd store this in the database)
+      // For now, we'll just return it to the client
+      res.json({ 
+        qrCode: qrCodeImage, 
+        backupCodes,
+        secret: secret.base32 // This would normally be stored securely in the database
+      });
+    } catch (error) {
+      console.error("Setup 2FA error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/users/2fa/verify", authenticateToken, async (req, res) => {
+    try {
+      const { code, secret } = req.body;
+      
+      if (!code || !secret) {
+        return res.status(400).json({ message: "Verification code and secret are required" });
+      }
+
+      // Verify the TOTP code
+      const verified = speakeasy.totp.verify({
+        secret: secret,
+        encoding: 'base32',
+        token: code,
+        window: 2 // Allow 2 time steps in either direction for clock drift
+      });
+
+      if (verified) {
+        // In production, you would:
+        // 1. Store the secret in the database for the user
+        // 2. Mark 2FA as enabled for the user
+        // 3. Invalidate any existing sessions to force re-authentication
+        
+        res.json({ success: true });
+      } else {
+        res.status(400).json({ message: "Invalid verification code" });
+      }
+    } catch (error) {
+      console.error("Verify 2FA error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/users/2fa/disable", authenticateToken, async (req, res) => {
+    try {
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Disable 2FA error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Login sessions routes
+  app.get("/api/users/sessions", authenticateToken, async (req, res) => {
+    try {
+      // Return mock session data for demo
+      const sessions = [
+        {
+          id: "session-1",
+          device: "MacBook Pro",
+          browser: "Chrome 120.0",
+          location: "San Francisco, CA",
+          ipAddress: "192.168.1.100",
+          lastActive: "2 minutes ago",
+          isCurrent: true
+        },
+        {
+          id: "session-2", 
+          device: "iPhone 15",
+          browser: "Safari Mobile",
+          location: "San Francisco, CA",
+          ipAddress: "192.168.1.101",
+          lastActive: "1 hour ago",
+          isCurrent: false
+        },
+        {
+          id: "session-3",
+          device: "Windows PC",
+          browser: "Edge 119.0",
+          location: "New York, NY",
+          ipAddress: "203.0.113.50",
+          lastActive: "3 days ago",
+          isCurrent: false
+        }
+      ];
+
+      res.json(sessions);
+    } catch (error) {
+      console.error("Get sessions error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/users/sessions/:sessionId", authenticateToken, async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user!.tenantId,
+        userId: req.user!.id,
+        entityType: "session",
+        entityId: sessionId,
+        action: "revoke_session",
+        previousData: null,
+        newData: { sessionId },
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Revoke session error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // API Keys routes
+  app.get("/api/users/api-keys", authenticateToken, async (req, res) => {
+    try {
+      // Return mock API keys for demo
+      const apiKeys = [
+        {
+          id: "key-1",
+          name: "Production API",
+          keyPreview: "pk_live_1234...5678",
+          createdAt: "2024-01-15T10:30:00Z",
+          lastUsed: "2024-01-27T14:22:00Z",
+          permissions: ["read", "write"]
+        },
+        {
+          id: "key-2",
+          name: "Development Testing",
+          keyPreview: "pk_test_abcd...efgh",
+          createdAt: "2024-01-20T09:15:00Z",
+          lastUsed: null,
+          permissions: ["read"]
+        }
+      ];
+
+      res.json(apiKeys);
+    } catch (error) {
+      console.error("Get API keys error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/users/api-keys", authenticateToken, async (req, res) => {
+    try {
+      const { name } = req.body;
+      
+      if (!name || !name.trim()) {
+        return res.status(400).json({ message: "API key name is required" });
+      }
+
+      // Generate mock API key
+      const newKey = {
+        id: `key-${Date.now()}`,
+        name: name.trim(),
+        key: `pk_live_${Math.random().toString(36).substr(2, 32)}`,
+        keyPreview: `pk_live_${Math.random().toString(36).substr(2, 4)}...${Math.random().toString(36).substr(2, 4)}`,
+        createdAt: new Date().toISOString(),
+        lastUsed: null,
+        permissions: ["read", "write"]
+      };
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user!.tenantId,
+        userId: req.user!.id,
+        entityType: "api_key",
+        entityId: newKey.id,
+        action: "create_api_key",
+        previousData: null,
+        newData: { name: newKey.name },
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.status(201).json(newKey);
+    } catch (error) {
+      console.error("Create API key error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/users/api-keys/:keyId", authenticateToken, async (req, res) => {
+    try {
+      const { keyId } = req.params;
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user!.tenantId,
+        userId: req.user!.id,
+        entityType: "api_key",
+        entityId: keyId,
+        action: "delete_api_key",
+        previousData: null,
+        newData: { keyId },
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete API key error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // User preferences routes
+  app.get("/api/users/preferences", authenticateToken, async (req, res) => {
+    try {
+      // Get saved language preference from localStorage equivalent (could be stored in user profile)
+      // For now, return preferences but don't override language if user has already selected one
+      const savedLanguage = req.headers['x-user-language'] || 'en';
+      
+      const preferences = {
+        emailNotifications: true,
+        smsNotifications: false,
+        appointmentReminders: true,
+        prescriptionAlerts: true,
+        marketingEmails: false,
+        language: savedLanguage,
+        timezone: 'America/New_York',
+        dateFormat: 'MM/DD/YYYY',
+        theme: 'light',
+        autoLogout: 30,
+        dataRetention: true
+      };
+
+      res.json(preferences);
+    } catch (error) {
+      console.error("Get preferences error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/users/preferences", authenticateToken, async (req, res) => {
+    try {
+      const preferences = req.body;
+      
+      // In production, you would save these to the database
+      // For now, just validate and return success
+      
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user!.tenantId,
+        userId: req.user!.id,
+        entityType: "user_preferences",
+        entityId: req.user!.id,
+        action: "update_preferences",
+        previousData: null,
+        newData: preferences,
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.json({ success: true, preferences });
+    } catch (error) {
+      console.error("Update preferences error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Get users by role (for fetching providers, etc.)
-  app.get("/api/users", requireTenant, async (req, res) => {
+  app.get("/api/users", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { role } = req.query;
       const tenantId = req.tenant!.id;
@@ -212,8 +835,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get current tenant info
+  app.get("/api/tenant/current", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user?.tenantId) {
+        return res.status(400).json({ message: "No tenant context" });
+      }
+      
+      const tenant = await storage.getTenant(req.user.tenantId);
+      if (!tenant) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+      
+      res.json(tenant);
+    } catch (error) {
+      console.error("Get current tenant error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Tenant management routes
-  app.get("/api/tenants", requireRole(["super_admin"]), async (req, res) => {
+  app.get("/api/tenants", authenticateToken, requireRole(["super_admin"]), async (req, res) => {
     try {
       const tenants = await storage.getAllTenants();
       res.json(tenants);
@@ -223,7 +865,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tenants", requireRole(["super_admin"]), async (req, res) => {
+  app.post("/api/tenants", authenticateToken, requireRole(["super_admin"]), async (req, res) => {
     try {
       const tenantData = insertTenantSchema.parse(req.body);
       const tenant = await storage.createTenant(tenantData);
@@ -231,13 +873,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: tenant.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "tenant",
         entityId: tenant.id,
         action: "create",
+        previousData: null,
         newData: tenant,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(tenant);
@@ -250,6 +893,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public organization registration (no authentication required)
+  app.post("/api/register-organization", async (req, res) => {
+    try {
+      const { 
+        organizationName, 
+        organizationType, 
+        adminFirstName, 
+        adminLastName, 
+        adminEmail, 
+        adminPassword,
+        phoneNumber,
+        address,
+        description 
+      } = req.body;
+
+      // Validate required fields
+      if (!organizationName || !organizationType || !adminFirstName || !adminLastName || !adminEmail || !adminPassword) {
+        return res.status(400).json({ message: "All required fields must be provided" });
+      }
+
+      // Create organization subdomain from name
+      const subdomain = organizationName.toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '-')
+        .substring(0, 50);
+
+      // Check if subdomain already exists
+      const existingTenant = await storage.getTenantBySubdomain(subdomain);
+      if (existingTenant) {
+        return res.status(400).json({ message: "Organization name already exists. Please choose a different name." });
+      }
+
+      // Create tenant data
+      const tenantData = {
+        name: organizationName,
+        type: organizationType,
+        subdomain,
+        phoneNumber: phoneNumber || null,
+        address: address || null,
+        description: description || null,
+        isActive: true
+      };
+
+      const tenant = await storage.createTenant(tenantData);
+
+      // Hash admin password
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+      // Create admin user for the organization
+      const adminUser = await storage.createUser({
+        username: adminEmail.split('@')[0], // Use email prefix as username
+        email: adminEmail,
+        password: hashedPassword,
+        firstName: adminFirstName,
+        lastName: adminLastName,
+        role: "tenant_admin",
+        tenantId: tenant.id,
+        isActive: true
+      });
+
+      // Create audit log for public registration
+      await storage.createAuditLog({
+        tenantId: tenant.id,
+        userId: adminUser.id,
+        entityType: "tenant",
+        entityId: tenant.id,
+        action: "public_registration",
+        previousData: null,
+        newData: { organizationName, organizationType, adminEmail },
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.status(201).json({ 
+        message: "Organization registered successfully!",
+        organization: {
+          id: tenant.id,
+          name: tenant.name,
+          type: tenant.type,
+          subdomain: tenant.subdomain
+        },
+        admin: {
+          id: adminUser.id,
+          email: adminUser.email,
+          firstName: adminUser.firstName,
+          lastName: adminUser.lastName
+        }
+      });
+    } catch (error) {
+      console.error("Organization registration error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to register organization" });
+    }
+  });
+
   // Patient management routes - require tenant context
   app.use("/api/patients", requireTenant);
 
@@ -257,12 +997,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { limit = "50", offset = "0", search } = req.query;
       const tenantId = req.tenant!.id;
+      
+      // Get full tenant info to check type
+      const tenant = await storage.getTenant(tenantId);
+      const tenantType = tenant?.type;
 
       let patients;
       if (search && typeof search === "string") {
-        patients = await storage.searchPatients(tenantId, search);
+        // For pharmacies, search only patients with prescriptions sent to them
+        if (tenantType === "pharmacy") {
+          patients = await storage.getPatientsWithPrescriptionsForPharmacy(tenantId, search);
+        } else {
+          patients = await storage.searchPatients(tenantId, search);
+        }
       } else {
-        patients = await storage.getPatientsByTenant(tenantId, parseInt(limit as string), parseInt(offset as string));
+        // For pharmacies, get only patients with prescriptions sent to them
+        if (tenantType === "pharmacy") {
+          patients = await storage.getPatientsWithPrescriptionsForPharmacy(tenantId);
+        } else {
+          patients = await storage.getPatientsByTenant(tenantId, parseInt(limit as string), parseInt(offset as string));
+        }
       }
 
       res.json(patients);
@@ -308,13 +1062,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "patient",
         entityId: patient.id,
         action: "create",
+        previousData: null,
         newData: patient,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(patient);
@@ -397,13 +1152,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "appointment",
         entityId: appointment.id,
         action: "create",
+        previousData: null,
         newData: appointment,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(appointment);
@@ -436,13 +1192,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "appointment",
         entityId: id,
         action: "update",
+        previousData: null,
         newData: updatedAppointment,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.json(updatedAppointment);
@@ -458,20 +1215,166 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Prescription management routes
   app.get("/api/prescriptions", authenticateToken, requireTenant, async (req, res) => {
     try {
+      console.log("Prescriptions API - User:", req.user?.id, "Tenant:", req.tenant?.id);
       const { patientId } = req.query;
       const tenantId = req.tenant!.id;
+      
+      // Get full tenant info to check type
+      const tenant = await storage.getTenant(tenantId);
+      const tenantType = tenant?.type;
 
       let prescriptions;
       if (patientId) {
         prescriptions = await storage.getPrescriptionsByPatient(patientId as string, tenantId);
       } else {
-        prescriptions = await storage.getPrescriptionsByTenant(tenantId);
+        // For pharmacies, get only prescriptions sent to them with provider info
+        if (tenantType === "pharmacy") {
+          console.log("Getting prescriptions for pharmacy tenant:", tenantId);
+          prescriptions = await storage.getPrescriptionsByPharmacy(tenantId);
+          console.log("Found prescriptions:", prescriptions.length);
+        } else {
+          // For healthcare providers, get prescriptions they created
+          prescriptions = await storage.getPrescriptionsByTenant(tenantId);
+        }
       }
 
       res.json(prescriptions);
     } catch (error) {
       console.error("Get prescriptions error:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/prescriptions/:id", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const tenantId = req.tenant!.id;
+
+      const updatedPrescription = await storage.updatePrescription(id, updates, tenantId);
+      
+      if (!updatedPrescription) {
+        return res.status(404).json({ message: "Prescription not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: tenantId,
+        userId: req.user!.id,
+        entityType: "prescription",
+        entityId: id,
+        action: "UPDATE",
+        previousData: null,
+        newData: updatedPrescription,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      res.json(updatedPrescription);
+    } catch (error) {
+      console.error("Update prescription error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // File insurance claim for prescription
+  app.post("/api/prescriptions/file-claim", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { prescriptionId, patientId, medicationName, dosage, quantity } = req.body;
+      const tenantId = req.tenant!.id;
+
+      // For pharmacies, we need to get the prescription from the pharmacy's perspective
+      // But the prescription belongs to the original hospital/clinic tenant
+      let prescription;
+      const tenant = await storage.getTenant(tenantId);
+      
+      if (tenant?.type === "pharmacy") {
+        // For pharmacies, we need to find the prescription by ID across all tenants
+        // since it was created by a different tenant (hospital/clinic)
+        const allTenants = await storage.getAllTenants();
+        for (const t of allTenants) {
+          if (t.type === "hospital" || t.type === "clinic") {
+            try {
+              prescription = await storage.getPrescription(prescriptionId, t.id);
+              if (prescription && prescription.pharmacyTenantId === tenantId) {
+                break;
+              }
+            } catch (error) {
+              // Continue searching
+            }
+          }
+        }
+      } else {
+        prescription = await storage.getPrescription(prescriptionId, tenantId);
+      }
+
+      if (!prescription) {
+        return res.status(404).json({ message: "Prescription not found" });
+      }
+
+      // Get patient information from the original tenant
+      const patient = await storage.getPatient(patientId, prescription.tenantId);
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      // Get service price for medication dispensing
+      const servicePrices = await storage.getServicePrices(tenantId);
+      const medicationService = servicePrices.find(sp => 
+        sp.serviceCategory === "medication" || 
+        sp.serviceName.toLowerCase().includes("dispensing") ||
+        sp.serviceName.toLowerCase().includes("medication")
+      );
+
+      const basePrice = medicationService?.price || 25.00; // Default medication dispensing fee
+      const totalAmount = basePrice * (quantity || 1);
+
+      // Calculate insurance coverage (80% coverage, 20% patient copay as standard)
+      const coveragePercentage = 0.80; // 80% insurance coverage
+      const insuranceAmount = Math.round(totalAmount * coveragePercentage * 100) / 100;
+      const patientCopay = Math.round(totalAmount * (1 - coveragePercentage) * 100) / 100;
+
+      // Create insurance claim with proper breakdown
+      const claimData = {
+        tenantId: tenantId,
+        patientId: patientId,
+        claimNumber: `RX-${Date.now()}`,
+        totalAmount: totalAmount,
+        totalInsuranceAmount: insuranceAmount,
+        totalPatientCopay: patientCopay,
+        status: "submitted" as const,
+        notes: `Insurance claim for ${medicationName} ${dosage} - Qty: ${quantity}. Insurance covers $${insuranceAmount} (80%), Patient pays $${patientCopay} (20%)`
+      };
+
+      const insuranceClaim = await storage.createInsuranceClaim(claimData);
+
+      // Update prescription status to filled (use original tenant ID)
+      await storage.updatePrescription(prescriptionId, { 
+        status: "filled",
+        filledDate: new Date()
+      }, prescription.tenantId);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: tenantId,
+        userId: req.user!.id,
+        entityType: "insurance_claim",
+        entityId: insuranceClaim.id,
+        action: "create",
+        previousData: null,
+        newData: insuranceClaim,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      res.status(201).json({ 
+        message: "Insurance claim filed successfully",
+        claim: insuranceClaim,
+        prescription: prescription
+      });
+    } catch (error) {
+      console.error("File insurance claim error:", error);
+      res.status(500).json({ message: "Failed to file insurance claim" });
     }
   });
 
@@ -487,7 +1390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const prescriptionData = {
         ...requestData,
         tenantId: req.tenant!.id,
-        providerId: req.user!.userId,
+        providerId: req.user!.id,
         appointmentId: requestData.appointmentId || null,
         pharmacyTenantId: requestData.pharmacyTenantId || null,
         prescribedDate: new Date(),
@@ -501,13 +1404,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "prescription",
         entityId: prescription.id,
         action: "create",
+        previousData: null,
         newData: prescription,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(prescription);
@@ -517,6 +1421,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Pharmacy routes
+  app.get("/api/pharmacies", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const pharmacies = await storage.getActivePharmacies(req.tenantId!);
+      res.json(pharmacies);
+    } catch (error) {
+      console.error("Error fetching pharmacies:", error);
+      res.status(500).json({ message: "Failed to fetch pharmacies" });
+    }
+  });
+
+  app.post("/api/pharmacies", authenticateToken, requireRole(["tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
+    try {
+      const pharmacyData = insertPharmacySchema.parse({
+        ...req.body,
+        tenantId: req.tenantId
+      });
+
+      const pharmacy = await storage.createPharmacy(pharmacyData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenantId!,
+        userId: req.userId!,
+        entityType: "pharmacy",
+        entityId: pharmacy.id,
+        action: "CREATE",
+        previousData: null,
+        newData: pharmacy,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      res.status(201).json(pharmacy);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid pharmacy data", errors: error.errors });
+      }
+      console.error("Error creating pharmacy:", error);
+      res.status(500).json({ message: "Failed to create pharmacy" });
     }
   });
 
@@ -553,7 +1500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const labOrderData = {
         ...requestData,
         tenantId: req.tenant!.id,
-        providerId: req.user!.userId,
+        providerId: req.user!.id,
         orderedDate: requestData.orderedDate || new Date(),
         appointmentId: requestData.appointmentId || null,
         labTenantId: requestData.labTenantId || null
@@ -566,13 +1513,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "lab_order",
         entityId: labOrder.id,
         action: "create",
+        previousData: null,
         newData: labOrder,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(labOrder);
@@ -626,13 +1574,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "insurance_claim",
         entityId: claim.id,
         action: "create",
+        previousData: null,
         newData: claim,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(claim);
@@ -666,13 +1615,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "insurance_claim",
         entityId: id,
         action: "update",
+        previousData: null,
         newData: updateData,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.json(updatedClaim);
@@ -888,7 +1838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const reportData = insertReportSchema.parse({
         ...req.body,
         tenantId: req.tenant.id,
-        generatedBy: req.user.userId,
+        generatedBy: req.user.id,
         status: 'generating'
       });
 
@@ -897,13 +1847,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant.id,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "report",
         entityId: report.id,
         action: "create",
+        previousData: null,
         newData: { title: report.title, type: report.type },
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       // In a real implementation, you would trigger async report generation here
@@ -951,7 +1902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const reportData = insertReportSchema.parse({
         ...reportParams,
         tenantId: targetTenantId,
-        generatedBy: req.user.userId,
+        generatedBy: req.user.id,
         status: 'generating',
         parameters: { 
           ...reportParams.parameters, 
@@ -965,33 +1916,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log for both platform and target tenant
       await storage.createAuditLog({
         tenantId: req.user.tenantId, // Platform tenant
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "cross_tenant_report",
         entityId: report.id,
         action: "create",
+        previousData: null,
         newData: { 
           title: report.title, 
           type: report.type, 
           targetTenant: targetTenant.name,
           targetTenantId: targetTenantId 
         },
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       await storage.createAuditLog({
         tenantId: targetTenantId, // Target tenant
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "report",
         entityId: report.id,
         action: "platform_generate",
+        previousData: null,
         newData: { 
           title: report.title, 
           type: report.type, 
           generatedBy: 'platform_admin' 
         },
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       // Simulate async report generation
@@ -1055,7 +2008,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user has permission to update this user
       const hasPermission = req.user.role === 'super_admin' || 
                            ((req.user.role === 'tenant_admin' || req.user.role === 'director') && existingUser.tenantId === req.user.tenantId) ||
-                           (req.user.userId === id); // User updating themselves
+                           (req.user.id === id); // User updating themselves
 
       if (!hasPermission) {
         return res.status(403).json({ message: "Access denied. Cannot update this user." });
@@ -1067,7 +2020,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Prevent users from deactivating themselves
-      if (req.user.userId === id && updateData.isActive === false) {
+      if (req.user.id === id && updateData.isActive === false) {
         return res.status(403).json({ message: "You cannot deactivate your own account." });
       }
 
@@ -1077,10 +2030,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: existingUser.tenantId,
-        userId: req.user.userId || null,
+        userId: req.user.id || null,
         entityType: "user",
         entityId: id,
         action: "update",
+        previousData: null,
         oldData: { isActive: existingUser.isActive, role: existingUser.role },
         newData: updateData,
         ipAddress: req.ip || null,
@@ -1166,6 +2120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "user",
         entityId: newUser.id,
         action: "create",
+        previousData: null,
         newData: { 
           username, 
           email, 
@@ -1335,7 +2290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertMedicalCommunicationSchema.parse({
         ...req.body,
         tenantId: req.user.tenantId,
-        senderId: req.user.userId,
+        senderId: req.user.id,
       });
 
       const communication = await storage.createMedicalCommunication(validatedData);
@@ -1343,13 +2298,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "medical_communication",
         entityId: communication.id,
         action: "CREATE",
+        previousData: null,
         newData: communication,
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent')
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
       });
 
       res.status(201).json(communication);
@@ -1373,13 +2329,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "medical_communication",
         entityId: communication.id,
         action: "UPDATE",
+        previousData: null,
         newData: communication,
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent')
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
       });
 
       res.json(communication);
@@ -1409,13 +2366,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "communication_translation",
         entityId: translation.id,
         action: "CREATE",
+        previousData: null,
         newData: translation,
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent')
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
       });
 
       res.status(201).json(translation);
@@ -1448,13 +2406,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "supported_language",
         entityId: language.id,
         action: "CREATE",
+        previousData: null,
         newData: language,
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent')
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
       });
 
       res.status(201).json(language);
@@ -1478,13 +2437,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "supported_language",
         entityId: language.id,
         action: "UPDATE",
+        previousData: null,
         newData: language,
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent')
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
       });
 
       res.json(language);
@@ -1518,13 +2478,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "medical_phrase",
         entityId: phrase.id,
         action: "CREATE",
+        previousData: null,
         newData: phrase,
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent')
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
       });
 
       res.status(201).json(phrase);
@@ -1550,7 +2511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertPhraseTranslationSchema.parse({
         ...req.body,
-        translatedBy: req.user.userId,
+        translatedBy: req.user.id,
       });
 
       const translation = await storage.createPhraseTranslation(validatedData);
@@ -1558,13 +2519,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "phrase_translation",
         entityId: translation.id,
         action: "CREATE",
+        previousData: null,
         newData: translation,
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent')
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
       });
 
       res.status(201).json(translation);
@@ -1611,9 +2573,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "laboratory",
         entityId: laboratory.id,
         action: "create",
+        previousData: null,
         newData: laboratory,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(laboratory);
@@ -1673,9 +2636,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "lab_result",
         entityId: labResult.id,
         action: "create",
+        previousData: null,
         newData: labResult,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(labResult);
@@ -1706,9 +2670,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "lab_order_assignment",
         entityId: assignment.id,
         action: "create",
+        previousData: null,
         newData: assignment,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(assignment);
@@ -1888,19 +2853,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertVitalSignsSchema.parse({
         ...req.body,
         tenantId: req.tenantId,
-        recordedById: req.user?.id
+        recordedBy: req.user?.id
       });
 
       const vitalSigns = await storage.createVitalSigns(validatedData);
+
+      // If checkInId is provided, link the vital signs to the check-in record
+      if (req.body.checkInId) {
+        await storage.updatePatientCheckIn(req.body.checkInId, {
+          vitalSignsId: vitalSigns.id
+        }, req.tenantId!);
+      }
 
       // Create audit log
       await storage.createAuditLog({
         userId: req.user?.id!,
         tenantId: req.tenantId!,
         action: "vital_signs_created",
+        previousData: null,
         entityType: "vital_signs",
         entityId: vitalSigns.id,
-        details: { patientId: vitalSigns.patientId, appointmentId: vitalSigns.appointmentId }
+        details: { patientId: vitalSigns.patientId, appointmentId: vitalSigns.appointmentId, checkInId: req.body.checkInId }
       });
 
       res.status(201).json(vitalSigns);
@@ -1926,6 +2899,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.userId!,
         tenantId: req.tenantId!,
         action: "vital_signs_updated",
+        previousData: null,
         resourceType: "vital_signs",
         resourceId: vitalSigns.id,
         details: { changes: req.body }
@@ -1994,6 +2968,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.userId!,
         tenantId: req.tenantId!,
         action: "visit_summary_created",
+        previousData: null,
         resourceType: "visit_summary",
         resourceId: visitSummary.id,
         details: { patientId: visitSummary.patientId, appointmentId: visitSummary.appointmentId }
@@ -2022,6 +2997,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.userId!,
         tenantId: req.tenantId!,
         action: "visit_summary_updated",
+        previousData: null,
         resourceType: "visit_summary",
         resourceId: visitSummary.id,
         details: { changes: req.body }
@@ -2033,78 +3009,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update visit summary" });
     }
   });
-
-  const httpServer = createServer(app);
-  return httpServer;
-}
-
-// Helper function to generate mock report content
-function generateReportContent(report: any): string {
-  const timestamp = new Date().toISOString();
-  
-  if (report.format === 'csv') {
-    return generateCSVContent(report, timestamp);
-  } else if (report.format === 'excel') {
-    return generateExcelContent(report, timestamp);
-  } else {
-    return generatePDFContent(report, timestamp);
-  }
-}
-
-function generateCSVContent(report: any, timestamp: string): string {
-  const headers = ['Date', 'Type', 'Category', 'Value', 'Status'];
-  const rows = [
-    [timestamp.split('T')[0], report.type, 'Patients', '150', 'Active'],
-    [timestamp.split('T')[0], report.type, 'Appointments', '45', 'Scheduled'],
-    [timestamp.split('T')[0], report.type, 'Revenue', '$12,500', 'Collected'],
-    [timestamp.split('T')[0], report.type, 'Lab Tests', '28', 'Completed'],
-    [timestamp.split('T')[0], report.type, 'Prescriptions', '67', 'Dispensed']
-  ];
-  
-  return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
-}
-
-function generateExcelContent(report: any, timestamp: string): string {
-  // For Excel format, return a simple CSV-like content
-  // In a real implementation, you would use a library like xlsx
-  return generateCSVContent(report, timestamp);
-}
-
-function generatePDFContent(report: any, timestamp: string): string {
-  // For PDF format, return plain text content
-  // In a real implementation, you would use a library like pdfkit
-  return `
-HEALTHCARE REPORT
-=================
-
-Report Title: ${report.title}
-Report Type: ${report.type}
-Generated: ${timestamp}
-Format: ${report.format.toUpperCase()}
-
-SUMMARY
--------
-This report contains healthcare analytics and operational data
-for the selected time period and organization.
-
-KEY METRICS
------------
-• Total Patients: 150
-• Appointments Scheduled: 45
-• Revenue Generated: $12,500
-• Lab Tests Completed: 28
-• Prescriptions Dispensed: 67
-
-COMPLIANCE STATUS
------------------
-✓ HIPAA Compliance: Active
-✓ Data Security: Verified
-✓ Audit Trail: Complete
-
-Generated by NAVIMED Healthcare Platform
-Report ID: ${report.id}
-`;
-}
 
   // AI Health Recommendations routes
   app.get("/api/health-recommendations/patient/:patientId", authenticateToken, requireTenant, async (req, res) => {
@@ -2199,6 +3103,7 @@ Report ID: ${report.id}
 
   app.post("/api/health-analyses/generate/:patientId", authenticateToken, requireTenant, requireRole(['physician', 'nurse', 'tenant_admin', 'super_admin']), async (req, res) => {
     try {
+      console.log("Health analysis generation started for patient:", req.params.patientId);
       const { patientId } = req.params;
       const { tenantId, userId } = req.user;
       
@@ -2216,18 +3121,44 @@ Report ID: ${report.id}
       const appointments = await storage.getAppointmentsByPatient(patientId, tenantId);
       const recentAppointments = appointments.slice(0, 5);
       
-      if (recentVitalSigns.length === 0) {
+      // Get lab results (latest 10 records)
+      const labResults = await storage.getLabResultsByPatient(patientId, tenantId);
+      const recentLabResults = labResults.slice(0, 10);
+      
+      console.log(`Patient data summary: Vital signs: ${recentVitalSigns.length}, Appointments: ${recentAppointments.length}, Lab results: ${recentLabResults.length}`);
+      
+      if (recentVitalSigns.length === 0 && recentLabResults.length === 0) {
         return res.status(400).json({ 
-          message: "No vital signs data available for health analysis. Please record vital signs first." 
+          message: "No vital signs or lab results data available for health analysis. Please record vital signs or lab results first." 
         });
       }
       
       // Generate AI health analysis
-      const analysisResult = await aiHealthAnalyzer.analyzePatientHealth(
-        patient,
-        recentVitalSigns,
-        recentAppointments
-      );
+      console.log("Generating AI health analysis...");
+      // Try Gemini first, fall back to OpenAI system if needed
+      let analysisResult;
+      try {
+        if (process.env.GEMINI_API_KEY) {
+          console.log("Using Gemini AI for health analysis...");
+          analysisResult = await geminiHealthAnalyzer.analyzePatientHealth(
+            patient,
+            recentVitalSigns,
+            recentAppointments,
+            recentLabResults
+          );
+        } else {
+          throw new Error("Gemini API key not available, using fallback");
+        }
+      } catch (error) {
+        console.log("Falling back to intelligent analysis system...");
+        analysisResult = await aiHealthAnalyzer.analyzePatientHealth(
+          patient,
+          recentVitalSigns,
+          recentAppointments,
+          recentLabResults
+        );
+      }
+      console.log("AI analysis completed successfully");
       
       // Save health analysis to database
       const healthAnalysis = await storage.createHealthAnalysis({
@@ -2259,19 +3190,20 @@ Report ID: ${report.id}
       }
       
       // Log audit trail
-      await storage.logAuditAction(
+      await storage.createAuditLog({
         tenantId,
         userId,
-        'health_analysis',
-        healthAnalysis.id,
-        'generate',
-        null,
-        { 
+        entityType: 'health_analysis',
+        entityId: healthAnalysis.id,
+        action: 'generate',
+        newData: { 
           patientId,
           analysisScore: analysisResult.overallHealthScore,
           recommendationsCount: savedRecommendations.length
-        }
-      );
+        },
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
       
       res.json({
         analysis: healthAnalysis,
@@ -2292,12 +3224,485 @@ Report ID: ${report.id}
     }
   });
 
-  // ==================== PATIENT CHECK-IN ROUTES ====================
+  const httpServer = createServer(app);
+  return httpServer;
+}
 
-  // Get all patient check-ins for today  
+// Helper function to generate mock report content
+function generateReportContent(report: any): string {
+  const timestamp = new Date().toISOString();
+  
+  if (report.format === 'csv') {
+    return generateCSVContent(report, timestamp);
+  } else if (report.format === 'excel') {
+    return generateExcelContent(report, timestamp);
+  } else {
+    return generatePDFContent(report, timestamp);
+  }
+}
+
+function generateCSVContent(report: any, timestamp: string): string {
+  const headers = ['Date', 'Type', 'Category', 'Value', 'Status'];
+  const rows = [
+    [timestamp.split('T')[0], report.type, 'Patients', '150', 'Active'],
+    [timestamp.split('T')[0], report.type, 'Appointments', '45', 'Scheduled'],
+    [timestamp.split('T')[0], report.type, 'Revenue', '$12,500', 'Collected'],
+    [timestamp.split('T')[0], report.type, 'Lab Tests', '28', 'Completed'],
+    [timestamp.split('T')[0], report.type, 'Prescriptions', '67', 'Dispensed']
+  ];
+  
+  return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+}
+
+function generateExcelContent(report: any, timestamp: string): string {
+  // For Excel format, return a simple CSV-like content
+  // In a real implementation, you would use a library like xlsx
+  return generateCSVContent(report, timestamp);
+}
+
+function generatePDFContent(report: any, timestamp: string): string {
+  // For PDF format, return plain text content
+  // In a real implementation, you would use a library like pdfkit
+  return `
+HEALTHCARE REPORT
+=================
+
+Report Title: ${report.title}
+Report Type: ${report.type}
+Generated: ${timestamp}
+Format: ${report.format.toUpperCase()}
+
+SUMMARY
+-------
+This report contains healthcare analytics and operational data
+for the selected time period and organization.
+
+KEY METRICS
+-----------
+• Total Patients: 150
+• Appointments Scheduled: 45
+• Revenue Generated: $12,500
+• Lab Tests Completed: 28
+• Prescriptions Dispensed: 67
+
+COMPLIANCE STATUS
+-----------------
+✓ HIPAA Compliance: Active
+✓ Data Security: Verified
+✓ Audit Trail: Complete
+
+Generated by NAVIMED Healthcare Platform
+Report ID: ${report.id}
+`;
+}
+
+  // ==================== MEDICATION COPAY ROUTES ====================
+
+  // Get medication copays for a patient
+  app.get("/api/medication-copays/patient/:patientId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const copays = await storage.getMedicationCopaysByPatient(patientId, req.user.tenantId);
+      res.json(copays);
+    } catch (error) {
+      console.error("Failed to fetch patient medication copays:", error);
+      res.status(500).json({ message: "Failed to fetch medication copays" });
+    }
+  });
+
+  // Get medication copays by prescription
+  app.get("/api/medication-copays/prescription/:prescriptionId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { prescriptionId } = req.params;
+      const copays = await storage.getMedicationCopaysByPrescription(prescriptionId, req.user.tenantId);
+      res.json(copays);
+    } catch (error) {
+      console.error("Failed to fetch prescription medication copays:", error);
+      res.status(500).json({ message: "Failed to fetch medication copays" });
+    }
+  });
+
+  // Get medication copays by patient insurance
+  app.get("/api/medication-copays/insurance/:patientInsuranceId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { patientInsuranceId } = req.params;
+      const copays = await storage.getMedicationCopaysByPatientInsurance(patientInsuranceId, req.user.tenantId);
+      res.json(copays);
+    } catch (error) {
+      console.error("Failed to fetch insurance medication copays:", error);
+      res.status(500).json({ message: "Failed to fetch medication copays" });
+    }
+  });
+
+  // Get all medication copays for tenant (pharmacist view)
+  app.get("/api/medication-copays", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const copays = await storage.getMedicationCopaysByTenant(req.user.tenantId);
+      res.json(copays);
+    } catch (error) {
+      console.error("Failed to fetch medication copays:", error);
+      res.status(500).json({ message: "Failed to fetch medication copays" });
+    }
+  });
+
+  // Get medication copays defined by current pharmacist
+  app.get("/api/medication-copays/pharmacist", authenticateToken, requireTenant, requireRole(["pharmacist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const copays = await storage.getMedicationCopaysByPharmacist(req.user.id, req.user.tenantId);
+      res.json(copays);
+    } catch (error) {
+      console.error("Failed to fetch pharmacist medication copays:", error);
+      res.status(500).json({ message: "Failed to fetch medication copays" });
+    }
+  });
+
+  // Get specific medication copay
+  app.get("/api/medication-copays/:id", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const copay = await storage.getMedicationCopay(id, req.user.tenantId);
+      
+      if (!copay) {
+        return res.status(404).json({ message: "Medication copay not found" });
+      }
+      
+      res.json(copay);
+    } catch (error) {
+      console.error("Failed to fetch medication copay:", error);
+      res.status(500).json({ message: "Failed to fetch medication copay" });
+    }
+  });
+
+  // Create new medication copay (pharmacists only)
+  app.post("/api/medication-copays", authenticateToken, requireTenant, requireRole(["pharmacist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      console.log("=== MEDICATION COPAY CREATION ===");
+      console.log("Request body:", req.body);
+      console.log("User:", { id: req.user.id, tenantId: req.user.tenantId });
+      
+      const validatedData = insertMedicationCopaySchema.parse({
+        ...req.body,
+        tenantId: req.user.tenantId,
+        definedByPharmacist: req.user.id,
+      });
+      
+      console.log("Validated data:", validatedData);
+
+      const copay = await storage.createMedicationCopay(validatedData);
+      console.log("Created copay:", copay);
+
+      if (!copay) {
+        console.error("Copay creation returned null/undefined");
+        return res.status(500).json({ message: "Failed to create medication copay - no data returned" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId,
+        userId: req.user.id,
+        entityType: "medication_copay",
+        entityId: copay.id,
+        action: "CREATE",
+        previousData: null,
+        newData: copay,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      console.log("Sending response:", copay);
+      res.status(201).json(copay);
+    } catch (error) {
+      console.error("Failed to create medication copay:", error);
+      res.status(500).json({ message: "Failed to create medication copay", error: error.message });
+    }
+  });
+
+  // Update medication copay (pharmacists only)
+  app.patch("/api/medication-copays/:id", authenticateToken, requireTenant, requireRole(["pharmacist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      const copay = await storage.updateMedicationCopay(id, updates, req.user.tenantId);
+      
+      if (!copay) {
+        return res.status(404).json({ message: "Medication copay not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId,
+        userId: req.user.id,
+        entityType: "medication_copay",
+        entityId: copay.id,
+        action: "UPDATE",
+        previousData: null,
+        newData: copay,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      res.json(copay);
+    } catch (error) {
+      console.error("Failed to update medication copay:", error);
+      res.status(500).json({ message: "Failed to update medication copay" });
+    }
+  });
+
+  // Get active medication copays for a patient
+  app.get("/api/medication-copays/patient/:patientId/active", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const copays = await storage.getActiveMedicationCopaysByPatient(patientId, req.user.tenantId);
+      res.json(copays);
+    } catch (error) {
+      console.error("Failed to fetch active medication copays:", error);
+      res.status(500).json({ message: "Failed to fetch active medication copays" });
+    }
+  });
+
+  // Patient insurance routes for copay form
+  app.get("/api/patient-insurance/:patientId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const patientInsurance = await storage.getPatientInsurance(patientId, req.user.tenantId);
+      res.json(patientInsurance);
+    } catch (error) {
+      console.error("Failed to fetch patient insurance:", error);
+      res.status(500).json({ message: "Failed to fetch patient insurance" });
+    }
+  });
+
+  // Pharmacy registration endpoint (public)
+  app.post("/api/pharmacy-registration", async (req, res) => {
+    try {
+      console.log("Pharmacy registration request:", JSON.stringify(req.body, null, 2));
+      
+      const { tenant: pharmacyData, admin } = req.body;
+      
+      if (!pharmacyData || !admin) {
+        return res.status(400).json({ 
+          message: "Pharmacy and admin information are required" 
+        });
+      }
+
+      // Create the pharmacy tenant
+      const tenantData = {
+        name: pharmacyData.name,
+        type: "pharmacy" as const,
+        subdomain: pharmacyData.subdomain,
+        settings: pharmacyData.settings || {}
+      };
+
+      console.log("Creating pharmacy tenant:", tenantData);
+      const tenant = await storage.createTenant(tenantData);
+      
+      // Generate a temporary password for the admin
+      const tempPassword = Math.random().toString(36).slice(-8);
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      
+      // Create the admin user
+      const adminData = {
+        tenantId: tenant.id,
+        username: admin.email,
+        email: admin.email,
+        password: hashedPassword,
+        firstName: admin.firstName,
+        lastName: admin.lastName,
+        role: "tenant_admin" as const,
+        isActive: true
+      };
+
+      console.log("Creating admin user:", { ...adminData, password: "[HIDDEN]" });
+      const adminUser = await storage.createUser(adminData);
+
+      // In a real application, you would send an email with the temporary password
+      console.log(`Pharmacy registered successfully. Admin credentials: ${admin.email} / ${tempPassword}`);
+
+      res.status(201).json({
+        message: "Pharmacy registered successfully",
+        tenant: {
+          id: tenant.id,
+          name: tenant.name,
+          subdomain: tenant.subdomain
+        },
+        admin: {
+          id: adminUser.id,
+          email: adminUser.email,
+          tempPassword: tempPassword // In production, this would be sent via email
+        }
+      });
+
+    } catch (error) {
+      console.error("Pharmacy registration error:", error);
+      res.status(500).json({ 
+        message: "Registration failed", 
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Pricing Plans routes
+  app.get('/api/pricing-plans', async (req, res) => {
+    try {
+      const plans = await storage.getPricingPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error('Error fetching pricing plans:', error);
+      res.status(500).json({ error: 'Failed to fetch pricing plans' });
+    }
+  });
+
+  // White Label Settings routes  
+  app.patch('/api/tenants/:tenantId/white-label', authenticateToken, async (req, res) => {
+    try {
+      const { tenantId } = req.params;
+      const whitelabelSettings = req.body;
+      
+      // Check if user has access to this tenant
+      if (req.user.tenantId !== tenantId && req.user.role !== 'super_admin') {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      // Get tenant info to check if it's ARGILETTE platform owner
+      const tenant = await storage.getTenant(tenantId);
+      if (!tenant) {
+        return res.status(404).json({ error: 'Tenant not found' });
+      }
+      
+      // ARGILETTE platform owner has unlimited white label access - no subscription check
+      const isPlatformOwner = tenant.name === 'ARGILETTE' || tenant.type === 'platform';
+      
+      if (!isPlatformOwner) {
+        // Check subscription for non-platform owners
+        const subscription = await storage.getCurrentSubscription(tenantId);
+        if (!subscription || (!subscription.whitelabelEnabled && subscription.plan !== 'white_label')) {
+          return res.status(403).json({ 
+            error: 'White label features require Enterprise or White Label subscription' 
+          });
+        }
+      } else {
+        console.log('[WHITE LABEL] ARGILETTE platform owner - unlimited white label access granted');
+      }
+      
+      const updatedTenant = await storage.updateTenantWhiteLabel(tenantId, whitelabelSettings);
+      res.json(updatedTenant);
+    } catch (error) {
+      console.error('Error updating white label settings:', error);
+      res.status(500).json({ error: 'Failed to update white label settings' });
+    }
+  });
+
+  // Offline Sync routes
+  app.post('/api/offline-sync', authenticateToken, async (req, res) => {
+    try {
+      const syncData = req.body;
+      const result = await storage.syncOfflineData(syncData);
+      res.json(result);
+    } catch (error) {
+      console.error('Error syncing offline data:', error);
+      res.status(500).json({ error: 'Failed to sync offline data' });
+    }
+  });
+
+  // Translation routes
+  app.get('/api/translations/:tenantId/:language', async (req, res) => {
+    try {
+      const { tenantId, language } = req.params;
+      const translations = await storage.getTranslations(tenantId, language);
+      res.json(translations);
+    } catch (error) {
+      console.error('Error fetching translations:', error);
+      res.status(500).json({ error: 'Failed to fetch translations' });
+    }
+  });
+
+  app.post('/api/translations', authenticateToken, async (req, res) => {
+    try {
+      const translation = req.body;
+      const result = await storage.createTranslation(translation);
+      res.json(result);
+    } catch (error) {
+      console.error('Error creating translation:', error);
+      res.status(500).json({ error: 'Failed to create translation' });
+    }
+  });
+
+  // ==================== TRIAL SUSPENSION ROUTES ====================
+  
+  // Get trial status for current tenant
+  app.get("/api/trial/status", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const trialStatus = await trialSuspensionService.getTrialStatus(req.user.tenantId);
+      
+      if (!trialStatus) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+      
+      res.json(trialStatus);
+    } catch (error) {
+      console.error("Failed to fetch trial status:", error);
+      res.status(500).json({ message: "Failed to fetch trial status" });
+    }
+  });
+
+  // Extend trial (super admin only)
+  app.post("/api/trial/:tenantId/extend", authenticateToken, requireRole(["super_admin"]), async (req, res) => {
+    try {
+      const { tenantId } = req.params;
+      const { days = 14 } = req.body;
+      
+      await trialSuspensionService.extendTrial(tenantId, days);
+      
+      res.json({ 
+        message: `Trial extended by ${days} days`,
+        tenantId 
+      });
+    } catch (error) {
+      console.error("Failed to extend trial:", error);
+      res.status(500).json({ message: "Failed to extend trial" });
+    }
+  });
+
+  // Reactivate suspended tenant (super admin only)
+  app.post("/api/trial/:tenantId/reactivate", authenticateToken, requireRole(["super_admin"]), async (req, res) => {
+    try {
+      const { tenantId } = req.params;
+      const { subscriptionPlan = 'professional' } = req.body;
+      
+      await trialSuspensionService.reactivateTenant(tenantId, subscriptionPlan);
+      
+      res.json({ 
+        message: "Tenant reactivated successfully",
+        tenantId,
+        subscriptionPlan
+      });
+    } catch (error) {
+      console.error("Failed to reactivate tenant:", error);
+      res.status(500).json({ message: "Failed to reactivate tenant" });
+    }
+  });
+
+  // Manually trigger suspension check (super admin only)
+  app.post("/api/trial/check-suspensions", authenticateToken, requireRole(["super_admin"]), async (req, res) => {
+    try {
+      await trialSuspensionService.checkAndSuspendExpiredTrials();
+      
+      res.json({ 
+        message: "Suspension check completed successfully" 
+      });
+    } catch (error) {
+      console.error("Failed to run suspension check:", error);
+      res.status(500).json({ message: "Failed to run suspension check" });
+    }
+  });
+
+  // Patient Check-ins for receptionist workflow
   app.get("/api/patient-check-ins", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const checkIns = await storage.getPatientCheckInsByTenant(req.tenant!.id);
+      const { date } = req.query;
+      const checkInDate = date ? new Date(date as string) : undefined;
+      const checkIns = await storage.getPatientCheckInsByTenant(req.tenant!.id, checkInDate);
       res.json(checkIns);
     } catch (error) {
       console.error("Failed to fetch patient check-ins:", error);
@@ -2305,11 +3710,9 @@ Report ID: ${report.id}
     }
   });
 
-  // Get today's patient check-ins
   app.get("/api/patient-check-ins/today", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const checkIns = await storage.getPatientCheckInsByDate(today, req.tenant!.id);
+      const checkIns = await storage.getTodaysCheckIns(req.tenant!.id);
       res.json(checkIns);
     } catch (error) {
       console.error("Failed to fetch today's check-ins:", error);
@@ -2317,7 +3720,6 @@ Report ID: ${report.id}
     }
   });
 
-  // Get waiting patients (checked in but not completed)
   app.get("/api/patient-check-ins/waiting", authenticateToken, requireTenant, async (req, res) => {
     try {
       const waitingPatients = await storage.getWaitingPatients(req.tenant!.id);
@@ -2339,13 +3741,13 @@ Report ID: ${report.id}
       const validatedData = insertPatientCheckInSchema.parse({
         ...req.body,
         tenantId: req.tenant!.id,
-        checkInTime: new Date()
+        checkedInBy: req.user!.id
       });
-      
+
       console.log("[CHECK-IN DEBUG] Validated data:", validatedData);
 
       const checkIn = await storage.createPatientCheckIn(validatedData);
-      
+
       console.log("[CHECK-IN DEBUG] Created check-in:", checkIn);
 
       // Create audit log
@@ -2363,11 +3765,49 @@ Report ID: ${report.id}
 
       res.status(201).json(checkIn);
     } catch (error) {
-      console.error("Failed to create patient check-in:", error);
+      console.error("[CHECK-IN DEBUG] Failed to create patient check-in:", error);
+      if (error instanceof z.ZodError) {
+        console.error("[CHECK-IN DEBUG] Validation errors:", error.errors);
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
       res.status(500).json({ message: "Failed to create patient check-in" });
     }
   });
 
-  const server = createServer(app);
+  app.patch("/api/patient-check-ins/:id", authenticateToken, requireTenant, requireRole(["receptionist", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      const originalCheckIn = await storage.getPatientCheckIn(id, req.tenant!.id);
+      if (!originalCheckIn) {
+        return res.status(404).json({ message: "Patient check-in not found" });
+      }
+
+      const updatedCheckIn = await storage.updatePatientCheckIn(id, updates, req.tenant!.id);
+      if (!updatedCheckIn) {
+        return res.status(404).json({ message: "Patient check-in not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenant!.id,
+        userId: req.user!.id,
+        entityType: "patient_check_in",
+        entityId: id,
+        action: "UPDATE",
+        previousData: originalCheckIn,
+        newData: updatedCheckIn,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      res.json(updatedCheckIn);
+    } catch (error) {
+      console.error("Failed to update patient check-in:", error);
+      res.status(500).json({ message: "Failed to update patient check-in" });
+    }
+  });
+
   return server;
 }
