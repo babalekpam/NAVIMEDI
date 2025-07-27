@@ -4,6 +4,9 @@
 A comprehensive multi-tenant healthcare management platform specializing in pharmacy operations and workflow optimization, with advanced capabilities for prescription management and insurance claims processing.
 
 ## Recent Changes (Latest)
+- **IMPLEMENTED HOSPITAL SERVICE PRICING MANAGEMENT** - Created comprehensive interface for hospitals to set service rates, insurance coverage, and patient copays
+- **ADDED INSURANCE COVERAGE CONFIGURATION** - Hospitals can now manually set coverage rates for each insurance provider and service combination
+- **ENHANCED PATIENT COPAY CALCULATIONS** - When patients have insurance and correct procedure is entered, system shows exact copay amount
 - **REMOVED LAB RESULTS FROM RECEPTIONIST ACCESS** - Receptionists no longer see lab results in sidebar navigation (only doctors, nurses, lab techs, and admins)
 - **FIXED TENANT DETECTION ISSUE** - Corrected tenant context fallback logic to properly show "Metro General Hospital" instead of "Working Test Pharmacy" for receptionist
 - **ENHANCED RECEPTIONIST SIDEBAR WITH QUICK ACTIONS** - Added "Register Patient" and "Book Appointment" buttons for direct access to forms

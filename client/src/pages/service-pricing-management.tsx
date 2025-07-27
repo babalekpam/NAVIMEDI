@@ -23,7 +23,7 @@ import {
   TestTube,
   Pill
 } from "lucide-react";
-import { ServicePrice, InsuranceProvider } from "@shared/schema";
+import { ServicePrice, InsuranceProvider, InsurancePlanCoverage } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
@@ -46,6 +46,334 @@ const serviceCategories = [
   { value: "emergency", label: "Emergency", icon: Building2 },
   { value: "other", label: "Other", icon: DollarSign }
 ];
+
+interface InsuranceCoverageManagerProps {
+  servicePrices: ServicePrice[];
+  insuranceProviders: InsuranceProvider[];
+}
+
+function InsuranceCoverageManager({ servicePrices, insuranceProviders }: InsuranceCoverageManagerProps) {
+  const [selectedService, setSelectedService] = useState<string>("");
+  const [selectedProvider, setSelectedProvider] = useState<string>("");
+  const [coverageFormData, setCoverageFormData] = useState({
+    copayAmount: "",
+    copayPercentage: "",
+    maxCoverageAmount: "",
+    preAuthRequired: false,
+    deductibleApplies: false
+  });
+  const [isCoverageFormOpen, setIsCoverageFormOpen] = useState(false);
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: coverages = [] } = useQuery<InsurancePlanCoverage[]>({
+    queryKey: ["/api/insurance-plan-coverage"],
+  });
+
+  const createCoverageMutation = useMutation({
+    mutationFn: async (coverageData: any) => {
+      const response = await apiRequest("POST", "/api/insurance-plan-coverage", coverageData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/insurance-plan-coverage"] });
+      setIsCoverageFormOpen(false);
+      resetCoverageForm();
+      toast({
+        title: "Success",
+        description: "Insurance coverage configured successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to configure coverage.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteCoverageMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/insurance-plan-coverage/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/insurance-plan-coverage"] });
+      toast({
+        title: "Success",
+        description: "Insurance coverage deleted successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete coverage.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetCoverageForm = () => {
+    setCoverageFormData({
+      copayAmount: "",
+      copayPercentage: "",
+      maxCoverageAmount: "",
+      preAuthRequired: false,
+      deductibleApplies: false
+    });
+    setSelectedService("");
+    setSelectedProvider("");
+  };
+
+  const handleSubmitCoverage = () => {
+    if (!selectedService || !selectedProvider) {
+      toast({
+        title: "Error",
+        description: "Please select both a service and insurance provider.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!coverageFormData.copayAmount && !coverageFormData.copayPercentage) {
+      toast({
+        title: "Error",
+        description: "Please specify either a copay amount or percentage.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createCoverageMutation.mutate({
+      servicePriceId: selectedService,
+      insuranceProviderId: selectedProvider,
+      copayAmount: coverageFormData.copayAmount ? parseFloat(coverageFormData.copayAmount) : null,
+      copayPercentage: coverageFormData.copayPercentage ? parseFloat(coverageFormData.copayPercentage) : null,
+      maxCoverageAmount: coverageFormData.maxCoverageAmount ? parseFloat(coverageFormData.maxCoverageAmount) : null,
+      preAuthRequired: coverageFormData.preAuthRequired,
+      deductibleApplies: coverageFormData.deductibleApplies
+    });
+  };
+
+  const getServiceName = (servicePriceId: string) => {
+    const service = servicePrices.find(s => s.id === servicePriceId);
+    return service?.serviceName || "Unknown Service";
+  };
+
+  const getProviderName = (insuranceProviderId: string) => {
+    const provider = insuranceProviders.find(p => p.id === insuranceProviderId);
+    return provider?.name || "Unknown Provider";
+  };
+
+  const calculateCopayDisplay = (coverage: InsurancePlanCoverage, basePrice: number) => {
+    if (coverage.copayAmount) {
+      return `$${parseFloat(coverage.copayAmount).toFixed(2)}`;
+    } else if (coverage.copayPercentage) {
+      const copayAmount = basePrice * (parseFloat(coverage.copayPercentage) / 100);
+      return `${coverage.copayPercentage}% ($${copayAmount.toFixed(2)})`;
+    }
+    return "Not configured";
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-blue-600" />
+            Insurance Coverage Configuration
+          </CardTitle>
+          <Dialog open={isCoverageFormOpen} onOpenChange={setIsCoverageFormOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-green-600 hover:bg-green-700" onClick={resetCoverageForm}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Coverage Rule
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Configure Insurance Coverage</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Service *</Label>
+                    <Select value={selectedService} onValueChange={setSelectedService}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select service" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {servicePrices.map((service) => (
+                          <SelectItem key={service.id} value={service.id}>
+                            {service.serviceName} - ${parseFloat(service.basePrice).toFixed(2)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Insurance Provider *</Label>
+                    <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select provider" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {insuranceProviders.map((provider) => (
+                          <SelectItem key={provider.id} value={provider.id}>
+                            {provider.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Fixed Copay Amount ($)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={coverageFormData.copayAmount}
+                      onChange={(e) => setCoverageFormData({...coverageFormData, copayAmount: e.target.value})}
+                      placeholder="25.00"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>OR Copay Percentage (%)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={coverageFormData.copayPercentage}
+                      onChange={(e) => setCoverageFormData({...coverageFormData, copayPercentage: e.target.value})}
+                      placeholder="20.0"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Maximum Coverage Amount ($)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={coverageFormData.maxCoverageAmount}
+                    onChange={(e) => setCoverageFormData({...coverageFormData, maxCoverageAmount: e.target.value})}
+                    placeholder="1000.00"
+                  />
+                  <p className="text-sm text-gray-600">Leave empty for unlimited coverage</p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="preAuth"
+                      checked={coverageFormData.preAuthRequired}
+                      onChange={(e) => setCoverageFormData({...coverageFormData, preAuthRequired: e.target.checked})}
+                      className="rounded"
+                    />
+                    <Label htmlFor="preAuth">Pre-authorization required</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="deductible"
+                      checked={coverageFormData.deductibleApplies}
+                      onChange={(e) => setCoverageFormData({...coverageFormData, deductibleApplies: e.target.checked})}
+                      className="rounded"
+                    />
+                    <Label htmlFor="deductible">Deductible applies</Label>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsCoverageFormOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleSubmitCoverage}
+                    disabled={createCoverageMutation.isPending}
+                  >
+                    Configure Coverage
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-gray-600 mb-4">
+          Set insurance coverage rates and patient copays for each service. When patients enter their insurance 
+          and the correct procedure, they'll see exactly how much they need to pay.
+        </p>
+
+        {coverages.length === 0 ? (
+          <div className="text-center py-8">
+            <Shield className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No coverage rules configured</h3>
+            <p className="text-gray-600 mb-4">
+              Start by adding insurance coverage rates for your services
+            </p>
+            <Button onClick={() => setIsCoverageFormOpen(true)} className="bg-green-600 hover:bg-green-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Add First Coverage Rule
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {insuranceProviders.map((provider) => (
+              <div key={provider.id} className="border rounded-lg p-4">
+                <h4 className="font-medium text-lg mb-3 flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                  {provider.name}
+                </h4>
+                <div className="space-y-2">
+                  {coverages
+                    .filter(coverage => coverage.insuranceProviderId === provider.id)
+                    .map((coverage) => {
+                      const service = servicePrices.find(s => s.id === coverage.servicePriceId);
+                      const basePrice = service ? parseFloat(service.basePrice) : 0;
+                      
+                      return (
+                        <div key={coverage.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex-1">
+                            <div className="font-medium">{getServiceName(coverage.servicePriceId)}</div>
+                            <div className="text-sm text-gray-600">
+                              Base Price: ${basePrice.toFixed(2)} • 
+                              Patient Copay: {calculateCopayDisplay(coverage, basePrice)}
+                              {coverage.preAuthRequired && <Badge className="ml-2 bg-orange-100 text-orange-800">Pre-auth Required</Badge>}
+                              {coverage.deductibleApplies && <Badge className="ml-2 bg-purple-100 text-purple-800">Deductible Applies</Badge>}
+                            </div>
+                          </div>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => deleteCoverageMutation.mutate(coverage.id)}
+                            disabled={deleteCoverageMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  {coverages.filter(coverage => coverage.insuranceProviderId === provider.id).length === 0 && (
+                    <p className="text-gray-500 italic">No coverage rules configured for this provider</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function ServicePricingManagement() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -463,32 +791,8 @@ export default function ServicePricingManagement() {
         </CardContent>
       </Card>
 
-      {/* Insurance Coverage Note */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-blue-600" />
-            Insurance Coverage Setup
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600">
-            After setting up your service prices, you can configure specific insurance coverage rates 
-            and patient copays for each insurance provider. This allows for accurate billing calculations 
-            based on individual insurance plans and coverage agreements.
-          </p>
-          <div className="mt-4">
-            <Button variant="outline" className="mr-2">
-              <Calculator className="h-4 w-4 mr-2" />
-              Configure Insurance Coverage
-            </Button>
-            <Button variant="outline">
-              <TestTube className="h-4 w-4 mr-2" />
-              Test Pricing Calculations
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Insurance Coverage Configuration */}
+      <InsuranceCoverageManager servicePrices={servicePrices} insuranceProviders={insuranceProviders} />
     </div>
   );
 }
