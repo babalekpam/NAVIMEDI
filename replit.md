@@ -34,6 +34,7 @@ A comprehensive multi-tenant healthcare management platform specializing in phar
 - **PHARMACY PATIENT ACCESS RESTRICTION** - Pharmacies only see patients with prescriptions sent to them
 - **FIXED MEDICATION CLAIMS SYSTEM** - Insurance claims for pharmacy medications work perfectly
 - **ADDED PUBLIC ORGANIZATION REGISTRATION** - Organizations can register directly from landing page
+- **ENHANCED RECEPTIONIST BILLING ACCESS** - Both hospital and pharmacy receptionists can now handle billing operations and file insurance claims
 
 ## User Preferences
 - Simple, everyday language for communication (user is non-technical)
@@ -89,7 +90,7 @@ A comprehensive multi-tenant healthcare management platform specializing in phar
 - **Hospital Admin**: `admin@metrogeneral.com` / `admin123`
   - Access: Full hospital management, staff oversight, billing
 - **Hospital Receptionist**: `reception@metrogeneral.com` / `reception123`
-  - Access: Patient registration, appointments, check-in, vital signs
+  - Access: Patient registration, appointments, check-in, vital signs, billing, insurance claims
 - **Hospital Doctor**: `dr.smith@metrogeneral.com` / `doctor123`
   - Access: Patient care, prescriptions, lab orders, medical records
 - **Hospital Nurse**: `nurse.davis@metrogeneral.com` / `nurse123`
@@ -98,6 +99,7 @@ A comprehensive multi-tenant healthcare management platform specializing in phar
 ### Pharmacy - Working Test Pharmacy (working-test)
 - **Pharmacy Admin**: `admin@workingtest.com` / `admin123`
 - **Pharmacy Receptionist**: `receptionist@workingtest.com` / `receptionist123`
+  - Access: Patient registration, prescriptions, billing, insurance claims
 
 ## Development Notes
 - Application runs on port 5000
