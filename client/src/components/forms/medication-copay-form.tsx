@@ -66,8 +66,8 @@ export default function MedicationCopayForm({
       copayPercentage: "",
       formularyTier: "tier_1",
       priorAuthRequired: false,
-      quantityLimit: "",
-      daySupplyLimit: "",
+      quantityLimit: 0,
+      daySupplyLimit: 0,
       definedByPharmacist: user?.id || "",
       pharmacyNotes: "",
       isActive: true
@@ -107,8 +107,8 @@ export default function MedicationCopayForm({
         insuranceCoverage: parseFloat(copayData.insuranceCoverage),
         patientCopay: parseFloat(copayData.patientCopay),
         copayPercentage: copayData.copayPercentage ? parseFloat(copayData.copayPercentage) : null,
-        quantityLimit: copayData.quantityLimit ? parseInt(copayData.quantityLimit) : null,
-        daySupplyLimit: copayData.daySupplyLimit ? parseInt(copayData.daySupplyLimit) : null
+        quantityLimit: copayData.quantityLimit ? parseInt(copayData.quantityLimit.toString()) : null,
+        daySupplyLimit: copayData.daySupplyLimit ? parseInt(copayData.daySupplyLimit.toString()) : null
       };
       const response = await apiRequest("POST", "/api/medication-copays", processedData);
       return response.json();
@@ -159,7 +159,7 @@ export default function MedicationCopayForm({
           </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6">
             {/* Patient and Insurance Selection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
