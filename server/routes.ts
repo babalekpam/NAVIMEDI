@@ -738,11 +738,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/service-prices", requireRole(["tenant_admin", "director", "billing_staff", "receptionist"]), async (req, res) => {
     try {
-      // Additional check for receptionists - only allow hospital/clinic receptionists
-      console.log("Service pricing check - User role:", req.user.role, "Tenant type:", req.tenant?.type, "Tenant name:", req.tenant?.name);
-      if (req.user.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
-        return res.status(403).json({ message: "Access denied. Receptionist billing access is only available for hospitals." });
-      }
+      // Allow hospital receptionists full access to service pricing
+      console.log("Service pricing access - User role:", req.user.role, "Tenant type:", req.tenant?.type, "Tenant name:", req.tenant?.name);
       
       const servicePriceData = insertServicePriceSchema.parse({
         ...req.body,

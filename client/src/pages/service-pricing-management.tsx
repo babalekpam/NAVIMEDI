@@ -579,10 +579,14 @@ export default function ServicePricingManagement() {
         </div>
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => {
-              setEditingService(null);
-              resetForm();
-            }}>
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700" 
+              onClick={() => {
+                console.log("Add Service clicked - opening form");
+                setEditingService(null);
+                resetForm();
+              }}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add Service
             </Button>
