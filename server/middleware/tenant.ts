@@ -22,8 +22,9 @@ export const tenantMiddleware = (req: AuthenticatedRequest, res: Response, next:
     
     const token = authHeader.split(' ')[1];
     
-    if (!token || token === 'undefined' || token === 'null') {
-      return res.status(401).json({ message: 'Invalid authorization token' });
+    if (!token || token === 'undefined' || token === 'null' || token.length < 10) {
+      console.log('Invalid token format:', token?.substring(0, 20) + '...');
+      return res.status(401).json({ message: 'Invalid authorization token format' });
     }
 
     try {

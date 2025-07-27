@@ -13,6 +13,16 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   const token = localStorage.getItem("auth_token");
+  
+  // Clear corrupted tokens
+  if (token && (token === 'undefined' || token === 'null' || token.length < 10)) {
+    console.warn('Clearing corrupted token:', token?.substring(0, 20));
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
+    window.location.href = '/login';
+    throw new Error('Invalid token - redirecting to login');
+  }
+  
   const headers: Record<string, string> = {
     ...(data ? { "Content-Type": "application/json" } : {}),
     ...(token ? { "Authorization": `Bearer ${token}` } : {}),
@@ -36,6 +46,15 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const token = localStorage.getItem("auth_token");
+    
+    // Clear corrupted tokens
+    if (token && (token === 'undefined' || token === 'null' || token.length < 10)) {
+      console.warn('Clearing corrupted token in query:', token?.substring(0, 20));
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
+      throw new Error('Invalid token format');
+    }
+    
     const headers: Record<string, string> = {
       ...(token ? { "Authorization": `Bearer ${token}` } : {}),
     };

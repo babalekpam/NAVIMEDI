@@ -43,9 +43,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const storedToken = localStorage.getItem("auth_token");
     const storedUser = localStorage.getItem("auth_user");
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+    // Validate token format before using it
+    if (storedToken && storedUser && 
+        storedToken !== 'undefined' && 
+        storedToken !== 'null' && 
+        storedToken.length > 10) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setToken(storedToken);
+        setUser(parsedUser);
+      } catch (error) {
+        console.warn('Failed to parse stored user data, clearing auth:', error);
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("auth_user");
+      }
+    } else if (storedToken) {
+      // Clear corrupted tokens
+      console.warn('Clearing corrupted auth data');
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
     }
     setIsLoading(false);
   }, []);
