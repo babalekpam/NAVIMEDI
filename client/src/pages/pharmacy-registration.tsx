@@ -35,7 +35,9 @@ const pharmacyRegistrationSchema = z.object({
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State is required"),
   zipCode: z.string().min(5, "Valid ZIP code is required"),
-  phone: z.string().min(10, "Valid phone number is required"),
+  phone: z.string().refine((val) => /^\d{10}$/.test(val.replace(/\D/g, '')), {
+    message: "Phone number must be exactly 10 digits"
+  }),
   email: z.string().email("Valid email address is required"),
   
   // Pharmacy Licensing
@@ -47,7 +49,9 @@ const pharmacyRegistrationSchema = z.object({
   adminFirstName: z.string().min(2, "First name is required"),
   adminLastName: z.string().min(2, "Last name is required"),
   adminEmail: z.string().email("Valid email address is required"),
-  adminPhone: z.string().min(10, "Valid phone number is required"),
+  adminPhone: z.string().refine((val) => /^\d{10}$/.test(val.replace(/\D/g, '')), {
+    message: "Phone number must be exactly 10 digits"
+  }),
   adminLicense: z.string().min(5, "Pharmacist license is required"),
   
   // Services
@@ -522,7 +526,16 @@ export default function PharmacyRegistration() {
                       <FormItem>
                         <FormLabel>Phone Number *</FormLabel>
                         <FormControl>
-                          <Input placeholder="(555) 123-4567" {...field} />
+                          <Input 
+                            placeholder="1234567890" 
+                            {...field} 
+                            maxLength={10}
+                            onChange={(e) => {
+                              // Only allow digits and limit to 10 characters
+                              const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                              field.onChange(value);
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -662,7 +675,16 @@ export default function PharmacyRegistration() {
                       <FormItem>
                         <FormLabel>Phone Number *</FormLabel>
                         <FormControl>
-                          <Input placeholder="(555) 123-4567" {...field} />
+                          <Input 
+                            placeholder="1234567890" 
+                            {...field} 
+                            maxLength={10}
+                            onChange={(e) => {
+                              // Only allow digits and limit to 10 characters
+                              const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                              field.onChange(value);
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

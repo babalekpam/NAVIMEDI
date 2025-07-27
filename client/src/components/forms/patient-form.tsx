@@ -33,7 +33,9 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
   }).extend({
     dateOfBirth: z.string().min(1, "Date of birth is required"),
     gender: z.string().optional(),
-    phone: z.string().optional(),
+    phone: z.string().optional().refine((val) => !val || /^\d{10}$/.test(val.replace(/\D/g, '')), {
+      message: "Phone number must be exactly 10 digits"
+    }),
     email: z.string().optional(),
     address: z.string().optional(),
     emergencyContact: z.string().optional()
@@ -187,7 +189,16 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
               <FormItem>
                 <FormLabel>Phone Number</FormLabel>
                 <FormControl>
-                  <Input placeholder="(555) 123-4567" {...field} />
+                  <Input 
+                    placeholder="1234567890" 
+                    {...field} 
+                    maxLength={10}
+                    onChange={(e) => {
+                      // Only allow digits and limit to 10 characters
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      field.onChange(value);
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -230,10 +241,10 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
             <FormItem>
               <FormLabel>Emergency Contact</FormLabel>
               <FormControl>
-                <Input placeholder="Name and phone number of emergency contact" {...field} />
+                <Input placeholder="Name and 10-digit phone number of emergency contact" {...field} />
               </FormControl>
               <FormDescription>
-                Example: John Doe - (555) 123-4567 (Spouse)
+                Example: John Doe - 5551234567 (Spouse)
               </FormDescription>
               <FormMessage />
             </FormItem>

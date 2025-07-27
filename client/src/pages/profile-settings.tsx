@@ -652,9 +652,15 @@ export default function ProfileSettingsPage() {
                     <Input
                       id="phone"
                       value={profileData.phone}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                      onChange={(e) => {
+                        if (!isEditing) return;
+                        // Only allow digits and limit to 10 characters
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setProfileData(prev => ({ ...prev, phone: value }));
+                      }}
                       disabled={!isEditing}
-                      placeholder="Optional"
+                      placeholder="1234567890"
+                      maxLength={10}
                     />
                   </div>
                 </div>

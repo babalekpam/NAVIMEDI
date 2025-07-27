@@ -57,6 +57,9 @@ export default function RegisterOrganization() {
     if (formData.adminPassword !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
     }
+    if (formData.phoneNumber && !/^\d{10}$/.test(formData.phoneNumber.replace(/\D/g, ''))) {
+      newErrors.phoneNumber = "Phone number must be exactly 10 digits";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -261,10 +264,19 @@ export default function RegisterOrganization() {
                     <Label htmlFor="phoneNumber">Phone Number</Label>
                     <Input
                       id="phoneNumber"
-                      placeholder="(555) 123-4567"
+                      placeholder="1234567890"
+                      maxLength={10}
                       value={formData.phoneNumber}
-                      onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                      onChange={(e) => {
+                        // Only allow digits and limit to 10 characters
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setFormData({ ...formData, phoneNumber: value });
+                      }}
+                      className={errors.phoneNumber ? "border-red-500" : ""}
                     />
+                    {errors.phoneNumber && (
+                      <p className="text-sm text-red-600">{errors.phoneNumber}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
