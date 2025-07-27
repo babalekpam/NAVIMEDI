@@ -135,7 +135,7 @@ export function VisitSummaryForm({
   const createMutation = useMutation({
     mutationFn: (data: VisitSummaryFormData) => {
       console.log("Submitting visit summary:", data);
-      return apiRequest("/api/visit-summaries", "POST", {
+      return apiRequest("POST", "/api/visit-summaries", {
         ...data,
         symptoms: selectedSymptoms,
         finalDiagnosis: selectedDiagnoses,
@@ -167,7 +167,7 @@ export function VisitSummaryForm({
 
   const updateMutation = useMutation({
     mutationFn: (data: VisitSummaryFormData) => 
-      apiRequest(`/api/visit-summaries/${existingVisitSummary?.id}`, "PATCH", {
+      apiRequest("PATCH", `/api/visit-summaries/${existingVisitSummary?.id}`, {
         ...data,
         symptoms: selectedSymptoms,
         finalDiagnosis: selectedDiagnoses,
