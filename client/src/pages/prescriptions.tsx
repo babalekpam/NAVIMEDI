@@ -231,6 +231,13 @@ export default function Prescriptions() {
                       <p className="text-sm text-gray-500">
                         Patient: {getPatientName(prescription.patientId)}
                       </p>
+                      {/* Show doctor and hospital info for pharmacy users */}
+                      {tenant?.type === "pharmacy" && (prescription as any).providerName && (
+                        <div className="text-xs text-blue-600 mt-1">
+                          <p>Dr. {(prescription as any).providerName} {(prescription as any).providerLastName}</p>
+                          <p className="text-gray-500">{(prescription as any).hospitalName}</p>
+                        </div>
+                      )}
                       <p className="text-xs text-gray-400">
                         {prescription.dosage} • {prescription.frequency}
                       </p>
@@ -317,6 +324,22 @@ export default function Prescriptions() {
                     <p className="text-sm text-gray-600">Prescription Date</p>
                     <p className="font-medium">{selectedPrescription.prescribedDate ? new Date(selectedPrescription.prescribedDate).toLocaleDateString() : 'Not set'}</p>
                   </div>
+                  {/* Show doctor and hospital info for pharmacy users */}
+                  {tenant?.type === "pharmacy" && (selectedPrescription as any).providerName && (
+                    <>
+                      <div>
+                        <p className="text-sm text-gray-600">Prescribing Doctor</p>
+                        <p className="font-medium text-blue-600">
+                          Dr. {(selectedPrescription as any).providerName} {(selectedPrescription as any).providerLastName}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Hospital/Clinic</p>
+                        <p className="font-medium">{(selectedPrescription as any).hospitalName}</p>
+                        <p className="text-xs text-gray-500 capitalize">{(selectedPrescription as any).hospitalType}</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 

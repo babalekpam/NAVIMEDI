@@ -135,7 +135,7 @@ export interface IStorage {
   updatePrescription(id: string, updates: Partial<Prescription>, tenantId: string): Promise<Prescription | undefined>;
   getPrescriptionsByPatient(patientId: string, tenantId: string): Promise<Prescription[]>;
   getPrescriptionsByTenant(tenantId: string): Promise<Prescription[]>;
-  getPrescriptionsByPharmacy(pharmacyTenantId: string): Promise<Prescription[]>;
+  getPrescriptionsByPharmacy(pharmacyTenantId: string): Promise<any[]>;
 
   // Lab order management
   getLabOrder(id: string, tenantId: string): Promise<LabOrder | undefined>;
@@ -509,15 +509,49 @@ export class DatabaseStorage implements IStorage {
       );
 
     if (search) {
-      query.where(
-        and(
-          eq(prescriptions.pharmacyTenantId, pharmacyTenantId),
-          eq(patients.isActive, true),
-          sql`(LOWER(${patients.firstName}) LIKE LOWER('%' || ${search} || '%') OR 
-               LOWER(${patients.lastName}) LIKE LOWER('%' || ${search} || '%') OR 
-               ${patients.mrn} LIKE '%' || ${search} || '%')`
+      return await db
+        .select({
+          id: prescriptions.id,
+          tenantId: prescriptions.tenantId,
+          patientId: prescriptions.patientId,
+          providerId: prescriptions.providerId,
+          appointmentId: prescriptions.appointmentId,
+          pharmacyTenantId: prescriptions.pharmacyTenantId,
+          medicationName: prescriptions.medicationName,
+          dosage: prescriptions.dosage,
+          frequency: prescriptions.frequency,
+          quantity: prescriptions.quantity,
+          refills: prescriptions.refills,
+          instructions: prescriptions.instructions,
+          status: prescriptions.status,
+          prescribedDate: prescriptions.prescribedDate,
+          sentToPharmacyDate: prescriptions.sentToPharmacyDate,
+          filledDate: prescriptions.filledDate,
+          expiryDate: prescriptions.expiryDate,
+          createdAt: prescriptions.createdAt,
+          updatedAt: prescriptions.updatedAt,
+          // Provider (doctor) information
+          providerName: users.firstName,
+          providerLastName: users.lastName,
+          providerUsername: users.username,
+          // Hospital/clinic information
+          hospitalName: tenants.name,
+          hospitalType: tenants.type
+        })
+        .from(prescriptions)
+        .innerJoin(users, eq(prescriptions.providerId, users.id))
+        .innerJoin(tenants, eq(prescriptions.tenantId, tenants.id))
+        .innerJoin(patients, eq(prescriptions.patientId, patients.id))
+        .where(
+          and(
+            eq(prescriptions.pharmacyTenantId, pharmacyTenantId),
+            eq(patients.isActive, true),
+            sql`(LOWER(${patients.firstName}) LIKE LOWER('%' || ${search} || '%') OR 
+                 LOWER(${patients.lastName}) LIKE LOWER('%' || ${search} || '%') OR 
+                 ${patients.mrn} LIKE '%' || ${search} || '%')`
+          )
         )
-      );
+        .orderBy(desc(prescriptions.sentToPharmacyDate));
     }
 
     return await query.orderBy(desc(patients.createdAt));
@@ -605,13 +639,7 @@ export class DatabaseStorage implements IStorage {
     return prescription;
   }
 
-  async updatePrescription(id: string, updates: Partial<Prescription>, tenantId: string): Promise<Prescription | undefined> {
-    const [prescription] = await db.update(prescriptions)
-      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
-      .where(and(eq(prescriptions.id, id), eq(prescriptions.tenantId, tenantId)))
-      .returning();
-    return prescription || undefined;
-  }
+
 
   async getPrescriptionsByPatient(patientId: string, tenantId: string): Promise<Prescription[]> {
     return await db.select().from(prescriptions).where(
@@ -624,22 +652,49 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(prescriptions.prescribedDate));
   }
 
-  async getPrescriptionsByPharmacy(pharmacyTenantId: string): Promise<Prescription[]> {
-    return await db.select().from(prescriptions).where(eq(prescriptions.pharmacyTenantId, pharmacyTenantId))
+  async getPrescriptionsByPharmacy(pharmacyTenantId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: prescriptions.id,
+        tenantId: prescriptions.tenantId,
+        patientId: prescriptions.patientId,
+        providerId: prescriptions.providerId,
+        appointmentId: prescriptions.appointmentId,
+        pharmacyTenantId: prescriptions.pharmacyTenantId,
+        medicationName: prescriptions.medicationName,
+        dosage: prescriptions.dosage,
+        frequency: prescriptions.frequency,
+        quantity: prescriptions.quantity,
+        refills: prescriptions.refills,
+        instructions: prescriptions.instructions,
+        status: prescriptions.status,
+        prescribedDate: prescriptions.prescribedDate,
+        sentToPharmacyDate: prescriptions.sentToPharmacyDate,
+        filledDate: prescriptions.filledDate,
+        expiryDate: prescriptions.expiryDate,
+        createdAt: prescriptions.createdAt,
+        updatedAt: prescriptions.updatedAt,
+        // Provider (doctor) information
+        providerName: users.firstName,
+        providerLastName: users.lastName,
+        providerUsername: users.username,
+        // Hospital/clinic information
+        hospitalName: tenants.name,
+        hospitalType: tenants.type
+      })
+      .from(prescriptions)
+      .innerJoin(users, eq(prescriptions.providerId, users.id))
+      .innerJoin(tenants, eq(prescriptions.tenantId, tenants.id))
+      .where(eq(prescriptions.pharmacyTenantId, pharmacyTenantId))
       .orderBy(desc(prescriptions.sentToPharmacyDate));
   }
 
-  async updatePrescription(id: string, updates: Partial<Prescription>, tenantId: string): Promise<Prescription | null> {
-    const result = await db
-      .update(prescriptions)
-      .set({
-        ...updates,
-        updatedAt: new Date()
-      })
+  async updatePrescription(id: string, updates: Partial<Prescription>, tenantId: string): Promise<Prescription | undefined> {
+    const [prescription] = await db.update(prescriptions)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
       .where(and(eq(prescriptions.id, id), eq(prescriptions.tenantId, tenantId)))
       .returning();
-    
-    return result[0] || null;
+    return prescription || undefined;
   }
 
   // Lab order management
