@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
+import { useTranslation } from "@/contexts/translation-context";
 import { cn } from "@/lib/utils";
 
 interface SidebarItem {
@@ -64,6 +65,7 @@ export const Sidebar = () => {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const { tenant: currentTenant } = useTenant();
+  const { t } = useTranslation();
 
   if (!user) return null;
 

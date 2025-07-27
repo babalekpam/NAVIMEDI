@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/contexts/translation-context";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { 
@@ -97,6 +98,7 @@ export default function ProfileSettingsPage() {
   const { user, refreshUser } = useAuth();
   const { tenant } = useTenant();
   const { toast } = useToast();
+  const { setLanguage: setTranslationLanguage, currentLanguage } = useTranslation();
   
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -169,8 +171,12 @@ export default function ProfileSettingsPage() {
   useEffect(() => {
     if (userPreferences) {
       setPreferences(userPreferences);
+      // Sync language preference with translation context
+      if (userPreferences.language && userPreferences.language !== currentLanguage) {
+        setTranslationLanguage(userPreferences.language);
+      }
     }
-  }, [userPreferences]);
+  }, [userPreferences, currentLanguage, setTranslationLanguage]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: Partial<UserProfile>) => {
@@ -500,6 +506,12 @@ export default function ProfileSettingsPage() {
       ...prev,
       [key]: value
     }));
+    
+    // If language preference changes, update the translation context immediately
+    if (key === 'language') {
+      setTranslationLanguage(value);
+      localStorage.setItem('selectedLanguage', value);
+    }
   };
 
   const handleChangePassword = () => {

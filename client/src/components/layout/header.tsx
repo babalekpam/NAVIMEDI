@@ -12,10 +12,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
+import { useTranslation } from "@/contexts/translation-context";
 import { useLocation } from "wouter";
 import { TenantSwitcher } from "@/components/tenant/tenant-switcher";
 import { LanguageSelector } from "@/components/language-selector";
-import { useTranslation } from "@/contexts/translation-context";
 
 export const Header = () => {
   const { user, logout } = useAuth();

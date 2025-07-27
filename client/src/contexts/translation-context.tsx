@@ -30,6 +30,16 @@ const translations = {
     'pending-appointments': 'Pending Appointments',
     'active-prescriptions': 'Active Prescriptions',
     'recent-activity': 'Recent Activity',
+    // Profile & Settings
+    'profile-settings': 'Profile Settings',
+    'account-preferences': 'Account Preferences',
+    'notification-settings': 'Notification Settings',
+    'display-language': 'Display & Language',
+    'security-privacy': 'Security & Privacy',
+    'save-preferences': 'Save Preferences',
+    'language': 'Language',
+    'timezone': 'Timezone',
+    'theme': 'Theme',
   },
   es: {
     // Navigation
@@ -59,6 +69,16 @@ const translations = {
     'pending-appointments': 'Citas Pendientes',
     'active-prescriptions': 'Recetas Activas',
     'recent-activity': 'Actividad Reciente',
+    // Profile & Settings
+    'profile-settings': 'Configuración de Perfil',
+    'account-preferences': 'Preferencias de Cuenta',
+    'notification-settings': 'Configuración de Notificaciones',
+    'display-language': 'Pantalla e Idioma',
+    'security-privacy': 'Seguridad y Privacidad',
+    'save-preferences': 'Guardar Preferencias',
+    'language': 'Idioma',
+    'timezone': 'Zona Horaria',
+    'theme': 'Tema',
   },
   fr: {
     // Navigation
@@ -88,6 +108,16 @@ const translations = {
     'pending-appointments': 'Rendez-vous en Attente',
     'active-prescriptions': 'Ordonnances Actives',
     'recent-activity': 'Activité Récente',
+    // Profile & Settings
+    'profile-settings': 'Paramètres de Profil',
+    'account-preferences': 'Préférences de Compte',
+    'notification-settings': 'Paramètres de Notification',
+    'display-language': 'Affichage et Langue',
+    'security-privacy': 'Sécurité et Confidentialité',
+    'save-preferences': 'Enregistrer les Préférences',
+    'language': 'Langue',
+    'timezone': 'Fuseau Horaire',
+    'theme': 'Thème',
   },
   de: {
     // Navigation
@@ -117,6 +147,16 @@ const translations = {
     'pending-appointments': 'Ausstehende Termine',
     'active-prescriptions': 'Aktive Verschreibungen',
     'recent-activity': 'Letzte Aktivität',
+    // Profile & Settings
+    'profile-settings': 'Profileinstellungen',
+    'account-preferences': 'Kontoeinstellungen',
+    'notification-settings': 'Benachrichtigungseinstellungen',
+    'display-language': 'Anzeige und Sprache',
+    'security-privacy': 'Sicherheit und Datenschutz',
+    'save-preferences': 'Einstellungen Speichern',
+    'language': 'Sprache',
+    'timezone': 'Zeitzone',
+    'theme': 'Design',
   }
 };
 
