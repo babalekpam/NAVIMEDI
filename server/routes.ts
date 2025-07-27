@@ -248,6 +248,262 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get users by specific tenant ID (for tenant admins)
+  app.get("/api/users/:tenantId", requireTenant, requireRole(["tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const tenantId = req.params.tenantId;
+      
+      // Only allow access to own tenant unless super admin
+      if (req.user!.role !== 'super_admin' && req.tenant!.id !== tenantId) {
+        return res.status(403).json({ message: "Access denied to other tenant's users" });
+      }
+      
+      const users = await storage.getUsersByTenant(tenantId);
+      res.json(users);
+    } catch (error) {
+      console.error("Get tenant users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Create new user (tenant admin functionality)
+  app.post("/api/users", requireTenant, requireRole(["tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const { username, email, firstName, lastName, role, password } = req.body;
+      const tenantId = req.tenant!.id;
+      const createdBy = req.user!.id;
+
+      // Validate required fields
+      if (!username || !email || !firstName || !lastName || !role || !password) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+
+      // Validate role is appropriate for tenant type
+      const validRoles = req.tenant!.type === 'pharmacy' 
+        ? ['pharmacist', 'tenant_admin', 'billing_staff']
+        : ['director', 'physician', 'nurse', 'lab_technician', 'receptionist', 'billing_staff', 'tenant_admin'];
+
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ 
+          message: `Invalid role for ${req.tenant!.type}. Valid roles: ${validRoles.join(', ')}` 
+        });
+      }
+
+      // Check if username or email already exists in this tenant
+      const existingUser = await storage.getUserByUsername(username, tenantId);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists in this organization" });
+      }
+
+      const allUsers = await storage.getUsersByTenant(tenantId);
+      const emailExists = allUsers.find(u => u.email === email);
+      if (emailExists) {
+        return res.status(400).json({ message: "Email already exists in this organization" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create user
+      const userData = {
+        tenantId,
+        username,
+        email,
+        firstName,
+        lastName,
+        role,
+        password: hashedPassword,
+        isActive: true
+      };
+
+      const newUser = await storage.createUser(userData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId,
+        userId: createdBy,
+        entityType: "user",
+        entityId: newUser.id,
+        action: "CREATE",
+        previousData: null,
+        newData: { 
+          username: newUser.username, 
+          email: newUser.email, 
+          role: newUser.role,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName
+        },
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      // Return user without password
+      const { password: _, ...userResponse } = newUser;
+      res.status(201).json(userResponse);
+
+    } catch (error) {
+      console.error("Create user error:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  // Update user (tenant admin functionality)
+  app.patch("/api/users/:userId", requireTenant, requireRole(["tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const { username, email, firstName, lastName, role, isActive, password } = req.body;
+      const tenantId = req.tenant!.id;
+      const updatedBy = req.user!.id;
+
+      // Get existing user
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Only allow access to own tenant unless super admin
+      if (req.user!.role !== 'super_admin' && existingUser.tenantId !== tenantId) {
+        return res.status(403).json({ message: "Access denied to other tenant's users" });
+      }
+
+      // Prevent users from modifying their own admin privileges (except super admin)
+      if (existingUser.id === updatedBy && req.user!.role !== 'super_admin') {
+        if (role && role !== existingUser.role) {
+          return res.status(403).json({ message: "Cannot modify your own role" });
+        }
+        if (isActive === false) {
+          return res.status(403).json({ message: "Cannot deactivate your own account" });
+        }
+      }
+
+      const updateData: any = {};
+      
+      if (username && username !== existingUser.username) {
+        // Check username uniqueness within tenant
+        const usernameExists = await storage.getUserByUsername(username, tenantId);
+        if (usernameExists && usernameExists.id !== userId) {
+          return res.status(400).json({ message: "Username already exists" });
+        }
+        updateData.username = username;
+      }
+
+      if (email && email !== existingUser.email) {
+        const allUsers = await storage.getUsersByTenant(tenantId);
+        const emailExists = allUsers.find(u => u.email === email && u.id !== userId);
+        if (emailExists) {
+          return res.status(400).json({ message: "Email already exists" });
+        }
+        updateData.email = email;
+      }
+
+      if (firstName) updateData.firstName = firstName;
+      if (lastName) updateData.lastName = lastName;
+      if (typeof isActive === 'boolean') updateData.isActive = isActive;
+
+      if (role && role !== existingUser.role) {
+        // Validate role for tenant type
+        const validRoles = req.tenant!.type === 'pharmacy' 
+          ? ['pharmacist', 'tenant_admin', 'billing_staff']
+          : ['director', 'physician', 'nurse', 'lab_technician', 'receptionist', 'billing_staff', 'tenant_admin'];
+
+        if (!validRoles.includes(role)) {
+          return res.status(400).json({ 
+            message: `Invalid role for ${req.tenant!.type}. Valid roles: ${validRoles.join(', ')}` 
+          });
+        }
+        updateData.role = role;
+      }
+
+      if (password) {
+        updateData.password = await bcrypt.hash(password, 10);
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: "No valid fields to update" });
+      }
+
+      const updatedUser = await storage.updateUser(userId, updateData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId,
+        userId: updatedBy,
+        entityType: "user",
+        entityId: userId,
+        action: "UPDATE",
+        previousData: {
+          username: existingUser.username,
+          email: existingUser.email,
+          role: existingUser.role,
+          isActive: existingUser.isActive
+        },
+        newData: updateData,
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      // Return user without password
+      const { password: _, ...userResponse } = updatedUser;
+      res.json(userResponse);
+
+    } catch (error) {
+      console.error("Update user error:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Delete user (tenant admin functionality)
+  app.delete("/api/users/:userId", requireTenant, requireRole(["tenant_admin", "super_admin"]), async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const tenantId = req.tenant!.id;
+      const deletedBy = req.user!.id;
+
+      // Get existing user
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Only allow access to own tenant unless super admin
+      if (req.user!.role !== 'super_admin' && existingUser.tenantId !== tenantId) {
+        return res.status(403).json({ message: "Access denied to other tenant's users" });
+      }
+
+      // Prevent users from deleting themselves
+      if (existingUser.id === deletedBy) {
+        return res.status(403).json({ message: "Cannot delete your own account" });
+      }
+
+      // Soft delete by deactivating
+      const updatedUser = await storage.updateUser(userId, { isActive: false });
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId,
+        userId: deletedBy,
+        entityType: "user",
+        entityId: userId,
+        action: "DELETE",
+        previousData: {
+          username: existingUser.username,
+          email: existingUser.email,
+          role: existingUser.role,
+          isActive: existingUser.isActive
+        },
+        newData: { isActive: false },
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.json({ message: "User deactivated successfully" });
+
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   // Tenant management routes
   app.get("/api/tenants", requireRole(["super_admin"]), async (req, res) => {
     try {
@@ -1201,32 +1457,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Cross-tenant report creation error:", error);
       res.status(500).json({ message: "Failed to create cross-tenant report" });
-    }
-  });
-
-  // Get users for a specific tenant (for super admin and tenant admin user management)
-  app.get("/api/users/:tenantId", authenticateToken, requireTenant, async (req, res) => {
-    try {
-      const { tenantId } = req.params;
-      
-      // Super admin can view users from any tenant
-      if (req.user?.role === 'super_admin') {
-        const users = await storage.getUsersByTenant(tenantId);
-        res.json(users);
-      } else if ((req.user?.role === 'tenant_admin' || req.user?.role === 'director') && req.user.tenantId === tenantId) {
-        // Tenant admin and director can view users from their own tenant
-        const users = await storage.getUsersByTenant(tenantId);
-        res.json(users);
-      } else if (req.user?.tenantId === tenantId) {
-        // Regular users can only view users from their own tenant (limited info)
-        const users = await storage.getUsersByTenant(tenantId);
-        res.json(users);
-      } else {
-        return res.status(403).json({ message: "Access denied. Cannot view users from this organization." });
-      }
-    } catch (error) {
-      console.error("Get users error:", error);
-      res.status(500).json({ message: "Failed to fetch users" });
     }
   });
 
