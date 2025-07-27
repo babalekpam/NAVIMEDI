@@ -660,7 +660,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPrescriptionsByPharmacy(pharmacyTenantId: string): Promise<any[]> {
-    return await db
+    const result = await db
       .select({
         id: prescriptions.id,
         tenantId: prescriptions.tenantId,
@@ -694,6 +694,17 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(tenants, eq(prescriptions.tenantId, tenants.id))
       .where(eq(prescriptions.pharmacyTenantId, pharmacyTenantId))
       .orderBy(desc(prescriptions.sentToPharmacyDate));
+    
+    console.log(`Found ${result.length} prescriptions for pharmacy ${pharmacyTenantId}`);
+    if (result.length > 0) {
+      console.log("Sample prescription with provider info:", {
+        medicationName: result[0].medicationName,
+        providerName: result[0].providerName,
+        hospitalName: result[0].hospitalName
+      });
+    }
+    
+    return result;
   }
 
   async updatePrescription(id: string, updates: Partial<Prescription>, tenantId: string): Promise<Prescription | undefined> {

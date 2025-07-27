@@ -258,10 +258,10 @@ export default function Prescriptions() {
                         Patient: {getPatientName(prescription.patientId)}
                       </p>
                       {/* Show doctor and hospital info for pharmacy users */}
-                      {tenant?.type === "pharmacy" && (prescription as any).providerName && (
+                      {tenant?.type === "pharmacy" && (
                         <div className="text-xs text-blue-600 mt-1">
-                          <p>Dr. {(prescription as any).providerName} {(prescription as any).providerLastName}</p>
-                          <p className="text-gray-500">{(prescription as any).hospitalName}</p>
+                          <p>Dr. {(prescription as any).providerName || 'Unknown'} {(prescription as any).providerLastName || 'Doctor'}</p>
+                          <p className="text-gray-500">{(prescription as any).hospitalName || 'Unknown Hospital'}</p>
                         </div>
                       )}
                       <p className="text-xs text-gray-400">
@@ -361,18 +361,18 @@ export default function Prescriptions() {
                     <p className="font-medium">{selectedPrescription.prescribedDate ? new Date(selectedPrescription.prescribedDate).toLocaleDateString() : 'Not set'}</p>
                   </div>
                   {/* Show doctor and hospital info for pharmacy users */}
-                  {tenant?.type === "pharmacy" && (selectedPrescription as any).providerName && (
+                  {tenant?.type === "pharmacy" && (
                     <>
                       <div>
                         <p className="text-sm text-gray-600">Prescribing Doctor</p>
                         <p className="font-medium text-blue-600">
-                          Dr. {(selectedPrescription as any).providerName} {(selectedPrescription as any).providerLastName}
+                          Dr. {(selectedPrescription as any).providerName || 'Unknown'} {(selectedPrescription as any).providerLastName || 'Doctor'}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Hospital/Clinic</p>
-                        <p className="font-medium">{(selectedPrescription as any).hospitalName}</p>
-                        <p className="text-xs text-gray-500 capitalize">{(selectedPrescription as any).hospitalType}</p>
+                        <p className="font-medium">{(selectedPrescription as any).hospitalName || 'Unknown Hospital'}</p>
+                        <p className="text-xs text-gray-500 capitalize">{(selectedPrescription as any).hospitalType || 'clinic'}</p>
                       </div>
                     </>
                   )}

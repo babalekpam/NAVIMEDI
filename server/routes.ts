@@ -650,9 +650,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (patientId) {
         prescriptions = await storage.getPrescriptionsByPatient(patientId as string, tenantId);
       } else {
-        // For pharmacies, get only prescriptions sent to them
+        // For pharmacies, get only prescriptions sent to them with provider info
         if (tenantType === "pharmacy") {
+          console.log("Getting prescriptions for pharmacy tenant:", tenantId);
           prescriptions = await storage.getPrescriptionsByPharmacy(tenantId);
+          console.log("Found prescriptions:", prescriptions.length);
         } else {
           // For healthcare providers, get prescriptions they created
           prescriptions = await storage.getPrescriptionsByTenant(tenantId);
