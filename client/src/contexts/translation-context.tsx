@@ -182,16 +182,12 @@ interface TranslationProviderProps {
 }
 
 export const TranslationProvider = ({ children }: TranslationProviderProps) => {
-  const [currentLanguage, setCurrentLanguage] = useState<string>('en');
-  const [isTranslating, setIsTranslating] = useState(false);
-
-  useEffect(() => {
-    // Load saved language preference
+  const [currentLanguage, setCurrentLanguage] = useState<string>(() => {
+    // Initialize with saved language if available
     const savedLanguage = localStorage.getItem('selectedLanguage');
-    if (savedLanguage && savedLanguage !== currentLanguage) {
-      setCurrentLanguage(savedLanguage);
-    }
-  }, []);
+    return savedLanguage || 'en';
+  });
+  const [isTranslating, setIsTranslating] = useState(false);
 
   useEffect(() => {
     // Listen for language change events from language selector
@@ -214,13 +210,19 @@ export const TranslationProvider = ({ children }: TranslationProviderProps) => {
   }, []);
 
   const setLanguage = (language: string) => {
+    console.log('Translation context setLanguage called:', language, 'current:', currentLanguage);
+    if (language === currentLanguage) return;
+    
     setIsTranslating(true);
     localStorage.setItem('selectedLanguage', language);
     
+    // Immediate update without timeout to prevent reversion
+    setCurrentLanguage(language);
+    console.log('Language updated to:', language);
+    
     setTimeout(() => {
-      setCurrentLanguage(language);
       setIsTranslating(false);
-    }, 200);
+    }, 300);
   };
 
   const t = (key: string): string => {

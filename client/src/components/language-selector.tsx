@@ -44,6 +44,7 @@ export function LanguageSelector({
   const selectedLanguage = currentLanguage || contextLanguage;
 
   const handleLanguageChange = (languageCode: string) => {
+    console.log('Language selector changing to:', languageCode);
     setLanguage(languageCode);
     if (onLanguageChange) {
       onLanguageChange(languageCode);

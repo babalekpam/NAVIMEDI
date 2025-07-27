@@ -171,12 +171,12 @@ export default function ProfileSettingsPage() {
   useEffect(() => {
     if (userPreferences) {
       setPreferences(userPreferences);
-      // Sync language preference with translation context
+      // Sync language preference with translation context only if different
       if (userPreferences.language && userPreferences.language !== currentLanguage) {
         setTranslationLanguage(userPreferences.language);
       }
     }
-  }, [userPreferences, currentLanguage, setTranslationLanguage]);
+  }, [userPreferences]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: Partial<UserProfile>) => {
@@ -502,15 +502,15 @@ export default function ProfileSettingsPage() {
   };
 
   const handlePreferenceChange = (key: keyof UserPreferences, value: any) => {
-    setPreferences(prev => ({
-      ...prev,
+    const newPreferences = {
+      ...preferences,
       [key]: value
-    }));
+    };
+    setPreferences(newPreferences);
     
     // If language preference changes, update the translation context immediately
-    if (key === 'language') {
+    if (key === 'language' && value !== currentLanguage) {
       setTranslationLanguage(value);
-      localStorage.setItem('selectedLanguage', value);
     }
   };
 
