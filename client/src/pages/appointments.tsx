@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,14 @@ export default function Appointments() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Check URL parameters to auto-open appointment booking form
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'book') {
+      setIsFormOpen(true);
+    }
+  }, []);
 
   // Get all appointments if "all" is selected, otherwise filter by date
   const { data: appointments = [], isLoading } = useQuery<Appointment[]>({

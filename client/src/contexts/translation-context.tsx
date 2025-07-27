@@ -243,6 +243,7 @@ const translations = {
     'receptionist-dashboard': 'Receptionist Dashboard',
     'patient-registration-checkin-vitals': 'Patient registration, check-in, and vital signs collection',
     'register-patient': 'Register Patient',
+    'book-appointment': 'Book Appointment',
     'patient-checkin': 'Patient Check-In',
     'waiting-room': 'Waiting Room',
     'patient-search': 'Patient Search',
