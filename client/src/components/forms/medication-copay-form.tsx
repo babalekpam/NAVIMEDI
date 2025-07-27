@@ -121,6 +121,11 @@ export default function MedicationCopayForm({
       console.log("Calling apiRequest...");
       const response = await apiRequest("POST", "/api/medication-copays", processedData);
       console.log("Got response from apiRequest:", response);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const result = await response.json();
       console.log("Parsed JSON result:", result);
       return result;
@@ -153,8 +158,17 @@ export default function MedicationCopayForm({
     console.log("User:", user);
     console.log("Tenant:", tenant);
     
+    // Ensure patient and insurance IDs are set in the data
+    const submissionData = {
+      ...data,
+      patientId: selectedPatientId,
+      patientInsuranceId: selectedInsuranceId,
+      tenantId: tenant?.id || "",
+      definedByPharmacist: user?.id || ""
+    };
+    
     // Ensure patient and insurance IDs are set
-    if (!selectedPatientId) {
+    if (!submissionData.patientId) {
       console.log("ERROR: No patient selected");
       toast({
         variant: "destructive",
@@ -164,7 +178,7 @@ export default function MedicationCopayForm({
       return;
     }
     
-    if (!selectedInsuranceId) {
+    if (!submissionData.patientInsuranceId) {
       console.log("ERROR: No insurance selected");
       toast({
         variant: "destructive", 
@@ -175,7 +189,7 @@ export default function MedicationCopayForm({
     }
     
     console.log("=== SUBMITTING TO API ===");
-    createCopayMutation.mutate(data);
+    createCopayMutation.mutate(submissionData);
   };
 
   // Auto-calculate patient copay when full price and insurance coverage change
@@ -514,10 +528,18 @@ export default function MedicationCopayForm({
               <Button 
                 type="submit" 
                 disabled={createCopayMutation.isPending}
-                onClick={() => {
+                onClick={async (e) => {
                   console.log("Submit button clicked");
                   console.log("Form valid:", form.formState.isValid);
                   console.log("Form errors:", form.formState.errors);
+                  
+                  // Trigger validation manually before submission
+                  const isValid = await form.trigger();
+                  if (!isValid) {
+                    console.log("Form validation failed, stopping submission");
+                    e.preventDefault();
+                    return;
+                  }
                 }}
               >
                 {createCopayMutation.isPending ? "Defining Copay..." : "Define Copay"}
