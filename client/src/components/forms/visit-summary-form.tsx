@@ -133,18 +133,22 @@ export function VisitSummaryForm({
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: VisitSummaryFormData) => 
-      apiRequest("/api/visit-summaries", "POST", {
+    mutationFn: (data: VisitSummaryFormData) => {
+      console.log("Submitting visit summary:", data);
+      return apiRequest("/api/visit-summaries", "POST", {
         ...data,
         symptoms: selectedSymptoms,
         finalDiagnosis: selectedDiagnoses,
-      }),
-    onSuccess: () => {
+      });
+    },
+    onSuccess: (response) => {
+      console.log("Visit summary created successfully:", response);
       queryClient.invalidateQueries({ queryKey: ["/api/visit-summaries"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      const currentStatus = form.getValues("status");
       toast({
         title: "Success",
-        description: "Visit summary created successfully",
+        description: currentStatus === "finalized" ? "Consultation finalized successfully!" : "Visit summary created successfully",
       });
       onClose();
       form.reset();
@@ -152,6 +156,7 @@ export function VisitSummaryForm({
       setSelectedDiagnoses([]);
     },
     onError: (error: any) => {
+      console.error("Error creating visit summary:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to create visit summary",
@@ -679,10 +684,26 @@ export function VisitSummaryForm({
                 Cancel
               </Button>
               <Button 
-                type="submit" 
+                type="button" 
+                variant="outline" 
                 disabled={createMutation.isPending || updateMutation.isPending}
+                onClick={() => {
+                  form.setValue("status", "draft");
+                  form.handleSubmit(onSubmit)();
+                }}
               >
-                {createMutation.isPending || updateMutation.isPending ? "Saving..." : existingVisitSummary ? "Update" : "Create"} Visit Summary
+                {createMutation.isPending || updateMutation.isPending ? "Saving..." : "Save as Draft"}
+              </Button>
+              <Button 
+                type="button" 
+                className="bg-green-600 hover:bg-green-700"
+                disabled={createMutation.isPending || updateMutation.isPending}
+                onClick={() => {
+                  form.setValue("status", "finalized");
+                  form.handleSubmit(onSubmit)();
+                }}
+              >
+                {createMutation.isPending || updateMutation.isPending ? "Finalizing..." : "Finalize Consultation"}
               </Button>
             </div>
           </form>
