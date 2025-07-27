@@ -134,13 +134,17 @@ export default function MedicationCopayForm({
   });
 
   const onSubmit = (data: CopayFormData) => {
+    console.log("=== FORM SUBMISSION START ===");
     console.log("Form submission data:", data);
     console.log("Form validation errors:", form.formState.errors);
     console.log("Selected patient ID:", selectedPatientId);
     console.log("Selected insurance ID:", selectedInsuranceId);
+    console.log("User:", user);
+    console.log("Tenant:", tenant);
     
     // Ensure patient and insurance IDs are set
     if (!selectedPatientId) {
+      console.log("ERROR: No patient selected");
       toast({
         variant: "destructive",
         title: "Validation Error",
@@ -150,6 +154,7 @@ export default function MedicationCopayForm({
     }
     
     if (!selectedInsuranceId) {
+      console.log("ERROR: No insurance selected");
       toast({
         variant: "destructive", 
         title: "Validation Error",
@@ -158,6 +163,7 @@ export default function MedicationCopayForm({
       return;
     }
     
+    console.log("=== SUBMITTING TO API ===");
     createCopayMutation.mutate(data);
   };
 
@@ -475,12 +481,34 @@ export default function MedicationCopayForm({
               />
             </div>
 
+            {/* Form Validation Debug */}
+            {Object.keys(form.formState.errors).length > 0 && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <h4 className="font-semibold text-red-800 mb-2">Form Validation Errors:</h4>
+                <ul className="text-sm text-red-600 space-y-1">
+                  {Object.entries(form.formState.errors).map(([field, error]) => (
+                    <li key={field}>
+                      <strong>{field}:</strong> {error?.message?.toString()}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {/* Form Actions */}
             <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createCopayMutation.isPending}>
+              <Button 
+                type="submit" 
+                disabled={createCopayMutation.isPending}
+                onClick={() => {
+                  console.log("Submit button clicked");
+                  console.log("Form valid:", form.formState.isValid);
+                  console.log("Form errors:", form.formState.errors);
+                }}
+              >
                 {createCopayMutation.isPending ? "Defining Copay..." : "Define Copay"}
               </Button>
             </div>
