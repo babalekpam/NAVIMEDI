@@ -2105,8 +2105,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user!.id,
         tenantId: req.tenantId!,
         action: "visit_summary_created",
-        resourceType: "visit_summary",
-        resourceId: visitSummary.id,
+        entityType: "visit_summary",
+        entityId: visitSummary.id,
         details: { patientId: visitSummary.patientId, appointmentId: visitSummary.appointmentId }
       });
 
