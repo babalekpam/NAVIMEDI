@@ -4,6 +4,9 @@
 A comprehensive multi-tenant healthcare management platform specializing in pharmacy operations and workflow optimization, with advanced capabilities for prescription management and insurance claims processing.
 
 ## Recent Changes (Latest)
+- **✅ DOCTOR CONSULTATION FINALIZATION FIXED** - Resolved 403 permission error by adding "physician" role to visit summary API endpoints, doctors can now successfully finalize patient consultations
+- **✅ ENHANCED CONSULTATION FORM UI** - Added separate "Save as Draft" and "Finalize Consultation" buttons with clear visual indicators for consultation workflow
+- **✅ CONSULTATION WORKFLOW IMPROVEMENTS** - Added visual indicators for "Ready for consultation" patients and highlighted Complete Consultation button for checked-in patients
 - **✅ UNIVERSAL 10-DIGIT PHONE NUMBER VALIDATION IMPLEMENTED** - Enforced 10-digit phone number validation across all forms with real-time input filtering and proper error messaging
 - **✅ COMPREHENSIVE MEDICAL HISTORY COLLECTION** - Enhanced patient registration form with interactive sections for medical conditions, allergies, current medications, address, and emergency contact information
 - **✅ AUTOMATIC PATIENT ID GENERATION ENHANCED** - Improved MRN generation with hospital-specific prefixes, 8-digit timestamps, and 6-character random alphanumeric suffixes for guaranteed uniqueness
