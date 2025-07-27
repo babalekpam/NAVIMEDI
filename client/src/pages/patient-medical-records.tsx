@@ -46,10 +46,38 @@ export default function PatientMedicalRecords() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: patients = [], isLoading } = useQuery<PatientMedicalRecord[]>({
+  const { data: allPatients = [], isLoading } = useQuery<PatientMedicalRecord[]>({
     queryKey: ["/api/patients/medical-records"],
-    enabled: !!user && !!tenant && searchQuery.length >= 2, // Only search when query has 2+ characters
+    queryFn: async () => {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/patients/medical-records", {
+        headers: {
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch patients");
+      }
+      
+      return response.json();
+    },
+    enabled: !!user && !!tenant,
   });
+
+  // Client-side filtering based on search query
+  const patients = React.useMemo(() => {
+    if (!searchQuery.trim()) return allPatients;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return allPatients.filter(patient => 
+      patient.firstName?.toLowerCase().includes(query) ||
+      patient.lastName?.toLowerCase().includes(query) ||
+      patient.mrn?.toLowerCase().includes(query) ||
+      patient.email?.toLowerCase().includes(query) ||
+      `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(query)
+    );
+  }, [allPatients, searchQuery]);
 
   const { data: selectedPatientDetails, isLoading: isDetailsLoading } = useQuery<any>({
     queryKey: ["/api/patients", selectedPatient?.id, "complete-record"],

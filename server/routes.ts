@@ -290,8 +290,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/patients/medical-records", requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
       const tenantId = req.tenant!.id;
-      console.log("Medical records request for tenant:", tenantId, "by user role:", req.user?.role);
-      const medicalRecords = await storage.getPatientsWithMedicalRecords(tenantId);
+      const searchQuery = req.query.search as string;
+      console.log("Medical records request for tenant:", tenantId, "by user role:", req.user?.role, "search:", searchQuery);
+      
+      let medicalRecords = await storage.getPatientsWithMedicalRecords(tenantId);
+      
+      // Apply search filter if provided
+      if (searchQuery && searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim();
+        medicalRecords = medicalRecords.filter(patient => 
+          patient.firstName?.toLowerCase().includes(query) ||
+          patient.lastName?.toLowerCase().includes(query) ||
+          patient.mrn?.toLowerCase().includes(query) ||
+          patient.email?.toLowerCase().includes(query) ||
+          `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(query)
+        );
+      }
+      
       res.json(medicalRecords);
     } catch (error) {
       console.error("Get patient medical records error:", error);
