@@ -57,6 +57,32 @@ export default function Prescriptions() {
     }
   });
 
+  const fileClaimMutation = useMutation({
+    mutationFn: async (prescriptionData: any) => {
+      const { apiRequest } = await import("@/lib/queryClient");
+      const response = await apiRequest("POST", "/api/prescriptions/file-claim", prescriptionData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/insurance-claims"] });
+    }
+  });
+
+  const handleFileInsuranceClaim = async (prescription: Prescription) => {
+    try {
+      await fileClaimMutation.mutateAsync({
+        prescriptionId: prescription.id,
+        patientId: prescription.patientId,
+        medicationName: prescription.medicationName,
+        dosage: prescription.dosage,
+        quantity: prescription.quantity
+      });
+    } catch (error) {
+      console.error("Error filing insurance claim:", error);
+    }
+  };
+
   const filteredPrescriptions = prescriptions.filter(prescription => {
     const patient = patients.find(p => p.id === prescription.patientId);
     const patientName = patient ? `${patient.firstName} ${patient.lastName}` : "";
@@ -284,9 +310,19 @@ export default function Prescriptions() {
                       >
                         View Details
                       </Button>
-                      {user.role === "pharmacist" && (
-                        <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700">
-                          Fill Prescription
+                      {user.role === "pharmacist" && prescription.status === "sent_to_pharmacy" && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-green-600 hover:text-green-700"
+                          onClick={() => handleFileInsuranceClaim(prescription)}
+                        >
+                          File Claim
+                        </Button>
+                      )}
+                      {user.role === "pharmacist" && prescription.status === "filled" && (
+                        <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                          Mark Picked Up
                         </Button>
                       )}
                       <Button variant="ghost" size="sm">

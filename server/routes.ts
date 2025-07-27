@@ -698,6 +698,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // File insurance claim for prescription
+  app.post("/api/prescriptions/file-claim", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { prescriptionId, patientId, medicationName, dosage, quantity } = req.body;
+      const tenantId = req.tenant!.id;
+
+      // For pharmacies, we need to get the prescription from the pharmacy's perspective
+      // But the prescription belongs to the original hospital/clinic tenant
+      let prescription;
+      const tenant = await storage.getTenant(tenantId);
+      
+      if (tenant?.type === "pharmacy") {
+        // For pharmacies, we need to find the prescription by ID across all tenants
+        // since it was created by a different tenant (hospital/clinic)
+        const allTenants = await storage.getAllTenants();
+        for (const t of allTenants) {
+          if (t.type === "hospital" || t.type === "clinic") {
+            try {
+              prescription = await storage.getPrescription(prescriptionId, t.id);
+              if (prescription && prescription.pharmacyTenantId === tenantId) {
+                break;
+              }
+            } catch (error) {
+              // Continue searching
+            }
+          }
+        }
+      } else {
+        prescription = await storage.getPrescription(prescriptionId, tenantId);
+      }
+
+      if (!prescription) {
+        return res.status(404).json({ message: "Prescription not found" });
+      }
+
+      // Get patient information from the original tenant
+      const patient = await storage.getPatient(patientId, prescription.tenantId);
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      // Get service price for medication dispensing
+      const servicePrices = await storage.getServicePrices(tenantId);
+      const medicationService = servicePrices.find(sp => 
+        sp.serviceCategory === "medication" || 
+        sp.serviceName.toLowerCase().includes("dispensing") ||
+        sp.serviceName.toLowerCase().includes("medication")
+      );
+
+      const basePrice = medicationService?.price || 25.00; // Default medication dispensing fee
+      const totalAmount = basePrice * (quantity || 1);
+
+      // Create insurance claim
+      const claimData = {
+        tenantId: tenantId,
+        patientId: patientId,
+        claimNumber: `RX-${Date.now()}`,
+        claimType: "medication" as const,
+        serviceDate: new Date(),
+        submissionDate: new Date(),
+        totalAmount: totalAmount,
+        insurancePayable: totalAmount * 0.8, // Assume 80% coverage
+        patientResponsibility: totalAmount * 0.2, // 20% copay
+        status: "submitted" as const,
+        diagnosis: "Prescription filling",
+        notes: `Insurance claim for ${medicationName} ${dosage} - Qty: ${quantity}`,
+        prescriptionId: prescriptionId
+      };
+
+      const insuranceClaim = await storage.createInsuranceClaim(claimData);
+
+      // Update prescription status to filled (use original tenant ID)
+      await storage.updatePrescription(prescriptionId, { 
+        status: "filled",
+        filledDate: new Date()
+      }, prescription.tenantId);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: tenantId,
+        userId: req.user!.id,
+        entityType: "insurance_claim",
+        entityId: insuranceClaim.id,
+        action: "create",
+        previousData: null,
+        newData: insuranceClaim,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      res.status(201).json({ 
+        message: "Insurance claim filed successfully",
+        claim: insuranceClaim,
+        prescription: prescription
+      });
+    } catch (error) {
+      console.error("File insurance claim error:", error);
+      res.status(500).json({ message: "Failed to file insurance claim" });
+    }
+  });
+
   app.post("/api/prescriptions", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
       // Convert string dates to Date objects

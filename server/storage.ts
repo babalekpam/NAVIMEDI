@@ -641,6 +641,13 @@ export class DatabaseStorage implements IStorage {
 
 
 
+  async getPrescription(id: string, tenantId: string): Promise<Prescription | undefined> {
+    const [prescription] = await db.select().from(prescriptions).where(
+      and(eq(prescriptions.id, id), eq(prescriptions.tenantId, tenantId))
+    );
+    return prescription || undefined;
+  }
+
   async getPrescriptionsByPatient(patientId: string, tenantId: string): Promise<Prescription[]> {
     return await db.select().from(prescriptions).where(
       and(eq(prescriptions.patientId, patientId), eq(prescriptions.tenantId, tenantId))
