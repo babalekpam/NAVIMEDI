@@ -29,6 +29,7 @@ import HealthRecommendations from "@/pages/health-recommendations";
 import PharmacyDashboard from "@/pages/pharmacy-dashboard";
 import PharmacyRegistration from "@/pages/pharmacy-registration";
 import PricingPage from "@/pages/pricing";
+import ServicePricingManagement from "@/pages/service-pricing-management";
 import WhiteLabelSettingsPage from "@/pages/white-label-settings";
 import OfflineModePage from "@/pages/offline-mode";
 import TrialStatusPage from "@/pages/trial-status";
@@ -231,6 +232,19 @@ function AppContent() {
         <Route path="/laboratory-registration" component={LaboratoryRegistration} />
         <Route path="/pharmacy-registration" component={PharmacyRegistration} />
         <Route path="/pricing" component={PricingPage} />
+        <Route path="/service-pricing-management">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <ServicePricingManagement />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
         <Route path="/white-label-settings">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
