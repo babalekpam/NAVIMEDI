@@ -232,6 +232,19 @@ export default function Billing() {
     e.preventDefault();
     
     try {
+      // Debug logging
+      console.log("Form data:", formData);
+      
+      // Check required fields
+      if (!formData.patientId) {
+        toast({
+          title: "Error",
+          description: "Please select a patient.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // For pharmacy claims, we don't require line items - we work with medication costs directly
       const totalAmount = parseFloat(formData.totalAmount) || 0;
       
@@ -253,7 +266,7 @@ export default function Billing() {
 
       const claimData = insertInsuranceClaimSchema.parse({
         patientId: formData.patientId,
-        patientInsuranceId: formData.patientInsuranceId,
+        patientInsuranceId: formData.patientInsuranceId || null,
         claimNumber,
         diagnosisCodes: formData.diagnosisCodes.split(',').map(code => code.trim()).filter(Boolean),
         procedureCodes: formData.procedureCodes.split(',').map(code => code.trim()).filter(Boolean),
@@ -261,9 +274,11 @@ export default function Billing() {
         totalPatientCopay,
         totalInsuranceAmount,
         status: 'draft',
-        appointmentId: formData.appointmentId || undefined,
-        notes: formData.notes || `Pharmacy medication claim for ${totalAmount}`
+        appointmentId: formData.appointmentId || null,
+        notes: formData.notes || `Pharmacy medication claim for $${totalAmount}`
       });
+      
+      console.log("Claim data to submit:", claimData);
 
       await createClaimMutation.mutateAsync(claimData);
     } catch (error: any) {
@@ -490,7 +505,7 @@ export default function Billing() {
                 </Button>
                 <Button 
                   onClick={handleCreateClaim} 
-                  disabled={createClaimMutation.isPending || !formData.patientId || !formData.patientInsuranceId || !formData.totalAmount}
+                  disabled={createClaimMutation.isPending || !formData.patientId || !formData.totalAmount}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   {createClaimMutation.isPending ? "Creating..." : "Create Claim"}
