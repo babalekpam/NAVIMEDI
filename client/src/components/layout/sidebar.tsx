@@ -46,7 +46,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "medical-communications", label: t("medical-communications"), icon: Languages, path: "/medical-communications", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   
   // Operations Section (only for tenant users)
-  { id: "billing", label: t("billing"), icon: FileText, path: "/billing", roles: ["billing_staff", "tenant_admin", "director"] },
+  { id: "billing", label: t("billing"), icon: FileText, path: "/billing", roles: ["billing_staff", "tenant_admin", "director", "receptionist"] },
   { id: "billing", label: t("billing"), icon: DollarSign, path: "/billing", roles: ["physician"] },
   { id: "reports", label: t("reports"), icon: BarChart3, path: "/reports", roles: ["physician", "nurse", "pharmacist", "lab_technician", "billing_staff", "tenant_admin", "director", "super_admin"] },
   

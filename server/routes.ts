@@ -608,7 +608,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/insurance-claims", requireRole(["billing_staff", "physician", "tenant_admin", "director"]), async (req, res) => {
+  app.post("/api/insurance-claims", requireRole(["billing_staff", "physician", "tenant_admin", "director", "receptionist"]), async (req, res) => {
     try {
       const requestData = { ...req.body };
       
@@ -649,7 +649,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/insurance-claims/:id", requireRole(["billing_staff", "physician", "tenant_admin", "director"]), async (req, res) => {
+  app.patch("/api/insurance-claims/:id", requireRole(["billing_staff", "physician", "tenant_admin", "director", "receptionist"]), async (req, res) => {
     try {
       const { id } = req.params;
       const updateData = { ...req.body };
@@ -717,7 +717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/service-prices", requireRole(["tenant_admin", "director", "billing_staff"]), async (req, res) => {
+  app.post("/api/service-prices", requireRole(["tenant_admin", "director", "billing_staff", "receptionist"]), async (req, res) => {
     try {
       const servicePriceData = insertServicePriceSchema.parse({
         ...req.body,
@@ -759,7 +759,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/insurance-plan-coverage", requireRole(["tenant_admin", "director", "billing_staff"]), async (req, res) => {
+  app.post("/api/insurance-plan-coverage", requireRole(["tenant_admin", "director", "billing_staff", "receptionist"]), async (req, res) => {
     try {
       const coverageData = insertInsurancePlanCoverageSchema.parse({
         ...req.body,
@@ -811,7 +811,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/claim-line-items", requireRole(["billing_staff", "physician", "tenant_admin", "director"]), async (req, res) => {
+  app.post("/api/claim-line-items", requireRole(["billing_staff", "physician", "tenant_admin", "director", "receptionist"]), async (req, res) => {
     try {
       const lineItemData = insertClaimLineItemSchema.parse({
         ...req.body,
