@@ -238,7 +238,7 @@ export default function Dashboard() {
                       <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                         <Building2 className="h-4 w-4 text-blue-600" />
                       </div>
-                      <span className="font-medium capitalize">{type.replace('_', ' ')}</span>
+                      <span className="font-medium capitalize">{t(type) || type.replace('_', ' ')}</span>
                     </div>
                     <div className="text-right">
                       <div className="font-bold text-gray-900">{count}</div>

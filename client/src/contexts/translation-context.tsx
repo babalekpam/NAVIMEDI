@@ -123,6 +123,13 @@ const translations = {
     'insurance': 'Insurance',
     'insurance-claims': 'Insurance Claims',
     'insurance-provider': 'Insurance Provider',
+    // Organization types
+    'pharmacy': 'Pharmacy',
+    'laboratory': 'Laboratory',
+    'clinic': 'Clinic',
+    'dental_clinic': 'Dental Clinic',
+    'medical_center': 'Medical Center',
+    'healthcare_system': 'Healthcare System',
     // Status and States
     'active': 'Active',
     'inactive': 'Inactive',
@@ -252,6 +259,13 @@ const translations = {
     'insurance': 'Seguro',
     'insurance-claims': 'Reclamos de seguro',
     'insurance-provider': 'Proveedor de seguro',
+    // Organization types
+    'pharmacy': 'Farmacia',
+    'laboratory': 'Laboratorio',
+    'clinic': 'Clínica',
+    'dental_clinic': 'Clínica Dental',
+    'medical_center': 'Centro Médico',
+    'healthcare_system': 'Sistema de Salud',
     // Status and States
     'active': 'Activo',
     'inactive': 'Inactivo',
@@ -381,6 +395,13 @@ const translations = {
     'insurance': 'Assurance',
     'insurance-claims': 'Réclamations d\'assurance',
     'insurance-provider': 'Fournisseur d\'assurance',
+    // Organization types
+    'pharmacy': 'Pharmacie',
+    'laboratory': 'Laboratoire',
+    'clinic': 'Clinique',
+    'dental_clinic': 'Clinique Dentaire',
+    'medical_center': 'Centre Médical',
+    'healthcare_system': 'Système de Santé',
     // Status and States
     'active': 'Actif',
     'inactive': 'Inactif',
