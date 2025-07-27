@@ -100,17 +100,15 @@ export const Header = () => {
                 >
                   Prescriptions
                 </button>
-                {/* Lab Orders prominently placed for pharmacy users */}
-                <button 
-                  onClick={() => setLocation("/lab-orders")}
-                  className={`px-1 pb-4 text-sm font-medium ${
-                    user.role === "pharmacist" || (user.role === "tenant_admin" && tenant?.type === "pharmacy")
-                      ? "text-blue-600 border-b-2 border-blue-600" 
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  Lab Orders
-                </button>
+                {/* Lab Orders - hidden for pharmacy users */}
+                {!(user.role === "tenant_admin" && tenant?.type === "pharmacy") && user.role !== "pharmacist" && (
+                  <button 
+                    onClick={() => setLocation("/lab-orders")}
+                    className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                  >
+                    Lab Orders
+                  </button>
+                )}
                 <button 
                   onClick={() => setLocation("/billing")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"

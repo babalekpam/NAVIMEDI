@@ -5,9 +5,9 @@ A comprehensive multi-tenant healthcare management platform specializing in phar
 
 ## Recent Changes (Latest)
 - **CUSTOMIZED PHARMACY INTERFACE** - Tailored UI for pharmacy operations workflow
-- **Removed appointments from pharmacy sidebar** - Pharmacy users no longer see appointment management
+- **Removed appointments from pharmacy navigation** - Pharmacy users no longer see appointment management
+- **Removed lab orders from pharmacy header** - Lab orders hidden from top navigation for pharmacy users
 - **Hidden Add Patient button for pharmacy** - Pharmacy staff cannot add new patients directly
-- **Highlighted lab orders in top navigation** - Lab orders prominently displayed for pharmacy users
 - **FIXED MEDICATION CLAIMS SYSTEM** - Insurance claims for pharmacy medications work perfectly
 
 ## User Preferences
