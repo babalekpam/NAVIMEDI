@@ -15,7 +15,7 @@ import MedicationCopayForm from "@/components/forms/medication-copay-form";
 import { type MedicationCopay, type Patient, type InsuranceProvider } from "@shared/schema";
 
 export default function MedicationCopaysPage() {
-  const [selectedPatient, setSelectedPatient] = useState("");
+  const [selectedPatient, setSelectedPatient] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [showCopayForm, setShowCopayForm] = useState(false);
   const [selectedCopay, setSelectedCopay] = useState<MedicationCopay | null>(null);
@@ -50,7 +50,7 @@ export default function MedicationCopaysPage() {
       copay.genericName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       copay.ndcNumber?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesPatient = selectedPatient === "" || copay.patientId === selectedPatient;
+    const matchesPatient = selectedPatient === "" || selectedPatient === "all" || copay.patientId === selectedPatient;
     
     const matchesStatus = filterStatus === "all" || 
       (filterStatus === "active" && copay.isActive) ||
@@ -214,8 +214,8 @@ export default function MedicationCopaysPage() {
                   <SelectValue placeholder="All patients" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All patients</SelectItem>
-                  {patients.map((patient) => (
+                  <SelectItem value="all">All patients</SelectItem>
+                  {patients.filter(patient => patient.id && patient.id.trim() !== '').map((patient) => (
                     <SelectItem key={patient.id} value={patient.id}>
                       {patient.firstName} {patient.lastName} - MRN: {patient.mrn}
                     </SelectItem>

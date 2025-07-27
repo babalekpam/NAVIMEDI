@@ -176,7 +176,7 @@ export default function MedicationCopayForm({
                     <SelectValue placeholder="Select patient" />
                   </SelectTrigger>
                   <SelectContent>
-                    {patients.map((patient) => (
+                    {patients.filter(patient => patient.id && patient.id.trim() !== '').map((patient) => (
                       <SelectItem key={patient.id} value={patient.id}>
                         {patient.firstName} {patient.lastName} - MRN: {patient.mrn}
                       </SelectItem>
@@ -199,7 +199,7 @@ export default function MedicationCopayForm({
                     <SelectValue placeholder="Select insurance plan" />
                   </SelectTrigger>
                   <SelectContent>
-                    {patientInsurance.map((insurance) => {
+                    {patientInsurance.filter(insurance => insurance.id && insurance.id.trim() !== '').map((insurance) => {
                       const provider = insuranceProviders.find(ip => ip.id === insurance.insuranceProviderId);
                       return (
                         <SelectItem key={insurance.id} value={insurance.id}>
@@ -272,9 +272,12 @@ export default function MedicationCopayForm({
 
                 <div className="space-y-2">
                   <Label htmlFor="dosageForm">Dosage Form</Label>
-                  <Select {...form.register("dosageForm")}>
+                  <Select 
+                    value={form.watch("dosageForm") || ""} 
+                    onValueChange={(value) => form.setValue("dosageForm", value)}
+                  >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Select dosage form" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="tablet">Tablet</SelectItem>
