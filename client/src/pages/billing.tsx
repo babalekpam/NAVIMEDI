@@ -278,7 +278,7 @@ export default function Billing() {
       // Generate unique claim number if not provided
       const claimNumber = formData.claimNumber || `CLM-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
 
-      const claimData = insertInsuranceClaimSchema.parse({
+      const rawClaimData = {
         patientId: formData.patientId,
         patientInsuranceId: formData.patientInsuranceId || null,
         claimNumber,
@@ -290,12 +290,26 @@ export default function Billing() {
         status: 'draft',
         appointmentId: formData.appointmentId || null,
         notes: formData.notes || `Pharmacy medication claim for $${totalAmount}`
-      });
+      };
+      
+      console.log("Raw claim data before validation:", rawClaimData);
+      
+      let claimData;
+      try {
+        claimData = insertInsuranceClaimSchema.parse(rawClaimData);
+        console.log("Schema validation passed");
+      } catch (validationError) {
+        console.error("Schema validation failed:", validationError);
+        throw new Error(`Validation failed: ${validationError.message}`);
+      }
       
       console.log("Claim data to submit:", claimData);
+      console.log("About to call mutation...");
 
       await createClaimMutation.mutateAsync(claimData);
+      console.log("Mutation completed successfully");
     } catch (error: any) {
+      console.error("handleCreateClaim error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to create insurance claim.",
