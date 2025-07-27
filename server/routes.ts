@@ -315,7 +315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate unique alphanumeric MRN automatically
       const timestamp = Date.now().toString().slice(-8); // Last 8 digits of timestamp
       const randomPart = Math.random().toString(36).substr(2, 6).toUpperCase(); // 6 random alphanumeric chars
-      const tenantPrefix = req.tenant!.name.replace(/[^A-Z]/g, '').slice(0, 3) || 'HOS'; // First 3 letters of tenant name
+      const tenantPrefix = (req.tenant!.name || 'HOSPITAL').replace(/[^A-Z]/g, '').slice(0, 3) || 'HOS'; // First 3 letters of tenant name
       const mrn = `${tenantPrefix}${timestamp}${randomPart}`;
       
       // Prepare patient data with proper date conversion
