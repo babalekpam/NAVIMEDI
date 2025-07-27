@@ -65,6 +65,17 @@ export const requireSuperAdmin = (req: AuthenticatedRequest, res: Response, next
   next();
 };
 
-// Alias exports for compatibility
-export const setTenantContext = tenantMiddleware;
+// Public routes that don't require authentication
+const publicRoutes = ['/api/login', '/api/auth/login', '/api/validate-token', '/api/laboratory-registration', '/api/pharmacy-registration'];
+
+// Modified tenant context middleware to allow public routes
+export const setTenantContext = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  // Skip authentication for public routes
+  if (publicRoutes.includes(req.path)) {
+    return next();
+  }
+  
+  return tenantMiddleware(req, res, next);
+};
+
 export const requireTenant = tenantMiddleware;

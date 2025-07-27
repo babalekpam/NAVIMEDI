@@ -108,16 +108,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Public routes that don't require authentication
-  const publicRoutes = ['/api/login', '/api/auth/login', '/api/validate-token', '/api/laboratory-registration', '/api/pharmacy-registration'];
-  
-  // Apply middleware conditionally - skip auth for public routes
-  app.use("/api", (req, res, next) => {
-    if (publicRoutes.includes(req.path)) {
-      return next();
+  // Laboratory registration endpoint (public)
+  app.post("/api/laboratory-registration", async (req, res) => {
+    try {
+      const { tenant: labData, admin } = req.body;
+      
+      if (!labData || !admin) {
+        return res.status(400).json({ 
+          message: "Laboratory and admin information are required" 
+        });
+      }
+
+      // Create the laboratory tenant
+      const tenantData = {
+        name: labData.name,
+        type: "laboratory" as const,
+        subdomain: labData.subdomain,
+        settings: labData.settings || {}
+      };
+
+      console.log("Creating laboratory tenant:", tenantData);
+      const tenant = await storage.createTenant(tenantData);
+      
+      // Generate a temporary password for the admin
+      const tempPassword = Math.random().toString(36).slice(-8);
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      
+      // Create the admin user
+      const adminData = {
+        tenantId: tenant.id,
+        username: admin.email,
+        email: admin.email,
+        password: hashedPassword,
+        firstName: admin.firstName,
+        lastName: admin.lastName,
+        role: "tenant_admin" as const,
+        isActive: true
+      };
+
+      console.log("Creating lab admin user:", { ...adminData, password: "[HIDDEN]" });
+      const adminUser = await storage.createUser(adminData);
+
+      console.log(`Laboratory registered successfully. Admin credentials: ${admin.email} / ${tempPassword}`);
+
+      res.status(201).json({
+        message: "Laboratory registered successfully",
+        tenant: {
+          id: tenant.id,
+          name: tenant.name,
+          subdomain: tenant.subdomain
+        },
+        admin: {
+          id: adminUser.id,
+          email: adminUser.email,
+          tempPassword: tempPassword
+        }
+      });
+
+    } catch (error) {
+      console.error("Laboratory registration error:", error);
+      res.status(500).json({ 
+        message: "Registration failed", 
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
-    return setTenantContext(req, res, next);
   });
+
+  // Pharmacy registration endpoint (public)
+  app.post("/api/pharmacy-registration", async (req, res) => {
+    try {
+      console.log("Pharmacy registration request:", JSON.stringify(req.body, null, 2));
+      
+      const { tenant: pharmacyData, admin } = req.body;
+      
+      if (!pharmacyData || !admin) {
+        return res.status(400).json({ 
+          message: "Pharmacy and admin information are required" 
+        });
+      }
+
+      // Create the pharmacy tenant
+      const tenantData = {
+        name: pharmacyData.name,
+        type: "pharmacy" as const,
+        subdomain: pharmacyData.subdomain,
+        settings: pharmacyData.settings || {}
+      };
+
+      console.log("Creating pharmacy tenant:", tenantData);
+      const tenant = await storage.createTenant(tenantData);
+      
+      // Generate a temporary password for the admin
+      const tempPassword = Math.random().toString(36).slice(-8);
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      
+      // Create the admin user
+      const adminData = {
+        tenantId: tenant.id,
+        username: admin.email,
+        email: admin.email,
+        password: hashedPassword,
+        firstName: admin.firstName,
+        lastName: admin.lastName,
+        role: "tenant_admin" as const,
+        isActive: true
+      };
+
+      console.log("Creating pharmacy admin user:", { ...adminData, password: "[HIDDEN]" });
+      const adminUser = await storage.createUser(adminData);
+
+      console.log(`Pharmacy registered successfully. Admin credentials: ${admin.email} / ${tempPassword}`);
+
+      res.status(201).json({
+        message: "Pharmacy registered successfully",
+        tenant: {
+          id: tenant.id,
+          name: tenant.name,
+          subdomain: tenant.subdomain
+        },
+        admin: {
+          id: adminUser.id,
+          email: adminUser.email,
+          tempPassword: tempPassword
+        }
+      });
+
+    } catch (error) {
+      console.error("Pharmacy registration error:", error);
+      res.status(500).json({ 
+        message: "Registration failed", 
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Apply tenant context middleware to all other API routes
+  app.use("/api", setTenantContext);
 
   app.post("/api/auth/register", async (req, res) => {
     try {
