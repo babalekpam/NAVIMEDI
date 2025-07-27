@@ -314,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // NOTE: Individual routes handle their own authentication middleware
 
   // User profile
-  app.get("/api/user/profile", async (req, res) => {
+  app.get("/api/user/profile", authenticateToken, async (req, res) => {
     try {
       const user = await storage.getUser(req.user!.id);
       if (!user) {
@@ -338,7 +338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get users by role (for fetching providers, etc.)
-  app.get("/api/users", requireTenant, async (req, res) => {
+  app.get("/api/users", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { role } = req.query;
       const tenantId = req.tenant!.id;
@@ -357,7 +357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get current tenant info
-  app.get("/api/tenant/current", async (req, res) => {
+  app.get("/api/tenant/current", authenticateToken, async (req, res) => {
     try {
       if (!req.user?.tenantId) {
         return res.status(400).json({ message: "No tenant context" });
@@ -637,7 +637,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Prescription management routes
-  app.get("/api/prescriptions", requireTenant, async (req, res) => {
+  app.get("/api/prescriptions", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { patientId } = req.query;
       const tenantId = req.tenant!.id;
