@@ -36,6 +36,7 @@ import OfflineModePage from "@/pages/offline-mode";
 import TrialStatusPage from "@/pages/trial-status";
 import ProfileSettingsPage from "@/pages/profile-settings";
 import ReceptionistDashboard from "@/pages/receptionist-dashboard";
+import ConsultationHistory from "@/pages/consultation-history";
 
 
 
@@ -306,6 +307,19 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <ProfileSettingsPage />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/consultation-history">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <ConsultationHistory />
                 </main>
               </div>
             </div>
