@@ -901,7 +901,7 @@ export const vitalSigns = pgTable("vital_signs", {
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   patientId: uuid("patient_id").references(() => patients.id).notNull(),
   appointmentId: uuid("appointment_id").references(() => appointments.id),
-  recordedBy: uuid("recorded_by").references(() => users.id).notNull(), // receptionist/nurse
+  recordedBy: uuid("recorded_by_id").references(() => users.id).notNull(), // receptionist/nurse
   // Standard vital signs
   systolicBp: integer("systolic_bp"), // mmHg
   diastolicBp: integer("diastolic_bp"), // mmHg
