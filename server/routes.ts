@@ -337,6 +337,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced patient medical records endpoint for healthcare professionals
+  app.get("/api/patients/medical-records", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const tenantId = req.tenant!.id;
+      const medicalRecords = await storage.getPatientsWithMedicalRecords(tenantId);
+      res.json(medicalRecords);
+    } catch (error) {
+      console.error("Get patient medical records error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Complete patient record with all medical data
+  app.get("/api/patients/:id/complete-record", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.tenant!.id;
+      
+      const completeRecord = await storage.getCompletePatientRecord(id, tenantId);
+      if (!completeRecord) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+      
+      res.json(completeRecord);
+    } catch (error) {
+      console.error("Get complete patient record error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Appointment management routes
   app.use("/api/appointments", requireTenant);
 

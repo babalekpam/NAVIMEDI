@@ -596,6 +596,146 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(patients.createdAt));
   }
 
+  // Enhanced medical records methods for healthcare professionals
+  async getPatientsWithMedicalRecords(tenantId: string): Promise<any[]> {
+    const patientsList = await db
+      .select({
+        id: patients.id,
+        tenantId: patients.tenantId,
+        firstName: patients.firstName,
+        lastName: patients.lastName,
+        dateOfBirth: patients.dateOfBirth,
+        gender: patients.gender,
+        phone: patients.phone,
+        email: patients.email,
+        address: patients.address,
+        mrn: patients.mrn,
+        emergencyContact: patients.emergencyContact,
+        allergies: patients.allergies,
+        medications: patients.medications,
+        medicalHistory: patients.medicalHistory,
+        isActive: patients.isActive,
+        createdAt: patients.createdAt,
+        updatedAt: patients.updatedAt
+      })
+      .from(patients)
+      .where(and(eq(patients.tenantId, tenantId), eq(patients.isActive, true)))
+      .orderBy(desc(patients.updatedAt));
+
+    // Enhance each patient with medical activity data
+    const enhancedPatients = await Promise.all(
+      patientsList.map(async (patient) => {
+        // Get latest appointment for last visit
+        const latestAppointments = await db
+          .select({ appointmentDate: appointments.appointmentDate })
+          .from(appointments)
+          .where(eq(appointments.patientId, patient.id))
+          .orderBy(desc(appointments.appointmentDate))
+          .limit(1);
+
+        // Count upcoming appointments
+        const upcomingCount = await db
+          .select({ count: sql`count(*)` })
+          .from(appointments)
+          .where(
+            and(
+              eq(appointments.patientId, patient.id),
+              sql`${appointments.appointmentDate} > NOW()`
+            )
+          );
+
+        // Count active prescriptions
+        const prescriptionCount = await db
+          .select({ count: sql`count(*)` })
+          .from(prescriptions)
+          .where(
+            and(
+              eq(prescriptions.patientId, patient.id),
+              sql`${prescriptions.status} IN ('prescribed', 'sent_to_pharmacy', 'filled')`
+            )
+          );
+
+        // Count pending lab orders
+        const labOrderCount = await db
+          .select({ count: sql`count(*)` })
+          .from(labOrders)
+          .where(
+            and(
+              eq(labOrders.patientId, patient.id),
+              sql`${labOrders.status} IN ('ordered', 'collected', 'processing')`
+            )
+          );
+
+        return {
+          ...patient,
+          lastVisit: latestAppointments[0]?.appointmentDate || null,
+          upcomingAppointments: Number(upcomingCount[0]?.count) || 0,
+          activePrescriptions: Number(prescriptionCount[0]?.count) || 0,
+          pendingLabOrders: Number(labOrderCount[0]?.count) || 0
+        };
+      })
+    );
+
+    return enhancedPatients;
+  }
+
+  async getCompletePatientRecord(patientId: string, tenantId: string): Promise<any | null> {
+    // Get base patient information
+    const [patient] = await db
+      .select()
+      .from(patients)
+      .where(and(eq(patients.id, patientId), eq(patients.tenantId, tenantId)));
+
+    if (!patient) return null;
+
+    // Get all appointments with provider information
+    const patientAppointments = await db
+      .select({
+        appointment: appointments,
+        providerName: users.firstName,
+        providerLastName: users.lastName,
+        providerRole: users.role
+      })
+      .from(appointments)
+      .leftJoin(users, eq(appointments.providerId, users.id))
+      .where(eq(appointments.patientId, patientId))
+      .orderBy(desc(appointments.appointmentDate));
+
+    // Get all prescriptions with provider information
+    const patientPrescriptions = await db
+      .select({
+        prescription: prescriptions,
+        providerName: users.firstName,
+        providerLastName: users.lastName
+      })
+      .from(prescriptions)
+      .leftJoin(users, eq(prescriptions.providerId, users.id))
+      .where(eq(prescriptions.patientId, patientId))
+      .orderBy(desc(prescriptions.prescribedDate));
+
+    // Get all lab orders
+    const patientLabOrders = await db
+      .select()
+      .from(labOrders)
+      .where(eq(labOrders.patientId, patientId))
+      .orderBy(desc(labOrders.createdAt));
+
+    // Get all vital signs
+    const patientVitalSigns = await db
+      .select()
+      .from(vitalSigns)
+      .where(eq(vitalSigns.patientId, patientId))
+      .orderBy(desc(vitalSigns.recordedAt));
+
+    return {
+      ...patient,
+      appointments: patientAppointments,
+      prescriptions: patientPrescriptions,
+      labOrders: patientLabOrders,
+      vitalSigns: patientVitalSigns
+    };
+  }
+
   // Appointment management
   async getAppointment(id: string, tenantId: string): Promise<Appointment | undefined> {
     const [appointment] = await db.select().from(appointments).where(

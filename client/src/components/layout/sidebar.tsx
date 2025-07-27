@@ -41,6 +41,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "register-patient", label: t("register-patient"), icon: UserPlus, path: "/patients?action=register", roles: ["receptionist", "tenant_admin", "director"] },
   { id: "book-appointment", label: t("book-appointment"), icon: CalendarPlus, path: "/appointments?action=book", roles: ["receptionist", "tenant_admin", "director"] },
   { id: "patients", label: t("patients"), icon: Users, path: "/patients", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
+  { id: "patient-medical-records", label: "Medical Records", icon: FileText, path: "/patient-medical-records", roles: ["physician", "nurse", "tenant_admin", "director"] },
   { id: "appointments", label: t("appointments"), icon: Calendar, path: "/appointments", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "prescriptions", label: t("prescriptions"), icon: Pill, path: "/prescriptions", roles: ["physician", "nurse", "pharmacist", "receptionist", "tenant_admin", "director"] },
   { id: "lab-orders", label: t("lab-orders"), icon: TestTube, path: "/lab-orders", roles: ["physician", "nurse", "lab_technician", "receptionist", "tenant_admin", "director"] },

@@ -15,6 +15,7 @@ import Login from "@/pages/login";
 import RegisterOrganization from "@/pages/register-organization";
 import Dashboard from "@/pages/dashboard";
 import Patients from "@/pages/patients";
+import PatientMedicalRecords from "@/pages/patient-medical-records";
 import Appointments from "@/pages/appointments";
 import Prescriptions from "@/pages/prescriptions";
 import LabOrders from "@/pages/lab-orders";
@@ -67,6 +68,19 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <Patients />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/patient-medical-records">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PatientMedicalRecords />
                 </main>
               </div>
             </div>
