@@ -182,10 +182,18 @@ export const Sidebar = () => {
     if (user.role === "receptionist" && isHospitalTenant && item.id === "hospital-billing") {
       return true;
     }
-    return !["pharmacy-dashboard"].includes(item.id);
-  }).slice(0, 5);
-  const operationItems = filteredItems.slice(5, 7);
-  const adminItems = filteredItems.slice(7);
+    // Include core clinical items
+    const clinicalItemIds = ["dashboard", "register-patient", "book-appointment", "patients", "patient-medical-records", "appointments", "prescriptions", "lab-orders", "lab-results", "health-recommendations", "medical-communications"];
+    return clinicalItemIds.includes(item.id) && !["pharmacy-dashboard"].includes(item.id);
+  });
+  const operationItems = filteredItems.filter(item => {
+    const operationItemIds = ["billing", "service-prices"];
+    return operationItemIds.includes(item.id);
+  });
+  const adminItems = filteredItems.filter(item => {
+    const adminItemIds = ["reports", "white-label-settings", "offline-mode", "trial-status", "tenant-management", "user-roles", "audit-logs"];
+    return adminItemIds.includes(item.id);
+  });
 
   return (
     <aside className="w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto">
