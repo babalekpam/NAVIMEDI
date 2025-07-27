@@ -58,8 +58,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        console.log("[LOGIN DEBUG] Getting user by username:", username, "tenant:", actualTenantId);
-        user = await storage.getUserByUsername(username, actualTenantId);
+        console.log("[LOGIN DEBUG] Getting user by email/username:", username, "tenant:", actualTenantId);
+        user = await storage.getUserByEmailOrUsername(username, actualTenantId);
         console.log("[LOGIN DEBUG] Found user in tenant:", user ? { id: user.id, email: user.email } : 'none');
       } else {
         // No tenant ID provided - search for user by email/username across all tenants

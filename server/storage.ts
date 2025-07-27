@@ -100,6 +100,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string, tenantId: string): Promise<User | undefined>;
   getUserByEmail(email: string, tenantId: string): Promise<User | undefined>;
+  getUserByEmailOrUsername(emailOrUsername: string, tenantId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
   getUsersByTenant(tenantId: string): Promise<User[]>;
@@ -372,6 +373,16 @@ export class DatabaseStorage implements IStorage {
   async getUserByUsername(username: string, tenantId: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(
       and(eq(users.username, username), eq(users.tenantId, tenantId))
+    );
+    return user || undefined;
+  }
+
+  async getUserByEmailOrUsername(emailOrUsername: string, tenantId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(
+      and(
+        or(eq(users.email, emailOrUsername), eq(users.username, emailOrUsername)),
+        eq(users.tenantId, tenantId)
+      )
     );
     return user || undefined;
   }
