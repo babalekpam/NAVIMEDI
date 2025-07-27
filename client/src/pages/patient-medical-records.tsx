@@ -142,37 +142,24 @@ export default function PatientMedicalRecords() {
     return <div className="flex items-center justify-center h-96">{t('loading')}</div>;
   }
 
-  // Filter and sort patients
+  // Filter and sort patients - using the filtered patients from useMemo
   const filteredPatients = patients.filter(patient => {
-    const matchesSearch = 
-      patient.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      patient.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      patient.mrn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (patient.allergies && Array.isArray(patient.allergies) && 
-       patient.allergies.some(allergy => 
-         (allergy as string).toLowerCase().includes(searchQuery.toLowerCase())
-       )) ||
-      (patient.medicalHistory && Array.isArray(patient.medicalHistory) && 
-       patient.medicalHistory.some(condition => 
-         (condition as string).toLowerCase().includes(searchQuery.toLowerCase())
-       ));
-
-    if (filterBy === "all") return matchesSearch;
+    if (filterBy === "all") return true;
     if (filterBy === "chronic") {
-      return matchesSearch && patient.medicalHistory && 
+      return patient.medicalHistory && 
              Array.isArray(patient.medicalHistory) && 
              patient.medicalHistory.length > 0;
     }
     if (filterBy === "allergies") {
-      return matchesSearch && patient.allergies && 
+      return patient.allergies && 
              Array.isArray(patient.allergies) && 
              patient.allergies.length > 0;
     }
     if (filterBy === "recent") {
-      return matchesSearch && patient.lastVisit && 
+      return patient.lastVisit && 
              new Date(patient.lastVisit) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     }
-    return matchesSearch;
+    return true;
   });
 
   const sortedPatients = [...filteredPatients].sort((a, b) => {
