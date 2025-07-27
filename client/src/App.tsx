@@ -32,6 +32,7 @@ import PricingPage from "@/pages/pricing";
 import WhiteLabelSettingsPage from "@/pages/white-label-settings";
 import OfflineModePage from "@/pages/offline-mode";
 import TrialStatusPage from "@/pages/trial-status";
+import ProfileSettingsPage from "@/pages/profile-settings";
 
 
 
@@ -250,6 +251,19 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <TrialStatusPage />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/profile-settings">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <ProfileSettingsPage />
                 </main>
               </div>
             </div>

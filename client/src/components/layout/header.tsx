@@ -161,13 +161,13 @@ export const Header = () => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLocation("/profile-settings")}>
                   Profile Settings
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLocation("/profile-settings")}>
                   Security
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLocation("/audit-logs")}>
                   Audit Logs
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
