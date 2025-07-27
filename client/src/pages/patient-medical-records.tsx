@@ -8,17 +8,18 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Filter, Calendar, FileText, Pill, Activity, Heart, AlertTriangle, Stethoscope, Clock, User, Building } from "lucide-react";
-import { Patient, Appointment, Prescription, LabOrder, VitalSigns } from "@shared/schema";
+import { Patient, Appointment, Prescription, LabOrder, VitalSigns, VisitSummary } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PatientMedicalRecord extends Patient {
-  appointments?: Appointment[];
-  prescriptions?: Prescription[];
+  appointments?: any[];
+  prescriptions?: any[];
   labOrders?: LabOrder[];
   vitalSigns?: VitalSigns[];
+  visitSummaries?: any[];
   lastVisit?: string;
   upcomingAppointments?: number;
 }
@@ -37,7 +38,7 @@ export default function PatientMedicalRecords() {
     enabled: !!user && !!tenant && searchQuery.length >= 2, // Only search when query has 2+ characters
   });
 
-  const { data: selectedPatientDetails, isLoading: isDetailsLoading } = useQuery({
+  const { data: selectedPatientDetails, isLoading: isDetailsLoading } = useQuery<any>({
     queryKey: ["/api/patients", selectedPatient?.id, "complete-record"],
     enabled: !!selectedPatient,
   });
@@ -94,8 +95,13 @@ export default function PatientMedicalRecords() {
     }
   });
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+  const formatDate = (dateString: string | Date | null) => {
+    if (!dateString) return "N/A";
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch {
+      return "Invalid Date";
+    }
   };
 
   const getPatientInitials = (firstName: string, lastName: string) => {
@@ -323,7 +329,7 @@ export default function PatientMedicalRecords() {
                         <CardContent className="space-y-2">
                           <div className="grid grid-cols-2 gap-2 text-sm">
                             <span className="text-gray-600">Date of Birth:</span>
-                            <span>{formatDate(selectedPatient.dateOfBirth)}</span>
+                            <span>{formatDate(selectedPatient.dateOfBirth?.toString())}</span>
                             <span className="text-gray-600">Gender:</span>
                             <span>{selectedPatient.gender || "Not specified"}</span>
                             <span className="text-gray-600">Phone:</span>
@@ -482,12 +488,169 @@ export default function PatientMedicalRecords() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="space-y-4">
+                        {isDetailsLoading ? (
+                          <div className="space-y-4">
+                            {[1, 2, 3].map((i) => (
+                              <div key={i} className="animate-pulse p-4 border rounded-lg">
+                                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : selectedPatientDetails ? (
+                          <div className="space-y-4">
+                            {/* Visit Summaries (Consultations) */}
+                            {selectedPatientDetails.visitSummaries && selectedPatientDetails.visitSummaries.length > 0 && (
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-green-700 flex items-center">
+                                  <Stethoscope className="h-4 w-4 mr-2" />
+                                  Consultation Records ({selectedPatientDetails.visitSummaries.length})
+                                </h4>
+                                {selectedPatientDetails.visitSummaries.map((vs: any, index: number) => (
+                                  <div key={index} className="p-4 border border-green-200 bg-green-50 rounded-lg">
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex-1">
+                                        <div className="flex items-center space-x-2 mb-2">
+                                          <Stethoscope className="h-4 w-4 text-green-600" />
+                                          <span className="font-medium text-green-800">
+                                            Consultation - {formatDate(vs.visitSummary.visitDate)}
+                                          </span>
+                                          <Badge className="bg-green-100 text-green-800 text-xs">
+                                            {vs.visitSummary.status || 'Completed'}
+                                          </Badge>
+                                        </div>
+                                        <div className="text-sm text-gray-700 space-y-1">
+                                          <p><strong>Provider:</strong> Dr. {vs.providerName} {vs.providerLastName}</p>
+                                          {vs.visitSummary.chiefComplaint && (
+                                            <p><strong>Chief Complaint:</strong> {vs.visitSummary.chiefComplaint}</p>
+                                          )}
+                                          {vs.visitSummary.assessment && (
+                                            <p><strong>Assessment:</strong> {vs.visitSummary.assessment}</p>
+                                          )}
+                                          {vs.visitSummary.treatmentPlan && (
+                                            <p><strong>Treatment Plan:</strong> {vs.visitSummary.treatmentPlan}</p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Appointments */}
+                            {selectedPatientDetails.appointments && selectedPatientDetails.appointments.length > 0 && (
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-blue-700 flex items-center">
+                                  <Calendar className="h-4 w-4 mr-2" />
+                                  Appointments ({selectedPatientDetails.appointments.length})
+                                </h4>
+                                {selectedPatientDetails.appointments.slice(0, 5).map((apt: any, index: number) => (
+                                  <div key={index} className="p-4 border border-blue-200 bg-blue-50 rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <div className="flex items-center space-x-2 mb-1">
+                                          <Calendar className="h-4 w-4 text-blue-600" />
+                                          <span className="font-medium text-blue-800">
+                                            {formatDate(apt.appointment.appointmentDate)}
+                                          </span>
+                                          <Badge className="bg-blue-100 text-blue-800 text-xs">
+                                            {apt.appointment.status}
+                                          </Badge>
+                                        </div>
+                                        <p className="text-sm text-gray-700">
+                                          Provider: Dr. {apt.providerName} {apt.providerLastName}
+                                        </p>
+                                        {apt.appointment.notes && (
+                                          <p className="text-sm text-gray-600 mt-1">{apt.appointment.notes}</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Prescriptions */}
+                            {selectedPatientDetails.prescriptions && selectedPatientDetails.prescriptions.length > 0 && (
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-purple-700 flex items-center">
+                                  <Pill className="h-4 w-4 mr-2" />
+                                  Prescriptions ({selectedPatientDetails.prescriptions.length})
+                                </h4>
+                                {selectedPatientDetails.prescriptions.slice(0, 5).map((presc: any, index: number) => (
+                                  <div key={index} className="p-4 border border-purple-200 bg-purple-50 rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <div className="flex items-center space-x-2 mb-1">
+                                          <Pill className="h-4 w-4 text-purple-600" />
+                                          <span className="font-medium text-purple-800">
+                                            {presc.prescription.medicationName}
+                                          </span>
+                                          <Badge className="bg-purple-100 text-purple-800 text-xs">
+                                            {presc.prescription.status}
+                                          </Badge>
+                                        </div>
+                                        <p className="text-sm text-gray-700">
+                                          Prescribed by: Dr. {presc.providerName} {presc.providerLastName}
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                          {formatDate(presc.prescription.prescribedDate)} - {presc.prescription.dosage}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Lab Orders */}
+                            {selectedPatientDetails.labOrders && selectedPatientDetails.labOrders.length > 0 && (
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-orange-700 flex items-center">
+                                  <FileText className="h-4 w-4 mr-2" />
+                                  Lab Orders ({selectedPatientDetails.labOrders.length})
+                                </h4>
+                                {selectedPatientDetails.labOrders.slice(0, 5).map((lab: LabOrder, index: number) => (
+                                  <div key={index} className="p-4 border border-orange-200 bg-orange-50 rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <div className="flex items-center space-x-2 mb-1">
+                                          <FileText className="h-4 w-4 text-orange-600" />
+                                          <span className="font-medium text-orange-800">
+                                            {lab.testName}
+                                          </span>
+                                          <Badge className="bg-orange-100 text-orange-800 text-xs">
+                                            {lab.status}
+                                          </Badge>
+                                        </div>
+                                        <p className="text-sm text-gray-600">
+                                          {formatDate(lab.orderedDate?.toString())}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* No data message */}
+                            {(!selectedPatientDetails.visitSummaries || selectedPatientDetails.visitSummaries.length === 0) &&
+                             (!selectedPatientDetails.appointments || selectedPatientDetails.appointments.length === 0) &&
+                             (!selectedPatientDetails.prescriptions || selectedPatientDetails.prescriptions.length === 0) &&
+                             (!selectedPatientDetails.labOrders || selectedPatientDetails.labOrders.length === 0) && (
+                              <div className="text-center py-8 text-gray-500">
+                                <Clock className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                                <p>No medical history available for this patient</p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
                           <div className="text-center py-8 text-gray-500">
                             <Clock className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                            <p>Medical timeline will be populated with appointment history, prescription changes, and lab results.</p>
+                            <p>Loading patient medical timeline...</p>
                           </div>
-                        </div>
+                        )}
                       </CardContent>
                     </Card>
                   </TabsContent>
