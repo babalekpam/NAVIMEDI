@@ -160,6 +160,13 @@ export const tenants = pgTable("tenants", {
   offlineEnabled: boolean("offline_enabled").default(false),
   offlineStorageMb: integer("offline_storage_mb").default(100),
   syncFrequencyMinutes: integer("sync_frequency_minutes").default(15),
+  // Trial and subscription tracking
+  trialStartDate: timestamp("trial_start_date").default(sql`CURRENT_TIMESTAMP`),
+  trialEndDate: timestamp("trial_end_date").default(sql`CURRENT_TIMESTAMP + INTERVAL '14 days'`),
+  subscriptionStatus: subscriptionStatusEnum("subscription_status").default('trial'),
+  lastSuspensionCheck: timestamp("last_suspension_check"),
+  suspendedAt: timestamp("suspended_at"),
+  suspensionReason: text("suspension_reason"),
   // Phone and address (moved from top level)
   phoneNumber: text("phone_number"),
   address: text("address"),

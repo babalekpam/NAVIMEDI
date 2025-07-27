@@ -15,7 +15,8 @@ import {
   Languages,
   DollarSign,
   Brain,
-  WifiOff
+  WifiOff,
+  Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
@@ -51,6 +52,7 @@ const sidebarItems: SidebarItem[] = [
   // Advanced Features (White Label & Enterprise)
   { id: "white-label-settings", label: "White Label Settings", icon: Settings, path: "/white-label-settings", roles: ["tenant_admin", "director", "super_admin"] },
   { id: "offline-mode", label: "Offline Sync", icon: WifiOff, path: "/offline-mode", roles: ["tenant_admin", "director", "super_admin"] },
+  { id: "trial-status", label: "Trial Status", icon: Clock, path: "/trial-status", roles: ["super_admin", "tenant_admin", "director", "physician", "nurse", "pharmacist", "lab_technician", "receptionist", "billing_staff", "insurance_manager"] },
   
   // Platform Administration Section (only for super admins)
   { id: "tenant-management", label: "Tenant Management", icon: Building, path: "/tenant-management", roles: ["super_admin"] },

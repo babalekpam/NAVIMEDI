@@ -72,6 +72,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Account is disabled" });
       }
 
+      // Check if tenant is suspended (except for super_admin)
+      if (user.role !== 'super_admin') {
+        const tenant = await storage.getTenant(user.tenantId);
+        if (tenant && (tenant.subscriptionStatus === 'suspended' || !tenant.isActive)) {
+          return res.status(403).json({ 
+            message: "Account suspended - Trial period expired. Please upgrade to continue using the service.",
+            suspensionReason: tenant.suspensionReason || "Trial period expired",
+            trialExpired: true
+          });
+        }
+      }
+
       // Update last login
       await storage.updateUser(user.id, { lastLogin: new Date() });
 
@@ -3120,6 +3132,75 @@ Report ID: ${report.id}
     } catch (error) {
       console.error('Error creating translation:', error);
       res.status(500).json({ error: 'Failed to create translation' });
+    }
+  });
+
+  // ==================== TRIAL SUSPENSION ROUTES ====================
+  
+  // Get trial status for current tenant
+  app.get("/api/trial/status", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const trialStatus = await trialSuspensionService.getTrialStatus(req.user.tenantId);
+      
+      if (!trialStatus) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+      
+      res.json(trialStatus);
+    } catch (error) {
+      console.error("Failed to fetch trial status:", error);
+      res.status(500).json({ message: "Failed to fetch trial status" });
+    }
+  });
+
+  // Extend trial (super admin only)
+  app.post("/api/trial/:tenantId/extend", authenticateToken, requireRole(["super_admin"]), async (req, res) => {
+    try {
+      const { tenantId } = req.params;
+      const { days = 14 } = req.body;
+      
+      await trialSuspensionService.extendTrial(tenantId, days);
+      
+      res.json({ 
+        message: `Trial extended by ${days} days`,
+        tenantId 
+      });
+    } catch (error) {
+      console.error("Failed to extend trial:", error);
+      res.status(500).json({ message: "Failed to extend trial" });
+    }
+  });
+
+  // Reactivate suspended tenant (super admin only)
+  app.post("/api/trial/:tenantId/reactivate", authenticateToken, requireRole(["super_admin"]), async (req, res) => {
+    try {
+      const { tenantId } = req.params;
+      const { subscriptionPlan = 'professional' } = req.body;
+      
+      await trialSuspensionService.reactivateTenant(tenantId, subscriptionPlan);
+      
+      res.json({ 
+        message: "Tenant reactivated successfully",
+        tenantId,
+        subscriptionPlan
+      });
+    } catch (error) {
+      console.error("Failed to reactivate tenant:", error);
+      res.status(500).json({ message: "Failed to reactivate tenant" });
+    }
+  });
+
+  // Manually trigger suspension check (super admin only)
+  app.post("/api/trial/check-suspensions", authenticateToken, requireRole(["super_admin"]), async (req, res) => {
+    try {
+      await trialSuspensionService.checkAndSuspendExpiredTrials();
+      
+      res.json({ 
+        message: "Suspension check completed successfully" 
+      });
+    } catch (error) {
+      console.error("Failed to run suspension check:", error);
+      res.status(500).json({ message: "Failed to run suspension check" });
     }
   });
 

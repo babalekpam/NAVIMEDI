@@ -5,6 +5,7 @@ import { db } from "./db";
 import { tenants, users } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
+import { trialSuspensionService } from "./trial-suspension-service";
 
 const app = express();
 app.use(express.json());
