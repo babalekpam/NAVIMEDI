@@ -114,47 +114,16 @@ export default function MedicationCopayForm({
         quantityLimit: copayData.quantityLimit ? parseInt(copayData.quantityLimit.toString()) : null,
         daySupplyLimit: copayData.daySupplyLimit ? parseInt(copayData.daySupplyLimit.toString()) : null
       };
+      
       console.log("Sending to API:", processedData);
       
-      // Use fetch directly to bypass potential routing issues
-      const token = localStorage.getItem('auth_token');
-      console.log("Token from localStorage:", token ? "exists" : "missing");
-      
-      if (!token) {
-        throw new Error("No authentication token found. Please log in again.");
-      }
-      
-      const response = await fetch("/api/medication-copays", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(processedData)
-      });
-      
-      console.log("API response status:", response.status);
-      console.log("API response headers:", Object.fromEntries(response.headers.entries()));
-      
-      // Log the raw response text to see what we're getting
-      const responseText = await response.text();
-      console.log("Raw response text:", responseText.substring(0, 200));
-      
-      if (!response.ok) {
-        console.error("API error response:", responseText);
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-      }
-      
-      // Try to parse as JSON
-      try {
-        const result = JSON.parse(responseText);
-        console.log("Parsed JSON result:", result);
-        return result;
-      } catch (parseError) {
-        console.error("Failed to parse JSON:", parseError);
-        console.error("Response was:", responseText);
-        throw new Error("Server returned non-JSON response");
-      }
+      // Use the existing apiRequest function which handles routing properly
+      console.log("Calling apiRequest...");
+      const response = await apiRequest("POST", "/api/medication-copays", processedData);
+      console.log("Got response from apiRequest:", response);
+      const result = await response.json();
+      console.log("Parsed JSON result:", result);
+      return result;
     },
     onSuccess: (data) => {
       console.log("Mutation success:", data);
