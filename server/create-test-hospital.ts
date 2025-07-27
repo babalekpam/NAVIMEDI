@@ -118,6 +118,68 @@ export async function createTestHospital() {
       console.log("✓ Hospital nurse already exists");
     }
 
+    // Create additional doctors
+    const additionalDoctors = [
+      {
+        email: 'dr.johnson@metrogeneral.com',
+        username: 'dr_johnson',
+        firstName: 'Michael',
+        lastName: 'Johnson',
+        specialty: 'Cardiology'
+      },
+      {
+        email: 'dr.martinez@metrogeneral.com',
+        username: 'dr_martinez',
+        firstName: 'Sofia',
+        lastName: 'Martinez',
+        specialty: 'Pediatrics'
+      },
+      {
+        email: 'dr.patel@metrogeneral.com',
+        username: 'dr_patel',
+        firstName: 'Raj',
+        lastName: 'Patel',
+        specialty: 'Emergency Medicine'
+      },
+      {
+        email: 'dr.chen@metrogeneral.com',
+        username: 'dr_chen',
+        firstName: 'Lisa',
+        lastName: 'Chen',
+        specialty: 'Internal Medicine'
+      },
+      {
+        email: 'dr.williams@metrogeneral.com',
+        username: 'dr_williams',
+        firstName: 'James',
+        lastName: 'Williams',
+        specialty: 'Surgery'
+      }
+    ];
+
+    for (const doctor of additionalDoctors) {
+      const existingDoctor = await db.select().from(users).where(eq(users.email, doctor.email)).limit(1);
+      
+      if (existingDoctor.length === 0) {
+        const hashedPassword = await bcrypt.hash('doctor123', 10);
+        
+        await db.insert(users).values({
+          tenantId: hospitalTenant.id,
+          username: doctor.username,
+          email: doctor.email,
+          password: hashedPassword,
+          firstName: doctor.firstName,
+          lastName: doctor.lastName,
+          role: 'physician',
+          isActive: true
+        });
+        
+        console.log(`✓ Created doctor: ${doctor.email} (${doctor.specialty})`);
+      } else {
+        console.log(`✓ Doctor already exists: ${doctor.email}`);
+      }
+    }
+
     console.log("✓ Metro General Hospital setup complete");
     return hospitalTenant;
   } catch (error) {

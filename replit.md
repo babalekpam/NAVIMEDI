@@ -135,8 +135,13 @@ A comprehensive multi-tenant healthcare management platform specializing in phar
   - Access: Full hospital management, staff oversight, billing
 - **Hospital Receptionist**: `hospital_reception` / `receptionist123` (organization: `Metro General Hospital` or `metro-general`)
   - Access: Patient registration, appointments, check-in, vital signs, billing, insurance claims
-- **Hospital Doctor**: `dr.smith@metrogeneral.com` / `doctor123`
-  - Access: Patient care, prescriptions, lab orders, medical records
+- **Hospital Doctors**: All with password `doctor123`
+  - **Dr. Michael Smith**: `dr.smith@metrogeneral.com` (General Medicine)
+  - **Dr. Sofia Martinez**: `dr.martinez@metrogeneral.com` (Pediatrics)
+  - **Dr. Raj Patel**: `dr.patel@metrogeneral.com` (Emergency Medicine)
+  - **Dr. Lisa Chen**: `dr.chen@metrogeneral.com` (Internal Medicine)
+  - **Dr. James Williams**: `dr.williams@metrogeneral.com` (Surgery)
+  - Access: Patient care, prescriptions, lab orders, medical records, comprehensive patient access
 - **Hospital Nurse**: `nurse.davis@metrogeneral.com` / `nurse123`
   - Access: Patient care, vital signs, medication administration
 
