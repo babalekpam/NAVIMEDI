@@ -2625,13 +2625,25 @@ Report ID: ${report.id}
   // Create new medication copay (pharmacists only)
   app.post("/api/medication-copays", authenticateToken, requireTenant, requireRole(["pharmacist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
+      console.log("=== MEDICATION COPAY CREATION ===");
+      console.log("Request body:", req.body);
+      console.log("User:", { id: req.user.userId, tenantId: req.user.tenantId });
+      
       const validatedData = insertMedicationCopaySchema.parse({
         ...req.body,
         tenantId: req.user.tenantId,
         definedByPharmacist: req.user.userId,
       });
+      
+      console.log("Validated data:", validatedData);
 
       const copay = await storage.createMedicationCopay(validatedData);
+      console.log("Created copay:", copay);
+
+      if (!copay) {
+        console.error("Copay creation returned null/undefined");
+        return res.status(500).json({ message: "Failed to create medication copay - no data returned" });
+      }
 
       // Create audit log
       await storage.createAuditLog({
@@ -2645,10 +2657,11 @@ Report ID: ${report.id}
         userAgent: req.get('User-Agent')
       });
 
+      console.log("Sending response:", copay);
       res.status(201).json(copay);
     } catch (error) {
       console.error("Failed to create medication copay:", error);
-      res.status(500).json({ message: "Failed to create medication copay" });
+      res.status(500).json({ message: "Failed to create medication copay", error: error.message });
     }
   });
 
