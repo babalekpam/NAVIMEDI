@@ -23,7 +23,10 @@ const copayFormSchema = insertMedicationCopaySchema.extend({
   medicationName: z.string().min(1, "Medication name is required"),
   fullPrice: z.string().min(1, "Full price is required"),
   insuranceCoverage: z.string().min(1, "Insurance coverage is required"),
-  patientCopay: z.string().min(1, "Patient copay is required")
+  patientCopay: z.string().min(1, "Patient copay is required"),
+  quantityLimit: z.string().optional(),
+  daySupplyLimit: z.string().optional(),
+  copayPercentage: z.string().optional()
 });
 
 type CopayFormData = z.infer<typeof copayFormSchema>;
@@ -66,8 +69,8 @@ export default function MedicationCopayForm({
       copayPercentage: "",
       formularyTier: "tier_1",
       priorAuthRequired: false,
-      quantityLimit: 0,
-      daySupplyLimit: 0,
+      quantityLimit: "",
+      daySupplyLimit: "",
       definedByPharmacist: user?.id || "",
       pharmacyNotes: "",
       isActive: true
