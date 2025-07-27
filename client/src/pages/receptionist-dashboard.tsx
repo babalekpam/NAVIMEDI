@@ -1,0 +1,556 @@
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { 
+  UserPlus, 
+  Users, 
+  Calendar,
+  Clock,
+  Activity,
+  Search,
+  CheckCircle,
+  AlertCircle,
+  User,
+  Heart,
+  FileText
+} from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useTranslation } from '@/contexts/translation-context';
+import { apiRequest } from '@/lib/queryClient';
+import OverviewCards from '@/components/receptionist/overview-cards';
+import PatientRegistrationDialog from '@/components/receptionist/patient-registration-dialog';
+import VitalSignsDialog from '@/components/receptionist/vital-signs-dialog';
+
+// Form schemas
+const patientRegistrationSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  dateOfBirth: z.string().min(1, 'Date of birth is required'),
+  gender: z.string().min(1, 'Gender is required'),
+  phone: z.string().min(10, 'Phone number must be at least 10 digits'),
+  email: z.string().email('Invalid email').optional().or(z.literal('')),
+  address: z.object({
+    street: z.string().min(1, 'Street address is required'),
+    city: z.string().min(1, 'City is required'),
+    state: z.string().min(1, 'State is required'),
+    zipCode: z.string().min(5, 'ZIP code is required'),
+  }),
+  emergencyContact: z.object({
+    name: z.string().min(1, 'Emergency contact name is required'),
+    relationship: z.string().min(1, 'Relationship is required'),
+    phone: z.string().min(10, 'Emergency contact phone is required'),
+  }),
+  insuranceInfo: z.object({
+    provider: z.string().optional(),
+    policyNumber: z.string().optional(),
+    groupNumber: z.string().optional(),
+  }),
+});
+
+const vitalSignsSchema = z.object({
+  systolicBp: z.number().min(60).max(300).optional(),
+  diastolicBp: z.number().min(30).max(200).optional(),
+  heartRate: z.number().min(30).max(250).optional(),
+  temperature: z.number().min(90).max(115).optional(),
+  temperatureUnit: z.enum(['F', 'C']).default('F'),
+  respiratoryRate: z.number().min(8).max(60).optional(),
+  oxygenSaturation: z.number().min(70).max(100).optional(),
+  weight: z.number().min(1).max(1000).optional(),
+  weightUnit: z.enum(['lbs', 'kg']).default('lbs'),
+  height: z.number().min(12).max(96).optional(),
+  heightUnit: z.enum(['inches', 'cm']).default('inches'),
+  painLevel: z.number().min(0).max(10).optional(),
+  glucoseLevel: z.number().min(50).max(500).optional(),
+  notes: z.string().optional(),
+});
+
+const checkInSchema = z.object({
+  appointmentId: z.string().optional(),
+  reasonForVisit: z.string().min(1, 'Reason for visit is required'),
+  chiefComplaint: z.string().optional(),
+  priorityLevel: z.enum(['low', 'normal', 'high', 'urgent', 'emergency']).default('normal'),
+  specialInstructions: z.string().optional(),
+  accompaniedBy: z.string().optional(),
+  insuranceVerified: z.boolean().default(false),
+  copayCollected: z.number().optional(),
+});
+
+type Patient = {
+  id: string;
+  mrn: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  phone: string;
+  email?: string;
+  isActive: boolean;
+};
+
+type CheckIn = {
+  id: string;
+  patientId: string;
+  appointmentId?: string;
+  checkedInAt: string;
+  reasonForVisit: string;
+  priorityLevel: string;
+  status: string;
+  patient: Patient;
+};
+
+export default function ReceptionistDashboard() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedCheckIn, setSelectedCheckIn] = useState<CheckIn | null>(null);
+  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
+  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
+  const [isVitalsDialogOpen, setIsVitalsDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Forms
+  const patientForm = useForm({
+    resolver: zodResolver(patientRegistrationSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      dateOfBirth: '',
+      gender: '',
+      phone: '',
+      email: '',
+      address: {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+      },
+      emergencyContact: {
+        name: '',
+        relationship: '',
+        phone: '',
+      },
+      insuranceInfo: {
+        provider: '',
+        policyNumber: '',
+        groupNumber: '',
+      },
+    },
+  });
+
+  const vitalSignsForm = useForm({
+    resolver: zodResolver(vitalSignsSchema),
+    defaultValues: {
+      temperatureUnit: 'F',
+      weightUnit: 'lbs',
+      heightUnit: 'inches',
+    },
+  });
+
+  const checkInForm = useForm({
+    resolver: zodResolver(checkInSchema),
+    defaultValues: {
+      reasonForVisit: '',
+      priorityLevel: 'normal',
+      insuranceVerified: false,
+    },
+  });
+
+  // Queries
+  const { data: todayCheckIns = [], isLoading: loadingCheckIns } = useQuery({
+    queryKey: ['/api/receptionist/check-ins/today'],
+  });
+
+  const { data: waitingPatients = [], isLoading: loadingWaiting } = useQuery({
+    queryKey: ['/api/receptionist/waiting-patients'],
+  });
+
+  const { data: todayAppointments = [], isLoading: loadingAppointments } = useQuery({
+    queryKey: ['/api/appointments/date', new Date().toISOString().split('T')[0]],
+  });
+
+  const { data: recentPatients = [], isLoading: loadingPatients } = useQuery({
+    queryKey: ['/api/patients'],
+  });
+
+  // Mutations
+  const registerPatientMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('/api/patients', { method: 'POST', body: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
+      setIsRegisterDialogOpen(false);
+      patientForm.reset();
+    },
+  });
+
+  const checkInPatientMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('/api/receptionist/check-in', { method: 'POST', body: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/receptionist/check-ins/today'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/receptionist/waiting-patients'] });
+      setIsCheckInDialogOpen(false);
+      checkInForm.reset();
+    },
+  });
+
+  const recordVitalsMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('/api/receptionist/vital-signs', { method: 'POST', body: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/receptionist/check-ins/today'] });
+      setIsVitalsDialogOpen(false);
+      vitalSignsForm.reset();
+    },
+  });
+
+  // Handlers
+  const handlePatientRegistration = (data: any) => {
+    registerPatientMutation.mutate(data);
+  };
+
+  const handleCheckIn = (data: any) => {
+    if (selectedPatient) {
+      checkInPatientMutation.mutate({
+        ...data,
+        patientId: selectedPatient.id,
+      });
+    }
+  };
+
+  const handleVitalSigns = (data: any) => {
+    if (selectedCheckIn) {
+      recordVitalsMutation.mutate({
+        ...data,
+        patientId: selectedCheckIn.patientId,
+        checkInId: selectedCheckIn.id,
+      });
+    }
+  };
+
+  const getPriorityBadgeColor = (priority: string) => {
+    switch (priority) {
+      case 'emergency': return 'bg-red-100 text-red-800 border-red-200';
+      case 'urgent': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'high': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'normal': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'low': return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const filteredPatients = recentPatients.filter((patient: Patient) => 
+    patient.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.mrn.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">{t('receptionist-dashboard')}</h1>
+          <p className="text-gray-600 mt-1">{t('patient-registration-checkin-vitals')}</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Dialog open={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <UserPlus className="h-4 w-4 mr-2" />
+                {t('register-patient')}
+              </Button>
+            </DialogTrigger>
+            <PatientRegistrationDialog
+              form={patientForm}
+              onSubmit={handlePatientRegistration}
+              isLoading={registerPatientMutation.isPending}
+            />
+          </Dialog>
+        </div>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview">{t('overview')}</TabsTrigger>
+          <TabsTrigger value="check-in">{t('patient-checkin')}</TabsTrigger>
+          <TabsTrigger value="waiting">{t('waiting-room')}</TabsTrigger>
+          <TabsTrigger value="vitals">{t('vital-signs')}</TabsTrigger>
+          <TabsTrigger value="patients">{t('patient-search')}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          <OverviewCards 
+            todayCheckIns={todayCheckIns}
+            waitingPatients={waitingPatients}
+            todayAppointments={todayAppointments}
+          />
+          
+          {/* Recent Activity */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('recent-activity')}</CardTitle>
+              <CardDescription>{t('latest-patient-check-ins')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {todayCheckIns.slice(0, 5).map((checkIn: CheckIn) => (
+                  <div key={checkIn.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <User className="h-5 w-5 text-gray-500" />
+                      <div>
+                        <p className="font-medium">
+                          {checkIn.patient.firstName} {checkIn.patient.lastName}
+                        </p>
+                        <p className="text-sm text-gray-500">{checkIn.reasonForVisit}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge className={getPriorityBadgeColor(checkIn.priorityLevel)}>
+                        {checkIn.priorityLevel}
+                      </Badge>
+                      <span className="text-sm text-gray-500">
+                        {new Date(checkIn.checkedInAt).toLocaleTimeString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                {todayCheckIns.length === 0 && (
+                  <p className="text-center text-gray-500 py-4">{t('no-check-ins-today')}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="check-in" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('patient-check-in')}</CardTitle>
+              <CardDescription>{t('search-and-check-in-patients')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Search className="h-4 w-4 text-gray-500" />
+                <Input
+                  placeholder={t('search-by-name-or-mrn')}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+              
+              <div className="grid gap-3">
+                {filteredPatients.slice(0, 10).map((patient: Patient) => (
+                  <div 
+                    key={patient.id} 
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                    onClick={() => setSelectedPatient(patient)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <User className="h-5 w-5 text-gray-500" />
+                      <div>
+                        <p className="font-medium">
+                          {patient.firstName} {patient.lastName}
+                        </p>
+                        <p className="text-sm text-gray-500">MRN: {patient.mrn}</p>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedPatient(patient);
+                        setIsCheckInDialogOpen(true);
+                      }}
+                      size="sm"
+                    >
+                      {t('check-in')}
+                    </Button>
+                  </div>
+                ))}
+                {filteredPatients.length === 0 && searchTerm && (
+                  <p className="text-center text-gray-500 py-4">{t('no-patients-found')}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="waiting" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Clock className="h-5 w-5 mr-2" />
+                {t('waiting-room')} ({waitingPatients.length})
+              </CardTitle>
+              <CardDescription>{t('patients-waiting-to-be-seen')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {waitingPatients.map((checkIn: CheckIn) => (
+                  <div key={checkIn.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <User className="h-5 w-5 text-gray-500" />
+                      <div>
+                        <p className="font-medium">
+                          {checkIn.patient.firstName} {checkIn.patient.lastName}
+                        </p>
+                        <p className="text-sm text-gray-500">{checkIn.reasonForVisit}</p>
+                        <p className="text-xs text-gray-400">
+                          {t('checked-in')}: {new Date(checkIn.checkedInAt).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge className={getPriorityBadgeColor(checkIn.priorityLevel)}>
+                        {checkIn.priorityLevel}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedCheckIn(checkIn);
+                          setIsVitalsDialogOpen(true);
+                        }}
+                      >
+                        <Heart className="h-4 w-4 mr-1" />
+                        {t('vitals')}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {waitingPatients.length === 0 && (
+                  <p className="text-center text-gray-500 py-8">{t('no-patients-waiting')}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="vitals" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Activity className="h-5 w-5 mr-2" />
+                {t('vital-signs-management')}
+              </CardTitle>
+              <CardDescription>{t('record-and-view-patient-vitals')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {todayCheckIns.map((checkIn: CheckIn) => (
+                  <div key={checkIn.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <User className="h-5 w-5 text-gray-500" />
+                      <div>
+                        <p className="font-medium">
+                          {checkIn.patient.firstName} {checkIn.patient.lastName}
+                        </p>
+                        <p className="text-sm text-gray-500">{checkIn.reasonForVisit}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {checkIn.vitalSigns ? (
+                        <Badge className="bg-green-100 text-green-800">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          {t('completed')}
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-orange-100 text-orange-800">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          {t('pending')}
+                        </Badge>
+                      )}
+                      <Button
+                        size="sm"
+                        variant={checkIn.vitalSigns ? "outline" : "default"}
+                        onClick={() => {
+                          setSelectedCheckIn(checkIn);
+                          setIsVitalsDialogOpen(true);
+                        }}
+                      >
+                        <Heart className="h-4 w-4 mr-1" />
+                        {checkIn.vitalSigns ? t('edit-vitals') : t('record-vitals')}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {todayCheckIns.length === 0 && (
+                  <p className="text-center text-gray-500 py-8">{t('no-checked-in-patients')}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="patients" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                {t('patient-search')}
+              </CardTitle>
+              <CardDescription>{t('search-and-manage-patients')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Search className="h-4 w-4 text-gray-500" />
+                <Input
+                  placeholder={t('search-patients')}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+              
+              <div className="grid gap-3">
+                {filteredPatients.map((patient: Patient) => (
+                  <div key={patient.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <User className="h-5 w-5 text-gray-500" />
+                      <div>
+                        <p className="font-medium">
+                          {patient.firstName} {patient.lastName}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          MRN: {patient.mrn} | DOB: {new Date(patient.dateOfBirth).toLocaleDateString()}
+                        </p>
+                        <p className="text-sm text-gray-500">Phone: {patient.phone}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedPatient(patient);
+                          setIsCheckInDialogOpen(true);
+                        }}
+                      >
+                        {t('check-in')}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Dialogs */}
+      <Dialog open={isVitalsDialogOpen} onOpenChange={setIsVitalsDialogOpen}>
+        <VitalSignsDialog
+          form={vitalSignsForm}
+          onSubmit={handleVitalSigns}
+          isLoading={recordVitalsMutation.isPending}
+          patient={selectedCheckIn?.patient}
+        />
+      </Dialog>
+    </div>
+  );
+}

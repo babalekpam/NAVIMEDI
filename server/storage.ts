@@ -87,7 +87,10 @@ import {
   type HealthRecommendation,
   type InsertHealthRecommendation,
   type HealthAnalysis,
-  type InsertHealthAnalysis
+  type InsertHealthAnalysis,
+  patientCheckIns,
+  type PatientCheckIn,
+  type InsertPatientCheckIn
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or } from "drizzle-orm";
@@ -340,6 +343,14 @@ export interface IStorage {
 
   // Offline Sync
   syncOfflineData(syncData: any): Promise<any>;
+
+  // Patient Check-ins for receptionist workflow
+  getPatientCheckIn(id: string, tenantId: string): Promise<PatientCheckIn | undefined>;
+  createPatientCheckIn(checkIn: InsertPatientCheckIn): Promise<PatientCheckIn>;
+  updatePatientCheckIn(id: string, updates: Partial<PatientCheckIn>, tenantId: string): Promise<PatientCheckIn | undefined>;
+  getPatientCheckInsByTenant(tenantId: string, date?: Date): Promise<PatientCheckIn[]>;
+  getWaitingPatients(tenantId: string): Promise<PatientCheckIn[]>;
+  getTodaysCheckIns(tenantId: string): Promise<PatientCheckIn[]>;
   getOfflineData(tenantId: string): Promise<any>;
 
   // Translations
@@ -1883,6 +1894,62 @@ export class DatabaseStorage implements IStorage {
   async createTranslation(data: any): Promise<any> {
     // Mock implementation
     return { id: 'new-translation', ...data, createdAt: new Date().toISOString() };
+  }
+
+  // Patient Check-ins for receptionist workflow
+  async getPatientCheckIn(id: string, tenantId: string): Promise<PatientCheckIn | undefined> {
+    const [checkIn] = await db.select().from(patientCheckIns).where(
+      and(eq(patientCheckIns.id, id), eq(patientCheckIns.tenantId, tenantId))
+    );
+    return checkIn || undefined;
+  }
+
+  async createPatientCheckIn(checkIn: InsertPatientCheckIn): Promise<PatientCheckIn> {
+    const [newCheckIn] = await db.insert(patientCheckIns).values(checkIn).returning();
+    return newCheckIn;
+  }
+
+  async updatePatientCheckIn(id: string, updates: Partial<PatientCheckIn>, tenantId: string): Promise<PatientCheckIn | undefined> {
+    const [updatedCheckIn] = await db.update(patientCheckIns)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(patientCheckIns.id, id), eq(patientCheckIns.tenantId, tenantId)))
+      .returning();
+    return updatedCheckIn || undefined;
+  }
+
+  async getPatientCheckInsByTenant(tenantId: string, date?: Date): Promise<PatientCheckIn[]> {
+    let query = db.select().from(patientCheckIns).where(eq(patientCheckIns.tenantId, tenantId));
+    
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      query = query.where(
+        and(
+          eq(patientCheckIns.tenantId, tenantId),
+          sql`${patientCheckIns.checkedInAt} >= ${startOfDay}`,
+          sql`${patientCheckIns.checkedInAt} <= ${endOfDay}`
+        )
+      );
+    }
+    
+    return await query.orderBy(desc(patientCheckIns.checkedInAt));
+  }
+
+  async getWaitingPatients(tenantId: string): Promise<PatientCheckIn[]> {
+    return await db.select().from(patientCheckIns).where(
+      and(
+        eq(patientCheckIns.tenantId, tenantId),
+        eq(patientCheckIns.status, 'waiting')
+      )
+    ).orderBy(patientCheckIns.checkedInAt);
+  }
+
+  async getTodaysCheckIns(tenantId: string): Promise<PatientCheckIn[]> {
+    const today = new Date();
+    return await this.getPatientCheckInsByTenant(tenantId, today);
   }
 }
 

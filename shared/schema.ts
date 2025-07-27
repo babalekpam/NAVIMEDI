@@ -138,6 +138,29 @@ export const serviceTypeEnum = pgEnum("service_type", [
   "emergency"
 ]);
 
+export const medicalSpecialtyEnum = pgEnum("medical_specialty", [
+  "family_medicine",
+  "internal_medicine",
+  "pediatrics",
+  "cardiology",
+  "dermatology",
+  "neurology",
+  "orthopedics",
+  "gynecology",
+  "psychiatry",
+  "oncology",
+  "emergency_medicine",
+  "anesthesiology",
+  "radiology",
+  "pathology",
+  "surgery",
+  "ophthalmology",
+  "ent",
+  "urology",
+  "endocrinology",
+  "gastroenterology"
+]);
+
 // Core Tables
 export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -394,26 +417,7 @@ export const medicationCopays = pgTable("medication_copays", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
-// Vital Signs captured at reception
-export const vitalSigns = pgTable("vital_signs", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
-  patientId: uuid("patient_id").references(() => patients.id).notNull(),
-  appointmentId: uuid("appointment_id").references(() => appointments.id),
-  recordedById: uuid("recorded_by_id").references(() => users.id).notNull(), // Reception staff
-  bloodPressureSystolic: integer("blood_pressure_systolic"),
-  bloodPressureDiastolic: integer("blood_pressure_diastolic"),
-  heartRate: integer("heart_rate"), // BPM
-  temperature: decimal("temperature", { precision: 4, scale: 1 }), // Fahrenheit
-  oxygenSaturation: integer("oxygen_saturation"), // Percentage
-  respiratoryRate: integer("respiratory_rate"), // Breaths per minute
-  weight: decimal("weight", { precision: 5, scale: 2 }), // Pounds
-  height: decimal("height", { precision: 5, scale: 2 }), // Inches
-  bodyMassIndex: decimal("body_mass_index", { precision: 4, scale: 1 }), // Auto-calculated
-  notes: text("notes"),
-  recordedAt: timestamp("recorded_at").default(sql`CURRENT_TIMESTAMP`),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
-});
+
 
 // Visit Summaries created during consultation
 export const visitSummaries = pgTable("visit_summaries", {
@@ -891,6 +895,94 @@ export const labOrderAssignments = pgTable("lab_order_assignments", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Vital Signs Records
+export const vitalSigns = pgTable("vital_signs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  appointmentId: uuid("appointment_id").references(() => appointments.id),
+  recordedBy: uuid("recorded_by").references(() => users.id).notNull(), // receptionist/nurse
+  // Standard vital signs
+  systolicBp: integer("systolic_bp"), // mmHg
+  diastolicBp: integer("diastolic_bp"), // mmHg
+  heartRate: integer("heart_rate"), // bpm
+  temperature: decimal("temperature", { precision: 4, scale: 1 }), // °F or °C
+  temperatureUnit: text("temperature_unit").default('F'), // F or C
+  respiratoryRate: integer("respiratory_rate"), // breaths per minute
+  oxygenSaturation: integer("oxygen_saturation"), // %
+  weight: decimal("weight", { precision: 5, scale: 2 }), // lbs or kg
+  weightUnit: text("weight_unit").default('lbs'), // lbs or kg
+  height: decimal("height", { precision: 5, scale: 2 }), // inches or cm
+  heightUnit: text("height_unit").default('inches'), // inches or cm
+  bmi: decimal("bmi", { precision: 4, scale: 1 }), // calculated
+  painLevel: integer("pain_level"), // 0-10 scale
+  // Additional measurements
+  glucoseLevel: integer("glucose_level"), // mg/dL
+  notes: text("notes"),
+  recordedAt: timestamp("recorded_at").default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Specialty-specific questionnaires
+export const specialtyQuestionnaires = pgTable("specialty_questionnaires", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  appointmentId: uuid("appointment_id").references(() => appointments.id),
+  specialty: medicalSpecialtyEnum("specialty").notNull(),
+  completedBy: uuid("completed_by").references(() => users.id).notNull(), // receptionist/nurse
+  // Questionnaire responses stored as JSON
+  responses: jsonb("responses").notNull().$type<{
+    [questionId: string]: {
+      question: string;
+      answer: string | number | boolean | string[];
+      type: 'text' | 'number' | 'boolean' | 'select' | 'multi_select' | 'scale';
+      required: boolean;
+    };
+  }>(),
+  chiefComplaint: text("chief_complaint"),
+  symptoms: text("symptoms").array().default([]),
+  symptomDuration: text("symptom_duration"),
+  severity: integer("severity"), // 1-10 scale
+  previousTreatments: text("previous_treatments"),
+  currentMedications: text("current_medications").array().default([]),
+  allergies: text("allergies").array().default([]),
+  familyHistory: text("family_history"),
+  socialHistory: text("social_history"),
+  reviewOfSystems: jsonb("review_of_systems").default('{}'),
+  additionalNotes: text("additional_notes"),
+  isComplete: boolean("is_complete").default(false),
+  completedAt: timestamp("completed_at"),
+  reviewedBy: uuid("reviewed_by").references(() => users.id), // doctor who reviewed
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Patient Check-ins for receptionist workflow
+export const patientCheckIns = pgTable("patient_check_ins", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  appointmentId: uuid("appointment_id").references(() => appointments.id),
+  checkedInBy: uuid("checked_in_by").references(() => users.id).notNull(), // receptionist
+  checkedInAt: timestamp("checked_in_at").default(sql`CURRENT_TIMESTAMP`),
+  reasonForVisit: text("reason_for_visit").notNull(),
+  chiefComplaint: text("chief_complaint"),
+  priorityLevel: text("priority_level", { enum: ['low', 'normal', 'high', 'urgent', 'emergency'] }).default('normal'),
+  specialInstructions: text("special_instructions"),
+  accompaniedBy: text("accompanied_by"),
+  insuranceVerified: boolean("insurance_verified").default(false),
+  copayCollected: decimal("copay_collected", { precision: 10, scale: 2 }),
+  estimatedWaitTime: integer("estimated_wait_time"), // minutes
+  vitalSignsId: uuid("vital_signs_id").references(() => vitalSigns.id),
+  questionnaireId: uuid("questionnaire_id").references(() => specialtyQuestionnaires.id),
+  status: text("status", { enum: ['waiting', 'in-room', 'with-provider', 'completed', 'cancelled'] }).default('waiting'),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Relations
 export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   users: many(users),
@@ -912,7 +1004,8 @@ export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   labResults: many(labResults),
   labOrderAssignments: many(labOrderAssignments),
   vitalSigns: many(vitalSigns),
-  visitSummaries: many(visitSummaries)
+  visitSummaries: many(visitSummaries),
+  patientCheckIns: many(patientCheckIns)
 }));
 
 export const insuranceProvidersRelations = relations(insuranceProviders, ({ one, many }) => ({
@@ -1223,6 +1316,8 @@ export const appointmentsRelations = relations(appointments, ({ one, many }) => 
   visitSummaries: many(visitSummaries)
 }));
 
+
+
 // Vital Signs Relations
 export const vitalSignsRelations = relations(vitalSigns, ({ one }) => ({
   tenant: one(tenants, {
@@ -1238,11 +1333,42 @@ export const vitalSignsRelations = relations(vitalSigns, ({ one }) => ({
     references: [appointments.id]
   }),
   recordedBy: one(users, {
-    fields: [vitalSigns.recordedById],
+    fields: [vitalSigns.recordedBy],
     references: [users.id],
     relationName: "recordedBy"
   })
 }));
+
+// Patient Check-ins Relations
+export const patientCheckInsRelations = relations(patientCheckIns, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [patientCheckIns.tenantId],
+    references: [tenants.id]
+  }),
+  patient: one(patients, {
+    fields: [patientCheckIns.patientId],
+    references: [patients.id]
+  }),
+  appointment: one(appointments, {
+    fields: [patientCheckIns.appointmentId],
+    references: [appointments.id]
+  }),
+  vitalSigns: one(vitalSigns, {
+    fields: [patientCheckIns.vitalSignsId],
+    references: [vitalSigns.id]
+  }),
+  questionnaire: one(specialtyQuestionnaires, {
+    fields: [patientCheckIns.questionnaireId],
+    references: [specialtyQuestionnaires.id]
+  }),
+  checkedInBy: one(users, {
+    fields: [patientCheckIns.checkedInBy],
+    references: [users.id],
+    relationName: "checkedInBy"
+  })
+}));
+
+
 
 // Medication Copays Relations
 export const medicationCopaysRelations = relations(medicationCopays, ({ one }) => ({
@@ -1387,6 +1513,12 @@ export const insertVitalSignsSchema = createInsertSchema(vitalSigns).omit({
 });
 
 export const insertVisitSummarySchema = createInsertSchema(visitSummaries).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertPatientCheckInSchema = createInsertSchema(patientCheckIns).omit({
   id: true,
   createdAt: true,
   updatedAt: true
@@ -1600,3 +1732,6 @@ export type InsertHealthRecommendation = z.infer<typeof insertHealthRecommendati
 
 export type HealthAnalysis = typeof healthAnalyses.$inferSelect;
 export type InsertHealthAnalysis = z.infer<typeof insertHealthAnalysisSchema>;
+
+export type PatientCheckIn = typeof patientCheckIns.$inferSelect;
+export type InsertPatientCheckIn = z.infer<typeof insertPatientCheckInSchema>;

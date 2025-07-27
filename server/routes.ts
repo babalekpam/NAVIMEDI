@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertPharmacySchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertMedicationCopaySchema } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertPharmacySchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertMedicationCopaySchema, insertPatientCheckInSchema } from "@shared/schema";
 import { authenticateToken, requireRole, AuthenticatedRequest } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -3662,6 +3662,104 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Failed to run suspension check:", error);
       res.status(500).json({ message: "Failed to run suspension check" });
+    }
+  });
+
+  // Patient Check-ins for receptionist workflow
+  app.get("/api/patient-check-ins", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { date } = req.query;
+      const checkInDate = date ? new Date(date as string) : undefined;
+      const checkIns = await storage.getPatientCheckInsByTenant(req.tenant!.id, checkInDate);
+      res.json(checkIns);
+    } catch (error) {
+      console.error("Failed to fetch patient check-ins:", error);
+      res.status(500).json({ message: "Failed to fetch patient check-ins" });
+    }
+  });
+
+  app.get("/api/patient-check-ins/today", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const checkIns = await storage.getTodaysCheckIns(req.tenant!.id);
+      res.json(checkIns);
+    } catch (error) {
+      console.error("Failed to fetch today's check-ins:", error);
+      res.status(500).json({ message: "Failed to fetch today's check-ins" });
+    }
+  });
+
+  app.get("/api/patient-check-ins/waiting", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const waitingPatients = await storage.getWaitingPatients(req.tenant!.id);
+      res.json(waitingPatients);
+    } catch (error) {
+      console.error("Failed to fetch waiting patients:", error);
+      res.status(500).json({ message: "Failed to fetch waiting patients" });
+    }
+  });
+
+  app.post("/api/patient-check-ins", authenticateToken, requireTenant, requireRole(["receptionist", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const validatedData = insertPatientCheckInSchema.parse({
+        ...req.body,
+        tenantId: req.tenant!.id,
+        checkedInBy: req.user!.id
+      });
+
+      const checkIn = await storage.createPatientCheckIn(validatedData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenant!.id,
+        userId: req.user!.id,
+        entityType: "patient_check_in",
+        entityId: checkIn.id,
+        action: "CREATE",
+        previousData: null,
+        newData: checkIn,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      res.status(201).json(checkIn);
+    } catch (error) {
+      console.error("Failed to create patient check-in:", error);
+      res.status(500).json({ message: "Failed to create patient check-in" });
+    }
+  });
+
+  app.patch("/api/patient-check-ins/:id", authenticateToken, requireTenant, requireRole(["receptionist", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      const originalCheckIn = await storage.getPatientCheckIn(id, req.tenant!.id);
+      if (!originalCheckIn) {
+        return res.status(404).json({ message: "Patient check-in not found" });
+      }
+
+      const updatedCheckIn = await storage.updatePatientCheckIn(id, updates, req.tenant!.id);
+      if (!updatedCheckIn) {
+        return res.status(404).json({ message: "Patient check-in not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenant!.id,
+        userId: req.user!.id,
+        entityType: "patient_check_in",
+        entityId: id,
+        action: "UPDATE",
+        previousData: originalCheckIn,
+        newData: updatedCheckIn,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      res.json(updatedCheckIn);
+    } catch (error) {
+      console.error("Failed to update patient check-in:", error);
+      res.status(500).json({ message: "Failed to update patient check-in" });
     }
   });
 
