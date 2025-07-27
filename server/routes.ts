@@ -740,14 +740,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User preferences routes
   app.get("/api/users/preferences", authenticateToken, async (req, res) => {
     try {
-      // Return mock preferences for demo
+      // Get saved language preference from localStorage equivalent (could be stored in user profile)
+      // For now, return preferences but don't override language if user has already selected one
+      const savedLanguage = req.headers['x-user-language'] || 'en';
+      
       const preferences = {
         emailNotifications: true,
         smsNotifications: false,
         appointmentReminders: true,
         prescriptionAlerts: true,
         marketingEmails: false,
-        language: 'en',
+        language: savedLanguage,
         timezone: 'America/New_York',
         dateFormat: 'MM/DD/YYYY',
         theme: 'light',

@@ -168,15 +168,28 @@ export default function ProfileSettingsPage() {
     }
   }, [securitySettings]);
 
+  // Flag to track if we've done initial sync
+  const [hasInitialSync, setHasInitialSync] = useState(false);
+
   useEffect(() => {
-    if (userPreferences) {
-      setPreferences(userPreferences);
-      // Sync language preference with translation context only if different
-      if (userPreferences.language && userPreferences.language !== currentLanguage) {
-        setTranslationLanguage(userPreferences.language);
+    if (userPreferences && !hasInitialSync) {
+      // Only sync preferences on initial load
+      const savedLanguage = localStorage.getItem('selectedLanguage');
+      const preferencesToSet = {
+        ...userPreferences,
+        // Use saved language preference over server default
+        language: savedLanguage || userPreferences.language
+      };
+      
+      setPreferences(preferencesToSet);
+      setHasInitialSync(true);
+      
+      // Update translation context if different
+      if (savedLanguage && savedLanguage !== currentLanguage) {
+        setTranslationLanguage(savedLanguage);
       }
     }
-  }, [userPreferences]);
+  }, [userPreferences, hasInitialSync, currentLanguage, setTranslationLanguage]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: Partial<UserProfile>) => {

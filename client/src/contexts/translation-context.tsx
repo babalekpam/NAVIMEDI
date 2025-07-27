@@ -189,36 +189,18 @@ export const TranslationProvider = ({ children }: TranslationProviderProps) => {
   });
   const [isTranslating, setIsTranslating] = useState(false);
 
-  useEffect(() => {
-    // Listen for language change events from language selector
-    const handleLanguageChange = (event: CustomEvent) => {
-      const { language } = event.detail;
-      setIsTranslating(true);
-      
-      // Simulate brief translation loading for visual feedback
-      setTimeout(() => {
-        setCurrentLanguage(language);
-        setIsTranslating(false);
-      }, 200);
-    };
-
-    window.addEventListener('languageChanged', handleLanguageChange as EventListener);
-    
-    return () => {
-      window.removeEventListener('languageChanged', handleLanguageChange as EventListener);
-    };
-  }, []);
+  // Remove conflicting language change event listener that might be causing resets
 
   const setLanguage = (language: string) => {
-    console.log('Translation context setLanguage called:', language, 'current:', currentLanguage);
-    if (language === currentLanguage) return;
+    if (language === currentLanguage) {
+      return;
+    }
     
     setIsTranslating(true);
     localStorage.setItem('selectedLanguage', language);
     
     // Immediate update without timeout to prevent reversion
     setCurrentLanguage(language);
-    console.log('Language updated to:', language);
     
     setTimeout(() => {
       setIsTranslating(false);
