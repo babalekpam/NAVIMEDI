@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -66,12 +67,44 @@ function InsuranceCoverageManager({ servicePrices, insuranceProviders }: Insuran
     deductibleApplies: false
   });
   const [isCoverageFormOpen, setIsCoverageFormOpen] = useState(false);
+  const [isProviderFormOpen, setIsProviderFormOpen] = useState(false);
+  const [providerFormData, setProviderFormData] = useState({
+    name: "",
+    type: "private",
+    contactInfo: "",
+    website: "",
+    coverageRegions: "",
+    isActive: true
+  });
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: coverages = [] } = useQuery<InsurancePlanCoverage[]>({
     queryKey: ["/api/insurance-plan-coverage"],
+  });
+
+  const createProviderMutation = useMutation({
+    mutationFn: async (providerData: any) => {
+      const response = await apiRequest("POST", "/api/insurance-providers", providerData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/insurance-providers"] });
+      setIsProviderFormOpen(false);
+      resetProviderForm();
+      toast({
+        title: "Success",
+        description: "Insurance provider added successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add insurance provider.",
+        variant: "destructive",
+      });
+    },
   });
 
   const createCoverageMutation = useMutation({
@@ -127,6 +160,37 @@ function InsuranceCoverageManager({ servicePrices, insuranceProviders }: Insuran
     });
     setSelectedService("");
     setSelectedProvider("");
+  };
+
+  const resetProviderForm = () => {
+    setProviderFormData({
+      name: "",
+      type: "private",
+      contactInfo: "",
+      website: "",
+      coverageRegions: "",
+      isActive: true
+    });
+  };
+
+  const handleProviderSubmit = () => {
+    if (!providerFormData.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Provider name is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createProviderMutation.mutate({
+      name: providerFormData.name.trim(),
+      type: providerFormData.type,
+      contactInfo: providerFormData.contactInfo.trim() || null,
+      website: providerFormData.website.trim() || null,
+      coverageRegions: providerFormData.coverageRegions.trim() || null,
+      isActive: providerFormData.isActive
+    });
   };
 
   const handleSubmitCoverage = () => {
@@ -190,13 +254,98 @@ function InsuranceCoverageManager({ servicePrices, insuranceProviders }: Insuran
             <Shield className="h-5 w-5 text-blue-600" />
             Insurance Coverage Configuration
           </CardTitle>
-          <Dialog open={isCoverageFormOpen} onOpenChange={setIsCoverageFormOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-green-600 hover:bg-green-700" onClick={resetCoverageForm}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Coverage Rule
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Dialog open={isProviderFormOpen} onOpenChange={setIsProviderFormOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" onClick={resetProviderForm}>
+                  <Building2 className="h-4 w-4 mr-2" />
+                  Add Insurance Provider
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Add Insurance Provider</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="providerName">Provider Name *</Label>
+                      <Input
+                        id="providerName"
+                        value={providerFormData.name}
+                        onChange={(e) => setProviderFormData({...providerFormData, name: e.target.value})}
+                        placeholder="e.g., Blue Cross Blue Shield"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Provider Type</Label>
+                      <Select value={providerFormData.type} onValueChange={(value) => setProviderFormData({...providerFormData, type: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="private">Private Insurance</SelectItem>
+                          <SelectItem value="government">Government Insurance</SelectItem>
+                          <SelectItem value="employer">Employer Insurance</SelectItem>
+                          <SelectItem value="medicaid">Medicaid</SelectItem>
+                          <SelectItem value="medicare">Medicare</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contactInfo">Contact Information</Label>
+                    <Input
+                      id="contactInfo"
+                      value={providerFormData.contactInfo}
+                      onChange={(e) => setProviderFormData({...providerFormData, contactInfo: e.target.value})}
+                      placeholder="Phone number, email, or address"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      value={providerFormData.website}
+                      onChange={(e) => setProviderFormData({...providerFormData, website: e.target.value})}
+                      placeholder="https://www.insuranceprovider.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="coverageRegions">Coverage Regions</Label>
+                    <Input
+                      id="coverageRegions"
+                      value={providerFormData.coverageRegions}
+                      onChange={(e) => setProviderFormData({...providerFormData, coverageRegions: e.target.value})}
+                      placeholder="e.g., California, Nevada, Arizona"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="isActive"
+                      checked={providerFormData.isActive}
+                      onCheckedChange={(checked) => setProviderFormData({...providerFormData, isActive: checked as boolean})}
+                    />
+                    <Label htmlFor="isActive">Active provider</Label>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button variant="outline" onClick={() => setIsProviderFormOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleProviderSubmit} disabled={createProviderMutation.isPending}>
+                      {createProviderMutation.isPending ? "Adding..." : "Add Provider"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={isCoverageFormOpen} onOpenChange={setIsCoverageFormOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-green-600 hover:bg-green-700" onClick={resetCoverageForm}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Coverage Rule
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Configure Insurance Coverage</DialogTitle>
@@ -311,6 +460,7 @@ function InsuranceCoverageManager({ servicePrices, insuranceProviders }: Insuran
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

@@ -4,6 +4,9 @@
 A comprehensive multi-tenant healthcare management platform specializing in pharmacy operations and workflow optimization, with advanced capabilities for prescription management and insurance claims processing.
 
 ## Recent Changes (Latest)
+- **IMPLEMENTED COMPLETE INSURANCE PROVIDER MANAGEMENT** - Hospitals can now manually add insurance companies specific to their country/region with details like type, contact info, website, and coverage regions
+- **RESOLVED SERVICE PRICING VALIDATION ERRORS** - Fixed enum validation by updating frontend categories to match database schema (procedure, consultation, diagnostic, treatment, laboratory, imaging, therapy, medication, emergency)
+- **ENABLED FULL INSURANCE COVERAGE CONFIGURATION** - Both hospital admins and receptionists can configure exact copay amounts or percentages for each service and insurance provider combination
 - **IMPLEMENTED HOSPITAL SERVICE PRICING MANAGEMENT** - Created comprehensive interface for hospitals to set service rates, insurance coverage, and patient copays
 - **ADDED INSURANCE COVERAGE CONFIGURATION** - Hospitals can now manually set coverage rates for each insurance provider and service combination
 - **ENHANCED PATIENT COPAY CALCULATIONS** - When patients have insurance and correct procedure is entered, system shows exact copay amount
