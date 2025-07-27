@@ -148,15 +148,18 @@ function InsuranceCoverageManager({ servicePrices, insuranceProviders }: Insuran
       return;
     }
 
-    createCoverageMutation.mutate({
+    const requestData = {
       servicePriceId: selectedService,
       insuranceProviderId: selectedProvider,
-      copayAmount: coverageFormData.copayAmount ? parseFloat(coverageFormData.copayAmount) : null,
-      copayPercentage: coverageFormData.copayPercentage ? parseFloat(coverageFormData.copayPercentage) : null,
-      maxCoverageAmount: coverageFormData.maxCoverageAmount ? parseFloat(coverageFormData.maxCoverageAmount) : null,
+      copayAmount: coverageFormData.copayAmount || undefined,
+      copayPercentage: coverageFormData.copayPercentage || undefined,
+      maxCoverageAmount: coverageFormData.maxCoverageAmount || undefined,
       preAuthRequired: coverageFormData.preAuthRequired,
       deductibleApplies: coverageFormData.deductibleApplies
-    });
+    };
+    
+    console.log("Sending coverage data:", requestData);
+    createCoverageMutation.mutate(requestData);
   };
 
   const getServiceName = (servicePriceId: string) => {

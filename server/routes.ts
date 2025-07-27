@@ -783,10 +783,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/insurance-plan-coverage", requireRole(["tenant_admin", "director", "billing_staff", "receptionist"]), async (req, res) => {
     try {
-      // Additional check for receptionists - only allow hospital/clinic receptionists
-      if (req.user.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
-        return res.status(403).json({ message: "Access denied. Receptionist billing access is only available for hospitals." });
-      }
+      console.log("Insurance coverage create - User role:", req.user.role, "Tenant type:", req.tenant?.type, "Request body:", req.body);
       
       const coverageData = insertInsurancePlanCoverageSchema.parse({
         ...req.body,
