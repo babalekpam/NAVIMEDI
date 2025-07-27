@@ -39,12 +39,15 @@ interface ServicePriceFormData {
 }
 
 const serviceCategories = [
+  { value: "procedure", label: "Procedure", icon: Heart },
   { value: "consultation", label: "Consultation", icon: Stethoscope },
-  { value: "surgery", label: "Surgery", icon: Heart },
   { value: "diagnostic", label: "Diagnostic", icon: TestTube },
+  { value: "treatment", label: "Treatment", icon: Heart },
+  { value: "laboratory", label: "Laboratory", icon: TestTube },
+  { value: "imaging", label: "Imaging", icon: TestTube },
+  { value: "therapy", label: "Therapy", icon: Stethoscope },
   { value: "medication", label: "Medication", icon: Pill },
-  { value: "emergency", label: "Emergency", icon: Building2 },
-  { value: "other", label: "Other", icon: DollarSign }
+  { value: "emergency", label: "Emergency", icon: Building2 }
 ];
 
 interface InsuranceCoverageManagerProps {
@@ -535,14 +538,17 @@ export default function ServicePricingManagement() {
 
   const getCategoryBadgeColor = (serviceType: string) => {
     const colors = {
+      procedure: "bg-red-100 text-red-800",
       consultation: "bg-blue-100 text-blue-800",
-      surgery: "bg-red-100 text-red-800",
       diagnostic: "bg-purple-100 text-purple-800",
+      treatment: "bg-green-100 text-green-800",
+      laboratory: "bg-yellow-100 text-yellow-800",
+      imaging: "bg-indigo-100 text-indigo-800",
+      therapy: "bg-teal-100 text-teal-800",
       medication: "bg-green-100 text-green-800",
-      emergency: "bg-orange-100 text-orange-800",
-      other: "bg-gray-100 text-gray-800"
+      emergency: "bg-orange-100 text-orange-800"
     };
-    return colors[serviceType as keyof typeof colors] || colors.other;
+    return colors[serviceType as keyof typeof colors] || "bg-gray-100 text-gray-800";
   };
 
   if (isLoading) {
