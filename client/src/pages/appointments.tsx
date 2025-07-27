@@ -355,6 +355,12 @@ export default function Appointments() {
                           <span>Vital signs recorded</span>
                         </div>
                       )}
+                      {(appointment.status === "checked_in" || appointment.status === "in_progress") && (user?.role === "doctor" || user?.role === "physician") && (
+                        <div className="flex items-center mt-2 text-xs text-purple-600 font-medium animate-pulse">
+                          <FileText className="h-3 w-3 mr-1" />
+                          <span>Ready for consultation</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   
@@ -393,13 +399,19 @@ export default function Appointments() {
                       )}
                       {(user?.role === "doctor" || user?.role === "physician" || user?.role === "nurse" || user?.role === "tenant_admin" || user?.role === "super_admin") && (
                         <Button 
-                          variant="ghost" 
+                          variant={appointment.status === "checked_in" || appointment.status === "in_progress" ? "default" : "ghost"}
                           size="sm" 
-                          className="text-purple-600 hover:text-purple-700"
+                          className={appointment.status === "checked_in" || appointment.status === "in_progress" 
+                            ? "bg-purple-600 hover:bg-purple-700 text-white" 
+                            : "text-purple-600 hover:text-purple-700"
+                          }
                           onClick={() => handleVisitSummary(appointment)}
                         >
                           <FileText className="h-4 w-4 mr-1" />
-                          Visit Summary
+                          {appointment.status === "checked_in" || appointment.status === "in_progress" 
+                            ? "Complete Consultation" 
+                            : "Visit Summary"
+                          }
                         </Button>
                       )}
                       <Button 
