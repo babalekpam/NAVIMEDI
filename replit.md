@@ -4,18 +4,17 @@
 A comprehensive multi-tenant healthcare management platform specializing in pharmacy operations and workflow optimization, with advanced capabilities for prescription management and insurance claims processing.
 
 ## Recent Changes (Latest)
+- **IMPLEMENTED AUTOMATIC TRIAL SUSPENSION SYSTEM** - 14-day trials with hourly automated checks and account suspension after expiration
+- **ARGILETTE PLATFORM OWNER EXCLUSION** - Platform owner (ARGILETTE) has unlimited access with no trial limitations or expiration
+- **TRIAL STATUS DASHBOARD** - Complete trial management interface with progress tracking and admin controls
+- **ENHANCED LOGIN SECURITY** - Suspended accounts blocked with clear upgrade messaging during login attempts
+- **UPDATED PRICING PLANS** - Added $20.99 to all tiers: Starter ($49.99), Professional ($119.99), Enterprise ($319.99), White Label ($1019.99)
 - **IMPLEMENTED COMPREHENSIVE ENTERPRISE FEATURES** - Full pricing/packaging, multi-language support, white label capabilities, and offline functionality
-- **ADDED PRICING PLANS SYSTEM** - Starter ($49.99), Professional ($119.99), Enterprise ($319.99), White Label ($1019.99) tiers with feature differentiation
-- **IMPLEMENTED WHITE LABEL SETTINGS** - Custom branding, logo upload, color themes, and tenant-specific customization
 - **ADDED MULTI-LANGUAGE SUPPORT** - Language selector component with English, Spanish, French translations and extensible framework
 - **IMPLEMENTED OFFLINE SYNC CAPABILITIES** - Offline data management and synchronization for enterprise deployment scenarios
-- **UPDATED NAVIGATION** - Added pricing page, white label settings, and language selection to sidebar and routing
-- **ENHANCED LANDING PAGE** - Updated call-to-action to showcase pricing instead of direct registration
-- **COMPLETED DATABASE SCHEMA** - All enterprise tables (subscriptions, pricing plans, translations, white-label settings) implemented
-- **ADDED SERVER ROUTES** - Full API support for pricing plans, white label settings, offline sync, and translations
+- **COMPLETED DATABASE SCHEMA** - All enterprise tables (subscriptions, pricing plans, translations, white-label settings, trial tracking) implemented
 - **IMPLEMENTED PRESCRIPTION ROUTING SYSTEM** - Doctors/hospitals send prescriptions directly to patient's chosen pharmacy
 - **PHARMACY PATIENT ACCESS RESTRICTION** - Pharmacies only see patients with prescriptions sent to them
-- **CUSTOMIZED PHARMACY INTERFACE** - Tailored UI for pharmacy operations workflow
 - **FIXED MEDICATION CLAIMS SYSTEM** - Insurance claims for pharmacy medications work perfectly
 - **ADDED PUBLIC ORGANIZATION REGISTRATION** - Organizations can register directly from landing page
 

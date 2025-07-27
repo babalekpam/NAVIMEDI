@@ -35,6 +35,7 @@ export class TrialSuspensionService {
       console.log(`[TRIAL SERVICE] Checking for expired trials at ${now.toISOString()}`);
 
       // Find tenants with expired trials that haven't been suspended yet
+      // Exclude ARGILETTE platform owner tenant
       const expiredTrials = await db
         .select({
           id: tenants.id,
@@ -49,6 +50,9 @@ export class TrialSuspensionService {
             eq(tenants.subscriptionStatus, 'trial'),
             lt(tenants.trialEndDate, sql`NOW()`),
             eq(tenants.isActive, true),
+            // Exclude ARGILETTE platform owner - they have unlimited access
+            sql`${tenants.name} != 'ARGILETTE'`,
+            sql`${tenants.type} != 'platform'`,
             // Only check tenants that haven't been checked in the last hour
             sql`(${tenants.lastSuspensionCheck} IS NULL OR ${tenants.lastSuspensionCheck} < NOW() - INTERVAL '1 hour')`
           )
@@ -167,6 +171,7 @@ export class TrialSuspensionService {
         .select({
           id: tenants.id,
           name: tenants.name,
+          type: tenants.type,
           trialStartDate: tenants.trialStartDate,
           trialEndDate: tenants.trialEndDate,
           subscriptionStatus: tenants.subscriptionStatus,
@@ -183,6 +188,19 @@ export class TrialSuspensionService {
       }
 
       const tenantData = tenant[0];
+      
+      // ARGILETTE platform owner has unlimited access - no trial limitations
+      if (tenantData.name === 'ARGILETTE' || tenantData.type === 'platform') {
+        return {
+          ...tenantData,
+          daysRemaining: 999999, // Unlimited
+          isTrialExpired: false,
+          isTrialActive: false, // Not on trial - unlimited access
+          isPlatformOwner: true,
+          unlimitedAccess: true
+        };
+      }
+
       const now = new Date();
       const trialEndDate = tenantData.trialEndDate ? new Date(tenantData.trialEndDate) : new Date();
       const daysRemaining = Math.max(0, Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
@@ -191,7 +209,9 @@ export class TrialSuspensionService {
         ...tenantData,
         daysRemaining,
         isTrialExpired: now > trialEndDate,
-        isTrialActive: tenantData.subscriptionStatus === 'trial' && now <= trialEndDate
+        isTrialActive: tenantData.subscriptionStatus === 'trial' && now <= trialEndDate,
+        isPlatformOwner: false,
+        unlimitedAccess: false
       };
 
     } catch (error) {

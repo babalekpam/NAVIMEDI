@@ -19,6 +19,7 @@ import { Link } from "wouter";
 interface TrialStatus {
   id: string;
   name: string;
+  type: string;
   trialStartDate: string;
   trialEndDate: string;
   subscriptionStatus: 'trial' | 'active' | 'suspended' | 'cancelled' | 'expired';
@@ -28,6 +29,8 @@ interface TrialStatus {
   daysRemaining: number;
   isTrialExpired: boolean;
   isTrialActive: boolean;
+  isPlatformOwner?: boolean;
+  unlimitedAccess?: boolean;
 }
 
 export default function TrialStatusPage() {
@@ -137,6 +140,11 @@ export default function TrialStatusPage() {
   }
 
   const getStatusBadge = () => {
+    // ARGILETTE platform owner has unlimited access
+    if (trialStatus.isPlatformOwner || trialStatus.unlimitedAccess) {
+      return <Badge variant="default" className="bg-purple-100 text-purple-800">Platform Owner - Unlimited Access</Badge>;
+    }
+    
     switch (trialStatus.subscriptionStatus) {
       case 'trial':
         return trialStatus.isTrialActive ? 
@@ -191,20 +199,35 @@ export default function TrialStatusPage() {
               {getStatusBadge()}
             </div>
             
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Trial Progress</span>
-                <span>{trialStatus.daysRemaining} days remaining</span>
+            {trialStatus.isPlatformOwner || trialStatus.unlimitedAccess ? (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Access Level</span>
+                  <span className="font-semibold text-purple-600">Unlimited</span>
+                </div>
+                <div className="p-3 bg-purple-50 rounded-lg">
+                  <p className="text-sm text-purple-800">
+                    <strong>Platform Owner Status</strong><br />
+                    As the platform owner, ARGILETTE has unlimited access to all features with no expiration.
+                  </p>
+                </div>
               </div>
-              <Progress 
-                value={progressPercentage} 
-                className="h-2"
-              />
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>Started: {new Date(trialStatus.trialStartDate).toLocaleDateString()}</span>
-                <span>Ends: {new Date(trialStatus.trialEndDate).toLocaleDateString()}</span>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Trial Progress</span>
+                  <span>{trialStatus.daysRemaining} days remaining</span>
+                </div>
+                <Progress 
+                  value={progressPercentage} 
+                  className="h-2"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Started: {new Date(trialStatus.trialStartDate).toLocaleDateString()}</span>
+                  <span>Ends: {new Date(trialStatus.trialEndDate).toLocaleDateString()}</span>
+                </div>
               </div>
-            </div>
+            )}
 
             {trialStatus.subscriptionStatus === 'suspended' && (
               <Alert>
@@ -242,32 +265,51 @@ export default function TrialStatusPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {trialStatus.subscriptionStatus === 'trial' && !trialStatus.isTrialExpired && (
+            {trialStatus.isPlatformOwner || trialStatus.unlimitedAccess ? (
               <div className="space-y-3">
-                <p className="text-sm text-gray-600">
-                  Upgrade to a paid plan to continue using all features after your trial ends.
-                </p>
-                <Link href="/pricing">
-                  <Button className="w-full">
+                <div className="p-3 bg-purple-50 rounded-lg">
+                  <p className="text-sm text-purple-800">
+                    <strong>Platform Owner Privileges</strong><br />
+                    You have full administrative access to the entire platform with no limitations or expiration dates.
+                  </p>
+                </div>
+                <Link href="/tenant-management">
+                  <Button className="w-full" variant="outline">
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    View Pricing Plans
+                    Manage Organizations
                   </Button>
                 </Link>
               </div>
-            )}
+            ) : (
+              <>
+                {trialStatus.subscriptionStatus === 'trial' && !trialStatus.isTrialExpired && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">
+                      Upgrade to a paid plan to continue using all features after your trial ends.
+                    </p>
+                    <Link href="/pricing">
+                      <Button className="w-full">
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        View Pricing Plans
+                      </Button>
+                    </Link>
+                  </div>
+                )}
 
-            {trialStatus.subscriptionStatus === 'suspended' && (
-              <div className="space-y-3">
-                <p className="text-sm text-gray-600">
-                  Your account has been suspended. Upgrade to reactivate your account.
-                </p>
-                <Link href="/pricing">
-                  <Button className="w-full">
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Upgrade Now
-                  </Button>
-                </Link>
-              </div>
+                {trialStatus.subscriptionStatus === 'suspended' && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">
+                      Your account has been suspended. Upgrade to reactivate your account.
+                    </p>
+                    <Link href="/pricing">
+                      <Button className="w-full">
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Upgrade Now
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </>
             )}
 
             {user?.role === 'super_admin' && (

@@ -72,15 +72,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Account is disabled" });
       }
 
-      // Check if tenant is suspended (except for super_admin)
+      // Check if tenant is suspended (except for super_admin and ARGILETTE platform owner)
       if (user.role !== 'super_admin') {
         const tenant = await storage.getTenant(user.tenantId);
         if (tenant && (tenant.subscriptionStatus === 'suspended' || !tenant.isActive)) {
-          return res.status(403).json({ 
-            message: "Account suspended - Trial period expired. Please upgrade to continue using the service.",
-            suspensionReason: tenant.suspensionReason || "Trial period expired",
-            trialExpired: true
-          });
+          // ARGILETTE platform owner has unlimited access - never suspend
+          if (tenant.name === 'ARGILETTE' || tenant.type === 'platform') {
+            console.log('[AUTH DEBUG] ARGILETTE platform owner - unlimited access granted');
+          } else {
+            return res.status(403).json({ 
+              message: "Account suspended - Trial period expired. Please upgrade to continue using the service.",
+              suspensionReason: tenant.suspensionReason || "Trial period expired",
+              trialExpired: true
+            });
+          }
         }
       }
 
