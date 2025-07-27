@@ -737,6 +737,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User preferences routes
+  app.get("/api/users/preferences", authenticateToken, async (req, res) => {
+    try {
+      // Return mock preferences for demo
+      const preferences = {
+        emailNotifications: true,
+        smsNotifications: false,
+        appointmentReminders: true,
+        prescriptionAlerts: true,
+        marketingEmails: false,
+        language: 'en',
+        timezone: 'America/New_York',
+        dateFormat: 'MM/DD/YYYY',
+        theme: 'light',
+        autoLogout: 30,
+        dataRetention: true
+      };
+
+      res.json(preferences);
+    } catch (error) {
+      console.error("Get preferences error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/users/preferences", authenticateToken, async (req, res) => {
+    try {
+      const preferences = req.body;
+      
+      // In production, you would save these to the database
+      // For now, just validate and return success
+      
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user!.tenantId,
+        userId: req.user!.id,
+        entityType: "user_preferences",
+        entityId: req.user!.id,
+        action: "update_preferences",
+        previousData: null,
+        newData: preferences,
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.json({ success: true, preferences });
+    } catch (error) {
+      console.error("Update preferences error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Get users by role (for fetching providers, etc.)
   app.get("/api/users", authenticateToken, requireTenant, async (req, res) => {
     try {

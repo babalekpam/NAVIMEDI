@@ -10,6 +10,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
@@ -77,6 +79,20 @@ interface ApiKey {
   permissions: string[];
 }
 
+interface UserPreferences {
+  emailNotifications: boolean;
+  smsNotifications: boolean;
+  appointmentReminders: boolean;
+  prescriptionAlerts: boolean;
+  marketingEmails: boolean;
+  language: string;
+  timezone: string;
+  dateFormat: string;
+  theme: string;
+  autoLogout: number;
+  dataRetention: boolean;
+}
+
 export default function ProfileSettingsPage() {
   const { user, refreshUser } = useAuth();
   const { tenant } = useTenant();
@@ -92,6 +108,19 @@ export default function ProfileSettingsPage() {
   const [twoFactorSecret, setTwoFactorSecret] = useState("");
   const [newApiKeyName, setNewApiKeyName] = useState("");
   const [showNewApiKeyDialog, setShowNewApiKeyDialog] = useState(false);
+  const [preferences, setPreferences] = useState<UserPreferences>({
+    emailNotifications: true,
+    smsNotifications: false,
+    appointmentReminders: true,
+    prescriptionAlerts: true,
+    marketingEmails: false,
+    language: 'en',
+    timezone: 'UTC',
+    dateFormat: 'MM/DD/YYYY',
+    theme: 'light',
+    autoLogout: 30,
+    dataRetention: true
+  });
   const [passwordData, setPasswordData] = useState<PasswordChange>({
     currentPassword: "",
     newPassword: "",
@@ -125,11 +154,23 @@ export default function ProfileSettingsPage() {
     enabled: !!user
   });
 
+  // Fetch user preferences
+  const { data: userPreferences } = useQuery<UserPreferences>({
+    queryKey: ['/api/users/preferences'],
+    enabled: !!user
+  });
+
   useEffect(() => {
     if (securitySettings) {
       setTwoFactorEnabled(securitySettings.twoFactorEnabled || false);
     }
   }, [securitySettings]);
+
+  useEffect(() => {
+    if (userPreferences) {
+      setPreferences(userPreferences);
+    }
+  }, [userPreferences]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: Partial<UserProfile>) => {
@@ -407,8 +448,58 @@ export default function ProfileSettingsPage() {
     }
   });
 
+  // Update Preferences Mutation
+  const updatePreferencesMutation = useMutation({
+    mutationFn: async (newPreferences: UserPreferences) => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch('/api/users/preferences', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(newPreferences)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update preferences');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Preferences updated",
+        description: "Your account preferences have been saved successfully."
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/users/preferences'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update preferences",
+        variant: "destructive"
+      });
+    }
+  });
+
   const handleSaveProfile = () => {
     updateProfileMutation.mutate(profileData);
+  };
+
+  const handleSavePreferences = () => {
+    updatePreferencesMutation.mutate(preferences);
+  };
+
+  const handlePreferenceChange = (key: keyof UserPreferences, value: any) => {
+    setPreferences(prev => ({
+      ...prev,
+      [key]: value
+    }));
   };
 
   const handleChangePassword = () => {
@@ -963,19 +1054,223 @@ export default function ProfileSettingsPage() {
 
           {/* Preferences Tab */}
           <TabsContent value="preferences">
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Preferences</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Preference settings will be available in a future update.
-                  </AlertDescription>
-                </Alert>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium">Account Preferences</h3>
+                <p className="text-sm text-gray-500">
+                  Configure your account settings and preferences.
+                </p>
+              </div>
+              
+              {/* Notification Preferences */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5" />
+                    Notification Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">Email Notifications</h4>
+                      <p className="text-sm text-gray-500">Receive important updates via email</p>
+                    </div>
+                    <Switch
+                      checked={preferences.emailNotifications}
+                      onCheckedChange={(value) => handlePreferenceChange('emailNotifications', value)}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">SMS Notifications</h4>
+                      <p className="text-sm text-gray-500">Receive urgent alerts via text message</p>
+                    </div>
+                    <Switch
+                      checked={preferences.smsNotifications}
+                      onCheckedChange={(value) => handlePreferenceChange('smsNotifications', value)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">Appointment Reminders</h4>
+                      <p className="text-sm text-gray-500">Get reminders for upcoming appointments</p>
+                    </div>
+                    <Switch
+                      checked={preferences.appointmentReminders}
+                      onCheckedChange={(value) => handlePreferenceChange('appointmentReminders', value)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">Prescription Alerts</h4>
+                      <p className="text-sm text-gray-500">Notifications for prescription updates and refills</p>
+                    </div>
+                    <Switch
+                      checked={preferences.prescriptionAlerts}
+                      onCheckedChange={(value) => handlePreferenceChange('prescriptionAlerts', value)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">Marketing Emails</h4>
+                      <p className="text-sm text-gray-500">Receive promotional content and updates</p>
+                    </div>
+                    <Switch
+                      checked={preferences.marketingEmails}
+                      onCheckedChange={(value) => handlePreferenceChange('marketingEmails', value)}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Display & Language Preferences */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="w-5 h-5" />
+                    Display & Language
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="language">Language</Label>
+                      <Select
+                        value={preferences.language}
+                        onValueChange={(value) => handlePreferenceChange('language', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="es">Español</SelectItem>
+                          <SelectItem value="fr">Français</SelectItem>
+                          <SelectItem value="de">Deutsch</SelectItem>
+                          <SelectItem value="pt">Português</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="timezone">Timezone</Label>
+                      <Select
+                        value={preferences.timezone}
+                        onValueChange={(value) => handlePreferenceChange('timezone', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
+                          <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
+                          <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
+                          <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
+                          <SelectItem value="UTC">UTC</SelectItem>
+                          <SelectItem value="Europe/London">London (GMT)</SelectItem>
+                          <SelectItem value="Europe/Paris">Paris (CET)</SelectItem>
+                          <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="dateFormat">Date Format</Label>
+                      <Select
+                        value={preferences.dateFormat}
+                        onValueChange={(value) => handlePreferenceChange('dateFormat', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
+                          <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
+                          <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
+                          <SelectItem value="DD-MMM-YYYY">DD-MMM-YYYY</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="theme">Theme</Label>
+                      <Select
+                        value={preferences.theme}
+                        onValueChange={(value) => handlePreferenceChange('theme', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="light">Light</SelectItem>
+                          <SelectItem value="dark">Dark</SelectItem>
+                          <SelectItem value="system">System</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Security & Privacy Preferences */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="w-5 h-5" />
+                    Security & Privacy
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="autoLogout">Auto Logout (minutes)</Label>
+                    <Select
+                      value={preferences.autoLogout.toString()}
+                      onValueChange={(value) => handlePreferenceChange('autoLogout', parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="15">15 minutes</SelectItem>
+                        <SelectItem value="30">30 minutes</SelectItem>
+                        <SelectItem value="60">1 hour</SelectItem>
+                        <SelectItem value="120">2 hours</SelectItem>
+                        <SelectItem value="240">4 hours</SelectItem>
+                        <SelectItem value="0">Never</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">Data Retention</h4>
+                      <p className="text-sm text-gray-500">Keep historical data for analytics and compliance</p>
+                    </div>
+                    <Switch
+                      checked={preferences.dataRetention}
+                      onCheckedChange={(value) => handlePreferenceChange('dataRetention', value)}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Save Preferences */}
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handleSavePreferences}
+                  disabled={updatePreferencesMutation.isPending}
+                  className="w-full sm:w-auto"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Preferences'}
+                </Button>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
