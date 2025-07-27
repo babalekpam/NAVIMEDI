@@ -411,6 +411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "appointment",
         entityId: appointment.id,
         action: "create",
+        previousData: null,
         newData: appointment,
         ipAddress: req.ip || null,
         userAgent: req.get("User-Agent") || null
@@ -426,9 +427,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update appointment (PATCH)
-  app.patch("/api/appointments/:id", authenticateToken, requireRole(["physician", "nurse", "receptionist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+  // Update appointment (PATCH) - Allow receptionists and doctors to update appointments
+  app.patch("/api/appointments/:id", authenticateToken, requireTenant, requireRole(["physician", "nurse", "receptionist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
+      console.log("[APPOINTMENT UPDATE] User role:", req.user?.role, "Tenant type:", req.tenant?.type, "User ID:", req.user?.id);
       const { id } = req.params;
       const updateData = { ...req.body };
 
@@ -450,6 +452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "appointment",
         entityId: id,
         action: "update",
+        previousData: null,
         newData: updatedAppointment,
         ipAddress: req.ip || null,
         userAgent: req.get("User-Agent") || null
