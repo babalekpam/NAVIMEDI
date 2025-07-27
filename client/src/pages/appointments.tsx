@@ -53,6 +53,14 @@ export default function Appointments() {
     if (urlParams.get('action') === 'book') {
       setIsFormOpen(true);
     }
+    
+    // Check if patient was selected from Quick Actions in medical records
+    const selectedPatientInfo = localStorage.getItem('selectedPatientForAppointment');
+    if (selectedPatientInfo) {
+      setIsFormOpen(true);
+      // Clear the stored patient info after using it
+      localStorage.removeItem('selectedPatientForAppointment');
+    }
   }, []);
 
   // Get all appointments if "all" is selected, otherwise filter by date

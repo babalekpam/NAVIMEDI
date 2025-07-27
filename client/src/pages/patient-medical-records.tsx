@@ -403,8 +403,14 @@ export default function PatientMedicalRecords() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <Button
                           onClick={() => {
-                            // Navigate to appointments page with patient pre-selected
-                            window.location.href = `/appointments?patientId=${selectedPatient.id}&action=schedule`;
+                            // Store patient info in localStorage for the appointment page
+                            localStorage.setItem('selectedPatientForAppointment', JSON.stringify({
+                              id: selectedPatient.id,
+                              name: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
+                              mrn: selectedPatient.mrn
+                            }));
+                            // Navigate to appointments page
+                            window.location.href = '/appointments';
                           }}
                           className="flex flex-col items-center p-4 h-auto"
                           variant="outline"
@@ -415,8 +421,14 @@ export default function PatientMedicalRecords() {
                         
                         <Button
                           onClick={() => {
-                            // Navigate to prescriptions page with patient pre-selected
-                            window.location.href = `/prescriptions?patientId=${selectedPatient.id}&action=new`;
+                            // Store patient info in localStorage for the prescription page
+                            localStorage.setItem('selectedPatientForPrescription', JSON.stringify({
+                              id: selectedPatient.id,
+                              name: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
+                              mrn: selectedPatient.mrn
+                            }));
+                            // Navigate to prescriptions page
+                            window.location.href = '/prescriptions';
                           }}
                           className="flex flex-col items-center p-4 h-auto"
                           variant="outline"
@@ -427,8 +439,14 @@ export default function PatientMedicalRecords() {
                         
                         <Button
                           onClick={() => {
-                            // Navigate to lab orders page with patient pre-selected
-                            window.location.href = `/lab-orders?patientId=${selectedPatient.id}&action=new`;
+                            // Store patient info in localStorage for the lab orders page
+                            localStorage.setItem('selectedPatientForLabOrder', JSON.stringify({
+                              id: selectedPatient.id,
+                              name: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
+                              mrn: selectedPatient.mrn
+                            }));
+                            // Navigate to lab orders page
+                            window.location.href = '/lab-orders';
                           }}
                           className="flex flex-col items-center p-4 h-auto"
                           variant="outline"
@@ -439,8 +457,14 @@ export default function PatientMedicalRecords() {
                         
                         <Button
                           onClick={() => {
-                            // Navigate to consultation/visit summary with patient pre-selected
-                            window.location.href = `/appointments?patientId=${selectedPatient.id}&action=consultation`;
+                            // Store patient info in localStorage for the consultation
+                            localStorage.setItem('selectedPatientForConsultation', JSON.stringify({
+                              id: selectedPatient.id,
+                              name: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
+                              mrn: selectedPatient.mrn
+                            }));
+                            // Navigate to consultation history page for adding notes
+                            window.location.href = '/consultation-history';
                           }}
                           className="flex flex-col items-center p-4 h-auto"
                           variant="outline"

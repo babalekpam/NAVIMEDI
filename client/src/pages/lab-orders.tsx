@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,16 @@ export default function LabOrders() {
   const { user } = useAuth();
   const { tenant } = useTenant();
   const queryClient = useQueryClient();
+
+  // Check if patient was selected from Quick Actions in medical records
+  useEffect(() => {
+    const selectedPatientInfo = localStorage.getItem('selectedPatientForLabOrder');
+    if (selectedPatientInfo) {
+      setIsFormOpen(true);
+      // Clear the stored patient info after using it
+      localStorage.removeItem('selectedPatientForLabOrder');
+    }
+  }, []);
 
   const { data: labOrders = [], isLoading } = useQuery<LabOrder[]>({
     queryKey: ["/api/lab-orders"],
