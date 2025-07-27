@@ -70,7 +70,7 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
 
 export const requireRole = (allowedRoles: string[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    console.log("[ROLE CHECK] Path:", req.path, "User:", req.user?.role, "Tenant type:", req.tenant?.type);
+    console.log("[ROLE CHECK] Path:", req.path, "User:", req.user?.role, "Tenant type:", req.tenant?.type, "Full tenant:", JSON.stringify(req.tenant));
     
     if (!req.user) {
       console.log("[ROLE CHECK] No user found - authentication required");

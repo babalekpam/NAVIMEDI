@@ -42,6 +42,7 @@ export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response,
       
       // Load full tenant information from database
       const tenant = await storage.getTenant(decoded.tenantId);
+      console.log("[TENANT DEBUG] Loaded tenant from DB:", tenant);
       req.tenant = tenant;
 
       // For super admin, allow access to all tenants
