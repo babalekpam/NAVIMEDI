@@ -183,14 +183,23 @@ function InsuranceCoverageManager({ servicePrices, insuranceProviders }: Insuran
       return;
     }
 
-    createProviderMutation.mutate({
+    // Create the data structure matching the database schema
+    const providerData = {
       name: providerFormData.name.trim(),
+      code: providerFormData.name.trim().toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, ''), // Auto-generate code from name
       type: providerFormData.type,
-      contactInfo: providerFormData.contactInfo.trim() || null,
-      website: providerFormData.website.trim() || null,
-      coverageRegions: providerFormData.coverageRegions.trim() || null,
+      contactInfo: providerFormData.contactInfo.trim() ? JSON.stringify({
+        contact: providerFormData.contactInfo.trim(),
+        website: providerFormData.website.trim() || null,
+        coverageRegions: providerFormData.coverageRegions.trim() || null
+      }) : null,
+      claimsAddress: null, // Optional field not in form
+      electronicSubmission: false, // Default value
       isActive: providerFormData.isActive
-    });
+    };
+    
+    console.log("Creating insurance provider with data:", providerData);
+    createProviderMutation.mutate(providerData);
   };
 
   const handleSubmitCoverage = () => {
