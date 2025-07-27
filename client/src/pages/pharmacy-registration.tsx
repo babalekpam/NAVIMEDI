@@ -113,10 +113,33 @@ export default function PharmacyRegistration() {
   const form = useForm<PharmacyRegistrationForm>({
     resolver: zodResolver(pharmacyRegistrationSchema),
     defaultValues: {
+      // Basic Information
+      name: "",
+      subdomain: "",
+      address: "",
+      phone: "",
+      email: "",
+      licenseNumber: "",
+      deaNumber: "",
+      taxId: "",
+      
+      // Administrator Details
+      adminFirstName: "",
+      adminLastName: "",
+      adminEmail: "",
+      adminPhone: "",
+      adminLicense: "",
+      
+      // Services
       services: [],
+      operatingHours: "",
       specializations: [],
+      
+      // Insurance and Network
       insuranceNetworks: [],
       acceptsInsurance: true,
+      
+      // Additional Information
       description: "",
       website: ""
     }
@@ -127,14 +150,14 @@ export default function PharmacyRegistration() {
       const registrationData = {
         // Tenant information
         tenant: {
-          name: data.organizationName,
+          name: data.name,
           type: "pharmacy",
           subdomain: data.subdomain,
           settings: {
-            address: `${data.address}, ${data.city}, ${data.state} ${data.zipCode}`,
+            address: data.address,
             phone: data.phone,
             email: data.email,
-            licenseNumber: data.pharmacyLicense,
+            licenseNumber: data.licenseNumber,
             deaNumber: data.deaNumber,
             taxId: data.taxId,
             services: data.services,
@@ -152,8 +175,7 @@ export default function PharmacyRegistration() {
           lastName: data.adminLastName,
           email: data.adminEmail,
           phone: data.adminPhone,
-          licenseNumber: data.adminLicense,
-          role: "tenant_admin"
+          licenseNumber: data.adminLicense
         }
       };
 
