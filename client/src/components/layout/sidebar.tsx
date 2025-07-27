@@ -44,7 +44,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "appointments", label: t("appointments"), icon: Calendar, path: "/appointments", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "prescriptions", label: t("prescriptions"), icon: Pill, path: "/prescriptions", roles: ["physician", "nurse", "pharmacist", "receptionist", "tenant_admin", "director"] },
   { id: "lab-orders", label: t("lab-orders"), icon: TestTube, path: "/lab-orders", roles: ["physician", "nurse", "lab_technician", "receptionist", "tenant_admin", "director"] },
-  { id: "lab-results", label: t("lab-results"), icon: TestTube, path: "/lab-results", roles: ["physician", "nurse", "lab_technician", "receptionist", "tenant_admin", "director"] },
+  { id: "lab-results", label: t("lab-results"), icon: FileText, path: "/lab-results", roles: ["physician", "nurse", "lab_technician", "tenant_admin", "director"] },
   { id: "pharmacy-dashboard", label: t("pharmacy-dashboard"), icon: Building2, path: "/pharmacy-dashboard", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "health-recommendations", label: t("health-recommendations"), icon: Brain, path: "/health-recommendations", roles: ["physician", "nurse", "tenant_admin", "director"] },
   { id: "medical-communications", label: t("medical-communications"), icon: Languages, path: "/medical-communications", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
