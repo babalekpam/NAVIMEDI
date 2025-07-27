@@ -97,7 +97,9 @@ export default function WhiteLabelSettingsPage() {
     }
   };
 
-  const isWhiteLabelEnabled = (subscription as any)?.whitelabelEnabled || (subscription as any)?.plan === 'white_label';
+  // ARGILETTE platform owner has unlimited white label access
+  const isPlatformOwner = currentTenant?.name === 'ARGILETTE' || currentTenant?.type === 'platform';
+  const isWhiteLabelEnabled = isPlatformOwner || (subscription as any)?.whitelabelEnabled || (subscription as any)?.plan === 'white_label';
 
   if (!isWhiteLabelEnabled) {
     return (
@@ -125,12 +127,15 @@ export default function WhiteLabelSettingsPage() {
           <div>
             <h1 className="text-3xl font-bold">White Label Settings</h1>
             <p className="text-slate-600 mt-2">
-              Customize your platform's branding and appearance
+              {isPlatformOwner 
+                ? "Platform owner unlimited customization - no payment required" 
+                : "Customize your platform's branding and appearance"
+              }
             </p>
           </div>
-          <Badge className="bg-purple-100 text-purple-800">
+          <Badge className={isPlatformOwner ? "bg-purple-100 text-purple-800" : "bg-green-100 text-green-800"}>
             <Crown className="w-3 h-3 mr-1" />
-            White Label Enabled
+            {isPlatformOwner ? "Platform Owner - Unlimited Access" : "White Label Enabled"}
           </Badge>
         </div>
 

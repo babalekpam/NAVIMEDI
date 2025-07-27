@@ -3097,6 +3097,32 @@ Report ID: ${report.id}
       const { tenantId } = req.params;
       const whitelabelSettings = req.body;
       
+      // Check if user has access to this tenant
+      if (req.user.tenantId !== tenantId && req.user.role !== 'super_admin') {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      // Get tenant info to check if it's ARGILETTE platform owner
+      const tenant = await storage.getTenant(tenantId);
+      if (!tenant) {
+        return res.status(404).json({ error: 'Tenant not found' });
+      }
+      
+      // ARGILETTE platform owner has unlimited white label access - no subscription check
+      const isPlatformOwner = tenant.name === 'ARGILETTE' || tenant.type === 'platform';
+      
+      if (!isPlatformOwner) {
+        // Check subscription for non-platform owners
+        const subscription = await storage.getCurrentSubscription(tenantId);
+        if (!subscription || (!subscription.whitelabelEnabled && subscription.plan !== 'white_label')) {
+          return res.status(403).json({ 
+            error: 'White label features require Enterprise or White Label subscription' 
+          });
+        }
+      } else {
+        console.log('[WHITE LABEL] ARGILETTE platform owner - unlimited white label access granted');
+      }
+      
       const updatedTenant = await storage.updateTenantWhiteLabel(tenantId, whitelabelSettings);
       res.json(updatedTenant);
     } catch (error) {
