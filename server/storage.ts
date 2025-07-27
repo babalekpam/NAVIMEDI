@@ -117,6 +117,8 @@ export interface IStorage {
   updatePatient(id: string, updates: Partial<Patient>, tenantId: string): Promise<Patient | undefined>;
   getPatientsByTenant(tenantId: string, limit?: number, offset?: number): Promise<Patient[]>;
   searchPatients(tenantId: string, query: string): Promise<Patient[]>;
+  getAllPatients(limit?: number, offset?: number): Promise<Patient[]>;
+  searchPatientsGlobal(query: string): Promise<Patient[]>;
 
   // Appointment management
   getAppointment(id: string, tenantId: string): Promise<Appointment | undefined>;
@@ -447,6 +449,25 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(patients).where(
       and(
         eq(patients.tenantId, tenantId),
+        eq(patients.isActive, true),
+        sql`(LOWER(${patients.firstName}) LIKE LOWER('%' || ${query} || '%') OR 
+             LOWER(${patients.lastName}) LIKE LOWER('%' || ${query} || '%') OR 
+             ${patients.mrn} LIKE '%' || ${query} || '%')`
+      )
+    );
+  }
+
+  async getAllPatients(limit = 50, offset = 0): Promise<Patient[]> {
+    return await db.select().from(patients)
+      .where(eq(patients.isActive, true))
+      .limit(limit)
+      .offset(offset)
+      .orderBy(desc(patients.createdAt));
+  }
+
+  async searchPatientsGlobal(query: string): Promise<Patient[]> {
+    return await db.select().from(patients).where(
+      and(
         eq(patients.isActive, true),
         sql`(LOWER(${patients.firstName}) LIKE LOWER('%' || ${query} || '%') OR 
              LOWER(${patients.lastName}) LIKE LOWER('%' || ${query} || '%') OR 

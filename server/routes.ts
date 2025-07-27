@@ -399,12 +399,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { limit = "50", offset = "0", search } = req.query;
       const tenantId = req.tenant!.id;
+      const tenantType = req.tenant!.type;
 
       let patients;
       if (search && typeof search === "string") {
-        patients = await storage.searchPatients(tenantId, search);
+        // For pharmacies, search across all patients, for healthcare providers search within tenant
+        if (tenantType === "pharmacy") {
+          patients = await storage.searchPatientsGlobal(search);
+        } else {
+          patients = await storage.searchPatients(tenantId, search);
+        }
       } else {
-        patients = await storage.getPatientsByTenant(tenantId, parseInt(limit as string), parseInt(offset as string));
+        // For pharmacies, get all patients, for healthcare providers get tenant patients
+        if (tenantType === "pharmacy") {
+          patients = await storage.getAllPatients(parseInt(limit as string), parseInt(offset as string));
+        } else {
+          patients = await storage.getPatientsByTenant(tenantId, parseInt(limit as string), parseInt(offset as string));
+        }
       }
 
       res.json(patients);
