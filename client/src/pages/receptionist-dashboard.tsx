@@ -168,11 +168,11 @@ export default function ReceptionistDashboard() {
 
   // Queries
   const { data: todayCheckIns = [], isLoading: loadingCheckIns } = useQuery({
-    queryKey: ['/api/receptionist/check-ins/today'],
+    queryKey: ['/api/patient-check-ins/today'],
   });
 
   const { data: waitingPatients = [], isLoading: loadingWaiting } = useQuery({
-    queryKey: ['/api/receptionist/waiting-patients'],
+    queryKey: ['/api/patient-check-ins/waiting'],
   });
 
   const { data: todayAppointments = [], isLoading: loadingAppointments } = useQuery({
@@ -187,19 +187,19 @@ export default function ReceptionistDashboard() {
   const [isRegistering, setIsRegistering] = useState(false);
 
   const checkInPatientMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/receptionist/check-in', { method: 'POST', body: data }),
+    mutationFn: (data: any) => apiRequest('POST', '/api/patient-check-ins', data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/receptionist/check-ins/today'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/receptionist/waiting-patients'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/patient-check-ins/today'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/patient-check-ins/waiting'] });
       setIsCheckInDialogOpen(false);
       checkInForm.reset();
     },
   });
 
   const recordVitalsMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/receptionist/vital-signs', { method: 'POST', body: data }),
+    mutationFn: (data: any) => apiRequest('POST', '/api/vital-signs', data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/receptionist/check-ins/today'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/patient-check-ins/today'] });
       setIsVitalsDialogOpen(false);
       vitalSignsForm.reset();
     },
@@ -210,10 +210,7 @@ export default function ReceptionistDashboard() {
     setIsRegistering(true);
     try {
       // Create patient only (no vital signs during registration)
-      await apiRequest('/api/patients', { 
-        method: 'POST', 
-        body: data 
-      });
+      await apiRequest('POST', '/api/patients', data);
       
       queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
       setIsRegisterDialogOpen(false);
