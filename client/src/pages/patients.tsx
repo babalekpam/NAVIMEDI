@@ -77,13 +77,15 @@ export default function Patients() {
           <h1 className="text-3xl font-bold text-gray-900">Patient Records</h1>
           <p className="text-gray-600 mt-1">Manage patient information and medical records</p>
         </div>
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Patient
-            </Button>
-          </DialogTrigger>
+        {/* Only show Add Patient button for non-pharmacy users */}
+        {user.role !== "pharmacist" && (
+          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Patient
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Patient</DialogTitle>
@@ -94,6 +96,7 @@ export default function Patients() {
             />
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       {/* Search and Filters */}

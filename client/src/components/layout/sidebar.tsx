@@ -37,7 +37,7 @@ const sidebarItems: SidebarItem[] = [
   { id: "pharmacy-dashboard", label: "Pharmacy Dashboard", icon: Building2, path: "/pharmacy-dashboard", roles: ["pharmacist", "tenant_admin", "director"] },
 
   { id: "patients", label: "Patient Records", icon: Users, path: "/patients", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
-  { id: "appointments", label: "Appointments", icon: Calendar, path: "/appointments", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
+  // Removed appointments from pharmacist role - they will use top navigation instead
   { id: "lab-orders", label: "Lab Results", icon: TestTube, path: "/lab-orders", roles: ["physician", "nurse", "lab_technician", "tenant_admin", "director"] },
   { id: "health-recommendations", label: "AI Health Insights", icon: Brain, path: "/health-recommendations", roles: ["physician", "nurse", "tenant_admin", "director"] },
   { id: "medical-communications", label: "Medical Communications", icon: Languages, path: "/medical-communications", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },

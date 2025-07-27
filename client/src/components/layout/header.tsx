@@ -85,21 +85,29 @@ export const Header = () => {
                 >
                   Patients
                 </button>
-                <button 
-                  onClick={() => setLocation("/appointments")}
-                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
-                >
-                  Appointments
-                </button>
+                {/* Show appointments for all except pharmacy users */}
+                {user.role !== "pharmacist" && (
+                  <button 
+                    onClick={() => setLocation("/appointments")}
+                    className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                  >
+                    Appointments
+                  </button>
+                )}
                 <button 
                   onClick={() => setLocation("/prescriptions")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   Prescriptions
                 </button>
+                {/* Lab Orders prominently placed for pharmacy users */}
                 <button 
                   onClick={() => setLocation("/lab-orders")}
-                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                  className={`px-1 pb-4 text-sm font-medium ${
+                    user.role === "pharmacist" 
+                      ? "text-blue-600 border-b-2 border-blue-600" 
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
                 >
                   Lab Orders
                 </button>
