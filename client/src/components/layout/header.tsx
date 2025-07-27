@@ -1,4 +1,4 @@
-import { Bell, ChevronDown, Building2 } from "lucide-react";
+import { Bell, ChevronDown, Building2, Wifi, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
