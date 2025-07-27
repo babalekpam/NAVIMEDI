@@ -118,6 +118,12 @@ export default function MedicationCopayForm({
       
       // Use fetch directly to bypass potential routing issues
       const token = localStorage.getItem('auth_token');
+      console.log("Token from localStorage:", token ? "exists" : "missing");
+      
+      if (!token) {
+        throw new Error("No authentication token found. Please log in again.");
+      }
+      
       const response = await fetch("/api/medication-copays", {
         method: "POST",
         headers: {
@@ -130,15 +136,25 @@ export default function MedicationCopayForm({
       console.log("API response status:", response.status);
       console.log("API response headers:", Object.fromEntries(response.headers.entries()));
       
+      // Log the raw response text to see what we're getting
+      const responseText = await response.text();
+      console.log("Raw response text:", responseText.substring(0, 200));
+      
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("API error response:", errorText);
+        console.error("API error response:", responseText);
         throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
       
-      const result = await response.json();
-      console.log("Parsed JSON result:", result);
-      return result;
+      // Try to parse as JSON
+      try {
+        const result = JSON.parse(responseText);
+        console.log("Parsed JSON result:", result);
+        return result;
+      } catch (parseError) {
+        console.error("Failed to parse JSON:", parseError);
+        console.error("Response was:", responseText);
+        throw new Error("Server returned non-JSON response");
+      }
     },
     onSuccess: (data) => {
       console.log("Mutation success:", data);
