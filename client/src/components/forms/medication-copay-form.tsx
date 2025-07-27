@@ -114,10 +114,22 @@ export default function MedicationCopayForm({
         quantityLimit: copayData.quantityLimit ? parseInt(copayData.quantityLimit.toString()) : null,
         daySupplyLimit: copayData.daySupplyLimit ? parseInt(copayData.daySupplyLimit.toString()) : null
       };
+      console.log("Sending to API:", processedData);
       const response = await apiRequest("POST", "/api/medication-copays", processedData);
-      return response.json();
+      console.log("API response:", response);
+      
+      // Check if the response is actually JSON
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        return response.json();
+      } else {
+        const text = await response.text();
+        console.error("Expected JSON but got:", text);
+        throw new Error("Server returned non-JSON response");
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Mutation success:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/medication-copays"] });
       toast({
         title: "Medication Copay Defined",
@@ -126,6 +138,7 @@ export default function MedicationCopayForm({
       onSuccess?.();
     },
     onError: (error: any) => {
+      console.error("Mutation error:", error);
       toast({
         variant: "destructive",
         title: "Error",
