@@ -2850,7 +2850,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertVitalSignsSchema.parse({
         ...req.body,
         tenantId: req.tenantId,
-        recordedById: req.user?.id
+        recordedBy: req.user?.id
       });
 
       const vitalSigns = await storage.createVitalSigns(validatedData);

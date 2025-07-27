@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,7 +24,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from '@/contexts/translation-context';
-import { apiRequest } from '@/lib/queryClient';
 import OverviewCards from '@/components/receptionist/overview-cards';
 import PatientRegistrationDialog from '@/components/receptionist/patient-registration-dialog';
 import VitalSignsDialog from '@/components/receptionist/vital-signs-dialog';
@@ -181,14 +181,7 @@ export default function ReceptionistDashboard() {
   });
 
   // Mutations
-  const registerPatientMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/patients', { method: 'POST', body: data }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
-      setIsRegisterDialogOpen(false);
-      patientForm.reset();
-    },
-  });
+  const [isRegistering, setIsRegistering] = useState(false);
 
   const checkInPatientMutation = useMutation({
     mutationFn: (data: any) => apiRequest('/api/receptionist/check-in', { method: 'POST', body: data }),
@@ -210,8 +203,52 @@ export default function ReceptionistDashboard() {
   });
 
   // Handlers
-  const handlePatientRegistration = (data: any) => {
-    registerPatientMutation.mutate(data);
+  const handlePatientRegistration = async (data: any) => {
+    // Extract vital signs from patient data if present
+    const { vitalSigns, ...patientData } = data;
+    
+    setIsRegistering(true);
+    try {
+      // First create the patient
+      const response = await apiRequest('/api/patients', { 
+        method: 'POST', 
+        body: patientData 
+      });
+      
+      // If vital signs are included, create them separately
+      if (vitalSigns) {
+        const vitalSignsData = {
+          patientId: response.id,
+          systolicBp: vitalSigns.bloodPressureSystolic ? parseInt(vitalSigns.bloodPressureSystolic) : undefined,
+          diastolicBp: vitalSigns.bloodPressureDiastolic ? parseInt(vitalSigns.bloodPressureDiastolic) : undefined,
+          heartRate: vitalSigns.heartRate ? parseInt(vitalSigns.heartRate) : undefined,
+          temperature: vitalSigns.temperature ? parseFloat(vitalSigns.temperature) : undefined,
+          temperatureUnit: 'F',
+          oxygenSaturation: vitalSigns.oxygenSaturation ? parseInt(vitalSigns.oxygenSaturation) : undefined,
+          respiratoryRate: vitalSigns.respiratoryRate ? parseInt(vitalSigns.respiratoryRate) : undefined,
+          weight: vitalSigns.weight ? parseFloat(vitalSigns.weight) : undefined,
+          weightUnit: 'lbs',
+          height: vitalSigns.height ? parseFloat(vitalSigns.height) : undefined,
+          heightUnit: 'inches',
+          painLevel: vitalSigns.painScale ? parseInt(vitalSigns.painScale) : undefined,
+          notes: vitalSigns.notes || undefined
+        };
+        
+        await apiRequest('/api/vital-signs', { 
+          method: 'POST', 
+          body: vitalSignsData 
+        });
+      }
+      
+      // Refresh patient list and close dialog
+      queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
+      setIsRegisterDialogOpen(false);
+      
+    } catch (error) {
+      console.error('Error registering patient:', error);
+    } finally {
+      setIsRegistering(false);
+    }
   };
 
   const handleCheckIn = (data: any) => {
@@ -281,7 +318,7 @@ export default function ReceptionistDashboard() {
             </DialogTrigger>
             <PatientRegistrationDialog
               onSubmit={handlePatientRegistration}
-              isLoading={registerPatientMutation.isPending}
+              isLoading={isRegistering}
               department={selectedDepartment}
             />
           </Dialog>
