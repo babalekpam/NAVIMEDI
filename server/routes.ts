@@ -64,7 +64,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Additional check: Prevent pharmacy receptionists from logging in
       if (user.role === "receptionist") {
-        const tenant = await storage.getTenantById(user.tenantId);
+        const allTenants = await storage.getAllTenants();
+        const tenant = allTenants.find(t => t.id === user.tenantId);
         if (tenant?.type === "pharmacy") {
           return res.status(403).json({ message: "Receptionist role is not available for pharmacy organizations. Please contact your administrator." });
         }
