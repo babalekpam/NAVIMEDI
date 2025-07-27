@@ -126,7 +126,7 @@ export default function Dashboard() {
               <Database className="h-3 w-3 mr-1" />
               {t('system-health')}
             </Badge>
-            <span className="text-sm text-gray-500">Last updated: 1 min ago</span>
+            <span className="text-sm text-gray-500">{t('last-updated')}: 1 {t('min-ago')}</span>
             <Button 
               variant="outline" 
               size="sm" 
@@ -164,7 +164,7 @@ export default function Dashboard() {
                   <p className="text-3xl font-bold text-gray-900">{platformMetrics?.totalUsers?.toLocaleString() || 0}</p>
                   <p className="text-xs text-green-600 mt-1 flex items-center">
                     <TrendingUp className="h-3 w-3 mr-1" />
-                    All tenants
+                    {t('all-tenants')}
                   </p>
                 </div>
                 <Users className="h-8 w-8 text-green-600" />
@@ -180,7 +180,7 @@ export default function Dashboard() {
                   <p className="text-3xl font-bold text-gray-900">{platformMetrics?.totalPatients?.toLocaleString() || 0}</p>
                   <p className="text-xs text-green-600 mt-1 flex items-center">
                     <TrendingUp className="h-3 w-3 mr-1" />
-                    Cross-platform data
+                    {t('cross-platform-data')}
                   </p>
                 </div>
                 <Activity className="h-8 w-8 text-purple-600" />
@@ -196,7 +196,7 @@ export default function Dashboard() {
                   <p className="text-3xl font-bold text-gray-900">${platformMetrics?.monthlyRevenue?.toLocaleString() || 0}</p>
                   <p className="text-xs text-blue-600 mt-1 flex items-center">
                     <DollarSign className="h-3 w-3 mr-1" />
-                    Subscription income
+                    {t('subscription-income')}
                   </p>
                 </div>
                 <DollarSign className="h-8 w-8 text-orange-600" />
@@ -208,11 +208,11 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Subscriptions</p>
+                  <p className="text-sm font-medium text-gray-600">{t('total-subscriptions')}</p>
                   <p className="text-3xl font-bold text-gray-900">${platformMetrics?.totalSubscriptionRevenue?.toLocaleString() || 0}</p>
                   <p className="text-xs text-purple-600 mt-1 flex items-center">
                     <DollarSign className="h-3 w-3 mr-1" />
-                    All active plans
+                    {t('all-active-plans')}
                   </p>
                 </div>
                 <DollarSign className="h-8 w-8 text-purple-600" />
@@ -225,9 +225,9 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Organization Types</CardTitle>
+              <CardTitle>{t('organization-types')}</CardTitle>
               <CardDescription>
-                Distribution of healthcare organizations on the platform
+                {t('distribution-healthcare-orgs')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -254,39 +254,39 @@ export default function Dashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle>System Health</CardTitle>
+              <CardTitle>{t('system-health')}</CardTitle>
               <CardDescription>
-                Platform performance and reliability metrics
+                {t('platform-performance-metrics')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">System Uptime</span>
+                  <span className="text-sm font-medium text-gray-600">{t('system-uptime')}</span>
                   <div className="text-right">
                     <div className="font-bold text-green-600">99.9%</div>
-                    <div className="text-xs text-gray-500">Last 30 days</div>
+                    <div className="text-xs text-gray-500">{t('last-30-days')}</div>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">Active Sessions</span>
+                  <span className="text-sm font-medium text-gray-600">{t('active-sessions')}</span>
                   <div className="text-right">
                     <div className="font-bold text-gray-900">1,847</div>
-                    <div className="text-xs text-gray-500">Current</div>
+                    <div className="text-xs text-gray-500">{t('current')}</div>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">API Response Time</span>
+                  <span className="text-sm font-medium text-gray-600">{t('api-response-time')}</span>
                   <div className="text-right">
                     <div className="font-bold text-gray-900">142ms</div>
-                    <div className="text-xs text-gray-500">Average</div>
+                    <div className="text-xs text-gray-500">{t('average')}</div>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">Data Storage</span>
+                  <span className="text-sm font-medium text-gray-600">{t('data-storage')}</span>
                   <div className="text-right">
                     <div className="font-bold text-gray-900">2.8TB</div>
-                    <div className="text-xs text-gray-500">Total used</div>
+                    <div className="text-xs text-gray-500">{t('total-used')}</div>
                   </div>
                 </div>
               </div>
@@ -297,19 +297,19 @@ export default function Dashboard() {
         {/* Recent Tenant Activity */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Tenant Activity</CardTitle>
+            <CardTitle>{t('recent-tenant-activity')}</CardTitle>
             <CardDescription>
-              Latest activities across all healthcare organizations
+              {t('latest-activities')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {[
-                { tenant: "City General Hospital", activity: "New patient registration", time: "2 minutes ago", type: "patient" },
-                { tenant: "Downtown Clinic", activity: "Prescription processed", time: "5 minutes ago", type: "prescription" },
-                { tenant: "MediLabs Inc", activity: "Lab results uploaded", time: "8 minutes ago", type: "lab" },
-                { tenant: "HealthFirst Pharmacy", activity: "Insurance claim submitted", time: "12 minutes ago", type: "billing" },
-                { tenant: "Regional Medical Center", activity: "Appointment scheduled", time: "15 minutes ago", type: "appointment" }
+                { tenant: "City General Hospital", activity: t('new-patient-registration'), time: t('2-minutes-ago'), type: "patient" },
+                { tenant: "Downtown Clinic", activity: t('prescription-processed'), time: t('5-minutes-ago'), type: "prescription" },
+                { tenant: "MediLabs Inc", activity: t('lab-results-uploaded'), time: t('8-minutes-ago'), type: "lab" },
+                { tenant: "HealthFirst Pharmacy", activity: t('insurance-claim-submitted'), time: t('12-minutes-ago'), type: "billing" },
+                { tenant: "Regional Medical Center", activity: t('appointment-scheduled'), time: t('15-minutes-ago'), type: "appointment" }
               ].map((item, index) => (
                 <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                   <div className="flex items-center space-x-3">
