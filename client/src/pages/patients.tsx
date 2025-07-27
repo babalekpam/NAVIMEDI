@@ -13,7 +13,6 @@ import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
 import { PatientForm } from "@/components/forms/patient-form";
 import { useLocation } from "wouter";
-import { TranslationDebug } from "@/debug-translation";
 
 export default function Patients() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,7 +73,6 @@ export default function Patients() {
 
   return (
     <div className="space-y-6">
-      <TranslationDebug />
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
