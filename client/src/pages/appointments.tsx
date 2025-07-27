@@ -77,6 +77,12 @@ export default function Appointments() {
     enabled: !!user && !!tenant,
   });
 
+  // Get existing visit summary for selected appointment
+  const { data: existingVisitSummary } = useQuery({
+    queryKey: ["/api/visit-summaries/appointment", selectedAppointment?.id],
+    enabled: !!selectedAppointment?.id && isVisitSummaryFormOpen,
+  });
+
   const createAppointmentMutation = useMutation({
     mutationFn: async (appointmentData: any) => {
       const response = await fetch("/api/appointments", {
@@ -687,6 +693,7 @@ export default function Appointments() {
           patientName={getPatientName(selectedAppointment.patientId)}
           appointmentId={selectedAppointment.id}
           vitalSignsId={getVitalSignsForAppointment(selectedAppointment.id)?.id}
+          existingVisitSummary={existingVisitSummary}
         />
       )}
     </div>
