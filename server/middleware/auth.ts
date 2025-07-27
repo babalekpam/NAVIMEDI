@@ -70,19 +70,23 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
 
 export const requireRole = (allowedRoles: string[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    console.log("[ROLE CHECK] Path:", req.path, "User:", req.user?.role, "Tenant type:", req.tenant?.type);
+    
     if (!req.user) {
+      console.log("[ROLE CHECK] No user found - authentication required");
       return res.status(401).json({ message: "Authentication required" });
     }
 
     // Special check: Receptionists are only allowed in hospital/clinic tenants
     if (req.user.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
+      console.log("[ROLE CHECK] Receptionist in non-hospital tenant blocked");
       return res.status(403).json({ message: "Receptionist role is only available for hospitals and clinics" });
     }
 
-    console.log("[DEBUG] Role check - User role:", req.user.role, "Allowed roles:", allowedRoles);
+    console.log("[ROLE CHECK] User role:", req.user.role, "Allowed roles:", allowedRoles);
 
     if (!allowedRoles.includes(req.user.role)) {
-      console.log("[DEBUG] Permission denied for role:", req.user.role);
+      console.log("[ROLE CHECK] Permission DENIED for role:", req.user.role, "Required:", allowedRoles);
       return res.status(403).json({ 
         message: "Insufficient permissions",
         required: allowedRoles,
@@ -90,7 +94,7 @@ export const requireRole = (allowedRoles: string[]) => {
       });
     }
 
-    console.log("[DEBUG] Permission granted for role:", req.user.role);
+    console.log("[ROLE CHECK] Permission GRANTED for role:", req.user.role);
     next();
   };
 };
