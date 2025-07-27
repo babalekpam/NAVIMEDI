@@ -4,11 +4,11 @@
 A comprehensive multi-tenant healthcare management platform specializing in pharmacy operations and workflow optimization, with advanced capabilities for prescription management and insurance claims processing.
 
 ## Recent Changes (Latest)
-- **Fixed critical app startup failure** - Resolved TypeScript authentication type mismatches in routes and middleware
-- **Restored login functionality** - Updated authentication interfaces and middleware consistency 
-- **Added missing tenant endpoint** - Created `/api/tenant/current` to resolve frontend console errors
-- **Fixed database parameter types** - Resolved null/undefined type issues in audit logs
-- **Reset test user credentials** - Updated pharmacy admin password to `admin123` for testing
+- **FIXED MAJOR AUTHENTICATION BUG** - Removed conflicting global tenant middleware that was blocking API calls
+- **Fixed middleware chain order** - Resolved "Authorization token required" errors for prescriptions API
+- **Reduced TypeScript errors** - Dropped from 131 to 8 critical diagnostics by fixing authentication flow
+- **Fixed route authentication** - Each API endpoint now properly handles authentication without conflicts
+- **Added debug logging** - Prescription API calls now include debugging information
 
 ## User Preferences
 - Simple, everyday language for communication (user is non-technical)

@@ -250,10 +250,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Apply tenant context middleware to all other API routes
-  app.use("/api", setTenantContext);
+  // NOTE: Individual routes handle their own tenant context middleware
 
-  app.post("/api/auth/register", async (req, res) => {
+  app.post("/api/auth/register", authenticateToken, requireTenant, async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
       
@@ -639,6 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Prescription management routes
   app.get("/api/prescriptions", authenticateToken, requireTenant, async (req, res) => {
     try {
+      console.log("Prescriptions API - User:", req.user?.id, "Tenant:", req.tenant?.id);
       const { patientId } = req.query;
       const tenantId = req.tenant!.id;
 
