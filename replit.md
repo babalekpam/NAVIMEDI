@@ -12,6 +12,8 @@ A comprehensive multi-tenant healthcare management platform specializing in phar
 - **FIXED MEDICATION CLAIMS SYSTEM** - Insurance claims for pharmacy medications work perfectly
 - **ADDED PRESCRIPTION PROVENANCE DISPLAY** - Prescriptions show doctor name and hospital name
 - **ENHANCED CLAIM FILING WORKFLOW** - One-click insurance claim filing for received prescriptions
+- **FIXED INSURANCE COVERAGE BREAKDOWN** - Claims now show insurance vs patient responsibility (80%/20% split)
+- **FIXED ORGANIZATION CREATION** - Added proper authentication to tenant management routes
 
 ## User Preferences
 - Simple, everyday language for communication (user is non-technical)
@@ -27,6 +29,9 @@ A comprehensive multi-tenant healthcare management platform specializing in phar
 - Prescription management (displays test prescriptions)
 - Multi-tenant pharmacy operations
 - Billing and claims submission workflow
+- Insurance coverage breakdown (80% insurance / 20% patient copay)
+- Organization/tenant creation and management
+- Prescription routing from hospitals to pharmacies
 
 ⚠️ **Known Issues:**
 - 122 TypeScript diagnostics remain in server routes (non-blocking for functionality)
