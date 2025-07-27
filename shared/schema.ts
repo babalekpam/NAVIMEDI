@@ -192,11 +192,11 @@ export const appointments = pgTable("appointments", {
 
 export const prescriptions = pgTable("prescriptions", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(), // Doctor/Hospital tenant
   patientId: uuid("patient_id").references(() => patients.id).notNull(),
-  providerId: uuid("provider_id").references(() => users.id).notNull(),
+  providerId: uuid("provider_id").references(() => users.id).notNull(), // Doctor who prescribed
   appointmentId: uuid("appointment_id").references(() => appointments.id),
-  pharmacyTenantId: uuid("pharmacy_tenant_id").references(() => tenants.id),
+  pharmacyTenantId: uuid("pharmacy_tenant_id").references(() => tenants.id), // Target pharmacy
   medicationName: text("medication_name").notNull(),
   dosage: text("dosage").notNull(),
   frequency: text("frequency").notNull(),
@@ -205,6 +205,8 @@ export const prescriptions = pgTable("prescriptions", {
   instructions: text("instructions"),
   status: prescriptionStatusEnum("status").default('prescribed'),
   prescribedDate: timestamp("prescribed_date").default(sql`CURRENT_TIMESTAMP`),
+  sentToPharmacyDate: timestamp("sent_to_pharmacy_date"),
+  filledDate: timestamp("filled_date"),
   expiryDate: timestamp("expiry_date"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)

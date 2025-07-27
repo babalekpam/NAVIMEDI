@@ -4,10 +4,11 @@
 A comprehensive multi-tenant healthcare management platform specializing in pharmacy operations and workflow optimization, with advanced capabilities for prescription management and insurance claims processing.
 
 ## Recent Changes (Latest)
+- **IMPLEMENTED PRESCRIPTION ROUTING SYSTEM** - Doctors/hospitals send prescriptions directly to patient's chosen pharmacy
+- **PHARMACY PATIENT ACCESS RESTRICTION** - Pharmacies only see patients with prescriptions sent to them
+- **Updated database schema** - Added pharmacyTenantId and routing timestamps to prescriptions
+- **Created test prescriptions** - 3 test prescriptions routed to Working Test Pharmacy for testing
 - **CUSTOMIZED PHARMACY INTERFACE** - Tailored UI for pharmacy operations workflow
-- **Removed appointments from pharmacy navigation** - Pharmacy users no longer see appointment management
-- **Removed lab orders from pharmacy header** - Lab orders hidden from top navigation for pharmacy users
-- **Hidden Add Patient button for pharmacy** - Pharmacy staff cannot add new patients directly
 - **FIXED MEDICATION CLAIMS SYSTEM** - Insurance claims for pharmacy medications work perfectly
 
 ## User Preferences

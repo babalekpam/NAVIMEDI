@@ -427,16 +427,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let patients;
       if (search && typeof search === "string") {
-        // For pharmacies, search across all patients, for healthcare providers search within tenant
+        // For pharmacies, search only patients with prescriptions sent to them
         if (tenantType === "pharmacy") {
-          patients = await storage.searchPatientsGlobal(search);
+          patients = await storage.getPatientsWithPrescriptionsForPharmacy(tenantId, search);
         } else {
           patients = await storage.searchPatients(tenantId, search);
         }
       } else {
-        // For pharmacies, get all patients, for healthcare providers get tenant patients
+        // For pharmacies, get only patients with prescriptions sent to them
         if (tenantType === "pharmacy") {
-          patients = await storage.getAllPatients(parseInt(limit as string), parseInt(offset as string));
+          patients = await storage.getPatientsWithPrescriptionsForPharmacy(tenantId);
         } else {
           patients = await storage.getPatientsByTenant(tenantId, parseInt(limit as string), parseInt(offset as string));
         }
@@ -641,12 +641,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Prescriptions API - User:", req.user?.id, "Tenant:", req.tenant?.id);
       const { patientId } = req.query;
       const tenantId = req.tenant!.id;
+      
+      // Get full tenant info to check type
+      const tenant = await storage.getTenant(tenantId);
+      const tenantType = tenant?.type;
 
       let prescriptions;
       if (patientId) {
         prescriptions = await storage.getPrescriptionsByPatient(patientId as string, tenantId);
       } else {
-        prescriptions = await storage.getPrescriptionsByTenant(tenantId);
+        // For pharmacies, get only prescriptions sent to them
+        if (tenantType === "pharmacy") {
+          prescriptions = await storage.getPrescriptionsByPharmacy(tenantId);
+        } else {
+          // For healthcare providers, get prescriptions they created
+          prescriptions = await storage.getPrescriptionsByTenant(tenantId);
+        }
       }
 
       res.json(prescriptions);

@@ -119,6 +119,7 @@ export interface IStorage {
   searchPatients(tenantId: string, query: string): Promise<Patient[]>;
   getAllPatients(limit?: number, offset?: number): Promise<Patient[]>;
   searchPatientsGlobal(query: string): Promise<Patient[]>;
+  getPatientsWithPrescriptionsForPharmacy(pharmacyTenantId: string, search?: string): Promise<Patient[]>;
 
   // Appointment management
   getAppointment(id: string, tenantId: string): Promise<Appointment | undefined>;
@@ -134,6 +135,7 @@ export interface IStorage {
   updatePrescription(id: string, updates: Partial<Prescription>, tenantId: string): Promise<Prescription | undefined>;
   getPrescriptionsByPatient(patientId: string, tenantId: string): Promise<Prescription[]>;
   getPrescriptionsByTenant(tenantId: string): Promise<Prescription[]>;
+  getPrescriptionsByPharmacy(pharmacyTenantId: string): Promise<Prescription[]>;
 
   // Lab order management
   getLabOrder(id: string, tenantId: string): Promise<LabOrder | undefined>;
@@ -476,6 +478,51 @@ export class DatabaseStorage implements IStorage {
     );
   }
 
+  async getPatientsWithPrescriptionsForPharmacy(pharmacyTenantId: string, search?: string): Promise<Patient[]> {
+    // Get patients who have prescriptions sent to this pharmacy
+    const query = db
+      .selectDistinct({
+        id: patients.id,
+        tenantId: patients.tenantId,
+        firstName: patients.firstName,
+        lastName: patients.lastName,
+        dateOfBirth: patients.dateOfBirth,
+        gender: patients.gender,
+        phone: patients.phone,
+        email: patients.email,
+        address: patients.address,
+        mrn: patients.mrn,
+        emergencyContact: patients.emergencyContact,
+        allergies: patients.allergies,
+        medications: patients.medications,
+        isActive: patients.isActive,
+        createdAt: patients.createdAt,
+        updatedAt: patients.updatedAt
+      })
+      .from(patients)
+      .innerJoin(prescriptions, eq(prescriptions.patientId, patients.id))
+      .where(
+        and(
+          eq(prescriptions.pharmacyTenantId, pharmacyTenantId),
+          eq(patients.isActive, true)
+        )
+      );
+
+    if (search) {
+      query.where(
+        and(
+          eq(prescriptions.pharmacyTenantId, pharmacyTenantId),
+          eq(patients.isActive, true),
+          sql`(LOWER(${patients.firstName}) LIKE LOWER('%' || ${search} || '%') OR 
+               LOWER(${patients.lastName}) LIKE LOWER('%' || ${search} || '%') OR 
+               ${patients.mrn} LIKE '%' || ${search} || '%')`
+        )
+      );
+    }
+
+    return await query.orderBy(desc(patients.createdAt));
+  }
+
   // Appointment management
   async getAppointment(id: string, tenantId: string): Promise<Appointment | undefined> {
     const [appointment] = await db.select().from(appointments).where(
@@ -575,6 +622,11 @@ export class DatabaseStorage implements IStorage {
   async getPrescriptionsByTenant(tenantId: string): Promise<Prescription[]> {
     return await db.select().from(prescriptions).where(eq(prescriptions.tenantId, tenantId))
       .orderBy(desc(prescriptions.prescribedDate));
+  }
+
+  async getPrescriptionsByPharmacy(pharmacyTenantId: string): Promise<Prescription[]> {
+    return await db.select().from(prescriptions).where(eq(prescriptions.pharmacyTenantId, pharmacyTenantId))
+      .orderBy(desc(prescriptions.sentToPharmacyDate));
   }
 
   async updatePrescription(id: string, updates: Partial<Prescription>, tenantId: string): Promise<Prescription | null> {
