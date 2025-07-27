@@ -8,6 +8,7 @@ import { Calendar, Clock, Plus, Search, Filter, MoreHorizontal, Eye, Edit, Phone
 import { Appointment, Patient, User, VitalSigns } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
+import { useTranslation } from "@/contexts/translation-context";
 import { AppointmentForm } from "@/components/forms/appointment-form";
 import { VitalSignsForm } from "@/components/forms/vital-signs-form";
 import { VisitSummaryForm } from "@/components/forms/visit-summary-form";
@@ -42,6 +43,7 @@ export default function Appointments() {
   const [statusNotes, setStatusNotes] = useState<string>("");
   const { user } = useAuth();
   const { tenant } = useTenant();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 

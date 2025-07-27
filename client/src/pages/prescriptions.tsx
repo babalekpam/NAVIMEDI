@@ -8,6 +8,7 @@ import { Pill, Plus, Search, Filter, MoreHorizontal, AlertTriangle } from "lucid
 import { Prescription, Patient } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
+import { useTranslation } from "@/contexts/translation-context";
 import { PrescriptionForm } from "@/components/forms/prescription-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,6 +29,7 @@ export default function Prescriptions() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const { user } = useAuth();
   const { tenant } = useTenant();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data: prescriptions = [], isLoading, error } = useQuery<Prescription[]>({

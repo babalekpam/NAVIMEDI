@@ -10,6 +10,7 @@ import { Search, Plus, MoreHorizontal, UserCircle, Calendar, Phone, Mail, MapPin
 import { Patient } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
+import { useTranslation } from "@/contexts/translation-context";
 import { PatientForm } from "@/components/forms/patient-form";
 import { useLocation } from "wouter";
 
@@ -20,6 +21,7 @@ export default function Patients() {
   const [isEHROpen, setIsEHROpen] = useState(false);
   const { user } = useAuth();
   const { tenant } = useTenant();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
@@ -48,7 +50,7 @@ export default function Patients() {
   });
 
   if (!user || !tenant) {
-    return <div>Loading...</div>;
+    return <div>{t('loading')}</div>;
   }
 
   const formatDate = (dateString: string) => {
@@ -74,8 +76,8 @@ export default function Patients() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Patient Records</h1>
-          <p className="text-gray-600 mt-1">Manage patient information and medical records</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('patients')}</h1>
+          <p className="text-gray-600 mt-1">{t('manage-patient-records')}</p>
         </div>
         {/* Only show Add Patient button for non-pharmacy users */}
         {!(user.role === "tenant_admin" && tenant?.type === "pharmacy") && user.role !== "pharmacist" && (
