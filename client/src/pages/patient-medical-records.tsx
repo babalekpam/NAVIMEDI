@@ -7,12 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Filter, Calendar, FileText, Pill, Activity, Heart, AlertTriangle, Stethoscope, Clock, User, Building } from "lucide-react";
+import { Search, Filter, Calendar, FileText, Pill, Activity, Heart, AlertTriangle, Stethoscope, Clock, User, Building, Edit, Save, X, Plus } from "lucide-react";
 import { Patient, Appointment, Prescription, LabOrder, VitalSigns, VisitSummary } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface PatientMedicalRecord extends Patient {
   appointments?: any[];
@@ -29,9 +34,17 @@ export default function PatientMedicalRecords() {
   const [selectedPatient, setSelectedPatient] = useState<PatientMedicalRecord | null>(null);
   const [filterBy, setFilterBy] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("recent");
+  const [editingMedicalHistory, setEditingMedicalHistory] = useState(false);
+  const [editingMedications, setEditingMedications] = useState(false);
+  const [editingAllergies, setEditingAllergies] = useState(false);
+  const [newMedicalCondition, setNewMedicalCondition] = useState("");
+  const [newMedication, setNewMedication] = useState("");
+  const [newAllergy, setNewAllergy] = useState("");
   const { user } = useAuth();
   const { tenant } = useTenant();
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: patients = [], isLoading } = useQuery<PatientMedicalRecord[]>({
     queryKey: ["/api/patients/medical-records"],
@@ -41,6 +54,45 @@ export default function PatientMedicalRecords() {
   const { data: selectedPatientDetails, isLoading: isDetailsLoading } = useQuery<any>({
     queryKey: ["/api/patients", selectedPatient?.id, "complete-record"],
     enabled: !!selectedPatient,
+  });
+
+  // Mutation for updating patient medical information
+  const updatePatientMutation = useMutation({
+    mutationFn: (updateData: { 
+      patientId: string; 
+      medicalHistory?: string[]; 
+      medications?: string[]; 
+      allergies?: string[]; 
+    }) => {
+      return apiRequest(`/api/patients/${updateData.patientId}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          medicalHistory: updateData.medicalHistory,
+          medications: updateData.medications,
+          allergies: updateData.allergies,
+        }),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Patient medical information updated successfully",
+      });
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/patients", selectedPatient?.id, "complete-record"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/patients/medical-records"] });
+      // Reset editing states
+      setEditingMedicalHistory(false);
+      setEditingMedications(false);
+      setEditingAllergies(false);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update patient medical information",
+        variant: "destructive",
+      });
+    },
   });
 
   if (!user || !tenant) {
@@ -401,25 +453,134 @@ export default function PatientMedicalRecords() {
                   <TabsContent value="history" className="space-y-4 mt-6">
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg flex items-center">
-                          <Heart className="h-5 w-5 mr-2 text-red-500" />
-                          Medical History
+                        <CardTitle className="text-lg flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Heart className="h-5 w-5 mr-2 text-red-500" />
+                            Medical History
+                          </div>
+                          {user?.role === "physician" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingMedicalHistory(!editingMedicalHistory)}
+                              disabled={updatePatientMutation.isPending}
+                            >
+                              {editingMedicalHistory ? (
+                                <>
+                                  <X className="h-4 w-4 mr-2" />
+                                  Cancel
+                                </>
+                              ) : (
+                                <>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit History
+                                </>
+                              )}
+                            </Button>
+                          )}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        {selectedPatient.medicalHistory && Array.isArray(selectedPatient.medicalHistory) && selectedPatient.medicalHistory.length > 0 ? (
-                          <div className="space-y-3">
-                            {selectedPatient.medicalHistory.map((condition, index) => (
-                              <div key={index} className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                                <div className="flex items-center space-x-2">
-                                  <Heart className="h-4 w-4 text-red-500" />
-                                  <span className="font-medium text-red-900">{condition as string}</span>
-                                </div>
+                        {editingMedicalHistory ? (
+                          <div className="space-y-4">
+                            {/* Existing conditions - editable */}
+                            {selectedPatient.medicalHistory && Array.isArray(selectedPatient.medicalHistory) && selectedPatient.medicalHistory.length > 0 && (
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-gray-700">Current Medical Conditions:</h4>
+                                {selectedPatient.medicalHistory.map((condition, index) => (
+                                  <div key={index} className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                      <Heart className="h-4 w-4 text-red-500" />
+                                      <span className="font-medium text-red-900">{condition as string}</span>
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => {
+                                        const updatedHistory = selectedPatient.medicalHistory?.filter((_, i) => i !== index) || [];
+                                        updatePatientMutation.mutate({
+                                          patientId: selectedPatient.id,
+                                          medicalHistory: updatedHistory,
+                                        });
+                                      }}
+                                    >
+                                      <X className="h-4 w-4 text-red-600" />
+                                    </Button>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            )}
+                            
+                            {/* Add new condition */}
+                            <div className="border-t pt-4">
+                              <h4 className="font-medium text-gray-700 mb-3">Add New Medical Condition:</h4>
+                              <div className="flex space-x-2">
+                                <Input
+                                  placeholder="Enter medical condition or diagnosis..."
+                                  value={newMedicalCondition}
+                                  onChange={(e) => setNewMedicalCondition(e.target.value)}
+                                  className="flex-1"
+                                />
+                                <Button
+                                  onClick={() => {
+                                    if (newMedicalCondition.trim()) {
+                                      const updatedHistory = [...(selectedPatient.medicalHistory || []), newMedicalCondition.trim()];
+                                      updatePatientMutation.mutate({
+                                        patientId: selectedPatient.id,
+                                        medicalHistory: updatedHistory,
+                                      });
+                                      setNewMedicalCondition("");
+                                    }
+                                  }}
+                                  disabled={!newMedicalCondition.trim() || updatePatientMutation.isPending}
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-end space-x-2 pt-4">
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingMedicalHistory(false);
+                                  setNewMedicalCondition("");
+                                }}
+                              >
+                                Done Editing
+                              </Button>
+                            </div>
                           </div>
                         ) : (
-                          <p className="text-gray-600 py-4">No medical history recorded</p>
+                          <>
+                            {selectedPatient.medicalHistory && Array.isArray(selectedPatient.medicalHistory) && selectedPatient.medicalHistory.length > 0 ? (
+                              <div className="space-y-3">
+                                {selectedPatient.medicalHistory.map((condition, index) => (
+                                  <div key={index} className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                                    <div className="flex items-center space-x-2">
+                                      <Heart className="h-4 w-4 text-red-500" />
+                                      <span className="font-medium text-red-900">{condition as string}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-center py-8">
+                                <Heart className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                                <p className="text-gray-600 mb-4">No medical history recorded</p>
+                                {user?.role === "physician" && (
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => setEditingMedicalHistory(true)}
+                                  >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Medical History
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+                          </>
                         )}
                       </CardContent>
                     </Card>
@@ -428,25 +589,134 @@ export default function PatientMedicalRecords() {
                   <TabsContent value="medications" className="space-y-4 mt-6">
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg flex items-center">
-                          <Pill className="h-5 w-5 mr-2 text-blue-500" />
-                          Current Medications
+                        <CardTitle className="text-lg flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Pill className="h-5 w-5 mr-2 text-blue-500" />
+                            Current Medications
+                          </div>
+                          {user?.role === "physician" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingMedications(!editingMedications)}
+                              disabled={updatePatientMutation.isPending}
+                            >
+                              {editingMedications ? (
+                                <>
+                                  <X className="h-4 w-4 mr-2" />
+                                  Cancel
+                                </>
+                              ) : (
+                                <>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit Medications
+                                </>
+                              )}
+                            </Button>
+                          )}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        {selectedPatient.medications && Array.isArray(selectedPatient.medications) && selectedPatient.medications.length > 0 ? (
-                          <div className="space-y-3">
-                            {selectedPatient.medications.map((medication, index) => (
-                              <div key={index} className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                <div className="flex items-center space-x-2">
-                                  <Pill className="h-4 w-4 text-blue-500" />
-                                  <span className="font-medium text-blue-900">{medication as string}</span>
-                                </div>
+                        {editingMedications ? (
+                          <div className="space-y-4">
+                            {/* Existing medications - editable */}
+                            {selectedPatient.medications && Array.isArray(selectedPatient.medications) && selectedPatient.medications.length > 0 && (
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-gray-700">Current Medications:</h4>
+                                {selectedPatient.medications.map((medication, index) => (
+                                  <div key={index} className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                      <Pill className="h-4 w-4 text-blue-500" />
+                                      <span className="font-medium text-blue-900">{medication as string}</span>
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => {
+                                        const updatedMedications = selectedPatient.medications?.filter((_, i) => i !== index) || [];
+                                        updatePatientMutation.mutate({
+                                          patientId: selectedPatient.id,
+                                          medications: updatedMedications,
+                                        });
+                                      }}
+                                    >
+                                      <X className="h-4 w-4 text-blue-600" />
+                                    </Button>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            )}
+                            
+                            {/* Add new medication */}
+                            <div className="border-t pt-4">
+                              <h4 className="font-medium text-gray-700 mb-3">Add New Medication:</h4>
+                              <div className="flex space-x-2">
+                                <Input
+                                  placeholder="Enter medication name and dosage..."
+                                  value={newMedication}
+                                  onChange={(e) => setNewMedication(e.target.value)}
+                                  className="flex-1"
+                                />
+                                <Button
+                                  onClick={() => {
+                                    if (newMedication.trim()) {
+                                      const updatedMedications = [...(selectedPatient.medications || []), newMedication.trim()];
+                                      updatePatientMutation.mutate({
+                                        patientId: selectedPatient.id,
+                                        medications: updatedMedications,
+                                      });
+                                      setNewMedication("");
+                                    }
+                                  }}
+                                  disabled={!newMedication.trim() || updatePatientMutation.isPending}
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-end space-x-2 pt-4">
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingMedications(false);
+                                  setNewMedication("");
+                                }}
+                              >
+                                Done Editing
+                              </Button>
+                            </div>
                           </div>
                         ) : (
-                          <p className="text-gray-600 py-4">No current medications recorded</p>
+                          <>
+                            {selectedPatient.medications && Array.isArray(selectedPatient.medications) && selectedPatient.medications.length > 0 ? (
+                              <div className="space-y-3">
+                                {selectedPatient.medications.map((medication, index) => (
+                                  <div key={index} className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div className="flex items-center space-x-2">
+                                      <Pill className="h-4 w-4 text-blue-500" />
+                                      <span className="font-medium text-blue-900">{medication as string}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-center py-8">
+                                <Pill className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                                <p className="text-gray-600 mb-4">No current medications recorded</p>
+                                {user?.role === "physician" && (
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => setEditingMedications(true)}
+                                  >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Medications
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+                          </>
                         )}
                       </CardContent>
                     </Card>
@@ -455,25 +725,134 @@ export default function PatientMedicalRecords() {
                   <TabsContent value="allergies" className="space-y-4 mt-6">
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg flex items-center">
-                          <AlertTriangle className="h-5 w-5 mr-2 text-orange-500" />
-                          Allergies & Reactions
+                        <CardTitle className="text-lg flex items-center justify-between">
+                          <div className="flex items-center">
+                            <AlertTriangle className="h-5 w-5 mr-2 text-orange-500" />
+                            Allergies & Reactions
+                          </div>
+                          {user?.role === "physician" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingAllergies(!editingAllergies)}
+                              disabled={updatePatientMutation.isPending}
+                            >
+                              {editingAllergies ? (
+                                <>
+                                  <X className="h-4 w-4 mr-2" />
+                                  Cancel
+                                </>
+                              ) : (
+                                <>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit Allergies
+                                </>
+                              )}
+                            </Button>
+                          )}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        {selectedPatient.allergies && Array.isArray(selectedPatient.allergies) && selectedPatient.allergies.length > 0 ? (
-                          <div className="space-y-3">
-                            {selectedPatient.allergies.map((allergy, index) => (
-                              <div key={index} className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                                <div className="flex items-center space-x-2">
-                                  <AlertTriangle className="h-4 w-4 text-orange-500" />
-                                  <span className="font-medium text-orange-900">{allergy as string}</span>
-                                </div>
+                        {editingAllergies ? (
+                          <div className="space-y-4">
+                            {/* Existing allergies - editable */}
+                            {selectedPatient.allergies && Array.isArray(selectedPatient.allergies) && selectedPatient.allergies.length > 0 && (
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-gray-700">Known Allergies:</h4>
+                                {selectedPatient.allergies.map((allergy, index) => (
+                                  <div key={index} className="p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                      <AlertTriangle className="h-4 w-4 text-orange-500" />
+                                      <span className="font-medium text-orange-900">{allergy as string}</span>
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => {
+                                        const updatedAllergies = selectedPatient.allergies?.filter((_, i) => i !== index) || [];
+                                        updatePatientMutation.mutate({
+                                          patientId: selectedPatient.id,
+                                          allergies: updatedAllergies,
+                                        });
+                                      }}
+                                    >
+                                      <X className="h-4 w-4 text-orange-600" />
+                                    </Button>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            )}
+                            
+                            {/* Add new allergy */}
+                            <div className="border-t pt-4">
+                              <h4 className="font-medium text-gray-700 mb-3">Add New Allergy:</h4>
+                              <div className="flex space-x-2">
+                                <Input
+                                  placeholder="Enter allergy or adverse reaction..."
+                                  value={newAllergy}
+                                  onChange={(e) => setNewAllergy(e.target.value)}
+                                  className="flex-1"
+                                />
+                                <Button
+                                  onClick={() => {
+                                    if (newAllergy.trim()) {
+                                      const updatedAllergies = [...(selectedPatient.allergies || []), newAllergy.trim()];
+                                      updatePatientMutation.mutate({
+                                        patientId: selectedPatient.id,
+                                        allergies: updatedAllergies,
+                                      });
+                                      setNewAllergy("");
+                                    }
+                                  }}
+                                  disabled={!newAllergy.trim() || updatePatientMutation.isPending}
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-end space-x-2 pt-4">
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingAllergies(false);
+                                  setNewAllergy("");
+                                }}
+                              >
+                                Done Editing
+                              </Button>
+                            </div>
                           </div>
                         ) : (
-                          <p className="text-gray-600 py-4">No known allergies</p>
+                          <>
+                            {selectedPatient.allergies && Array.isArray(selectedPatient.allergies) && selectedPatient.allergies.length > 0 ? (
+                              <div className="space-y-3">
+                                {selectedPatient.allergies.map((allergy, index) => (
+                                  <div key={index} className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                                    <div className="flex items-center space-x-2">
+                                      <AlertTriangle className="h-4 w-4 text-orange-500" />
+                                      <span className="font-medium text-orange-900">{allergy as string}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-center py-8">
+                                <AlertTriangle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                                <p className="text-gray-600 mb-4">No known allergies</p>
+                                {user?.role === "physician" && (
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => setEditingAllergies(true)}
+                                  >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Allergies
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+                          </>
                         )}
                       </CardContent>
                     </Card>

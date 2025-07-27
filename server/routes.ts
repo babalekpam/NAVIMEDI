@@ -377,6 +377,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update patient medical information (for doctors to edit medical history, medications, allergies)
+  app.patch("/api/patients/:id", requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.tenant!.id;
+      const updates = req.body;
+
+      // Get original patient data for audit log
+      const originalPatient = await storage.getPatient(id, tenantId);
+      if (!originalPatient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      // Update patient
+      const updatedPatient = await storage.updatePatient(id, updates, tenantId);
+      if (!updatedPatient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: tenantId,
+        userId: req.user!.id,
+        entityType: "patient",
+        entityId: id,
+        action: "update",
+        previousData: originalPatient,
+        newData: updatedPatient,
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.json(updatedPatient);
+    } catch (error) {
+      console.error("Update patient error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Appointment management routes
   app.use("/api/appointments", requireTenant);
 
