@@ -727,12 +727,26 @@ export class DatabaseStorage implements IStorage {
       .where(eq(vitalSigns.patientId, patientId))
       .orderBy(desc(vitalSigns.recordedAt));
 
+    // Get all visit summaries with provider information
+    const patientVisitSummaries = await db
+      .select({
+        visitSummary: visitSummaries,
+        providerName: users.firstName,
+        providerLastName: users.lastName,
+        providerRole: users.role
+      })
+      .from(visitSummaries)
+      .leftJoin(users, eq(visitSummaries.providerId, users.id))
+      .where(eq(visitSummaries.patientId, patientId))
+      .orderBy(desc(visitSummaries.visitDate));
+
     return {
       ...patient,
       appointments: patientAppointments,
       prescriptions: patientPrescriptions,
       labOrders: patientLabOrders,
-      vitalSigns: patientVitalSigns
+      vitalSigns: patientVitalSigns,
+      visitSummaries: patientVisitSummaries
     };
   }
 
