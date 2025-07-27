@@ -376,9 +376,12 @@ export default function MedicationCopayForm({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="formularyTier">Formulary Tier</Label>
-                  <Select {...form.register("formularyTier")}>
+                  <Select 
+                    value={form.watch("formularyTier") || ""} 
+                    onValueChange={(value) => form.setValue("formularyTier", value)}
+                  >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Select formulary tier" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="tier_1">Tier 1 (Generic)</SelectItem>
@@ -424,7 +427,8 @@ export default function MedicationCopayForm({
 
               <div className="flex items-center space-x-2">
                 <Switch
-                  {...form.register("priorAuthRequired")}
+                  checked={form.watch("priorAuthRequired") || false}
+                  onCheckedChange={(checked) => form.setValue("priorAuthRequired", checked)}
                   id="priorAuthRequired"
                 />
                 <Label htmlFor="priorAuthRequired" className="flex items-center gap-2">
