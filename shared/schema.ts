@@ -903,18 +903,16 @@ export const vitalSigns = pgTable("vital_signs", {
   appointmentId: uuid("appointment_id").references(() => appointments.id),
   recordedBy: uuid("recorded_by_id").references(() => users.id).notNull(), // receptionist/nurse
   // Standard vital signs
-  systolicBp: integer("systolic_bp"), // mmHg
-  diastolicBp: integer("diastolic_bp"), // mmHg
+  systolicBp: integer("blood_pressure_systolic"), // mmHg
+  diastolicBp: integer("blood_pressure_diastolic"), // mmHg
   heartRate: integer("heart_rate"), // bpm
   temperature: decimal("temperature", { precision: 4, scale: 1 }), // °F or °C
   temperatureUnit: text("temperature_unit").default('F'), // F or C
   respiratoryRate: integer("respiratory_rate"), // breaths per minute
   oxygenSaturation: integer("oxygen_saturation"), // %
   weight: decimal("weight", { precision: 5, scale: 2 }), // lbs or kg
-  weightUnit: text("weight_unit").default('lbs'), // lbs or kg
   height: decimal("height", { precision: 5, scale: 2 }), // inches or cm
-  heightUnit: text("height_unit").default('inches'), // inches or cm
-  bmi: decimal("bmi", { precision: 4, scale: 1 }), // calculated
+  bmi: decimal("body_mass_index", { precision: 4, scale: 1 }), // calculated
   painLevel: integer("pain_level"), // 0-10 scale
   // Additional measurements
   glucoseLevel: integer("glucose_level"), // mg/dL

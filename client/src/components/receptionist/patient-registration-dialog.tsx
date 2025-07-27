@@ -35,7 +35,7 @@ export default function PatientRegistrationDialog({ onSubmit, isLoading, departm
           onSubmit={onSubmit}
           isLoading={isLoading}
           department={department}
-          includeVitalSigns={includeVitalSigns}
+          includeVitalSigns={false}
         />
       </ScrollArea>
     </DialogContent>

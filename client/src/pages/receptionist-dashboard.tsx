@@ -204,43 +204,14 @@ export default function ReceptionistDashboard() {
 
   // Handlers
   const handlePatientRegistration = async (data: any) => {
-    // Extract vital signs from patient data if present
-    const { vitalSigns, ...patientData } = data;
-    
     setIsRegistering(true);
     try {
-      // First create the patient
-      const response = await apiRequest('/api/patients', { 
+      // Create patient only (no vital signs during registration)
+      await apiRequest('/api/patients', { 
         method: 'POST', 
-        body: patientData 
+        body: data 
       });
       
-      // If vital signs are included, create them separately
-      if (vitalSigns) {
-        const vitalSignsData = {
-          patientId: response.id,
-          systolicBp: vitalSigns.bloodPressureSystolic ? parseInt(vitalSigns.bloodPressureSystolic) : undefined,
-          diastolicBp: vitalSigns.bloodPressureDiastolic ? parseInt(vitalSigns.bloodPressureDiastolic) : undefined,
-          heartRate: vitalSigns.heartRate ? parseInt(vitalSigns.heartRate) : undefined,
-          temperature: vitalSigns.temperature ? parseFloat(vitalSigns.temperature) : undefined,
-          temperatureUnit: 'F',
-          oxygenSaturation: vitalSigns.oxygenSaturation ? parseInt(vitalSigns.oxygenSaturation) : undefined,
-          respiratoryRate: vitalSigns.respiratoryRate ? parseInt(vitalSigns.respiratoryRate) : undefined,
-          weight: vitalSigns.weight ? parseFloat(vitalSigns.weight) : undefined,
-          weightUnit: 'lbs',
-          height: vitalSigns.height ? parseFloat(vitalSigns.height) : undefined,
-          heightUnit: 'inches',
-          painLevel: vitalSigns.painScale ? parseInt(vitalSigns.painScale) : undefined,
-          notes: vitalSigns.notes || undefined
-        };
-        
-        await apiRequest('/api/vital-signs', { 
-          method: 'POST', 
-          body: vitalSignsData 
-        });
-      }
-      
-      // Refresh patient list and close dialog
       queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
       setIsRegisterDialogOpen(false);
       
@@ -262,10 +233,35 @@ export default function ReceptionistDashboard() {
 
   const handleVitalSigns = (data: any) => {
     if (selectedCheckIn) {
-      recordVitalsMutation.mutate({
-        ...data,
+      // Transform the form data to match the backend expected format
+      const vitalSignsData = {
         patientId: selectedCheckIn.patientId,
-        checkInId: selectedCheckIn.id,
+        appointmentId: selectedCheckIn.appointmentId || null,
+        systolicBp: data.systolicBp,
+        diastolicBp: data.diastolicBp,
+        heartRate: data.heartRate,
+        temperature: data.temperature,
+        temperatureUnit: data.temperatureUnit || 'F',
+        respiratoryRate: data.respiratoryRate,
+        oxygenSaturation: data.oxygenSaturation,
+        weight: data.weight,
+        height: data.height,
+        painLevel: data.painLevel,
+        glucoseLevel: data.glucoseLevel,
+        notes: data.notes
+      };
+      
+      // Call vital signs API directly instead of using a separate endpoint
+      apiRequest('/api/vital-signs', { 
+        method: 'POST', 
+        body: vitalSignsData 
+      }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/vital-signs'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/receptionist/check-ins/today'] });
+        setIsVitalsDialogOpen(false);
+        vitalSignsForm.reset();
+      }).catch((error) => {
+        console.error('Error recording vital signs:', error);
       });
     }
   };
