@@ -251,13 +251,14 @@ export default function ReceptionistDashboard() {
         notes: data.notes
       };
       
-      // Call vital signs API directly instead of using a separate endpoint
-      apiRequest('/api/vital-signs', { 
-        method: 'POST', 
-        body: vitalSignsData 
+      // Call vital signs API with check-in ID for proper linking
+      apiRequest('POST', '/api/vital-signs', {
+        ...vitalSignsData,
+        checkInId: selectedCheckIn.id
       }).then(() => {
         queryClient.invalidateQueries({ queryKey: ['/api/vital-signs'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/receptionist/check-ins/today'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/patient-check-ins/today'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/patient-check-ins/waiting'] });
         setIsVitalsDialogOpen(false);
         vitalSignsForm.reset();
       }).catch((error) => {

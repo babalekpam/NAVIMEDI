@@ -2855,6 +2855,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const vitalSigns = await storage.createVitalSigns(validatedData);
 
+      // If checkInId is provided, link the vital signs to the check-in record
+      if (req.body.checkInId) {
+        await storage.updatePatientCheckIn(req.body.checkInId, {
+          vitalSignsId: vitalSigns.id
+        }, req.tenantId!);
+      }
+
       // Create audit log
       await storage.createAuditLog({
         userId: req.user?.id!,
@@ -2863,7 +2870,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         previousData: null,
         entityType: "vital_signs",
         entityId: vitalSigns.id,
-        details: { patientId: vitalSigns.patientId, appointmentId: vitalSigns.appointmentId }
+        details: { patientId: vitalSigns.patientId, appointmentId: vitalSigns.appointmentId, checkInId: req.body.checkInId }
       });
 
       res.status(201).json(vitalSigns);
