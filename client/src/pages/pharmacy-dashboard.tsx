@@ -210,11 +210,11 @@ export default function PharmacyDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Pharmacy Operations</h1>
-          <p className="text-gray-600">Prescription Processing & Patient Care</p>
+          <p className="text-gray-600">Prescription Processing & Insurance Claims</p>
         </div>
         <div className="text-right">
           <p className="text-sm text-gray-500">{currentTenant?.name}</p>
-          <p className="text-xs text-gray-400">Licensed Pharmacy - Prescription Processing Only</p>
+          <p className="text-xs text-gray-400">Licensed Pharmacy - Receives Prescriptions from Healthcare Providers</p>
         </div>
       </div>
 

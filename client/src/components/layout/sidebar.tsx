@@ -115,7 +115,7 @@ export const Sidebar = () => {
   if (user.role === "pharmacist" || (user.role === "tenant_admin" && isPharmacyTenant)) {
     
     const pharmacyItems = filteredItems.filter(item => 
-      ["dashboard", "pharmacy-dashboard", "prescriptions", "patients", "billing"].includes(item.id)
+      ["dashboard", "pharmacy-dashboard", "prescriptions", "billing"].includes(item.id)
     );
     
     return (
@@ -163,8 +163,8 @@ export const Sidebar = () => {
   return (
     <aside className="w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto">
       <div className="p-6">
-        {/* Quick Actions - Show for pharmacy and non-pharmacy tenant users */}
-        {user.role !== "super_admin" && (
+        {/* Quick Actions - Only show for non-pharmacy tenant users */}
+        {user.role !== "super_admin" && !isPharmacyTenant && (
           <div className="mb-8">
             <Button 
               className="w-full bg-blue-600 hover:bg-blue-700"
