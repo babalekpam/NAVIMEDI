@@ -356,6 +356,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get current tenant info
+  app.get("/api/tenant/current", async (req, res) => {
+    try {
+      if (!req.user?.tenantId) {
+        return res.status(400).json({ message: "No tenant context" });
+      }
+      
+      const tenant = await storage.getTenant(req.user.tenantId);
+      if (!tenant) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+      
+      res.json(tenant);
+    } catch (error) {
+      console.error("Get current tenant error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Tenant management routes
   app.get("/api/tenants", requireRole(["super_admin"]), async (req, res) => {
     try {
@@ -402,7 +421,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { limit = "50", offset = "0", search } = req.query;
       const tenantId = req.tenant!.id;
-      const tenantType = req.tenant!.type;
+      
+      // Get full tenant info to check type
+      const tenant = await storage.getTenant(tenantId);
+      const tenantType = tenant?.type;
 
       let patients;
       if (search && typeof search === "string") {
