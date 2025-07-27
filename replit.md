@@ -70,6 +70,12 @@ A comprehensive multi-tenant healthcare management platform specializing in phar
 - Tenant: `working-test`
 - Access: Pharmacy operations and patient management
 
+### Receptionist (Working Test Pharmacy)
+- Email: `receptionist@workingtest.com`
+- Password: `receptionist123`
+- Tenant: `working-test`
+- Access: Patient registration, check-in, and vital signs collection
+
 ## Development Notes
 - Application runs on port 5000
 - Database auto-initializes with test data
