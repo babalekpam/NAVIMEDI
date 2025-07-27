@@ -6,223 +6,239 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { 
-  Package, 
+  Pill, 
   Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  Truck, 
-  FileText, 
   DollarSign, 
-  Phone, 
-  MapPin,
-  Calendar,
-  Pill,
+  FileText, 
+  CreditCard,
+  CheckCircle,
+  AlertCircle,
+  Package2,
+  Receipt,
   Shield,
-  User,
-  Building2,
-  RefreshCw
+  Truck
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useTenant } from "@/hooks/use-tenant";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import type { Prescription, Patient, InsuranceClaim, Pharmacy } from "@shared/schema";
 
-interface PrescriptionWithPatient extends Prescription {
-  patient?: Patient;
-  pharmacy?: Pharmacy;
+interface PharmacyPrescription {
+  id: string;
+  patientName: string;
+  patientId: string;
+  medication: string;
+  dosage: string;
+  quantity: number;
+  instructions: string;
+  prescriberId: string;
+  prescriberName: string;
+  status: 'received' | 'processing' | 'ready' | 'dispensed';
+  insuranceProvider?: string;
+  insuranceCopay?: number;
+  totalCost: number;
+  dateReceived: string;
+  dateReady?: string;
+  dateDispensed?: string;
 }
 
 export default function PharmacyDashboard() {
   const { user } = useAuth();
+  const { currentTenant } = useTenant();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedPrescription, setSelectedPrescription] = useState<PrescriptionWithPatient | null>(null);
-  const [processingDialogOpen, setProcessingDialogOpen] = useState(false);
-  const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
-  const [insuranceDialogOpen, setInsuranceDialogOpen] = useState(false);
+  const [selectedPrescription, setSelectedPrescription] = useState<PharmacyPrescription | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Fetch prescriptions for pharmacy processing
-  const { data: prescriptions = [], isLoading: prescriptionsLoading } = useQuery({
-    queryKey: ["/api/prescriptions"],
+  // Fetch prescriptions sent to this pharmacy
+  const { data: prescriptions = [], isLoading } = useQuery({
+    queryKey: ['/api/prescriptions'],
     queryFn: async () => {
-      const response = await fetch("/api/prescriptions");
-      if (!response.ok) throw new Error("Failed to fetch prescriptions");
-      return response.json() as Promise<PrescriptionWithPatient[]>;
+      const response = await fetch('/api/prescriptions');
+      if (!response.ok) throw new Error('Failed to fetch prescriptions');
+      return response.json() as Promise<PharmacyPrescription[]>;
     }
   });
 
-  // Fetch patients data
-  const { data: patients = [] } = useQuery({
-    queryKey: ["/api/patients"],
-    queryFn: async () => {
-      const response = await fetch("/api/patients");
-      if (!response.ok) throw new Error("Failed to fetch patients");
-      return response.json() as Promise<Patient[]>;
+  // Mock data for demonstration (replace with real API data)
+  const mockPrescriptions: PharmacyPrescription[] = [
+    {
+      id: "RX001",
+      patientName: "John Smith",
+      patientId: "P001",
+      medication: "Lisinopril",
+      dosage: "10mg",
+      quantity: 30,
+      instructions: "Take once daily with food",
+      prescriberId: "DR001",
+      prescriberName: "Dr. Johnson",
+      status: "received",
+      insuranceProvider: "Blue Cross Blue Shield",
+      insuranceCopay: 15.00,
+      totalCost: 65.00,
+      dateReceived: "2025-01-27"
+    },
+    {
+      id: "RX002", 
+      patientName: "Sarah Davis",
+      medication: "Metformin",
+      dosage: "500mg",
+      quantity: 60,
+      instructions: "Take twice daily with meals",
+      prescriberId: "DR002",
+      prescriberName: "Dr. Brown",
+      status: "processing",
+      insuranceProvider: "Aetna",
+      insuranceCopay: 10.00,
+      totalCost: 45.00,
+      dateReceived: "2025-01-26",
+      patientId: "P002"
+    },
+    {
+      id: "RX003",
+      patientName: "Mike Wilson",
+      medication: "Atorvastatin",
+      dosage: "20mg", 
+      quantity: 30,
+      instructions: "Take once daily at bedtime",
+      prescriberId: "DR003",
+      prescriberName: "Dr. Garcia",
+      status: "ready",
+      insuranceProvider: "Medicare",
+      insuranceCopay: 5.00,
+      totalCost: 75.00,
+      dateReceived: "2025-01-25",
+      dateReady: "2025-01-27",
+      patientId: "P003"
+    },
+    {
+      id: "RX004",
+      patientName: "Lisa Johnson",
+      medication: "Omeprazole",
+      dosage: "40mg",
+      quantity: 30,
+      instructions: "Take once daily before breakfast",
+      prescriberId: "DR001",
+      prescriberName: "Dr. Johnson",
+      status: "dispensed",
+      insuranceProvider: "United Healthcare",
+      insuranceCopay: 20.00,
+      totalCost: 55.00,
+      dateReceived: "2025-01-24",
+      dateReady: "2025-01-26",
+      dateDispensed: "2025-01-27",
+      patientId: "P004"
     }
-  });
+  ];
 
-  // Fetch pharmacy information
-  const { data: pharmacies = [] } = useQuery({
-    queryKey: ["/api/pharmacies"],
-    queryFn: async () => {
-      const response = await fetch("/api/pharmacies");
-      if (!response.ok) throw new Error("Failed to fetch pharmacies");
-      return response.json() as Promise<Pharmacy[]>;
-    }
-  });
+  const activePrescriptions = isLoading ? mockPrescriptions : prescriptions;
 
-  // Fetch insurance claims
-  const { data: insuranceClaims = [] } = useQuery({
-    queryKey: ["/api/insurance-claims"],
-    queryFn: async () => {
-      const response = await fetch("/api/insurance-claims");
-      if (!response.ok) throw new Error("Failed to fetch insurance claims");
-      return response.json() as Promise<InsuranceClaim[]>;
-    }
-  });
+  // Calculate dashboard metrics
+  const metrics = {
+    received: activePrescriptions.filter((p) => p.status === 'received').length,
+    processing: activePrescriptions.filter((p) => p.status === 'processing').length,
+    ready: activePrescriptions.filter((p) => p.status === 'ready').length,
+    dispensed: activePrescriptions.filter((p) => p.status === 'dispensed' && p.dateDispensed === format(new Date(), 'yyyy-MM-dd')).length,
+    todayRevenue: activePrescriptions
+      .filter((p) => p.status === 'dispensed' && p.dateDispensed === format(new Date(), 'yyyy-MM-dd'))
+      .reduce((sum, p) => sum + (p.insuranceCopay || p.totalCost), 0)
+  };
 
-  // Update prescription status mutation
-  const updatePrescriptionMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Prescription> }) => {
-      const response = await fetch(`/api/prescriptions/${id}`, {
+  // Process prescription mutation
+  const processPrescriptionMutation = useMutation({
+    mutationFn: async (data: { prescriptionId: string; action: string; details?: any }) => {
+      const response = await fetch(`/api/prescriptions/${data.prescriptionId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
+        body: JSON.stringify({ action: data.action, details: data.details })
       });
-      if (!response.ok) throw new Error("Failed to update prescription");
+      if (!response.ok) throw new Error('Failed to process prescription');
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] });
-      toast({
-        title: "Success",
-        description: "Prescription status updated successfully"
-      });
-    }
-  });
-
-  // Create insurance claim mutation
-  const createInsuranceClaimMutation = useMutation({
-    mutationFn: async (claimData: any) => {
-      const response = await fetch("/api/insurance-claims", {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(claimData)
-      });
-      if (!response.ok) throw new Error("Failed to create insurance claim");
-      return response.json();
+      toast({ title: "Success", description: "Prescription processed successfully" });
+      setDialogOpen(false);
+      setSelectedPrescription(null);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/insurance-claims'] });
-      toast({
-        title: "Success",
-        description: "Insurance claim filed successfully"
-      });
-      setInsuranceDialogOpen(false);
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     }
   });
-
-  // Helper functions
-  const getPatientById = (patientId: string) => {
-    return patients.find(p => p.id === patientId);
-  };
-
-  const getPharmacyById = (pharmacyId: string) => {
-    return pharmacies.find(p => p.id === pharmacyId);
-  };
 
   const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'prescribed': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'sent_to_pharmacy': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'filled': return 'bg-green-100 text-green-800 border-green-200';
-      case 'picked_up': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    switch (status) {
+      case "received": return "bg-blue-100 text-blue-800";
+      case "processing": return "bg-yellow-100 text-yellow-800";
+      case "ready": return "bg-green-100 text-green-800";
+      case "dispensed": return "bg-gray-100 text-gray-800";
+      default: return "bg-gray-100 text-gray-800";
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority.toLowerCase()) {
-      case 'urgent': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'normal': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "received": return <Clock className="h-4 w-4" />;
+      case "processing": return <Package2 className="h-4 w-4" />;
+      case "ready": return <CheckCircle className="h-4 w-4" />;
+      case "dispensed": return <Receipt className="h-4 w-4" />;
+      default: return <AlertCircle className="h-4 w-4" />;
     }
   };
 
-  // Filter prescriptions by status
-  const pendingPrescriptions = prescriptions.filter(p => p.status === 'prescribed');
-  const processingPrescriptions = prescriptions.filter(p => p.status === 'sent_to_pharmacy');
-  const readyPrescriptions = prescriptions.filter(p => p.status === 'filled');
-  const dispensedPrescriptions = prescriptions.filter(p => p.status === 'picked_up');
-
-  const handleProcessPrescription = async (prescription: PrescriptionWithPatient) => {
-    setSelectedPrescription(prescription);
-    setProcessingDialogOpen(true);
+  const getActionButton = (prescription: PharmacyPrescription) => {
+    switch (prescription.status) {
+      case 'received':
+        return { text: 'Start Processing', color: 'bg-blue-600 hover:bg-blue-700' };
+      case 'processing':
+        return { text: 'File Insurance Claim', color: 'bg-green-600 hover:bg-green-700' };
+      case 'ready':
+        return { text: 'Dispense & Collect Payment', color: 'bg-purple-600 hover:bg-purple-700' };
+      case 'dispensed':
+        return { text: 'View Details', color: 'bg-gray-600 hover:bg-gray-700' };
+      default:
+        return { text: 'Process', color: 'bg-blue-600 hover:bg-blue-700' };
+    }
   };
-
-  const handleFileInsuranceClaim = async (prescription: PrescriptionWithPatient) => {
-    setSelectedPrescription(prescription);
-    setInsuranceDialogOpen(true);
-  };
-
-  const handleDeliverySetup = async (prescription: PrescriptionWithPatient) => {
-    setSelectedPrescription(prescription);
-    setDeliveryDialogOpen(true);
-  };
-
-  if (prescriptionsLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
-        <span className="ml-2 text-lg">Loading pharmacy dashboard...</span>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Pharmacy Dashboard</h1>
-          <p className="text-gray-600">Manage prescriptions, insurance claims, and deliveries</p>
+          <h1 className="text-3xl font-bold text-gray-900">Pharmacy Operations</h1>
+          <p className="text-gray-600">Prescription Processing & Patient Care</p>
         </div>
-        <div className="flex items-center space-x-4">
-          <Badge variant="outline" className="text-green-700 border-green-300">
-            <CheckCircle className="h-4 w-4 mr-1" />
-            Active Pharmacy
-          </Badge>
+        <div className="text-right">
+          <p className="text-sm text-gray-500">{currentTenant?.name}</p>
+          <p className="text-xs text-gray-400">Licensed Pharmacy</p>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
+            <CardTitle className="text-sm font-medium">New Prescriptions</CardTitle>
+            <Clock className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{pendingPrescriptions.length}</div>
-            <p className="text-xs text-gray-500">Awaiting processing</p>
+            <div className="text-2xl font-bold text-blue-600">{metrics.received}</div>
+            <p className="text-xs text-muted-foreground">Ready to process</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Processing</CardTitle>
-            <Package className="h-4 w-4 text-blue-600" />
+            <Package2 className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{processingPrescriptions.length}</div>
-            <p className="text-xs text-gray-500">Being prepared</p>
+            <div className="text-2xl font-bold text-yellow-600">{metrics.processing}</div>
+            <p className="text-xs text-muted-foreground">Insurance pending</p>
           </CardContent>
         </Card>
 
@@ -232,335 +248,343 @@ export default function PharmacyDashboard() {
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{readyPrescriptions.length}</div>
-            <p className="text-xs text-gray-500">Available for collection</p>
+            <div className="text-2xl font-bold text-green-600">{metrics.ready}</div>
+            <p className="text-xs text-muted-foreground">Awaiting patient</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Delivered Today</CardTitle>
-            <Truck className="h-4 w-4 text-purple-600" />
+            <CardTitle className="text-sm font-medium">Dispensed Today</CardTitle>
+            <Receipt className="h-4 w-4 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{dispensedPrescriptions.length}</div>
-            <p className="text-xs text-gray-500">Completed deliveries</p>
+            <div className="text-2xl font-bold text-gray-600">{metrics.dispensed}</div>
+            <p className="text-xs text-muted-foreground">Completed</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Today's Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">${metrics.todayRevenue.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">Patient copays</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="prescriptions" className="space-y-6">
+      {/* Prescription Processing Workflow */}
+      <Tabs defaultValue="received" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
-          <TabsTrigger value="insurance">Insurance Claims</TabsTrigger>
-          <TabsTrigger value="delivery">Delivery Management</TabsTrigger>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
+          <TabsTrigger value="received" className="flex items-center space-x-2">
+            <Clock className="h-4 w-4" />
+            <span>New ({metrics.received})</span>
+          </TabsTrigger>
+          <TabsTrigger value="processing" className="flex items-center space-x-2">
+            <Package2 className="h-4 w-4" />
+            <span>Processing ({metrics.processing})</span>
+          </TabsTrigger>
+          <TabsTrigger value="ready" className="flex items-center space-x-2">
+            <CheckCircle className="h-4 w-4" />
+            <span>Ready ({metrics.ready})</span>
+          </TabsTrigger>
+          <TabsTrigger value="dispensed" className="flex items-center space-x-2">
+            <Receipt className="h-4 w-4" />
+            <span>Dispensed ({metrics.dispensed})</span>
+          </TabsTrigger>
         </TabsList>
 
-        {/* Prescriptions Tab */}
-        <TabsContent value="prescriptions" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Pill className="h-5 w-5 text-blue-600" />
-                <span>Prescription Management</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {prescriptions.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <Package className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>No prescriptions available</p>
-                  </div>
-                ) : (
-                  prescriptions.map((prescription) => {
-                    const patient = getPatientById(prescription.patientId);
-                    const pharmacy = getPharmacyById(prescription.pharmacyId || '');
-                    
-                    return (
-                      <div key={prescription.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-center justify-between">
+        {(['received', 'processing', 'ready', 'dispensed'] as const).map((status) => (
+          <TabsContent key={status} value={status}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  {getStatusIcon(status)}
+                  <span>{status.charAt(0).toUpperCase() + status.slice(1)} Prescriptions</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {activePrescriptions
+                    .filter((p) => p.status === status)
+                    .map((prescription) => {
+                      const actionButton = getActionButton(prescription);
+                      return (
+                        <div key={prescription.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                           <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <Badge className={getStatusColor(prescription.status || 'prescribed')}>
-                                {(prescription.status || 'prescribed').toUpperCase().replace('_', ' ')}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
-                                PHARMACY
-                              </Badge>
-                              <span className="text-sm text-gray-500">
-                                RX#{prescription.id.split('-')[0].toUpperCase()}
-                              </span>
-                            </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div>
-                                <h4 className="font-medium text-gray-900">{prescription.medicationName}</h4>
-                                <p className="text-sm text-gray-600">
-                                  {prescription.dosage} • {prescription.quantity} units
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  Prescribed: {prescription.prescribedDate ? format(new Date(prescription.prescribedDate), 'MMM dd, yyyy') : 'N/A'}
-                                </p>
-                              </div>
-                              
-                              <div>
-                                <div className="flex items-center space-x-2 text-sm">
-                                  <User className="h-4 w-4 text-gray-400" />
-                                  <span className="font-medium">
-                                    {patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient'}
-                                  </span>
-                                </div>
-                                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                  <Phone className="h-4 w-4 text-gray-400" />
-                                  <span>{patient?.phone || 'No phone'}</span>
-                                </div>
-                              </div>
-                              
-                              <div>
-                                {patient?.preferredPharmacyId && (
-                                  <div className="flex items-center space-x-2 text-sm">
-                                    <Building2 className="h-4 w-4 text-gray-400" />
-                                    <span className="font-medium">
-                                      {getPharmacyById(patient.preferredPharmacyId)?.name || 'Unknown Pharmacy'}
-                                    </span>
+                            <div className="flex items-start space-x-4">
+                              <div className="flex-1">
+                                <p className="font-semibold text-lg">{prescription.patientName}</p>
+                                <p className="text-blue-600 font-medium">{prescription.medication} {prescription.dosage}</p>
+                                <p className="text-sm text-gray-600">Qty: {prescription.quantity} | Dr. {prescription.prescriberName}</p>
+                                <p className="text-xs text-gray-500">{prescription.instructions}</p>
+                                {prescription.insuranceProvider && (
+                                  <div className="flex items-center space-x-2 mt-2">
+                                    <Shield className="h-4 w-4 text-blue-500" />
+                                    <span className="text-sm text-blue-600">{prescription.insuranceProvider}</span>
                                   </div>
                                 )}
-                                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                  <Calendar className="h-4 w-4 text-gray-400" />
-                                  <span>Expires: {prescription.expiryDate ? format(new Date(prescription.expiryDate), 'MMM dd, yyyy') : 'N/A'}</span>
-                                </div>
+                              </div>
+                              <div className="text-right">
+                                <Badge className={getStatusColor(prescription.status)}>
+                                  {prescription.status.charAt(0).toUpperCase() + prescription.status.slice(1)}
+                                </Badge>
+                                <p className="font-semibold text-green-600 mt-2">
+                                  Patient Pay: ${prescription.insuranceCopay?.toFixed(2) || prescription.totalCost.toFixed(2)}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Total: ${prescription.totalCost.toFixed(2)}
+                                </p>
                               </div>
                             </div>
                           </div>
-                          
-                          <div className="flex items-center space-x-2 ml-4">
-                            {prescription.status === 'prescribed' && (
-                              <Button 
-                                size="sm" 
-                                onClick={() => handleProcessPrescription(prescription)}
-                                className="bg-blue-600 hover:bg-blue-700"
-                              >
-                                Process
-                              </Button>
-                            )}
-                            
-                            {prescription.status === 'sent_to_pharmacy' && (
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => updatePrescriptionMutation.mutate({
-                                  id: prescription.id,
-                                  updates: { status: 'filled' }
-                                })}
-                              >
-                                Mark Ready
-                              </Button>
-                            )}
-                            
-                            {prescription.status === 'filled' && (
-                              <>
+                          <div className="ml-4">
+                            <Dialog open={dialogOpen && selectedPrescription?.id === prescription.id} onOpenChange={setDialogOpen}>
+                              <DialogTrigger asChild>
                                 <Button 
                                   size="sm" 
-                                  variant="outline"
-                                  onClick={() => updatePrescriptionMutation.mutate({
-                                    id: prescription.id,
-                                    updates: { status: 'picked_up' }
-                                  })}
+                                  className={actionButton.color}
+                                  onClick={() => {
+                                    setSelectedPrescription(prescription);
+                                    setDialogOpen(true);
+                                  }}
                                 >
-                                  Dispense
+                                  {actionButton.text}
                                 </Button>
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => handleDeliverySetup(prescription)}
-                                >
-                                  <Truck className="h-4 w-4 mr-1" />
-                                  Deliver
-                                </Button>
-                              </>
-                            )}
-                            
-                            {patient && (
-                              <Button 
-                                size="sm" 
-                                variant="ghost"
-                                onClick={() => handleFileInsuranceClaim(prescription)}
-                              >
-                                <Shield className="h-4 w-4 mr-1" />
-                                Insurance
-                              </Button>
-                            )}
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                  <DialogTitle>
+                                    {status === 'received' && 'Process Prescription'}
+                                    {status === 'processing' && 'File Insurance Claim'}
+                                    {status === 'ready' && 'Dispense Medication'}
+                                    {status === 'dispensed' && 'Prescription Details'}
+                                  </DialogTitle>
+                                </DialogHeader>
+                                <PrescriptionProcessingDialog 
+                                  prescription={selectedPrescription}
+                                  status={status}
+                                  onProcess={(action, details) => {
+                                    if (selectedPrescription) {
+                                      processPrescriptionMutation.mutate({
+                                        prescriptionId: selectedPrescription.id,
+                                        action,
+                                        details
+                                      });
+                                    }
+                                  }}
+                                />
+                              </DialogContent>
+                            </Dialog>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Insurance Claims Tab */}
-        <TabsContent value="insurance" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="h-5 w-5 text-green-600" />
-                <span>Insurance Claims Management</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {insuranceClaims.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>No insurance claims filed</p>
-                  </div>
-                ) : (
-                  insuranceClaims.map((claim) => (
-                    <div key={claim.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium">Claim #{claim.claimNumber || 'N/A'}</h4>
-                          <p className="text-sm text-gray-600">
-                            Patient: {claim.patientId} • Amount: ${claim.totalAmount || '0.00'}
-                          </p>
-                          <Badge className={getStatusColor(claim.status || 'draft')}>
-                            {(claim.status || 'draft').toUpperCase()}
-                          </Badge>
-                        </div>
-                        <div className="text-right text-sm text-gray-500">
-                          Filed: {claim.createdAt ? format(new Date(claim.createdAt), 'MMM dd, yyyy') : 'N/A'}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Delivery Management Tab */}
-        <TabsContent value="delivery" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Truck className="h-5 w-5 text-purple-600" />
-                <span>Delivery Management</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <Truck className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>Delivery management system coming soon</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Inventory Tab */}
-        <TabsContent value="inventory" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Package className="h-5 w-5 text-orange-600" />
-                <span>Inventory Management</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <Package className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>Inventory management system coming soon</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                      );
+                    })}
+                  {activePrescriptions.filter((p) => p.status === status).length === 0 && (
+                    <p className="text-center py-8 text-gray-500">No {status} prescriptions</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
       </Tabs>
+    </div>
+  );
+}
 
-      {/* Processing Dialog */}
-      <Dialog open={processingDialogOpen} onOpenChange={setProcessingDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Process Prescription</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p>Mark this prescription as being processed?</p>
-            {selectedPrescription && (
-              <div className="bg-gray-50 p-3 rounded">
-                <p className="font-medium">{selectedPrescription.medicationName}</p>
-                <p className="text-sm text-gray-600">{selectedPrescription.dosage}</p>
-              </div>
-            )}
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setProcessingDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={() => {
-                  if (selectedPrescription) {
-                    updatePrescriptionMutation.mutate({
-                      id: selectedPrescription.id,
-                      updates: { status: 'sent_to_pharmacy' }
-                    });
-                  }
-                  setProcessingDialogOpen(false);
-                }}
-              >
-                Start Processing
-              </Button>
+// Prescription Processing Dialog Component
+function PrescriptionProcessingDialog({ 
+  prescription, 
+  status, 
+  onProcess 
+}: { 
+  prescription: PharmacyPrescription | null;
+  status: string;
+  onProcess: (action: string, details?: any) => void;
+}) {
+  const [copayAmount, setCopayAmount] = useState('');
+  const [claimNotes, setClaimNotes] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
+
+  if (!prescription) return null;
+
+  return (
+    <div className="space-y-6">
+      {/* Prescription Details */}
+      <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+        <div>
+          <h4 className="font-semibold text-gray-900">Patient Information</h4>
+          <p className="font-medium">{prescription.patientName}</p>
+          <p className="text-sm text-gray-600">ID: {prescription.patientId}</p>
+        </div>
+        <div>
+          <h4 className="font-semibold text-gray-900">Prescription Details</h4>
+          <p className="font-medium">{prescription.medication} {prescription.dosage}</p>
+          <p className="text-sm text-gray-600">Quantity: {prescription.quantity}</p>
+        </div>
+        <div>
+          <h4 className="font-semibold text-gray-900">Prescribing Doctor</h4>
+          <p className="font-medium">Dr. {prescription.prescriberName}</p>
+          <p className="text-sm text-gray-600">Instructions: {prescription.instructions}</p>
+        </div>
+        <div>
+          <h4 className="font-semibold text-gray-900">Insurance & Cost</h4>
+          <p className="font-medium">{prescription.insuranceProvider || 'Self-Pay'}</p>
+          <p className="text-sm text-gray-600">Total Cost: ${prescription.totalCost.toFixed(2)}</p>
+          <p className="text-sm font-semibold text-green-600">
+            Patient Copay: ${prescription.insuranceCopay?.toFixed(2) || prescription.totalCost.toFixed(2)}
+          </p>
+        </div>
+      </div>
+
+      {/* Status-specific Actions */}
+      {status === 'received' && (
+        <div className="space-y-4">
+          <h4 className="font-semibold text-gray-900">Step 1: Start Processing</h4>
+          <div className="space-y-3">
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <h5 className="font-medium text-blue-900">Processing Checklist:</h5>
+              <ul className="text-sm text-blue-800 mt-2 space-y-1">
+                <li>✓ Verify prescription authenticity</li>
+                <li>✓ Check medication inventory</li>
+                <li>✓ Review patient allergies and interactions</li>
+                <li>✓ Prepare medication for dispensing</li>
+              </ul>
             </div>
+            <Button 
+              onClick={() => onProcess('start_processing')}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              <Package2 className="h-4 w-4 mr-2" />
+              Start Processing Prescription
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
-      {/* Insurance Claim Dialog */}
-      <Dialog open={insuranceDialogOpen} onOpenChange={setInsuranceDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>File Insurance Claim</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p>File an insurance claim for this prescription?</p>
-            {selectedPrescription && (
-              <div className="bg-gray-50 p-3 rounded">
-                <p className="font-medium">{selectedPrescription.medicationName}</p>
-                <p className="text-sm text-gray-600">Patient: {getPatientById(selectedPrescription.patientId)?.firstName} {getPatientById(selectedPrescription.patientId)?.lastName}</p>
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Claim Amount</label>
-                <Input placeholder="$0.00" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Service Code</label>
-                <Input placeholder="RX001" />
-              </div>
+      {status === 'processing' && (
+        <div className="space-y-4">
+          <h4 className="font-semibold text-gray-900">Step 2: File Insurance Claim</h4>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="copay">Confirm Patient Copay Amount</Label>
+              <Input
+                id="copay"
+                type="number"
+                step="0.01"
+                placeholder={prescription.insuranceCopay?.toFixed(2) || "0.00"}
+                value={copayAmount}
+                onChange={(e) => setCopayAmount(e.target.value)}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Insurance will cover: ${(prescription.totalCost - (prescription.insuranceCopay || 0)).toFixed(2)}
+              </p>
             </div>
             <div>
-              <label className="text-sm font-medium">Notes</label>
-              <Textarea placeholder="Additional notes for insurance claim..." />
+              <Label htmlFor="notes">Claim Processing Notes</Label>
+              <Textarea
+                id="notes"
+                placeholder="Any additional notes for the insurance claim (optional)..."
+                value={claimNotes}
+                onChange={(e) => setClaimNotes(e.target.value)}
+              />
             </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setInsuranceDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={() => {
-                  // Create insurance claim logic here
-                  setInsuranceDialogOpen(false);
-                }}
-              >
-                File Claim
-              </Button>
+            <Button 
+              onClick={() => onProcess('file_claim', { 
+                copay: parseFloat(copayAmount) || prescription.insuranceCopay, 
+                notes: claimNotes 
+              })}
+              className="w-full bg-green-600 hover:bg-green-700"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Submit Insurance Claim
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {status === 'ready' && (
+        <div className="space-y-4">
+          <h4 className="font-semibold text-gray-900">Step 3: Dispense & Collect Payment</h4>
+          <div className="space-y-3">
+            <div className="p-4 bg-green-50 rounded-lg">
+              <h5 className="font-medium text-green-900">Ready for Patient Pickup</h5>
+              <p className="text-sm text-green-800 mt-1">
+                Insurance claim approved. Medication prepared and ready for dispensing.
+              </p>
+            </div>
+            
+            <div>
+              <Label htmlFor="payment">Payment Method</Label>
+              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="card">Credit/Debit Card</SelectItem>
+                  <SelectItem value="insurance_card">Insurance Card</SelectItem>
+                  <SelectItem value="hsa">HSA/FSA Card</SelectItem>
+                  <SelectItem value="check">Check</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="p-4 bg-purple-50 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-purple-900">Amount to Collect:</span>
+                <span className="text-xl font-bold text-purple-900">
+                  ${prescription.insuranceCopay?.toFixed(2) || prescription.totalCost.toFixed(2)}
+                </span>
+              </div>
+              <p className="text-sm text-purple-800 mt-1">Patient copay after insurance</p>
+            </div>
+
+            <Button 
+              onClick={() => onProcess('dispense', { paymentMethod })}
+              className="w-full bg-purple-600 hover:bg-purple-700"
+              disabled={!paymentMethod}
+            >
+              <CreditCard className="h-4 w-4 mr-2" />
+              Complete Dispensing & Collect Payment
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {status === 'dispensed' && (
+        <div className="space-y-4">
+          <h4 className="font-semibold text-gray-900">Transaction Complete</h4>
+          <div className="p-4 bg-gray-50 rounded-lg space-y-2">
+            <div className="flex justify-between">
+              <span className="font-medium">Date Received:</span>
+              <span>{prescription.dateReceived}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium">Date Ready:</span>
+              <span>{prescription.dateReady}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium">Date Dispensed:</span>
+              <span>{prescription.dateDispensed}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium">Payment Collected:</span>
+              <span className="text-green-600 font-semibold">
+                ${prescription.insuranceCopay?.toFixed(2) || prescription.totalCost.toFixed(2)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium">Status:</span>
+              <span className="text-green-600 font-semibold">Complete ✓</span>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 }

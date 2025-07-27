@@ -191,7 +191,7 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
-        <Route path="/pharmacy">
+        <Route path="/pharmacy-dashboard">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
               <Header />
