@@ -121,8 +121,22 @@ export default function Billing() {
 
   const createClaimMutation = useMutation({
     mutationFn: async (claimData: any) => {
-      const response = await apiRequest("POST", "/api/insurance-claims", claimData);
-      return response.json();
+      console.log("Creating claim with data:", claimData);
+      try {
+        const response = await apiRequest("POST", "/api/insurance-claims", claimData);
+        console.log("Response status:", response.status);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Error response:", errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        const result = await response.json();
+        console.log("Success result:", result);
+        return result;
+      } catch (error) {
+        console.error("Full error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/insurance-claims"] });
