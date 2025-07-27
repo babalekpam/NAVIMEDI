@@ -678,7 +678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         previousData: null,
         newData: updatedPrescription,
         ipAddress: req.ip || null,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent') || null
       });
 
       res.json(updatedPrescription);
@@ -764,7 +764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         previousData: null,
         newData: pharmacy,
         ipAddress: req.ip || null,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent') || null
       });
 
       res.status(201).json(pharmacy);
@@ -1615,7 +1615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         previousData: null,
         newData: communication,
         ipAddress: req.ip || null,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent') || null
       });
 
       res.status(201).json(communication);
@@ -1646,7 +1646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         previousData: null,
         newData: communication,
         ipAddress: req.ip || null,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent') || null
       });
 
       res.json(communication);
@@ -1683,7 +1683,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         previousData: null,
         newData: translation,
         ipAddress: req.ip || null,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent') || null
       });
 
       res.status(201).json(translation);
@@ -1723,7 +1723,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         previousData: null,
         newData: language,
         ipAddress: req.ip || null,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent') || null
       });
 
       res.status(201).json(language);
@@ -1754,7 +1754,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         previousData: null,
         newData: language,
         ipAddress: req.ip || null,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent') || null
       });
 
       res.json(language);
@@ -1795,7 +1795,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         previousData: null,
         newData: phrase,
         ipAddress: req.ip || null,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent') || null
       });
 
       res.status(201).json(phrase);
@@ -1836,7 +1836,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         previousData: null,
         newData: translation,
         ipAddress: req.ip || null,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent') || null
       });
 
       res.status(201).json(translation);
@@ -2708,7 +2708,7 @@ Report ID: ${report.id}
         previousData: null,
         newData: copay,
         ipAddress: req.ip || null,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent') || null
       });
 
       console.log("Sending response:", copay);
@@ -2741,7 +2741,7 @@ Report ID: ${report.id}
         previousData: null,
         newData: copay,
         ipAddress: req.ip || null,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent') || null
       });
 
       res.json(copay);
