@@ -47,9 +47,11 @@ export default function LandingPage() {
                 Sign In
               </Button>
             </Link>
-            <Button className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700">
-              Get Started
-            </Button>
+            <Link href="/register">
+              <Button className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700">
+                Get Started
+              </Button>
+            </Link>
           </nav>
         </div>
       </header>
@@ -72,17 +74,19 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/login">
+            <Link href="/register">
               <Button size="lg" className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 px-8">
-                <Heart className="w-5 h-5 mr-2" />
-                Start Your Practice
+                <Building2 className="w-5 h-5 mr-2" />
+                Start Your Organization
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50">
-              <Activity className="w-5 h-5 mr-2" />
-              View Demo
-            </Button>
+            <Link href="/login">
+              <Button size="lg" variant="outline" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50">
+                <UserCheck className="w-5 h-5 mr-2" />
+                Sign In
+              </Button>
+            </Link>
           </div>
           
           <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">

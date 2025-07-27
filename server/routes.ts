@@ -413,6 +413,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public organization registration (no authentication required)
+  app.post("/api/register-organization", async (req, res) => {
+    try {
+      const { 
+        organizationName, 
+        organizationType, 
+        adminFirstName, 
+        adminLastName, 
+        adminEmail, 
+        adminPassword,
+        phoneNumber,
+        address,
+        description 
+      } = req.body;
+
+      // Validate required fields
+      if (!organizationName || !organizationType || !adminFirstName || !adminLastName || !adminEmail || !adminPassword) {
+        return res.status(400).json({ message: "All required fields must be provided" });
+      }
+
+      // Create organization subdomain from name
+      const subdomain = organizationName.toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '-')
+        .substring(0, 50);
+
+      // Check if subdomain already exists
+      const existingTenant = await storage.getTenantBySubdomain(subdomain);
+      if (existingTenant) {
+        return res.status(400).json({ message: "Organization name already exists. Please choose a different name." });
+      }
+
+      // Create tenant data
+      const tenantData = {
+        name: organizationName,
+        type: organizationType,
+        subdomain,
+        phoneNumber: phoneNumber || null,
+        address: address || null,
+        description: description || null,
+        isActive: true
+      };
+
+      const tenant = await storage.createTenant(tenantData);
+
+      // Hash admin password
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+      // Create admin user for the organization
+      const adminUser = await storage.createUser({
+        username: adminEmail.split('@')[0], // Use email prefix as username
+        email: adminEmail,
+        password: hashedPassword,
+        firstName: adminFirstName,
+        lastName: adminLastName,
+        role: "tenant_admin",
+        tenantId: tenant.id,
+        isActive: true
+      });
+
+      // Create audit log for public registration
+      await storage.createAuditLog({
+        tenantId: tenant.id,
+        userId: adminUser.id,
+        entityType: "tenant",
+        entityId: tenant.id,
+        action: "public_registration",
+        previousData: null,
+        newData: { organizationName, organizationType, adminEmail },
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.status(201).json({ 
+        message: "Organization registered successfully!",
+        organization: {
+          id: tenant.id,
+          name: tenant.name,
+          type: tenant.type,
+          subdomain: tenant.subdomain
+        },
+        admin: {
+          id: adminUser.id,
+          email: adminUser.email,
+          firstName: adminUser.firstName,
+          lastName: adminUser.lastName
+        }
+      });
+    } catch (error) {
+      console.error("Organization registration error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to register organization" });
+    }
+  });
+
   // Patient management routes - require tenant context
   app.use("/api/patients", requireTenant);
 

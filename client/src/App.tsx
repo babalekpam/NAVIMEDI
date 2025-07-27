@@ -11,6 +11,7 @@ import { ProtectedRoute } from "@/components/layout/protected-route";
 import LandingPage from "@/pages/landing";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
+import RegisterOrganization from "@/pages/register-organization";
 import Dashboard from "@/pages/dashboard";
 import Patients from "@/pages/patients";
 import Appointments from "@/pages/appointments";
@@ -36,6 +37,7 @@ function AppContent() {
       <Switch>
         <Route path="/" component={LandingPage} />
         <Route path="/login" component={Login} />
+        <Route path="/register" component={RegisterOrganization} />
         <Route path="/dashboard">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
