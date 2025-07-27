@@ -6,7 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2 } from 'lucide-react';
 import { 
   UserPlus, 
   Users, 
@@ -54,6 +59,13 @@ const patientRegistrationSchema = z.object({
   }),
 });
 
+const checkInSchema = z.object({
+  reasonForVisit: z.string().min(1, 'Reason for visit is required'),
+  priorityLevel: z.enum(['low', 'normal', 'high', 'urgent', 'emergency']).default('normal'),
+  chiefComplaint: z.string().optional(),
+  insuranceVerified: z.boolean().default(false),
+});
+
 const vitalSignsSchema = z.object({
   systolicBp: z.number().min(60).max(300).optional(),
   diastolicBp: z.number().min(30).max(200).optional(),
@@ -71,16 +83,7 @@ const vitalSignsSchema = z.object({
   notes: z.string().optional(),
 });
 
-const checkInSchema = z.object({
-  appointmentId: z.string().optional(),
-  reasonForVisit: z.string().min(1, 'Reason for visit is required'),
-  chiefComplaint: z.string().optional(),
-  priorityLevel: z.enum(['low', 'normal', 'high', 'urgent', 'emergency']).default('normal'),
-  specialInstructions: z.string().optional(),
-  accompaniedBy: z.string().optional(),
-  insuranceVerified: z.boolean().default(false),
-  copayCollected: z.number().optional(),
-});
+
 
 type Patient = {
   id: string;
@@ -590,6 +593,102 @@ export default function ReceptionistDashboard() {
       </Tabs>
 
       {/* Dialogs */}
+      <Dialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('patient-check-in')}</DialogTitle>
+            <DialogDescription>
+              {selectedPatient && `${t('patient')}: ${selectedPatient.firstName} ${selectedPatient.lastName}`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...checkInForm}>
+            <form onSubmit={checkInForm.handleSubmit(handleCheckIn)} className="space-y-4">
+              <FormField
+                control={checkInForm.control}
+                name="reasonForVisit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('reason-for-visit')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder={t('enter-reason-for-visit')} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={checkInForm.control}
+                name="priorityLevel"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('priority-level')}</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('select-priority')} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="low">{t('low')}</SelectItem>
+                        <SelectItem value="normal">{t('normal')}</SelectItem>
+                        <SelectItem value="high">{t('high')}</SelectItem>
+                        <SelectItem value="urgent">{t('urgent')}</SelectItem>
+                        <SelectItem value="emergency">{t('emergency')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={checkInForm.control}
+                name="chiefComplaint"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('chief-complaint')} ({t('optional')})</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} placeholder={t('describe-main-symptoms')} rows={3} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={checkInForm.control}
+                name="insuranceVerified"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>{t('insurance-verified')}</FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={() => setIsCheckInDialogOpen(false)}>
+                  {t('cancel')}
+                </Button>
+                <Button type="submit" disabled={checkInPatientMutation.isPending}>
+                  {checkInPatientMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t('check-in')}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isVitalsDialogOpen} onOpenChange={setIsVitalsDialogOpen}>
         <VitalSignsDialog
           form={vitalSignsForm}
