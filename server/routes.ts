@@ -92,6 +92,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "user",
         entityId: user.id,
         action: "login",
+        previousData: null,
         newData: { loginTime: new Date() },
         ipAddress: req.ip || null,
         userAgent: req.get("User-Agent") || null
@@ -149,6 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "user",
         entityId: user.id,
         action: "register",
+        previousData: null,
         newData: { username: user.username, email: user.email, role: user.role },
         ipAddress: req.ip || null,
         userAgent: req.get("User-Agent") || null
@@ -288,7 +290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/patients/medical-records", requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
       const tenantId = req.tenant!.id;
-      console.log("Medical records request for tenant:", tenantId, "by user role:", req.user.role);
+      console.log("Medical records request for tenant:", tenantId, "by user role:", req.user?.role);
       const medicalRecords = await storage.getPatientsWithMedicalRecords(tenantId);
       res.json(medicalRecords);
     } catch (error) {
@@ -340,6 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "patient",
         entityId: patient.id,
         action: "create",
+        previousData: null,
         newData: patient,
         ipAddress: req.ip || null,
         userAgent: req.get("User-Agent") || null
@@ -555,6 +558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "prescription",
         entityId: prescription.id,
         action: "create",
+        previousData: null,
         newData: prescription,
         ipAddress: req.ip || null,
         userAgent: req.get("User-Agent") || null
@@ -620,6 +624,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "lab_order",
         entityId: labOrder.id,
         action: "create",
+        previousData: null,
         newData: labOrder,
         ipAddress: req.ip || null,
         userAgent: req.get("User-Agent") || null
@@ -660,7 +665,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/insurance-claims", requireRole(["billing_staff", "physician", "tenant_admin", "director", "receptionist"]), async (req, res) => {
     try {
       // Additional check for receptionists - only allow hospital/clinic receptionists
-      if (req.user.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
+      if (req.user!.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
         return res.status(403).json({ message: "Access denied. Receptionist billing access is only available for hospitals." });
       }
       
@@ -685,6 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "insurance_claim",
         entityId: claim.id,
         action: "create",
+        previousData: null,
         newData: claim,
         ipAddress: req.ip || null,
         userAgent: req.get("User-Agent") || null
@@ -696,7 +702,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
-      if (error.code === '23505' && error.constraint === 'insurance_claims_claim_number_unique') {
+      if ((error as any).code === '23505' && (error as any).constraint === 'insurance_claims_claim_number_unique') {
         return res.status(400).json({ message: "Claim number already exists. Please use a different claim number." });
       }
       res.status(500).json({ message: "Internal server error" });
@@ -706,7 +712,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/insurance-claims/:id", requireRole(["billing_staff", "physician", "tenant_admin", "director", "receptionist"]), async (req, res) => {
     try {
       // Additional check for receptionists - only allow hospital/clinic receptionists
-      if (req.user.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
+      if (req.user!.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
         return res.status(403).json({ message: "Access denied. Receptionist billing access is only available for hospitals." });
       }
       
@@ -730,6 +736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "insurance_claim",
         entityId: id,
         action: "update",
+        previousData: null,
         newData: updateData,
         ipAddress: req.ip || null,
         userAgent: req.get("User-Agent") || null
@@ -812,7 +819,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/service-prices", requireRole(["tenant_admin", "director", "billing_staff", "receptionist"]), async (req, res) => {
     try {
       // Allow hospital receptionists full access to service pricing
-      console.log("Service pricing access - User role:", req.user.role, "Tenant type:", req.tenant?.type, "Tenant name:", req.tenant?.name);
+      console.log("Service pricing access - User role:", req.user!.role, "Tenant type:", req.tenant?.type, "Tenant name:", req.tenant?.name);
       
       const servicePriceData = insertServicePriceSchema.parse({
         ...req.body,
@@ -856,7 +863,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/insurance-plan-coverage", requireRole(["tenant_admin", "director", "billing_staff", "receptionist"]), async (req, res) => {
     try {
-      console.log("Insurance coverage create - User role:", req.user.role, "Tenant type:", req.tenant?.type, "Request body:", req.body);
+      console.log("Insurance coverage create - User role:", req.user!.role, "Tenant type:", req.tenant?.type, "Request body:", req.body);
       
       const coverageData = insertInsurancePlanCoverageSchema.parse({
         ...req.body,
@@ -911,7 +918,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/claim-line-items", requireRole(["billing_staff", "physician", "tenant_admin", "director", "receptionist"]), async (req, res) => {
     try {
       // Additional check for receptionists - only allow hospital/clinic receptionists
-      if (req.user.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
+      if (req.user!.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
         return res.status(403).json({ message: "Access denied. Receptionist billing access is only available for hospitals." });
       }
       
