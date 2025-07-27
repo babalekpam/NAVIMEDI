@@ -35,21 +35,56 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
       return;
     }
 
-    // Create a mock tenant for now to stop infinite loops
-    const mockTenant: Tenant = {
-      id: user.tenantId,
-      name: user.role === 'super_admin' ? 'ARGILETTE Platform' : 'Healthcare Organization',
-      type: user.role === 'super_admin' ? 'platform' : 'hospital',
-      subdomain: 'platform',
-      settings: {},
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
+    // Fetch tenant information from API
+    const fetchTenant = async () => {
+      try {
+        const response = await fetch('/api/tenant/current', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const tenantData = await response.json();
+          setTenant(tenantData);
+          setAvailableTenants([tenantData]);
+        } else {
+          // Fallback to mock tenant if API fails
+          const mockTenant: Tenant = {
+            id: user.tenantId,
+            name: user.role === 'super_admin' ? 'ARGILETTE Platform' : 'Healthcare Organization',
+            type: user.role === 'super_admin' ? 'platform' : 'hospital',
+            subdomain: 'platform',
+            settings: {},
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          setTenant(mockTenant);
+          setAvailableTenants([mockTenant]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch tenant:', error);
+        // Fallback to mock tenant
+        const mockTenant: Tenant = {
+          id: user.tenantId,
+          name: user.role === 'super_admin' ? 'ARGILETTE Platform' : 'Healthcare Organization',
+          type: user.role === 'super_admin' ? 'platform' : 'hospital',
+          subdomain: 'platform',
+          settings: {},
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        setTenant(mockTenant);
+        setAvailableTenants([mockTenant]);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    setTenant(mockTenant);
-    setAvailableTenants([mockTenant]);
-    setIsLoading(false);
+    fetchTenant();
   }, [token, user?.id]); // Simplified dependencies
 
   const switchTenant = (tenantId: string) => {

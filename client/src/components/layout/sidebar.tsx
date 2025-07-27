@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
+import { useTenant } from "@/contexts/tenant-context";
 import { cn } from "@/lib/utils";
 
 interface SidebarItem {
@@ -54,6 +55,7 @@ const sidebarItems: SidebarItem[] = [
 export const Sidebar = () => {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
+  const { tenant: currentTenant } = useTenant();
 
   if (!user) return null;
 
@@ -103,8 +105,13 @@ export const Sidebar = () => {
     );
   }
 
+  // Check if this is a pharmacy tenant by checking tenant name (temporary solution)
+  const isPharmacyTenant = currentTenant?.name?.toLowerCase().includes('pharmacy') || 
+                          currentTenant?.name?.toLowerCase().includes('rx') || 
+                          currentTenant?.type === "pharmacy";
+
   // For pharmacy users - show only pharmacy-specific items
-  if (user.role === "pharmacist") {
+  if (user.role === "pharmacist" || (user.role === "tenant_admin" && isPharmacyTenant)) {
     const pharmacyItems = filteredItems.filter(item => 
       ["dashboard", "pharmacy-dashboard", "prescriptions"].includes(item.id)
     );
@@ -144,16 +151,18 @@ export const Sidebar = () => {
     );
   }
 
-  // For regular tenant users
-  const clinicalItems = filteredItems.slice(0, 5);
+  // For regular tenant users (excluding pharmacists)
+  const clinicalItems = filteredItems.filter(item => 
+    !["pharmacy-dashboard"].includes(item.id)
+  ).slice(0, 5);
   const operationItems = filteredItems.slice(5, 7);
   const adminItems = filteredItems.slice(7);
 
   return (
     <aside className="w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto">
       <div className="p-6">
-        {/* Quick Actions - Only show for tenant users */}
-        {user.role !== "super_admin" && (
+        {/* Quick Actions - Only show for non-pharmacy tenant users */}
+        {user.role !== "super_admin" && user.role !== "pharmacist" && !isPharmacyTenant && (
           <div className="mb-8">
             <Button 
               className="w-full bg-blue-600 hover:bg-blue-700"
