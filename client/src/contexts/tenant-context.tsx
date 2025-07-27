@@ -50,33 +50,87 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
           setTenant(tenantData);
           setAvailableTenants([tenantData]);
         } else {
-          // Fallback to mock tenant if API fails - check if this is pharmacy tenant
-          const mockTenant: Tenant = {
-            id: user.tenantId,
-            name: user.role === 'super_admin' ? 'ARGILETTE Platform' : 'Working Test Pharmacy',
-            type: user.role === 'super_admin' ? 'platform' : 'pharmacy',
-            subdomain: user.role === 'super_admin' ? 'platform' : 'pharmacy',
-            settings: {},
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          };
+          // Fallback to mock tenant if API fails - use appropriate tenant based on user role and tenant ID
+          let mockTenant: Tenant;
+          if (user.role === 'super_admin') {
+            mockTenant = {
+              id: user.tenantId,
+              name: 'ARGILETTE Platform',
+              type: 'platform',
+              subdomain: 'platform',
+              settings: {},
+              isActive: true,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            };
+          } else if (user.tenantId === '37a1f504-6f59-4d2f-9eec-d108cd2b83d7') {
+            // Metro General Hospital
+            mockTenant = {
+              id: user.tenantId,
+              name: 'Metro General Hospital',
+              type: 'hospital',
+              subdomain: 'metro-general',
+              settings: {},
+              isActive: true,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            };
+          } else {
+            // Default pharmacy fallback
+            mockTenant = {
+              id: user.tenantId,
+              name: 'Working Test Pharmacy',
+              type: 'pharmacy',
+              subdomain: 'pharmacy',
+              settings: {},
+              isActive: true,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            };
+          }
           setTenant(mockTenant);
           setAvailableTenants([mockTenant]);
         }
       } catch (error) {
         console.error('Failed to fetch tenant:', error);
-        // Fallback to mock tenant - check if this is pharmacy tenant
-        const mockTenant: Tenant = {
-          id: user.tenantId,
-          name: user.role === 'super_admin' ? 'ARGILETTE Platform' : 'Working Test Pharmacy',
-          type: user.role === 'super_admin' ? 'platform' : 'pharmacy',
-          subdomain: user.role === 'super_admin' ? 'platform' : 'pharmacy',
-          settings: {},
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
+        // Fallback to mock tenant - use appropriate tenant based on user role and tenant ID
+        let mockTenant: Tenant;
+        if (user.role === 'super_admin') {
+          mockTenant = {
+            id: user.tenantId,
+            name: 'ARGILETTE Platform',
+            type: 'platform',
+            subdomain: 'platform',
+            settings: {},
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+        } else if (user.tenantId === '37a1f504-6f59-4d2f-9eec-d108cd2b83d7') {
+          // Metro General Hospital
+          mockTenant = {
+            id: user.tenantId,
+            name: 'Metro General Hospital',
+            type: 'hospital',
+            subdomain: 'metro-general',
+            settings: {},
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+        } else {
+          // Default pharmacy fallback
+          mockTenant = {
+            id: user.tenantId,
+            name: 'Working Test Pharmacy',
+            type: 'pharmacy',
+            subdomain: 'pharmacy',
+            settings: {},
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+        }
         setTenant(mockTenant);
         setAvailableTenants([mockTenant]);
       } finally {
