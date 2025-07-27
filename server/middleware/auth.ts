@@ -44,7 +44,10 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
 
+  console.log("[AUTH DEBUG] Path:", req.path, "Token present:", !!token, "Token preview:", token?.substring(0, 20) + "...");
+
   if (!token) {
+    console.log("[AUTH DEBUG] No token provided");
     return res.status(401).json({ message: "Access token required" });
   }
 
@@ -57,6 +60,7 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
       username: decoded.username
     };
     req.tenantId = decoded.tenantId;
+    console.log("[AUTH DEBUG] Token valid for user:", decoded.userId, "tenant:", decoded.tenantId);
     next();
   } catch (error) {
     console.error("Token verification error:", error);

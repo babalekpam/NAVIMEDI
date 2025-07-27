@@ -4,10 +4,21 @@ import { AuthenticatedRequest, JWTPayload } from './auth';
 
 export const tenantMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    console.log("[TENANT DEBUG] Path:", req.path, "User from auth:", !!req.user);
+    
+    // If user is already authenticated by previous middleware, use that
+    if (req.user && req.user.tenantId) {
+      req.tenant = { id: req.user.tenantId };
+      req.tenantId = req.user.tenantId;
+      console.log("[TENANT DEBUG] Using authenticated user tenant:", req.user.tenantId);
+      return next();
+    }
+    
     // Extract tenant context from JWT token
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log("[TENANT DEBUG] No bearer token");
       return res.status(401).json({ message: 'Authorization token required' });
     }
     
