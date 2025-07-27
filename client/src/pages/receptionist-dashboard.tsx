@@ -114,6 +114,7 @@ export default function ReceptionistDashboard() {
   const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
   const [isVitalsDialogOpen, setIsVitalsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState('Emergency');
 
   // Forms
   const patientForm = useForm({
@@ -258,6 +259,19 @@ export default function ReceptionistDashboard() {
           <p className="text-gray-600 mt-1">{t('patient-registration-checkin-vitals')}</p>
         </div>
         <div className="flex items-center space-x-3">
+          {/* Department Selection */}
+          <select 
+            value={selectedDepartment} 
+            onChange={(e) => setSelectedDepartment(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="Emergency">Emergency</option>
+            <option value="Internal Medicine">Internal Medicine</option>
+            <option value="Cardiology">Cardiology</option>
+            <option value="Pediatrics">Pediatrics</option>
+            <option value="Surgery">Surgery</option>
+          </select>
+          
           <Dialog open={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700">
@@ -266,9 +280,9 @@ export default function ReceptionistDashboard() {
               </Button>
             </DialogTrigger>
             <PatientRegistrationDialog
-              form={patientForm}
               onSubmit={handlePatientRegistration}
               isLoading={registerPatientMutation.isPending}
+              department={selectedDepartment}
             />
           </Dialog>
         </div>
