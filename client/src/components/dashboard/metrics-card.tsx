@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LucideIcon, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/contexts/translation-context";
 
 interface MetricsCardProps {
   title: string;
@@ -36,6 +37,7 @@ export const MetricsCard = ({
   color,
   loading = false
 }: MetricsCardProps) => {
+  const { t } = useTranslation();
   if (loading) {
     return (
       <Card>
@@ -71,7 +73,7 @@ export const MetricsCard = ({
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">{title}</p>
+            <p className="text-sm font-medium text-gray-600">{t(title) || title}</p>
             <p className="text-3xl font-bold text-gray-900">{value}</p>
             {trend && (
               <p className={cn("text-sm flex items-center", trendDirection && trendClasses[trendDirection])}>

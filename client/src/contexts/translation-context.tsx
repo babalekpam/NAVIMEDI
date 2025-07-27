@@ -184,8 +184,14 @@ export const TranslationProvider = ({ children }: TranslationProviderProps) => {
   };
 
   const t = (key: string): string => {
-    const languageDict = translations[currentLanguage as keyof typeof translations] || translations.en;
-    return languageDict[key as keyof typeof languageDict] || key;
+    try {
+      const languageDict = translations[currentLanguage as keyof typeof translations] || translations.en;
+      const translation = languageDict[key as keyof typeof languageDict];
+      return translation || key;
+    } catch (error) {
+      console.error('Translation error:', error);
+      return key;
+    }
   };
 
   return (
