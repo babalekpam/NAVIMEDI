@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { offlineStorage } from "./offline-storage";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -45,6 +46,16 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const endpoint = queryKey.join("/") as string;
+    
+    // Try to get data from offline storage first if offline mode is enabled
+    if (offlineStorage.isOfflineEnabled() && !offlineStorage.isOnline()) {
+      const offlineData = await offlineStorage.getData(endpoint, false);
+      if (offlineData && offlineData.length > 0) {
+        return offlineData;
+      }
+    }
+
     const token = localStorage.getItem("auth_token");
     
     // Clear corrupted tokens
@@ -59,17 +70,36 @@ export const getQueryFn: <T>(options: {
       ...(token ? { "Authorization": `Bearer ${token}` } : {}),
     };
 
-    const res = await fetch(queryKey.join("/") as string, {
-      headers,
-      credentials: "include",
-    });
+    try {
+      const res = await fetch(endpoint, {
+        headers,
+        credentials: "include",
+      });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
+      }
+
+      await throwIfResNotOk(res);
+      const data = await res.json();
+      
+      // Cache data for offline use if offline mode is enabled
+      if (offlineStorage.isOfflineEnabled()) {
+        offlineStorage.storeOfflineData(endpoint, data);
+      }
+      
+      return data;
+    } catch (error) {
+      // If fetch fails and we have offline data, return it
+      if (offlineStorage.isOfflineEnabled()) {
+        const offlineData = await offlineStorage.getData(endpoint, false);
+        if (offlineData && offlineData.length > 0) {
+          console.log('Using offline data due to fetch error:', endpoint);
+          return offlineData;
+        }
+      }
+      throw error;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
 
 export const queryClient = new QueryClient({

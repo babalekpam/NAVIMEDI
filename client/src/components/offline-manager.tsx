@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { offlineStorage } from "@/lib/offline-storage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -63,14 +64,8 @@ export function OfflineManager({ tenantId, userId }: OfflineManagerProps) {
         setPendingChanges(parseInt(pending));
       }
 
-      // Calculate storage used
-      let totalSize = 0;
-      for (let key in localStorage) {
-        if (key.startsWith('offline_')) {
-          totalSize += localStorage.getItem(key)?.length || 0;
-        }
-      }
-      setStorageUsed(Math.round(totalSize / (1024 * 1024))); // Convert to MB
+      // Use offline storage utility to calculate usage
+      setStorageUsed(offlineStorage.getStorageUsage());
     } catch (error) {
       console.error('Error loading sync data:', error);
     }
@@ -128,15 +123,8 @@ export function OfflineManager({ tenantId, userId }: OfflineManagerProps) {
   };
 
   const disableOfflineMode = () => {
-    // Clear offline data
-    for (let key in localStorage) {
-      if (key.startsWith('offline_')) {
-        localStorage.removeItem(key);
-      }
-    }
-    localStorage.removeItem('offlineEnabled');
-    localStorage.removeItem('lastSyncTime');
-    localStorage.removeItem('pendingChanges');
+    // Use offline storage utility to clear data
+    offlineStorage.clearOfflineData();
     
     setIsOfflineEnabled(false);
     setLastSyncTime(null);
