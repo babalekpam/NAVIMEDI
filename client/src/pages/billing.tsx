@@ -39,6 +39,8 @@ export default function Billing() {
     patientInsuranceId: "",
     claimNumber: "",
     diagnosisCodes: "",
+    procedureCodes: "",
+    totalAmount: "",
     appointmentId: "",
     notes: ""
   });
@@ -131,6 +133,8 @@ export default function Billing() {
         patientInsuranceId: "",
         claimNumber: "",
         diagnosisCodes: "",
+        procedureCodes: "",
+        totalAmount: "",
         appointmentId: "",
         notes: ""
       });
@@ -237,8 +241,8 @@ export default function Billing() {
         return;
       }
 
-      const totalPatientCopay = selectedLineItems.reduce((sum, item) => sum + item.copayAmount, 0);
-      const totalInsuranceAmount = selectedLineItems.reduce((sum, item) => sum + item.insuranceAmount, 0);
+      const totalPatientCopay = selectedLineItems.reduce((sum, item) => sum + parseFloat(item.patientCopay || "0"), 0);
+      const totalInsuranceAmount = selectedLineItems.reduce((sum, item) => sum + parseFloat(item.insuranceAmount || "0"), 0);
       const totalAmount = totalPatientCopay + totalInsuranceAmount;
 
       // Generate unique claim number if not provided
@@ -671,9 +675,9 @@ export default function Billing() {
                     <div className="text-right">
                       <Badge 
                         variant="secondary"
-                        className={statusColors[claim.status] || statusColors.draft}
+                        className={statusColors[claim.status as keyof typeof statusColors] || statusColors.draft}
                       >
-                        {claim.status.replace('_', ' ')}
+                        {claim.status?.replace('_', ' ') || 'draft'}
                       </Badge>
                       {claim.processedDate && (
                         <p className="text-xs text-gray-400 mt-1">
@@ -756,8 +760,8 @@ export default function Billing() {
                     </div>
                     <div>
                       <Label className="text-sm font-medium text-gray-600">Status</Label>
-                      <Badge variant="secondary" className={statusColors[selectedClaim.status]}>
-                        {selectedClaim.status.replace('_', ' ')}
+                      <Badge variant="secondary" className={statusColors[selectedClaim.status as keyof typeof statusColors] || statusColors.draft}>
+                        {selectedClaim.status?.replace('_', ' ') || 'draft'}
                       </Badge>
                     </div>
                     <div>
@@ -773,7 +777,7 @@ export default function Billing() {
                 <div>
                   <Label className="text-sm font-medium text-gray-600">Procedure Codes</Label>
                   <div className="mt-2 space-y-1">
-                    {selectedClaim.procedureCodes.map((code, index) => (
+                    {(selectedClaim.procedureCodes as string[] || []).map((code: string, index: number) => (
                       <Badge key={index} variant="outline" className="mr-2 mb-1">
                         {code}
                       </Badge>
@@ -783,7 +787,7 @@ export default function Billing() {
                 <div>
                   <Label className="text-sm font-medium text-gray-600">Diagnosis Codes</Label>
                   <div className="mt-2 space-y-1">
-                    {selectedClaim.diagnosisCodes.map((code, index) => (
+                    {(selectedClaim.diagnosisCodes as string[] || []).map((code: string, index: number) => (
                       <Badge key={index} variant="outline" className="mr-2 mb-1">
                         {code}
                       </Badge>
