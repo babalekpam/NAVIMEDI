@@ -375,7 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Tenant management routes
-  app.get("/api/tenants", requireRole(["super_admin"]), async (req, res) => {
+  app.get("/api/tenants", authenticateToken, requireRole(["super_admin"]), async (req, res) => {
     try {
       const tenants = await storage.getAllTenants();
       res.json(tenants);
@@ -385,7 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tenants", requireRole(["super_admin"]), async (req, res) => {
+  app.post("/api/tenants", authenticateToken, requireRole(["super_admin"]), async (req, res) => {
     try {
       const tenantData = insertTenantSchema.parse(req.body);
       const tenant = await storage.createTenant(tenantData);
