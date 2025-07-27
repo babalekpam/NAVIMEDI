@@ -33,9 +33,9 @@ import { apiRequest } from "@/lib/queryClient";
 interface ServicePriceFormData {
   serviceName: string;
   serviceCode: string;
-  category: string;
+  serviceType: string;
   basePrice: string;
-  description: string;
+  serviceDescription: string;
 }
 
 const serviceCategories = [
@@ -383,9 +383,9 @@ export default function ServicePricingManagement() {
   const [formData, setFormData] = useState<ServicePriceFormData>({
     serviceName: "",
     serviceCode: "",
-    category: "",
+    serviceType: "",
     basePrice: "",
-    description: ""
+    serviceDescription: ""
   });
 
   const { user } = useAuth();
@@ -481,9 +481,9 @@ export default function ServicePricingManagement() {
     setFormData({
       serviceName: "",
       serviceCode: "",
-      category: "",
+      serviceType: "",
       basePrice: "",
-      description: ""
+      serviceDescription: ""
     });
   };
 
@@ -492,9 +492,9 @@ export default function ServicePricingManagement() {
     setFormData({
       serviceName: service.serviceName,
       serviceCode: service.serviceCode || "",
-      category: service.category || "",
+      serviceType: service.serviceType || "",
       basePrice: service.basePrice,
-      description: service.description || ""
+      serviceDescription: service.serviceDescription || ""
     });
     setIsFormOpen(true);
   };
@@ -519,17 +519,17 @@ export default function ServicePricingManagement() {
   const filteredServices = servicePrices.filter(service => {
     const matchesSearch = service.serviceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (service.serviceCode && service.serviceCode.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = categoryFilter === "all" || service.category === categoryFilter;
+    const matchesCategory = categoryFilter === "all" || service.serviceType === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
-  const getCategoryIcon = (category: string) => {
-    const categoryInfo = serviceCategories.find(cat => cat.value === category);
+  const getCategoryIcon = (serviceType: string) => {
+    const categoryInfo = serviceCategories.find(cat => cat.value === serviceType);
     const IconComponent = categoryInfo?.icon || DollarSign;
     return <IconComponent className="h-4 w-4" />;
   };
 
-  const getCategoryBadgeColor = (category: string) => {
+  const getCategoryBadgeColor = (serviceType: string) => {
     const colors = {
       consultation: "bg-blue-100 text-blue-800",
       surgery: "bg-red-100 text-red-800",
@@ -538,7 +538,7 @@ export default function ServicePricingManagement() {
       emergency: "bg-orange-100 text-orange-800",
       other: "bg-gray-100 text-gray-800"
     };
-    return colors[category as keyof typeof colors] || colors.other;
+    return colors[serviceType as keyof typeof colors] || colors.other;
   };
 
   if (!user || !tenant) {
@@ -595,8 +595,8 @@ export default function ServicePricingManagement() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                  <Label htmlFor="serviceType">Category</Label>
+                  <Select value={formData.serviceType} onValueChange={(value) => setFormData({...formData, serviceType: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -627,11 +627,11 @@ export default function ServicePricingManagement() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="serviceDescription">Description</Label>
                 <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  id="serviceDescription"
+                  value={formData.serviceDescription}
+                  onChange={(e) => setFormData({...formData, serviceDescription: e.target.value})}
                   placeholder="Brief description of the service..."
                   rows={3}
                 />
@@ -745,11 +745,11 @@ export default function ServicePricingManagement() {
                         )}
                       </TableCell>
                       <TableCell>
-                        {service.category && (
-                          <Badge className={getCategoryBadgeColor(service.category)}>
+                        {service.serviceType && (
+                          <Badge className={getCategoryBadgeColor(service.serviceType)}>
                             <div className="flex items-center gap-1">
-                              {getCategoryIcon(service.category)}
-                              {serviceCategories.find(cat => cat.value === service.category)?.label || service.category}
+                              {getCategoryIcon(service.serviceType)}
+                              {serviceCategories.find(cat => cat.value === service.serviceType)?.label || service.serviceType}
                             </div>
                           </Badge>
                         )}
@@ -761,7 +761,7 @@ export default function ServicePricingManagement() {
                         </div>
                       </TableCell>
                       <TableCell className="max-w-xs truncate">
-                        {service.description || "-"}
+                        {service.serviceDescription || "-"}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center gap-2 justify-end">
