@@ -169,15 +169,15 @@ export const Sidebar = () => {
   // For hospital users - include receptionist billing access
   const isHospitalTenant = currentTenant?.type === "hospital" || currentTenant?.type === "clinic";
   
-  // For regular tenant users (excluding pharmacists)  
+  // For regular tenant users (excluding pharmacists, receptionists only exist in hospitals/clinics)
   const clinicalItems = filteredItems.filter(item => {
+    // Receptionists should only exist in hospital/clinic tenants
+    if (user.role === "receptionist" && !isHospitalTenant) {
+      return false; // No receptionist access for pharmacy tenants
+    }
     // For hospital receptionists, include billing access
     if (user.role === "receptionist" && isHospitalTenant && item.id === "hospital-billing") {
       return true;
-    }
-    // For pharmacy receptionists, exclude billing (pharmacy billing handled separately)
-    if (user.role === "receptionist" && !isHospitalTenant && (item.id === "billing" || item.id === "hospital-billing")) {
-      return false;
     }
     return !["pharmacy-dashboard"].includes(item.id);
   }).slice(0, 5);

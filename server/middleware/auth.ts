@@ -74,6 +74,11 @@ export const requireRole = (allowedRoles: string[]) => {
       return res.status(401).json({ message: "Authentication required" });
     }
 
+    // Special check: Receptionists are only allowed in hospital/clinic tenants
+    if (req.user.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
+      return res.status(403).json({ message: "Receptionist role is only available for hospitals and clinics" });
+    }
+
     console.log("[DEBUG] Role check - User role:", req.user.role, "Allowed roles:", allowedRoles);
 
     if (!allowedRoles.includes(req.user.role)) {

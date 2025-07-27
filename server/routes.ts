@@ -62,6 +62,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Account is disabled" });
       }
 
+      // Additional check: Prevent pharmacy receptionists from logging in
+      if (user.role === "receptionist") {
+        const tenant = await storage.getTenantById(user.tenantId);
+        if (tenant?.type === "pharmacy") {
+          return res.status(403).json({ message: "Receptionist role is not available for pharmacy organizations. Please contact your administrator." });
+        }
+      }
+
       // Update last login
       await storage.updateUser(user.id, { lastLogin: new Date() });
 
