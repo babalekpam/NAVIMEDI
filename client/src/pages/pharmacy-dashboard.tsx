@@ -214,7 +214,7 @@ export default function PharmacyDashboard() {
         </div>
         <div className="text-right">
           <p className="text-sm text-gray-500">{currentTenant?.name}</p>
-          <p className="text-xs text-gray-400">Licensed Pharmacy</p>
+          <p className="text-xs text-gray-400">Licensed Pharmacy - Prescription Processing Only</p>
         </div>
       </div>
 

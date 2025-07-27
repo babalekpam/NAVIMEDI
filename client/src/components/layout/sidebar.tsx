@@ -32,10 +32,10 @@ interface SidebarItem {
 const sidebarItems: SidebarItem[] = [
   // Clinical Section (only for tenant users)
   { id: "dashboard", label: "Overview", icon: BarChart3, path: "/dashboard", roles: ["physician", "nurse", "pharmacist", "lab_technician", "receptionist", "billing_staff", "tenant_admin", "director", "super_admin"] },
-  { id: "patients", label: "Patient Records", icon: Users, path: "/patients", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
-  { id: "appointments", label: "Appointments", icon: Calendar, path: "/appointments", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "prescriptions", label: "Prescriptions", icon: Pill, path: "/prescriptions", roles: ["physician", "nurse", "pharmacist", "tenant_admin", "director"] },
   { id: "pharmacy-dashboard", label: "Pharmacy Dashboard", icon: Building2, path: "/pharmacy-dashboard", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "patients", label: "Patient Records", icon: Users, path: "/patients", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
+  { id: "appointments", label: "Appointments", icon: Calendar, path: "/appointments", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "lab-orders", label: "Lab Results", icon: TestTube, path: "/lab-orders", roles: ["physician", "nurse", "lab_technician", "tenant_admin", "director"] },
   { id: "health-recommendations", label: "AI Health Insights", icon: Brain, path: "/health-recommendations", roles: ["physician", "nurse", "tenant_admin", "director"] },
   { id: "medical-communications", label: "Medical Communications", icon: Languages, path: "/medical-communications", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
@@ -77,6 +77,47 @@ export const Sidebar = () => {
                 Platform Management
               </h3>
               {platformItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.path;
+                
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setLocation(item.path)}
+                    className={cn(
+                      "w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+                      isActive
+                        ? "text-blue-600 bg-blue-50"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    )}
+                  >
+                    <Icon className={cn("mr-3 h-4 w-4", isActive ? "text-blue-600" : "text-gray-400")} />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+        </div>
+      </aside>
+    );
+  }
+
+  // For pharmacy users - show only pharmacy-specific items
+  if (user.role === "pharmacist") {
+    const pharmacyItems = filteredItems.filter(item => 
+      ["dashboard", "pharmacy-dashboard", "prescriptions"].includes(item.id)
+    );
+    
+    return (
+      <aside className="w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto">
+        <div className="p-6">
+          <nav className="space-y-2">
+            <div className="mb-6">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                Pharmacy Operations
+              </h3>
+              {pharmacyItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location === item.path;
                 
