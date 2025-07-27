@@ -58,20 +58,31 @@ export default function PatientMedicalRecords() {
 
   // Mutation for updating patient medical information
   const updatePatientMutation = useMutation({
-    mutationFn: (updateData: { 
+    mutationFn: async (updateData: { 
       patientId: string; 
       medicalHistory?: string[]; 
       medications?: string[]; 
       allergies?: string[]; 
     }) => {
-      return apiRequest(`/api/patients/${updateData.patientId}`, {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(`/api/patients/${updateData.patientId}`, {
         method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           medicalHistory: updateData.medicalHistory,
           medications: updateData.medications,
           allergies: updateData.allergies,
         }),
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to update patient information");
+      }
+
+      return response.json();
     },
     onSuccess: () => {
       toast({
