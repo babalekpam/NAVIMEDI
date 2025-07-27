@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,16 @@ import {
   AlertCircle,
   CheckCircle,
   Eye,
-  EyeOff
+  EyeOff,
+  Smartphone,
+  Monitor,
+  Copy,
+  Plus,
+  Trash2,
+  RefreshCw,
+  Calendar,
+  MapPin,
+  Globe
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -49,6 +58,25 @@ interface PasswordChange {
   confirmPassword: string;
 }
 
+interface LoginSession {
+  id: string;
+  device: string;
+  browser: string;
+  location: string;
+  ipAddress: string;
+  lastActive: string;
+  isCurrent: boolean;
+}
+
+interface ApiKey {
+  id: string;
+  name: string;
+  keyPreview: string;
+  createdAt: string;
+  lastUsed?: string;
+  permissions: string[];
+}
+
 export default function ProfileSettingsPage() {
   const { user, refreshUser } = useAuth();
   const { tenant } = useTenant();
@@ -56,6 +84,13 @@ export default function ProfileSettingsPage() {
   
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [qrCode, setQrCode] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [newApiKeyName, setNewApiKeyName] = useState("");
+  const [showNewApiKeyDialog, setShowNewApiKeyDialog] = useState(false);
   const [passwordData, setPasswordData] = useState<PasswordChange>({
     currentPassword: "",
     newPassword: "",
@@ -70,6 +105,30 @@ export default function ProfileSettingsPage() {
     bio: user?.bio || "",
     profileImage: user?.profileImage || ""
   });
+
+  // Fetch user's 2FA status
+  const { data: securitySettings } = useQuery({
+    queryKey: ['/api/users/security'],
+    enabled: !!user
+  });
+
+  // Fetch active login sessions
+  const { data: loginSessions = [] } = useQuery<LoginSession[]>({
+    queryKey: ['/api/users/sessions'],
+    enabled: !!user
+  });
+
+  // Fetch API keys
+  const { data: apiKeys = [] } = useQuery<ApiKey[]>({
+    queryKey: ['/api/users/api-keys'],
+    enabled: !!user
+  });
+
+  useEffect(() => {
+    if (securitySettings) {
+      setTwoFactorEnabled(securitySettings.twoFactorEnabled || false);
+    }
+  }, [securitySettings]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: Partial<UserProfile>) => {
@@ -141,6 +200,178 @@ export default function ProfileSettingsPage() {
         description: error.message || "Failed to change password",
         variant: "destructive"
       });
+    }
+  });
+
+  // 2FA Setup Mutation
+  const setup2FAMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/users/2fa/setup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to setup 2FA');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setQrCode(data.qrCode);
+      setBackupCodes(data.backupCodes);
+      setShow2FASetup(true);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to setup 2FA",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Verify 2FA Mutation
+  const verify2FAMutation = useMutation({
+    mutationFn: async (code: string) => {
+      const response = await fetch('/api/users/2fa/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ code })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Invalid verification code');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      setTwoFactorEnabled(true);
+      setShow2FASetup(false);
+      toast({
+        title: "Success",
+        description: "Two-factor authentication enabled successfully"
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/users/security'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Invalid verification code",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Disable 2FA Mutation
+  const disable2FAMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/users/2fa/disable', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to disable 2FA');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      setTwoFactorEnabled(false);
+      toast({
+        title: "Success",
+        description: "Two-factor authentication disabled"
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/users/security'] });
+    }
+  });
+
+  // Revoke Session Mutation
+  const revokeSessionMutation = useMutation({
+    mutationFn: async (sessionId: string) => {
+      const response = await fetch(`/api/users/sessions/${sessionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to revoke session');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Session revoked successfully"
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/users/sessions'] });
+    }
+  });
+
+  // Create API Key Mutation
+  const createApiKeyMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const response = await fetch('/api/users/api-keys', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ name })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create API key');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "API Key Created",
+        description: "Make sure to copy your API key now. You won't be able to see it again!"
+      });
+      setShowNewApiKeyDialog(false);
+      setNewApiKeyName("");
+      queryClient.invalidateQueries({ queryKey: ['/api/users/api-keys'] });
+    }
+  });
+
+  // Delete API Key Mutation
+  const deleteApiKeyMutation = useMutation({
+    mutationFn: async (keyId: string) => {
+      const response = await fetch(`/api/users/api-keys/${keyId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete API key');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "API key deleted successfully"
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/users/api-keys'] });
     }
   });
 
@@ -420,41 +651,278 @@ export default function ProfileSettingsPage() {
                 </CardContent>
               </Card>
 
-              {/* Account Security */}
+              {/* Two-Factor Authentication */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Shield className="w-5 h-5" />
-                    Account Security
+                    <Smartphone className="w-5 h-5" />
+                    Two-Factor Authentication
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
-                      <h4 className="font-medium">Two-Factor Authentication</h4>
-                      <p className="text-sm text-gray-500">Add an extra layer of security</p>
+                      <h4 className="font-medium">Authenticator App</h4>
+                      <p className="text-sm text-gray-500">
+                        {twoFactorEnabled 
+                          ? "Two-factor authentication is enabled" 
+                          : "Add an extra layer of security to your account"
+                        }
+                      </p>
                     </div>
-                    <Button variant="outline" size="sm">
-                      Enable 2FA
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {twoFactorEnabled ? (
+                        <>
+                          <Badge className="bg-green-100 text-green-800">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Enabled
+                          </Badge>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => disable2FAMutation.mutate()}
+                            disabled={disable2FAMutation.isPending}
+                          >
+                            {disable2FAMutation.isPending ? 'Disabling...' : 'Disable'}
+                          </Button>
+                        </>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setup2FAMutation.mutate()}
+                          disabled={setup2FAMutation.isPending}
+                        >
+                          {setup2FAMutation.isPending ? 'Setting up...' : 'Enable 2FA'}
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-medium">Login Sessions</h4>
-                      <p className="text-sm text-gray-500">Manage your active sessions</p>
+
+                  {/* 2FA Setup Dialog */}
+                  {show2FASetup && (
+                    <div className="p-4 border rounded-lg bg-blue-50">
+                      <h4 className="font-medium mb-2">Setup Two-Factor Authentication</h4>
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-sm text-gray-600 mb-2">
+                            1. Scan this QR code with your authenticator app:
+                          </p>
+                          <div className="flex justify-center p-4 bg-white border rounded">
+                            {qrCode ? (
+                              <img src={qrCode} alt="2FA QR Code" className="w-32 h-32" />
+                            ) : (
+                              <div className="w-32 h-32 bg-gray-200 flex items-center justify-center">
+                                QR Code
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <p className="text-sm text-gray-600 mb-2">
+                            2. Enter the verification code from your app:
+                          </p>
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="000000"
+                              value={verificationCode}
+                              onChange={(e) => setVerificationCode(e.target.value)}
+                              maxLength={6}
+                              className="font-mono text-center"
+                            />
+                            <Button 
+                              onClick={() => verify2FAMutation.mutate(verificationCode)}
+                              disabled={verify2FAMutation.isPending || verificationCode.length !== 6}
+                            >
+                              {verify2FAMutation.isPending ? 'Verifying...' : 'Verify'}
+                            </Button>
+                          </div>
+                        </div>
+
+                        {backupCodes.length > 0 && (
+                          <div>
+                            <p className="text-sm text-gray-600 mb-2">
+                              3. Save these backup codes in a safe place:
+                            </p>
+                            <div className="p-3 bg-gray-100 rounded font-mono text-sm">
+                              {backupCodes.map((code, index) => (
+                                <div key={index}>{code}</div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <Button variant="outline" size="sm">
-                      View Sessions
-                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Login Sessions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Monitor className="w-5 h-5" />
+                    Active Login Sessions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {loginSessions.map((session) => (
+                      <div key={session.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <Monitor className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium">{session.device}</h4>
+                              {session.isCurrent && (
+                                <Badge className="bg-green-100 text-green-800 text-xs">
+                                  Current
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-sm text-gray-500 flex items-center gap-4">
+                              <span className="flex items-center gap-1">
+                                <Globe className="w-3 h-3" />
+                                {session.browser}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                {session.location}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {session.lastActive}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        {!session.isCurrent && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => revokeSessionMutation.mutate(session.id)}
+                            disabled={revokeSessionMutation.isPending}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {loginSessions.length === 0 && (
+                      <div className="text-center py-6 text-gray-500">
+                        <Monitor className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                        <p>No active sessions found</p>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-medium">API Keys</h4>
-                      <p className="text-sm text-gray-500">Manage API access tokens</p>
+                </CardContent>
+              </Card>
+
+              {/* API Keys */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Key className="w-5 h-5" />
+                    API Keys
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm text-gray-600">
+                        API keys allow external applications to access your account
+                      </p>
+                      <Button 
+                        size="sm"
+                        onClick={() => setShowNewApiKeyDialog(true)}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        New Key
+                      </Button>
                     </div>
-                    <Button variant="outline" size="sm">
-                      Manage Keys
-                    </Button>
+
+                    <div className="space-y-3">
+                      {apiKeys.map((key) => (
+                        <div key={key.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <h4 className="font-medium">{key.name}</h4>
+                            <div className="text-sm text-gray-500 flex items-center gap-4">
+                              <span className="font-mono">{key.keyPreview}</span>
+                              <span>Created: {new Date(key.createdAt).toLocaleDateString()}</span>
+                              {key.lastUsed && (
+                                <span>Last used: {new Date(key.lastUsed).toLocaleDateString()}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(key.keyPreview);
+                                toast({ title: "Copied to clipboard" });
+                              }}
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => deleteApiKeyMutation.mutate(key.id)}
+                              disabled={deleteApiKeyMutation.isPending}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {apiKeys.length === 0 && (
+                        <div className="text-center py-6 text-gray-500">
+                          <Key className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                          <p>No API keys created yet</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* New API Key Dialog */}
+                    {showNewApiKeyDialog && (
+                      <div className="p-4 border rounded-lg bg-blue-50">
+                        <h4 className="font-medium mb-2">Create New API Key</h4>
+                        <div className="space-y-3">
+                          <div>
+                            <Label htmlFor="apiKeyName">Key Name</Label>
+                            <Input
+                              id="apiKeyName"
+                              placeholder="My API Key"
+                              value={newApiKeyName}
+                              onChange={(e) => setNewApiKeyName(e.target.value)}
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button 
+                              onClick={() => createApiKeyMutation.mutate(newApiKeyName)}
+                              disabled={createApiKeyMutation.isPending || !newApiKeyName.trim()}
+                            >
+                              {createApiKeyMutation.isPending ? 'Creating...' : 'Create Key'}
+                            </Button>
+                            <Button 
+                              variant="outline"
+                              onClick={() => {
+                                setShowNewApiKeyDialog(false);
+                                setNewApiKeyName("");
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

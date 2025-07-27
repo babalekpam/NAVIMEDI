@@ -480,6 +480,224 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Security settings routes
+  app.get("/api/users/security", authenticateToken, async (req, res) => {
+    try {
+      // For now, return mock security settings
+      res.json({
+        twoFactorEnabled: false,
+        backupCodesCount: 0,
+        lastPasswordChange: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Get security settings error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // 2FA setup routes
+  app.post("/api/users/2fa/setup", authenticateToken, async (req, res) => {
+    try {
+      // Generate mock QR code and backup codes for demo
+      const qrCode = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+      const backupCodes = [
+        "12345-67890",
+        "23456-78901", 
+        "34567-89012",
+        "45678-90123",
+        "56789-01234"
+      ];
+
+      res.json({ qrCode, backupCodes });
+    } catch (error) {
+      console.error("Setup 2FA error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/users/2fa/verify", authenticateToken, async (req, res) => {
+    try {
+      const { code } = req.body;
+      
+      // For demo, accept any 6-digit code
+      if (code && code.length === 6) {
+        res.json({ success: true });
+      } else {
+        res.status(400).json({ message: "Invalid verification code" });
+      }
+    } catch (error) {
+      console.error("Verify 2FA error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/users/2fa/disable", authenticateToken, async (req, res) => {
+    try {
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Disable 2FA error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Login sessions routes
+  app.get("/api/users/sessions", authenticateToken, async (req, res) => {
+    try {
+      // Return mock session data for demo
+      const sessions = [
+        {
+          id: "session-1",
+          device: "MacBook Pro",
+          browser: "Chrome 120.0",
+          location: "San Francisco, CA",
+          ipAddress: "192.168.1.100",
+          lastActive: "2 minutes ago",
+          isCurrent: true
+        },
+        {
+          id: "session-2", 
+          device: "iPhone 15",
+          browser: "Safari Mobile",
+          location: "San Francisco, CA",
+          ipAddress: "192.168.1.101",
+          lastActive: "1 hour ago",
+          isCurrent: false
+        },
+        {
+          id: "session-3",
+          device: "Windows PC",
+          browser: "Edge 119.0",
+          location: "New York, NY",
+          ipAddress: "203.0.113.50",
+          lastActive: "3 days ago",
+          isCurrent: false
+        }
+      ];
+
+      res.json(sessions);
+    } catch (error) {
+      console.error("Get sessions error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/users/sessions/:sessionId", authenticateToken, async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user!.tenantId,
+        userId: req.user!.id,
+        entityType: "session",
+        entityId: sessionId,
+        action: "revoke_session",
+        previousData: null,
+        newData: { sessionId },
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Revoke session error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // API Keys routes
+  app.get("/api/users/api-keys", authenticateToken, async (req, res) => {
+    try {
+      // Return mock API keys for demo
+      const apiKeys = [
+        {
+          id: "key-1",
+          name: "Production API",
+          keyPreview: "pk_live_1234...5678",
+          createdAt: "2024-01-15T10:30:00Z",
+          lastUsed: "2024-01-27T14:22:00Z",
+          permissions: ["read", "write"]
+        },
+        {
+          id: "key-2",
+          name: "Development Testing",
+          keyPreview: "pk_test_abcd...efgh",
+          createdAt: "2024-01-20T09:15:00Z",
+          lastUsed: null,
+          permissions: ["read"]
+        }
+      ];
+
+      res.json(apiKeys);
+    } catch (error) {
+      console.error("Get API keys error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/users/api-keys", authenticateToken, async (req, res) => {
+    try {
+      const { name } = req.body;
+      
+      if (!name || !name.trim()) {
+        return res.status(400).json({ message: "API key name is required" });
+      }
+
+      // Generate mock API key
+      const newKey = {
+        id: `key-${Date.now()}`,
+        name: name.trim(),
+        key: `pk_live_${Math.random().toString(36).substr(2, 32)}`,
+        keyPreview: `pk_live_${Math.random().toString(36).substr(2, 4)}...${Math.random().toString(36).substr(2, 4)}`,
+        createdAt: new Date().toISOString(),
+        lastUsed: null,
+        permissions: ["read", "write"]
+      };
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user!.tenantId,
+        userId: req.user!.id,
+        entityType: "api_key",
+        entityId: newKey.id,
+        action: "create_api_key",
+        previousData: null,
+        newData: { name: newKey.name },
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.status(201).json(newKey);
+    } catch (error) {
+      console.error("Create API key error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/users/api-keys/:keyId", authenticateToken, async (req, res) => {
+    try {
+      const { keyId } = req.params;
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user!.tenantId,
+        userId: req.user!.id,
+        entityType: "api_key",
+        entityId: keyId,
+        action: "delete_api_key",
+        previousData: null,
+        newData: { keyId },
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete API key error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Get users by role (for fetching providers, etc.)
   app.get("/api/users", authenticateToken, requireTenant, async (req, res) => {
     try {
