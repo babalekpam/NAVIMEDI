@@ -206,11 +206,16 @@ export default function ProfileSettingsPage() {
   // 2FA Setup Mutation
   const setup2FAMutation = useMutation({
     mutationFn: async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
       const response = await fetch('/api/users/2fa/setup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
       
@@ -237,11 +242,16 @@ export default function ProfileSettingsPage() {
   // Verify 2FA Mutation
   const verify2FAMutation = useMutation({
     mutationFn: async (code: string) => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
       const response = await fetch('/api/users/2fa/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ code })
       });
@@ -273,10 +283,15 @@ export default function ProfileSettingsPage() {
   // Disable 2FA Mutation
   const disable2FAMutation = useMutation({
     mutationFn: async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
       const response = await fetch('/api/users/2fa/disable', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
       
@@ -299,10 +314,15 @@ export default function ProfileSettingsPage() {
   // Revoke Session Mutation
   const revokeSessionMutation = useMutation({
     mutationFn: async (sessionId: string) => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
       const response = await fetch(`/api/users/sessions/${sessionId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
       
@@ -324,11 +344,16 @@ export default function ProfileSettingsPage() {
   // Create API Key Mutation
   const createApiKeyMutation = useMutation({
     mutationFn: async (name: string) => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
       const response = await fetch('/api/users/api-keys', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ name })
       });
@@ -353,10 +378,15 @@ export default function ProfileSettingsPage() {
   // Delete API Key Mutation
   const deleteApiKeyMutation = useMutation({
     mutationFn: async (keyId: string) => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
       const response = await fetch(`/api/users/api-keys/${keyId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
       
