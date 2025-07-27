@@ -134,6 +134,30 @@ export default function MedicationCopayForm({
   });
 
   const onSubmit = (data: CopayFormData) => {
+    console.log("Form submission data:", data);
+    console.log("Form validation errors:", form.formState.errors);
+    console.log("Selected patient ID:", selectedPatientId);
+    console.log("Selected insurance ID:", selectedInsuranceId);
+    
+    // Ensure patient and insurance IDs are set
+    if (!selectedPatientId) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please select a patient"
+      });
+      return;
+    }
+    
+    if (!selectedInsuranceId) {
+      toast({
+        variant: "destructive", 
+        title: "Validation Error",
+        description: "Please select patient insurance"
+      });
+      return;
+    }
+    
     createCopayMutation.mutate(data);
   };
 
