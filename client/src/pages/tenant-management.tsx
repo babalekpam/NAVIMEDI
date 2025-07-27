@@ -136,7 +136,7 @@ export default function TenantManagement() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Create New Organization</DialogTitle>
+              <DialogTitle>{t('create-new-organization')}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -146,9 +146,9 @@ export default function TenantManagement() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Organization Name</FormLabel>
+                        <FormLabel>{t('organization-name')}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter organization name" {...field} />
+                          <Input placeholder={t('enter-organization-name')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -159,19 +159,19 @@ export default function TenantManagement() {
                     name="type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Organization Type</FormLabel>
+                        <FormLabel>{t('organization-type')}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select type" />
+                              <SelectValue placeholder={t('select-type')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="hospital">Hospital</SelectItem>
-                            <SelectItem value="clinic">Clinic</SelectItem>
-                            <SelectItem value="pharmacy">Pharmacy</SelectItem>
-                            <SelectItem value="laboratory">Laboratory</SelectItem>
-                            <SelectItem value="insurance_provider">Insurance Provider</SelectItem>
+                            <SelectItem value="hospital">{t('hospital')}</SelectItem>
+                            <SelectItem value="clinic">{t('clinic')}</SelectItem>
+                            <SelectItem value="pharmacy">{t('pharmacy')}</SelectItem>
+                            <SelectItem value="laboratory">{t('laboratory')}</SelectItem>
+                            <SelectItem value="insurance_provider">{t('insurance-provider')}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

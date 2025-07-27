@@ -132,29 +132,29 @@ export default function AuditLogs() {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Shield className="h-5 w-5 text-green-600" />
-            <span>HIPAA Compliance Status</span>
+            <span>{t('hipaa-compliance-status')}</span>
           </CardTitle>
           <CardDescription>
-            Current compliance metrics and audit trail summary
+{t('current-compliance-metrics')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
               <div className="text-2xl font-bold text-green-600">100%</div>
-              <div className="text-sm text-green-700">Data Encrypted</div>
+              <div className="text-sm text-green-700">{t('data-encrypted')}</div>
             </div>
             <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
               <div className="text-2xl font-bold text-blue-600">{filteredLogs.length}</div>
-              <div className="text-sm text-blue-700">Audit Entries</div>
+              <div className="text-sm text-blue-700">{t('audit-entries')}</div>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
               <div className="text-2xl font-bold text-purple-600">0</div>
-              <div className="text-sm text-purple-700">Security Violations</div>
+              <div className="text-sm text-purple-700">{t('security-violations')}</div>
             </div>
             <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
               <div className="text-2xl font-bold text-orange-600">24/7</div>
-              <div className="text-sm text-orange-700">Monitoring</div>
+              <div className="text-sm text-orange-700">{t('monitoring')}</div>
             </div>
           </div>
         </CardContent>
@@ -163,7 +163,7 @@ export default function AuditLogs() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Audit Log Filters</CardTitle>
+          <CardTitle>{t('audit-log-filters')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4">
@@ -171,7 +171,7 @@ export default function AuditLogs() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Search by entity, action, or user..."
+                  placeholder={t('search-entity-action-user')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"

@@ -294,10 +294,10 @@ export default function UserRoles() {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>
-                {editingUser ? "Edit User" : "Create New User"}
+                {editingUser ? t('edit-user') : t('create-new-user')}
               </DialogTitle>
               <DialogDescription>
-                {editingUser ? "Update user information and role" : "Add a new team member to your healthcare organization"}
+                {editingUser ? t('update-user-info-role') : t('add-new-team-member')}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -307,9 +307,9 @@ export default function UserRoles() {
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Username</FormLabel>
+                      <FormLabel>{t('username')}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter username" {...field} />
+                        <Input placeholder={t('enter-username')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -320,9 +320,9 @@ export default function UserRoles() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t('email')}</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="Enter email" {...field} />
+                        <Input type="email" placeholder={t('enter-email')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -333,9 +333,9 @@ export default function UserRoles() {
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>First Name</FormLabel>
+                      <FormLabel>{t('first-name')}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter first name" {...field} />
+                        <Input placeholder={t('enter-first-name')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
