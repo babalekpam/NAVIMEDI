@@ -15,6 +15,9 @@ import { geminiHealthAnalyzer } from "./gemini-health-analyzer";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  console.log("DEBUG: registerRoutes called - starting route registration");
+  const server = createServer(app);
+  
   // Authentication routes (before tenant middleware)
   app.post("/api/auth/login", async (req, res) => {
     try {
@@ -3726,15 +3729,25 @@ Report ID: ${report.id}
     }
   });
 
+  console.log("DEBUG: Reached line after waiting patients route registration");
+  console.log("DEBUG: About to register POST /api/patient-check-ins route");
   app.post("/api/patient-check-ins", authenticateToken, requireTenant, requireRole(["receptionist", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
+      console.log("[CHECK-IN DEBUG] Request body:", req.body);
+      console.log("[CHECK-IN DEBUG] Tenant ID:", req.tenant!.id);
+      console.log("[CHECK-IN DEBUG] User ID:", req.user!.id);
+
       const validatedData = insertPatientCheckInSchema.parse({
         ...req.body,
         tenantId: req.tenant!.id,
         checkedInBy: req.user!.id
       });
 
+      console.log("[CHECK-IN DEBUG] Validated data:", validatedData);
+
       const checkIn = await storage.createPatientCheckIn(validatedData);
+
+      console.log("[CHECK-IN DEBUG] Created check-in:", checkIn);
 
       // Create audit log
       await storage.createAuditLog({
@@ -3751,7 +3764,11 @@ Report ID: ${report.id}
 
       res.status(201).json(checkIn);
     } catch (error) {
-      console.error("Failed to create patient check-in:", error);
+      console.error("[CHECK-IN DEBUG] Failed to create patient check-in:", error);
+      if (error instanceof z.ZodError) {
+        console.error("[CHECK-IN DEBUG] Validation errors:", error.errors);
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
       res.status(500).json({ message: "Failed to create patient check-in" });
     }
   });
