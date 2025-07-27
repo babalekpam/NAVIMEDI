@@ -312,8 +312,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/patients", requireRole(["physician", "nurse", "receptionist", "tenant_admin", "director"]), async (req, res) => {
     try {
-      // Generate MRN automatically
-      const mrn = `MRN${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      // Generate unique alphanumeric MRN automatically
+      const timestamp = Date.now().toString().slice(-8); // Last 8 digits of timestamp
+      const randomPart = Math.random().toString(36).substr(2, 6).toUpperCase(); // 6 random alphanumeric chars
+      const tenantPrefix = req.tenant!.name.replace(/[^A-Z]/g, '').slice(0, 3) || 'HOS'; // First 3 letters of tenant name
+      const mrn = `${tenantPrefix}${timestamp}${randomPart}`;
       
       // Prepare patient data with proper date conversion
       const requestData = {
