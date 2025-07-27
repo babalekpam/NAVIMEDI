@@ -545,6 +545,17 @@ export default function ServicePricingManagement() {
     return colors[serviceType as keyof typeof colors] || colors.other;
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Loading service pricing data...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!user || !tenant) {
     return (
       <div className="flex items-center justify-center h-64">
