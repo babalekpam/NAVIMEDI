@@ -394,6 +394,8 @@ export default function ServicePricingManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  console.log("ServicePricingManagement render - user:", user?.username, "tenant:", tenant?.name);
+
   const { data: servicePrices = [], isLoading } = useQuery<ServicePrice[]>({
     queryKey: ["/api/service-prices"],
     enabled: !!user && !!tenant,
@@ -403,6 +405,8 @@ export default function ServicePricingManagement() {
     queryKey: ["/api/insurance-providers"],
     enabled: !!user && !!tenant,
   });
+
+  console.log("ServicePricingManagement data - servicePrices:", servicePrices.length, "providers:", insuranceProviders.length);
 
   const createServiceMutation = useMutation({
     mutationFn: async (serviceData: ServicePriceFormData) => {
@@ -542,7 +546,14 @@ export default function ServicePricingManagement() {
   };
 
   if (!user || !tenant) {
-    return <div className="flex items-center justify-center h-64">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Loading user and tenant data...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
