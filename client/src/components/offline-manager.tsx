@@ -95,7 +95,13 @@ export function OfflineManager({ tenantId, userId }: OfflineManagerProps) {
         setSyncProgress(((i + 1) / essentialData.length) * 100);
         
         try {
-          const response = await fetch(`/api/${dataType}`);
+          const token = localStorage.getItem('auth_token');
+          const response = await fetch(`/api/${dataType}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
           if (response.ok) {
             const data = await response.json();
             localStorage.setItem(`offline_${dataType}`, JSON.stringify(data));
