@@ -2133,8 +2133,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user!.id,
         tenantId: req.tenantId!,
         action: "visit_summary_updated",
-        resourceType: "visit_summary",
-        resourceId: visitSummary.id,
+        entityType: "visit_summary",
+        entityId: visitSummary.id,
         details: { changes: req.body }
       });
 
