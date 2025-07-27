@@ -30,10 +30,15 @@ export default function Prescriptions() {
   const { tenant } = useTenant();
   const queryClient = useQueryClient();
 
-  const { data: prescriptions = [], isLoading } = useQuery<Prescription[]>({
+  const { data: prescriptions = [], isLoading, error } = useQuery<Prescription[]>({
     queryKey: ["/api/prescriptions"],
     enabled: !!user && !!tenant,
   });
+
+  // Debug logging
+  if (error) {
+    console.error("Prescriptions query error:", error);
+  }
 
   const { data: patients = [] } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
