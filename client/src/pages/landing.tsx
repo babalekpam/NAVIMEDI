@@ -40,6 +40,7 @@ export default function LandingPage() {
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-slate-600 hover:text-emerald-600 transition-colors">Features</a>
+            <Link href="/pricing" className="text-slate-600 hover:text-emerald-600 transition-colors">Pricing</Link>
             <a href="#solutions" className="text-slate-600 hover:text-emerald-600 transition-colors">Solutions</a>
             <a href="#security" className="text-slate-600 hover:text-emerald-600 transition-colors">Security</a>
             <Link href="/login">
@@ -47,9 +48,9 @@ export default function LandingPage() {
                 Sign In
               </Button>
             </Link>
-            <Link href="/pricing">
+            <Link href="/register">
               <Button className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700">
-                View Pricing
+                Get Started
               </Button>
             </Link>
           </nav>
@@ -74,17 +75,17 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/register">
+            <Link href="/pricing">
               <Button size="lg" className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 px-8">
-                <Building2 className="w-5 h-5 mr-2" />
-                Start Your Organization
+                <Star className="w-5 h-5 mr-2" />
+                View Pricing Plans
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
-            <Link href="/login">
+            <Link href="/register">
               <Button size="lg" variant="outline" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50">
-                <UserCheck className="w-5 h-5 mr-2" />
-                Sign In
+                <Building2 className="w-5 h-5 mr-2" />
+                Start Free Trial
               </Button>
             </Link>
           </div>
