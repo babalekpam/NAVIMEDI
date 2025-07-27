@@ -46,15 +46,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!uuidPattern.test(tenantId)) {
           // If not a UUID, try to find tenant by name
           const tenants = await storage.getAllTenants();
+          console.log("[LOGIN DEBUG] Looking for tenant:", tenantId);
+          console.log("[LOGIN DEBUG] Available tenants:", tenants.map(t => t.name));
           const tenant = tenants.find(t => t.name.toLowerCase() === tenantId.toLowerCase());
           if (tenant) {
             actualTenantId = tenant.id;
+            console.log("[LOGIN DEBUG] Found tenant ID:", actualTenantId);
           } else {
+            console.log("[LOGIN DEBUG] Tenant not found:", tenantId);
             return res.status(400).json({ message: "Organization not found" });
           }
         }
         
+        console.log("[LOGIN DEBUG] Getting user by username:", username, "tenant:", actualTenantId);
         user = await storage.getUserByUsername(username, actualTenantId);
+        console.log("[LOGIN DEBUG] Found user in tenant:", user ? { id: user.id, email: user.email } : 'none');
       } else {
         // No tenant ID provided - search for user by email/username across all tenants
         const allUsers = await storage.getAllUsers();
@@ -71,12 +77,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      if (!user) {
+        console.log("[LOGIN DEBUG] No user found");
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
       console.log("[LOGIN DEBUG] About to verify password for user:", user.email);
       const passwordMatch = await bcrypt.compare(password, user.password);
       console.log("[LOGIN DEBUG] Password match result:", passwordMatch);
 
-      if (!user || !passwordMatch) {
-        console.log("[LOGIN DEBUG] Login failed - user exists:", !!user, "password match:", passwordMatch);
+      if (!passwordMatch) {
+        console.log("[LOGIN DEBUG] Login failed - password mismatch");
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
