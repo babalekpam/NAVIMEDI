@@ -1,15 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    tenantId: string;
-    role: string;
-    username: string;
-  };
-  tenantId?: string;
-}
+import { AuthenticatedRequest, JWTPayload } from './auth';
 
 export const tenantMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
@@ -28,7 +19,7 @@ export const tenantMiddleware = (req: AuthenticatedRequest, res: Response, next:
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production') as any;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production') as JWTPayload;
       req.tenantId = decoded.tenantId;
       req.user = {
         id: decoded.userId,

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertPharmacySchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertMedicationCopaySchema } from "@shared/schema";
-import { authenticateToken, requireRole } from "./middleware/auth";
+import { authenticateToken, requireRole, AuthenticatedRequest } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -84,9 +84,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "user",
         entityId: user.id,
         action: "login",
+        previousData: null,
         newData: { loginTime: new Date() },
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.json({
@@ -282,9 +283,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "user",
         entityId: user.id,
         action: "register",
+        previousData: null,
         newData: { username: user.username, email: user.email, role: user.role },
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json({
@@ -314,7 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User profile
   app.get("/api/user/profile", async (req, res) => {
     try {
-      const user = await storage.getUser(req.user!.userId);
+      const user = await storage.getUser(req.user!.id);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -373,13 +375,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: tenant.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "tenant",
         entityId: tenant.id,
         action: "create",
+        previousData: null,
         newData: tenant,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(tenant);
@@ -461,13 +464,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "patient",
         entityId: patient.id,
         action: "create",
+        previousData: null,
         newData: patient,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(patient);
@@ -550,13 +554,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "appointment",
         entityId: appointment.id,
         action: "create",
+        previousData: null,
         newData: appointment,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(appointment);
@@ -589,13 +594,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "appointment",
         entityId: id,
         action: "update",
+        previousData: null,
         newData: updatedAppointment,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.json(updatedAppointment);
@@ -643,12 +649,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: tenantId,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "prescription",
         entityId: id,
         action: "UPDATE",
+        previousData: null,
         newData: updatedPrescription,
-        ipAddress: req.ip,
+        ipAddress: req.ip || null,
         userAgent: req.get('User-Agent')
       });
 
@@ -671,7 +678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const prescriptionData = {
         ...requestData,
         tenantId: req.tenant!.id,
-        providerId: req.user!.userId,
+        providerId: req.user!.id,
         appointmentId: requestData.appointmentId || null,
         pharmacyTenantId: requestData.pharmacyTenantId || null,
         prescribedDate: new Date(),
@@ -685,13 +692,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "prescription",
         entityId: prescription.id,
         action: "create",
+        previousData: null,
         newData: prescription,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(prescription);
@@ -731,8 +739,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "pharmacy",
         entityId: pharmacy.id,
         action: "CREATE",
+        previousData: null,
         newData: pharmacy,
-        ipAddress: req.ip,
+        ipAddress: req.ip || null,
         userAgent: req.get('User-Agent')
       });
 
@@ -779,7 +788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const labOrderData = {
         ...requestData,
         tenantId: req.tenant!.id,
-        providerId: req.user!.userId,
+        providerId: req.user!.id,
         orderedDate: requestData.orderedDate || new Date(),
         appointmentId: requestData.appointmentId || null,
         labTenantId: requestData.labTenantId || null
@@ -792,13 +801,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "lab_order",
         entityId: labOrder.id,
         action: "create",
+        previousData: null,
         newData: labOrder,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(labOrder);
@@ -852,13 +862,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "insurance_claim",
         entityId: claim.id,
         action: "create",
+        previousData: null,
         newData: claim,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(claim);
@@ -892,13 +903,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "insurance_claim",
         entityId: id,
         action: "update",
+        previousData: null,
         newData: updateData,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.json(updatedClaim);
@@ -1114,7 +1126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const reportData = insertReportSchema.parse({
         ...req.body,
         tenantId: req.tenant.id,
-        generatedBy: req.user.userId,
+        generatedBy: req.user.id,
         status: 'generating'
       });
 
@@ -1123,13 +1135,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant.id,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "report",
         entityId: report.id,
         action: "create",
+        previousData: null,
         newData: { title: report.title, type: report.type },
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       // In a real implementation, you would trigger async report generation here
@@ -1177,7 +1190,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const reportData = insertReportSchema.parse({
         ...reportParams,
         tenantId: targetTenantId,
-        generatedBy: req.user.userId,
+        generatedBy: req.user.id,
         status: 'generating',
         parameters: { 
           ...reportParams.parameters, 
@@ -1191,33 +1204,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log for both platform and target tenant
       await storage.createAuditLog({
         tenantId: req.user.tenantId, // Platform tenant
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "cross_tenant_report",
         entityId: report.id,
         action: "create",
+        previousData: null,
         newData: { 
           title: report.title, 
           type: report.type, 
           targetTenant: targetTenant.name,
           targetTenantId: targetTenantId 
         },
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       await storage.createAuditLog({
         tenantId: targetTenantId, // Target tenant
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "report",
         entityId: report.id,
         action: "platform_generate",
+        previousData: null,
         newData: { 
           title: report.title, 
           type: report.type, 
           generatedBy: 'platform_admin' 
         },
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       // Simulate async report generation
@@ -1281,7 +1296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user has permission to update this user
       const hasPermission = req.user.role === 'super_admin' || 
                            ((req.user.role === 'tenant_admin' || req.user.role === 'director') && existingUser.tenantId === req.user.tenantId) ||
-                           (req.user.userId === id); // User updating themselves
+                           (req.user.id === id); // User updating themselves
 
       if (!hasPermission) {
         return res.status(403).json({ message: "Access denied. Cannot update this user." });
@@ -1293,7 +1308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Prevent users from deactivating themselves
-      if (req.user.userId === id && updateData.isActive === false) {
+      if (req.user.id === id && updateData.isActive === false) {
         return res.status(403).json({ message: "You cannot deactivate your own account." });
       }
 
@@ -1303,10 +1318,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: existingUser.tenantId,
-        userId: req.user.userId || null,
+        userId: req.user.id || null,
         entityType: "user",
         entityId: id,
         action: "update",
+        previousData: null,
         oldData: { isActive: existingUser.isActive, role: existingUser.role },
         newData: updateData,
         ipAddress: req.ip || null,
@@ -1392,6 +1408,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "user",
         entityId: newUser.id,
         action: "create",
+        previousData: null,
         newData: { 
           username, 
           email, 
@@ -1561,7 +1578,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertMedicalCommunicationSchema.parse({
         ...req.body,
         tenantId: req.user.tenantId,
-        senderId: req.user.userId,
+        senderId: req.user.id,
       });
 
       const communication = await storage.createMedicalCommunication(validatedData);
@@ -1569,12 +1586,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "medical_communication",
         entityId: communication.id,
         action: "CREATE",
+        previousData: null,
         newData: communication,
-        ipAddress: req.ip,
+        ipAddress: req.ip || null,
         userAgent: req.get('User-Agent')
       });
 
@@ -1599,12 +1617,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "medical_communication",
         entityId: communication.id,
         action: "UPDATE",
+        previousData: null,
         newData: communication,
-        ipAddress: req.ip,
+        ipAddress: req.ip || null,
         userAgent: req.get('User-Agent')
       });
 
@@ -1635,12 +1654,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "communication_translation",
         entityId: translation.id,
         action: "CREATE",
+        previousData: null,
         newData: translation,
-        ipAddress: req.ip,
+        ipAddress: req.ip || null,
         userAgent: req.get('User-Agent')
       });
 
@@ -1674,12 +1694,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "supported_language",
         entityId: language.id,
         action: "CREATE",
+        previousData: null,
         newData: language,
-        ipAddress: req.ip,
+        ipAddress: req.ip || null,
         userAgent: req.get('User-Agent')
       });
 
@@ -1704,12 +1725,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "supported_language",
         entityId: language.id,
         action: "UPDATE",
+        previousData: null,
         newData: language,
-        ipAddress: req.ip,
+        ipAddress: req.ip || null,
         userAgent: req.get('User-Agent')
       });
 
@@ -1744,12 +1766,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "medical_phrase",
         entityId: phrase.id,
         action: "CREATE",
+        previousData: null,
         newData: phrase,
-        ipAddress: req.ip,
+        ipAddress: req.ip || null,
         userAgent: req.get('User-Agent')
       });
 
@@ -1776,7 +1799,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertPhraseTranslationSchema.parse({
         ...req.body,
-        translatedBy: req.user.userId,
+        translatedBy: req.user.id,
       });
 
       const translation = await storage.createPhraseTranslation(validatedData);
@@ -1784,12 +1807,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "phrase_translation",
         entityId: translation.id,
         action: "CREATE",
+        previousData: null,
         newData: translation,
-        ipAddress: req.ip,
+        ipAddress: req.ip || null,
         userAgent: req.get('User-Agent')
       });
 
@@ -1837,9 +1861,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "laboratory",
         entityId: laboratory.id,
         action: "create",
+        previousData: null,
         newData: laboratory,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(laboratory);
@@ -1899,9 +1924,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "lab_result",
         entityId: labResult.id,
         action: "create",
+        previousData: null,
         newData: labResult,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(labResult);
@@ -1932,9 +1958,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "lab_order_assignment",
         entityId: assignment.id,
         action: "create",
+        previousData: null,
         newData: assignment,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(assignment);
@@ -2124,6 +2151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user?.id!,
         tenantId: req.tenantId!,
         action: "vital_signs_created",
+        previousData: null,
         entityType: "vital_signs",
         entityId: vitalSigns.id,
         details: { patientId: vitalSigns.patientId, appointmentId: vitalSigns.appointmentId }
@@ -2152,6 +2180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.userId!,
         tenantId: req.tenantId!,
         action: "vital_signs_updated",
+        previousData: null,
         resourceType: "vital_signs",
         resourceId: vitalSigns.id,
         details: { changes: req.body }
@@ -2220,6 +2249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.userId!,
         tenantId: req.tenantId!,
         action: "visit_summary_created",
+        previousData: null,
         resourceType: "visit_summary",
         resourceId: visitSummary.id,
         details: { patientId: visitSummary.patientId, appointmentId: visitSummary.appointmentId }
@@ -2248,6 +2278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.userId!,
         tenantId: req.tenantId!,
         action: "visit_summary_updated",
+        previousData: null,
         resourceType: "visit_summary",
         resourceId: visitSummary.id,
         details: { changes: req.body }
@@ -2451,8 +2482,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           analysisScore: analysisResult.overallHealthScore,
           recommendationsCount: savedRecommendations.length
         },
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
       
       res.json({
@@ -2597,7 +2628,7 @@ Report ID: ${report.id}
   // Get medication copays defined by current pharmacist
   app.get("/api/medication-copays/pharmacist", authenticateToken, requireTenant, requireRole(["pharmacist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
-      const copays = await storage.getMedicationCopaysByPharmacist(req.user.userId, req.user.tenantId);
+      const copays = await storage.getMedicationCopaysByPharmacist(req.user.id, req.user.tenantId);
       res.json(copays);
     } catch (error) {
       console.error("Failed to fetch pharmacist medication copays:", error);
@@ -2627,12 +2658,12 @@ Report ID: ${report.id}
     try {
       console.log("=== MEDICATION COPAY CREATION ===");
       console.log("Request body:", req.body);
-      console.log("User:", { id: req.user.userId, tenantId: req.user.tenantId });
+      console.log("User:", { id: req.user.id, tenantId: req.user.tenantId });
       
       const validatedData = insertMedicationCopaySchema.parse({
         ...req.body,
         tenantId: req.user.tenantId,
-        definedByPharmacist: req.user.userId,
+        definedByPharmacist: req.user.id,
       });
       
       console.log("Validated data:", validatedData);
@@ -2648,12 +2679,13 @@ Report ID: ${report.id}
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "medication_copay",
         entityId: copay.id,
         action: "CREATE",
+        previousData: null,
         newData: copay,
-        ipAddress: req.ip,
+        ipAddress: req.ip || null,
         userAgent: req.get('User-Agent')
       });
 
@@ -2680,12 +2712,13 @@ Report ID: ${report.id}
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "medication_copay",
         entityId: copay.id,
         action: "UPDATE",
+        previousData: null,
         newData: copay,
-        ipAddress: req.ip,
+        ipAddress: req.ip || null,
         userAgent: req.get('User-Agent')
       });
 

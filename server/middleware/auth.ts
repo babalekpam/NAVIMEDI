@@ -3,22 +3,44 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
-interface JWTPayload {
+export interface JWTPayload {
   userId: string;
   tenantId: string;
   role: string;
   username: string;
 }
 
+export interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    tenantId: string;
+    role: string;
+    username: string;
+  };
+  tenant?: {
+    id: string;
+  };
+  tenantId?: string;
+}
+
 declare global {
   namespace Express {
     interface Request {
-      user?: JWTPayload;
+      user?: {
+        id: string;
+        tenantId: string;
+        role: string;
+        username: string;
+      };
+      tenant?: {
+        id: string;
+      };
+      tenantId?: string;
     }
   }
 }
 
-export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
+export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
 
@@ -28,7 +50,13 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
-    req.user = decoded;
+    req.user = {
+      id: decoded.userId,
+      tenantId: decoded.tenantId,
+      role: decoded.role,
+      username: decoded.username
+    };
+    req.tenantId = decoded.tenantId;
     next();
   } catch (error) {
     console.error("Token verification error:", error);
@@ -37,7 +65,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
 };
 
 export const requireRole = (allowedRoles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ message: "Authentication required" });
     }
