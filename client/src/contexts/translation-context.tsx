@@ -114,6 +114,15 @@ const translations = {
     '8-minutes-ago': '8 minutes ago',
     '12-minutes-ago': '12 minutes ago',
     '15-minutes-ago': '15 minutes ago',
+    // Healthcare organizations
+    'hospitals': 'Hospitals',
+    'hospital': 'Hospital',
+    'pharmacies': 'Pharmacies',
+    'laboratories': 'Laboratories', 
+    'clinics': 'Clinics',
+    'insurance': 'Insurance',
+    'insurance-claims': 'Insurance Claims',
+    'insurance-provider': 'Insurance Provider',
     // Status and States
     'active': 'Active',
     'inactive': 'Inactive',
@@ -234,6 +243,15 @@ const translations = {
     '8-minutes-ago': 'hace 8 minutos',
     '12-minutes-ago': 'hace 12 minutos',
     '15-minutes-ago': 'hace 15 minutos',
+    // Healthcare organizations
+    'hospitals': 'Hospitales',
+    'hospital': 'Hospital',
+    'pharmacies': 'Farmacias', 
+    'laboratories': 'Laboratorios',
+    'clinics': 'Clínicas',
+    'insurance': 'Seguro',
+    'insurance-claims': 'Reclamos de seguro',
+    'insurance-provider': 'Proveedor de seguro',
     // Status and States
     'active': 'Activo',
     'inactive': 'Inactivo',
@@ -354,6 +372,15 @@ const translations = {
     '8-minutes-ago': 'il y a 8 minutes',
     '12-minutes-ago': 'il y a 12 minutes',
     '15-minutes-ago': 'il y a 15 minutes',
+    // Healthcare organizations
+    'hospitals': 'Hôpitaux',
+    'hospital': 'Hôpital', 
+    'pharmacies': 'Pharmacies',
+    'laboratories': 'Laboratoires',
+    'clinics': 'Cliniques',
+    'insurance': 'Assurance',
+    'insurance-claims': 'Réclamations d\'assurance',
+    'insurance-provider': 'Fournisseur d\'assurance',
     // Status and States
     'active': 'Actif',
     'inactive': 'Inactif',
