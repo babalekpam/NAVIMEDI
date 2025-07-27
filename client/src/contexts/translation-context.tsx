@@ -1,0 +1,201 @@
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+
+// Basic translation dictionary for instant translation
+const translations = {
+  en: {
+    // Navigation
+    dashboard: 'Dashboard',
+    patients: 'Patients',
+    appointments: 'Appointments',
+    prescriptions: 'Prescriptions',
+    billing: 'Billing',
+    'lab-orders': 'Lab Orders',
+    reports: 'Reports',
+    // Common UI
+    save: 'Save',
+    cancel: 'Cancel',
+    edit: 'Edit',
+    delete: 'Delete',
+    add: 'Add',
+    search: 'Search',
+    filter: 'Filter',
+    // Healthcare specific
+    'patient-name': 'Patient Name',
+    'date-of-birth': 'Date of Birth',
+    'medical-record': 'Medical Record',
+    'insurance-info': 'Insurance Information',
+    'vital-signs': 'Vital Signs',
+    // Dashboard
+    'total-patients': 'Total Patients',
+    'pending-appointments': 'Pending Appointments',
+    'active-prescriptions': 'Active Prescriptions',
+    'recent-activity': 'Recent Activity',
+  },
+  es: {
+    // Navigation
+    dashboard: 'Panel de Control',
+    patients: 'Pacientes',
+    appointments: 'Citas',
+    prescriptions: 'Recetas',
+    billing: 'Facturación',
+    'lab-orders': 'Órdenes de Laboratorio',
+    reports: 'Informes',
+    // Common UI
+    save: 'Guardar',
+    cancel: 'Cancelar',
+    edit: 'Editar',
+    delete: 'Eliminar',
+    add: 'Agregar',
+    search: 'Buscar',
+    filter: 'Filtrar',
+    // Healthcare specific
+    'patient-name': 'Nombre del Paciente',
+    'date-of-birth': 'Fecha de Nacimiento',
+    'medical-record': 'Historial Médico',
+    'insurance-info': 'Información del Seguro',
+    'vital-signs': 'Signos Vitales',
+    // Dashboard
+    'total-patients': 'Total de Pacientes',
+    'pending-appointments': 'Citas Pendientes',
+    'active-prescriptions': 'Recetas Activas',
+    'recent-activity': 'Actividad Reciente',
+  },
+  fr: {
+    // Navigation
+    dashboard: 'Tableau de Bord',
+    patients: 'Patients',
+    appointments: 'Rendez-vous',
+    prescriptions: 'Ordonnances',
+    billing: 'Facturation',
+    'lab-orders': 'Analyses de Laboratoire',
+    reports: 'Rapports',
+    // Common UI
+    save: 'Sauvegarder',
+    cancel: 'Annuler',
+    edit: 'Modifier',
+    delete: 'Supprimer',
+    add: 'Ajouter',
+    search: 'Rechercher',
+    filter: 'Filtrer',
+    // Healthcare specific
+    'patient-name': 'Nom du Patient',
+    'date-of-birth': 'Date de Naissance',
+    'medical-record': 'Dossier Médical',
+    'insurance-info': 'Informations d\'Assurance',
+    'vital-signs': 'Signes Vitaux',
+    // Dashboard
+    'total-patients': 'Total des Patients',
+    'pending-appointments': 'Rendez-vous en Attente',
+    'active-prescriptions': 'Ordonnances Actives',
+    'recent-activity': 'Activité Récente',
+  },
+  de: {
+    // Navigation
+    dashboard: 'Dashboard',
+    patients: 'Patienten',
+    appointments: 'Termine',
+    prescriptions: 'Verschreibungen',
+    billing: 'Abrechnung',
+    'lab-orders': 'Laboraufträge',
+    reports: 'Berichte',
+    // Common UI
+    save: 'Speichern',
+    cancel: 'Abbrechen',
+    edit: 'Bearbeiten',
+    delete: 'Löschen',
+    add: 'Hinzufügen',
+    search: 'Suchen',
+    filter: 'Filtern',
+    // Healthcare specific
+    'patient-name': 'Patientenname',
+    'date-of-birth': 'Geburtsdatum',
+    'medical-record': 'Krankenakte',
+    'insurance-info': 'Versicherungsinformationen',
+    'vital-signs': 'Vitalzeichen',
+    // Dashboard
+    'total-patients': 'Gesamte Patienten',
+    'pending-appointments': 'Ausstehende Termine',
+    'active-prescriptions': 'Aktive Verschreibungen',
+    'recent-activity': 'Letzte Aktivität',
+  }
+};
+
+interface TranslationContextType {
+  currentLanguage: string;
+  setLanguage: (language: string) => void;
+  t: (key: string) => string;
+  isTranslating: boolean;
+}
+
+const TranslationContext = createContext<TranslationContextType | undefined>(undefined);
+
+export const useTranslation = () => {
+  const context = useContext(TranslationContext);
+  if (context === undefined) {
+    throw new Error('useTranslation must be used within a TranslationProvider');
+  }
+  return context;
+};
+
+interface TranslationProviderProps {
+  children: ReactNode;
+}
+
+export const TranslationProvider = ({ children }: TranslationProviderProps) => {
+  const [currentLanguage, setCurrentLanguage] = useState<string>('en');
+  const [isTranslating, setIsTranslating] = useState(false);
+
+  useEffect(() => {
+    // Load saved language preference
+    const savedLanguage = localStorage.getItem('selectedLanguage');
+    if (savedLanguage && savedLanguage !== currentLanguage) {
+      setCurrentLanguage(savedLanguage);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Listen for language change events from language selector
+    const handleLanguageChange = (event: CustomEvent) => {
+      const { language } = event.detail;
+      setIsTranslating(true);
+      
+      // Simulate brief translation loading for visual feedback
+      setTimeout(() => {
+        setCurrentLanguage(language);
+        setIsTranslating(false);
+      }, 200);
+    };
+
+    window.addEventListener('languageChanged', handleLanguageChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('languageChanged', handleLanguageChange as EventListener);
+    };
+  }, []);
+
+  const setLanguage = (language: string) => {
+    setIsTranslating(true);
+    localStorage.setItem('selectedLanguage', language);
+    
+    setTimeout(() => {
+      setCurrentLanguage(language);
+      setIsTranslating(false);
+    }, 200);
+  };
+
+  const t = (key: string): string => {
+    const languageDict = translations[currentLanguage as keyof typeof translations] || translations.en;
+    return languageDict[key as keyof typeof languageDict] || key;
+  };
+
+  return (
+    <TranslationContext.Provider value={{
+      currentLanguage,
+      setLanguage,
+      t,
+      isTranslating
+    }}>
+      {children}
+    </TranslationContext.Provider>
+  );
+};

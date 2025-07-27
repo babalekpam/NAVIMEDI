@@ -14,11 +14,14 @@ import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { useLocation } from "wouter";
 import { TenantSwitcher } from "@/components/tenant/tenant-switcher";
+import { LanguageSelector } from "@/components/language-selector";
+import { useTranslation } from "@/contexts/translation-context";
 
 export const Header = () => {
   const { user, logout } = useAuth();
   const { tenant } = useTenant();
   const [, setLocation] = useLocation();
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     logout();
@@ -52,7 +55,7 @@ export const Header = () => {
               onClick={() => setLocation("/dashboard")}
               className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
             >
-              Dashboard
+              {t('dashboard')}
             </button>
             {user.role === "super_admin" ? (
               // Platform Owner Navigation
@@ -83,7 +86,7 @@ export const Header = () => {
                   onClick={() => setLocation("/patients")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
-                  Patients
+                  {t('patients')}
                 </button>
                 {/* Show appointments for all except pharmacy tenant users */}
                 {!(user.role === "tenant_admin" && tenant?.type === "pharmacy") && user.role !== "pharmacist" && (
@@ -91,14 +94,14 @@ export const Header = () => {
                     onClick={() => setLocation("/appointments")}
                     className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                   >
-                    Appointments
+                    {t('appointments')}
                   </button>
                 )}
                 <button 
                   onClick={() => setLocation("/prescriptions")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
-                  Prescriptions
+                  {t('prescriptions')}
                 </button>
                 {/* Lab Orders - hidden for pharmacy users */}
                 {!(user.role === "tenant_admin" && tenant?.type === "pharmacy") && user.role !== "pharmacist" && (
@@ -106,14 +109,14 @@ export const Header = () => {
                     onClick={() => setLocation("/lab-orders")}
                     className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                   >
-                    Lab Orders
+                    {t('lab-orders')}
                   </button>
                 )}
                 <button 
                   onClick={() => setLocation("/billing")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
-                  Billing
+                  {t('billing')}
                 </button>
               </>
             )}
@@ -121,6 +124,9 @@ export const Header = () => {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
+            {/* Language Selector */}
+            <LanguageSelector compact={true} />
+            
             {/* Notifications */}
             <Button variant="ghost" size="sm" className="relative">
               <Bell className="h-5 w-5" />

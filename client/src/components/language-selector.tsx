@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "@/contexts/translation-context";
 import { useQuery } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -35,49 +36,47 @@ interface LanguageSelectorProps {
 }
 
 export function LanguageSelector({ 
-  currentLanguage = "en", 
+  currentLanguage, 
   onLanguageChange, 
   compact = false 
 }: LanguageSelectorProps) {
-  const [selectedLanguage, setSelectedLanguage] = useState(currentLanguage);
+  const { currentLanguage: contextLanguage, setLanguage, isTranslating } = useTranslation();
+  const selectedLanguage = currentLanguage || contextLanguage;
 
   const handleLanguageChange = (languageCode: string) => {
-    setSelectedLanguage(languageCode);
+    setLanguage(languageCode);
     if (onLanguageChange) {
       onLanguageChange(languageCode);
     }
-    
-    // Store in localStorage for persistence
-    localStorage.setItem("selectedLanguage", languageCode);
-    
-    // Trigger translation update for the UI
-    window.dispatchEvent(new CustomEvent("languageChanged", { 
-      detail: { language: languageCode } 
-    }));
   };
 
   const currentLang = supportedLanguages.find(lang => lang.code === selectedLanguage);
 
   if (compact) {
     return (
-      <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
-        <SelectTrigger className="w-auto min-w-[120px]">
-          <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4" />
-            <SelectValue />
-          </div>
-        </SelectTrigger>
-        <SelectContent>
-          {supportedLanguages.map((language) => (
-            <SelectItem key={language.code} value={language.code}>
-              <div className="flex items-center gap-2">
-                <span className="text-xs">{language.code.toUpperCase()}</span>
-                <span>{language.nativeName}</span>
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="relative">
+        <Select value={selectedLanguage} onValueChange={handleLanguageChange} disabled={isTranslating}>
+          <SelectTrigger className="w-auto min-w-[120px]">
+            <div className="flex items-center gap-2">
+              <Globe className={`w-4 h-4 ${isTranslating ? 'animate-spin' : ''}`} />
+              <SelectValue placeholder="Language" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            {supportedLanguages.map((language) => (
+              <SelectItem key={language.code} value={language.code}>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs">{language.code.toUpperCase()}</span>
+                  <span>{language.nativeName}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {isTranslating && (
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+        )}
+      </div>
     );
   }
 
