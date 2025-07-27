@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Users, Pill, TestTube, DollarSign, AlertTriangle, CheckCircle, Clock, RefreshCw, Building2, Activity, TrendingUp, Database, Stethoscope, Heart, UserCheck, Package, Shield, ShieldCheck, FileText } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
+import { useTranslation } from "@/contexts/translation-context";
 
 interface DashboardMetrics {
   todayAppointments: number;
@@ -33,6 +34,7 @@ interface PlatformMetrics {
 export default function Dashboard() {
   const { user } = useAuth();
   const { tenant } = useTenant();
+  const { t } = useTranslation();
 
   const isSuperAdmin = user?.role === 'super_admin';
   
@@ -92,7 +94,7 @@ export default function Dashboard() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">Loading...</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{t('loading')}</h2>
           <p className="text-gray-600">Setting up your workspace</p>
         </div>
       </div>
@@ -114,15 +116,15 @@ export default function Dashboard() {
         {/* Platform Owner Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Platform Overview</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t('platform-overview')}</h1>
             <p className="text-gray-600 mt-1">
-              Welcome back, {user.firstName}. Platform-wide analytics and tenant management.
+              {t('welcome-back')}, {user.firstName}. Platform-wide analytics and tenant management.
             </p>
           </div>
           <div className="flex items-center space-x-3">
             <Badge className="bg-green-100 text-green-800 border-green-200">
               <Database className="h-3 w-3 mr-1" />
-              System Healthy
+              {t('system-health')}
             </Badge>
             <span className="text-sm text-gray-500">Last updated: 1 min ago</span>
             <Button 
@@ -132,7 +134,7 @@ export default function Dashboard() {
               disabled={platformLoading}
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${platformLoading ? 'animate-spin' : ''}`} />
-              Refresh
+              {t('refresh')}
             </Button>
           </div>
         </div>
@@ -143,10 +145,10 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Organizations</p>
+                  <p className="text-sm font-medium text-gray-600">{t('total-tenants')}</p>
                   <p className="text-3xl font-bold text-gray-900">{platformMetrics?.totalTenants || 0}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {platformMetrics?.activeTenants || 0} active
+                    {platformMetrics?.activeTenants || 0} {t('active')}
                   </p>
                 </div>
                 <Building2 className="h-8 w-8 text-blue-600" />
@@ -174,7 +176,7 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Patients</p>
+                  <p className="text-sm font-medium text-gray-600">{t('total-patients')}</p>
                   <p className="text-3xl font-bold text-gray-900">{platformMetrics?.totalPatients?.toLocaleString() || 0}</p>
                   <p className="text-xs text-green-600 mt-1 flex items-center">
                     <TrendingUp className="h-3 w-3 mr-1" />
@@ -190,7 +192,7 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
+                  <p className="text-sm font-medium text-gray-600">{t('monthly-revenue')}</p>
                   <p className="text-3xl font-bold text-gray-900">${platformMetrics?.monthlyRevenue?.toLocaleString() || 0}</p>
                   <p className="text-xs text-blue-600 mt-1 flex items-center">
                     <DollarSign className="h-3 w-3 mr-1" />

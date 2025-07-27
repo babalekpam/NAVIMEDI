@@ -76,6 +76,27 @@ export const MetricsCard = ({
             <p className="text-sm font-medium text-gray-600">{t(title) || title}</p>
             <p className="text-3xl font-bold text-gray-900">{value}</p>
             {trend && (
+              <p className={cn(
+                "text-xs mt-1 flex items-center",
+                trendDirection && trendClasses[trendDirection]
+              )}>
+                {getTrendIcon()}
+                {trend}
+              </p>
+            )}
+          </div>
+          <div className={cn(
+            "p-3 rounded-lg",
+            colorClasses[color]
+          )}>
+            <Icon className="h-6 w-6" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+            {trend && (
               <p className={cn("text-sm flex items-center", trendDirection && trendClasses[trendDirection])}>
                 {getTrendIcon()}
                 {trend}

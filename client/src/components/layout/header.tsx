@@ -64,19 +64,19 @@ export const Header = () => {
                   onClick={() => setLocation("/tenant-management")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
-                  Tenants
+                  {t('tenant-management')}
                 </button>
                 <button 
                   onClick={() => setLocation("/user-roles")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
-                  Users
+                  {t('user-roles')}
                 </button>
                 <button 
                   onClick={() => setLocation("/audit-logs")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
-                  Audit
+                  {t('audit-logs')}
                 </button>
               </>
             ) : (
@@ -159,20 +159,20 @@ export const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel>{t('my-account')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setLocation("/profile-settings")}>
-                  Profile Settings
+                  {t('profile-settings')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setLocation("/profile-settings")}>
-                  Security
+                  {t('security-privacy')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setLocation("/audit-logs")}>
-                  Audit Logs
+                  {t('audit-logs')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-                  Sign Out
+                  {t('sign-out')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
