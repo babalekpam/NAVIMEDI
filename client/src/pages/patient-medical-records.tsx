@@ -34,7 +34,7 @@ export default function PatientMedicalRecords() {
 
   const { data: patients = [], isLoading } = useQuery<PatientMedicalRecord[]>({
     queryKey: ["/api/patients/medical-records"],
-    enabled: !!user && !!tenant,
+    enabled: !!user && !!tenant && searchQuery.length >= 2, // Only search when query has 2+ characters
   });
 
   const { data: selectedPatientDetails, isLoading: isDetailsLoading } = useQuery({
@@ -145,7 +145,7 @@ export default function PatientMedicalRecords() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 text-gray-400 transform -translate-y-1/2" />
                 <Input
-                  placeholder="Search by name, MRN, condition..."
+                  placeholder="🔍 Search by name, MRN, conditions, allergies... (minimum 2 characters)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -189,7 +189,10 @@ export default function PatientMedicalRecords() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center">
                 <Stethoscope className="h-5 w-5 mr-2" />
-                Patients ({sortedPatients.length})
+                {searchQuery.length >= 2 
+                  ? `Search Results (${sortedPatients.length})` 
+                  : "Patient Search"
+                }
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -205,10 +208,20 @@ export default function PatientMedicalRecords() {
                     </div>
                   ))}
                 </div>
+              ) : searchQuery.length < 2 ? (
+                <div className="text-center py-12 p-4">
+                  <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-600 text-lg font-medium mb-2">Search for Patients</p>
+                  <p className="text-gray-500 text-sm">Enter at least 2 characters to search by name, MRN, conditions, or allergies</p>
+                  <div className="mt-4 text-xs text-gray-400">
+                    <p>🔒 Patient privacy protected - search required to view records</p>
+                  </div>
+                </div>
               ) : sortedPatients.length === 0 ? (
                 <div className="text-center py-8 p-4">
                   <User className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-600">No patients found matching your criteria</p>
+                  <p className="text-gray-600">No patients found matching: "{searchQuery}"</p>
+                  <p className="text-gray-500 text-sm mt-1">Try searching by name, MRN, medical conditions, or allergies</p>
                 </div>
               ) : (
                 <div className="max-h-96 overflow-y-auto">
