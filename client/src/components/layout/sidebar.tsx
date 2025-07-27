@@ -35,6 +35,7 @@ const sidebarItems: SidebarItem[] = [
   { id: "dashboard", label: "Overview", icon: BarChart3, path: "/dashboard", roles: ["physician", "nurse", "pharmacist", "lab_technician", "receptionist", "billing_staff", "tenant_admin", "director", "super_admin"] },
   { id: "prescriptions", label: "Prescriptions", icon: Pill, path: "/prescriptions", roles: ["physician", "nurse", "pharmacist", "tenant_admin", "director"] },
   { id: "pharmacy-dashboard", label: "Pharmacy Dashboard", icon: Building2, path: "/pharmacy-dashboard", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "medication-copays", label: "Medication Copays", icon: DollarSign, path: "/medication-copays", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "patients", label: "Patient Records", icon: Users, path: "/patients", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "appointments", label: "Appointments", icon: Calendar, path: "/appointments", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "lab-orders", label: "Lab Results", icon: TestTube, path: "/lab-orders", roles: ["physician", "nurse", "lab_technician", "tenant_admin", "director"] },
@@ -115,7 +116,7 @@ export const Sidebar = () => {
   if (user.role === "pharmacist" || (user.role === "tenant_admin" && isPharmacyTenant)) {
     
     const pharmacyItems = filteredItems.filter(item => 
-      ["dashboard", "pharmacy-dashboard", "prescriptions", "billing"].includes(item.id)
+      ["dashboard", "pharmacy-dashboard", "prescriptions", "medication-copays", "billing"].includes(item.id)
     );
     
     return (

@@ -313,6 +313,45 @@ export const claimLineItems = pgTable("claim_line_items", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Medication Copays defined by pharmacists for patients based on insurance
+export const medicationCopays = pgTable("medication_copays", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(), // Pharmacy tenant
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  patientInsuranceId: uuid("patient_insurance_id").references(() => patientInsurance.id).notNull(),
+  prescriptionId: uuid("prescription_id").references(() => prescriptions.id),
+  medicationName: text("medication_name").notNull(),
+  genericName: text("generic_name"),
+  strength: text("strength"),
+  dosageForm: text("dosage_form"), // tablet, capsule, liquid, etc.
+  ndcNumber: text("ndc_number"), // National Drug Code
+  
+  // Pricing Information
+  fullPrice: decimal("full_price", { precision: 10, scale: 2 }).notNull(), // Full medication price
+  insuranceCoverage: decimal("insurance_coverage", { precision: 10, scale: 2 }).notNull(), // Amount covered by insurance
+  patientCopay: decimal("patient_copay", { precision: 10, scale: 2 }).notNull(), // Amount patient pays
+  copayPercentage: decimal("copay_percentage", { precision: 5, scale: 2 }), // If percentage-based copay
+  
+  // Insurance Details
+  formularyTier: text("formulary_tier"), // Tier 1, 2, 3, etc.
+  priorAuthRequired: boolean("prior_auth_required").default(false),
+  quantityLimit: integer("quantity_limit"), // Max quantity per fill
+  daySupplyLimit: integer("day_supply_limit"), // Max days supply
+  
+  // Pharmacy Information
+  definedByPharmacist: uuid("defined_by_pharmacist").references(() => users.id).notNull(),
+  pharmacyNotes: text("pharmacy_notes"),
+  effectiveDate: timestamp("effective_date").default(sql`CURRENT_TIMESTAMP`),
+  expirationDate: timestamp("expiration_date"),
+  
+  // Status
+  isActive: boolean("is_active").default(true),
+  lastVerified: timestamp("last_verified").default(sql`CURRENT_TIMESTAMP`),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Vital Signs captured at reception
 export const vitalSigns = pgTable("vital_signs", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -756,6 +795,7 @@ export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   servicePrices: many(servicePrices),
   insurancePlanCoverage: many(insurancePlanCoverage),
   claimLineItems: many(claimLineItems),
+  medicationCopays: many(medicationCopays),
   auditLogs: many(auditLogs),
   subscription: one(subscriptions),
   reports: many(reports),
@@ -788,7 +828,8 @@ export const patientInsuranceRelations = relations(patientInsurance, ({ one, man
     fields: [patientInsurance.insuranceProviderId],
     references: [insuranceProviders.id]
   }),
-  claims: many(insuranceClaims)
+  claims: many(insuranceClaims),
+  medicationCopays: many(medicationCopays)
 }));
 
 export const servicePricesRelations = relations(servicePrices, ({ one, many }) => ({
@@ -958,7 +999,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   labResults: many(labResults),
   labOrderAssignments: many(labOrderAssignments),
   vitalSignsRecorded: many(vitalSigns, { relationName: "recordedBy" }),
-  visitSummariesAsProvider: many(visitSummaries, { relationName: "providerSummaries" })
+  visitSummariesAsProvider: many(visitSummaries, { relationName: "providerSummaries" }),
+  medicationCopaysAsDefined: many(medicationCopays, { relationName: "pharmacistCopays" })
 }));
 
 export const pharmaciesRelations = relations(pharmacies, ({ one, many }) => ({
@@ -984,6 +1026,7 @@ export const patientsRelations = relations(patients, ({ one, many }) => ({
   insuranceClaims: many(insuranceClaims),
   labResults: many(labResults),
   vitalSigns: many(vitalSigns),
+  medicationCopays: many(medicationCopays),
   visitSummaries: many(visitSummaries)
 }));
 
@@ -1092,6 +1135,31 @@ export const vitalSignsRelations = relations(vitalSigns, ({ one }) => ({
   })
 }));
 
+// Medication Copays Relations
+export const medicationCopaysRelations = relations(medicationCopays, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [medicationCopays.tenantId],
+    references: [tenants.id]
+  }),
+  patient: one(patients, {
+    fields: [medicationCopays.patientId],
+    references: [patients.id]
+  }),
+  patientInsurance: one(patientInsurance, {
+    fields: [medicationCopays.patientInsuranceId],
+    references: [patientInsurance.id]
+  }),
+  prescription: one(prescriptions, {
+    fields: [medicationCopays.prescriptionId],
+    references: [prescriptions.id]
+  }),
+  definedBy: one(users, {
+    fields: [medicationCopays.definedByPharmacist],
+    references: [users.id],
+    relationName: "pharmacistCopays"
+  })
+}));
+
 // Visit Summaries Relations
 export const visitSummariesRelations = relations(visitSummaries, ({ one }) => ({
   tenant: one(tenants, {
@@ -1193,6 +1261,12 @@ export const insertInsurancePlanCoverageSchema = createInsertSchema(insurancePla
 });
 
 export const insertClaimLineItemSchema = createInsertSchema(claimLineItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertMedicationCopaySchema = createInsertSchema(medicationCopays).omit({
   id: true,
   createdAt: true,
   updatedAt: true
@@ -1335,6 +1409,9 @@ export type InsertInsurancePlanCoverage = z.infer<typeof insertInsurancePlanCove
 
 export type ClaimLineItem = typeof claimLineItems.$inferSelect;
 export type InsertClaimLineItem = z.infer<typeof insertClaimLineItemSchema>;
+
+export type MedicationCopay = typeof medicationCopays.$inferSelect;
+export type InsertMedicationCopay = z.infer<typeof insertMedicationCopaySchema>;
 
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;

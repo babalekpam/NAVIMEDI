@@ -27,6 +27,7 @@ import {
   visitSummaries,
   healthRecommendations,
   healthAnalyses,
+  medicationCopays,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -54,6 +55,8 @@ import {
   type InsertInsurancePlanCoverage,
   type ClaimLineItem,
   type InsertClaimLineItem,
+  type MedicationCopay,
+  type InsertMedicationCopay,
   type Subscription,
   type InsertSubscription,
   type Report,
@@ -311,6 +314,17 @@ export interface IStorage {
   getHealthAnalysesByPatient(patientId: string, tenantId: string): Promise<HealthAnalysis[]>;
   getLatestHealthAnalysis(patientId: string, tenantId: string): Promise<HealthAnalysis | undefined>;
   getHealthAnalysesByTenant(tenantId: string): Promise<HealthAnalysis[]>;
+
+  // Medication Copay Management
+  getMedicationCopay(id: string, tenantId: string): Promise<MedicationCopay | undefined>;
+  createMedicationCopay(copay: InsertMedicationCopay): Promise<MedicationCopay>;
+  updateMedicationCopay(id: string, updates: Partial<MedicationCopay>, tenantId: string): Promise<MedicationCopay | undefined>;
+  getMedicationCopaysByPatient(patientId: string, tenantId: string): Promise<MedicationCopay[]>;
+  getMedicationCopaysByPatientInsurance(patientInsuranceId: string, tenantId: string): Promise<MedicationCopay[]>;
+  getMedicationCopaysByPrescription(prescriptionId: string, tenantId: string): Promise<MedicationCopay[]>;
+  getMedicationCopaysByPharmacist(pharmacistId: string, tenantId: string): Promise<MedicationCopay[]>;
+  getMedicationCopaysByTenant(tenantId: string): Promise<MedicationCopay[]>;
+  getActiveMedicationCopaysByPatient(patientId: string, tenantId: string): Promise<MedicationCopay[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1528,6 +1542,66 @@ export class DatabaseStorage implements IStorage {
   async getHealthAnalysesByTenant(tenantId: string): Promise<HealthAnalysis[]> {
     return await db.select().from(healthAnalyses).where(eq(healthAnalyses.tenantId, tenantId))
       .orderBy(desc(healthAnalyses.createdAt));
+  }
+
+  // Medication Copay Management Implementation
+  async getMedicationCopay(id: string, tenantId: string): Promise<MedicationCopay | undefined> {
+    const [copay] = await db.select().from(medicationCopays).where(
+      and(eq(medicationCopays.id, id), eq(medicationCopays.tenantId, tenantId))
+    );
+    return copay || undefined;
+  }
+
+  async createMedicationCopay(insertCopay: InsertMedicationCopay): Promise<MedicationCopay> {
+    const [copay] = await db.insert(medicationCopays).values(insertCopay).returning();
+    return copay;
+  }
+
+  async updateMedicationCopay(id: string, updates: Partial<MedicationCopay>, tenantId: string): Promise<MedicationCopay | undefined> {
+    const [copay] = await db.update(medicationCopays)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(medicationCopays.id, id), eq(medicationCopays.tenantId, tenantId)))
+      .returning();
+    return copay || undefined;
+  }
+
+  async getMedicationCopaysByPatient(patientId: string, tenantId: string): Promise<MedicationCopay[]> {
+    return await db.select().from(medicationCopays).where(
+      and(eq(medicationCopays.patientId, patientId), eq(medicationCopays.tenantId, tenantId))
+    ).orderBy(desc(medicationCopays.createdAt));
+  }
+
+  async getMedicationCopaysByPatientInsurance(patientInsuranceId: string, tenantId: string): Promise<MedicationCopay[]> {
+    return await db.select().from(medicationCopays).where(
+      and(eq(medicationCopays.patientInsuranceId, patientInsuranceId), eq(medicationCopays.tenantId, tenantId))
+    ).orderBy(desc(medicationCopays.createdAt));
+  }
+
+  async getMedicationCopaysByPrescription(prescriptionId: string, tenantId: string): Promise<MedicationCopay[]> {
+    return await db.select().from(medicationCopays).where(
+      and(eq(medicationCopays.prescriptionId, prescriptionId), eq(medicationCopays.tenantId, tenantId))
+    ).orderBy(desc(medicationCopays.createdAt));
+  }
+
+  async getMedicationCopaysByPharmacist(pharmacistId: string, tenantId: string): Promise<MedicationCopay[]> {
+    return await db.select().from(medicationCopays).where(
+      and(eq(medicationCopays.definedByPharmacist, pharmacistId), eq(medicationCopays.tenantId, tenantId))
+    ).orderBy(desc(medicationCopays.createdAt));
+  }
+
+  async getMedicationCopaysByTenant(tenantId: string): Promise<MedicationCopay[]> {
+    return await db.select().from(medicationCopays).where(eq(medicationCopays.tenantId, tenantId))
+      .orderBy(desc(medicationCopays.createdAt));
+  }
+
+  async getActiveMedicationCopaysByPatient(patientId: string, tenantId: string): Promise<MedicationCopay[]> {
+    return await db.select().from(medicationCopays).where(
+      and(
+        eq(medicationCopays.patientId, patientId), 
+        eq(medicationCopays.tenantId, tenantId),
+        eq(medicationCopays.isActive, true)
+      )
+    ).orderBy(desc(medicationCopays.createdAt));
   }
 }
 
