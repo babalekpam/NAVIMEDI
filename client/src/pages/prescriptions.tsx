@@ -244,7 +244,7 @@ export default function Prescriptions() {
                     <div className="text-right">
                       <p className="text-sm text-gray-500">Prescribed</p>
                       <p className="text-sm font-medium text-gray-900">
-                        {new Date(prescription.prescribedDate).toLocaleDateString()}
+                        {prescription.prescribedDate ? new Date(prescription.prescribedDate).toLocaleDateString() : 'Not set'}
                       </p>
                       {prescription.expiryDate && (
                         <p className="text-xs text-gray-400">
@@ -255,9 +255,9 @@ export default function Prescriptions() {
                     
                     <Badge 
                       variant="secondary"
-                      className={statusColors[prescription.status] || statusColors.prescribed}
+                      className={statusColors[prescription.status || 'prescribed'] || statusColors.prescribed}
                     >
-                      {prescription.status.replace('_', ' ')}
+                      {(prescription.status || 'prescribed').replace('_', ' ')}
                     </Badge>
                     
                     <div className="flex items-center space-x-2">
@@ -310,7 +310,7 @@ export default function Prescriptions() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Prescription Date</p>
-                    <p className="font-medium">{new Date(selectedPrescription.prescribedDate).toLocaleDateString()}</p>
+                    <p className="font-medium">{selectedPrescription.prescribedDate ? new Date(selectedPrescription.prescribedDate).toLocaleDateString() : 'Not set'}</p>
                   </div>
                 </div>
               </div>
@@ -333,7 +333,7 @@ export default function Prescriptions() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Route</p>
-                    <p className="font-medium">{selectedPrescription.route}</p>
+                    <p className="font-medium">{selectedPrescription.route || 'Oral'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Quantity</p>
@@ -362,9 +362,9 @@ export default function Prescriptions() {
                     <p className="text-sm text-gray-600">Current Status</p>
                     <Badge 
                       variant="secondary"
-                      className={`${statusColors[selectedPrescription.status] || statusColors.prescribed} font-medium`}
+                      className={`${statusColors[selectedPrescription.status || 'prescribed'] || statusColors.prescribed} font-medium`}
                     >
-                      {selectedPrescription.status.replace('_', ' ').toUpperCase()}
+                      {(selectedPrescription.status || 'prescribed').replace('_', ' ').toUpperCase()}
                     </Badge>
                   </div>
                   {selectedPrescription.expiryDate && (
@@ -389,7 +389,7 @@ export default function Prescriptions() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Prescribing Physician</p>
-                    <p className="font-medium">{selectedPrescription.physicianName || 'Not specified'}</p>
+                    <p className="font-medium">{'Not specified'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Prescription ID</p>
