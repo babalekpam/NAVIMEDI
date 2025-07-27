@@ -115,18 +115,30 @@ export default function MedicationCopayForm({
         daySupplyLimit: copayData.daySupplyLimit ? parseInt(copayData.daySupplyLimit.toString()) : null
       };
       console.log("Sending to API:", processedData);
-      const response = await apiRequest("POST", "/api/medication-copays", processedData);
-      console.log("API response:", response);
       
-      // Check if the response is actually JSON
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        return response.json();
-      } else {
-        const text = await response.text();
-        console.error("Expected JSON but got:", text);
-        throw new Error("Server returned non-JSON response");
+      // Use fetch directly to bypass potential routing issues
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch("/api/medication-copays", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(processedData)
+      });
+      
+      console.log("API response status:", response.status);
+      console.log("API response headers:", Object.fromEntries(response.headers.entries()));
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API error response:", errorText);
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
+      
+      const result = await response.json();
+      console.log("Parsed JSON result:", result);
+      return result;
     },
     onSuccess: (data) => {
       console.log("Mutation success:", data);
