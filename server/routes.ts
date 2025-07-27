@@ -610,6 +610,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/insurance-claims", requireRole(["billing_staff", "physician", "tenant_admin", "director", "receptionist"]), async (req, res) => {
     try {
+      // Additional check for receptionists - only allow hospital/clinic receptionists
+      if (req.user.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
+        return res.status(403).json({ message: "Access denied. Receptionist billing access is only available for hospitals." });
+      }
+      
       const requestData = { ...req.body };
       
       // Generate unique claim number if not provided
@@ -651,6 +656,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/insurance-claims/:id", requireRole(["billing_staff", "physician", "tenant_admin", "director", "receptionist"]), async (req, res) => {
     try {
+      // Additional check for receptionists - only allow hospital/clinic receptionists
+      if (req.user.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
+        return res.status(403).json({ message: "Access denied. Receptionist billing access is only available for hospitals." });
+      }
+      
       const { id } = req.params;
       const updateData = { ...req.body };
 
@@ -719,6 +729,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/service-prices", requireRole(["tenant_admin", "director", "billing_staff", "receptionist"]), async (req, res) => {
     try {
+      // Additional check for receptionists - only allow hospital/clinic receptionists
+      if (req.user.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
+        return res.status(403).json({ message: "Access denied. Receptionist billing access is only available for hospitals." });
+      }
+      
       const servicePriceData = insertServicePriceSchema.parse({
         ...req.body,
         tenantId: req.tenant!.id
@@ -761,6 +776,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/insurance-plan-coverage", requireRole(["tenant_admin", "director", "billing_staff", "receptionist"]), async (req, res) => {
     try {
+      // Additional check for receptionists - only allow hospital/clinic receptionists
+      if (req.user.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
+        return res.status(403).json({ message: "Access denied. Receptionist billing access is only available for hospitals." });
+      }
+      
       const coverageData = insertInsurancePlanCoverageSchema.parse({
         ...req.body,
         tenantId: req.tenant!.id
@@ -813,6 +833,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/claim-line-items", requireRole(["billing_staff", "physician", "tenant_admin", "director", "receptionist"]), async (req, res) => {
     try {
+      // Additional check for receptionists - only allow hospital/clinic receptionists
+      if (req.user.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
+        return res.status(403).json({ message: "Access denied. Receptionist billing access is only available for hospitals." });
+      }
+      
       const lineItemData = insertClaimLineItemSchema.parse({
         ...req.body,
         tenantId: req.tenant!.id

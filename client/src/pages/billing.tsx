@@ -406,7 +406,7 @@ export default function Billing() {
             }
           </p>
         </div>
-        {!isPhysician && (user.role === "billing_staff" || user.role === "tenant_admin" || user.role === "director" || user.role === "receptionist") && (
+        {!isPhysician && (user.role === "billing_staff" || user.role === "tenant_admin" || user.role === "director" || (user.role === "receptionist" && (tenant?.type === "hospital" || tenant?.type === "clinic"))) && (
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700">
@@ -682,7 +682,7 @@ export default function Billing() {
                  isPhysician ? "No billing information available for your services yet" : 
                  "No insurance claims have been created yet"}
               </p>
-              {!isPhysician && (user.role === "billing_staff" || user.role === "tenant_admin" || user.role === "director" || user.role === "receptionist") && (
+              {!isPhysician && (user.role === "billing_staff" || user.role === "tenant_admin" || user.role === "director" || (user.role === "receptionist" && (tenant?.type === "hospital" || tenant?.type === "clinic"))) && (
                 <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsCreateDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Claim

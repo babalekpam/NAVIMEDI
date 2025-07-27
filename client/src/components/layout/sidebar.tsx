@@ -46,7 +46,9 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "medical-communications", label: t("medical-communications"), icon: Languages, path: "/medical-communications", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   
   // Operations Section (only for tenant users)
-  { id: "billing", label: t("billing"), icon: FileText, path: "/billing", roles: ["billing_staff", "tenant_admin", "director", "receptionist"] },
+  { id: "billing", label: t("billing"), icon: FileText, path: "/billing", roles: ["billing_staff", "tenant_admin", "director"] },
+  // Hospital billing access (receptionist only for hospitals)
+  { id: "hospital-billing", label: t("billing"), icon: FileText, path: "/billing", roles: ["receptionist"] },
   { id: "billing", label: t("billing"), icon: DollarSign, path: "/billing", roles: ["physician"] },
   { id: "reports", label: t("reports"), icon: BarChart3, path: "/reports", roles: ["physician", "nurse", "pharmacist", "lab_technician", "billing_staff", "tenant_admin", "director", "super_admin"] },
   
@@ -164,10 +166,21 @@ export const Sidebar = () => {
     );
   }
 
-  // For regular tenant users (excluding pharmacists)
-  const clinicalItems = filteredItems.filter(item => 
-    !["pharmacy-dashboard"].includes(item.id)
-  ).slice(0, 5);
+  // For hospital users - include receptionist billing access
+  const isHospitalTenant = currentTenant?.type === "hospital" || currentTenant?.type === "clinic";
+  
+  // For regular tenant users (excluding pharmacists)  
+  const clinicalItems = filteredItems.filter(item => {
+    // For hospital receptionists, include billing access
+    if (user.role === "receptionist" && isHospitalTenant && item.id === "hospital-billing") {
+      return true;
+    }
+    // For pharmacy receptionists, exclude billing (pharmacy billing handled separately)
+    if (user.role === "receptionist" && !isHospitalTenant && (item.id === "billing" || item.id === "hospital-billing")) {
+      return false;
+    }
+    return !["pharmacy-dashboard"].includes(item.id);
+  }).slice(0, 5);
   const operationItems = filteredItems.slice(5, 7);
   const adminItems = filteredItems.slice(7);
 
