@@ -2095,7 +2095,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertVisitSummarySchema.parse({
         ...req.body,
         tenantId: req.tenantId,
-        providerId: req.userId
+        providerId: req.user?.id
       });
 
       const visitSummary = await storage.createVisitSummary(validatedData);
