@@ -79,12 +79,15 @@ export default function PatientMedicalRecords() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update patient information");
+        const errorText = await response.text();
+        console.error("Update request failed:", response.status, errorText);
+        throw new Error(`Update failed: ${response.status} - ${errorText}`);
       }
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Update successful, received data:", data);
       toast({
         title: "Success",
         description: "Patient medical information updated successfully",
@@ -97,10 +100,11 @@ export default function PatientMedicalRecords() {
       setEditingMedications(false);
       setEditingAllergies(false);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Update failed:", error);
       toast({
         title: "Error",
-        description: "Failed to update patient medical information",
+        description: `Failed to update patient medical information: ${error.message}`,
         variant: "destructive",
       });
     },
@@ -495,10 +499,10 @@ export default function PatientMedicalRecords() {
                         {editingMedicalHistory ? (
                           <div className="space-y-4">
                             {/* Existing conditions - editable */}
-                            {selectedPatient.medicalHistory && Array.isArray(selectedPatient.medicalHistory) && selectedPatient.medicalHistory.length > 0 && (
+                            {(selectedPatientDetails?.medicalHistory || selectedPatient.medicalHistory) && Array.isArray(selectedPatientDetails?.medicalHistory || selectedPatient.medicalHistory) && (selectedPatientDetails?.medicalHistory || selectedPatient.medicalHistory).length > 0 && (
                               <div className="space-y-3">
                                 <h4 className="font-medium text-gray-700">Current Medical Conditions:</h4>
-                                {selectedPatient.medicalHistory.map((condition, index) => (
+                                {(selectedPatientDetails?.medicalHistory || selectedPatient.medicalHistory).map((condition, index) => (
                                   <div key={index} className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
                                     <div className="flex items-center space-x-2">
                                       <Heart className="h-4 w-4 text-red-500" />
@@ -508,7 +512,8 @@ export default function PatientMedicalRecords() {
                                       size="sm"
                                       variant="ghost"
                                       onClick={() => {
-                                        const updatedHistory = selectedPatient.medicalHistory?.filter((_, i) => i !== index) || [];
+                                        const currentHistory = selectedPatientDetails?.medicalHistory || selectedPatient.medicalHistory || [];
+                                        const updatedHistory = currentHistory.filter((_, i) => i !== index);
                                         updatePatientMutation.mutate({
                                           patientId: selectedPatient.id,
                                           medicalHistory: updatedHistory,
@@ -535,7 +540,11 @@ export default function PatientMedicalRecords() {
                                 <Button
                                   onClick={() => {
                                     if (newMedicalCondition.trim()) {
-                                      const updatedHistory = [...(selectedPatient.medicalHistory || []), newMedicalCondition.trim()];
+                                      const currentHistory = selectedPatientDetails?.medicalHistory || selectedPatient.medicalHistory || [];
+                                      const updatedHistory = [...currentHistory, newMedicalCondition.trim()];
+                                      console.log("Adding medical condition:", newMedicalCondition.trim());
+                                      console.log("Current history:", currentHistory);
+                                      console.log("Updated history will be:", updatedHistory);
                                       updatePatientMutation.mutate({
                                         patientId: selectedPatient.id,
                                         medicalHistory: updatedHistory,
@@ -565,9 +574,9 @@ export default function PatientMedicalRecords() {
                           </div>
                         ) : (
                           <>
-                            {selectedPatient.medicalHistory && Array.isArray(selectedPatient.medicalHistory) && selectedPatient.medicalHistory.length > 0 ? (
+                            {selectedPatientDetails?.medicalHistory && Array.isArray(selectedPatientDetails.medicalHistory) && selectedPatientDetails.medicalHistory.length > 0 ? (
                               <div className="space-y-3">
-                                {selectedPatient.medicalHistory.map((condition, index) => (
+                                {selectedPatientDetails.medicalHistory.map((condition, index) => (
                                   <div key={index} className="p-3 bg-red-50 border border-red-200 rounded-lg">
                                     <div className="flex items-center space-x-2">
                                       <Heart className="h-4 w-4 text-red-500" />
