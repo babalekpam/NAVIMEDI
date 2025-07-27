@@ -4,6 +4,12 @@
 A comprehensive multi-tenant healthcare management platform specializing in pharmacy operations and workflow optimization, with advanced capabilities for prescription management and insurance claims processing.
 
 ## Recent Changes (Latest)
+- **CREATED METRO GENERAL HOSPITAL ENVIRONMENT** - Full hospital setup with departments (Emergency, Internal Medicine, Cardiology, Pediatrics, Surgery)
+- **HOSPITAL USER ROLES IMPLEMENTED** - Admin, receptionist, doctor, and nurse accounts with appropriate permissions
+- **FIXED APPLICATION STARTUP ISSUES** - Resolved database connection and schema migration problems
+- **RESOLVED TYPESCRIPT ERRORS** - Fixed null/undefined handling in tenant management interface
+- **HOSPITAL-SPECIFIC FEATURES** - Patient management, appointments, lab orders, prescriptions, and billing for hospital environment
+- **MULTI-TENANT HOSPITAL SUPPORT** - Hospital operates independently from pharmacy with separate patient databases
 - **FIXED TRANSLATION SYSTEM COMPLETELY** - Multi-language support now fully functional with real-time interface translation
 - **RESOLVED LANGUAGE PERSISTENCE ISSUES** - Language selection persists across page refreshes and navigation
 - **ELIMINATED SERVER LANGUAGE OVERRIDE** - Server API no longer forces English, respects user's language choice
@@ -64,17 +70,19 @@ A comprehensive multi-tenant healthcare management platform specializing in phar
 - Password: `Serrega1208@`
 - Access: All tenants and system management
 
-### Pharmacy Admin (Working Test Pharmacy)
-- Email: `admin@workingtest.com`
-- Password: `admin123`
-- Tenant: `working-test`
-- Access: Pharmacy operations and patient management
+### Hospital - Metro General Hospital (metro-general)
+- **Hospital Admin**: `admin@metrogeneral.com` / `admin123`
+  - Access: Full hospital management, staff oversight, billing
+- **Hospital Receptionist**: `reception@metrogeneral.com` / `reception123`
+  - Access: Patient registration, appointments, check-in, vital signs
+- **Hospital Doctor**: `dr.smith@metrogeneral.com` / `doctor123`
+  - Access: Patient care, prescriptions, lab orders, medical records
+- **Hospital Nurse**: `nurse.davis@metrogeneral.com` / `nurse123`
+  - Access: Patient care, vital signs, medication administration
 
-### Receptionist (Working Test Pharmacy)
-- Email: `receptionist@workingtest.com`
-- Password: `receptionist123`
-- Tenant: `working-test`
-- Access: Patient registration, check-in, and vital signs collection
+### Pharmacy - Working Test Pharmacy (working-test)
+- **Pharmacy Admin**: `admin@workingtest.com` / `admin123`
+- **Pharmacy Receptionist**: `receptionist@workingtest.com` / `receptionist123`
 
 ## Development Notes
 - Application runs on port 5000

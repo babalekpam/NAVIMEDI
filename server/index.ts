@@ -6,6 +6,7 @@ import { tenants, users } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { trialSuspensionService } from "./trial-suspension-service";
+import { createTestHospital } from "./create-test-hospital";
 
 const app = express();
 app.use(express.json());
@@ -89,6 +90,9 @@ app.use((req, res, next) => {
     }
     
     log("✓ Platform initialization complete");
+    
+    // Initialize test hospital
+    await createTestHospital();
   } catch (error) {
     log("❌ Platform initialization failed: " + error);
   }
