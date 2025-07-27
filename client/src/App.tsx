@@ -25,6 +25,7 @@ import MedicalCommunications from "@/pages/medical-communications";
 import LaboratoryRegistration from "@/pages/laboratory-registration";
 import HealthRecommendations from "@/pages/health-recommendations";
 import PharmacyDashboard from "@/pages/pharmacy-dashboard";
+import PharmacyRegistration from "@/pages/pharmacy-registration";
 
 
 
@@ -204,6 +205,7 @@ function AppContent() {
           </ProtectedRoute>
         </Route>
         <Route path="/laboratory-registration" component={LaboratoryRegistration} />
+        <Route path="/pharmacy-registration" component={PharmacyRegistration} />
         <Route component={NotFound} />
       </Switch>
     </div>

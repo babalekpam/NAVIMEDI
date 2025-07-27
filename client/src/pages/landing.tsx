@@ -392,6 +392,92 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Independent Organizations Registration */}
+      <section className="py-20 bg-gradient-to-br from-purple-50 via-green-50 to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-slate-100">
+              Register as Independent Organization
+            </h2>
+            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
+              Join the NAVIMED network as an independent healthcare service provider and expand your reach
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <Card className="border-green-200 hover:border-green-300 transition-all duration-300 hover:shadow-lg bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-green-100 dark:bg-green-900 rounded-xl">
+                    <TestTube className="w-8 h-8 text-green-600 dark:text-green-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Laboratory Services</h3>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+                  Join as an independent diagnostic laboratory with comprehensive testing capabilities and seamless result integration with healthcare providers across the network.
+                </p>
+                <div className="mb-6">
+                  <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      Receive lab orders from multiple healthcare providers
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      Automated result reporting and integration
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      Quality control and compliance tracking
+                    </li>
+                  </ul>
+                </div>
+                <Link href="/laboratory-registration">
+                  <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                    Register Laboratory
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="border-purple-200 hover:border-purple-300 transition-all duration-300 hover:shadow-lg bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-xl">
+                    <Pill className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Pharmacy Services</h3>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+                  Register as an independent pharmacy to receive prescriptions from healthcare providers and manage patient medication needs with complete insurance processing and delivery management.
+                </p>
+                <div className="mb-6">
+                  <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-purple-500" />
+                      Receive prescriptions from multiple healthcare providers
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-purple-500" />
+                      Insurance claim processing and approval workflow
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-purple-500" />
+                      Delivery management and patient communication
+                    </li>
+                  </ul>
+                </div>
+                <Link href="/pharmacy-registration">
+                  <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                    Register Pharmacy
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-300 py-12">
         <div className="container mx-auto px-4">
