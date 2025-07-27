@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertInsuranceProviderSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertPatientCheckInSchema } from "@shared/schema";
-import { authenticateToken, requireRole } from "./middleware/auth";
+import { authenticateToken, requireRole, type AuthenticatedRequest, type JWTPayload } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -179,6 +179,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Protected routes - require authentication
   app.use("/api", authenticateToken);
+
+  // Get current tenant information - allowed without full auth
+  app.get("/api/tenant/current", async (req, res) => {
+    try {
+      // This route needs special handling to get tenant info for authenticated users
+      const authHeader = req.headers.authorization;
+      
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Authorization token required' });
+      }
+      
+      const token = authHeader.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production') as JWTPayload;
+      
+      const tenant = await storage.getTenant(decoded.tenantId);
+      if (!tenant) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+      
+      res.json(tenant);
+    } catch (error) {
+      console.error("Get current tenant error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
 
   // User profile
   app.get("/api/user/profile", async (req, res) => {

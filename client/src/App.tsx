@@ -325,6 +325,22 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
+        <Route path="/lab-results">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <div className="text-center py-12">
+                    <h2 className="text-2xl font-bold text-gray-900">Lab Results</h2>
+                    <p className="text-gray-600 mt-2">Lab results management coming soon</p>
+                  </div>
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
         <Route component={NotFound} />
       </Switch>
     </div>
