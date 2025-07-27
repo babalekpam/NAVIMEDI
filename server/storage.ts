@@ -542,6 +542,19 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(prescriptions.prescribedDate));
   }
 
+  async updatePrescription(id: string, updates: Partial<Prescription>, tenantId: string): Promise<Prescription | null> {
+    const result = await db
+      .update(prescriptions)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(and(eq(prescriptions.id, id), eq(prescriptions.tenantId, tenantId)))
+      .returning();
+    
+    return result[0] || null;
+  }
+
   // Lab order management
   async getLabOrder(id: string, tenantId: string): Promise<LabOrder | undefined> {
     const [labOrder] = await db.select().from(labOrders).where(

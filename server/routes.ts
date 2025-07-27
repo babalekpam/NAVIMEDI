@@ -476,6 +476,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/prescriptions/:id", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const tenantId = req.tenant!.id;
+
+      const updatedPrescription = await storage.updatePrescription(id, updates, tenantId);
+      
+      if (!updatedPrescription) {
+        return res.status(404).json({ message: "Prescription not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: tenantId,
+        userId: req.user!.userId,
+        entityType: "prescription",
+        entityId: id,
+        action: "UPDATE",
+        newData: updatedPrescription,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json(updatedPrescription);
+    } catch (error) {
+      console.error("Update prescription error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/prescriptions", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
       // Convert string dates to Date objects

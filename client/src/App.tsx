@@ -24,6 +24,7 @@ import Reports from "@/pages/reports";
 import MedicalCommunications from "@/pages/medical-communications";
 import LaboratoryRegistration from "@/pages/laboratory-registration";
 import HealthRecommendations from "@/pages/health-recommendations";
+import PharmacyDashboard from "@/pages/pharmacy-dashboard";
 
 
 
@@ -184,6 +185,19 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <HealthRecommendations />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/pharmacy">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PharmacyDashboard />
                 </main>
               </div>
             </div>
