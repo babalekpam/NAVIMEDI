@@ -26,7 +26,7 @@ import LaboratoryRegistration from "@/pages/laboratory-registration";
 import HealthRecommendations from "@/pages/health-recommendations";
 import PharmacyDashboard from "@/pages/pharmacy-dashboard";
 import PharmacyRegistration from "@/pages/pharmacy-registration";
-import MedicationCopays from "@/pages/medication-copays";
+
 
 
 
@@ -205,19 +205,7 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
-        <Route path="/medication-copays">
-          <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <MedicationCopays />
-                </main>
-              </div>
-            </div>
-          </ProtectedRoute>
-        </Route>
+
         <Route path="/laboratory-registration" component={LaboratoryRegistration} />
         <Route path="/pharmacy-registration" component={PharmacyRegistration} />
         <Route component={NotFound} />
