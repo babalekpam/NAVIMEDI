@@ -288,23 +288,23 @@ export default function TenantManagement() {
                 <div>
                   <label className="text-sm font-medium text-gray-600">Created Date</label>
                   <p className="text-sm text-gray-900">
-                    {new Date(viewDetailsTenant.createdAt).toLocaleDateString('en-US', {
+                    {viewDetailsTenant.createdAt ? new Date(viewDetailsTenant.createdAt).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
                       hour: '2-digit',
                       minute: '2-digit'
-                    })}
+                    }) : 'N/A'}
                   </p>
                 </div>
 
                 {viewDetailsTenant.settings && Object.keys(viewDetailsTenant.settings).length > 0 && (
                   <div>
                     <label className="text-sm font-medium text-gray-600">
-                      {viewDetailsTenant.settings.isPlatformOwner ? 'Platform Features' : 'Organization Settings'}
+                      {(viewDetailsTenant.settings as any)?.isPlatformOwner ? 'Platform Features' : 'Organization Settings'}
                     </label>
                     <div className="mt-1 bg-gray-50 p-3 rounded">
-                      {viewDetailsTenant.settings.isPlatformOwner ? (
+                      {(viewDetailsTenant.settings as any)?.isPlatformOwner ? (
                         <div className="space-y-2">
                           <div className="flex items-center text-sm text-gray-700">
                             <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
@@ -497,7 +497,7 @@ export default function TenantManagement() {
                         Subdomain: {tenant.subdomain}
                       </p>
                       <p className="text-xs text-gray-400">
-                        Created: {new Date(tenant.createdAt).toLocaleDateString()}
+                        Created: {tenant.createdAt ? new Date(tenant.createdAt).toLocaleDateString() : 'N/A'}
                       </p>
                     </div>
                   </div>
