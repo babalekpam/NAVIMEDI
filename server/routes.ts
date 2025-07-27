@@ -20,6 +20,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, password, tenantId } = req.body;
       
+      console.log("[LOGIN DEBUG] Login attempt:", { username, tenantId: tenantId || 'none', hasPassword: !!password });
+      
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
       }
@@ -56,17 +58,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // No tenant ID provided - search for user by email/username across all tenants
         const allUsers = await storage.getAllUsers();
+        console.log("[LOGIN DEBUG] Searching all users for:", username);
         user = allUsers.find(u => 
           (u.email === username || u.username === username) && 
           u.role !== 'super_admin' // Exclude super admin from this search
         );
+        
+        console.log("[LOGIN DEBUG] Found user:", user ? { id: user.id, email: user.email, username: user.username } : 'none');
         
         if (!user) {
           return res.status(401).json({ message: "Invalid credentials" });
         }
       }
 
-      if (!user || !await bcrypt.compare(password, user.password)) {
+      console.log("[LOGIN DEBUG] About to verify password for user:", user.email);
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      console.log("[LOGIN DEBUG] Password match result:", passwordMatch);
+
+      if (!user || !passwordMatch) {
+        console.log("[LOGIN DEBUG] Login failed - user exists:", !!user, "password match:", passwordMatch);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
