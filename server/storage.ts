@@ -350,8 +350,9 @@ export interface IStorage {
   createPatientCheckIn(checkIn: InsertPatientCheckIn): Promise<PatientCheckIn>;
   updatePatientCheckIn(id: string, updates: Partial<PatientCheckIn>, tenantId: string): Promise<PatientCheckIn | undefined>;
   getPatientCheckInsByTenant(tenantId: string, date?: Date): Promise<PatientCheckIn[]>;
-  getWaitingPatients(tenantId: string): Promise<PatientCheckIn[]>;
-  getTodaysCheckIns(tenantId: string): Promise<PatientCheckIn[]>;
+  getPatientCheckInsByDate(date: string, tenantId: string): Promise<any[]>;
+  getWaitingPatients(tenantId: string): Promise<any[]>;
+  getTodaysCheckIns(tenantId: string): Promise<any[]>;
   getOfflineData(tenantId: string): Promise<any>;
 
   // Translations
@@ -1983,6 +1984,66 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(patientCheckIns.checkedInAt);
+      
+    return result;
+  }
+
+  async getPatientCheckIn(id: string, tenantId: string): Promise<PatientCheckIn | undefined> {
+    const [checkIn] = await db.select().from(patientCheckIns)
+      .where(and(eq(patientCheckIns.id, id), eq(patientCheckIns.tenantId, tenantId)));
+    return checkIn || undefined;
+  }
+
+  async getPatientCheckInsByDate(date: string, tenantId: string): Promise<any[]> {
+    const targetDate = new Date(date);
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    const result = await db
+      .select({
+        id: patientCheckIns.id,
+        patientId: patientCheckIns.patientId,
+        appointmentId: patientCheckIns.appointmentId,
+        checkedInBy: patientCheckIns.checkedInBy,
+        checkedInAt: patientCheckIns.checkedInAt,
+        reasonForVisit: patientCheckIns.reasonForVisit,
+        chiefComplaint: patientCheckIns.chiefComplaint,
+        priorityLevel: patientCheckIns.priorityLevel,
+        specialInstructions: patientCheckIns.specialInstructions,
+        insuranceVerified: patientCheckIns.insuranceVerified,
+        status: patientCheckIns.status,
+        vitalSignsId: patientCheckIns.vitalSignsId,
+        patient: {
+          id: patients.id,
+          firstName: patients.firstName,
+          lastName: patients.lastName,
+          mrn: patients.mrn,
+          dateOfBirth: patients.dateOfBirth,
+          phone: patients.phone,
+          email: patients.email,
+        },
+        vitalSigns: {
+          id: vitalSigns.id,
+          systolicBp: vitalSigns.bloodPressureSystolic,
+          diastolicBp: vitalSigns.bloodPressureDiastolic,
+          heartRate: vitalSigns.heartRate,
+          temperature: vitalSigns.temperature,
+          temperatureUnit: vitalSigns.temperatureUnit,
+        }
+      })
+      .from(patientCheckIns)
+      .innerJoin(patients, eq(patientCheckIns.patientId, patients.id))
+      .leftJoin(vitalSigns, eq(patientCheckIns.vitalSignsId, vitalSigns.id))
+      .where(
+        and(
+          eq(patientCheckIns.tenantId, tenantId),
+          sql`${patientCheckIns.checkedInAt} >= ${startOfDay}`,
+          sql`${patientCheckIns.checkedInAt} <= ${endOfDay}`
+        )
+      )
+      .orderBy(desc(patientCheckIns.checkedInAt));
       
     return result;
   }
