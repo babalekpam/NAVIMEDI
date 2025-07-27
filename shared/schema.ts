@@ -419,7 +419,7 @@ export const insuranceClaims = pgTable("insurance_claims", {
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   patientId: uuid("patient_id").references(() => patients.id).notNull(),
   appointmentId: uuid("appointment_id").references(() => appointments.id),
-  patientInsuranceId: uuid("patient_insurance_id").references(() => patientInsurance.id).notNull(),
+  patientInsuranceId: uuid("patient_insurance_id").references(() => patientInsurance.id),
   claimNumber: text("claim_number").unique().notNull(),
   procedureCodes: jsonb("procedure_codes").default('[]'),
   diagnosisCodes: jsonb("diagnosis_codes").default('[]'),

@@ -284,9 +284,9 @@ export default function Billing() {
         claimNumber,
         diagnosisCodes: formData.diagnosisCodes.split(',').map(code => code.trim()).filter(Boolean),
         procedureCodes: formData.procedureCodes.split(',').map(code => code.trim()).filter(Boolean),
-        totalAmount,
-        totalPatientCopay,
-        totalInsuranceAmount,
+        totalAmount: totalAmount.toString(),
+        totalPatientCopay: totalPatientCopay.toString(),
+        totalInsuranceAmount: totalInsuranceAmount.toString(),
         status: 'draft',
         appointmentId: formData.appointmentId || null,
         notes: formData.notes || `Pharmacy medication claim for $${totalAmount}`
@@ -294,14 +294,15 @@ export default function Billing() {
       
       console.log("Raw claim data before validation:", rawClaimData);
       
-      let claimData;
-      try {
-        claimData = insertInsuranceClaimSchema.parse(rawClaimData);
-        console.log("Schema validation passed");
-      } catch (validationError) {
-        console.error("Schema validation failed:", validationError);
-        throw new Error(`Validation failed: ${validationError.message}`);
-      }
+      // Note: tenantId will be added by the backend, so we don't include it here
+      // Also, patientInsuranceId can be null for self-pay patients
+      const claimDataForAPI = {
+        ...rawClaimData,
+        patientInsuranceId: rawClaimData.patientInsuranceId || undefined
+      };
+      
+      console.log("Final claim data for API:", claimDataForAPI);
+      const claimData = claimDataForAPI;
       
       console.log("Claim data to submit:", claimData);
       console.log("About to call mutation...");
