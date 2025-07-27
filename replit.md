@@ -94,7 +94,7 @@ A comprehensive multi-tenant healthcare management platform specializing in phar
 ### Hospital - Metro General Hospital (metro-general)
 - **Hospital Admin**: `admin@metrogeneral.com` / `admin123`
   - Access: Full hospital management, staff oversight, billing
-- **Hospital Receptionist**: `hospital_reception` / `receptionist123` (email: reception@metrogeneral.com)
+- **Hospital Receptionist**: `hospital_reception` / `receptionist123` (organization: `Metro General Hospital` or `metro-general`)
   - Access: Patient registration, appointments, check-in, vital signs, billing, insurance claims
 - **Hospital Doctor**: `dr.smith@metrogeneral.com` / `doctor123`
   - Access: Patient care, prescriptions, lab orders, medical records
