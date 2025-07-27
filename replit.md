@@ -4,11 +4,11 @@
 A comprehensive multi-tenant healthcare management platform specializing in pharmacy operations and workflow optimization, with advanced capabilities for prescription management and insurance claims processing.
 
 ## Recent Changes (Latest)
-- **FIXED MEDICATION CLAIMS SYSTEM** - Insurance claims for pharmacy medications now work perfectly
-- **Fixed prescription data display** - Added test prescription data and resolved TypeScript errors in prescriptions page
-- **Updated database schema** - Made patientInsuranceId optional to support self-pay medication claims
-- **Fixed data validation** - Resolved schema validation issues with number/string type conversion
-- **Comprehensive debugging added** - Enhanced error logging for claims processing and authentication
+- **CUSTOMIZED PHARMACY INTERFACE** - Tailored UI for pharmacy operations workflow
+- **Removed appointments from pharmacy sidebar** - Pharmacy users no longer see appointment management
+- **Hidden Add Patient button for pharmacy** - Pharmacy staff cannot add new patients directly
+- **Highlighted lab orders in top navigation** - Lab orders prominently displayed for pharmacy users
+- **FIXED MEDICATION CLAIMS SYSTEM** - Insurance claims for pharmacy medications work perfectly
 
 ## User Preferences
 - Simple, everyday language for communication (user is non-technical)

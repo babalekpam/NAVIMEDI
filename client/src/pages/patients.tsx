@@ -78,7 +78,7 @@ export default function Patients() {
           <p className="text-gray-600 mt-1">Manage patient information and medical records</p>
         </div>
         {/* Only show Add Patient button for non-pharmacy users */}
-        {user.role !== "pharmacist" && (
+        {!(user.role === "tenant_admin" && tenant?.type === "pharmacy") && user.role !== "pharmacist" && (
           <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700">
