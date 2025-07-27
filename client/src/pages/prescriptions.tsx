@@ -71,15 +71,29 @@ export default function Prescriptions() {
 
   const handleFileInsuranceClaim = async (prescription: Prescription) => {
     try {
-      await fileClaimMutation.mutateAsync({
+      const result = await fileClaimMutation.mutateAsync({
         prescriptionId: prescription.id,
         patientId: prescription.patientId,
         medicationName: prescription.medicationName,
         dosage: prescription.dosage,
         quantity: prescription.quantity
       });
+      
+      // Show success message
+      const { toast } = await import("@/hooks/use-toast");
+      toast({
+        title: "Insurance Claim Filed",
+        description: `Successfully filed claim for ${prescription.medicationName}`,
+        variant: "default"
+      });
     } catch (error) {
       console.error("Error filing insurance claim:", error);
+      const { toast } = await import("@/hooks/use-toast");
+      toast({
+        title: "Error Filing Claim",
+        description: "Failed to file insurance claim. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -310,18 +324,32 @@ export default function Prescriptions() {
                       >
                         View Details
                       </Button>
-                      {user.role === "pharmacist" && prescription.status === "sent_to_pharmacy" && (
+                      {(user.role === "pharmacist" || user.role === "tenant_admin") && prescription.status === "sent_to_pharmacy" && (
                         <Button 
                           variant="ghost" 
                           size="sm" 
                           className="text-green-600 hover:text-green-700"
                           onClick={() => handleFileInsuranceClaim(prescription)}
+                          disabled={fileClaimMutation.isPending}
                         >
-                          File Claim
+                          {fileClaimMutation.isPending ? "Filing..." : "File Claim"}
                         </Button>
                       )}
-                      {user.role === "pharmacist" && prescription.status === "filled" && (
-                        <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                      {(user.role === "pharmacist" || user.role === "tenant_admin") && prescription.status === "filled" && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-blue-600 hover:text-blue-700"
+                          onClick={() => {
+                            // Update prescription status to picked up
+                            const { apiRequest } = import("@/lib/queryClient");
+                            apiRequest("PATCH", `/api/prescriptions/${prescription.id}`, {
+                              status: "picked_up"
+                            }).then(() => {
+                              queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
+                            });
+                          }}
+                        >
                           Mark Picked Up
                         </Button>
                       )}

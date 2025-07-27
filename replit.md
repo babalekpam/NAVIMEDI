@@ -10,6 +10,8 @@ A comprehensive multi-tenant healthcare management platform specializing in phar
 - **Created test prescriptions** - 3 test prescriptions routed to Working Test Pharmacy for testing
 - **CUSTOMIZED PHARMACY INTERFACE** - Tailored UI for pharmacy operations workflow
 - **FIXED MEDICATION CLAIMS SYSTEM** - Insurance claims for pharmacy medications work perfectly
+- **ADDED PRESCRIPTION PROVENANCE DISPLAY** - Prescriptions show doctor name and hospital name
+- **ENHANCED CLAIM FILING WORKFLOW** - One-click insurance claim filing for received prescriptions
 
 ## User Preferences
 - Simple, everyday language for communication (user is non-technical)
