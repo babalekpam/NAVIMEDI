@@ -78,8 +78,9 @@ export const requireRole = (allowedRoles: string[]) => {
     }
 
     // Special check: Receptionists are only allowed in hospital/clinic tenants
+    // Note: Metro General Hospital has type "hospital" so this should pass
     if (req.user.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
-      console.log("[ROLE CHECK] Receptionist in non-hospital tenant blocked");
+      console.log("[ROLE CHECK] Receptionist blocked - tenant type:", req.tenant?.type, "tenant name:", req.tenant?.name);
       return res.status(403).json({ message: "Receptionist role is only available for hospitals and clinics" });
     }
 

@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthenticatedRequest, JWTPayload } from './auth';
+import { storage } from '../storage';
 
-export const tenantMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     console.log("[TENANT DEBUG] Path:", req.path, "User from auth:", !!req.user);
     
@@ -38,7 +39,10 @@ export const tenantMiddleware = (req: AuthenticatedRequest, res: Response, next:
         role: decoded.role,
         username: decoded.username
       };
-      req.tenant = { id: decoded.tenantId };
+      
+      // Load full tenant information from database
+      const tenant = await storage.getTenant(decoded.tenantId);
+      req.tenant = tenant;
 
       // For super admin, allow access to all tenants
       if (req.user?.role === 'super_admin') {
