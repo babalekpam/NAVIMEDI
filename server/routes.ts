@@ -713,6 +713,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/insurance-providers", authenticateToken, requireTenant, requireRole(["tenant_admin", "director", "billing_staff", "receptionist"]), async (req, res) => {
+    try {
+      const validatedData = insertInsuranceProviderSchema.parse({
+        ...req.body,
+        tenantId: req.tenant!.id,
+      });
+
+      const provider = await storage.createInsuranceProvider(validatedData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenant!.id,
+        userId: req.user!.id,
+        entityType: "insurance_provider",
+        entityId: provider.id,
+        action: "CREATE",
+        newData: provider,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      res.status(201).json(provider);
+    } catch (error) {
+      console.error("Failed to create insurance provider:", error);
+      if (error instanceof Error && error.message.includes('validation')) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Failed to create insurance provider" });
+      }
+    }
+  });
+
   // Patient Insurance routes
   app.get("/api/patient-insurance/:patientId", requireTenant, async (req, res) => {
     try {
