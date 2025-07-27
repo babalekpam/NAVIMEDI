@@ -174,7 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Pharmacy registration endpoint (public)
+  // Pharmacy registration endpoint (public) - Auto-approve and create tenant
   app.post("/api/pharmacy-registration", async (req, res) => {
     try {
       console.log("Pharmacy registration request:", JSON.stringify(req.body, null, 2));
@@ -187,15 +187,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Create the pharmacy tenant
+      // Create the pharmacy tenant immediately (auto-approved)
       const tenantData = {
-        name: pharmacyData.name,
+        name: pharmacyData.name || "Unnamed Pharmacy",
         type: "pharmacy" as const,
         subdomain: pharmacyData.subdomain,
         settings: pharmacyData.settings || {}
       };
 
-      console.log("Creating pharmacy tenant:", tenantData);
+      console.log("Creating pharmacy tenant (auto-approved):", tenantData);
       const tenant = await storage.createTenant(tenantData);
       
       // Generate a temporary password for the admin
@@ -220,16 +220,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Pharmacy registered successfully. Admin credentials: ${admin.email} / ${tempPassword}`);
 
       res.status(201).json({
-        message: "Pharmacy registered successfully",
+        message: "Pharmacy registered and approved successfully",
         tenant: {
           id: tenant.id,
           name: tenant.name,
-          subdomain: tenant.subdomain
+          subdomain: tenant.subdomain,
+          status: "approved"
         },
         admin: {
           id: adminUser.id,
           email: adminUser.email,
           tempPassword: tempPassword
+        },
+        loginInfo: {
+          message: "Your pharmacy is now active! You can login with these credentials:",
+          email: admin.email,
+          tempPassword: tempPassword,
+          loginUrl: `${req.protocol}://${req.get('host')}/login`
         }
       });
 

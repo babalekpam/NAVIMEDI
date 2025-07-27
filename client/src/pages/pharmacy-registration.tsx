@@ -108,7 +108,8 @@ const insuranceNetworks = [
 export default function PharmacyRegistration() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [registrationStep, setRegistrationStep] = useState<'form' | 'review' | 'submitted'>('form');
+  const [registrationStep, setRegistrationStep] = useState<'form' | 'review' | 'submitted' | 'approved'>('form');
+  const [registrationResult, setRegistrationResult] = useState<any>(null);
 
   const form = useForm<PharmacyRegistrationForm>({
     resolver: zodResolver(pharmacyRegistrationSchema),
@@ -192,11 +193,12 @@ export default function PharmacyRegistration() {
 
       return response.json();
     },
-    onSuccess: () => {
-      setRegistrationStep('submitted');
+    onSuccess: (data) => {
+      setRegistrationStep('approved');
+      setRegistrationResult(data);
       toast({
-        title: "Registration Submitted",
-        description: "Your pharmacy registration has been submitted for review. You'll receive confirmation within 24-48 hours."
+        title: "Registration Approved!",
+        description: "Your pharmacy has been registered and approved. You can now login with your credentials."
       });
     },
     onError: (error: Error) => {
@@ -215,6 +217,52 @@ export default function PharmacyRegistration() {
   const handleConfirmRegistration = () => {
     registrationMutation.mutate(form.getValues());
   };
+
+  if (registrationStep === 'approved') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <Card className="max-w-lg w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <CardTitle className="text-2xl text-green-800">Pharmacy Approved!</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-gray-600">
+              Your pharmacy <strong>{registrationResult?.tenant?.name}</strong> has been registered and approved successfully!
+            </p>
+            
+            <div className="bg-blue-50 p-4 rounded-lg text-left">
+              <p className="text-sm font-semibold text-blue-800 mb-2">
+                Login Credentials:
+              </p>
+              <div className="space-y-2 text-sm text-blue-700">
+                <div><strong>Email:</strong> {registrationResult?.admin?.email}</div>
+                <div><strong>Password:</strong> {registrationResult?.admin?.tempPassword}</div>
+                <div><strong>Subdomain:</strong> {registrationResult?.tenant?.subdomain}</div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                <strong>Important:</strong> Save these credentials in a safe place. Change your password after first login.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Button onClick={() => setLocation("/login")} className="w-full">
+                Login Now
+              </Button>
+              <Button onClick={() => setLocation("/")} variant="outline" className="w-full">
+                Return to Home
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (registrationStep === 'submitted') {
     return (
@@ -268,13 +316,13 @@ export default function PharmacyRegistration() {
                 <h3 className="text-lg font-semibold mb-3">Organization Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="font-medium">Name:</span> {formData.organizationName}
+                    <span className="font-medium">Name:</span> {formData.name}
                   </div>
                   <div>
                     <span className="font-medium">Subdomain:</span> {formData.subdomain}.navimed.app
                   </div>
                   <div>
-                    <span className="font-medium">Address:</span> {formData.address}, {formData.city}, {formData.state} {formData.zipCode}
+                    <span className="font-medium">Address:</span> {formData.address}
                   </div>
                   <div>
                     <span className="font-medium">Phone:</span> {formData.phone}
@@ -283,7 +331,7 @@ export default function PharmacyRegistration() {
                     <span className="font-medium">Email:</span> {formData.email}
                   </div>
                   <div>
-                    <span className="font-medium">License:</span> {formData.pharmacyLicense}
+                    <span className="font-medium">License:</span> {formData.licenseNumber}
                   </div>
                 </div>
               </div>

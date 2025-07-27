@@ -2,6 +2,7 @@ import { sql, relations } from "drizzle-orm";
 import { pgTable, text, varchar, uuid, timestamp, boolean, integer, decimal, jsonb, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { nanoid } from "nanoid";
 
 // Enums
 export const roleEnum = pgEnum("role", [
@@ -667,6 +668,38 @@ export const laboratoryApplications = pgTable("laboratory_applications", {
   reviewNotes: text("review_notes"),
   reviewedBy: uuid("reviewed_by").references(() => users.id),
   reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const pendingRegistrations = pgTable("pending_registrations", {
+  id: text("id").primaryKey().default(nanoid()),
+  type: text("type").notNull(), // 'pharmacy', 'laboratory', 'hospital', 'clinic'
+  organizationName: text("organization_name").notNull(),
+  subdomain: text("subdomain").notNull(),
+  contactEmail: text("contact_email").notNull(),
+  contactPhone: text("contact_phone"),
+  
+  // Registration Data (JSON blob containing all form data)
+  registrationData: jsonb("registration_data").notNull(),
+  
+  // Admin User Data
+  adminData: jsonb("admin_data").notNull(),
+  
+  // Status Management
+  status: text("status").notNull().default("pending"), // pending, approved, rejected
+  submittedAt: timestamp("submitted_at").default(sql`CURRENT_TIMESTAMP`),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: uuid("reviewed_by").references(() => users.id), // User ID of reviewer
+  reviewNotes: text("review_notes"),
+  
+  // Tenant ID (populated after approval)
+  approvedTenantId: uuid("approved_tenant_id").references(() => tenants.id),
+  approvedUserId: uuid("approved_user_id").references(() => users.id),
+  
+  // Metadata
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
