@@ -640,10 +640,10 @@ export default function PatientMedicalRecords() {
                         {editingMedications ? (
                           <div className="space-y-4">
                             {/* Existing medications - editable */}
-                            {selectedPatient.medications && Array.isArray(selectedPatient.medications) && selectedPatient.medications.length > 0 && (
+                            {(selectedPatientDetails?.medications || selectedPatient.medications) && Array.isArray(selectedPatientDetails?.medications || selectedPatient.medications) && (selectedPatientDetails?.medications || selectedPatient.medications).length > 0 && (
                               <div className="space-y-3">
                                 <h4 className="font-medium text-gray-700">Current Medications:</h4>
-                                {selectedPatient.medications.map((medication, index) => (
+                                {(selectedPatientDetails?.medications || selectedPatient.medications).map((medication, index) => (
                                   <div key={index} className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
                                     <div className="flex items-center space-x-2">
                                       <Pill className="h-4 w-4 text-blue-500" />
@@ -653,7 +653,8 @@ export default function PatientMedicalRecords() {
                                       size="sm"
                                       variant="ghost"
                                       onClick={() => {
-                                        const updatedMedications = selectedPatient.medications?.filter((_, i) => i !== index) || [];
+                                        const currentMedications = selectedPatientDetails?.medications || selectedPatient.medications || [];
+                                        const updatedMedications = currentMedications.filter((_, i) => i !== index);
                                         updatePatientMutation.mutate({
                                           patientId: selectedPatient.id,
                                           medications: updatedMedications,
@@ -680,7 +681,8 @@ export default function PatientMedicalRecords() {
                                 <Button
                                   onClick={() => {
                                     if (newMedication.trim()) {
-                                      const updatedMedications = [...(selectedPatient.medications || []), newMedication.trim()];
+                                      const currentMedications = selectedPatientDetails?.medications || selectedPatient.medications || [];
+                                      const updatedMedications = [...currentMedications, newMedication.trim()];
                                       updatePatientMutation.mutate({
                                         patientId: selectedPatient.id,
                                         medications: updatedMedications,
@@ -710,9 +712,9 @@ export default function PatientMedicalRecords() {
                           </div>
                         ) : (
                           <>
-                            {selectedPatient.medications && Array.isArray(selectedPatient.medications) && selectedPatient.medications.length > 0 ? (
+                            {selectedPatientDetails?.medications && Array.isArray(selectedPatientDetails.medications) && selectedPatientDetails.medications.length > 0 ? (
                               <div className="space-y-3">
-                                {selectedPatient.medications.map((medication, index) => (
+                                {selectedPatientDetails.medications.map((medication, index) => (
                                   <div key={index} className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                                     <div className="flex items-center space-x-2">
                                       <Pill className="h-4 w-4 text-blue-500" />
@@ -776,10 +778,10 @@ export default function PatientMedicalRecords() {
                         {editingAllergies ? (
                           <div className="space-y-4">
                             {/* Existing allergies - editable */}
-                            {selectedPatient.allergies && Array.isArray(selectedPatient.allergies) && selectedPatient.allergies.length > 0 && (
+                            {(selectedPatientDetails?.allergies || selectedPatient.allergies) && Array.isArray(selectedPatientDetails?.allergies || selectedPatient.allergies) && (selectedPatientDetails?.allergies || selectedPatient.allergies).length > 0 && (
                               <div className="space-y-3">
                                 <h4 className="font-medium text-gray-700">Known Allergies:</h4>
-                                {selectedPatient.allergies.map((allergy, index) => (
+                                {(selectedPatientDetails?.allergies || selectedPatient.allergies).map((allergy, index) => (
                                   <div key={index} className="p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-center justify-between">
                                     <div className="flex items-center space-x-2">
                                       <AlertTriangle className="h-4 w-4 text-orange-500" />
@@ -789,7 +791,8 @@ export default function PatientMedicalRecords() {
                                       size="sm"
                                       variant="ghost"
                                       onClick={() => {
-                                        const updatedAllergies = selectedPatient.allergies?.filter((_, i) => i !== index) || [];
+                                        const currentAllergies = selectedPatientDetails?.allergies || selectedPatient.allergies || [];
+                                        const updatedAllergies = currentAllergies.filter((_, i) => i !== index);
                                         updatePatientMutation.mutate({
                                           patientId: selectedPatient.id,
                                           allergies: updatedAllergies,
@@ -816,7 +819,8 @@ export default function PatientMedicalRecords() {
                                 <Button
                                   onClick={() => {
                                     if (newAllergy.trim()) {
-                                      const updatedAllergies = [...(selectedPatient.allergies || []), newAllergy.trim()];
+                                      const currentAllergies = selectedPatientDetails?.allergies || selectedPatient.allergies || [];
+                                      const updatedAllergies = [...currentAllergies, newAllergy.trim()];
                                       updatePatientMutation.mutate({
                                         patientId: selectedPatient.id,
                                         allergies: updatedAllergies,
@@ -846,9 +850,9 @@ export default function PatientMedicalRecords() {
                           </div>
                         ) : (
                           <>
-                            {selectedPatient.allergies && Array.isArray(selectedPatient.allergies) && selectedPatient.allergies.length > 0 ? (
+                            {selectedPatientDetails?.allergies && Array.isArray(selectedPatientDetails.allergies) && selectedPatientDetails.allergies.length > 0 ? (
                               <div className="space-y-3">
-                                {selectedPatient.allergies.map((allergy, index) => (
+                                {selectedPatientDetails.allergies.map((allergy, index) => (
                                   <div key={index} className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                                     <div className="flex items-center space-x-2">
                                       <AlertTriangle className="h-4 w-4 text-orange-500" />
