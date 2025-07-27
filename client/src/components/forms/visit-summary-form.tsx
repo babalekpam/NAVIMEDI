@@ -135,11 +135,15 @@ export function VisitSummaryForm({
   const createMutation = useMutation({
     mutationFn: (data: VisitSummaryFormData) => {
       console.log("Submitting visit summary:", data);
-      return apiRequest("POST", "/api/visit-summaries", {
+      // Clean up empty string fields that should be null for UUID validation
+      const cleanedData = {
         ...data,
         symptoms: selectedSymptoms,
         finalDiagnosis: selectedDiagnoses,
-      });
+        vitalSignsId: data.vitalSignsId || null, // Convert empty string to null
+        returnVisitTimeframe: data.returnVisitTimeframe || null, // Handle empty timeframe
+      };
+      return apiRequest("POST", "/api/visit-summaries", cleanedData);
     },
     onSuccess: (response) => {
       console.log("Visit summary created successfully:", response);
