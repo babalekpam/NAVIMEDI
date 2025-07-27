@@ -89,6 +89,7 @@ export default function ProfileSettingsPage() {
   const [qrCode, setQrCode] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [twoFactorSecret, setTwoFactorSecret] = useState("");
   const [newApiKeyName, setNewApiKeyName] = useState("");
   const [showNewApiKeyDialog, setShowNewApiKeyDialog] = useState(false);
   const [passwordData, setPasswordData] = useState<PasswordChange>({
@@ -228,6 +229,7 @@ export default function ProfileSettingsPage() {
     onSuccess: (data) => {
       setQrCode(data.qrCode);
       setBackupCodes(data.backupCodes);
+      setTwoFactorSecret(data.secret);
       setShow2FASetup(true);
     },
     onError: (error: any) => {
@@ -253,7 +255,7 @@ export default function ProfileSettingsPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ code })
+        body: JSON.stringify({ code, secret: twoFactorSecret })
       });
       
       if (!response.ok) {

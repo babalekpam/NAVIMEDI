@@ -7,6 +7,8 @@ import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
+import QRCode from "qrcode";
+import speakeasy from "speakeasy";
 import { aiHealthAnalyzer } from "./ai-health-analyzer";
 import { geminiHealthAnalyzer } from "./gemini-health-analyzer";
 
@@ -498,17 +500,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 2FA setup routes
   app.post("/api/users/2fa/setup", authenticateToken, async (req, res) => {
     try {
-      // Generate mock QR code and backup codes for demo
-      const qrCode = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
-      const backupCodes = [
-        "12345-67890",
-        "23456-78901", 
-        "34567-89012",
-        "45678-90123",
-        "56789-01234"
-      ];
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
 
-      res.json({ qrCode, backupCodes });
+      // Generate secret for 2FA
+      const secret = speakeasy.generateSecret({
+        name: `${user.firstName} ${user.lastName} (${user.email})`,
+        issuer: 'Healthcare Platform',
+        length: 32
+      });
+
+      // Generate QR code
+      const qrCodeUrl = secret.otpauth_url;
+      const qrCodeImage = await QRCode.toDataURL(qrCodeUrl!);
+
+      // Generate backup codes
+      const backupCodes = [];
+      for (let i = 0; i < 8; i++) {
+        const code = Math.random().toString(36).substr(2, 5).toUpperCase() + 
+                    '-' + 
+                    Math.random().toString(36).substr(2, 5).toUpperCase();
+        backupCodes.push(code);
+      }
+
+      // Store the secret temporarily (in production, you'd store this in the database)
+      // For now, we'll just return it to the client
+      res.json({ 
+        qrCode: qrCodeImage, 
+        backupCodes,
+        secret: secret.base32 // This would normally be stored securely in the database
+      });
     } catch (error) {
       console.error("Setup 2FA error:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -517,10 +540,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users/2fa/verify", authenticateToken, async (req, res) => {
     try {
-      const { code } = req.body;
+      const { code, secret } = req.body;
       
-      // For demo, accept any 6-digit code
-      if (code && code.length === 6) {
+      if (!code || !secret) {
+        return res.status(400).json({ message: "Verification code and secret are required" });
+      }
+
+      // Verify the TOTP code
+      const verified = speakeasy.totp.verify({
+        secret: secret,
+        encoding: 'base32',
+        token: code,
+        window: 2 // Allow 2 time steps in either direction for clock drift
+      });
+
+      if (verified) {
+        // In production, you would:
+        // 1. Store the secret in the database for the user
+        // 2. Mark 2FA as enabled for the user
+        // 3. Invalidate any existing sessions to force re-authentication
+        
         res.json({ success: true });
       } else {
         res.status(400).json({ message: "Invalid verification code" });
