@@ -92,8 +92,8 @@ export const Header = () => {
                 >
                   {t('patients')}
                 </button>
-                {/* Show appointments for all except pharmacy tenant users */}
-                {!(user.role === "tenant_admin" && tenant?.type === "pharmacy") && user.role !== "pharmacist" && (
+                {/* Show appointments for all except pharmacy and laboratory tenant users */}
+                {!(user.role === "tenant_admin" && (tenant?.type === "pharmacy" || tenant?.type === "laboratory")) && user.role !== "pharmacist" && user.role !== "lab_technician" && (
                   <button 
                     onClick={() => setLocation("/appointments")}
                     className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
@@ -101,12 +101,15 @@ export const Header = () => {
                     {t('appointments')}
                   </button>
                 )}
-                <button 
-                  onClick={() => setLocation("/prescriptions")}
-                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
-                >
-                  {t('prescriptions')}
-                </button>
+                {/* Prescriptions - hidden for laboratory users */}
+                {!(user.role === "tenant_admin" && tenant?.type === "laboratory") && user.role !== "lab_technician" && (
+                  <button 
+                    onClick={() => setLocation("/prescriptions")}
+                    className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                  >
+                    {t('prescriptions')}
+                  </button>
+                )}
                 {/* Lab Orders - hidden for pharmacy users */}
                 {!(user.role === "tenant_admin" && tenant?.type === "pharmacy") && user.role !== "pharmacist" && (
                   <button 

@@ -44,6 +44,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "book-appointment", label: t("book-appointment"), icon: CalendarPlus, path: "/appointments?action=book", roles: ["receptionist", "tenant_admin", "director"] },
   { id: "patients", label: t("patients"), icon: Users, path: "/patients", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "patient-medical-records", label: "Medical Records", icon: FileText, path: "/patient-medical-records", roles: ["physician", "nurse", "tenant_admin", "director"] },
+  { id: "lab-records", label: "Lab Records", icon: TestTube, path: "/patient-medical-records", roles: ["lab_technician", "tenant_admin", "director"] },
   { id: "consultation-history", label: "Consultation History", icon: Stethoscope, path: "/consultation-history", roles: ["physician", "nurse", "tenant_admin", "director"] },
   { id: "appointments", label: t("appointments"), icon: Calendar, path: "/appointments", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "prescriptions", label: t("prescriptions"), icon: Pill, path: "/prescriptions", roles: ["physician", "nurse", "pharmacist", "receptionist", "tenant_admin", "director"] },
@@ -139,6 +140,60 @@ export const Sidebar = () => {
                           currentTenant?.name?.toLowerCase().includes('rx') || 
                           currentTenant?.type === "pharmacy";
 
+  // Check if user is in a laboratory tenant
+  const isLaboratoryTenant = currentTenant?.type === "laboratory";
+  
+  // For laboratory users - show only laboratory-specific items
+  if (user.role === "lab_technician" || (user.role === "tenant_admin" && isLaboratoryTenant)) {
+    
+    const laboratoryItems = filteredItems.filter(item => 
+      ["dashboard", "lab-records", "lab-orders", "lab-results", "reports"].includes(item.id)
+    );
+    
+    return (
+      <aside className="w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto">
+        <div className="p-6">
+          {/* NaviMed Logo */}
+          <div className="flex items-center space-x-3 mb-8 pb-4 border-b border-gray-200">
+            <img src={navimedLogo} alt="NaviMed" className="h-8 w-8 rounded-lg object-contain" />
+            <div>
+              <h1 className="text-sm font-bold text-blue-600">NAVIMED</h1>
+              <p className="text-xs text-gray-500">{currentTenant?.name || 'Laboratory'}</p>
+            </div>
+          </div>
+          
+          <nav className="space-y-2">
+            <div className="mb-6">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                Laboratory Operations
+              </h3>
+              {laboratoryItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.path;
+                
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setLocation(item.path)}
+                    className={cn(
+                      "w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+                      isActive
+                        ? "text-blue-600 bg-blue-50"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    )}
+                  >
+                    <Icon className={cn("mr-3 h-4 w-4", isActive ? "text-blue-600" : "text-gray-400")} />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+        </div>
+      </aside>
+    );
+  }
+
   // For pharmacy users - show only pharmacy-specific items
   if (user.role === "pharmacist" || (user.role === "tenant_admin" && isPharmacyTenant)) {
     
@@ -203,15 +258,25 @@ export const Sidebar = () => {
     if (user.role === "receptionist" && isHospitalTenant && item.id === "hospital-billing") {
       return true;
     }
-    // Include core clinical items
+    // Include core clinical items - exclude laboratory-specific items for non-laboratory tenants
     const clinicalItemIds = ["dashboard", "register-patient", "book-appointment", "patients", "patient-medical-records", "appointments", "prescriptions", "lab-orders", "lab-results", "health-recommendations", "medical-communications"];
-    return clinicalItemIds.includes(item.id) && !["pharmacy-dashboard"].includes(item.id);
+    // For laboratory tenants, exclude prescription-related items and medical communications
+    if (currentTenant?.type === "laboratory") {
+      const labClinicalIds = ["dashboard", "patients", "lab-records", "lab-orders", "lab-results"];
+      return labClinicalIds.includes(item.id);
+    }
+    return clinicalItemIds.includes(item.id) && !["pharmacy-dashboard", "lab-records"].includes(item.id);
   });
   const operationItems = filteredItems.filter(item => {
     const operationItemIds = ["billing", "service-prices"];
     return operationItemIds.includes(item.id);
   });
   const adminItems = filteredItems.filter(item => {
+    // For laboratory tenants, exclude white-label settings and advanced features
+    if (currentTenant?.type === "laboratory") {
+      const labAdminIds = ["reports", "trial-status", "user-roles", "audit-logs"];
+      return labAdminIds.includes(item.id);
+    }
     const adminItemIds = ["reports", "white-label-settings", "offline-mode", "trial-status", "tenant-management", "user-roles", "audit-logs"];
     return adminItemIds.includes(item.id);
   });
