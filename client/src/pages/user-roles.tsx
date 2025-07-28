@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { UserCheck, Users, Plus, Edit, HelpCircle, Info } from "lucide-react";
+import { UserCheck, Users, Plus, Edit, HelpCircle, Info, Shield, Key, Eye, EyeOff, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
@@ -53,6 +53,89 @@ const roleDescriptions = {
   tenant_admin: "Full tenant management, user administration, and system configuration"
 };
 
+const rolePermissions = {
+  director: {
+    patients: ["view", "search"],
+    appointments: ["view", "create", "update", "cancel"],
+    prescriptions: ["view"],
+    labOrders: ["view"],
+    billing: ["view", "manage"],
+    reports: ["view", "generate"],
+    users: ["view", "create_staff"],
+    auditLogs: ["view"],
+    dashboard: ["view_metrics"]
+  },
+  physician: {
+    patients: ["view", "create", "update", "search", "medical_records"],
+    appointments: ["view", "create", "update", "cancel"],
+    prescriptions: ["view", "create", "update", "cancel"],
+    labOrders: ["view", "create", "update", "assign"],
+    consultations: ["view", "create", "update", "finalize"],
+    vitalSigns: ["view", "record"],
+    medicalHistory: ["view", "edit"],
+    billing: ["view"],
+    reports: ["view"],
+    communications: ["view", "create"],
+    dashboard: ["view_clinical"]
+  },
+  nurse: {
+    patients: ["view", "search", "basic_info"],
+    appointments: ["view", "update_status"],
+    prescriptions: ["view"],
+    labOrders: ["view"],
+    consultations: ["view", "assist"],
+    vitalSigns: ["view", "record"],
+    medicalHistory: ["view"],
+    patientCheckIn: ["manage"],
+    communications: ["view"],
+    dashboard: ["view_patient_care"]
+  },
+  pharmacist: {
+    patients: ["view_basic", "search_prescriptions"],
+    prescriptions: ["view", "dispense", "update_status"],
+    medications: ["manage", "inventory"],
+    billing: ["medication_claims"],
+    communications: ["view", "create"],
+    dashboard: ["view_pharmacy"]
+  },
+  lab_technician: {
+    patients: ["view_basic", "search_lab"],
+    labOrders: ["view", "process", "enter_results"],
+    labResults: ["create", "update", "view"],
+    dashboard: ["view_lab"]
+  },
+  receptionist: {
+    patients: ["view", "create", "update_basic", "search"],
+    appointments: ["view", "create", "update", "cancel"],
+    patientCheckIn: ["manage"],
+    vitalSigns: ["record"],
+    billing: ["view", "process_payments"],
+    servicePrice: ["view", "manage"],
+    dashboard: ["view_front_desk"]
+  },
+  billing_staff: {
+    patients: ["view_billing", "search"],
+    appointments: ["view"],
+    billing: ["view", "create", "update", "process"],
+    insuranceClaims: ["view", "create", "submit", "track"],
+    servicePrice: ["view", "manage"],
+    reports: ["view", "generate_financial"],
+    dashboard: ["view_billing"]
+  },
+  tenant_admin: {
+    patients: ["view", "search"],
+    appointments: ["view"],
+    users: ["view", "create", "update", "deactivate"],
+    roles: ["assign", "modify"],
+    tenantSettings: ["view", "update"],
+    auditLogs: ["view"],
+    reports: ["view", "generate"],
+    billing: ["view", "manage"],
+    servicePrice: ["view", "manage"],
+    dashboard: ["view_admin"]
+  }
+};
+
 const roleTooltips = {
   director: "Directors have executive-level access to view organizational metrics, strategic reports, and operational oversight but limited direct patient data access for privacy compliance.",
   physician: "Physicians have the highest level of clinical access and can view/edit all patient data, prescribe medications, and order lab tests.",
@@ -85,6 +168,7 @@ export default function UserRoles() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [showPermissions, setShowPermissions] = useState<string | null>(null);
 
   const form = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
@@ -249,6 +333,26 @@ export default function UserRoles() {
       id: userItem.id,
       isActive: !userItem.isActive,
     });
+  };
+
+  const formatPermissionName = (permission: string) => {
+    return permission.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const getPermissionColor = (permission: string) => {
+    if (permission.includes('create') || permission.includes('edit') || permission.includes('update')) {
+      return 'bg-green-100 text-green-800';
+    }
+    if (permission.includes('view') || permission.includes('search')) {
+      return 'bg-blue-100 text-blue-800';
+    }
+    if (permission.includes('delete') || permission.includes('cancel') || permission.includes('deactivate')) {
+      return 'bg-red-100 text-red-800';
+    }
+    if (permission.includes('manage') || permission.includes('admin')) {
+      return 'bg-purple-100 text-purple-800';
+    }
+    return 'bg-gray-100 text-gray-800';
   };
 
   return (
@@ -473,9 +577,26 @@ export default function UserRoles() {
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           <h3 className="font-semibold text-lg">{userItem.firstName} {userItem.lastName}</h3>
-                          <Badge className={roleColors[userItem.role as keyof typeof roleColors]}>
-                            {userItem.role.replace('_', ' ').toUpperCase()}
-                          </Badge>
+                          <div className="flex items-center space-x-2">
+                            <Badge className={roleColors[userItem.role as keyof typeof roleColors]}>
+                              {userItem.role.replace('_', ' ').toUpperCase()}
+                            </Badge>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setShowPermissions(showPermissions === userItem.role ? null : userItem.role)}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <Shield className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>View detailed permissions</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
                           <Badge variant={userItem.isActive ? "default" : "secondary"}>
                             {userItem.isActive ? "Active" : "Inactive"}
                           </Badge>
@@ -505,6 +626,39 @@ export default function UserRoles() {
                         )}
                       </div>
                     </div>
+                    
+                    {/* Permissions Display */}
+                    {showPermissions === userItem.role && rolePermissions[userItem.role as keyof typeof rolePermissions] && (
+                      <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                        <div className="flex items-center space-x-2 mb-3">
+                          <Shield className="h-4 w-4 text-blue-600" />
+                          <h4 className="font-semibold text-gray-900">
+                            {userItem.role.replace('_', ' ').toUpperCase()} Permissions
+                          </h4>
+                        </div>
+                        
+                        <div className="grid gap-3">
+                          {Object.entries(rolePermissions[userItem.role as keyof typeof rolePermissions]).map(([module, permissions]) => (
+                            <div key={module} className="space-y-1">
+                              <h5 className="font-medium text-gray-700 text-sm capitalize">
+                                {module.replace(/([A-Z])/g, ' $1').trim()}
+                              </h5>
+                              <div className="flex flex-wrap gap-1">
+                                {permissions.map((permission: string) => (
+                                  <Badge 
+                                    key={permission} 
+                                    variant="outline" 
+                                    className={`text-xs ${getPermissionColor(permission)}`}
+                                  >
+                                    {formatPermissionName(permission)}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
                 
@@ -537,7 +691,98 @@ export default function UserRoles() {
               <div className="text-sm text-gray-600">Active Users</div>
             </CardContent>
           </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <Shield className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-gray-900">
+                {Object.keys(rolePermissions).length}
+              </div>
+              <div className="text-sm text-gray-600">Role Types</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <Key className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-gray-900">
+                {Object.values(rolePermissions).reduce((total, perms) => 
+                  total + Object.values(perms).flat().length, 0)}
+              </div>
+              <div className="text-sm text-gray-600">Total Permissions</div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Permissions Reference Guide */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center space-x-2">
+              <Shield className="h-5 w-5 text-blue-600" />
+              <CardTitle>Permissions Reference Guide</CardTitle>
+              <Tooltip>
+                <TooltipTrigger>
+                  <HelpCircle className="h-4 w-4 text-gray-400" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">Complete overview of what each role can access and perform within your healthcare system.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <CardDescription>
+              Comprehensive role capabilities for your healthcare team. Click the shield icon next to any user above to see their specific permissions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Object.entries(rolePermissions).map(([role, permissions]) => (
+                <div key={role} className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Badge className={roleColors[role as keyof typeof roleColors]}>
+                      {role.replace('_', ' ').toUpperCase()}
+                    </Badge>
+                    <span className="text-sm text-gray-600">
+                      {Object.values(permissions).flat().length} permissions
+                    </span>
+                  </div>
+                  
+                  <div className="text-sm text-gray-700">
+                    {roleDescriptions[role as keyof typeof roleDescriptions]}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {Object.entries(permissions).slice(0, 3).map(([module, modulePerms]) => (
+                      <div key={module} className="text-xs">
+                        <span className="font-medium text-gray-600 capitalize">
+                          {module.replace(/([A-Z])/g, ' $1').trim()}:
+                        </span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {(modulePerms as string[]).slice(0, 4).map((perm) => (
+                            <Badge 
+                              key={perm} 
+                              variant="outline" 
+                              className={`text-xs ${getPermissionColor(perm)}`}
+                            >
+                              {formatPermissionName(perm)}
+                            </Badge>
+                          ))}
+                          {(modulePerms as string[]).length > 4 && (
+                            <span className="text-xs text-gray-400">
+                              +{(modulePerms as string[]).length - 4} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {Object.keys(permissions).length > 3 && (
+                      <div className="text-xs text-gray-400">
+                        +{Object.keys(permissions).length - 3} more modules
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </TooltipProvider>
   );

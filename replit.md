@@ -8,6 +8,9 @@ A comprehensive multi-tenant healthcare management platform specializing in phar
 - **✅ ROLE-BASED USER CREATION WITH VALIDATION** - Tenant admins can add physicians, nurses, receptionists, billing staff, and other healthcare professionals with appropriate role restrictions
 - **✅ TENANT-SPECIFIC ROLE VALIDATION** - Hospitals can create medical staff roles while pharmacies are restricted to pharmacy-specific roles (pharmacist, billing staff)
 - **✅ COMPREHENSIVE PERMISSION CONTROLS** - Tenant admins cannot create other admins, maintaining proper hierarchy and security controls
+- **✅ DETAILED PERMISSIONS VISUALIZATION SYSTEM** - Complete permissions display showing exactly what each role can access and perform within the healthcare platform
+- **✅ INTERACTIVE PERMISSIONS EXPLORER** - Shield icons next to roles reveal comprehensive permission breakdowns with color-coded action types (view, create, edit, manage)
+- **✅ PERMISSIONS REFERENCE GUIDE** - Complete overview of all role capabilities with module-by-module permission listings for easy admin reference
 - **✅ AUDIT LOGGING FOR USER MANAGEMENT** - All user creation, updates, and role changes are tracked with complete audit trails for compliance
 - **✅ INTUITIVE USER MANAGEMENT INTERFACE** - Clean UI with role descriptions, tooltips, and user status management for easy team administration
 - **✅ SECURE CREDENTIAL MANAGEMENT** - Password hashing, email/username uniqueness validation, and proper authentication token handling
