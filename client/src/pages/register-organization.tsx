@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Building2, ArrowLeft, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import navimedLogo from "@assets/JPG_1753663321927.jpg";
 
 export default function RegisterOrganization() {
   const [, setLocation] = useLocation();
@@ -172,8 +173,11 @@ export default function RegisterOrganization() {
 
         {/* Registration Form */}
         <Card>
-          <CardHeader>
-            <CardTitle>Organization Details</CardTitle>
+          <CardHeader className="text-center">
+            <div className="flex items-center justify-center mb-4">
+              <img src={navimedLogo} alt="NaviMed" className="h-10 w-10 rounded-lg object-contain" />
+            </div>
+            <CardTitle className="text-xl font-bold text-gray-900">Organization Details</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">

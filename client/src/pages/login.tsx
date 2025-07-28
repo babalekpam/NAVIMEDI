@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield, Building2 } from "lucide-react";
+import navimedLogo from "@assets/JPG_1753663321927.jpg";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -51,9 +52,7 @@ export default function Login() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Shield className="h-6 w-6 text-white" />
-            </div>
+            <img src={navimedLogo} alt="NaviMed" className="h-12 w-12 rounded-lg object-contain" />
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">NAVIMED</CardTitle>
           <CardDescription>

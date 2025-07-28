@@ -21,6 +21,7 @@ import {
   CalendarPlus,
   Stethoscope
 } from "lucide-react";
+import navimedLogo from "@assets/JPG_1753663321927.jpg";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
@@ -90,6 +91,15 @@ export const Sidebar = () => {
     return (
       <aside className="w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto">
         <div className="p-6">
+          {/* NaviMed Logo */}
+          <div className="flex items-center space-x-3 mb-8 pb-4 border-b border-gray-200">
+            <img src={navimedLogo} alt="NaviMed" className="h-8 w-8 rounded-lg object-contain" />
+            <div>
+              <h1 className="text-sm font-bold text-blue-600">NAVIMED</h1>
+              <p className="text-xs text-gray-500">Platform Admin</p>
+            </div>
+          </div>
+          
           {/* Navigation Menu for Platform Owner */}
           <nav className="space-y-2">
             <div className="mb-6">
@@ -139,6 +149,15 @@ export const Sidebar = () => {
     return (
       <aside className="w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto">
         <div className="p-6">
+          {/* NaviMed Logo */}
+          <div className="flex items-center space-x-3 mb-8 pb-4 border-b border-gray-200">
+            <img src={navimedLogo} alt="NaviMed" className="h-8 w-8 rounded-lg object-contain" />
+            <div>
+              <h1 className="text-sm font-bold text-blue-600">NAVIMED</h1>
+              <p className="text-xs text-gray-500">{currentTenant?.name || 'Pharmacy'}</p>
+            </div>
+          </div>
+          
           <nav className="space-y-2">
             <div className="mb-6">
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
@@ -200,6 +219,15 @@ export const Sidebar = () => {
   return (
     <aside className="w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto">
       <div className="p-6">
+        {/* NaviMed Logo */}
+        <div className="flex items-center space-x-3 mb-8 pb-4 border-b border-gray-200">
+          <img src={navimedLogo} alt="NaviMed" className="h-8 w-8 rounded-lg object-contain" />
+          <div>
+            <h1 className="text-sm font-bold text-blue-600">NAVIMED</h1>
+            <p className="text-xs text-gray-500">{currentTenant?.name || 'Healthcare'}</p>
+          </div>
+        </div>
+        
         {/* Quick Actions - Only show for non-pharmacy tenant users */}
         {user.role !== "super_admin" && !isPharmacyTenant && (
           <div className="mb-8">

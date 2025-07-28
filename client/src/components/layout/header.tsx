@@ -2,6 +2,7 @@ import { Bell, ChevronDown, Building2, Wifi, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import navimedLogo from "@assets/JPG_1753663321927.jpg";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,9 +40,7 @@ export const Header = () => {
           {/* Tenant Branding */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Building2 className="h-6 w-6 text-white" />
-              </div>
+              <img src={navimedLogo} alt="NaviMed" className="h-10 w-10 rounded-lg object-contain" />
               <div>
                 <h1 className="text-xl font-bold text-blue-600">NAVIMED</h1>
                 <p className="text-xs text-gray-500">{tenant?.name || 'Loading...'}</p>
