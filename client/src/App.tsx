@@ -69,6 +69,8 @@ import YoutubeIntegration from "@/pages/videos/youtube-integration";
 import VimeoIntegration from "@/pages/videos/vimeo-integration";
 import AWSIntegration from "@/pages/videos/aws-integration";
 import PostLabResults from "@/pages/post-lab-results";
+import PatientPortal from "@/pages/patient-portal";
+import PatientPortalPublic from "@/pages/patient-portal-public";
 
 
 
@@ -170,6 +172,14 @@ function AppContent() {
               </div>
             </div>
           </ProtectedRoute>
+        </Route>
+        <Route path="/patient-portal">
+          <ProtectedRoute>
+            <PatientPortal />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/patient-portal-public">
+          <PatientPortalPublic />
         </Route>
         <Route path="/billing">
           <ProtectedRoute>
