@@ -724,30 +724,30 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-white mb-4">Platform</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="hover:text-emerald-400 transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-emerald-400 transition-colors">Security</a></li>
-                <li><a href="#" className="hover:text-emerald-400 transition-colors">Integrations</a></li>
-                <li><a href="#" className="hover:text-emerald-400 transition-colors">API Docs</a></li>
+                <li><a href="/features" className="hover:text-emerald-400 transition-colors">Features</a></li>
+                <li><a href="/security" className="hover:text-emerald-400 transition-colors">Security</a></li>
+                <li><a href="/integrations" className="hover:text-emerald-400 transition-colors">Integrations</a></li>
+                <li><a href="/api-docs" className="hover:text-emerald-400 transition-colors">API Docs</a></li>
               </ul>
             </div>
             
             <div>
               <h4 className="font-semibold text-white mb-4">Solutions</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="hover:text-emerald-400 transition-colors">Hospitals</a></li>
-                <li><a href="#" className="hover:text-emerald-400 transition-colors">Clinics</a></li>
-                <li><a href="#" className="hover:text-emerald-400 transition-colors">Pharmacies</a></li>
-                <li><a href="#" className="hover:text-emerald-400 transition-colors">Laboratories</a></li>
+                <li><a href="/solutions/hospitals" className="hover:text-emerald-400 transition-colors">Hospitals</a></li>
+                <li><a href="/solutions/clinics" className="hover:text-emerald-400 transition-colors">Clinics</a></li>
+                <li><a href="/solutions/pharmacies" className="hover:text-emerald-400 transition-colors">Pharmacies</a></li>
+                <li><a href="/solutions/laboratories" className="hover:text-emerald-400 transition-colors">Laboratories</a></li>
               </ul>
             </div>
             
             <div>
               <h4 className="font-semibold text-white mb-4">Support</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="hover:text-emerald-400 transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-emerald-400 transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-emerald-400 transition-colors">Contact Us</a></li>
-                <li><a href="#" className="hover:text-emerald-400 transition-colors">Status</a></li>
+                <li><a href="/support/documentation" className="hover:text-emerald-400 transition-colors">Documentation</a></li>
+                <li><a href="/support/help-center" className="hover:text-emerald-400 transition-colors">Help Center</a></li>
+                <li><a href="/support/contact" className="hover:text-emerald-400 transition-colors">Contact Us</a></li>
+                <li><a href="/support/status" className="hover:text-emerald-400 transition-colors">Status</a></li>
               </ul>
             </div>
           </div>

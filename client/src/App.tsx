@@ -37,6 +37,18 @@ import TrialStatusPage from "@/pages/trial-status";
 import ProfileSettingsPage from "@/pages/profile-settings";
 import ReceptionistDashboard from "@/pages/receptionist-dashboard";
 import ConsultationHistory from "@/pages/consultation-history";
+import Features from "@/pages/features";
+import Security from "@/pages/security";
+import Integrations from "@/pages/integrations";
+import ApiDocs from "@/pages/api-docs";
+import HospitalSolutions from "@/pages/solutions/hospitals";
+import ClinicSolutions from "@/pages/solutions/clinics";
+import PharmacySolutions from "@/pages/solutions/pharmacies";
+import LaboratorySolutions from "@/pages/solutions/laboratories";
+import Documentation from "@/pages/support/documentation";
+import HelpCenter from "@/pages/support/help-center";
+import Contact from "@/pages/support/contact";
+import Status from "@/pages/support/status";
 
 
 
@@ -341,6 +353,25 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
+        
+        {/* Platform Footer Pages */}
+        <Route path="/features" component={Features} />
+        <Route path="/security" component={Security} />
+        <Route path="/integrations" component={Integrations} />
+        <Route path="/api-docs" component={ApiDocs} />
+        
+        {/* Solutions Pages */}
+        <Route path="/solutions/hospitals" component={HospitalSolutions} />
+        <Route path="/solutions/clinics" component={ClinicSolutions} />
+        <Route path="/solutions/pharmacies" component={PharmacySolutions} />
+        <Route path="/solutions/laboratories" component={LaboratorySolutions} />
+        
+        {/* Support Pages */}
+        <Route path="/support/documentation" component={Documentation} />
+        <Route path="/support/help-center" component={HelpCenter} />
+        <Route path="/support/contact" component={Contact} />
+        <Route path="/support/status" component={Status} />
+        
         <Route component={NotFound} />
       </Switch>
     </div>
