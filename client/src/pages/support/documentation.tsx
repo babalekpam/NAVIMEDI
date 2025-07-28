@@ -403,13 +403,12 @@ const appointment = await client.appointments.create({
                           {video.level}
                         </Badge>
                       </div>
-                      <Button 
-                        className="w-full"
-                        onClick={() => window.open(`/videos/${video.title.toLowerCase().replace(/\s+/g, '-')}`, '_blank')}
-                      >
-                        <Video className="w-4 h-4 mr-2" />
-                        Watch Video
-                      </Button>
+                      <Link href={`/videos/${video.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '')}`}>
+                        <Button className="w-full">
+                          <Video className="w-4 h-4 mr-2" />
+                          Watch Video
+                        </Button>
+                      </Link>
                     </CardContent>
                   </Card>
                 ))}

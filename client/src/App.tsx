@@ -61,6 +61,7 @@ import { ElectronicHealthRecords } from "@/pages/docs/electronic-health-records"
 import { PrescriptionManagement } from "@/pages/docs/prescription-management";
 import { LaboratoryOrderProcessing } from "@/pages/docs/laboratory-order-processing";
 import { ClinicalDocumentation } from "@/pages/docs/clinical-documentation";
+import VideoPlayer from "@/pages/videos/video-player";
 
 
 
@@ -397,6 +398,9 @@ function AppContent() {
         <Route path="/docs/billing-insurance" component={BillingInsurance} />
         <Route path="/docs/security-compliance" component={SecurityCompliance} />
         <Route path="/docs/api-docs" component={ApiDocsPage} />
+        
+        {/* Video Tutorial Routes */}
+        <Route path="/videos/:videoId" component={VideoPlayer} />
         
         {/* Catch-all routes for docs */}
         <Route path="/docs/:slug" component={GettingStarted} />
