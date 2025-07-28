@@ -294,6 +294,26 @@ const appointment = await client.appointments.create({
             </TabsContent>
 
             <TabsContent value="videos" className="space-y-6">
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold mb-4">Video Tutorial Library</h3>
+                <p className="text-gray-600 mb-6">Comprehensive video guides covering all aspects of the NAVIMED healthcare platform. Follow the learning paths below for structured training.</p>
+                
+                <div className="grid md:grid-cols-3 gap-4 mb-8">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">🎯 New User Path</h4>
+                    <p className="text-sm text-blue-700">Start here for platform basics</p>
+                  </div>
+                  <div className="bg-emerald-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-emerald-900 mb-2">👩‍⚕️ Clinical Staff Path</h4>
+                    <p className="text-sm text-emerald-700">Essential workflows for patient care</p>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-purple-900 mb-2">⚙️ Administrative Path</h4>
+                    <p className="text-sm text-purple-700">System management and compliance</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
                   {
@@ -301,7 +321,8 @@ const appointment = await client.appointments.create({
                     description: "Complete introduction to NAVIMED platform and initial setup process",
                     duration: "12:45",
                     category: "Getting Started",
-                    level: "Beginner"
+                    level: "Beginner",
+                    path: "new-user"
                   },
                   {
                     title: "Patient Registration Walkthrough",
@@ -401,59 +422,61 @@ const appointment = await client.appointments.create({
                 </CardHeader>
                 <CardContent>
                   <div className="grid md:grid-cols-3 gap-6">
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold mb-2">For Healthcare Providers</h4>
-                      <p className="text-sm text-gray-600 mb-3">Essential videos for doctors and nurses</p>
-                      <ul className="text-xs space-y-1 text-gray-500">
-                        <li>1. Platform Overview</li>
-                        <li>2. Patient Registration</li>
-                        <li>3. EHR Deep Dive</li>
-                        <li>4. Prescription Management</li>
-                      </ul>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full mt-3"
-                        onClick={() => window.open('/learning-paths/healthcare-providers', '_blank')}
-                      >
-                        Start Learning Path
-                      </Button>
+                    <div className="p-4 border rounded-lg bg-blue-50">
+                      <h4 className="font-medium text-blue-900 mb-3">🎯 New User Path</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                          <span className="text-blue-700">Platform Overview & Setup (12:45)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                          <span className="text-blue-700">Patient Registration (8:30)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                          <span className="text-blue-700">Basic Appointment Scheduling (15:20)</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-blue-600 mt-3 font-medium">Total: 36 minutes</p>
                     </div>
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold mb-2">For Administrative Staff</h4>
-                      <p className="text-sm text-gray-600 mb-3">Videos focused on operations and billing</p>
-                      <ul className="text-xs space-y-1 text-gray-500">
-                        <li>1. Platform Overview</li>
-                        <li>2. Appointment Scheduling</li>
-                        <li>3. Insurance Claims</li>
-                        <li>4. Patient Registration</li>
-                      </ul>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full mt-3"
-                        onClick={() => window.open('/learning-paths/administrative-staff', '_blank')}
-                      >
-                        Start Learning Path
-                      </Button>
+                    
+                    <div className="p-4 border rounded-lg bg-emerald-50">
+                      <h4 className="font-medium text-emerald-900 mb-3">👩‍⚕️ Clinical Staff Path</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-emerald-600 rounded-full"></div>
+                          <span className="text-emerald-700">Electronic Health Records (22:15)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-emerald-600 rounded-full"></div>
+                          <span className="text-emerald-700">Prescription Management (14:30)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-emerald-600 rounded-full"></div>
+                          <span className="text-emerald-700">Laboratory Integration (16:45)</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-emerald-600 mt-3 font-medium">Total: 53 minutes</p>
                     </div>
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold mb-2">For IT Administrators</h4>
-                      <p className="text-sm text-gray-600 mb-3">Technical setup and system management</p>
-                      <ul className="text-xs space-y-1 text-gray-500">
-                        <li>1. System Administration</li>
-                        <li>2. Security & Compliance</li>
-                        <li>3. Laboratory Integration</li>
-                        <li>4. Advanced Configuration</li>
-                      </ul>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full mt-3"
-                        onClick={() => window.open('/learning-paths/it-administrators', '_blank')}
-                      >
-                        Start Learning Path
-                      </Button>
+                    
+                    <div className="p-4 border rounded-lg bg-purple-50">
+                      <h4 className="font-medium text-purple-900 mb-3">⚙️ Administrative Path</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-purple-600 rounded-full"></div>
+                          <span className="text-purple-700">Insurance Claims Processing (18:45)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-purple-600 rounded-full"></div>
+                          <span className="text-purple-700">System Administration (25:30)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-purple-600 rounded-full"></div>
+                          <span className="text-purple-700">HIPAA Compliance & Security (19:20)</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-purple-600 mt-3 font-medium">Total: 63 minutes</p>
                     </div>
                   </div>
                 </CardContent>
