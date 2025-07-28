@@ -208,6 +208,11 @@ A comprehensive multi-tenant healthcare management platform specializing in phar
   - Access: Full pharmacy management, prescriptions, medication claims
 - **Note**: Pharmacies do not have receptionist roles - only hospitals and clinics use receptionists
 
+### Laboratory - JOY (joy)
+- **Laboratory Admin**: `sam_back_admin` / `admin123` (organization: `JOY`)
+  - Access: Full laboratory management, lab orders processing, results posting
+- **Laboratory Login**: Use organization name "JOY" on login page
+
 ## Development Notes
 - Application runs on port 5000
 - Database auto-initializes with test data
