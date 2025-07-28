@@ -88,6 +88,7 @@ export default function RegisterOrganization() {
           adminLastName: formData.adminLastName,
           adminEmail: formData.adminEmail,
           adminPassword: formData.adminPassword,
+          confirmPassword: formData.confirmPassword,
           phoneNumber: formData.phoneNumber || null,
           address: formData.address || null,
           description: formData.description || null
