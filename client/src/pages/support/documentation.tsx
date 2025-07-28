@@ -120,16 +120,23 @@ export default function Documentation() {
                           <div key={idx} className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <h4 className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer">
+                                <button 
+                                  className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer text-left"
+                                  onClick={() => window.open(`/docs/${doc.title.toLowerCase().replace(/\s+/g, '-')}`, '_blank')}
+                                >
                                   {doc.title}
-                                </h4>
+                                </button>
                                 <p className="text-sm text-gray-600 mt-1">{doc.description}</p>
                                 <div className="flex items-center gap-2 mt-2">
                                   <Clock className="w-3 h-3 text-gray-400" />
                                   <span className="text-xs text-gray-500">{doc.readTime}</span>
                                 </div>
                               </div>
-                              <Button variant="ghost" size="sm">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => window.open(`/docs/${doc.title.toLowerCase().replace(/\s+/g, '-')}`, '_blank')}
+                              >
                                 <FileText className="w-4 h-4" />
                               </Button>
                             </div>
@@ -161,7 +168,13 @@ export default function Documentation() {
                         <li>• Insurance Claims API</li>
                       </ul>
                     </div>
-                    <Button variant="outline" className="w-full">View Complete API Reference</Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.open('/api-docs', '_blank')}
+                    >
+                      View Complete API Reference
+                    </Button>
                   </CardContent>
                 </Card>
 
@@ -182,7 +195,13 @@ export default function Documentation() {
                         <li>• API key management</li>
                       </ul>
                     </div>
-                    <Button variant="outline" className="w-full">View Security Documentation</Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.open('/docs/api-security', '_blank')}
+                    >
+                      View Security Documentation
+                    </Button>
                   </CardContent>
                 </Card>
 
@@ -203,7 +222,13 @@ export default function Documentation() {
                         <li>• System alerts and notifications</li>
                       </ul>
                     </div>
-                    <Button variant="outline" className="w-full">Configure Webhooks</Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.open('/docs/webhooks-setup', '_blank')}
+                    >
+                      Configure Webhooks
+                    </Button>
                   </CardContent>
                 </Card>
 
@@ -224,7 +249,13 @@ export default function Documentation() {
                         <li>• Java SDK (Beta)</li>
                       </ul>
                     </div>
-                    <Button variant="outline" className="w-full">Download SDKs</Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.open('/downloads/sdks', '_blank')}
+                    >
+                      Download SDKs
+                    </Button>
                   </CardContent>
                 </Card>
               </div>
@@ -356,7 +387,10 @@ const appointment = await client.appointments.create({
                           {video.level}
                         </Badge>
                       </div>
-                      <Button className="w-full">
+                      <Button 
+                        className="w-full"
+                        onClick={() => window.open(`/videos/${video.title.toLowerCase().replace(/\s+/g, '-')}`, '_blank')}
+                      >
                         <Video className="w-4 h-4 mr-2" />
                         Watch Video
                       </Button>
@@ -381,7 +415,14 @@ const appointment = await client.appointments.create({
                         <li>3. EHR Deep Dive</li>
                         <li>4. Prescription Management</li>
                       </ul>
-                      <Button variant="outline" size="sm" className="w-full mt-3">Start Learning Path</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full mt-3"
+                        onClick={() => window.open('/learning-paths/healthcare-providers', '_blank')}
+                      >
+                        Start Learning Path
+                      </Button>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <h4 className="font-semibold mb-2">For Administrative Staff</h4>
@@ -392,7 +433,14 @@ const appointment = await client.appointments.create({
                         <li>3. Insurance Claims</li>
                         <li>4. Patient Registration</li>
                       </ul>
-                      <Button variant="outline" size="sm" className="w-full mt-3">Start Learning Path</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full mt-3"
+                        onClick={() => window.open('/learning-paths/administrative-staff', '_blank')}
+                      >
+                        Start Learning Path
+                      </Button>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <h4 className="font-semibold mb-2">For IT Administrators</h4>
@@ -403,7 +451,14 @@ const appointment = await client.appointments.create({
                         <li>3. Laboratory Integration</li>
                         <li>4. Advanced Configuration</li>
                       </ul>
-                      <Button variant="outline" size="sm" className="w-full mt-3">Start Learning Path</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full mt-3"
+                        onClick={() => window.open('/learning-paths/it-administrators', '_blank')}
+                      >
+                        Start Learning Path
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -483,7 +538,18 @@ const appointment = await client.appointments.create({
                                 <span className="uppercase">{file.type}</span>
                               </div>
                             </div>
-                            <Button size="sm">
+                            <Button 
+                              size="sm"
+                              onClick={() => {
+                                // Create a mock download
+                                const link = document.createElement('a');
+                                link.href = `data:application/pdf;base64,JVBERi0xLjMKJcTl8uXrp/Og0MTGCjQgMCBvYmoKPDwKL1R5cGUgL0NhdGFsb2cKL091dGxpbmVzIDIgMCBSCi9QYWdlcyAzIDAgUgo+PgplbmRvYmoKMiAwIG9iago8PAovVHlwZSAvT3V0bGluZXMKL0NvdW50IDAKL1Jvb3QgMSAwIFIKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9Db3VudCAxCi9LaWRzIFs0IDAgUl0KPj4KZW5kb2JqCjQgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAzIDAgUgovUmVzb3VyY2VzIDw8Ci9Gb250IDw8Ci9GMSAKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvQXJpYWwtQm9sZE1UCj4+Cj4+Cj4+Ci9NZWRpYUJveCBbMCAwIDYxMiA3OTJdCi9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKNSAwIG9iago8PAovTGVuZ3RoIDQ0Cj4+CnN0cmVhbQpCVAovRjEgMTIgVGYKNzIgNzIwIFRkCihOQVZJTUVEIERvY3VtZW50YXRpb24pIFRqCkVUCmVuZHN0cmVhbQplbmRvYmoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNzQgMDAwMDAgbiAKMDAwMDAwMDEyMCAwMDAwMCBuIAowMDAwMDAwMTc5IDAwMDAwIG4gCjAwMDAwMDA0MTcgMDAwMDAgbiAKdHJhaWxlcgo8PAovU2l6ZSA2Ci9Sb290IDEgMCBSCj4+CnN0YXJ0eHJlZgo1MjcKJSVFT0Y=`;
+                                link.download = `${file.name.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }}
+                            >
                               <Download className="w-4 h-4 mr-2" />
                               Download
                             </Button>
@@ -558,7 +624,20 @@ const appointment = await client.appointments.create({
                               <span className="text-xs text-gray-500">{software.size}</span>
                               <span className="text-xs text-gray-500">{software.type}</span>
                             </div>
-                            <Button variant="outline" size="sm" className="w-full">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="w-full"
+                              onClick={() => {
+                                // Create a mock download
+                                const link = document.createElement('a');
+                                link.href = `data:application/zip;base64,UEsDBAoAAAAAAIdYT1QAAAAAAAAAAAAAAAAJAAAAc2RrLWZpbGVzL1BLAwQKAAAAAAB/WE9UAAAAAAAAAAAAAAAAFAAAAG5hdmltZWQtc2RrLXYyLjEuMC50YXJQSwMECgAAAAAAgFhPVAAAAAAAAAAAAAAAABYAAABwYWNrYWdlLWRlcGVuZGVuY2llcy50eHRQSwECFAAKAAAAAAB/WE9UAAAAAAAAAAAAAAAAFAAAAG5hdmltZWQtc2RrLXYyLjEuMC50YXIAAAAAAAAAAFBLAQIUAAoAAAAAAIBYT1QAAAAAAAAAAAAAAAAWAAAAcGFja2FnZS1kZXBlbmRlbmNpZXMudHh0AAAAAAAAAABQSwECFAAKAAAAAACHWE9UAAAAAAAAAAAAAAAACQAAAHN`;
+                                link.download = `${software.name.toLowerCase().replace(/\s+/g, '-')}-${software.version}.zip`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }}
+                            >
                               <Download className="w-3 h-3 mr-2" />
                               Download
                             </Button>
@@ -624,7 +703,19 @@ const appointment = await client.appointments.create({
                                 <span className="uppercase">{template.type}</span>
                               </div>
                             </div>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => {
+                                // Create a mock download
+                                const link = document.createElement('a');
+                                link.href = `data:application/${template.type.toLowerCase()};base64,eyJuYW1lIjoiJHt0ZW1wbGF0ZS5uYW1lfSIsInZlcnNpb24iOiIxLjAuMCIsInNldHRpbmdzIjp7fX0=`;
+                                link.download = `${template.name.toLowerCase().replace(/\s+/g, '-')}.${template.type.toLowerCase()}`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }}
+                            >
                               <Download className="w-4 h-4" />
                             </Button>
                           </div>
