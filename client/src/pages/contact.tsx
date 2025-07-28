@@ -89,9 +89,8 @@ export default function ContactPage() {
                     <MapPin className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <div className="font-semibold text-lg">ARGILETTE Labs</div>
-                    <div className="text-slate-600">Healthcare Technology Division</div>
-                    <div className="text-sm text-slate-500">Global healthcare innovation</div>
+                    <div className="font-semibold text-lg">ARGILETTE LLC Cybersecurity and Healthcare Technology</div>
+                    <div className="text-slate-600">Global healthcare innovation</div>
                   </div>
                 </div>
               </div>
