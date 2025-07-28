@@ -401,8 +401,8 @@ function AppContent() {
         <Route path="/docs/api-docs" component={ApiDocsPage} />
         
         {/* Video Tutorial Routes */}
-        <Route path="/videos/:videoId" component={VideoPlayer} />
         <Route path="/videos/integration" component={VideoIntegrationOptions} />
+        <Route path="/videos/:videoId" component={VideoPlayer} />
         
         {/* Catch-all routes for docs */}
         <Route path="/docs/:slug" component={GettingStarted} />
