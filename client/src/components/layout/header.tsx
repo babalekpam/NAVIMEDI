@@ -101,8 +101,8 @@ export const Header = () => {
                     {t('appointments')}
                   </button>
                 )}
-                {/* Prescriptions - hidden for laboratory users */}
-                {!(user.role === "tenant_admin" && tenant?.type === "laboratory") && user.role !== "lab_technician" && (
+                {/* Prescriptions - hidden for laboratory users completely */}
+                {tenant?.type !== "laboratory" && user.role !== "lab_technician" && (
                   <button 
                     onClick={() => setLocation("/prescriptions")}
                     className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
