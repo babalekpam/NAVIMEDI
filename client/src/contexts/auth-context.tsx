@@ -94,6 +94,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     
     setToken(data.token);
     setUser(data.user);
+    
+    // Redirect based on user role
+    if (data.user.role === 'patient') {
+      window.location.href = '/patient-portal';
+    } else {
+      window.location.href = '/dashboard';
+    }
   };
 
   const logout = () => {

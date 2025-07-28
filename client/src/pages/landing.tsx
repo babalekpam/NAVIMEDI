@@ -8,6 +8,7 @@ import {
   Heart, 
   Shield, 
   Users, 
+  User,
   Bolt, 
   Globe, 
   Building2, 
@@ -86,7 +87,13 @@ export default function LandingPage() {
               <Link href="/login">
                 <Button size="lg" variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50 px-8 py-4 text-lg">
                   <Monitor className="w-5 h-5 mr-2" />
-                  View Demo
+                  Provider Login
+                </Button>
+              </Link>
+              <Link href="/patient-login">
+                <Button size="lg" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50 px-8 py-4 text-lg">
+                  <User className="w-5 h-5 mr-2" />
+                  Patient Portal
                 </Button>
               </Link>
             </div>
