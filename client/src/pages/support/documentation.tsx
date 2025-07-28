@@ -322,63 +322,71 @@ const appointment = await client.appointments.create({
                     duration: "12:45",
                     category: "Getting Started",
                     level: "Beginner",
-                    path: "new-user"
+                    slug: "platform-overview-setup"
                   },
                   {
                     title: "Patient Registration Walkthrough",
                     description: "Step-by-step guide to registering new patients and managing records",
                     duration: "8:30",
                     category: "Patient Management",
-                    level: "Beginner"
+                    level: "Beginner",
+                    slug: "patient-registration"
                   },
                   {
                     title: "Advanced Appointment Scheduling",
                     description: "Master complex scheduling scenarios, recurring appointments, and resource management",
                     duration: "15:20",
                     category: "Scheduling",
-                    level: "Intermediate"
+                    level: "Intermediate",
+                    slug: "appointment-scheduling"
                   },
                   {
                     title: "Electronic Health Records Deep Dive",
                     description: "Complete EHR workflow including documentation, care plans, and clinical notes",
                     duration: "22:15",
                     category: "Clinical",
-                    level: "Intermediate"
+                    level: "Intermediate",
+                    slug: "electronic-health-records"
                   },
                   {
                     title: "Insurance Claims Processing",
                     description: "End-to-end insurance claims workflow from submission to payment",
                     duration: "18:45",
                     category: "Billing",
-                    level: "Advanced"
+                    level: "Advanced",
+                    slug: "insurance-claims-processing"
                   },
                   {
                     title: "Prescription Management System",
                     description: "Digital prescriptions, pharmacy integration, and medication management",
                     duration: "14:30",
                     category: "Clinical",
-                    level: "Intermediate"
+                    level: "Intermediate",
+                    slug: "prescription-management"
                   },
                   {
                     title: "Laboratory Integration Setup",
                     description: "Connecting lab systems, ordering tests, and managing results",
                     duration: "16:45",
                     category: "Laboratory",
-                    level: "Advanced"
+                    level: "Advanced",
+                    slug: "laboratory-integration"
                   },
                   {
                     title: "System Administration Essentials",
                     description: "User management, security settings, and system configuration",
                     duration: "25:30",
                     category: "Administration",
-                    level: "Advanced"
+                    level: "Advanced",
+                    slug: "system-administration"
                   },
                   {
                     title: "HIPAA Compliance & Security",
                     description: "Ensuring HIPAA compliance and implementing security best practices",
                     duration: "19:20",
                     category: "Security",
-                    level: "Advanced"
+                    level: "Advanced",
+                    slug: "hipaa-compliance-security"
                   }
                 ].map((video, index) => (
                   <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
@@ -403,7 +411,7 @@ const appointment = await client.appointments.create({
                           {video.level}
                         </Badge>
                       </div>
-                      <Link href={`/videos/${video.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '')}`}>
+                      <Link href={`/videos/${video.slug || video.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '')}`}>
                         <Button className="w-full">
                           <Video className="w-4 h-4 mr-2" />
                           Watch Video
