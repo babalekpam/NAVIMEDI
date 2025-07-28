@@ -303,13 +303,14 @@ export default function UserRoles() {
       }, {} as Record<string, string[]>);
 
       // Create or update permissions for each module
-      const promises = Object.entries(permissionsByModule).map(([module, permissions]) =>
-        apiRequest("POST", "/api/role-permissions", {
+      const promises = Object.entries(permissionsByModule).map(async ([module, permissions]) => {
+        const response = await apiRequest("POST", "/api/role-permissions", {
           role,
           module,
           permissions
-        })
-      );
+        });
+        return response.json();
+      });
 
       await Promise.all(promises);
     },
