@@ -2330,6 +2330,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get lab orders for laboratory (cross-tenant)
+  app.get("/api/lab-orders/laboratory", authenticateToken, requireRole(["lab_technician", "tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
+    try {
+      // Get lab orders sent to this laboratory tenant
+      const labOrders = await storage.getLabOrdersForLaboratory(req.tenantId!);
+      res.json(labOrders);
+    } catch (error) {
+      console.error("Error fetching lab orders for laboratory:", error);
+      res.status(500).json({ message: "Failed to fetch lab orders" });
+    }
+  });
+
+  // Get cross-tenant lab results for patients (viewable by doctors and patients)
+  app.get("/api/patients/:patientId/lab-results/all", authenticateToken, requireRole(["physician", "nurse", "patient", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      
+      // For doctors and admins, get results from all laboratories
+      if (["physician", "nurse", "tenant_admin", "director", "super_admin"].includes(req.user!.role)) {
+        const crossTenantResults = await storage.getLabResultsForPatientAcrossTenants(patientId);
+        res.json(crossTenantResults);
+      } else {
+        // For patients, get their own results across all labs
+        const crossTenantResults = await storage.getLabResultsForPatientAcrossTenants(patientId);
+        res.json(crossTenantResults);
+      }
+    } catch (error) {
+      console.error("Error fetching cross-tenant lab results for patient:", error);
+      res.status(500).json({ message: "Failed to fetch lab results" });
+    }
+  });
+
   // Laboratory application routes (external lab registration) - Public endpoint
   app.post("/api/laboratory-applications", async (req, res) => {
     try {

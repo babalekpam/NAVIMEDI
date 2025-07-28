@@ -953,6 +953,53 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(labOrders.orderedDate));
   }
 
+  // Get lab orders sent to a specific laboratory (cross-tenant)
+  async getLabOrdersForLaboratory(laboratoryTenantId: string): Promise<any[]> {
+    // Get all lab orders assigned to this laboratory
+    const orders = await db.select({
+      id: labOrders.id,
+      testName: labOrders.testName,
+      testCode: labOrders.testCode,
+      instructions: labOrders.instructions,
+      priority: labOrders.priority,
+      status: labOrders.status,
+      orderedDate: labOrders.orderedDate,
+      patientId: labOrders.patientId,
+      originatingHospitalId: labOrders.tenantId
+    }).from(labOrders)
+      .where(eq(labOrders.labTenantId, laboratoryTenantId))
+      .orderBy(desc(labOrders.orderedDate));
+
+    // Enrich with patient and hospital information
+    const enrichedOrders = await Promise.all(orders.map(async (order) => {
+      // Get patient info
+      const patientInfo = await db.select({
+        firstName: patients.firstName,
+        lastName: patients.lastName,
+        mrn: patients.mrn
+      }).from(patients)
+        .where(eq(patients.id, order.patientId))
+        .limit(1);
+
+      // Get originating hospital info
+      const hospitalInfo = await db.select({
+        name: tenants.name
+      }).from(tenants)
+        .where(eq(tenants.id, order.originatingHospitalId))
+        .limit(1);
+
+      return {
+        ...order,
+        patientFirstName: patientInfo[0]?.firstName || 'Unknown',
+        patientLastName: patientInfo[0]?.lastName || 'Patient',
+        patientMrn: patientInfo[0]?.mrn || 'N/A',
+        originatingHospital: hospitalInfo[0]?.name || 'Unknown Hospital'
+      };
+    }));
+
+    return enrichedOrders;
+  }
+
   async getPendingLabOrders(tenantId: string): Promise<LabOrder[]> {
     return await db.select().from(labOrders).where(
       and(
@@ -1589,6 +1636,10 @@ export class DatabaseStorage implements IStorage {
 
   async createLabResult(insertLabResult: InsertLabResult): Promise<LabResult> {
     const [labResult] = await db.insert(labResults).values(insertLabResult).returning();
+    
+    // Automatically notify hospital and update lab order status
+    await this.notifyHospitalOfResults(labResult);
+    
     return labResult;
   }
 
@@ -1610,6 +1661,56 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(labResults).where(
       and(eq(labResults.patientId, patientId), eq(labResults.tenantId, tenantId))
     ).orderBy(desc(labResults.createdAt));
+  }
+
+  // Cross-tenant lab results access for doctors and patients
+  async getLabResultsForPatientAcrossTenants(patientId: string): Promise<any[]> {
+    // Get all lab results for a patient across all tenants (for doctors to view)
+    const results = await db.select({
+      id: labResults.id,
+      labOrderId: labResults.labOrderId,
+      testName: labResults.testName,
+      result: labResults.result,
+      normalRange: labResults.normalRange,
+      unit: labResults.unit,
+      status: labResults.status,
+      abnormalFlag: labResults.abnormalFlag,
+      notes: labResults.notes,
+      performedBy: labResults.performedBy,
+      completedAt: labResults.completedAt,
+      reportedAt: labResults.reportedAt,
+      createdAt: labResults.createdAt,
+      laboratoryTenantId: labResults.tenantId
+    }).from(labResults)
+      .where(eq(labResults.patientId, patientId))
+      .orderBy(desc(labResults.completedAt));
+
+    // Enrich with laboratory information
+    const enrichedResults = await Promise.all(results.map(async (result) => {
+      const lab = await db.select().from(tenants).where(eq(tenants.id, result.laboratoryTenantId)).limit(1);
+      return {
+        ...result,
+        laboratoryName: lab[0]?.name || 'Unknown Laboratory'
+      };
+    }));
+
+    return enrichedResults;
+  }
+
+  // Method to automatically notify hospitals when results are posted
+  async notifyHospitalOfResults(labResult: LabResult): Promise<void> {
+    // Get the original lab order to find the ordering hospital
+    const labOrder = await db.select().from(labOrders).where(eq(labOrders.id, labResult.labOrderId)).limit(1);
+    if (labOrder.length > 0) {
+      // Update the lab order status to completed
+      await db.update(labOrders)
+        .set({ 
+          status: 'completed',
+          results: { completed: true, resultId: labResult.id },
+          updatedAt: sql`CURRENT_TIMESTAMP` 
+        })
+        .where(eq(labOrders.id, labResult.labOrderId));
+    }
   }
 
   async getLabResultsByTenant(tenantId: string): Promise<LabResult[]> {

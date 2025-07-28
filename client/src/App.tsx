@@ -68,6 +68,7 @@ import VideoIntegrationOptions from "@/pages/videos/video-integration-options";
 import YoutubeIntegration from "@/pages/videos/youtube-integration";
 import VimeoIntegration from "@/pages/videos/vimeo-integration";
 import AWSIntegration from "@/pages/videos/aws-integration";
+import PostLabResults from "@/pages/post-lab-results";
 
 
 
@@ -152,6 +153,19 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <LabOrders />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/post-lab-results">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PostLabResults />
                 </main>
               </div>
             </div>
