@@ -53,6 +53,8 @@ import { GettingStarted } from "@/pages/docs/getting-started";
 import { PatientManagement } from "@/pages/docs/patient-management";
 import { ApiDocs as ApiDocsPage } from "@/pages/docs/api-docs";
 import { AppointmentScheduling } from "@/pages/docs/appointment-scheduling";
+import { BillingInsurance } from "@/pages/docs/billing-insurance";
+import { SecurityCompliance } from "@/pages/docs/security-compliance";
 
 
 
@@ -380,7 +382,12 @@ function AppContent() {
         <Route path="/docs/getting-started" component={GettingStarted} />
         <Route path="/docs/patient-management" component={PatientManagement} />
         <Route path="/docs/appointment-scheduling" component={AppointmentScheduling} />
+        <Route path="/docs/billing-insurance" component={BillingInsurance} />
+        <Route path="/docs/security-compliance" component={SecurityCompliance} />
         <Route path="/docs/api-docs" component={ApiDocsPage} />
+        
+        {/* Catch-all routes for docs */}
+        <Route path="/docs/:slug" component={GettingStarted} />
         
         <Route component={NotFound} />
       </Switch>
