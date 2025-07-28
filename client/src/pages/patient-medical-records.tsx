@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Filter, Calendar, FileText, Pill, Activity, Heart, AlertTriangle, Stethoscope, Clock, User, Building, Edit, Save, X, Plus, TestTube, Zap } from "lucide-react";
+import { Search, Filter, Calendar, FileText, Pill, Activity, Heart, AlertTriangle, Stethoscope, Clock, User, Building, Edit, Save, X, Plus, TestTube, Bolt } from "lucide-react";
 import { Patient, Appointment, Prescription, LabOrder, VitalSigns, VisitSummary } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
@@ -395,7 +395,7 @@ export default function PatientMedicalRecords() {
                   <Card className="mb-6">
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center">
-                        <Zap className="h-5 w-5 mr-2 text-yellow-500" />
+                        <Bolt className="h-5 w-5 mr-2 text-yellow-500" />
                         Quick Actions
                       </CardTitle>
                     </CardHeader>
