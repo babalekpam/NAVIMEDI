@@ -120,25 +120,22 @@ export default function Documentation() {
                           <div key={idx} className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <button 
-                                  className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer text-left"
-                                  onClick={() => window.open(`/docs/${doc.title.toLowerCase().replace(/\s+/g, '-')}`, '_blank')}
-                                >
-                                  {doc.title}
-                                </button>
+                                <Link href={`/docs/${doc.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                                  <button className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer text-left">
+                                    {doc.title}
+                                  </button>
+                                </Link>
                                 <p className="text-sm text-gray-600 mt-1">{doc.description}</p>
                                 <div className="flex items-center gap-2 mt-2">
                                   <Clock className="w-3 h-3 text-gray-400" />
                                   <span className="text-xs text-gray-500">{doc.readTime}</span>
                                 </div>
                               </div>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => window.open(`/docs/${doc.title.toLowerCase().replace(/\s+/g, '-')}`, '_blank')}
-                              >
-                                <FileText className="w-4 h-4" />
-                              </Button>
+                              <Link href={`/docs/${doc.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                                <Button variant="ghost" size="sm">
+                                  <FileText className="w-4 h-4" />
+                                </Button>
+                              </Link>
                             </div>
                           </div>
                         ))}
@@ -168,13 +165,11 @@ export default function Documentation() {
                         <li>• Insurance Claims API</li>
                       </ul>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      onClick={() => window.open('/api-docs', '_blank')}
-                    >
-                      View Complete API Reference
-                    </Button>
+                    <Link href="/api-docs">
+                      <Button variant="outline" className="w-full">
+                        View Complete API Reference
+                      </Button>
+                    </Link>
                   </CardContent>
                 </Card>
 

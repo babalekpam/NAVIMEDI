@@ -49,6 +49,10 @@ import Documentation from "@/pages/support/documentation";
 import HelpCenter from "@/pages/support/help-center";
 import Contact from "@/pages/support/contact";
 import Status from "@/pages/support/status";
+import { GettingStarted } from "@/pages/docs/getting-started";
+import { PatientManagement } from "@/pages/docs/patient-management";
+import { ApiDocs as ApiDocsPage } from "@/pages/docs/api-docs";
+import { AppointmentScheduling } from "@/pages/docs/appointment-scheduling";
 
 
 
@@ -358,7 +362,7 @@ function AppContent() {
         <Route path="/features" component={Features} />
         <Route path="/security" component={Security} />
         <Route path="/integrations" component={Integrations} />
-        <Route path="/api-docs" component={ApiDocs} />
+        <Route path="/api-docs" component={ApiDocsPage} />
         
         {/* Solutions Pages */}
         <Route path="/solutions/hospitals" component={HospitalSolutions} />
@@ -371,6 +375,12 @@ function AppContent() {
         <Route path="/support/help-center" component={HelpCenter} />
         <Route path="/support/contact" component={Contact} />
         <Route path="/support/status" component={Status} />
+        
+        {/* Documentation Pages */}
+        <Route path="/docs/getting-started" component={GettingStarted} />
+        <Route path="/docs/patient-management" component={PatientManagement} />
+        <Route path="/docs/appointment-scheduling" component={AppointmentScheduling} />
+        <Route path="/docs/api-docs" component={ApiDocsPage} />
         
         <Route component={NotFound} />
       </Switch>
