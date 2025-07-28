@@ -638,8 +638,8 @@ export default function LandingPage() {
                     <Phone className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <div className="font-semibold">Sales & Support</div>
-                    <div className="text-slate-300">1-800-NAVIMED (628-4633)</div>
+                    <div className="font-semibold">Sales Team</div>
+                    <div className="text-slate-300">314-472-3839</div>
                   </div>
                 </div>
                 

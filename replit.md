@@ -4,6 +4,8 @@
 A comprehensive multi-tenant healthcare management platform specializing in pharmacy operations and workflow optimization, with advanced capabilities for prescription management and insurance claims processing.
 
 ## Recent Changes (Latest)
+- **✅ NAVIMED LOGO BRANDING APPLIED PLATFORM-WIDE (January 28, 2025)** - Applied client's actual NaviMed logo across entire platform including landing page, header, sidebar, login, and registration pages for consistent professional branding
+- **✅ SALES TEAM CONTACT INFORMATION UPDATED** - Added sales team phone number (314-472-3839) to landing page contact section
 - **✅ CRITICAL APPLICATION STARTUP ERROR RESOLVED (January 28, 2025)** - Fixed invalid Lucide React icon import causing "Zap is not defined" error that prevented application from loading
 - **✅ PATIENT MEDICAL RECORDS PAGE RESTORED** - Application now loads successfully with all medical records functionality working properly
 - **✅ DATABASE CONNECTIVITY CONFIRMED** - All database operations and API endpoints functioning correctly after startup fix
