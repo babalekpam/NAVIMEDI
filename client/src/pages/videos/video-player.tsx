@@ -172,8 +172,31 @@ export default function VideoPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState("0:00");
+  const [progress, setProgress] = useState(0);
   
   const video = videoId ? videoLibrary[videoId] : null;
+
+  useEffect(() => {
+    if (isPlaying && video) {
+      const interval = setInterval(() => {
+        setProgress(prev => {
+          const newProgress = prev + 0.5;
+          if (newProgress >= 100) {
+            setIsPlaying(false);
+            return 0;
+          }
+          // Update time display based on progress
+          const totalSeconds = parseInt(video.duration.split(':')[0]) * 60 + parseInt(video.duration.split(':')[1]);
+          const currentSeconds = Math.floor((newProgress / 100) * totalSeconds);
+          const minutes = Math.floor(currentSeconds / 60);
+          const seconds = currentSeconds % 60;
+          setCurrentTime(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+          return newProgress;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isPlaying, video]);
 
   if (!video) {
     return (
@@ -227,20 +250,67 @@ export default function VideoPlayer() {
           <div className="lg:col-span-2">
             <Card>
               <CardContent className="p-0">
-                {/* Video Placeholder */}
+                {/* Video Player */}
                 <div className="relative aspect-video bg-gray-900 rounded-t-lg overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center text-white">
-                      <div className="w-20 h-20 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  {/* Video Content Area */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-emerald-600 to-purple-600">
+                    {/* Simulated Video Content */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center text-white">
                         {isPlaying ? (
-                          <Pause className="w-8 h-8" />
+                          <div className="space-y-4">
+                            <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                              <Pause className="w-10 h-10" />
+                            </div>
+                            <div className="space-y-2">
+                              <div className="text-lg font-semibold">▶ Now Playing: {video.title}</div>
+                              <div className="text-sm text-gray-200">Professional Healthcare Training Video</div>
+                              <div className="text-xs text-gray-300 bg-black/30 px-3 py-1 rounded-full inline-block">
+                                🎥 Demo Mode - Video Content Available in Full Version
+                              </div>
+                            </div>
+                          </div>
                         ) : (
-                          <Play className="w-8 h-8 ml-1" />
+                          <div className="space-y-4">
+                            <div 
+                              className="w-24 h-24 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 cursor-pointer hover:bg-emerald-500 transition-colors"
+                              onClick={() => setIsPlaying(true)}
+                            >
+                              <Play className="w-10 h-10 ml-1" />
+                            </div>
+                            <div className="space-y-2">
+                              <div className="text-lg font-semibold">{video.title}</div>
+                              <div className="text-sm text-gray-200">Duration: {video.duration}</div>
+                              <div className="text-xs text-gray-300 bg-black/30 px-3 py-1 rounded-full inline-block">
+                                Click Play to Start Demo
+                              </div>
+                            </div>
+                          </div>
                         )}
                       </div>
-                      <p className="text-lg font-semibold mb-2">{video.title}</p>
-                      <p className="text-sm text-gray-300">Duration: {video.duration}</p>
                     </div>
+                    
+                    {/* Professional Video Overlay Elements */}
+                    {isPlaying && (
+                      <>
+                        <div className="absolute top-4 left-4">
+                          <div className="bg-black/60 text-white px-3 py-1 rounded text-sm">
+                            🔴 LIVE DEMO
+                          </div>
+                        </div>
+                        <div className="absolute top-4 right-4">
+                          <div className="bg-black/60 text-white px-3 py-1 rounded text-sm">
+                            HD Quality
+                          </div>
+                        </div>
+                        <div className="absolute bottom-20 left-4 right-4">
+                          <div className="bg-black/80 text-white p-3 rounded">
+                            <div className="text-sm font-medium mb-1">Current Chapter: {video.chapters[0]?.title}</div>
+                            <div className="text-xs text-gray-300">{video.chapters[0]?.description}</div>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                   
                   {/* Video Controls */}
@@ -250,7 +320,12 @@ export default function VideoPlayer() {
                         size="sm"
                         variant="ghost"
                         className="text-white hover:bg-white/20"
-                        onClick={() => setIsPlaying(!isPlaying)}
+                        onClick={() => {
+                          setIsPlaying(!isPlaying);
+                          if (!isPlaying && progress === 0) {
+                            setCurrentTime("0:00");
+                          }
+                        }}
                       >
                         {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                       </Button>
@@ -263,8 +338,11 @@ export default function VideoPlayer() {
                         <SkipForward className="w-4 h-4" />
                       </Button>
                       
-                      <div className="flex-1 bg-white/20 h-1 rounded">
-                        <div className="bg-emerald-500 h-1 rounded w-1/4"></div>
+                      <div className="flex-1 bg-white/20 h-1 rounded cursor-pointer">
+                        <div 
+                          className="bg-emerald-500 h-1 rounded transition-all duration-300" 
+                          style={{ width: `${progress}%` }}
+                        ></div>
                       </div>
                       
                       <span className="text-white text-sm">{currentTime} / {video.duration}</span>
@@ -292,7 +370,7 @@ export default function VideoPlayer() {
                       <h1 className="text-2xl font-bold text-gray-900 mb-2">{video.title}</h1>
                       <p className="text-gray-600 mb-4">{video.description}</p>
                       
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 mb-4">
                         <Badge variant="outline">{video.category}</Badge>
                         <Badge className={`${
                           video.level === 'Beginner' ? 'bg-green-100 text-green-800' :
@@ -302,6 +380,21 @@ export default function VideoPlayer() {
                           {video.level}
                         </Badge>
                         <span className="text-sm text-gray-500">{video.duration}</span>
+                      </div>
+                      
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mt-0.5">
+                            <span className="text-white text-xs">ℹ</span>
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-blue-900 mb-1">Demo Video Player</h4>
+                            <p className="text-sm text-blue-700">
+                              This is a demonstration of the video tutorial interface. In the full version, 
+                              you would see actual healthcare training videos with real content from medical professionals.
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
