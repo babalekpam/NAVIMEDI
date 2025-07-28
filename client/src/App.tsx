@@ -63,6 +63,9 @@ import { LaboratoryOrderProcessing } from "@/pages/docs/laboratory-order-process
 import { ClinicalDocumentation } from "@/pages/docs/clinical-documentation";
 import VideoPlayer from "@/pages/videos/video-player";
 import VideoIntegrationOptions from "@/pages/videos/video-integration-options";
+import YoutubeIntegration from "@/pages/videos/youtube-integration";
+import VimeoIntegration from "@/pages/videos/vimeo-integration";
+import AWSIntegration from "@/pages/videos/aws-integration";
 
 
 
@@ -402,6 +405,9 @@ function AppContent() {
         
         {/* Video Tutorial Routes */}
         <Route path="/videos/integration" component={VideoIntegrationOptions} />
+        <Route path="/videos/integration/youtube" component={YoutubeIntegration} />
+        <Route path="/videos/integration/vimeo" component={VimeoIntegration} />
+        <Route path="/videos/integration/aws" component={AWSIntegration} />
         <Route path="/videos/:videoId" component={VideoPlayer} />
         
         {/* Catch-all routes for docs */}

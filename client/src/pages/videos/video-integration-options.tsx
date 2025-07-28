@@ -69,7 +69,11 @@ export default function VideoIntegrationOptions() {
                   </ul>
                 </div>
               </div>
-              <Button className="w-full" variant="outline">
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => window.open('/videos/integration/youtube', '_blank')}
+              >
                 <Youtube className="w-4 h-4 mr-2" />
                 Setup YouTube Integration
               </Button>
@@ -105,7 +109,11 @@ export default function VideoIntegrationOptions() {
                   <strong>Cost:</strong> $20-75/month
                 </div>
               </div>
-              <Button className="w-full" variant="outline">
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => window.open('/videos/integration/vimeo', '_blank')}
+              >
                 <Video className="w-4 h-4 mr-2" />
                 Setup Vimeo Integration
               </Button>
@@ -141,7 +149,11 @@ export default function VideoIntegrationOptions() {
                   <strong>Cost:</strong> Pay per usage (~$10-100/month)
                 </div>
               </div>
-              <Button className="w-full" variant="outline">
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => window.open('/videos/integration/aws', '_blank')}
+              >
                 <Cloud className="w-4 h-4 mr-2" />
                 Setup AWS Integration
               </Button>
