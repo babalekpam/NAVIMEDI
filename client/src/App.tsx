@@ -55,6 +55,12 @@ import { ApiDocs as ApiDocsPage } from "@/pages/docs/api-docs";
 import { AppointmentScheduling } from "@/pages/docs/appointment-scheduling";
 import { BillingInsurance } from "@/pages/docs/billing-insurance";
 import { SecurityCompliance } from "@/pages/docs/security-compliance";
+import { PlatformOverview } from "@/pages/docs/platform-overview";
+import { OrganizationSetup } from "@/pages/docs/organization-setup";
+import { ElectronicHealthRecords } from "@/pages/docs/electronic-health-records";
+import { PrescriptionManagement } from "@/pages/docs/prescription-management";
+import { LaboratoryOrderProcessing } from "@/pages/docs/laboratory-order-processing";
+import { ClinicalDocumentation } from "@/pages/docs/clinical-documentation";
 
 
 
@@ -380,8 +386,14 @@ function AppContent() {
         
         {/* Documentation Pages */}
         <Route path="/docs/getting-started" component={GettingStarted} />
+        <Route path="/docs/platform-overview" component={PlatformOverview} />
+        <Route path="/docs/organization-setup" component={OrganizationSetup} />
         <Route path="/docs/patient-management" component={PatientManagement} />
         <Route path="/docs/appointment-scheduling" component={AppointmentScheduling} />
+        <Route path="/docs/electronic-health-records" component={ElectronicHealthRecords} />
+        <Route path="/docs/prescription-management" component={PrescriptionManagement} />
+        <Route path="/docs/laboratory-order-processing" component={LaboratoryOrderProcessing} />
+        <Route path="/docs/clinical-documentation" component={ClinicalDocumentation} />
         <Route path="/docs/billing-insurance" component={BillingInsurance} />
         <Route path="/docs/security-compliance" component={SecurityCompliance} />
         <Route path="/docs/api-docs" component={ApiDocsPage} />
