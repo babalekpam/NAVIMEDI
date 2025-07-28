@@ -209,7 +209,7 @@ export default function PatientPortal({ patientId }: PatientPortalProps) {
           {/* Find Care Tab */}
           <TabsContent value="find-care">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = "/telemedicine-booking"}>
                 <CardHeader>
                   <CardTitle className="flex items-center text-lg">
                     <Video className="h-5 w-5 mr-2 text-blue-600" />
@@ -220,7 +220,7 @@ export default function PatientPortal({ patientId }: PatientPortalProps) {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full">Start Video Visit</Button>
+                  <Button className="w-full" onClick={() => window.location.href = "/telemedicine-booking"}>Start Video Visit</Button>
                 </CardContent>
               </Card>
 

@@ -71,6 +71,7 @@ import AWSIntegration from "@/pages/videos/aws-integration";
 import PostLabResults from "@/pages/post-lab-results";
 import PatientPortal from "@/pages/patient-portal";
 import PatientPortalPublic from "@/pages/patient-portal-public";
+import TelemedicineBooking from "@/pages/telemedicine-booking";
 
 
 
@@ -180,6 +181,11 @@ function AppContent() {
         </Route>
         <Route path="/patient-portal-public">
           <PatientPortalPublic />
+        </Route>
+        <Route path="/telemedicine-booking">
+          <ProtectedRoute>
+            <TelemedicineBooking />
+          </ProtectedRoute>
         </Route>
         <Route path="/billing">
           <ProtectedRoute>

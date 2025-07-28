@@ -19,7 +19,8 @@ import {
   Clock,
   UserPlus,
   CalendarPlus,
-  Stethoscope
+  Stethoscope,
+  Video
 } from "lucide-react";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   // Clinical Section (only for tenant users)
   { id: "dashboard", label: t("dashboard"), icon: BarChart3, path: "/dashboard", roles: ["physician", "nurse", "pharmacist", "lab_technician", "receptionist", "billing_staff", "tenant_admin", "director", "super_admin"] },
   { id: "patient-portal", label: "Patient Portal", icon: Users, path: "/patient-portal", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
+  { id: "telemedicine-booking", label: "Telemedicine Booking", icon: Video, path: "/telemedicine-booking", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "register-patient", label: t("register-patient"), icon: UserPlus, path: "/patients?action=register", roles: ["receptionist", "tenant_admin", "director"] },
   { id: "book-appointment", label: t("book-appointment"), icon: CalendarPlus, path: "/appointments?action=book", roles: ["receptionist", "tenant_admin", "director"] },
   { id: "patients", label: t("patients"), icon: Users, path: "/patients", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
@@ -269,7 +271,7 @@ export const Sidebar = () => {
       return true;
     }
     // Include core clinical items - exclude laboratory-specific items for non-laboratory tenants
-    const clinicalItemIds = ["dashboard", "patient-portal", "register-patient", "book-appointment", "patients", "patient-medical-records", "appointments", "prescriptions", "lab-orders", "lab-results", "health-recommendations", "medical-communications"];
+    const clinicalItemIds = ["dashboard", "patient-portal", "telemedicine-booking", "register-patient", "book-appointment", "patients", "patient-medical-records", "appointments", "prescriptions", "lab-orders", "lab-results", "health-recommendations", "medical-communications"];
     // For laboratory tenants, exclude prescription-related items and medical communications
     if (currentTenant?.type === "laboratory") {
       const labClinicalIds = ["dashboard", "patients", "lab-records", "lab-orders", "lab-results"];
