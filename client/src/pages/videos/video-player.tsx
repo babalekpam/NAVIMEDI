@@ -215,9 +215,14 @@ export default function VideoPlayer() {
             <CardContent className="p-12 text-center">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Video Not Found</h2>
               <p className="text-gray-600 mb-6">The requested video tutorial could not be found.</p>
-              <Link href="/support/documentation">
-                <Button>Return to Documentation</Button>
-              </Link>
+              <div className="space-x-4">
+                <Link href="/support/documentation">
+                  <Button>Return to Documentation</Button>
+                </Link>
+                <Link href="/videos/integration">
+                  <Button variant="outline">Add Real Videos</Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </div>
