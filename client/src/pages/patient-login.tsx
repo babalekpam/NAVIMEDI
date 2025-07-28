@@ -31,7 +31,8 @@ export default function PatientLogin() {
     setError("");
 
     try {
-      await login(formData.username, formData.password, "37a1f504-6f59-4d2f-9eec-d108cd2b83d7");
+      // For patients, we don't need to specify tenant ID - it will be found automatically
+      await login(formData.username, formData.password, "");
       // Redirect will be handled by auth context
     } catch (err: any) {
       setError(err.message || "Invalid username or password");

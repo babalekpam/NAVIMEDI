@@ -51,7 +51,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         user = await storage.getUserByUsername(username, actualTenantId);
       } else {
-        return res.status(400).json({ message: "Tenant ID is required for regular users" });
+        // For patients and other users without tenant ID, search across all tenants
+        const allUsers = await storage.getAllUsers();
+        user = allUsers.find(u => u.username === username || u.email === username);
       }
 
       if (!user || !await bcrypt.compare(password, user.password)) {
