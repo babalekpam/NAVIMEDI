@@ -28,6 +28,7 @@ import {
   healthRecommendations,
   healthAnalyses,
   medicationCopays,
+  rolePermissions,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -90,7 +91,9 @@ import {
   type InsertHealthAnalysis,
   patientCheckIns,
   type PatientCheckIn,
-  type InsertPatientCheckIn
+  type InsertPatientCheckIn,
+  type RolePermission,
+  type InsertRolePermission
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or } from "drizzle-orm";
@@ -358,6 +361,14 @@ export interface IStorage {
   // Translations
   getTranslations(tenantId: string, language: string): Promise<any[]>;
   createTranslation(data: any): Promise<any>;
+
+  // Role Permissions Management
+  getRolePermissions(tenantId: string): Promise<RolePermission[]>;
+  getRolePermissionsByRole(role: string, tenantId: string): Promise<RolePermission[]>;
+  createRolePermission(permission: InsertRolePermission): Promise<RolePermission>;
+  updateRolePermission(id: string, updates: Partial<RolePermission>, tenantId: string): Promise<RolePermission | undefined>;
+  deleteRolePermission(id: string, tenantId: string): Promise<boolean>;
+  getRolePermissionByRoleAndModule(role: string, module: string, tenantId: string): Promise<RolePermission | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2254,6 +2265,56 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(patientCheckIns.checkedInAt));
       
     return result;
+  }
+
+  // Role Permissions Management
+  async getRolePermissions(tenantId: string): Promise<RolePermission[]> {
+    return await db.select().from(rolePermissions)
+      .where(and(eq(rolePermissions.tenantId, tenantId), eq(rolePermissions.isActive, true)));
+  }
+
+  async getRolePermissionsByRole(role: string, tenantId: string): Promise<RolePermission[]> {
+    return await db.select().from(rolePermissions)
+      .where(and(
+        eq(rolePermissions.tenantId, tenantId),
+        eq(rolePermissions.role, role as any),
+        eq(rolePermissions.isActive, true)
+      ));
+  }
+
+  async createRolePermission(permission: InsertRolePermission): Promise<RolePermission> {
+    const [created] = await db.insert(rolePermissions).values(permission).returning();
+    return created;
+  }
+
+  async updateRolePermission(id: string, updates: Partial<RolePermission>, tenantId: string): Promise<RolePermission | undefined> {
+    const [updated] = await db.update(rolePermissions)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(and(eq(rolePermissions.id, id), eq(rolePermissions.tenantId, tenantId)))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteRolePermission(id: string, tenantId: string): Promise<boolean> {
+    const [deleted] = await db.update(rolePermissions)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(and(eq(rolePermissions.id, id), eq(rolePermissions.tenantId, tenantId)))
+      .returning();
+    return !!deleted;
+  }
+
+  async getRolePermissionByRoleAndModule(role: string, module: string, tenantId: string): Promise<RolePermission | undefined> {
+    const [permission] = await db.select().from(rolePermissions)
+      .where(and(
+        eq(rolePermissions.tenantId, tenantId),
+        eq(rolePermissions.role, role as any),
+        eq(rolePermissions.module, module),
+        eq(rolePermissions.isActive, true)
+      ));
+    return permission || undefined;
   }
 }
 

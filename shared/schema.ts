@@ -483,6 +483,20 @@ export const insuranceClaims = pgTable("insurance_claims", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Role Permissions table - for custom tenant-specific role permissions
+export const rolePermissions = pgTable("role_permissions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  role: roleEnum("role").notNull(),
+  module: varchar("module", { length: 50 }).notNull(), // 'patients', 'appointments', 'prescriptions', etc.
+  permissions: text("permissions").array().notNull(), // ['view', 'create', 'update', 'delete']
+  isActive: boolean("is_active").default(true).notNull(),
+  createdBy: uuid("created_by").references(() => users.id).notNull(),
+  updatedBy: uuid("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
 export const auditLogs = pgTable("audit_logs", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
@@ -1522,6 +1536,12 @@ export const insertPatientCheckInSchema = createInsertSchema(patientCheckIns).om
   updatedAt: true
 });
 
+export const insertRolePermissionSchema = createInsertSchema(rolePermissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
   id: true,
   createdAt: true,
@@ -1733,3 +1753,6 @@ export type InsertHealthAnalysis = z.infer<typeof insertHealthAnalysisSchema>;
 
 export type PatientCheckIn = typeof patientCheckIns.$inferSelect;
 export type InsertPatientCheckIn = z.infer<typeof insertPatientCheckInSchema>;
+
+export type RolePermission = typeof rolePermissions.$inferSelect;
+export type InsertRolePermission = z.infer<typeof insertRolePermissionSchema>;

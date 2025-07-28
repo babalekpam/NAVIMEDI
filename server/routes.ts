@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertInsuranceProviderSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertPatientCheckInSchema } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertInsuranceProviderSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertPatientCheckInSchema, insertRolePermissionSchema } from "@shared/schema";
 import { authenticateToken, requireRole, type AuthenticatedRequest, type JWTPayload } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -2781,6 +2781,135 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Failed to create patient check-in:", error);
       res.status(500).json({ message: "Failed to create patient check-in" });
+    }
+  });
+
+  // Role Permissions Management Routes
+  app.get("/api/role-permissions", authenticateToken, setTenantContext, requireRole(["tenant_admin"]), async (req: AuthenticatedRequest, res) => {
+    try {
+      const permissions = await storage.getRolePermissions(req.tenant!.id);
+      res.json(permissions);
+    } catch (error) {
+      console.error("Failed to fetch role permissions:", error);
+      res.status(500).json({ message: "Failed to fetch role permissions" });
+    }
+  });
+
+  app.get("/api/role-permissions/role/:role", authenticateToken, setTenantContext, requireRole(["tenant_admin"]), async (req: AuthenticatedRequest, res) => {
+    try {
+      const { role } = req.params;
+      const permissions = await storage.getRolePermissionsByRole(role, req.tenant!.id);
+      res.json(permissions);
+    } catch (error) {
+      console.error("Failed to fetch role permissions:", error);
+      res.status(500).json({ message: "Failed to fetch role permissions" });
+    }
+  });
+
+  app.post("/api/role-permissions", authenticateToken, setTenantContext, requireRole(["tenant_admin"]), async (req: AuthenticatedRequest, res) => {
+    try {
+      const permissionData = {
+        ...req.body,
+        tenantId: req.tenant!.id,
+        createdBy: req.user!.id
+      };
+
+      const permission = await storage.createRolePermission(permissionData);
+
+      // Log audit trail
+      await storage.createAuditLog({
+        tenantId: req.tenant!.id,
+        userId: req.user!.id,
+        entityType: "role_permission",
+        entityId: permission.id,
+        action: "CREATE",
+        previousData: null,
+        newData: permission,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      res.status(201).json(permission);
+    } catch (error) {
+      console.error("Failed to create role permission:", error);
+      res.status(500).json({ message: "Failed to create role permission" });
+    }
+  });
+
+  app.patch("/api/role-permissions/:id", authenticateToken, setTenantContext, requireRole(["tenant_admin"]), async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const existingPermission = await storage.getRolePermissions(req.tenant!.id);
+      const permission = existingPermission.find(p => p.id === id);
+      
+      if (!permission) {
+        return res.status(404).json({ message: "Role permission not found" });
+      }
+
+      const updateData = {
+        ...req.body,
+        updatedBy: req.user!.id
+      };
+
+      const updatedPermission = await storage.updateRolePermission(id, updateData, req.tenant!.id);
+
+      if (!updatedPermission) {
+        return res.status(404).json({ message: "Role permission not found" });
+      }
+
+      // Log audit trail
+      await storage.createAuditLog({
+        tenantId: req.tenant!.id,
+        userId: req.user!.id,
+        entityType: "role_permission",
+        entityId: id,
+        action: "UPDATE",
+        previousData: permission,
+        newData: updatedPermission,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      res.json(updatedPermission);
+    } catch (error) {
+      console.error("Failed to update role permission:", error);
+      res.status(500).json({ message: "Failed to update role permission" });
+    }
+  });
+
+  app.delete("/api/role-permissions/:id", authenticateToken, setTenantContext, requireRole(["tenant_admin"]), async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const existingPermissions = await storage.getRolePermissions(req.tenant!.id);
+      const permission = existingPermissions.find(p => p.id === id);
+      
+      if (!permission) {
+        return res.status(404).json({ message: "Role permission not found" });
+      }
+
+      const deleted = await storage.deleteRolePermission(id, req.tenant!.id);
+
+      if (!deleted) {
+        return res.status(404).json({ message: "Role permission not found" });
+      }
+
+      // Log audit trail
+      await storage.createAuditLog({
+        tenantId: req.tenant!.id,
+        userId: req.user!.id,
+        entityType: "role_permission",
+        entityId: id,
+        action: "DELETE",
+        previousData: permission,
+        newData: null,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
+      });
+
+      res.status(204).send();
+    } catch (error) {
+      console.error("Failed to delete role permission:", error);
+      res.status(500).json({ message: "Failed to delete role permission" });
     }
   });
 

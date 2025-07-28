@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -169,6 +170,10 @@ export default function UserRoles() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showPermissions, setShowPermissions] = useState<string | null>(null);
+  
+  // Permission editing state
+  const [selectedRoleForEdit, setSelectedRoleForEdit] = useState<string>("");
+  const [editingPermissions, setEditingPermissions] = useState<Record<string, boolean>>({});
 
   const form = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
@@ -279,6 +284,71 @@ export default function UserRoles() {
       });
     },
   });
+
+  // Permission management mutations
+  const savePermissionsMutation = useMutation({
+    mutationFn: async (role: string) => {
+      const permissionsToSave = Object.entries(editingPermissions)
+        .filter(([key, enabled]) => key.startsWith(`${role}.`) && enabled)
+        .map(([key]) => {
+          const [, module, permission] = key.split('.');
+          return { module, permission };
+        });
+
+      // Group by module
+      const permissionsByModule = permissionsToSave.reduce((acc, { module, permission }) => {
+        if (!acc[module]) acc[module] = [];
+        acc[module].push(permission);
+        return acc;
+      }, {} as Record<string, string[]>);
+
+      // Create or update permissions for each module
+      const promises = Object.entries(permissionsByModule).map(([module, permissions]) =>
+        apiRequest("POST", "/api/role-permissions", {
+          role,
+          module,
+          permissions
+        })
+      );
+
+      await Promise.all(promises);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Role permissions updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSavePermissions = (role: string) => {
+    savePermissionsMutation.mutate(role);
+  };
+
+  const handleResetPermissions = (role: string) => {
+    // Reset to default permissions
+    const defaultPermissions = rolePermissions[role as keyof typeof rolePermissions];
+    if (defaultPermissions) {
+      const resetPermissions: Record<string, boolean> = {};
+      Object.entries(defaultPermissions).forEach(([module, permissions]) => {
+        (permissions as string[]).forEach((permission) => {
+          resetPermissions[`${role}.${module}.${permission}`] = true;
+        });
+      });
+      setEditingPermissions(resetPermissions);
+      toast({
+        title: "Reset",
+        description: "Permissions reset to default values",
+      });
+    }
+  };
 
   // Use real users data from API or empty array if loading
   const usersData = Array.isArray(users) ? users : [];
@@ -783,6 +853,152 @@ export default function UserRoles() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Dynamic Permissions Management - Only for tenant admins */}
+        {user?.role === 'tenant_admin' && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Settings className="h-5 w-5 text-green-600" />
+                  <CardTitle>Customize Role Permissions</CardTitle>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <HelpCircle className="h-4 w-4 text-gray-400" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">Customize what each role can access and perform within your organization. Changes apply to all users with the selected role.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  Admin Only
+                </Badge>
+              </div>
+              <CardDescription>
+                Customize permissions for each role within your organization. Changes will apply to all users with the selected role.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Role Selection */}
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-gray-700">Select Role to Customize</div>
+                  <Select 
+                    value={selectedRoleForEdit} 
+                    onValueChange={setSelectedRoleForEdit}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Choose a role to customize permissions" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableRoles.filter(role => role !== 'tenant_admin').map((role) => (
+                        <SelectItem key={role} value={role}>
+                          <div className="flex items-center space-x-2">
+                            <Badge className={roleColors[role as keyof typeof roleColors]} variant="outline">
+                              {role.replace('_', ' ').toUpperCase()}
+                            </Badge>
+                            <span>{role.replace('_', ' ').split(' ').map(word => 
+                              word.charAt(0).toUpperCase() + word.slice(1)
+                            ).join(' ')}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Permission Editing Interface */}
+                {selectedRoleForEdit && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        Permissions for {selectedRoleForEdit.replace('_', ' ').split(' ').map(word => 
+                          word.charAt(0).toUpperCase() + word.slice(1)
+                        ).join(' ')}
+                      </h4>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleResetPermissions(selectedRoleForEdit)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          Reset to Default
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleSavePermissions(selectedRoleForEdit)}
+                          disabled={savePermissionsMutation.isPending}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          {savePermissionsMutation.isPending ? "Saving..." : "Save Changes"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Permission Modules Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {Object.entries(rolePermissions[selectedRoleForEdit as keyof typeof rolePermissions] || {}).map(([module, permissions]) => (
+                        <Card key={module} className="border-gray-200">
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm capitalize">
+                              {module.replace(/([A-Z])/g, ' $1').trim()}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                            {['view', 'create', 'update', 'delete', 'manage', 'search', 'assign', 'finalize', 'edit', 'record', 'cancel'].map((permission) => {
+                              const hasPermission = (permissions as string[]).includes(permission);
+                              const permissionKey = `${selectedRoleForEdit}.${module}.${permission}`;
+                              
+                              return (
+                                <div key={permission} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={permissionKey}
+                                    checked={editingPermissions[permissionKey] ?? hasPermission}
+                                    onCheckedChange={(checked) => 
+                                      setEditingPermissions(prev => ({
+                                        ...prev,
+                                        [permissionKey]: checked
+                                      }))
+                                    }
+                                  />
+                                  <label
+                                    htmlFor={permissionKey}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center space-x-1"
+                                  >
+                                    <span className="capitalize">{formatPermissionName(permission)}</span>
+                                    <Badge 
+                                      variant="outline" 
+                                      className={`text-xs ${getPermissionColor(permission)}`}
+                                    >
+                                      {permission}
+                                    </Badge>
+                                  </label>
+                                </div>
+                              );
+                            })}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+
+                    {/* Permission Summary */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-medium text-gray-900 mb-2">Permission Summary</h5>
+                      <div className="text-sm text-gray-600">
+                        Total permissions enabled: {Object.values(editingPermissions).filter(Boolean).length}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Changes will apply to all users with the {selectedRoleForEdit.replace('_', ' ')} role
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </TooltipProvider>
   );
