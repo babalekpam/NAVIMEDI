@@ -1,4 +1,4 @@
-import { ArrowLeft, FileText, Book, Video, Download, Search, Users, Clock, Code, Key, Zap } from "lucide-react";
+import { ArrowLeft, FileText, Book, Video, Download, Search, Users, Clock, Code, Key, Zap, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -295,7 +295,15 @@ const appointment = await client.appointments.create({
 
             <TabsContent value="videos" className="space-y-6">
               <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-4">Video Tutorial Library</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold">Video Tutorial Library</h3>
+                  <Link href="/videos/integration">
+                    <Button variant="outline" size="sm">
+                      <Upload className="w-4 h-4 mr-2" />
+                      Add Real Videos
+                    </Button>
+                  </Link>
+                </div>
                 <p className="text-gray-600 mb-6">Comprehensive video guides covering all aspects of the NAVIMED healthcare platform. Follow the learning paths below for structured training.</p>
                 
                 <div className="grid md:grid-cols-3 gap-4 mb-8">

@@ -62,6 +62,7 @@ import { PrescriptionManagement } from "@/pages/docs/prescription-management";
 import { LaboratoryOrderProcessing } from "@/pages/docs/laboratory-order-processing";
 import { ClinicalDocumentation } from "@/pages/docs/clinical-documentation";
 import VideoPlayer from "@/pages/videos/video-player";
+import VideoIntegrationOptions from "@/pages/videos/video-integration-options";
 
 
 
@@ -401,6 +402,7 @@ function AppContent() {
         
         {/* Video Tutorial Routes */}
         <Route path="/videos/:videoId" component={VideoPlayer} />
+        <Route path="/videos/integration" component={VideoIntegrationOptions} />
         
         {/* Catch-all routes for docs */}
         <Route path="/docs/:slug" component={GettingStarted} />

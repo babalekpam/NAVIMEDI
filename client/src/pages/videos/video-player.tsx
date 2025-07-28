@@ -1,4 +1,4 @@
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, Settings } from "lucide-react";
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, Settings, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -389,10 +389,16 @@ export default function VideoPlayer() {
                           </div>
                           <div>
                             <h4 className="font-medium text-blue-900 mb-1">Demo Video Player</h4>
-                            <p className="text-sm text-blue-700">
+                            <p className="text-sm text-blue-700 mb-3">
                               This is a demonstration of the video tutorial interface. In the full version, 
                               you would see actual healthcare training videos with real content from medical professionals.
                             </p>
+                            <Link href="/videos/integration">
+                              <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                                <Upload className="w-4 h-4 mr-2" />
+                                Add Real Videos
+                              </Button>
+                            </Link>
                           </div>
                         </div>
                       </div>
