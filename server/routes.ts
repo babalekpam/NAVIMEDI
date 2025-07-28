@@ -117,6 +117,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public organization registration route (before tenant middleware)
+  app.post("/api/register-organization", async (req, res) => {
+    try {
+      console.log("Organization registration request:", req.body);
+      
+      const { organizationName, organizationType, adminFirstName, adminLastName, adminEmail, adminPassword, confirmPassword, phoneNumber, address, description } = req.body;
+      
+      // Validate required fields
+      if (!organizationName || !organizationType || !adminFirstName || !adminLastName || !adminEmail || !adminPassword) {
+        return res.status(400).json({ message: "All required fields must be provided" });
+      }
+      
+      if (adminPassword !== confirmPassword) {
+        return res.status(400).json({ message: "Passwords do not match" });
+      }
+      
+      if (adminPassword.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long" });
+      }
+      
+      // Check if organization already exists
+      const allTenants = await storage.getAllTenants();
+      const existingTenant = allTenants.find(t => t.name.toLowerCase() === organizationName.toLowerCase());
+      if (existingTenant) {
+        return res.status(409).json({ message: "Organization name already exists" });
+      }
+      
+      // Check if admin email already exists across all tenants
+      const allUsers = await storage.getAllUsers();
+      const existingUser = allUsers.find(u => u.email.toLowerCase() === adminEmail.toLowerCase());
+      if (existingUser) {
+        return res.status(409).json({ message: "Email address already exists" });
+      }
+      
+      // Generate subdomain from organization name
+      const subdomain = organizationName.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      
+      // Create tenant first
+      const tenantData = {
+        name: organizationName,
+        type: organizationType,
+        subdomain: subdomain,
+        settings: { 
+          features: organizationType === 'hospital' ? ['ehr', 'lab', 'billing'] : 
+                   organizationType === 'laboratory' ? ['lab_processing', 'results'] : 
+                   ['prescription', 'billing'] 
+        },
+        isActive: true,
+        phoneNumber: phoneNumber || null,
+        address: address || null,
+        description: description || null,
+        trialStartDate: new Date(),
+        trialEndDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days trial
+        subscriptionStatus: 'trial' as const
+      };
+      
+      const tenant = await storage.createTenant(tenantData);
+      console.log("Created tenant:", tenant);
+      
+      // Hash admin password
+      const hashedPassword = await bcrypt.hash(adminPassword, 12);
+      
+      // Create admin user
+      const adminUserData = {
+        username: `${adminFirstName.toLowerCase()}_${adminLastName.toLowerCase()}_admin`,
+        email: adminEmail,
+        password: hashedPassword,
+        firstName: adminFirstName,
+        lastName: adminLastName,
+        role: 'tenant_admin' as const,
+        tenantId: tenant.id,
+        isActive: true
+      };
+      
+      const adminUser = await storage.createUser(adminUserData);
+      console.log("Created admin user:", adminUser);
+      
+      // Create audit log for tenant creation
+      await storage.createAuditLog({
+        tenantId: tenant.id,
+        userId: adminUser.id,
+        entityType: "tenant",
+        entityId: tenant.id,
+        action: "CREATE",
+        previousData: null,
+        newData: tenant,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent') || null
+      });
+      
+      res.status(201).json({
+        message: "Organization registered successfully",
+        organization: {
+          id: tenant.id,
+          name: tenant.name,
+          type: tenant.type,
+          subdomain: tenant.subdomain
+        },
+        admin: {
+          id: adminUser.id,
+          email: adminUser.email,
+          firstName: adminUser.firstName,
+          lastName: adminUser.lastName
+        }
+      });
+      
+    } catch (error) {
+      console.error("Organization registration error:", error);
+      res.status(500).json({ 
+        message: "Failed to register organization", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
+
   // Apply tenant context middleware to all other API routes
   app.use("/api", setTenantContext);
 
@@ -912,11 +1031,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Lab order management routes
   app.get("/api/lab-orders", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const { patientId, pending } = req.query;
+      const { patientId, pending, forLaboratory, patientMrn } = req.query;
       const tenantId = req.tenant!.id;
 
       let labOrders;
-      if (patientId) {
+      if (forLaboratory === 'true') {
+        // Laboratory viewing orders sent to them
+        labOrders = await storage.getLabOrdersForLaboratory(tenantId);
+      } else if (patientMrn) {
+        // Search by patient MRN (for laboratories to find patient orders using hospital-assigned ID)
+        labOrders = await storage.getLabOrdersByPatientMrn(patientMrn as string);
+      } else if (patientId) {
         labOrders = await storage.getLabOrdersByPatient(patientId as string, tenantId);
       } else if (pending === "true") {
         labOrders = await storage.getPendingLabOrders(tenantId);

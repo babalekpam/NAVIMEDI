@@ -150,6 +150,8 @@ export interface IStorage {
   updateLabOrder(id: string, updates: Partial<LabOrder>, tenantId: string): Promise<LabOrder | undefined>;
   getLabOrdersByPatient(patientId: string, tenantId: string): Promise<LabOrder[]>;
   getLabOrdersByTenant(tenantId: string): Promise<LabOrder[]>;
+  getLabOrdersForLaboratory(tenantId: string): Promise<any[]>;
+  getLabOrdersByPatientMrn(patientMrn: string): Promise<any[]>;
   getPendingLabOrders(tenantId: string): Promise<LabOrder[]>;
 
   // Pharmacy management
@@ -958,6 +960,62 @@ export class DatabaseStorage implements IStorage {
         sql`${labOrders.status} IN ('ordered', 'collected', 'processing')`
       )
     ).orderBy(labOrders.orderedDate);
+  }
+
+  // Laboratory workflow methods - simplified to avoid query complexity issues
+  async getLabOrdersForLaboratory(tenantId: string): Promise<any[]> {
+    // Get basic lab orders sent to this laboratory
+    const orders = await db.select().from(labOrders)
+      .where(eq(labOrders.labTenantId, tenantId))
+      .orderBy(desc(labOrders.orderedDate));
+      
+    // Enrich with patient and hospital information
+    const enrichedOrders = await Promise.all(orders.map(async (order) => {
+      const patient = await db.select().from(patients).where(eq(patients.id, order.patientId)).limit(1);
+      const hospital = await db.select().from(tenants).where(eq(tenants.id, order.tenantId)).limit(1);
+      
+      return {
+        ...order,
+        patientMrn: patient[0]?.mrn,
+        patientFirstName: patient[0]?.firstName,
+        patientLastName: patient[0]?.lastName,
+        patientDateOfBirth: patient[0]?.dateOfBirth,
+        originatingHospital: hospital[0]?.name
+      };
+    }));
+    
+    return enrichedOrders;
+  }
+
+  async getLabOrdersByPatientMrn(patientMrn: string): Promise<any[]> {
+    // Find patient by MRN first
+    const patientResult = await db.select().from(patients).where(eq(patients.mrn, patientMrn));
+    if (patientResult.length === 0) {
+      return [];
+    }
+    
+    const patient = patientResult[0];
+    
+    // Get lab orders for this patient
+    const orders = await db.select().from(labOrders)
+      .where(eq(labOrders.patientId, patient.id))
+      .orderBy(desc(labOrders.orderedDate));
+      
+    // Enrich with hospital information
+    const enrichedOrders = await Promise.all(orders.map(async (order) => {
+      const hospital = await db.select().from(tenants).where(eq(tenants.id, order.tenantId)).limit(1);
+      
+      return {
+        ...order,
+        patientMrn: patient.mrn,
+        patientFirstName: patient.firstName,
+        patientLastName: patient.lastName,
+        patientDateOfBirth: patient.dateOfBirth,
+        originatingHospital: hospital[0]?.name
+      };
+    }));
+    
+    return enrichedOrders;
   }
 
   // Pharmacy management
