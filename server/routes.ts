@@ -3072,6 +3072,109 @@ Report ID: ${report.id}
     }
   });
 
+  // Patient Portal API endpoints
+  app.get("/api/patient/profile", requireRole(["patient"]), async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const patientUser = await storage.getUser(userId);
+      
+      if (!patientUser) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+      
+      // Get patient medical record
+      const patients = await storage.getPatientsByTenant(patientUser.tenantId);
+      const patient = patients.find(p => p.email === patientUser.email);
+      
+      if (!patient) {
+        return res.status(404).json({ message: "Patient medical record not found" });
+      }
+      
+      res.json({
+        user: {
+          id: patientUser.id,
+          firstName: patientUser.firstName,
+          lastName: patientUser.lastName,
+          email: patientUser.email
+        },
+        patient: {
+          mrn: patient.mrn,
+          dateOfBirth: patient.dateOfBirth,
+          gender: patient.gender,
+          phone: patient.phone,
+          address: patient.address,
+          emergencyContact: patient.emergencyContact,
+          medicalHistory: patient.medicalHistory || [],
+          allergies: patient.allergies || [],
+          medications: patient.medications || []
+        }
+      });
+    } catch (error) {
+      console.error("Get patient profile error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/patient/appointments", requireRole(["patient"]), async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const patientUser = await storage.getUser(userId);
+      
+      const patients = await storage.getPatientsByTenant(patientUser.tenantId);
+      const patient = patients.find(p => p.email === patientUser.email);
+      
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+      
+      const appointments = await storage.getAppointmentsByPatient(patient.id);
+      res.json(appointments);
+    } catch (error) {
+      console.error("Get patient appointments error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/patient/prescriptions", requireRole(["patient"]), async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const patientUser = await storage.getUser(userId);
+      
+      const patients = await storage.getPatientsByTenant(patientUser.tenantId);
+      const patient = patients.find(p => p.email === patientUser.email);
+      
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+      
+      const prescriptions = await storage.getPrescriptionsByPatient(patient.id);
+      res.json(prescriptions);
+    } catch (error) {
+      console.error("Get patient prescriptions error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/patient/lab-results", requireRole(["patient"]), async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const patientUser = await storage.getUser(userId);
+      
+      const patients = await storage.getPatientsByTenant(patientUser.tenantId);
+      const patient = patients.find(p => p.email === patientUser.email);
+      
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+      
+      const labOrders = await storage.getLabOrdersByPatient(patient.id);
+      res.json(labOrders);
+    } catch (error) {
+      console.error("Get patient lab results error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   const server = createServer(app);
   return server;
 }

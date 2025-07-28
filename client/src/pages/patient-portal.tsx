@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +35,27 @@ export default function PatientPortal() {
   const { user, logout } = useAuth();
   const [activeSection, setActiveSection] = useState("overview");
 
+  // Fetch patient data
+  const { data: patientProfile, isLoading: profileLoading } = useQuery({
+    queryKey: ["/api/patient/profile"],
+    enabled: !!user && user.role === "patient"
+  });
+
+  const { data: appointments, isLoading: appointmentsLoading } = useQuery({
+    queryKey: ["/api/patient/appointments"],
+    enabled: !!user && user.role === "patient"
+  });
+
+  const { data: prescriptions, isLoading: prescriptionsLoading } = useQuery({
+    queryKey: ["/api/patient/prescriptions"],
+    enabled: !!user && user.role === "patient"
+  });
+
+  const { data: labResults, isLoading: labResultsLoading } = useQuery({
+    queryKey: ["/api/patient/lab-results"],
+    enabled: !!user && user.role === "patient"
+  });
+
   if (!user || user.role !== "patient") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -67,7 +89,85 @@ export default function PatientPortal() {
       <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-6">
         <h2 className="text-2xl font-bold mb-2">Welcome back, {user.firstName}!</h2>
         <p className="text-blue-100">Stay on top of your health with your personal dashboard</p>
+        {patientProfile && (
+          <div className="mt-4 text-sm text-blue-100">
+            <p>MRN: {patientProfile.patient.mrn} • Metro General Hospital</p>
+          </div>
+        )}
       </div>
+
+      {/* Health Summary Cards */}
+      <div className="grid md:grid-cols-3 gap-6">
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-800">Upcoming Appointments</p>
+                <p className="text-2xl font-bold text-green-900">
+                  {appointments ? appointments.filter(a => new Date(a.appointmentDate) > new Date()).length : "–"}
+                </p>
+              </div>
+              <Calendar className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-800">Active Prescriptions</p>
+                <p className="text-2xl font-bold text-blue-900">
+                  {prescriptions ? prescriptions.filter(p => p.status === 'active').length : "–"}
+                </p>
+              </div>
+              <Pill className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-purple-200 bg-purple-50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-800">Pending Results</p>
+                <p className="text-2xl font-bold text-purple-900">
+                  {labResults ? labResults.filter(l => l.status === 'pending').length : "–"}
+                </p>
+              </div>
+              <FileText className="h-8 w-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {appointments && appointments.length > 0 ? (
+              appointments.slice(0, 3).map((appointment) => (
+                <div key={appointment.id} className="flex items-center justify-between border-l-4 border-blue-500 pl-4 py-2">
+                  <div>
+                    <p className="font-medium">Appointment</p>
+                    <p className="text-sm text-gray-600">
+                      {new Date(appointment.appointmentDate).toLocaleDateString()} - {appointment.type}
+                    </p>
+                  </div>
+                  <Badge variant={appointment.status === 'completed' ? 'default' : 'secondary'}>
+                    {appointment.status}
+                  </Badge>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500">No recent appointments</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <Card>
@@ -213,6 +313,235 @@ export default function PatientPortal() {
     </div>
   );
 
+  const renderMyRecords = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>My Medical Records</CardTitle>
+          <CardDescription>View your complete medical history and information</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {profileLoading ? (
+            <div className="text-center py-8">Loading your medical records...</div>
+          ) : patientProfile ? (
+            <div className="space-y-6">
+              {/* Personal Information */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Personal Information</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Medical Record Number</p>
+                    <p className="font-medium">{patientProfile.patient.mrn}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Date of Birth</p>
+                    <p className="font-medium">
+                      {new Date(patientProfile.patient.dateOfBirth).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Gender</p>
+                    <p className="font-medium capitalize">{patientProfile.patient.gender}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Phone</p>
+                    <p className="font-medium">{patientProfile.patient.phone}</p>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Medical History */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Medical History</h3>
+                {patientProfile.patient.medicalHistory && patientProfile.patient.medicalHistory.length > 0 ? (
+                  <div className="space-y-2">
+                    {typeof patientProfile.patient.medicalHistory === 'string' ? 
+                      patientProfile.patient.medicalHistory.split(',').map((condition, index) => (
+                        <Badge key={index} variant="outline" className="mr-2">
+                          {condition.trim()}
+                        </Badge>
+                      )) :
+                      patientProfile.patient.medicalHistory.map((condition, index) => (
+                        <Badge key={index} variant="outline" className="mr-2">
+                          {condition}
+                        </Badge>
+                      ))
+                    }
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No medical history recorded</p>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Allergies */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Allergies</h3>
+                {patientProfile.patient.allergies && patientProfile.patient.allergies.length > 0 ? (
+                  <div className="space-y-2">
+                    {patientProfile.patient.allergies.map((allergy, index) => (
+                      <Badge key={index} variant="destructive" className="mr-2">
+                        {allergy}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No known allergies</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">Unable to load medical records</div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderMedications = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>My Medications</CardTitle>
+          <CardDescription>Current and past prescriptions</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {prescriptionsLoading ? (
+            <div className="text-center py-8">Loading your medications...</div>
+          ) : prescriptions && prescriptions.length > 0 ? (
+            <div className="space-y-4">
+              {prescriptions.map((prescription) => (
+                <div key={prescription.id} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg">{prescription.medicationName}</h3>
+                      <p className="text-gray-600">
+                        {prescription.dosage} • {prescription.frequency}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Prescribed: {new Date(prescription.prescribedDate).toLocaleDateString()}
+                      </p>
+                      {prescription.expiryDate && (
+                        <p className="text-sm text-gray-500">
+                          Expires: {new Date(prescription.expiryDate).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                    <Badge variant={prescription.status === 'active' ? 'default' : 'secondary'}>
+                      {prescription.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Pill className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No medications found</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderTestResults = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Test Results</CardTitle>
+          <CardDescription>Laboratory and diagnostic test results</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {labResultsLoading ? (
+            <div className="text-center py-8">Loading your test results...</div>
+          ) : labResults && labResults.length > 0 ? (
+            <div className="space-y-4">
+              {labResults.map((labOrder) => (
+                <div key={labOrder.id} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg">{labOrder.testType}</h3>
+                      <p className="text-gray-600">{labOrder.notes || 'No additional notes'}</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Ordered: {new Date(labOrder.orderDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Badge variant={
+                      labOrder.status === 'completed' ? 'default' : 
+                      labOrder.status === 'pending' ? 'secondary' : 'outline'
+                    }>
+                      {labOrder.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No test results available</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderVisits = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Video Visits & Telemedicine</CardTitle>
+          <CardDescription>Schedule and manage your virtual appointments</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <Video className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Ready for Your Video Visit?</h3>
+            <p className="text-gray-600 mb-6">
+              Connect with your healthcare providers from the comfort of your home
+            </p>
+            <Button 
+              onClick={() => window.location.href = "/telemedicine-booking"}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Video className="w-4 h-4 mr-2" />
+              Schedule Video Visit
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderMessages = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Messages</CardTitle>
+          <CardDescription>Secure communication with your care team</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Messages</h3>
+            <p className="text-gray-600 mb-6">
+              You have no messages from your care team at this time
+            </p>
+            <Button variant="outline">
+              <Plus className="w-4 h-4 mr-2" />
+              Compose Message
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   const renderFindCare = () => (
     <div className="space-y-6">
       <div>
@@ -264,48 +593,15 @@ export default function PatientPortal() {
       case "find-care":
         return renderFindCare();
       case "visits":
-        return (
-          <div className="text-center py-12">
-            <Video className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">Video Visits</h3>
-            <p className="text-gray-600 mb-4">Schedule and manage your video consultations</p>
-            <Button onClick={() => window.location.href = "/telemedicine-booking"}>
-              Book New Video Visit
-            </Button>
-          </div>
-        );
+        return renderVisits();
       case "records":
-        return (
-          <div className="text-center py-12">
-            <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">Medical Records</h3>
-            <p className="text-gray-600">View your complete medical history and documents</p>
-          </div>
-        );
+        return renderMyRecords();
       case "messages":
-        return (
-          <div className="text-center py-12">
-            <MessageCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">Messages</h3>
-            <p className="text-gray-600">Secure messaging with your healthcare team</p>
-          </div>
-        );
+        return renderMessages();
       case "results":
-        return (
-          <div className="text-center py-12">
-            <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">Test Results</h3>
-            <p className="text-gray-600">View your lab results and diagnostic reports</p>
-          </div>
-        );
+        return renderTestResults();
       case "medications":
-        return (
-          <div className="text-center py-12">
-            <Pill className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">Medications</h3>
-            <p className="text-gray-600">Manage your prescriptions and medication history</p>
-          </div>
-        );
+        return renderMedications();
       case "health":
         return (
           <div className="text-center py-12">
