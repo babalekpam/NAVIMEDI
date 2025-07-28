@@ -1,147 +1,334 @@
-import { ArrowLeft, Shield, Users, Calendar, FileText, DollarSign, Globe, Smartphone, Cloud, CheckCircle } from "lucide-react";
+import { PublicHeader } from "@/components/layout/public-header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
-import navimedLogo from "@assets/JPG_1753663321927.jpg";
+import { 
+  Heart, 
+  Shield, 
+  Users, 
+  Globe, 
+  Stethoscope, 
+  Pill, 
+  TestTube, 
+  FileText,
+  Lock,
+  Languages,
+  Activity,
+  Calendar,
+  Database,
+  CheckCircle,
+  ArrowRight,
+  Star,
+  Zap,
+  TrendingUp,
+  Clock,
+  Smartphone,
+  Cloud,
+  Brain,
+  Monitor,
+  Headphones,
+  Building2,
+  UserCheck
+} from "lucide-react";
 
-export default function Features() {
-  const features = [
-    {
-      icon: Users,
-      title: "Patient Management",
-      description: "Comprehensive patient records, medical history tracking, and intelligent data organization with advanced search capabilities.",
-      benefits: ["Complete medical histories", "Real-time updates", "HIPAA compliant", "Multi-tenant isolation"]
-    },
-    {
-      icon: Calendar,
-      title: "Appointment Scheduling",
-      description: "Smart scheduling system with automated reminders, conflict detection, and seamless integration with provider calendars.",
-      benefits: ["Automated reminders", "Conflict detection", "Provider integration", "Patient self-scheduling"]
-    },
-    {
-      icon: FileText,
-      title: "Electronic Health Records",
-      description: "Complete EHR/EMR system with consultation notes, treatment plans, and comprehensive medical documentation.",
-      benefits: ["Digital documentation", "Treatment tracking", "Clinical notes", "Audit trails"]
-    },
-    {
-      icon: DollarSign,
-      title: "Billing & Claims",
-      description: "Automated insurance claims processing, payment tracking, and comprehensive financial reporting.",
-      benefits: ["Insurance integration", "Automated claims", "Payment tracking", "Financial reports"]
-    },
-    {
-      icon: Shield,
-      title: "Enterprise Security",
-      description: "Bank-level security with role-based access control, data encryption, and compliance monitoring.",
-      benefits: ["256-bit encryption", "Role-based access", "Audit logging", "Compliance ready"]
-    },
-    {
-      icon: Globe,
-      title: "Multi-Language Support",
-      description: "Native support for multiple languages with real-time translation and localized interfaces.",
-      benefits: ["Real-time translation", "Localized UI", "Cultural adaptation", "Global deployment"]
-    },
-    {
-      icon: Smartphone,
-      title: "Mobile Ready",
-      description: "Responsive design that works seamlessly across all devices with native mobile app capabilities.",
-      benefits: ["Responsive design", "Touch optimized", "Offline sync", "Native apps"]
-    },
-    {
-      icon: Cloud,
-      title: "Cloud Infrastructure",
-      description: "Scalable cloud architecture with 99.9% uptime, automatic backups, and disaster recovery.",
-      benefits: ["99.9% uptime", "Auto scaling", "Data backup", "Disaster recovery"]
-    }
-  ];
-
+export default function FeaturesPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/">
-              <div className="flex items-center gap-3">
-                <img src={navimedLogo} alt="NaviMed" className="h-10 w-10 rounded-lg object-contain" />
-                <span className="text-2xl font-bold text-blue-600">NAVIMED</span>
-              </div>
-            </Link>
-            <Link href="/">
-              <Button variant="ghost">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Home
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
+    <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-emerald-50/30">
+      <PublicHeader />
+      
       {/* Hero Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-6 text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
-            Platform Features
-          </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Discover the comprehensive suite of tools designed to streamline healthcare operations, 
-            improve patient care, and drive operational efficiency across your organization.
-          </p>
+      <section className="pt-32 pb-20 px-6">
+        <div className="container mx-auto">
+          <div className="text-center max-w-4xl mx-auto">
+            <Badge className="mb-8 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 px-4 py-2">
+              <Star className="w-4 h-4 mr-2" />
+              Complete Healthcare Platform
+            </Badge>
+            
+            <h1 className="text-5xl md:text-6xl font-bold mb-8 tracking-tight">
+              <span className="bg-gradient-to-r from-slate-900 via-emerald-600 to-blue-600 bg-clip-text text-transparent">
+                Powerful Features
+              </span>
+              <br />
+              <span className="text-slate-900">for Modern Healthcare</span>
+            </h1>
+            
+            <p className="text-xl text-slate-600 mb-12 leading-relaxed max-w-3xl mx-auto">
+              Comprehensive suite of healthcare management tools designed to streamline operations, improve patient care, and ensure compliance.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section className="py-16">
+      {/* Core Features */}
+      <section className="py-20 bg-white/50">
         <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4 text-slate-900">Core Healthcare Features</h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              Everything you need to manage modern healthcare operations efficiently and securely
+            </p>
+          </div>
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="h-full hover:shadow-lg transition-shadow duration-300">
-                <CardHeader>
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-emerald-600 rounded-lg flex items-center justify-center mb-4">
-                    <feature.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  <CardDescription className="text-gray-600">
-                    {feature.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {feature.benefits.map((benefit, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-sm text-gray-600">
-                        <CheckCircle className="w-4 h-4 text-emerald-600" />
-                        {benefit}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
+            <Card className="border-emerald-200 hover:border-emerald-300 transition-all duration-300 hover:shadow-lg">
+              <CardHeader>
+                <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
+                  <Users className="w-6 h-6 text-emerald-600" />
+                </div>
+                <CardTitle className="text-xl">Patient Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600 mb-4">
+                  Complete patient records, medical history, and comprehensive care coordination.
+                </p>
+                <ul className="space-y-2 text-sm text-slate-600">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                    Electronic Health Records (EHR)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                    Medical History Tracking
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                    Allergy & Medication Management
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="border-blue-200 hover:border-blue-300 transition-all duration-300 hover:shadow-lg">
+              <CardHeader>
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                  <Calendar className="w-6 h-6 text-blue-600" />
+                </div>
+                <CardTitle className="text-xl">Appointment Scheduling</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600 mb-4">
+                  Advanced scheduling system with automated reminders and real-time availability.
+                </p>
+                <ul className="space-y-2 text-sm text-slate-600">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-blue-500" />
+                    Online Booking Portal
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-blue-500" />
+                    Automated Reminders
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-blue-500" />
+                    Resource Management
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="border-purple-200 hover:border-purple-300 transition-all duration-300 hover:shadow-lg">
+              <CardHeader>
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                  <Pill className="w-6 h-6 text-purple-600" />
+                </div>
+                <CardTitle className="text-xl">Prescription Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600 mb-4">
+                  Digital prescriptions with pharmacy integration and medication tracking.
+                </p>
+                <ul className="space-y-2 text-sm text-slate-600">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-purple-500" />
+                    E-Prescribing
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-purple-500" />
+                    Pharmacy Integration
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-purple-500" />
+                    Drug Interaction Alerts
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="border-green-200 hover:border-green-300 transition-all duration-300 hover:shadow-lg">
+              <CardHeader>
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                  <TestTube className="w-6 h-6 text-green-600" />
+                </div>
+                <CardTitle className="text-xl">Laboratory Integration</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600 mb-4">
+                  Seamless lab order management with automated result integration.
+                </p>
+                <ul className="space-y-2 text-sm text-slate-600">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    Digital Lab Orders
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    Automated Results
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    Critical Value Alerts
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="border-orange-200 hover:border-orange-300 transition-all duration-300 hover:shadow-lg">
+              <CardHeader>
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+                  <FileText className="w-6 h-6 text-orange-600" />
+                </div>
+                <CardTitle className="text-xl">Billing & Claims</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600 mb-4">
+                  Automated billing with insurance claim processing and payment tracking.
+                </p>
+                <ul className="space-y-2 text-sm text-slate-600">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-orange-500" />
+                    Insurance Claims Processing
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-orange-500" />
+                    Payment Tracking
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-orange-500" />
+                    Revenue Analytics
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="border-teal-200 hover:border-teal-300 transition-all duration-300 hover:shadow-lg">
+              <CardHeader>
+                <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4">
+                  <Activity className="w-6 h-6 text-teal-600" />
+                </div>
+                <CardTitle className="text-xl">Clinical Workflow</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600 mb-4">
+                  Streamlined clinical workflows with decision support and documentation.
+                </p>
+                <ul className="space-y-2 text-sm text-slate-600">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-teal-500" />
+                    Clinical Decision Support
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-teal-500" />
+                    Visit Documentation
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-teal-500" />
+                    Quality Metrics
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Enterprise Features */}
+      <section className="py-20 bg-slate-50">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4 text-slate-900">Enterprise-Grade Security & Compliance</h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              Built with healthcare security standards and regulatory compliance at its core
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <Card className="text-center">
+              <CardContent className="pt-6">
+                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Shield className="w-8 h-8 text-emerald-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">HIPAA Compliant</h3>
+                <p className="text-slate-600 text-sm">
+                  Full HIPAA compliance with encrypted data transmission and storage
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardContent className="pt-6">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Lock className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">SOC 2 Type II</h3>
+                <p className="text-slate-600 text-sm">
+                  Certified security controls and operational effectiveness
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardContent className="pt-6">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Globe className="w-8 h-8 text-purple-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Multi-Language</h3>
+                <p className="text-slate-600 text-sm">
+                  Real-time translation supporting 50+ languages worldwide
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardContent className="pt-6">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Cloud className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">99.9% Uptime</h3>
+                <p className="text-slate-600 text-sm">
+                  Enterprise-grade infrastructure with guaranteed availability
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-emerald-600">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-4xl font-bold text-white mb-6">
-            Ready to Experience These Features?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Start your 14-day free trial today and see how NAVIMED can transform your healthcare operations.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/register">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50">
-                Start Free Trial
-              </Button>
-            </Link>
-            <Link href="/">
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
-                Schedule Demo
-              </Button>
-            </Link>
+      <section className="py-24 bg-gradient-to-br from-emerald-600 via-blue-600 to-emerald-700">
+        <div className="container mx-auto px-6">
+          <div className="text-center max-w-4xl mx-auto">
+            <h2 className="text-5xl font-bold mb-8 text-white">
+              Ready to Experience These Features?
+            </h2>
+            <p className="text-xl text-emerald-50 mb-12 leading-relaxed">
+              Start your 14-day free trial and see how NAVIMED can transform your healthcare operations.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+              <Link href="/register">
+                <Button size="lg" className="bg-white text-emerald-600 hover:bg-emerald-50 shadow-xl px-8 py-4 text-lg font-semibold">
+                  Start Free Trial
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
+              <Link href="/contact">
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-emerald-600 px-8 py-4 text-lg font-semibold">
+                  Schedule Demo
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>

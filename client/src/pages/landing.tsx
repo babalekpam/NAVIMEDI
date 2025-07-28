@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PublicHeader } from "@/components/layout/public-header";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 import { 
   Heart, 
@@ -46,40 +47,7 @@ const tagline = "Next-Generation Healthcare Management Platform";
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-emerald-50/30">
-      {/* Modern Header */}
-      <header className="fixed top-0 w-full z-50 border-b border-white/10 backdrop-blur-xl bg-white/80 supports-[backdrop-filter]:bg-white/60">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src={navimedLogo} alt="NaviMed" className="h-12 w-12 rounded-lg object-contain" />
-              <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-                {brandName}
-              </span>
-            </div>
-            
-            <nav className="hidden lg:flex items-center gap-8">
-              <a href="#features" className="text-slate-600 hover:text-emerald-600 transition-colors font-medium">Features</a>
-              <a href="#solutions" className="text-slate-600 hover:text-emerald-600 transition-colors font-medium">Solutions</a>
-              <Link href="/pricing" className="text-slate-600 hover:text-emerald-600 transition-colors font-medium">Pricing</Link>
-              <a href="#security" className="text-slate-600 hover:text-emerald-600 transition-colors font-medium">Security</a>
-              <a href="#contact" className="text-slate-600 hover:text-emerald-600 transition-colors font-medium">Contact</a>
-            </nav>
-
-            <div className="flex items-center gap-4">
-              <Link href="/login">
-                <Button variant="ghost" className="text-slate-600 hover:text-emerald-600 font-medium">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 shadow-lg shadow-emerald-600/25">
-                  Start Free Trial
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-6">

@@ -37,8 +37,10 @@ import TrialStatusPage from "@/pages/trial-status";
 import ProfileSettingsPage from "@/pages/profile-settings";
 import ReceptionistDashboard from "@/pages/receptionist-dashboard";
 import ConsultationHistory from "@/pages/consultation-history";
-import Features from "@/pages/features";
-import Security from "@/pages/security";
+import FeaturesPage from "@/pages/features";
+import SolutionsPage from "@/pages/solutions";
+import SecurityPage from "@/pages/security";
+import ContactPage from "@/pages/contact";
 import Integrations from "@/pages/integrations";
 import ApiDocs from "@/pages/api-docs";
 import HospitalSolutions from "@/pages/solutions/hospitals";
@@ -372,8 +374,10 @@ function AppContent() {
         </Route>
         
         {/* Platform Footer Pages */}
-        <Route path="/features" component={Features} />
-        <Route path="/security" component={Security} />
+        <Route path="/features" component={FeaturesPage} />
+        <Route path="/solutions" component={SolutionsPage} />
+        <Route path="/security" component={SecurityPage} />
+        <Route path="/contact" component={ContactPage} />
         <Route path="/integrations" component={Integrations} />
         <Route path="/api-docs" component={ApiDocsPage} />
         
