@@ -3101,6 +3101,8 @@ Report ID: ${report.id}
           email: patientUser.email
         },
         patient: {
+          id: patient.id,  // Add the actual patient ID from patients table
+          patientId: patient.id, // Also include as patientId for clarity
           mrn: patient.mrn,
           dateOfBirth: patient.dateOfBirth,
           gender: patient.gender,

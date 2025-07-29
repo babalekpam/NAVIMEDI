@@ -279,7 +279,7 @@ export default function DoctorCalendar() {
         }
         
         const requestBody = {
-          patientId: patient.id,
+          patientId: patient?.patientId || patient?.id,
           providerId: appointmentData.doctorId,
           appointmentDate: appointmentData.date.toISOString(),
           appointmentTime: appointmentData.time,
@@ -304,6 +304,15 @@ export default function DoctorCalendar() {
         
         console.log("Response status:", response.status);
         console.log("Response headers:", [...response.headers.entries()]);
+        
+        const responseText = await response.text();
+        console.log("Response body:", responseText);
+        
+        if (!response.ok) {
+          throw new Error(`${response.status}: ${responseText}`);
+        }
+        
+        return JSON.parse(responseText);
         
         if (!response.ok) {
           const errorData = await response.text();
