@@ -269,33 +269,10 @@ export default function DoctorCalendar() {
         
         const profile = await profileResponse.json();
         
-        // Get actual patient ID from patients table using profile info
-        const patientsResponse = await fetch("/api/patients", {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
-        
-        if (!patientsResponse.ok) {
-          if (patientsResponse.status === 401) {
-            localStorage.removeItem("token");
-            window.location.href = "/patient-login";
-            return;
-          }
-          throw new Error("Failed to get patients list");
-        }
-        
-        const patients = await patientsResponse.json();
-        const patient = patients.find((p: any) => p.email === profile.user.email);
-        
-        if (!patient) {
-          throw new Error("Patient record not found. Please contact support.");
-        }
-        
-        // Use the correct patient ID from the patient medical record
-        const actualPatientId = patient?.patient?.patientId || patient?.patient?.id || patient?.patientId || patient?.id;
-        console.log("Patient object structure:", patient);
-        console.log("Selected patient ID:", actualPatientId);
+        // Use the patient ID directly from the profile API (already fixed to return correct ID)
+        const actualPatientId = profile.patient.id;
+        console.log("Profile patient ID:", actualPatientId);
+        console.log("Full profile:", profile);
         
         const requestBody = {
           patientId: actualPatientId,
@@ -326,7 +303,7 @@ export default function DoctorCalendar() {
         
         const responseText = await response.text();
         console.log("Response body:", responseText);
-        console.log("Patient data being used:", patient);
+        console.log("Patient ID being used:", actualPatientId);
         
         if (!response.ok) {
           console.error("Appointment booking failed!");
@@ -341,21 +318,6 @@ export default function DoctorCalendar() {
           console.error("Failed to parse response:", parseError);
           throw new Error(`Invalid server response: ${responseText}`);
         }
-        
-        if (!response.ok) {
-          const errorData = await response.text();
-          console.error("Appointment creation failed:", errorData);
-          
-          if (response.status === 401) {
-            localStorage.removeItem("token");
-            window.location.href = "/patient-login";
-            return;
-          }
-          
-          throw new Error(`Failed to create appointment: ${response.status} - ${errorData}`);
-        }
-        
-        return response.json();
       } catch (error) {
         console.error("Appointment booking error:", error);
         throw error;
@@ -367,7 +329,10 @@ export default function DoctorCalendar() {
     },
     onError: (error) => {
       console.error("Appointment booking error:", error);
-      console.error("Full error object:", error);
+      console.error("Error type:", typeof error);
+      console.error("Error message:", error?.message);
+      console.error("Error stack:", error?.stack);
+      console.error("Full error object:", JSON.stringify(error, null, 2));
       
       // Check if the token is expired and redirect to fresh login
       if (error.message && (error.message.includes("401") || error.message.includes("Invalid or expired token") || error.message.includes("log in again"))) {
@@ -376,7 +341,7 @@ export default function DoctorCalendar() {
         return;
       } else {
         // Show user-friendly error message for other errors
-        alert(`Booking failed: ${error.message || 'Please try again or contact support'}`);
+        alert(`Booking failed: ${error?.message || 'Unknown error occurred. Please try again or contact support'}`);
       }
     }
   });
