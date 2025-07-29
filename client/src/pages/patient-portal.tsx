@@ -17,6 +17,7 @@ import {
   Pill,
   Activity,
   User,
+  Users,
   Video,
   Clock,
   Shield,
