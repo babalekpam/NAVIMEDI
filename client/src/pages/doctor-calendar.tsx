@@ -297,13 +297,15 @@ export default function DoctorCalendar() {
         });
         
         if (!response.ok) {
+          const errorData = await response.text();
+          console.error("Appointment creation failed:", errorData);
+          
           if (response.status === 401) {
             localStorage.removeItem("token");
             window.location.href = "/patient-login";
             return;
           }
-          const errorData = await response.text();
-          console.error("Appointment creation failed:", errorData);
+          
           throw new Error(`Failed to create appointment: ${response.status} - ${errorData}`);
         }
         
@@ -319,10 +321,15 @@ export default function DoctorCalendar() {
     },
     onError: (error) => {
       console.error("Appointment booking error:", error);
-      // Check if it's an authentication error
+      console.error("Full error object:", error);
+      
+      // Only redirect for actual 401 errors, not other errors
       if (error.message && error.message.includes("401")) {
         localStorage.removeItem("token");
         window.location.href = "/patient-login?message=Session expired. Please log in again to book appointments.";
+      } else {
+        // Show user-friendly error message for other errors
+        alert(`Appointment booking failed: ${error.message || 'Unknown error occurred'}`);
       }
     }
   });
