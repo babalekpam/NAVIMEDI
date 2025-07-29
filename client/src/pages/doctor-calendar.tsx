@@ -228,63 +228,88 @@ export default function DoctorCalendar() {
   // Create appointment mutation
   const createAppointmentMutation = useMutation({
     mutationFn: async (appointmentData: Appointment) => {
-      // First, get patient profile to find patient ID
-      const profileResponse = await fetch("/api/patient/profile", {
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Please log in again to book appointments");
+      }
+      
+      try {
+        // First, get patient profile to find patient ID
+        const profileResponse = await fetch("/api/patient/profile", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        
+        if (!profileResponse.ok) {
+          if (profileResponse.status === 401) {
+            localStorage.removeItem("token");
+            window.location.href = "/patient-login";
+            return;
+          }
+          throw new Error("Failed to get patient profile");
         }
-      });
-      
-      if (!profileResponse.ok) {
-        throw new Error("Failed to get patient profile");
-      }
-      
-      const profile = await profileResponse.json();
-      
-      // Get actual patient ID from patients table using profile info
-      const patientsResponse = await fetch("/api/patients", {
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        
+        const profile = await profileResponse.json();
+        
+        // Get actual patient ID from patients table using profile info
+        const patientsResponse = await fetch("/api/patients", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        
+        if (!patientsResponse.ok) {
+          if (patientsResponse.status === 401) {
+            localStorage.removeItem("token");
+            window.location.href = "/patient-login";
+            return;
+          }
+          throw new Error("Failed to get patients list");
         }
-      });
-      
-      if (!patientsResponse.ok) {
-        throw new Error("Failed to get patients list");
+        
+        const patients = await patientsResponse.json();
+        const patient = patients.find((p: any) => p.email === profile.user.email);
+        
+        if (!patient) {
+          throw new Error("Patient record not found. Please contact support.");
+        }
+        
+        const response = await fetch("/api/appointments", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            patientId: patient.id,
+            providerId: appointmentData.doctorId,
+            appointmentDate: appointmentData.date.toISOString(),
+            appointmentTime: appointmentData.time,
+            duration: 30,
+            type: appointmentData.type || "consultation",
+            status: "scheduled",
+            notes: appointmentData.reason + (appointmentData.notes ? ` | Additional Notes: ${appointmentData.notes}` : ""),
+            chiefComplaint: appointmentData.reason
+          })
+        });
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem("token");
+            window.location.href = "/patient-login";
+            return;
+          }
+          const errorData = await response.text();
+          console.error("Appointment creation failed:", errorData);
+          throw new Error(`Failed to create appointment: ${response.status} - ${errorData}`);
+        }
+        
+        return response.json();
+      } catch (error) {
+        console.error("Appointment booking error:", error);
+        throw error;
       }
-      
-      const patients = await patientsResponse.json();
-      const patient = patients.find((p: any) => p.email === profile.user.email);
-      
-      if (!patient) {
-        throw new Error("Patient record not found");
-      }
-      
-      const response = await fetch("/api/appointments", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify({
-          patientId: patient.id,
-          providerId: appointmentData.doctorId,
-          appointmentDate: appointmentData.date.toISOString(),
-          appointmentTime: appointmentData.time,
-          duration: 30,
-          type: appointmentData.type || "consultation",
-          status: "scheduled",
-          notes: appointmentData.reason + (appointmentData.notes ? ` | Additional Notes: ${appointmentData.notes}` : ""),
-          chiefComplaint: appointmentData.reason
-        })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error("Appointment creation failed:", errorData);
-        throw new Error(`Failed to create appointment: ${response.status}`);
-      }
-      
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patient/appointments"] });

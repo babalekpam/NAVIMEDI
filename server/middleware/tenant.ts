@@ -31,7 +31,7 @@ export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response,
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production') as JWTPayload;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key-change-in-production") as JWTPayload;
       req.tenantId = decoded.tenantId;
       req.user = {
         id: decoded.userId,

@@ -871,7 +871,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/appointments", authenticateToken, requireTenant, async (req, res) => {
+  app.post("/api/appointments", requireTenant, authenticateToken, async (req, res) => {
     try {
       console.log("[DEBUG] Creating appointment - User:", req.user?.role, "User ID:", req.user?.id, "Tenant:", req.tenant?.id);
       console.log("[DEBUG] Request body:", req.body);
