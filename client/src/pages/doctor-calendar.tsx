@@ -93,12 +93,12 @@ export default function DoctorCalendar() {
     );
   }
 
-  // Mock doctor data as fallback with valid UUIDs
+  // Metro General Hospital doctors - using real database IDs
   const mockDoctors = [
     {
-      id: "550e8400-e29b-41d4-a716-446655440001",
-      firstName: "Michael",
-      lastName: "Smith",
+      id: "0c6ed45a-13ff-4806-8c8e-b59c699e3d03", // Dr. James Williams
+      firstName: "James",
+      lastName: "Williams",
       specialization: "General Medicine",
       department: "Internal Medicine",
       rating: 4.8,
@@ -110,9 +110,9 @@ export default function DoctorCalendar() {
       languages: ["English", "Spanish"]
     },
     {
-      id: "550e8400-e29b-41d4-a716-446655440002", 
-      firstName: "Sofia",
-      lastName: "Martinez",
+      id: "720deedd-e634-4fc2-9f52-57b6bd7f52d9", // Dr. Sarah Johnson
+      firstName: "Sarah",
+      lastName: "Johnson",
       specialization: "Pediatrics",
       department: "Pediatrics",
       rating: 4.9,
@@ -124,9 +124,9 @@ export default function DoctorCalendar() {
       languages: ["English", "Spanish"]
     },
     {
-      id: "550e8400-e29b-41d4-a716-446655440003",
-      firstName: "Raj",
-      lastName: "Patel", 
+      id: "9049628e-cd05-4bd6-b08e-ee923c6dec10", // Dr. David Brown
+      firstName: "David",
+      lastName: "Brown", 
       specialization: "Emergency Medicine",
       department: "Emergency",
       rating: 4.7,
@@ -138,9 +138,9 @@ export default function DoctorCalendar() {
       languages: ["English", "Hindi"]
     },
     {
-      id: "550e8400-e29b-41d4-a716-446655440004",
-      firstName: "Lisa",
-      lastName: "Chen",
+      id: "e6236087-ce86-4c24-9553-9fb8d6b7b960", // Dr. Emily Wilson
+      firstName: "Emily",
+      lastName: "Wilson",
       specialization: "Internal Medicine", 
       department: "Internal Medicine",
       rating: 4.8,
@@ -150,6 +150,20 @@ export default function DoctorCalendar() {
       experience: 10,
       education: "MD from Yale School of Medicine",
       languages: ["English", "Mandarin"]
+    },
+    {
+      id: "49591cfd-ddb0-478c-aae9-b307ac138999", // Dr. Carlos Garcia
+      firstName: "Carlos",
+      lastName: "Garcia",
+      specialization: "Cardiology", 
+      department: "Cardiology",
+      rating: 4.9,
+      totalReviews: 198,
+      isAvailable: true,
+      consultationFee: 200,
+      experience: 18,
+      education: "MD from University of Pennsylvania",
+      languages: ["English", "Spanish"]
     }
   ];
 
@@ -278,8 +292,13 @@ export default function DoctorCalendar() {
           throw new Error("Patient record not found. Please contact support.");
         }
         
+        // Use the correct patient ID from the patient medical record
+        const actualPatientId = patient?.patient?.patientId || patient?.patient?.id || patient?.patientId || patient?.id;
+        console.log("Patient object structure:", patient);
+        console.log("Selected patient ID:", actualPatientId);
+        
         const requestBody = {
-          patientId: patient?.patientId || patient?.id,
+          patientId: actualPatientId,
           providerId: appointmentData.doctorId,
           appointmentDate: appointmentData.date.toISOString(),
           appointmentTime: appointmentData.time,
@@ -307,12 +326,21 @@ export default function DoctorCalendar() {
         
         const responseText = await response.text();
         console.log("Response body:", responseText);
+        console.log("Patient data being used:", patient);
         
         if (!response.ok) {
-          throw new Error(`${response.status}: ${responseText}`);
+          console.error("Appointment booking failed!");
+          console.error("Status:", response.status);
+          console.error("Response:", responseText);
+          throw new Error(`Appointment booking failed: ${responseText || 'Server error'}`);
         }
         
-        return JSON.parse(responseText);
+        try {
+          return JSON.parse(responseText);
+        } catch (parseError) {
+          console.error("Failed to parse response:", parseError);
+          throw new Error(`Invalid server response: ${responseText}`);
+        }
         
         if (!response.ok) {
           const errorData = await response.text();
