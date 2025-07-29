@@ -41,7 +41,7 @@ export default function MedicalCommunications() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedCommunication, setSelectedCommunication] = useState<MedicalCommunication | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("communications");
+  const [activeTab, setActiveTab] = useState("patient-messages");
 
   const { user } = useAuth();
   const { tenant } = useTenant();
@@ -85,18 +85,27 @@ export default function MedicalCommunications() {
     }
   });
 
-  const filteredCommunications = communications.filter(comm => {
-    const patient = patients.find(p => p.id === comm.patientId);
-    const patientName = patient ? `${patient.firstName} ${patient.lastName}` : "";
-    
-    const matchesSearch = patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         JSON.stringify(comm.originalContent).toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesPriority = priorityFilter === "all" || comm.priority === priorityFilter;
-    const matchesType = typeFilter === "all" || comm.type === typeFilter;
-    const matchesLanguage = languageFilter === "all" || comm.originalLanguage === languageFilter;
-    
-    return matchesSearch && matchesPriority && matchesType && matchesLanguage;
-  });
+  const patientMessages = communications.filter(comm => comm.isFromPatient === true);
+  const staffMessages = communications.filter(comm => comm.isFromPatient !== true);
+  
+  const getFilteredMessages = (messagesList: MedicalCommunication[]) => {
+    return messagesList.filter(comm => {
+      const patient = patients.find(p => p.id === comm.patientId);
+      const patientName = patient ? `${patient.firstName} ${patient.lastName}` : "";
+      
+      const matchesSearch = patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           comm.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           comm.message?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesPriority = priorityFilter === "all" || comm.priority === priorityFilter;
+      const matchesType = typeFilter === "all" || comm.type === typeFilter;
+      const matchesLanguage = languageFilter === "all" || comm.originalLanguage === languageFilter;
+      
+      return matchesSearch && matchesPriority && matchesType && matchesLanguage;
+    });
+  };
+  
+  const filteredPatientMessages = getFilteredMessages(patientMessages);
+  const filteredStaffMessages = getFilteredMessages(staffMessages);
 
   const getPatientName = (patientId: string) => {
     const patient = patients.find(p => p.id === patientId);
@@ -153,10 +162,14 @@ export default function MedicalCommunications() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="communications">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="patient-messages">
             <MessageSquare className="h-4 w-4 mr-2" />
-            Communications
+            Patient Messages ({patientMessages.length})
+          </TabsTrigger>
+          <TabsTrigger value="staff-communications">
+            <Send className="h-4 w-4 mr-2" />
+            Staff Communications ({staffMessages.length})
           </TabsTrigger>
           <TabsTrigger value="languages">
             <Languages className="h-4 w-4 mr-2" />
@@ -168,7 +181,71 @@ export default function MedicalCommunications() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="communications" className="space-y-6">
+        <TabsContent value="patient-messages" className="space-y-6">
+          {/* Patient Messages - Only visible to nurses and doctors */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Patient Messages
+              </CardTitle>
+              <p className="text-sm text-gray-600">Messages sent from patients to their care team</p>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex items-center justify-center p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : filteredPatientMessages.length === 0 ? (
+                <div className="text-center py-8">
+                  <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">No patient messages found</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredPatientMessages.map((comm) => (
+                    <div
+                      key={comm.id}
+                      className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => {
+                        setSelectedCommunication(comm);
+                        setIsViewerOpen(true);
+                        if (!comm.isRead) {
+                          markAsReadMutation.mutate(comm.id);
+                        }
+                      }}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold">{getPatientName(comm.patientId)}</h3>
+                            <Badge className={`text-xs ${priorityColors[comm.priority as keyof typeof priorityColors] || priorityColors.normal}`}>
+                              {comm.priority}
+                            </Badge>
+                            <Badge variant="outline" className={`text-xs ${typeColors[comm.type as keyof typeof typeColors] || typeColors.general_message}`}>
+                              {comm.type}
+                            </Badge>
+                            {!comm.isRead && (
+                              <Badge variant="destructive" className="text-xs">New</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm font-medium mb-1">{comm.subject}</p>
+                          <p className="text-sm text-gray-600 line-clamp-2">{comm.message}</p>
+                          <p className="text-xs text-gray-400 mt-2">
+                            {new Date(comm.sentAt).toLocaleDateString()} at {new Date(comm.sentAt).toLocaleTimeString()}
+                          </p>
+                        </div>
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="staff-communications" className="space-y-6">
           {/* Filters */}
           <Card>
             <CardContent className="p-6">
@@ -230,88 +307,71 @@ export default function MedicalCommunications() {
             </CardContent>
           </Card>
 
-          {/* Communications List */}
-          <div className="space-y-4">
-            {isLoading ? (
-              <Card>
-                <CardContent className="p-6">
-                  <div className="text-center text-gray-500">Loading communications...</div>
-                </CardContent>
-              </Card>
-            ) : filteredCommunications.length === 0 ? (
-              <Card>
-                <CardContent className="p-6">
-                  <div className="text-center text-gray-500">
-                    No communications found. Create your first multilingual communication.
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              filteredCommunications.map((communication) => (
-                <Card 
-                  key={communication.id} 
-                  className={`cursor-pointer transition-all hover:shadow-md ${!communication.isRead ? 'border-l-4 border-l-blue-500 bg-blue-50/50' : ''}`}
-                  onClick={() => {
-                    setSelectedCommunication(communication);
-                    setIsViewerOpen(true);
-                    if (!communication.isRead) {
-                      markAsReadMutation.mutate(communication.id);
-                    }
-                  }}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <Badge className={priorityColors[communication.priority as keyof typeof priorityColors]}>
-                            {communication.priority}
-                          </Badge>
-                          <Badge variant="outline" className={typeColors[communication.type as keyof typeof typeColors]}>
-                            {communication.type.replace('_', ' ')}
-                          </Badge>
-                          <span className="text-sm text-gray-500">
-                            Patient: {getPatientName(communication.patientId)}
-                          </span>
+          {/* Staff Communications List */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Send className="h-5 w-5" />
+                Staff Communications
+              </CardTitle>
+              <p className="text-sm text-gray-600">Messages sent between healthcare staff members</p>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex items-center justify-center p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : filteredStaffMessages.length === 0 ? (
+                <div className="text-center py-8">
+                  <Send className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">No staff communications found</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredStaffMessages.map((communication) => (
+                    <div
+                      key={communication.id}
+                      className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => {
+                        setSelectedCommunication(communication);
+                        setIsViewerOpen(true);
+                        if (!communication.isRead) {
+                          markAsReadMutation.mutate(communication.id);
+                        }
+                      }}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold">{getPatientName(communication.patientId)}</h3>
+                            <Badge className={`text-xs ${priorityColors[communication.priority as keyof typeof priorityColors] || priorityColors.normal}`}>
+                              {communication.priority}
+                            </Badge>
+                            <Badge variant="outline" className={`text-xs ${typeColors[communication.type as keyof typeof typeColors] || typeColors.general_message}`}>
+                              {communication.type}
+                            </Badge>
+                            {!communication.isRead && (
+                              <Badge variant="destructive" className="text-xs">Unread</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm font-medium mb-1">{communication.subject}</p>
+                          <p className="text-sm text-gray-600 line-clamp-2">{communication.message}</p>
+                          <div className="flex items-center text-xs text-gray-400 gap-4 mt-2">
+                            <span>{new Date(communication.sentAt).toLocaleDateString()}</span>
+                            <span>Language: {communication.originalLanguage}</span>
+                            {communication.translatedLanguages && communication.translatedLanguages.length > 0 && (
+                              <span>Translated to: {communication.translatedLanguages.join(', ')}</span>
+                            )}
+                          </div>
                         </div>
-                        
-                        <div className="flex items-center space-x-2 mb-2">
-                          <Languages className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">
-                            {supportedLanguages.find(l => l.languageCode === communication.originalLanguage)?.languageName || communication.originalLanguage.toUpperCase()}
-                          </span>
-                          {Array.isArray(communication.targetLanguages) && communication.targetLanguages.length > 1 && (
-                            <span className="text-sm text-blue-600">
-                              → {communication.targetLanguages.length - 1} translations
-                            </span>
-                          )}
-                        </div>
-
-                        <p className="text-gray-700 text-sm line-clamp-2">
-                          {typeof communication.originalContent === 'string' 
-                            ? communication.originalContent 
-                            : JSON.stringify(communication.originalContent).slice(0, 150) + "..."
-                          }
-                        </p>
-                      </div>
-                      
-                      <div className="flex items-center space-x-3 ml-4">
-                        {!communication.isRead && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        )}
-                        <div className="text-right text-sm text-gray-500">
-                          <div>{new Date(communication.createdAt).toLocaleDateString()}</div>
-                          <div>{new Date(communication.createdAt).toLocaleTimeString()}</div>
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <Eye className="h-4 w-4 text-gray-400" />
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="languages">

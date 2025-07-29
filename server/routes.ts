@@ -1850,11 +1850,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ==================== MULTILINGUAL COMMUNICATION ROUTES ====================
 
-  // Medical Communications routes
-  app.get("/api/medical-communications", authenticateToken, requireTenant, async (req, res) => {
+  // Medical Communications routes - restricted to nurses and primary care doctors
+  app.get("/api/medical-communications", authenticateToken, requireTenant, requireRole(["nurse", "physician", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
       const communications = await storage.getMedicalCommunicationsByTenant(req.user.tenantId);
-      res.json(communications);
+      
+      // Filter to show only patient messages for nurses and doctors
+      const patientMessages = communications.filter(comm => 
+        comm.isFromPatient === true || 
+        req.user.role === "tenant_admin" || 
+        req.user.role === "director" || 
+        req.user.role === "super_admin"
+      );
+      
+      res.json(patientMessages);
     } catch (error) {
       console.error("Failed to fetch communications:", error);
       res.status(500).json({ message: "Failed to fetch communications" });
@@ -1883,6 +1892,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         tenantId: req.user.tenantId,
         senderId: req.user!.id,
+        isFromPatient: false  // Messages from healthcare providers
       });
 
       const communication = await storage.createMedicalCommunication(validatedData);
