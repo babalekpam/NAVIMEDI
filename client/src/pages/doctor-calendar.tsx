@@ -230,6 +230,8 @@ export default function DoctorCalendar() {
     mutationFn: async (appointmentData: Appointment) => {
       const token = localStorage.getItem("token");
       if (!token) {
+        localStorage.removeItem("token");
+        window.location.href = "/patient-login";
         throw new Error("Please log in again to book appointments");
       }
       
@@ -317,6 +319,11 @@ export default function DoctorCalendar() {
     },
     onError: (error) => {
       console.error("Appointment booking error:", error);
+      // Check if it's an authentication error
+      if (error.message && error.message.includes("401")) {
+        localStorage.removeItem("token");
+        window.location.href = "/patient-login?message=Session expired. Please log in again to book appointments.";
+      }
     }
   });
 
