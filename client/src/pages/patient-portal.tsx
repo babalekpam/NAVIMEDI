@@ -97,6 +97,12 @@ export default function PatientPortal() {
     enabled: !!user && user.role === "patient"
   });
 
+  const { data: bills = [], isLoading: billsLoading } = useQuery({
+    queryKey: ["/api/patient/bills"],
+    enabled: !!user && user.role === "patient",
+    retry: false,
+  });
+
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: any) => {
@@ -1391,12 +1397,7 @@ export default function PatientPortal() {
   );
 
   const renderBilling = () => {
-    const { data: bills = [], isLoading } = useQuery({
-      queryKey: ["/api/patient/bills"],
-      retry: false,
-    });
-
-    if (isLoading) {
+    if (billsLoading) {
       return (
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
