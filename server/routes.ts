@@ -877,7 +877,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("[DEBUG] Request body:", req.body);
       
       // Check if user has permission to create appointments
-      const allowedRoles = ["physician", "nurse", "receptionist", "tenant_admin", "director", "super_admin", "billing_staff", "pharmacist"];
+      const allowedRoles = ["physician", "nurse", "receptionist", "tenant_admin", "director", "super_admin", "billing_staff", "pharmacist", "patient"];
       if (!allowedRoles.includes(req.user!.role)) {
         console.log("[DEBUG] Permission denied for role:", req.user!.role);
         return res.status(403).json({ 

@@ -76,7 +76,8 @@ export default function DoctorCalendar() {
 
   // Fetch all doctors in the hospital
   const { data: doctors, isLoading: doctorsLoading } = useQuery({
-    queryKey: ["/api/users", { role: "physician" }],
+    queryKey: ["/api/users"],
+    select: (data) => data?.filter((user: any) => user.role === "physician") || [],
     enabled: !!user
   });
 
@@ -118,6 +119,37 @@ export default function DoctorCalendar() {
   // Create appointment mutation
   const createAppointmentMutation = useMutation({
     mutationFn: async (appointmentData: Appointment) => {
+      // First, get patient profile to find patient ID
+      const profileResponse = await fetch("/api/patient/profile", {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+      
+      if (!profileResponse.ok) {
+        throw new Error("Failed to get patient profile");
+      }
+      
+      const profile = await profileResponse.json();
+      
+      // Get actual patient ID from patients table using profile info
+      const patientsResponse = await fetch("/api/patients", {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+      
+      if (!patientsResponse.ok) {
+        throw new Error("Failed to get patients list");
+      }
+      
+      const patients = await patientsResponse.json();
+      const patient = patients.find((p: any) => p.email === profile.user.email);
+      
+      if (!patient) {
+        throw new Error("Patient record not found");
+      }
+      
       const response = await fetch("/api/appointments", {
         method: "POST",
         headers: {
@@ -125,17 +157,22 @@ export default function DoctorCalendar() {
           "Authorization": `Bearer ${localStorage.getItem("token")}`
         },
         body: JSON.stringify({
+          patientId: patient.id,
           providerId: appointmentData.doctorId,
           appointmentDate: appointmentData.date.toISOString(),
+          appointmentTime: appointmentData.time,
           duration: 30,
-          type: appointmentData.type,
-          notes: appointmentData.reason + (appointmentData.notes ? ` | Notes: ${appointmentData.notes}` : ""),
+          type: appointmentData.type || "consultation",
+          status: "scheduled",
+          notes: appointmentData.reason + (appointmentData.notes ? ` | Additional Notes: ${appointmentData.notes}` : ""),
           chiefComplaint: appointmentData.reason
         })
       });
       
       if (!response.ok) {
-        throw new Error("Failed to create appointment");
+        const errorData = await response.text();
+        console.error("Appointment creation failed:", errorData);
+        throw new Error(`Failed to create appointment: ${response.status}`);
       }
       
       return response.json();
@@ -143,6 +180,9 @@ export default function DoctorCalendar() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patient/appointments"] });
       setStep(4); // Go to confirmation step
+    },
+    onError: (error) => {
+      console.error("Appointment booking error:", error);
     }
   });
 
