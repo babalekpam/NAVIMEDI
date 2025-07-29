@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { format, addDays, startOfToday, isSameDay, isAfter, isBefore, addHours, setHours, setMinutes } from "date-fns";
 import { useAuth } from "@/contexts/auth-context";
+import { apiRequest } from "@/lib/queryClient";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 
 interface Doctor {
@@ -240,88 +241,40 @@ export default function DoctorCalendar() {
 
   const timeSlots = selectedDoctor ? generateTimeSlots(selectedDoctor, selectedDate) : [];
 
-  // Create appointment mutation
+  // Fetch patient profile to get correct patient ID
+  const { data: patientProfile } = useQuery({
+    queryKey: ["/api/patient/profile"],
+    enabled: !!user && user.role === "patient"
+  });
+
+  // Create appointment mutation using standard apiRequest pattern
   const createAppointmentMutation = useMutation({
-    mutationFn: async (appointmentData: Appointment) => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        localStorage.removeItem("token");
-        window.location.href = "/patient-login";
-        throw new Error("Please log in again to book appointments");
+    mutationFn: async (appointmentData: {
+      doctorId: string;
+      date: Date;
+      time: string;
+      type: string;
+      reason: string;
+      notes?: string;
+    }) => {
+      if (!patientProfile?.patient?.id) {
+        throw new Error("Patient profile not loaded. Please refresh the page.");
       }
-      
-      try {
-        // First, get patient profile to find patient ID
-        const profileResponse = await fetch("/api/patient/profile", {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
-        
-        if (!profileResponse.ok) {
-          if (profileResponse.status === 401) {
-            localStorage.removeItem("token");
-            window.location.href = "/patient-login";
-            return;
-          }
-          throw new Error("Failed to get patient profile");
-        }
-        
-        const profile = await profileResponse.json();
-        
-        // Use the patient ID directly from the profile API (already fixed to return correct ID)
-        const actualPatientId = profile.patient.id;
-        console.log("Profile patient ID:", actualPatientId);
-        console.log("Full profile:", profile);
-        
-        const requestBody = {
-          patientId: actualPatientId,
-          providerId: appointmentData.doctorId,
-          appointmentDate: appointmentData.date.toISOString(),
-          appointmentTime: appointmentData.time,
-          duration: 30,
-          type: appointmentData.type || "consultation",
-          status: "scheduled",
-          notes: appointmentData.reason + (appointmentData.notes ? ` | Additional Notes: ${appointmentData.notes}` : ""),
-          chiefComplaint: appointmentData.reason
-        };
-        
-        console.log("Sending appointment request:", requestBody);
-        console.log("Token preview:", token.substring(0, 20) + "...");
-        
-        const response = await fetch("/api/appointments", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify(requestBody)
-        });
-        
-        console.log("Response status:", response.status);
-        console.log("Response headers:", [...response.headers.entries()]);
-        
-        const responseText = await response.text();
-        console.log("Response body:", responseText);
-        console.log("Patient ID being used:", actualPatientId);
-        
-        if (!response.ok) {
-          console.error("Appointment booking failed!");
-          console.error("Status:", response.status);
-          console.error("Response:", responseText);
-          throw new Error(`Appointment booking failed: ${responseText || 'Server error'}`);
-        }
-        
-        try {
-          return JSON.parse(responseText);
-        } catch (parseError) {
-          console.error("Failed to parse response:", parseError);
-          throw new Error(`Invalid server response: ${responseText}`);
-        }
-      } catch (error) {
-        console.error("Appointment booking error:", error);
-        throw error;
-      }
+
+      const requestBody = {
+        patientId: patientProfile.patient.id,
+        providerId: appointmentData.doctorId,
+        appointmentDate: appointmentData.date.toISOString(),
+        appointmentTime: appointmentData.time,
+        duration: 30,
+        type: appointmentData.type || "consultation",
+        status: "scheduled",
+        notes: appointmentData.reason + (appointmentData.notes ? ` | Additional Notes: ${appointmentData.notes}` : ""),
+        chiefComplaint: appointmentData.reason
+      };
+
+      const response = await apiRequest("POST", "/api/appointments", requestBody);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patient/appointments"] });
@@ -329,20 +282,7 @@ export default function DoctorCalendar() {
     },
     onError: (error) => {
       console.error("Appointment booking error:", error);
-      console.error("Error type:", typeof error);
-      console.error("Error message:", error?.message);
-      console.error("Error stack:", error?.stack);
-      console.error("Full error object:", JSON.stringify(error, null, 2));
-      
-      // Check if the token is expired and redirect to fresh login
-      if (error.message && (error.message.includes("401") || error.message.includes("Invalid or expired token") || error.message.includes("log in again"))) {
-        localStorage.removeItem("token");
-        window.location.href = "/patient-login?message=Your session expired. Please log in again to book appointments";
-        return;
-      } else {
-        // Show user-friendly error message for other errors
-        alert(`Booking failed: ${error?.message || 'Unknown error occurred. Please try again or contact support'}`);
-      }
+      alert(`Booking failed: ${error?.message || 'An error occurred. Please try again.'}`);
     }
   });
 
