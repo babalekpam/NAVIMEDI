@@ -126,6 +126,15 @@ export const priorityLevelEnum = pgEnum("priority_level", [
   "emergency"
 ]);
 
+export const billStatusEnum = pgEnum("bill_status", [
+  "pending",
+  "overdue",
+  "paid",
+  "partial_payment",
+  "cancelled",
+  "refunded"
+]);
+
 export const serviceTypeEnum = pgEnum("service_type", [
   "procedure",
   "consultation", 
@@ -995,6 +1004,56 @@ export const patientCheckIns = pgTable("patient_check_ins", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Patient Bills - Outstanding balances that patients need to pay
+export const patientBills = pgTable("patient_bills", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  billNumber: text("bill_number").notNull().unique(),
+  description: text("description").notNull(),
+  serviceDate: timestamp("service_date").notNull(),
+  dueDate: timestamp("due_date").notNull(),
+  originalAmount: decimal("original_amount", { precision: 10, scale: 2 }).notNull(),
+  paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }).default('0'),
+  remainingBalance: decimal("remaining_balance", { precision: 10, scale: 2 }).notNull(),
+  status: billStatusEnum("status").notNull().default("pending"),
+  appointmentId: uuid("appointment_id").references(() => appointments.id),
+  prescriptionId: uuid("prescription_id").references(() => prescriptions.id),
+  labOrderId: uuid("lab_order_id").references(() => labOrders.id),
+  servicePriceId: uuid("service_price_id").references(() => servicePrices.id),
+  insuranceClaimId: uuid("insurance_claim_id").references(() => insuranceClaims.id),
+  insuranceCovered: decimal("insurance_covered", { precision: 10, scale: 2 }).default('0'),
+  patientResponsibility: decimal("patient_responsibility", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes"),
+  lateFeesApplied: decimal("late_fees_applied", { precision: 10, scale: 2 }).default('0'),
+  discountApplied: decimal("discount_applied", { precision: 10, scale: 2 }).default('0'),
+  paymentTerms: text("payment_terms"), // "Net 30", "Due on receipt", etc.
+  lastReminderSent: timestamp("last_reminder_sent"),
+  reminderCount: integer("reminder_count").default(0),
+  createdBy: uuid("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Payment Records for Patient Bills
+export const patientPayments = pgTable("patient_payments", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientBillId: uuid("patient_bill_id").references(() => patientBills.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: text("payment_method").notNull(), // cash, check, credit_card, bank_transfer, online
+  paymentReference: text("payment_reference"), // transaction ID, check number, etc.
+  paymentDate: timestamp("payment_date").notNull(),
+  processedBy: uuid("processed_by").references(() => users.id),
+  notes: text("notes"),
+  refundAmount: decimal("refund_amount", { precision: 10, scale: 2 }).default('0'),
+  refundDate: timestamp("refund_date"),
+  refundReason: text("refund_reason"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Relations
 export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   users: many(users),
@@ -1017,7 +1076,9 @@ export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   labOrderAssignments: many(labOrderAssignments),
   vitalSigns: many(vitalSigns),
   visitSummaries: many(visitSummaries),
-  patientCheckIns: many(patientCheckIns)
+  patientCheckIns: many(patientCheckIns),
+  patientBills: many(patientBills),
+  patientPayments: many(patientPayments)
 }));
 
 export const insuranceProvidersRelations = relations(insuranceProviders, ({ one, many }) => ({
