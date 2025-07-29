@@ -145,6 +145,7 @@ export default function PatientPortal() {
     { id: "results", label: "Test Results", icon: FileText },
     { id: "medications", label: "Medications", icon: Pill },
     { id: "health", label: "Track Health", icon: Heart },
+    { id: "billing", label: "Bills & Payments", icon: FileText },
   ];
 
   const renderOverview = () => (
@@ -1389,6 +1390,226 @@ export default function PatientPortal() {
     </div>
   );
 
+  const renderBilling = () => {
+    const { data: bills = [], isLoading } = useQuery({
+      queryKey: ["/api/patient/bills"],
+      retry: false,
+    });
+
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
+
+    const totalOutstanding = bills
+      .filter((bill: any) => bill.status !== 'paid')
+      .reduce((sum: number, bill: any) => sum + parseFloat(bill.remainingBalance), 0);
+
+    const paidBills = bills.filter((bill: any) => bill.status === 'paid');
+    const unpaidBills = bills.filter((bill: any) => bill.status !== 'paid');
+
+    const getStatusColor = (status: string) => {
+      switch (status) {
+        case 'paid':
+          return 'bg-green-100 text-green-800';
+        case 'partial':
+          return 'bg-yellow-100 text-yellow-800';
+        case 'overdue':
+          return 'bg-red-100 text-red-800';
+        default:
+          return 'bg-blue-100 text-blue-800';
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Bills & Payments</h2>
+            <p className="text-gray-600">View and manage your medical bills and payment history</p>
+          </div>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Outstanding</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">${totalOutstanding.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">
+                {unpaidBills.length} unpaid {unpaidBills.length === 1 ? 'bill' : 'bills'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Paid This Year</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                ${paidBills.reduce((sum, bill) => sum + parseFloat(bill.originalAmount), 0).toFixed(2)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {paidBills.length} paid {paidBills.length === 1 ? 'bill' : 'bills'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Insurance Coverage</CardTitle>
+              <Shield className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                ${bills.reduce((sum, bill) => sum + parseFloat(bill.insuranceCovered || '0'), 0).toFixed(2)}
+              </div>
+              <p className="text-xs text-muted-foreground">Total coverage amount</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Outstanding Bills Section */}
+        {unpaidBills.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Outstanding Bills</h3>
+            <div className="space-y-4">
+              {unpaidBills.map((bill: any) => (
+                <Card key={bill.id} className="border-l-4 border-l-red-500">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{bill.description}</CardTitle>
+                        <CardDescription>
+                          Bill #{bill.billNumber} • Service Date: {new Date(bill.serviceDate).toLocaleDateString()}
+                        </CardDescription>
+                      </div>
+                      <Badge className={getStatusColor(bill.status)}>
+                        {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Total Amount</p>
+                        <p className="font-semibold">${parseFloat(bill.originalAmount).toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Insurance Covered</p>
+                        <p className="font-semibold text-green-600">${parseFloat(bill.insuranceCovered || '0').toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Your Responsibility</p>
+                        <p className="font-semibold text-blue-600">${parseFloat(bill.patientResponsibility).toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Amount Due</p>
+                        <p className="font-semibold text-red-600">${parseFloat(bill.remainingBalance).toFixed(2)}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-gray-600">Due Date: {new Date(bill.dueDate).toLocaleDateString()}</p>
+                        {parseFloat(bill.lateFeesApplied || '0') > 0 && (
+                          <p className="text-sm text-red-600">Late Fees: ${parseFloat(bill.lateFeesApplied).toFixed(2)}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm">
+                          View Details
+                        </Button>
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                          <FileText className="h-4 w-4 mr-2" />
+                          Pay Now
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Payment History Section */}
+        {paidBills.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Payment History</h3>
+            <div className="space-y-4">
+              {paidBills.map((bill: any) => (
+                <Card key={bill.id} className="border-l-4 border-l-green-500">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{bill.description}</CardTitle>
+                        <CardDescription>
+                          Bill #{bill.billNumber} • Service Date: {new Date(bill.serviceDate).toLocaleDateString()}
+                        </CardDescription>
+                      </div>
+                      <Badge className={getStatusColor(bill.status)}>
+                        Paid
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Total Amount</p>
+                        <p className="font-semibold">${parseFloat(bill.originalAmount).toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Insurance Covered</p>
+                        <p className="font-semibold text-green-600">${parseFloat(bill.insuranceCovered || '0').toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">You Paid</p>
+                        <p className="font-semibold">${parseFloat(bill.paidAmount).toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Payment Date</p>
+                        <p className="font-semibold text-green-600">{new Date(bill.updatedAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm text-gray-600">Paid in full</p>
+                      <Button variant="outline" size="sm">
+                        Download Receipt
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* No Bills Message */}
+        {bills.length === 0 && (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <FileText className="h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Bills Found</h3>
+              <p className="text-gray-600 text-center max-w-md">
+                You don't have any medical bills at this time. Bills will appear here after you receive medical services.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  };
+
   const renderSection = () => {
     switch (activeSection) {
       case "overview":
@@ -1415,6 +1636,8 @@ export default function PatientPortal() {
         return renderSetGoals();
       case "health-report":
         return renderHealthReport();
+      case "billing":
+        return renderBilling();
       default:
         return renderOverview();
     }

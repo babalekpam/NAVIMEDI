@@ -29,6 +29,8 @@ import {
   healthAnalyses,
   medicationCopays,
   rolePermissions,
+  patientBills,
+  patientPayments,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -85,6 +87,10 @@ import {
   type InsertVitalSigns,
   type VisitSummary,
   type InsertVisitSummary,
+  type PatientBill,
+  type InsertPatientBill,
+  type PatientPayment,
+  type InsertPatientPayment,
   type HealthRecommendation,
   type InsertHealthRecommendation,
   type HealthAnalysis,
@@ -371,6 +377,18 @@ export interface IStorage {
   updateRolePermission(id: string, updates: Partial<RolePermission>, tenantId: string): Promise<RolePermission | undefined>;
   deleteRolePermission(id: string, tenantId: string): Promise<boolean>;
   getRolePermissionByRoleAndModule(role: string, module: string, tenantId: string): Promise<RolePermission | undefined>;
+
+  // Patient Billing operations
+  createPatientBill(bill: InsertPatientBill): Promise<PatientBill>;
+  getPatientBills(patientId: string, tenantId: string): Promise<PatientBill[]>;
+  getPatientBill(id: string, tenantId: string): Promise<PatientBill | undefined>;
+  updatePatientBill(id: string, bill: Partial<InsertPatientBill>, tenantId: string): Promise<PatientBill>;
+  createPatientPayment(payment: InsertPatientPayment): Promise<PatientPayment>;
+  getPatientPayments(patientBillId: string, tenantId: string): Promise<PatientPayment[]>;
+  
+  // Patient Account Activation
+  generatePatientCredentials(patientId: string, tenantId: string): Promise<{tempPassword: string, activationToken: string}>;
+  sendPatientActivationMessage(patient: Patient, tempPassword: string, activationToken: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2474,6 +2492,83 @@ export class DatabaseStorage implements IStorage {
         eq(rolePermissions.isActive, true)
       ));
     return permission || undefined;
+  }
+
+  // Patient Billing Management
+  async createPatientBill(bill: InsertPatientBill): Promise<PatientBill> {
+    const [patientBill] = await db.insert(patientBills).values(bill).returning();
+    return patientBill;
+  }
+
+  async getPatientBills(patientId: string, tenantId: string): Promise<PatientBill[]> {
+    return await db.select().from(patientBills)
+      .where(and(eq(patientBills.patientId, patientId), eq(patientBills.tenantId, tenantId)))
+      .orderBy(desc(patientBills.serviceDate));
+  }
+
+  async getPatientBill(id: string, tenantId: string): Promise<PatientBill | undefined> {
+    const [bill] = await db.select().from(patientBills)
+      .where(and(eq(patientBills.id, id), eq(patientBills.tenantId, tenantId)));
+    return bill || undefined;
+  }
+
+  async updatePatientBill(id: string, updates: Partial<InsertPatientBill>, tenantId: string): Promise<PatientBill> {
+    const [bill] = await db.update(patientBills)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(patientBills.id, id), eq(patientBills.tenantId, tenantId)))
+      .returning();
+    return bill;
+  }
+
+  async createPatientPayment(payment: InsertPatientPayment): Promise<PatientPayment> {
+    const [patientPayment] = await db.insert(patientPayments).values(payment).returning();
+    return patientPayment;
+  }
+
+  async getPatientPayments(patientBillId: string, tenantId: string): Promise<PatientPayment[]> {
+    return await db.select().from(patientPayments)
+      .where(and(eq(patientPayments.patientBillId, patientBillId), eq(patientPayments.tenantId, tenantId)))
+      .orderBy(desc(patientPayments.paymentDate));
+  }
+
+  // Patient Account Activation
+  async generatePatientCredentials(patientId: string, tenantId: string): Promise<{tempPassword: string, activationToken: string}> {
+    // Generate temporary password (8 characters)
+    const tempPassword = Math.random().toString(36).slice(-8);
+    
+    // Generate activation token
+    const activationToken = Math.random().toString(36) + Date.now().toString(36);
+    
+    // Store in database for verification (you could create a separate table for this)
+    await this.createAuditLog({
+      tenantId,
+      userId: patientId,
+      action: "patient_account_generated",
+      entityType: "patient",
+      entityId: patientId,
+      details: { activationToken },
+      ipAddress: "system",
+      userAgent: "automated-service"
+    });
+    
+    return { tempPassword, activationToken };
+  }
+
+  async sendPatientActivationMessage(patient: Patient, tempPassword: string, activationToken: string): Promise<boolean> {
+    try {
+      // This would integrate with SendGrid for email and Twilio for SMS
+      // For now, we'll log the credentials and return true
+      console.log(`Patient activation credentials for ${patient.firstName} ${patient.lastName}:`);
+      console.log(`Email: ${patient.email}`);
+      console.log(`Phone: ${patient.phone}`);
+      console.log(`Temporary Password: ${tempPassword}`);
+      console.log(`Activation Link: ${process.env.FRONTEND_URL || 'https://localhost:5000'}/patient/activate?token=${activationToken}`);
+      
+      return true;
+    } catch (error) {
+      console.error("Failed to send patient activation message:", error);
+      return false;
+    }
   }
 }
 

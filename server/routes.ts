@@ -3306,6 +3306,119 @@ Report ID: ${report.id}
     }
   });
 
+  // Patient Billing Routes
+  app.get("/api/patient/bills", requireRole(["patient"]), async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const patientUser = await storage.getUser(userId);
+      
+      if (!patientUser) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+      
+      // Get patient medical record
+      const patients = await storage.getPatientsByTenant(patientUser.tenantId);
+      const patient = patients.find(p => p.email === patientUser.email);
+      
+      if (!patient) {
+        return res.status(404).json({ message: "Patient medical record not found" });
+      }
+
+      const bills = await storage.getPatientBills(patient.id, patientUser.tenantId);
+      res.json(bills);
+    } catch (error) {
+      console.error("Error fetching patient bills:", error);
+      res.status(500).json({ message: "Failed to fetch patient bills" });
+    }
+  });
+
+  app.get("/api/patient/bills/:billId", requireRole(["patient"]), async (req, res) => {
+    try {
+      const { billId } = req.params;
+      const userId = req.user!.id;
+      const patientUser = await storage.getUser(userId);
+      
+      if (!patientUser) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      const bill = await storage.getPatientBill(billId, patientUser.tenantId);
+      if (!bill) {
+        return res.status(404).json({ message: "Bill not found" });
+      }
+
+      res.json(bill);
+    } catch (error) {
+      console.error("Error fetching patient bill:", error);
+      res.status(500).json({ message: "Failed to fetch patient bill" });
+    }
+  });
+
+  // Create bill after service (hospital staff only)
+  app.post("/api/patient-bills", authenticateToken, setTenantContext, requireRole(["super_admin", "tenant_admin", "receptionist", "billing_staff"]), async (req: AuthenticatedRequest, res) => {
+    try {
+      const billData = {
+        ...req.body,
+        tenantId: req.tenant!.id,
+        createdBy: req.user!.id,
+        billNumber: `BILL-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
+      };
+
+      const bill = await storage.createPatientBill(billData);
+      
+      // If this is after a completed visit, generate patient credentials
+      if (req.body.triggerAccountCreation && req.body.patientId) {
+        try {
+          const patient = await storage.getPatient(req.body.patientId, req.tenant!.id);
+          if (patient) {
+            const { tempPassword, activationToken } = await storage.generatePatientCredentials(patient.id, req.tenant!.id);
+            await storage.sendPatientActivationMessage(patient, tempPassword, activationToken);
+          }
+        } catch (activationError) {
+          console.error("Failed to send patient activation:", activationError);
+          // Continue with bill creation even if activation fails
+        }
+      }
+      
+      res.json(bill);
+    } catch (error) {
+      console.error("Error creating patient bill:", error);
+      res.status(500).json({ message: "Failed to create patient bill" });
+    }
+  });
+
+  // Record payment (hospital staff only)
+  app.post("/api/patient-payments", authenticateToken, setTenantContext, requireRole(["super_admin", "tenant_admin", "receptionist", "billing_staff"]), async (req: AuthenticatedRequest, res) => {
+    try {
+      const paymentData = {
+        ...req.body,
+        tenantId: req.tenant!.id,
+        recordedBy: req.user!.id,
+        paymentDate: new Date()
+      };
+
+      const payment = await storage.createPatientPayment(paymentData);
+
+      // Update bill remaining balance
+      const bill = await storage.getPatientBill(paymentData.patientBillId, req.tenant!.id);
+      if (bill) {
+        const newBalance = parseFloat(bill.remainingBalance) - parseFloat(paymentData.amount);
+        const newPaidAmount = parseFloat(bill.paidAmount) + parseFloat(paymentData.amount);
+        
+        await storage.updatePatientBill(bill.id, {
+          paidAmount: newPaidAmount.toString(),
+          remainingBalance: Math.max(0, newBalance).toString(),
+          status: newBalance <= 0 ? 'paid' : 'partial'
+        }, req.tenant!.id);
+      }
+
+      res.json(payment);
+    } catch (error) {
+      console.error("Error recording patient payment:", error);
+      res.status(500).json({ message: "Failed to record patient payment" });
+    }
+  });
+
   const server = createServer(app);
   return server;
 }

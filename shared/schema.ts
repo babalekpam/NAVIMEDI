@@ -1302,7 +1302,9 @@ export const patientsRelations = relations(patients, ({ one, many }) => ({
   labResults: many(labResults),
   vitalSigns: many(vitalSigns),
   medicationCopays: many(medicationCopays),
-  visitSummaries: many(visitSummaries)
+  visitSummaries: many(visitSummaries),
+  patientBills: many(patientBills),
+  patientPayments: many(patientPayments)
 }));
 
 // Laboratory Relations
@@ -1493,6 +1495,63 @@ export const visitSummariesRelations = relations(visitSummaries, ({ one }) => ({
   })
 }));
 
+// Patient Bills Relations
+export const patientBillsRelations = relations(patientBills, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [patientBills.tenantId],
+    references: [tenants.id]
+  }),
+  patient: one(patients, {
+    fields: [patientBills.patientId],
+    references: [patients.id]
+  }),
+  appointment: one(appointments, {
+    fields: [patientBills.appointmentId],
+    references: [appointments.id]
+  }),
+  prescription: one(prescriptions, {
+    fields: [patientBills.prescriptionId],
+    references: [prescriptions.id]
+  }),
+  labOrder: one(labOrders, {
+    fields: [patientBills.labOrderId],
+    references: [labOrders.id]
+  }),
+  servicePrice: one(servicePrices, {
+    fields: [patientBills.servicePriceId],
+    references: [servicePrices.id]
+  }),
+  insuranceClaim: one(insuranceClaims, {
+    fields: [patientBills.insuranceClaimId],
+    references: [insuranceClaims.id]
+  }),
+  createdByUser: one(users, {
+    fields: [patientBills.createdBy],
+    references: [users.id]
+  }),
+  payments: many(patientPayments)
+}));
+
+// Patient Payments Relations
+export const patientPaymentsRelations = relations(patientPayments, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [patientPayments.tenantId],
+    references: [tenants.id]
+  }),
+  patientBill: one(patientBills, {
+    fields: [patientPayments.patientBillId],
+    references: [patientBills.id]
+  }),
+  patient: one(patients, {
+    fields: [patientPayments.patientId],
+    references: [patients.id]
+  }),
+  processedByUser: one(users, {
+    fields: [patientPayments.processedBy],
+    references: [users.id]
+  })
+}));
+
 // Insert Schemas
 export const insertTenantSchema = createInsertSchema(tenants).omit({
   id: true,
@@ -1598,6 +1657,18 @@ export const insertPatientCheckInSchema = createInsertSchema(patientCheckIns).om
 });
 
 export const insertRolePermissionSchema = createInsertSchema(rolePermissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertPatientBillSchema = createInsertSchema(patientBills).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertPatientPaymentSchema = createInsertSchema(patientPayments).omit({
   id: true,
   createdAt: true,
   updatedAt: true
@@ -1804,6 +1875,12 @@ export type InsertVitalSigns = z.infer<typeof insertVitalSignsSchema>;
 
 export type VisitSummary = typeof visitSummaries.$inferSelect;
 export type InsertVisitSummary = z.infer<typeof insertVisitSummarySchema>;
+
+export type PatientBill = typeof patientBills.$inferSelect;
+export type InsertPatientBill = z.infer<typeof insertPatientBillSchema>;
+
+export type PatientPayment = typeof patientPayments.$inferSelect;
+export type InsertPatientPayment = z.infer<typeof insertPatientPaymentSchema>;
 
 // AI Health Recommendations Types
 export type HealthRecommendation = typeof healthRecommendations.$inferSelect;
