@@ -34,7 +34,14 @@ import {
   Search,
   Plus,
   Send,
-  ArrowLeft
+  ArrowLeft,
+  Target,
+  TrendingUp,
+  AlertCircle,
+  CheckCircle,
+  Droplets,
+  Zap,
+  Brain
 } from "lucide-react";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 
