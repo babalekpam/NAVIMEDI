@@ -278,6 +278,7 @@ export default function DoctorCalendar() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patient/appointments"] });
+      queryClient.refetchQueries({ queryKey: ["/api/patient/appointments"] });
       setStep(4); // Go to confirmation step
     },
     onError: (error) => {

@@ -3137,7 +3137,7 @@ Report ID: ${report.id}
         return res.status(404).json({ message: "Patient not found" });
       }
       
-      const appointments = await storage.getAppointmentsByPatient(patient.id);
+      const appointments = await storage.getAppointmentsByPatient(patient.id, patientUser.tenantId);
       res.json(appointments);
     } catch (error) {
       console.error("Get patient appointments error:", error);
@@ -3157,7 +3157,7 @@ Report ID: ${report.id}
         return res.status(404).json({ message: "Patient not found" });
       }
       
-      const prescriptions = await storage.getPrescriptionsByPatient(patient.id);
+      const prescriptions = await storage.getPrescriptionsByPatient(patient.id, patientUser.tenantId);
       res.json(prescriptions);
     } catch (error) {
       console.error("Get patient prescriptions error:", error);
