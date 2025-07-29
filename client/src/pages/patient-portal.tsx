@@ -54,6 +54,21 @@ export default function PatientPortal() {
     priority: "normal",
     type: "general_message"
   });
+  const [vitalsForm, setVitalsForm] = useState({
+    temperature: "",
+    systolic: "",
+    diastolic: "",
+    heartRate: "",
+    weight: "",
+    notes: ""
+  });
+  const [goalsForm, setGoalsForm] = useState({
+    steps: 10000,
+    water: 8,
+    sleep: 8,
+    exercise: 30,
+    weight: 165
+  });
   const queryClient = useQueryClient();
 
   // Fetch patient data
@@ -979,19 +994,398 @@ export default function PatientPortal() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Button className="h-16 flex flex-col space-y-2">
+        <Button 
+          className="h-16 flex flex-col space-y-2"
+          onClick={() => setActiveSection("log-vitals")}
+        >
           <Plus className="h-6 w-6" />
           <span>Log Vitals</span>
         </Button>
-        <Button variant="outline" className="h-16 flex flex-col space-y-2">
+        <Button 
+          variant="outline" 
+          className="h-16 flex flex-col space-y-2"
+          onClick={() => setActiveSection("set-goals")}
+        >
           <Target className="h-6 w-6" />
           <span>Set Goals</span>
         </Button>
-        <Button variant="outline" className="h-16 flex flex-col space-y-2">
+        <Button 
+          variant="outline" 
+          className="h-16 flex flex-col space-y-2"
+          onClick={() => setActiveSection("health-report")}
+        >
           <FileText className="h-6 w-6" />
           <span>Health Report</span>
         </Button>
       </div>
+    </div>
+  );
+
+  const renderLogVitals = () => (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="outline" onClick={() => setActiveSection("health")}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Health Tracking
+        </Button>
+        <div>
+          <h2 className="text-2xl font-bold">Log Vital Signs</h2>
+          <p className="text-gray-600">Record your current vital signs and health measurements</p>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Enter Your Vitals</CardTitle>
+          <CardDescription>All measurements are saved securely and shared with your care team</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="temperature">Temperature (°F)</Label>
+              <Input 
+                id="temperature"
+                type="number"
+                step="0.1"
+                placeholder="98.6"
+                value={vitalsForm.temperature}
+                onChange={(e) => setVitalsForm(prev => ({ ...prev, temperature: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="systolic">Systolic BP</Label>
+              <Input 
+                id="systolic"
+                type="number"
+                placeholder="120"
+                value={vitalsForm.systolic}
+                onChange={(e) => setVitalsForm(prev => ({ ...prev, systolic: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="diastolic">Diastolic BP</Label>
+              <Input 
+                id="diastolic"
+                type="number"
+                placeholder="80"
+                value={vitalsForm.diastolic}
+                onChange={(e) => setVitalsForm(prev => ({ ...prev, diastolic: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="heartRate">Heart Rate (bpm)</Label>
+              <Input 
+                id="heartRate"
+                type="number"
+                placeholder="72"
+                value={vitalsForm.heartRate}
+                onChange={(e) => setVitalsForm(prev => ({ ...prev, heartRate: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="weight">Weight (lbs)</Label>
+              <Input 
+                id="weight"
+                type="number"
+                step="0.1"
+                placeholder="165.0"
+                value={vitalsForm.weight}
+                onChange={(e) => setVitalsForm(prev => ({ ...prev, weight: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="notes">Additional Notes (Optional)</Label>
+            <Textarea 
+              id="notes"
+              placeholder="Any symptoms, medications taken, or other relevant information..."
+              className="min-h-[100px]"
+              value={vitalsForm.notes}
+              onChange={(e) => setVitalsForm(prev => ({ ...prev, notes: e.target.value }))}
+            />
+          </div>
+
+          <div className="flex justify-end gap-4">
+            <Button variant="outline" onClick={() => setActiveSection("health")}>
+              Cancel
+            </Button>
+            <Button>
+              <Heart className="w-4 h-4 mr-2" />
+              Save Vitals
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderSetGoals = () => (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="outline" onClick={() => setActiveSection("health")}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Health Tracking
+        </Button>
+        <div>
+          <h2 className="text-2xl font-bold">Set Health Goals</h2>
+          <p className="text-gray-600">Customize your daily and weekly health targets</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Target className="h-5 w-5 mr-2 text-blue-600" />
+              Daily Activity Goals
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="steps">Daily Steps Goal</Label>
+              <Input 
+                id="steps"
+                type="number"
+                value={goalsForm.steps}
+                onChange={(e) => setGoalsForm(prev => ({ ...prev, steps: parseInt(e.target.value) || 0 }))}
+              />
+              <p className="text-sm text-gray-500 mt-1">Recommended: 8,000-10,000 steps</p>
+            </div>
+            <div>
+              <Label htmlFor="exercise">Exercise Minutes (per day)</Label>
+              <Input 
+                id="exercise"
+                type="number"
+                value={goalsForm.exercise}
+                onChange={(e) => setGoalsForm(prev => ({ ...prev, exercise: parseInt(e.target.value) || 0 }))}
+              />
+              <p className="text-sm text-gray-500 mt-1">Recommended: 30-60 minutes</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Droplets className="h-5 w-5 mr-2 text-blue-600" />
+              Wellness Goals
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="water">Daily Water Intake (glasses)</Label>
+              <Input 
+                id="water"
+                type="number"
+                value={goalsForm.water}
+                onChange={(e) => setGoalsForm(prev => ({ ...prev, water: parseInt(e.target.value) || 0 }))}
+              />
+              <p className="text-sm text-gray-500 mt-1">Recommended: 8 glasses (64 oz)</p>
+            </div>
+            <div>
+              <Label htmlFor="sleep">Sleep Hours (per night)</Label>
+              <Input 
+                id="sleep"
+                type="number"
+                step="0.5"
+                value={goalsForm.sleep}
+                onChange={(e) => setGoalsForm(prev => ({ ...prev, sleep: parseFloat(e.target.value) || 0 }))}
+              />
+              <p className="text-sm text-gray-500 mt-1">Recommended: 7-9 hours</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Scale className="h-5 w-5 mr-2 text-purple-600" />
+              Weight Goals
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="targetWeight">Target Weight (lbs)</Label>
+              <Input 
+                id="targetWeight"
+                type="number"
+                step="0.1"
+                value={goalsForm.weight}
+                onChange={(e) => setGoalsForm(prev => ({ ...prev, weight: parseFloat(e.target.value) || 0 }))}
+              />
+              <p className="text-sm text-gray-500 mt-1">Set a healthy, realistic target</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Goal Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Daily Steps:</span>
+                <span className="font-medium">{goalsForm.steps.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Daily Exercise:</span>
+                <span className="font-medium">{goalsForm.exercise} minutes</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Daily Water:</span>
+                <span className="font-medium">{goalsForm.water} glasses</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Sleep Target:</span>
+                <span className="font-medium">{goalsForm.sleep} hours</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Target Weight:</span>
+                <span className="font-medium">{goalsForm.weight} lbs</span>
+              </div>
+            </div>
+            <div className="flex justify-end gap-4 mt-6">
+              <Button variant="outline" onClick={() => setActiveSection("health")}>
+                Cancel
+              </Button>
+              <Button>
+                <Target className="w-4 h-4 mr-2" />
+                Save Goals
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  const renderHealthReport = () => (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="outline" onClick={() => setActiveSection("health")}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Health Tracking
+        </Button>
+        <div>
+          <h2 className="text-2xl font-bold">Health Report</h2>
+          <p className="text-gray-600">Comprehensive overview of your health data and progress</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <TrendingUp className="h-5 w-5 mr-2" />
+              30-Day Health Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">85/100</div>
+                  <div className="text-sm text-green-600">Overall Health Score</div>
+                  <div className="text-xs text-gray-500">↑ 5 points from last month</div>
+                </div>
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">92%</div>
+                  <div className="text-sm text-blue-600">Goal Achievement</div>
+                  <div className="text-xs text-gray-500">↑ 8% from last month</div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="font-semibold">Key Achievements</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="text-sm">Maintained healthy blood pressure for 28 days</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="text-sm">Achieved step goal 24 out of 30 days</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="text-sm">Improved sleep quality by 15%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="font-semibold">Areas for Improvement</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <AlertCircle className="h-4 w-4 text-yellow-600" />
+                    <span className="text-sm">Water intake below target on 12 days</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <AlertCircle className="h-4 w-4 text-yellow-600" />
+                    <span className="text-sm">Exercise frequency could be more consistent</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button className="w-full justify-start" variant="outline">
+              <FileText className="w-4 h-4 mr-2" />
+              Download PDF Report
+            </Button>
+            <Button className="w-full justify-start" variant="outline">
+              <Mail className="w-4 h-4 mr-2" />
+              Email to Doctor
+            </Button>
+            <Button className="w-full justify-start" variant="outline">
+              <Calendar className="w-4 h-4 mr-2" />
+              Schedule Check-up
+            </Button>
+            <Button className="w-full justify-start" variant="outline">
+              <Target className="w-4 h-4 mr-2" />
+              Update Goals
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Detailed Metrics</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="text-lg font-bold">98.4°F</div>
+              <div className="text-sm text-gray-600">Avg Temperature</div>
+              <div className="text-xs text-green-600">Normal range</div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="text-lg font-bold">118/78</div>
+              <div className="text-sm text-gray-600">Avg Blood Pressure</div>
+              <div className="text-xs text-green-600">Excellent</div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="text-lg font-bold">74 bpm</div>
+              <div className="text-sm text-gray-600">Avg Heart Rate</div>
+              <div className="text-xs text-green-600">Good fitness</div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="text-lg font-bold">164.8 lbs</div>
+              <div className="text-sm text-gray-600">Avg Weight</div>
+              <div className="text-xs text-blue-600">Stable</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 
@@ -1015,6 +1409,12 @@ export default function PatientPortal() {
         return renderMedications();
       case "health":
         return renderHealthTracking();
+      case "log-vitals":
+        return renderLogVitals();
+      case "set-goals":
+        return renderSetGoals();
+      case "health-report":
+        return renderHealthReport();
       default:
         return renderOverview();
     }
