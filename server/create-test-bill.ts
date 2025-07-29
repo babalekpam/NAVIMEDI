@@ -42,6 +42,7 @@ async function createTestBill() {
       description: "General Consultation Visit",
       serviceDate: new Date(),
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      currency: "USD" as const,
       originalAmount: "150.00",
       paidAmount: "0.00",
       remainingBalance: "150.00",

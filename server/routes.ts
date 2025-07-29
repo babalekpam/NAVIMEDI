@@ -8,6 +8,16 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { aiHealthAnalyzer } from "./ai-health-analyzer";
+import { 
+  formatCurrency, 
+  getCurrencyInfo, 
+  getTenantCurrencies, 
+  getTenantBaseCurrency, 
+  convertCurrency, 
+  getAfricanCurrencies, 
+  getAllCurrencies, 
+  updateExchangeRate 
+} from "./currency-utils";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
@@ -3416,6 +3426,149 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Error recording patient payment:", error);
       res.status(500).json({ message: "Failed to record patient payment" });
+    }
+  });
+
+  // ==================== CURRENCY MANAGEMENT ROUTES ====================
+  
+  // Get all available currencies
+  app.get("/api/currencies", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const currencies = await getAllCurrencies();
+      res.json(currencies);
+    } catch (error) {
+      console.error("Failed to fetch currencies:", error);
+      res.status(500).json({ message: "Failed to fetch currencies" });
+    }
+  });
+
+  // Get African currencies
+  app.get("/api/currencies/african", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const currencies = await getAfricanCurrencies();
+      res.json(currencies);
+    } catch (error) {
+      console.error("Failed to fetch African currencies:", error);
+      res.status(500).json({ message: "Failed to fetch African currencies" });
+    }
+  });
+
+  // Get tenant's supported currencies
+  app.get("/api/tenant/currencies", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const supportedCurrencies = await getTenantCurrencies(req.tenant!.id);
+      const baseCurrency = await getTenantBaseCurrency(req.tenant!.id);
+      
+      // Get full currency info for each supported currency
+      const currencyDetails = await Promise.all(
+        supportedCurrencies.map(async (code) => {
+          const info = await getCurrencyInfo(code);
+          return info;
+        })
+      );
+
+      res.json({
+        baseCurrency,
+        supportedCurrencies: currencyDetails.filter(Boolean)
+      });
+    } catch (error) {
+      console.error("Failed to fetch tenant currencies:", error);
+      res.status(500).json({ message: "Failed to fetch tenant currencies" });
+    }
+  });
+
+  // Update tenant currency settings
+  app.patch("/api/tenant/currencies", authenticateToken, requireTenant, requireRole(["tenant_admin", "super_admin"]), async (req, res) => {
+    try {
+      const { baseCurrency, supportedCurrencies } = req.body;
+      
+      if (baseCurrency) {
+        const currencyInfo = await getCurrencyInfo(baseCurrency);
+        if (!currencyInfo) {
+          return res.status(400).json({ message: "Invalid base currency code" });
+        }
+      }
+
+      if (supportedCurrencies && Array.isArray(supportedCurrencies)) {
+        // Validate all currency codes
+        for (const code of supportedCurrencies) {
+          const currencyInfo = await getCurrencyInfo(code);
+          if (!currencyInfo) {
+            return res.status(400).json({ message: `Invalid currency code: ${code}` });
+          }
+        }
+      }
+
+      const updateData: any = {};
+      if (baseCurrency) updateData.baseCurrency = baseCurrency;
+      if (supportedCurrencies) updateData.supportedCurrencies = JSON.stringify(supportedCurrencies);
+
+      const updatedTenant = await storage.updateTenant(req.tenant!.id, updateData);
+      
+      res.json({
+        baseCurrency: updatedTenant?.baseCurrency || 'USD',
+        supportedCurrencies: updatedTenant?.supportedCurrencies || ['USD']
+      });
+    } catch (error) {
+      console.error("Failed to update tenant currencies:", error);
+      res.status(500).json({ message: "Failed to update tenant currencies" });
+    }
+  });
+
+  // Convert currency amounts
+  app.post("/api/currencies/convert", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { amount, fromCurrency, toCurrency } = req.body;
+      
+      if (!amount || !fromCurrency || !toCurrency) {
+        return res.status(400).json({ message: "Amount, fromCurrency, and toCurrency are required" });
+      }
+
+      const conversion = await convertCurrency(parseFloat(amount), fromCurrency, toCurrency);
+      
+      if (!conversion) {
+        return res.status(400).json({ message: "Currency conversion failed" });
+      }
+
+      res.json(conversion);
+    } catch (error) {
+      console.error("Failed to convert currency:", error);
+      res.status(500).json({ message: "Failed to convert currency" });
+    }
+  });
+
+  // Format currency for display
+  app.post("/api/currencies/format", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { amount, currencyCode } = req.body;
+      
+      if (!amount || !currencyCode) {
+        return res.status(400).json({ message: "Amount and currencyCode are required" });
+      }
+
+      const formatted = await formatCurrency(amount, currencyCode);
+      
+      res.json({ formatted });
+    } catch (error) {
+      console.error("Failed to format currency:", error);
+      res.status(500).json({ message: "Failed to format currency" });
+    }
+  });
+
+  // Get currency information
+  app.get("/api/currencies/:code", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { code } = req.params;
+      const currencyInfo = await getCurrencyInfo(code);
+      
+      if (!currencyInfo) {
+        return res.status(404).json({ message: "Currency not found" });
+      }
+
+      res.json(currencyInfo);
+    } catch (error) {
+      console.error("Failed to get currency info:", error);
+      res.status(500).json({ message: "Failed to get currency info" });
     }
   });
 

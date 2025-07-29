@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { CreditCard, FileText, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@/contexts/translation-context";
+import { useTenantCurrencies, formatCurrencyAmount, type CurrencyInfo } from "@/hooks/useCurrency";
 
 interface PatientBill {
   id: string;
@@ -11,6 +12,7 @@ interface PatientBill {
   description: string;
   serviceDate: string;
   dueDate: string;
+  currency: string;
   originalAmount: string;
   paidAmount: string;
   remainingBalance: string;
@@ -56,11 +58,20 @@ const getStatusIcon = (status: string) => {
 
 export default function PatientBilling() {
   const { t } = useTranslation();
-
+  
   const { data: bills = [], isLoading } = useQuery({
     queryKey: ["/api/patient/bills"],
     retry: false,
   });
+
+  const { data: tenantCurrencies } = useTenantCurrencies();
+
+  // Helper function to format currency amounts
+  const formatAmount = (amount: string, currencyCode?: string) => {
+    const currency = currencyCode || tenantCurrencies?.baseCurrency || 'USD';
+    const currencyInfo = tenantCurrencies?.supportedCurrencies?.find(c => c.code === currency);
+    return formatCurrencyAmount(amount, currency, currencyInfo);
+  };
 
   if (isLoading) {
     return (
@@ -94,7 +105,9 @@ export default function PatientBilling() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">${totalOutstanding.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-red-600">
+              {formatAmount(totalOutstanding.toFixed(2))}
+            </div>
             <p className="text-xs text-muted-foreground">
               {unpaidBills.length} unpaid {unpaidBills.length === 1 ? 'bill' : 'bills'}
             </p>
@@ -108,7 +121,7 @@ export default function PatientBilling() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              ${paidBills.reduce((sum, bill) => sum + parseFloat(bill.originalAmount), 0).toFixed(2)}
+              {formatAmount(paidBills.reduce((sum, bill) => sum + parseFloat(bill.originalAmount), 0).toFixed(2))}
             </div>
             <p className="text-xs text-muted-foreground">
               {paidBills.length} paid {paidBills.length === 1 ? 'bill' : 'bills'}
@@ -123,7 +136,7 @@ export default function PatientBilling() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              ${bills.reduce((sum, bill) => sum + parseFloat(bill.insuranceCovered || '0'), 0).toFixed(2)}
+              {formatAmount(bills.reduce((sum, bill) => sum + parseFloat(bill.insuranceCovered || '0'), 0).toFixed(2))}
             </div>
             <p className="text-xs text-muted-foreground">Total coverage amount</p>
           </CardContent>
@@ -157,19 +170,19 @@ export default function PatientBilling() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div>
                       <p className="text-sm text-gray-600">Total Amount</p>
-                      <p className="font-semibold">${parseFloat(bill.originalAmount).toFixed(2)}</p>
+                      <p className="font-semibold">{formatAmount(bill.originalAmount, bill.currency)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Insurance Covered</p>
-                      <p className="font-semibold text-green-600">${parseFloat(bill.insuranceCovered || '0').toFixed(2)}</p>
+                      <p className="font-semibold text-green-600">{formatAmount(bill.insuranceCovered || '0', bill.currency)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Your Responsibility</p>
-                      <p className="font-semibold text-blue-600">${parseFloat(bill.patientResponsibility).toFixed(2)}</p>
+                      <p className="font-semibold text-blue-600">{formatAmount(bill.patientResponsibility, bill.currency)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Amount Due</p>
-                      <p className="font-semibold text-red-600">${parseFloat(bill.remainingBalance).toFixed(2)}</p>
+                      <p className="font-semibold text-red-600">{formatAmount(bill.remainingBalance, bill.currency)}</p>
                     </div>
                   </div>
                   
@@ -177,7 +190,7 @@ export default function PatientBilling() {
                     <div>
                       <p className="text-sm text-gray-600">Due Date: {new Date(bill.dueDate).toLocaleDateString()}</p>
                       {parseFloat(bill.lateFeesApplied || '0') > 0 && (
-                        <p className="text-sm text-red-600">Late Fees: ${parseFloat(bill.lateFeesApplied).toFixed(2)}</p>
+                        <p className="text-sm text-red-600">Late Fees: {formatAmount(bill.lateFeesApplied, bill.currency)}</p>
                       )}
                     </div>
                     <div className="flex gap-2">
@@ -224,15 +237,15 @@ export default function PatientBilling() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div>
                       <p className="text-sm text-gray-600">Total Amount</p>
-                      <p className="font-semibold">${parseFloat(bill.originalAmount).toFixed(2)}</p>
+                      <p className="font-semibold">{formatAmount(bill.originalAmount, bill.currency)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Insurance Covered</p>
-                      <p className="font-semibold text-green-600">${parseFloat(bill.insuranceCovered || '0').toFixed(2)}</p>
+                      <p className="font-semibold text-green-600">{formatAmount(bill.insuranceCovered || '0', bill.currency)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">You Paid</p>
-                      <p className="font-semibold">${parseFloat(bill.paidAmount).toFixed(2)}</p>
+                      <p className="font-semibold">{formatAmount(bill.paidAmount, bill.currency)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Payment Date</p>

@@ -118,6 +118,17 @@ export const translationStatusEnum = pgEnum("translation_status", [
   "manual_review"
 ]);
 
+export const currencyEnum = pgEnum("currency", [
+  // Major International Currencies
+  "USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "CNY",
+  // African Currencies
+  "DZD", "AOA", "XOF", "BWP", "BIF", "XAF", "CVE", "KMF", "CDF",
+  "DJF", "EGP", "ERN", "SZL", "ETB", "GMD", "GHS", "GNF", "KES",
+  "LSL", "LRD", "LYD", "MGA", "MWK", "MRU", "MUR", "MAD", "MZN",
+  "NAD", "NGN", "RWF", "STN", "SCR", "SLE", "SOS", "ZAR", "SSP",
+  "SDG", "TZS", "TND", "UGX", "ZMW", "ZWL"
+]);
+
 export const priorityLevelEnum = pgEnum("priority_level", [
   "low",
   "normal", 
@@ -170,6 +181,37 @@ export const medicalSpecialtyEnum = pgEnum("medical_specialty", [
   "gastroenterology"
 ]);
 
+// Currency Configuration Table
+export const currencies = pgTable("currencies", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: currencyEnum("code").notNull().unique(),
+  name: text("name").notNull(),
+  symbol: text("symbol").notNull(),
+  numericCode: varchar("numeric_code", { length: 3 }),
+  decimalPlaces: integer("decimal_places").default(2),
+  region: text("region"), // Africa, Europe, Asia, etc.
+  country: text("country"),
+  isActive: boolean("is_active").default(true),
+  exchangeRateToUSD: decimal("exchange_rate_to_usd", { precision: 15, scale: 6 }).default("1.000000"),
+  lastUpdated: timestamp("last_updated").default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Exchange Rates Table for real-time currency conversion
+export const exchangeRates = pgTable("exchange_rates", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  baseCurrency: currencyEnum("base_currency").notNull().default("USD"),
+  targetCurrency: currencyEnum("target_currency").notNull(),
+  rate: decimal("rate", { precision: 15, scale: 6 }).notNull(),
+  bidRate: decimal("bid_rate", { precision: 15, scale: 6 }),
+  askRate: decimal("ask_rate", { precision: 15, scale: 6 }),
+  provider: text("provider").default("manual"), // manual, api, bank
+  validFrom: timestamp("valid_from").default(sql`CURRENT_TIMESTAMP`),
+  validTo: timestamp("valid_to"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Core Tables
 export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -188,6 +230,9 @@ export const tenants = pgTable("tenants", {
   // Multi-language settings
   defaultLanguage: varchar("default_language", { length: 10 }).default("en"),
   supportedLanguages: jsonb("supported_languages").default(['en']),
+  // Currency settings
+  baseCurrency: currencyEnum("base_currency").default("USD"),
+  supportedCurrencies: jsonb("supported_currencies").default(['USD']),
   // Offline settings
   offlineEnabled: boolean("offline_enabled").default(false),
   offlineStorageMb: integer("offline_storage_mb").default(100),
@@ -346,6 +391,7 @@ export const servicePrices = pgTable("service_prices", {
   serviceName: text("service_name").notNull(),
   serviceDescription: text("service_description"),
   serviceType: serviceTypeEnum("service_type").notNull(),
+  currency: currencyEnum("currency").notNull().default("USD"),
   basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
   isActive: boolean("is_active").default(true),
   effectiveDate: timestamp("effective_date").default(sql`CURRENT_TIMESTAMP`),
@@ -1013,6 +1059,7 @@ export const patientBills = pgTable("patient_bills", {
   description: text("description").notNull(),
   serviceDate: timestamp("service_date").notNull(),
   dueDate: timestamp("due_date").notNull(),
+  currency: currencyEnum("currency").notNull().default("USD"),
   originalAmount: decimal("original_amount", { precision: 10, scale: 2 }).notNull(),
   paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }).default('0'),
   remainingBalance: decimal("remaining_balance", { precision: 10, scale: 2 }).notNull(),
@@ -1041,6 +1088,7 @@ export const patientPayments = pgTable("patient_payments", {
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   patientBillId: uuid("patient_bill_id").references(() => patientBills.id).notNull(),
   patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  currency: currencyEnum("currency").notNull().default("USD"),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: text("payment_method").notNull(), // cash, check, credit_card, bank_transfer, online
   paymentReference: text("payment_reference"), // transaction ID, check number, etc.
