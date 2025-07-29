@@ -3160,8 +3160,12 @@ Report ID: ${report.id}
         return res.status(404).json({ message: "Patient user not found" });
       }
       
+      console.log(`[PATIENT PORTAL] Fetching patients list for tenant: ${patientUser.tenantId}`);
+      
       // Get all patients from the same hospital/tenant
       const allPatients = await storage.getPatientsByTenant(patientUser.tenantId);
+      
+      console.log(`[PATIENT PORTAL] Found ${allPatients.length} patients in tenant`);
       
       // Filter out sensitive information and return public patient directory
       const publicPatientList = allPatients.map(patient => ({
@@ -3175,6 +3179,7 @@ Report ID: ${report.id}
         isActive: true
       }));
       
+      console.log(`[PATIENT PORTAL] Returning ${publicPatientList.length} patients to portal`);
       res.json(publicPatientList);
     } catch (error) {
       console.error("Failed to fetch patients list:", error);
@@ -3190,9 +3195,13 @@ Report ID: ${report.id}
         return res.status(404).json({ message: "Patient user not found" });
       }
       
+      console.log(`[PATIENT PORTAL] Fetching doctors list for tenant: ${patientUser.tenantId}`);
+      
       // Get all doctors/physicians from the same hospital/tenant
       const allUsers = await storage.getUsersByTenant(patientUser.tenantId);
       const doctors = allUsers.filter(user => user.role === 'physician');
+      
+      console.log(`[PATIENT PORTAL] Found ${doctors.length} doctors in tenant`);
       
       // Format doctor information for patient portal
       const doctorsList = doctors.map(doctor => ({
@@ -3214,6 +3223,7 @@ Report ID: ${report.id}
         availability: 'Available'
       }));
       
+      console.log(`[PATIENT PORTAL] Returning ${doctorsList.length} doctors to portal`);
       res.json(doctorsList);
     } catch (error) {
       console.error("Failed to fetch doctors list:", error);
