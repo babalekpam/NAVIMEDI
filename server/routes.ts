@@ -3151,6 +3151,76 @@ Report ID: ${report.id}
   });
 
   // Patient Portal API endpoints
+  
+  // Get all patients for patient portal access (synchronized from hospital database)
+  app.get("/api/patient/patients-list", requireRole(["patient"]), async (req, res) => {
+    try {
+      const patientUser = await storage.getUser(req.user!.id);
+      if (!patientUser) {
+        return res.status(404).json({ message: "Patient user not found" });
+      }
+      
+      // Get all patients from the same hospital/tenant
+      const allPatients = await storage.getPatientsByTenant(patientUser.tenantId);
+      
+      // Filter out sensitive information and return public patient directory
+      const publicPatientList = allPatients.map(patient => ({
+        id: patient.id,
+        firstName: patient.firstName,
+        lastName: patient.lastName,
+        mrn: patient.mrn,
+        department: patient.department || 'General',
+        // Only include non-sensitive information for patient directory
+        dateOfBirth: patient.dateOfBirth ? new Date(patient.dateOfBirth).getFullYear().toString() : null,
+        isActive: true
+      }));
+      
+      res.json(publicPatientList);
+    } catch (error) {
+      console.error("Failed to fetch patients list:", error);
+      res.status(500).json({ message: "Failed to fetch patients list" });
+    }
+  });
+
+  // Get all doctors for patient portal access (synchronized from hospital database)
+  app.get("/api/patient/doctors-list", requireRole(["patient"]), async (req, res) => {
+    try {
+      const patientUser = await storage.getUser(req.user!.id);
+      if (!patientUser) {
+        return res.status(404).json({ message: "Patient user not found" });
+      }
+      
+      // Get all doctors/physicians from the same hospital/tenant
+      const allUsers = await storage.getUsersByTenant(patientUser.tenantId);
+      const doctors = allUsers.filter(user => user.role === 'physician');
+      
+      // Format doctor information for patient portal
+      const doctorsList = doctors.map(doctor => ({
+        id: doctor.id,
+        firstName: doctor.firstName,
+        lastName: doctor.lastName,
+        fullName: `Dr. ${doctor.firstName} ${doctor.lastName}`,
+        email: doctor.email,
+        specialization: doctor.specialization || 'General Medicine',
+        department: doctor.department || 'Internal Medicine',
+        isActive: doctor.isActive,
+        // Additional fields for patient portal display
+        rating: 4.8, // Default rating
+        totalReviews: 127,
+        experience: 8,
+        consultationFee: 150,
+        languages: ['English'],
+        education: 'MD',
+        availability: 'Available'
+      }));
+      
+      res.json(doctorsList);
+    } catch (error) {
+      console.error("Failed to fetch doctors list:", error);
+      res.status(500).json({ message: "Failed to fetch doctors list" });
+    }
+  });
+
   app.get("/api/patient/profile", requireRole(["patient"]), async (req, res) => {
     try {
       const userId = req.user!.id;

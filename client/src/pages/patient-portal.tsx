@@ -97,6 +97,18 @@ export default function PatientPortal() {
     enabled: !!user && user.role === "patient"
   });
 
+  // Fetch synchronized hospital patients list
+  const { data: hospitalPatients = [], isLoading: patientsLoading } = useQuery({
+    queryKey: ["/api/patient/patients-list"],
+    enabled: !!user && user.role === "patient"
+  });
+
+  // Fetch synchronized hospital doctors list
+  const { data: hospitalDoctors = [], isLoading: doctorsLoading } = useQuery({
+    queryKey: ["/api/patient/doctors-list"],
+    enabled: !!user && user.role === "patient"
+  });
+
   const { data: bills = [], isLoading: billsLoading } = useQuery({
     queryKey: ["/api/patient/bills"],
     enabled: !!user && user.role === "patient",
@@ -146,6 +158,7 @@ export default function PatientPortal() {
     { id: "overview", label: "Overview", icon: Activity },
     { id: "find-care", label: "Find Care", icon: Search },
     { id: "visits", label: "My Visits", icon: Video },
+    { id: "directory", label: "Hospital Directory", icon: Users },
     { id: "records", label: "My Records", icon: FileText },
     { id: "messages", label: "Messages", icon: MessageCircle },
     { id: "results", label: "Test Results", icon: FileText },
@@ -1611,6 +1624,202 @@ export default function PatientPortal() {
     );
   };
 
+  const renderDirectory = () => {
+    const [directoryTab, setDirectoryTab] = useState("doctors");
+    const [searchTerm, setSearchTerm] = useState("");
+    
+    const filteredDoctors = hospitalDoctors.filter(doctor => 
+      doctor.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.department.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    const filteredPatients = hospitalPatients.filter(patient => 
+      `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.mrn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.department.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Hospital Directory</h2>
+          <p className="text-gray-600">Browse Metro General Hospital's patient and doctor directories</p>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setDirectoryTab("doctors")}
+              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                directoryTab === "doctors"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              <Stethoscope className="h-4 w-4 inline mr-2" />
+              Doctors ({hospitalDoctors.length})
+            </button>
+            <button
+              onClick={() => setDirectoryTab("patients")}
+              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                directoryTab === "patients"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              <Users className="h-4 w-4 inline mr-2" />
+              Patients ({hospitalPatients.length})
+            </button>
+          </nav>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder={`Search ${directoryTab}...`}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {/* Doctors Directory */}
+        {directoryTab === "doctors" && (
+          <div className="space-y-4">
+            {doctorsLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading doctors...</p>
+              </div>
+            ) : filteredDoctors.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredDoctors.map((doctor) => (
+                  <Card key={doctor.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-start space-x-4">
+                        <div className="bg-blue-100 p-3 rounded-full">
+                          <Stethoscope className="h-6 w-6 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">{doctor.fullName}</h3>
+                          <p className="text-blue-600 font-medium">{doctor.specialization}</p>
+                          <p className="text-gray-600 text-sm">{doctor.department}</p>
+                          <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+                            <span>⭐ {doctor.rating} ({doctor.totalReviews} reviews)</span>
+                            <span>{doctor.experience}+ years exp</span>
+                          </div>
+                          <div className="mt-2">
+                            <Badge variant="secondary" className="mr-2">
+                              {doctor.availability}
+                            </Badge>
+                            <span className="text-sm text-green-600 font-medium">${doctor.consultationFee}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <Stethoscope className="h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Doctors Found</h3>
+                  <p className="text-gray-600 text-center max-w-md">
+                    {searchTerm ? "No doctors match your search criteria." : "No doctors available in the directory."}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Patients Directory */}
+        {directoryTab === "patients" && (
+          <div className="space-y-4">
+            {patientsLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading patients...</p>
+              </div>
+            ) : filteredPatients.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredPatients.map((patient) => (
+                  <Card key={patient.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-start space-x-4">
+                        <div className="bg-green-100 p-3 rounded-full">
+                          <User className="h-6 w-6 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">
+                            {patient.firstName} {patient.lastName}
+                          </h3>
+                          <p className="text-gray-600 text-sm">MRN: {patient.mrn}</p>
+                          <p className="text-gray-600 text-sm">{patient.department}</p>
+                          {patient.dateOfBirth && (
+                            <p className="text-gray-500 text-xs mt-1">Born: {patient.dateOfBirth}</p>
+                          )}
+                          <div className="mt-2">
+                            <Badge variant="outline" className="text-green-600 border-green-600">
+                              Active Patient
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <Users className="h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Patients Found</h3>
+                  <p className="text-gray-600 text-center max-w-md">
+                    {searchTerm ? "No patients match your search criteria." : "No patients available in the directory."}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Directory Statistics */}
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50">
+          <CardContent className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Directory Statistics</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{hospitalDoctors.length}</div>
+                <div className="text-sm text-gray-600">Total Doctors</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{hospitalPatients.length}</div>
+                <div className="text-sm text-gray-600">Total Patients</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">
+                  {hospitalDoctors.filter(d => d.availability === 'Available').length}
+                </div>
+                <div className="text-sm text-gray-600">Available Doctors</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600">
+                  {hospitalPatients.filter(p => p.isActive).length}
+                </div>
+                <div className="text-sm text-gray-600">Active Patients</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   const renderSection = () => {
     switch (activeSection) {
       case "overview":
@@ -1619,6 +1828,8 @@ export default function PatientPortal() {
         return renderFindCare();
       case "visits":
         return renderVisits();
+      case "directory":
+        return renderDirectory();
       case "records":
         return renderMyRecords();
       case "messages":
