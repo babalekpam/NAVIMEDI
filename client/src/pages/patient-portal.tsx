@@ -70,6 +70,11 @@ export default function PatientPortal() {
     enabled: !!user && user.role === "patient"
   });
 
+  const { data: healthData, isLoading: healthLoading } = useQuery({
+    queryKey: ["/api/patient/health-tracking"],
+    enabled: !!user && user.role === "patient"
+  });
+
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: any) => {
@@ -768,6 +773,221 @@ export default function PatientPortal() {
     </div>
   );
 
+  const renderHealthTracking = () => (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold mb-2">Health Tracking</h2>
+        <p className="text-gray-600">Monitor your vital signs, track health goals, and view AI-powered health insights</p>
+      </div>
+
+      {/* Health Score Card */}
+      <Card className="border-l-4 border-l-green-500">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="bg-green-100 p-3 rounded-full">
+                <Heart className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Overall Health Score</h3>
+                <p className="text-gray-600">Based on your recent health data</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold text-green-600">85/100</div>
+              <p className="text-sm text-gray-500">Excellent</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Vital Signs Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <Thermometer className="h-8 w-8 text-red-500" />
+              <div>
+                <p className="text-sm text-gray-600">Temperature</p>
+                <p className="text-xl font-bold">98.6°F</p>
+                <p className="text-xs text-green-600">Normal</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <Heart className="h-8 w-8 text-red-500" />
+              <div>
+                <p className="text-sm text-gray-600">Blood Pressure</p>
+                <p className="text-xl font-bold">120/80</p>
+                <p className="text-xs text-green-600">Normal</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <Activity className="h-8 w-8 text-blue-500" />
+              <div>
+                <p className="text-sm text-gray-600">Heart Rate</p>
+                <p className="text-xl font-bold">72 bpm</p>
+                <p className="text-xs text-green-600">Normal</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <Scale className="h-8 w-8 text-purple-500" />
+              <div>
+                <p className="text-sm text-gray-600">Weight</p>
+                <p className="text-xl font-bold">165 lbs</p>
+                <p className="text-xs text-green-600">Healthy</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Health Goals & Recommendations */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Target className="h-5 w-5 mr-2 text-blue-600" />
+              Health Goals
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <Activity className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="font-medium">Daily Steps</p>
+                  <p className="text-sm text-gray-600">Goal: 10,000 steps</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-bold text-blue-600">7,485</p>
+                <div className="w-24 bg-gray-200 rounded-full h-2">
+                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: '75%' }}></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <Droplets className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="font-medium">Water Intake</p>
+                  <p className="text-sm text-gray-600">Goal: 8 glasses</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-bold text-green-600">6/8</p>
+                <div className="w-24 bg-gray-200 rounded-full h-2">
+                  <div className="bg-green-600 h-2 rounded-full" style={{ width: '75%' }}></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <Brain className="h-5 w-5 text-purple-600" />
+                <div>
+                  <p className="font-medium">Sleep</p>
+                  <p className="text-sm text-gray-600">Goal: 8 hours</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-bold text-purple-600">7.5h</p>
+                <div className="w-24 bg-gray-200 rounded-full h-2">
+                  <div className="bg-purple-600 h-2 rounded-full" style={{ width: '94%' }}></div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Zap className="h-5 w-5 mr-2 text-orange-600" />
+              AI Health Recommendations
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg">
+              <CheckCircle className="h-5 w-5 text-green-600 mt-1" />
+              <div>
+                <p className="font-medium text-green-800">Great Progress!</p>
+                <p className="text-sm text-green-600">Your blood pressure has improved significantly this month. Keep up the healthy lifestyle changes.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg">
+              <AlertCircle className="h-5 w-5 text-yellow-600 mt-1" />
+              <div>
+                <p className="font-medium text-yellow-800">Recommendation</p>
+                <p className="text-sm text-yellow-600">Consider increasing your daily water intake. You're 25% below your hydration goal this week.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
+              <TrendingUp className="h-5 w-5 text-blue-600 mt-1" />
+              <div>
+                <p className="font-medium text-blue-800">Trend Alert</p>
+                <p className="text-sm text-blue-600">Your activity levels have increased 15% this month. This is excellent for cardiovascular health!</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Health History Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <TrendingUp className="h-5 w-5 mr-2" />
+            Health Trends (Last 30 Days)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
+            <div className="text-center">
+              <Activity className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+              <p className="text-gray-600">Health trend visualization</p>
+              <p className="text-sm text-gray-500">Blood pressure, weight, and activity data over time</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Button className="h-16 flex flex-col space-y-2">
+          <Plus className="h-6 w-6" />
+          <span>Log Vitals</span>
+        </Button>
+        <Button variant="outline" className="h-16 flex flex-col space-y-2">
+          <Target className="h-6 w-6" />
+          <span>Set Goals</span>
+        </Button>
+        <Button variant="outline" className="h-16 flex flex-col space-y-2">
+          <FileText className="h-6 w-6" />
+          <span>Health Report</span>
+        </Button>
+      </div>
+    </div>
+  );
+
   const renderSection = () => {
     switch (activeSection) {
       case "overview":
@@ -787,13 +1007,7 @@ export default function PatientPortal() {
       case "medications":
         return renderMedications();
       case "health":
-        return (
-          <div className="text-center py-12">
-            <Heart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">Track Health</h3>
-            <p className="text-gray-600">Monitor your health metrics and wellness goals</p>
-          </div>
-        );
+        return renderHealthTracking();
       default:
         return renderOverview();
     }

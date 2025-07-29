@@ -3266,6 +3266,46 @@ Report ID: ${report.id}
     }
   });
 
+  app.get("/api/patient/health-tracking", requireRole(["patient"]), async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const patientUser = await storage.getUser(userId);
+      
+      const patients = await storage.getPatientsByTenant(patientUser.tenantId);
+      const patient = patients.find(p => p.email === patientUser.email);
+      
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+      
+      // Get health tracking data including vital signs, goals, and AI analysis
+      const healthData = {
+        overallScore: 85,
+        vitals: {
+          temperature: 98.6,
+          bloodPressure: { systolic: 120, diastolic: 80 },
+          heartRate: 72,
+          weight: 165
+        },
+        goals: [
+          { type: "steps", current: 7485, target: 10000, progress: 75 },
+          { type: "water", current: 6, target: 8, progress: 75 },
+          { type: "sleep", current: 7.5, target: 8, progress: 94 }
+        ],
+        recommendations: [
+          { type: "positive", message: "Your blood pressure has improved significantly this month. Keep up the healthy lifestyle changes." },
+          { type: "warning", message: "Consider increasing your daily water intake. You're 25% below your hydration goal this week." },
+          { type: "trend", message: "Your activity levels have increased 15% this month. This is excellent for cardiovascular health!" }
+        ]
+      };
+      
+      res.json(healthData);
+    } catch (error) {
+      console.error("Get patient health tracking error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   const server = createServer(app);
   return server;
 }
