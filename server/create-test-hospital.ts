@@ -2,6 +2,7 @@ import { db } from "./db";
 import { tenants, users } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
+import { storage } from "./storage";
 
 export async function createTestHospital() {
   try {
@@ -177,6 +178,32 @@ export async function createTestHospital() {
         console.log(`✓ Created doctor: ${doctor.email} (${doctor.specialty})`);
       } else {
         console.log(`✓ Doctor already exists: ${doctor.email}`);
+      }
+    }
+
+    // Create sample medical communications/messages
+    console.log("Creating sample medical communications...");
+    
+    const samplePatients = await storage.getPatientsByTenant(hospitalTenant.id);
+    const samplePatient = samplePatients.find(p => p.email === "sarah.johnson@email.com");
+    const sampleDoctor = await storage.getUserByUsername("dr.smith@metrogeneral.com");
+    
+    if (samplePatient && sampleDoctor) {
+      try {
+        const sampleMessage = await storage.createMedicalCommunication({
+          tenantId: hospitalTenant.id,
+          patientId: samplePatient.id,
+          senderId: sampleDoctor.id,
+          subject: "Welcome to Metro General Hospital",
+          message: "Welcome to our patient portal! You can now view your medical records, schedule appointments, and communicate with your care team securely through this platform. If you have any questions, please don't hesitate to reach out.",
+          type: "general_message",
+          priority: "normal",
+          sentAt: new Date().toISOString(),
+          isFromPatient: false
+        });
+        console.log("✓ Sample medical communication created");
+      } catch (error) {
+        console.log("✓ Sample medical communication already exists or creation failed:", error.message);
       }
     }
 

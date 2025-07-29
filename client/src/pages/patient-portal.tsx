@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   Calendar,
   MessageCircle,
@@ -27,13 +32,22 @@ import {
   Stethoscope,
   BookOpen,
   Search,
-  Plus
+  Plus,
+  Send,
+  ArrowLeft
 } from "lucide-react";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 
 export default function PatientPortal() {
   const { user, logout } = useAuth();
   const [activeSection, setActiveSection] = useState("overview");
+  const [messageForm, setMessageForm] = useState({
+    subject: "",
+    message: "",
+    priority: "normal",
+    type: "general_message"
+  });
+  const queryClient = useQueryClient();
 
   // Fetch patient data
   const { data: patientProfile, isLoading: profileLoading } = useQuery({
@@ -49,6 +63,28 @@ export default function PatientPortal() {
   const { data: prescriptions, isLoading: prescriptionsLoading } = useQuery({
     queryKey: ["/api/patient/prescriptions"],
     enabled: !!user && user.role === "patient"
+  });
+
+  const { data: messages, isLoading: messagesLoading } = useQuery({
+    queryKey: ["/api/patient/messages"],
+    enabled: !!user && user.role === "patient"
+  });
+
+  // Send message mutation
+  const sendMessageMutation = useMutation({
+    mutationFn: async (messageData: any) => {
+      const response = await apiRequest("POST", "/api/patient/messages", messageData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/patient/messages"] });
+      setMessageForm({ subject: "", message: "", priority: "normal", type: "general_message" });
+      setActiveSection("messages");
+    },
+    onError: (error) => {
+      console.error("Send message error:", error);
+      alert(`Failed to send message: ${error?.message || 'An error occurred. Please try again.'}`);
+    }
   });
 
   const { data: labResults, isLoading: labResultsLoading } = useQuery({
@@ -520,25 +556,74 @@ export default function PatientPortal() {
 
   const renderMessages = () => (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Messages</CardTitle>
-          <CardDescription>Secure communication with your care team</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-12">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">Messages</h2>
+          <p className="text-gray-600">Secure communication with your care team</p>
+        </div>
+        <Button onClick={() => setActiveSection("compose-message")}>
+          <Plus className="w-4 h-4 mr-2" />
+          New Message
+        </Button>
+      </div>
+
+      {messagesLoading ? (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2">Loading messages...</span>
+            </div>
+          </CardContent>
+        </Card>
+      ) : messages && messages.length > 0 ? (
+        <div className="space-y-4">
+          {messages.map((message: any) => (
+            <Card key={message.id} className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge variant="outline" className="text-xs">
+                        {message.type || 'General'}
+                      </Badge>
+                      <Badge variant={message.priority === 'urgent' ? 'destructive' : 'secondary'} className="text-xs">
+                        {message.priority || 'Normal'}
+                      </Badge>
+                      {!message.readAt && (
+                        <Badge variant="default" className="text-xs">New</Badge>
+                      )}
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2">{message.subject}</h3>
+                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                      {message.message}
+                    </p>
+                    <div className="flex items-center text-sm text-gray-500 gap-4">
+                      <span>From: {message.senderName}</span>
+                      <span>{new Date(message.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="text-center py-12">
             <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No Messages</h3>
             <p className="text-gray-600 mb-6">
               You have no messages from your care team at this time
             </p>
-            <Button variant="outline">
+            <Button onClick={() => setActiveSection("compose-message")}>
               <Plus className="w-4 h-4 mr-2" />
-              Compose Message
+              Send Your First Message
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 
@@ -586,6 +671,103 @@ export default function PatientPortal() {
     </div>
   );
 
+  const renderComposeMessage = () => (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="outline" onClick={() => setActiveSection("messages")}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Messages
+        </Button>
+        <div>
+          <h2 className="text-2xl font-bold">Compose Message</h2>
+          <p className="text-gray-600">Send a secure message to your care team</p>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>New Message</CardTitle>
+          <CardDescription>All messages are secure and HIPAA-compliant</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="message-type">Message Type</Label>
+              <Select value={messageForm.type} onValueChange={(value) => setMessageForm(prev => ({ ...prev, type: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select message type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general_message">General Question</SelectItem>
+                  <SelectItem value="prescription_note">Prescription Request</SelectItem>
+                  <SelectItem value="appointment_reminder">Appointment Question</SelectItem>
+                  <SelectItem value="lab_result">Lab Results Question</SelectItem>
+                  <SelectItem value="medical_instruction">Medical Instruction</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="priority">Priority</Label>
+              <Select value={messageForm.priority} onValueChange={(value) => setMessageForm(prev => ({ ...prev, priority: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="subject">Subject</Label>
+            <Input 
+              id="subject"
+              placeholder="Enter message subject"
+              value={messageForm.subject}
+              onChange={(e) => setMessageForm(prev => ({ ...prev, subject: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="message">Message</Label>
+            <Textarea 
+              id="message"
+              placeholder="Type your message here..."
+              className="min-h-[120px]"
+              value={messageForm.message}
+              onChange={(e) => setMessageForm(prev => ({ ...prev, message: e.target.value }))}
+            />
+          </div>
+
+          <div className="flex justify-end gap-4">
+            <Button variant="outline" onClick={() => setActiveSection("messages")}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => sendMessageMutation.mutate(messageForm)}
+              disabled={!messageForm.subject || !messageForm.message || sendMessageMutation.isPending}
+            >
+              {sendMessageMutation.isPending ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Send Message
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   const renderSection = () => {
     switch (activeSection) {
       case "overview":
@@ -598,6 +780,8 @@ export default function PatientPortal() {
         return renderMyRecords();
       case "messages":
         return renderMessages();
+      case "compose-message":
+        return renderComposeMessage();
       case "results":
         return renderTestResults();
       case "medications":

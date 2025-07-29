@@ -3145,6 +3145,75 @@ Report ID: ${report.id}
     }
   });
 
+  // Patient Messages routes
+  app.get("/api/patient/messages", requireRole(["patient"]), async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const patientUser = await storage.getUser(userId);
+      
+      const patients = await storage.getPatientsByTenant(patientUser.tenantId);
+      const patient = patients.find(p => p.email === patientUser.email);
+      
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+      
+      const messages = await storage.getMedicalCommunicationsByPatient(patient.id, patientUser.tenantId);
+      
+      // Add sender name for patient view
+      const messagesWithSender = await Promise.all(
+        messages.map(async (message) => {
+          try {
+            const sender = await storage.getUser(message.senderId);
+            return {
+              ...message,
+              senderName: sender ? `${sender.firstName} ${sender.lastName}` : 'Healthcare Provider'
+            };
+          } catch {
+            return {
+              ...message,
+              senderName: 'Healthcare Provider'
+            };
+          }
+        })
+      );
+      
+      res.json(messagesWithSender);
+    } catch (error) {
+      console.error("Get patient messages error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/patient/messages", requireRole(["patient"]), async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const patientUser = await storage.getUser(userId);
+      
+      const patients = await storage.getPatientsByTenant(patientUser.tenantId);
+      const patient = patients.find(p => p.email === patientUser.email);
+      
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      const messageData = {
+        ...req.body,
+        tenantId: patientUser.tenantId,
+        patientId: patient.id,
+        senderId: userId,
+        sentAt: new Date().toISOString(),
+        isFromPatient: true
+      };
+
+      const message = await storage.createMedicalCommunication(messageData);
+      res.json(message);
+    } catch (error) {
+      console.error("Create patient message error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.get("/api/patient/prescriptions", requireRole(["patient"]), async (req, res) => {
     try {
       const userId = req.user!.id;
