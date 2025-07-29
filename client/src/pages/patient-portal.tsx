@@ -1629,16 +1629,16 @@ export default function PatientPortal() {
     const [directoryTab, setDirectoryTab] = useState("doctors");
     const [searchTerm, setSearchTerm] = useState("");
     
-    const filteredDoctors = hospitalDoctors.filter(doctor => 
-      doctor.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.department.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredDoctors = (hospitalDoctors as any[]).filter((doctor: any) => 
+      doctor.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.specialization?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.department?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     
-    const filteredPatients = hospitalPatients.filter(patient => 
+    const filteredPatients = (hospitalPatients as any[]).filter((patient: any) => 
       `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.mrn.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.department.toLowerCase().includes(searchTerm.toLowerCase())
+      patient.mrn?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.department?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -1660,7 +1660,7 @@ export default function PatientPortal() {
               }`}
             >
               <Stethoscope className="h-4 w-4 inline mr-2" />
-              Doctors ({hospitalDoctors.length})
+              Doctors ({(hospitalDoctors as any[]).length})
             </button>
             <button
               onClick={() => setDirectoryTab("patients")}
@@ -1671,7 +1671,7 @@ export default function PatientPortal() {
               }`}
             >
               <Users className="h-4 w-4 inline mr-2" />
-              Patients ({hospitalPatients.length})
+              Patients ({(hospitalPatients as any[]).length})
             </button>
           </nav>
         </div>
@@ -1795,22 +1795,22 @@ export default function PatientPortal() {
             <h3 className="font-semibold text-gray-900 mb-4">Directory Statistics</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{hospitalDoctors.length}</div>
+                <div className="text-2xl font-bold text-blue-600">{(hospitalDoctors as any[]).length}</div>
                 <div className="text-sm text-gray-600">Total Doctors</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{hospitalPatients.length}</div>
+                <div className="text-2xl font-bold text-green-600">{(hospitalPatients as any[]).length}</div>
                 <div className="text-sm text-gray-600">Total Patients</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-600">
-                  {hospitalDoctors.filter(d => d.availability === 'Available').length}
+                  {(hospitalDoctors as any[]).filter((d: any) => d.availability === 'Available').length}
                 </div>
                 <div className="text-sm text-gray-600">Available Doctors</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-orange-600">
-                  {hospitalPatients.filter(p => p.isActive).length}
+                  {(hospitalPatients as any[]).filter((p: any) => p.isActive).length}
                 </div>
                 <div className="text-sm text-gray-600">Active Patients</div>
               </div>
