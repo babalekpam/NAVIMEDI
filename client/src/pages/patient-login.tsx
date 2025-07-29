@@ -73,6 +73,14 @@ export default function PatientLogin() {
             </CardTitle>
             <CardDescription>
               Access your health records and manage your care
+              {/* Display URL message if present */}
+              {window.location.search.includes('message=') && (
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-sm text-blue-700">
+                    {decodeURIComponent(window.location.search.split('message=')[1]?.split('&')[0] || '')}
+                  </p>
+                </div>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>

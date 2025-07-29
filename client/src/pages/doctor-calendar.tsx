@@ -76,7 +76,8 @@ export default function DoctorCalendar() {
 
   // Redirect to patient login if not authenticated
   if (!authLoading && !user) {
-    window.location.href = "/patient-login";
+    localStorage.removeItem("token");
+    window.location.href = "/patient-login?message=Please log in to book appointments";
     return null;
   }
 
@@ -332,13 +333,13 @@ export default function DoctorCalendar() {
       console.error("Full error object:", error);
       
       // Check if the token is expired and redirect to fresh login
-      if (error.message && (error.message.includes("401") || error.message.includes("Invalid or expired token"))) {
+      if (error.message && (error.message.includes("401") || error.message.includes("Invalid or expired token") || error.message.includes("log in again"))) {
         localStorage.removeItem("token");
-        alert("Your session has expired. Please log in again to book appointments.");
-        window.location.href = "/patient-login";
+        window.location.href = "/patient-login?message=Your session expired. Please log in again to book appointments";
+        return;
       } else {
         // Show user-friendly error message for other errors
-        alert(`Appointment booking failed: ${error.message || 'Unknown error occurred. Please try logging in again.'}`);
+        alert(`Booking failed: ${error.message || 'Please try again or contact support'}`);
       }
     }
   });
