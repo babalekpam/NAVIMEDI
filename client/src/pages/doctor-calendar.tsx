@@ -92,10 +92,10 @@ export default function DoctorCalendar() {
     );
   }
 
-  // Mock doctor data as fallback
+  // Mock doctor data as fallback with valid UUIDs
   const mockDoctors = [
     {
-      id: "doctor-1",
+      id: "550e8400-e29b-41d4-a716-446655440001",
       firstName: "Michael",
       lastName: "Smith",
       specialization: "General Medicine",
@@ -109,7 +109,7 @@ export default function DoctorCalendar() {
       languages: ["English", "Spanish"]
     },
     {
-      id: "doctor-2", 
+      id: "550e8400-e29b-41d4-a716-446655440002", 
       firstName: "Sofia",
       lastName: "Martinez",
       specialization: "Pediatrics",
@@ -123,7 +123,7 @@ export default function DoctorCalendar() {
       languages: ["English", "Spanish"]
     },
     {
-      id: "doctor-3",
+      id: "550e8400-e29b-41d4-a716-446655440003",
       firstName: "Raj",
       lastName: "Patel", 
       specialization: "Emergency Medicine",
@@ -137,7 +137,7 @@ export default function DoctorCalendar() {
       languages: ["English", "Hindi"]
     },
     {
-      id: "doctor-4",
+      id: "550e8400-e29b-41d4-a716-446655440004",
       firstName: "Lisa",
       lastName: "Chen",
       specialization: "Internal Medicine", 
@@ -277,24 +277,32 @@ export default function DoctorCalendar() {
           throw new Error("Patient record not found. Please contact support.");
         }
         
+        const requestBody = {
+          patientId: patient.id,
+          providerId: appointmentData.doctorId,
+          appointmentDate: appointmentData.date.toISOString(),
+          appointmentTime: appointmentData.time,
+          duration: 30,
+          type: appointmentData.type || "consultation",
+          status: "scheduled",
+          notes: appointmentData.reason + (appointmentData.notes ? ` | Additional Notes: ${appointmentData.notes}` : ""),
+          chiefComplaint: appointmentData.reason
+        };
+        
+        console.log("Sending appointment request:", requestBody);
+        console.log("Token preview:", token.substring(0, 20) + "...");
+        
         const response = await fetch("/api/appointments", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify({
-            patientId: patient.id,
-            providerId: appointmentData.doctorId,
-            appointmentDate: appointmentData.date.toISOString(),
-            appointmentTime: appointmentData.time,
-            duration: 30,
-            type: appointmentData.type || "consultation",
-            status: "scheduled",
-            notes: appointmentData.reason + (appointmentData.notes ? ` | Additional Notes: ${appointmentData.notes}` : ""),
-            chiefComplaint: appointmentData.reason
-          })
+          body: JSON.stringify(requestBody)
         });
+        
+        console.log("Response status:", response.status);
+        console.log("Response headers:", [...response.headers.entries()]);
         
         if (!response.ok) {
           const errorData = await response.text();
@@ -323,13 +331,14 @@ export default function DoctorCalendar() {
       console.error("Appointment booking error:", error);
       console.error("Full error object:", error);
       
-      // Only redirect for actual 401 errors, not other errors
-      if (error.message && error.message.includes("401")) {
+      // Check if the token is expired and redirect to fresh login
+      if (error.message && (error.message.includes("401") || error.message.includes("Invalid or expired token"))) {
         localStorage.removeItem("token");
-        window.location.href = "/patient-login?message=Session expired. Please log in again to book appointments.";
+        alert("Your session has expired. Please log in again to book appointments.");
+        window.location.href = "/patient-login";
       } else {
         // Show user-friendly error message for other errors
-        alert(`Appointment booking failed: ${error.message || 'Unknown error occurred'}`);
+        alert(`Appointment booking failed: ${error.message || 'Unknown error occurred. Please try logging in again.'}`);
       }
     }
   });
