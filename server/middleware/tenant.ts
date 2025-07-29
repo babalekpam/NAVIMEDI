@@ -74,12 +74,19 @@ export const requireSuperAdmin = (req: AuthenticatedRequest, res: Response, next
 };
 
 // Public routes that don't require authentication
-const publicRoutes = ['/api/login', '/api/auth/login', '/api/validate-token', '/api/laboratory-registration', '/api/pharmacy-registration', '/api/tenant/current', '/api/register-organization'];
+const publicRoutes = ['/api/login', '/api/auth/login', '/api/validate-token', '/api/laboratory-registration', '/api/pharmacy-registration', '/api/tenant/current', '/api/register-organization', '/api/currency/detect', '/api/currencies/african-countries'];
 
 // Modified tenant context middleware to allow public routes
 export const setTenantContext = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   // Skip authentication for public routes
-  if (publicRoutes.includes(req.path)) {
+  const isPublicRoute = publicRoutes.some(route => {
+    if (route.includes(':') || req.path.includes('/currency/detect/') || req.path.includes('/currencies/african-countries')) {
+      return req.path.startsWith(route) || req.path.includes('/currency/detect/') || req.path.includes('/currencies/african-countries');
+    }
+    return req.path === route;
+  });
+  
+  if (isPublicRoute) {
     return next();
   }
   

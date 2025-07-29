@@ -18,6 +18,7 @@ import {
   getAllCurrencies, 
   updateExchangeRate 
 } from "./currency-utils";
+import { autoDetectCurrency, getCurrencyByCountry, getAfricanCountries } from "./geo-currency-mapping";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
@@ -170,6 +171,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '');
       
+      // Auto-detect currency based on geographic location
+      const currencyMapping = autoDetectCurrency(address, req.body.country);
+      let baseCurrency = 'USD'; // Default fallback
+      let supportedCurrencies = ['USD'];
+      
+      if (currencyMapping) {
+        baseCurrency = currencyMapping.currency;
+        supportedCurrencies = currencyMapping.supportedCurrencies;
+        console.log(`Auto-detected currency for ${organizationName}: ${baseCurrency} (${currencyMapping.country}, ${currencyMapping.region})`);
+        console.log(`Supported currencies: ${supportedCurrencies.join(', ')}`);
+      } else if (address) {
+        // Log the address for manual review if auto-detection failed
+        console.log(`Could not auto-detect currency for address: ${address}. Using default USD.`);
+      }
+
       // Create tenant first
       const tenantData = {
         name: organizationName,
@@ -184,6 +200,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phoneNumber: phoneNumber || null,
         address: address || null,
         description: description || null,
+        baseCurrency: baseCurrency,
+        supportedCurrencies: JSON.stringify(supportedCurrencies),
         trialStartDate: new Date(),
         trialEndDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days trial
         subscriptionStatus: 'trial' as const
@@ -245,6 +263,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to register organization", 
         error: error instanceof Error ? error.message : "Unknown error" 
       });
+    }
+  });
+
+  // Currency detection routes (public, before any middleware)
+  app.get("/api/currency/detect/:country", async (req, res) => {
+    try {
+      const country = req.params.country;
+      const currencyMapping = getCurrencyByCountry(country);
+      
+      if (currencyMapping) {
+        res.json({
+          country: currencyMapping.country,
+          currency: currencyMapping.currency,
+          region: currencyMapping.region,
+          supportedCurrencies: currencyMapping.supportedCurrencies,
+          detected: true
+        });
+      } else {
+        res.json({
+          country: country,
+          currency: 'USD',
+          region: 'Unknown',
+          supportedCurrencies: ['USD'],
+          detected: false,
+          message: 'Currency not detected, using USD as default'
+        });
+      }
+    } catch (error) {
+      console.error("Currency detection error:", error);
+      res.status(500).json({ message: "Failed to detect currency" });
+    }
+  });
+
+  app.get("/api/currencies/african-countries", async (req, res) => {
+    try {
+      const africanCountries = getAfricanCountries();
+      res.json(africanCountries);
+    } catch (error) {
+      console.error("Get African countries error:", error);
+      res.status(500).json({ message: "Failed to fetch African countries" });
     }
   });
 
@@ -3450,6 +3508,47 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Failed to fetch African currencies:", error);
       res.status(500).json({ message: "Failed to fetch African currencies" });
+    }
+  });
+
+  // Auto-detect currency by country route (public route for registration)
+  app.get("/api/currency/detect/:country", async (req, res) => {
+    try {
+      const country = req.params.country;
+      const currencyMapping = getCurrencyByCountry(country);
+      
+      if (currencyMapping) {
+        res.json({
+          country: currencyMapping.country,
+          currency: currencyMapping.currency,
+          region: currencyMapping.region,
+          supportedCurrencies: currencyMapping.supportedCurrencies,
+          detected: true
+        });
+      } else {
+        res.json({
+          country: country,
+          currency: 'USD',
+          region: 'Unknown',
+          supportedCurrencies: ['USD'],
+          detected: false,
+          message: 'Currency not detected, using USD as default'
+        });
+      }
+    } catch (error) {
+      console.error("Currency detection error:", error);
+      res.status(500).json({ message: "Failed to detect currency" });
+    }
+  });
+
+  // Get all African countries with their currencies (public route)
+  app.get("/api/currencies/african-countries", async (req, res) => {
+    try {
+      const africanCountries = getAfricanCountries();
+      res.json(africanCountries);
+    } catch (error) {
+      console.error("Get African countries error:", error);
+      res.status(500).json({ message: "Failed to fetch African countries" });
     }
   });
 

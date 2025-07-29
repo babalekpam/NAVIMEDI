@@ -26,6 +26,7 @@ export default function RegisterOrganization() {
     confirmPassword: "",
     phoneNumber: "",
     address: "",
+    country: "",
     description: ""
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -91,6 +92,7 @@ export default function RegisterOrganization() {
           confirmPassword: formData.confirmPassword,
           phoneNumber: formData.phoneNumber || null,
           address: formData.address || null,
+          country: formData.country || null,
           description: formData.description || null
         })
       });
@@ -320,15 +322,64 @@ export default function RegisterOrganization() {
               <div className="border-t pt-6">
                 <h3 className="text-lg font-semibold mb-4">Additional Information (Optional)</h3>
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Address</Label>
-                    <Textarea
-                      id="address"
-                      placeholder="Enter organization address"
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      rows={2}
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="country">Country</Label>
+                      <Select value={formData.country} onValueChange={(value) => setFormData({ ...formData, country: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="United States">United States</SelectItem>
+                          <SelectItem value="Canada">Canada</SelectItem>
+                          <SelectItem value="United Kingdom">United Kingdom</SelectItem>
+                          <SelectItem value="Germany">Germany</SelectItem>
+                          <SelectItem value="France">France</SelectItem>
+                          <SelectItem value="Nigeria">Nigeria</SelectItem>
+                          <SelectItem value="Ghana">Ghana</SelectItem>
+                          <SelectItem value="Kenya">Kenya</SelectItem>
+                          <SelectItem value="South Africa">South Africa</SelectItem>
+                          <SelectItem value="Egypt">Egypt</SelectItem>
+                          <SelectItem value="Morocco">Morocco</SelectItem>
+                          <SelectItem value="Tunisia">Tunisia</SelectItem>
+                          <SelectItem value="Senegal">Senegal</SelectItem>
+                          <SelectItem value="Mali">Mali</SelectItem>
+                          <SelectItem value="Burkina Faso">Burkina Faso</SelectItem>
+                          <SelectItem value="Ivory Coast">Ivory Coast</SelectItem>
+                          <SelectItem value="Togo">Togo</SelectItem>
+                          <SelectItem value="Benin">Benin</SelectItem>
+                          <SelectItem value="Tanzania">Tanzania</SelectItem>
+                          <SelectItem value="Uganda">Uganda</SelectItem>
+                          <SelectItem value="Rwanda">Rwanda</SelectItem>
+                          <SelectItem value="Ethiopia">Ethiopia</SelectItem>
+                          <SelectItem value="Cameroon">Cameroon</SelectItem>
+                          <SelectItem value="Angola">Angola</SelectItem>
+                          <SelectItem value="Mozambique">Mozambique</SelectItem>
+                          <SelectItem value="Zambia">Zambia</SelectItem>
+                          <SelectItem value="Zimbabwe">Zimbabwe</SelectItem>
+                          <SelectItem value="Botswana">Botswana</SelectItem>
+                          <SelectItem value="Namibia">Namibia</SelectItem>
+                          <SelectItem value="India">India</SelectItem>
+                          <SelectItem value="China">China</SelectItem>
+                          <SelectItem value="Japan">Japan</SelectItem>
+                          <SelectItem value="Australia">Australia</SelectItem>
+                          <SelectItem value="Brazil">Brazil</SelectItem>
+                          <SelectItem value="Mexico">Mexico</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-500">Helps automatically set the appropriate currency for your organization</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="address">Address</Label>
+                      <Textarea
+                        id="address"
+                        placeholder="Enter organization address"
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        rows={2}
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
