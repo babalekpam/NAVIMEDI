@@ -62,7 +62,7 @@ interface Appointment {
 }
 
 export default function DoctorCalendar() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date>(startOfToday());
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
@@ -73,6 +73,24 @@ export default function DoctorCalendar() {
   const [step, setStep] = useState<number>(1);
   const [searchFilter, setSearchFilter] = useState<string>("");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
+
+  // Redirect to patient login if not authenticated
+  if (!authLoading && !user) {
+    window.location.href = "/patient-login";
+    return null;
+  }
+
+  // Show loading while authenticating
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Mock doctor data as fallback
   const mockDoctors = [
@@ -310,6 +328,16 @@ export default function DoctorCalendar() {
 
   const renderDoctorSelection = () => (
     <div className="space-y-6">
+      {/* API Connection Status */}
+      {doctorsError && (
+        <Alert className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Using demo data - API connection unavailable. Appointments will still be processed normally.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1">
           <div className="relative">
@@ -339,7 +367,10 @@ export default function DoctorCalendar() {
 
       <div className="grid gap-4">
         {doctorsLoading ? (
-          <div className="text-center py-8">Loading doctors...</div>
+          <div className="text-center py-8">
+            <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-2"></div>
+            Loading available doctors...
+          </div>
         ) : filteredDoctors?.length ? (
           filteredDoctors.map((doctor: Doctor) => (
             <Card key={doctor.id} className="cursor-pointer hover:shadow-lg transition-shadow">
