@@ -73,6 +73,7 @@ import PatientPortal from "@/pages/patient-portal";
 import PatientPortalPublic from "@/pages/patient-portal-public";
 import TelemedicineBooking from "@/pages/telemedicine-booking";
 import PatientLogin from "@/pages/patient-login";
+import DoctorCalendar from "@/pages/doctor-calendar";
 
 
 
@@ -186,6 +187,11 @@ function AppContent() {
         <Route path="/telemedicine-booking">
           <ProtectedRoute>
             <TelemedicineBooking />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/doctor-calendar">
+          <ProtectedRoute>
+            <DoctorCalendar />
           </ProtectedRoute>
         </Route>
         <Route path="/patient-login">

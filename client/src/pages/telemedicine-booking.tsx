@@ -27,7 +27,8 @@ import {
   Star,
   MapPin,
   DollarSign,
-  Info
+  Info,
+  FileText
 } from "lucide-react";
 import { format, addDays, startOfToday, isSameDay, isAfter, isBefore } from "date-fns";
 import { useAuth } from "@/contexts/auth-context";

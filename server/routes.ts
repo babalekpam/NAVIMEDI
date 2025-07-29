@@ -3090,6 +3090,9 @@ Report ID: ${report.id}
         return res.status(404).json({ message: "Patient medical record not found" });
       }
       
+      // Get hospital information for urgent care
+      const hospital = await storage.getTenant(patientUser.tenantId);
+      
       res.json({
         user: {
           id: patientUser.id,
@@ -3107,6 +3110,11 @@ Report ID: ${report.id}
           medicalHistory: patient.medicalHistory || [],
           allergies: patient.allergies || [],
           medications: patient.medications || []
+        },
+        hospital: {
+          name: hospital?.name || "Metro General Hospital",
+          phone: hospital?.phoneNumber || "+1-314-472-3839",
+          address: hospital?.address || "123 Medical Center Drive, St. Louis, MO 63110"
         }
       });
     } catch (error) {
