@@ -566,7 +566,7 @@ export default function PatientPortal() {
             <Stethoscope className="h-12 w-12 text-green-500 mx-auto mb-4" />
             <h3 className="font-bold mb-2">In-Person Care</h3>
             <p className="text-sm text-gray-600 mb-4">Schedule office visits</p>
-            <Button className="w-full" variant="outline">
+            <Button className="w-full" variant="outline" onClick={() => window.location.href = "/doctor-calendar"}>
               Find Providers
             </Button>
           </CardContent>
