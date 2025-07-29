@@ -3212,8 +3212,10 @@ Report ID: ${report.id}
         tenantId: patientUser.tenantId,
         patientId: patient.id,
         senderId: userId,
+        originalContent: req.body.message, // Add required originalContent field
         sentAt: new Date().toISOString(),
-        isFromPatient: true
+        isFromPatient: true,
+        isRead: false
       };
 
       const message = await storage.createMedicalCommunication(messageData);
