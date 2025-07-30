@@ -3532,7 +3532,7 @@ Report ID: ${report.id}
         return res.status(404).json({ message: "Patient not found" });
       }
       
-      // Get lab orders and their associated results across all laboratories
+      // Get lab orders and their associated results across all laboratories (no tenant restriction)
       const labOrders = await storage.getLabOrdersByPatient(patient.id);
       const labResults = await storage.getLabResultsForPatientAcrossTenants(patient.id);
       

@@ -154,7 +154,7 @@ export interface IStorage {
   getLabOrder(id: string, tenantId: string): Promise<LabOrder | undefined>;
   createLabOrder(labOrder: InsertLabOrder): Promise<LabOrder>;
   updateLabOrder(id: string, updates: Partial<LabOrder>, tenantId: string): Promise<LabOrder | undefined>;
-  getLabOrdersByPatient(patientId: string, tenantId: string): Promise<LabOrder[]>;
+  getLabOrdersByPatient(patientId: string, tenantId?: string): Promise<LabOrder[]>;
   getLabOrdersByTenant(tenantId: string): Promise<LabOrder[]>;
   getLabOrdersForLaboratory(tenantId: string): Promise<any[]>;
   getLabOrdersByPatientMrn(patientMrn: string): Promise<any[]>;
@@ -966,10 +966,14 @@ export class DatabaseStorage implements IStorage {
     return labOrder || undefined;
   }
 
-  async getLabOrdersByPatient(patientId: string, tenantId: string): Promise<LabOrder[]> {
-    return await db.select().from(labOrders).where(
-      and(eq(labOrders.patientId, patientId), eq(labOrders.tenantId, tenantId))
-    ).orderBy(desc(labOrders.orderedDate));
+  async getLabOrdersByPatient(patientId: string, tenantId?: string): Promise<LabOrder[]> {
+    // For patient portal, get all lab orders for this patient regardless of which tenant created them
+    const whereConditions = tenantId ? 
+      and(eq(labOrders.patientId, patientId), eq(labOrders.tenantId, tenantId)) :
+      eq(labOrders.patientId, patientId);
+      
+    return await db.select().from(labOrders).where(whereConditions)
+      .orderBy(desc(labOrders.orderedDate));
   }
 
   async getLabOrdersByTenant(tenantId: string): Promise<LabOrder[]> {
