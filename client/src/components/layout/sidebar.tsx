@@ -265,7 +265,7 @@ export const Sidebar = () => {
       return true;
     }
     // Include core clinical items - exclude laboratory-specific items for non-laboratory tenants
-    const clinicalItemIds = ["dashboard", "patient-portal", "telemedicine-booking", "register-patient", "book-appointment", "patients", "patient-medical-records", "appointments", "prescriptions", "lab-orders", "lab-results", "health-recommendations", "medical-communications"];
+    const clinicalItemIds = ["dashboard", "patient-portal", "telemedicine-booking", "register-patient", "book-appointment", "patients", "patient-medical-records", "patient-messages", "consultation-history", "appointments", "prescriptions", "lab-orders", "lab-results", "health-recommendations", "medical-communications"];
     // For laboratory tenants, exclude prescription-related items and medical communications
     if (currentTenant?.type === "laboratory") {
       const labClinicalIds = ["dashboard", "patients", "lab-records", "lab-orders", "lab-results"];
@@ -301,7 +301,18 @@ export const Sidebar = () => {
         
         {/* Quick Actions - Only show for non-pharmacy tenant users */}
         {user.role !== "super_admin" && !isPharmacyTenant && (
-          <div className="mb-8">
+          <div className="mb-8 space-y-2">
+            {/* Patient Portal Access Button - For Doctors and Hospital Staff */}
+            {(user.role === "physician" || user.role === "nurse" || user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director") && (
+              <Button 
+                className="w-full bg-green-600 hover:bg-green-700 text-white shadow-md"
+                onClick={() => setLocation("/patient-portal")}
+                title="Access patient portal to view from patient perspective"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                🔗 Patient Portal Access
+              </Button>
+            )}
             <Button 
               className="w-full bg-blue-600 hover:bg-blue-700"
               onClick={() => setLocation("/patients/new")}
