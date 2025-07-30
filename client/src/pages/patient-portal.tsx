@@ -770,9 +770,22 @@ Report ID: ${labOrder.id}
                         <Badge variant="default" className="text-xs">New</Badge>
                       )}
                     </div>
-                    <h3 className="font-semibold text-lg mb-2">{message.subject}</h3>
+                    <h3 className="font-semibold text-lg mb-2">{message.metadata?.subject || message.subject || 'No Subject'}</h3>
                     <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                      {message.message}
+                      {(() => {
+                        // Handle different message content formats
+                        if (message.originalContent) {
+                          try {
+                            const parsed = typeof message.originalContent === 'string' 
+                              ? JSON.parse(message.originalContent) 
+                              : message.originalContent;
+                            return parsed.content || parsed.title || parsed;
+                          } catch {
+                            return message.originalContent;
+                          }
+                        }
+                        return message.message || 'No content';
+                      })()}
                     </p>
                     <div className="flex items-center text-sm text-gray-500 gap-4">
                       <span>From: {message.senderName}</span>
