@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,19 +60,19 @@ export default function PatientPortalStaff() {
     enabled: !!selectedPatientId
   });
 
-  // Fetch patient's appointments
+  // Fetch patient's appointments using correct endpoint
   const { data: patientAppointments = [] } = useQuery({
     queryKey: ['/api/appointments/patient', selectedPatientId],
     enabled: !!selectedPatientId
   });
 
-  // Fetch patient's lab results
+  // Fetch patient's lab results using cross-tenant endpoint (allows doctors to view)
   const { data: patientLabResults = [] } = useQuery({
-    queryKey: ['/api/patient/lab-results', selectedPatientId],
+    queryKey: ['/api/patients', selectedPatientId, 'lab-results', 'all'],
     enabled: !!selectedPatientId
   });
 
-  // Fetch patient's prescriptions
+  // Fetch patient's prescriptions using correct endpoint
   const { data: patientPrescriptions = [] } = useQuery({
     queryKey: ['/api/prescriptions/patient', selectedPatientId],
     enabled: !!selectedPatientId
@@ -354,26 +355,33 @@ export default function PatientPortalStaff() {
                   <p className="text-sm text-gray-600">
                     Completed on {result.completedAt ? new Date(result.completedAt).toLocaleDateString() : "Processing"}
                   </p>
-                  {result.results && result.results.length > 0 && (
-                    <div className="mt-2 space-y-1">
-                      {result.results.map((res: any, idx: number) => (
-                        <p key={idx} className="text-sm text-gray-700">
-                          {res.testName}: {res.result} {res.unit} 
-                          {res.normalRange && ` (Normal: ${res.normalRange})`}
-                        </p>
-                      ))}
-                    </div>
-                  )}
+                  <p className="text-sm text-gray-500">
+                    Laboratory: {result.laboratoryName || "Unknown Laboratory"}
+                  </p>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">Result:</span> {result.result} {result.unit}
+                      {result.normalRange && ` (Normal: ${result.normalRange})`}
+                    </p>
+                    {result.notes && (
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Notes:</span> {result.notes}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="text-right">
                   <Badge 
-                    variant={result.status === "completed" ? "default" : "secondary"}
-                    className={result.status === "completed" ? "bg-green-100 text-green-800" : ""}
+                    variant={result.abnormalFlag === "normal" ? "default" : "destructive"}
+                    className={result.abnormalFlag === "normal" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
                   >
-                    {result.status === "completed" ? "Complete" : result.status}
+                    {result.abnormalFlag === "normal" ? "Normal" : 
+                     result.abnormalFlag === "high" ? "High" :
+                     result.abnormalFlag === "low" ? "Low" :
+                     result.abnormalFlag === "critical" ? "Critical" : "Complete"}
                   </Badge>
                   <div className="mt-2">
-                    <Button size="sm" variant="outline" disabled={result.status !== "completed"}>
+                    <Button size="sm" variant="outline">
                       <Download className="h-4 w-4 mr-2" />
                       Download
                     </Button>
@@ -425,9 +433,15 @@ export default function PatientPortalStaff() {
                   <p className="text-sm text-gray-500">
                     Prescribed on {new Date(prescription.prescribedDate).toLocaleDateString()}
                   </p>
+                  {prescription.instructions && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      <span className="font-medium">Instructions:</span> {prescription.instructions}
+                    </p>
+                  )}
                 </div>
                 <Badge variant="outline" className={
-                  prescription.status === "active" ? "bg-green-100 text-green-800" : ""
+                  prescription.status === "active" ? "bg-green-100 text-green-800" : 
+                  prescription.status === "pending" ? "bg-yellow-100 text-yellow-800" : ""
                 }>
                   {prescription.status || "Active"}
                 </Badge>
