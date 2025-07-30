@@ -1996,11 +1996,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ==================== MULTILINGUAL COMMUNICATION ROUTES ====================
 
   // Medical Communications routes - restricted to nurses and primary care doctors
-  app.get("/api/medical-communications", authenticateToken, requireTenant, requireRole(["nurse", "physician", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+  app.get("/api/medical-communications", authenticateToken, requireTenant, requireRole(["patient", "nurse", "physician", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
-      const communications = await storage.getMedicalCommunicationsByTenantWithSenderInfo(req.user.tenantId);
+      const { role, tenantId, id: userId } = req.user!;
+      let communications;
       
-      // Show all communications for healthcare providers (both patient messages and staff messages)
+      if (role === 'patient') {
+        // For patients, get their own messages only
+        const patient = await storage.getPatientByUserId(userId, tenantId);
+        if (!patient) {
+          return res.status(404).json({ message: "Patient record not found" });
+        }
+        communications = await storage.getMedicalCommunicationsByPatient(patient.id, tenantId);
+      } else {
+        // For healthcare providers, show all communications
+        communications = await storage.getMedicalCommunicationsByTenantWithSenderInfo(tenantId);
+      }
+      
       res.json(communications);
     } catch (error) {
       console.error("Failed to fetch communications:", error);
@@ -2024,12 +2036,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/medical-communications", authenticateToken, requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+  app.post("/api/medical-communications", authenticateToken, requireTenant, requireRole(["patient", "physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
+      const { role, tenantId, id: userId } = req.user!;
+      let patientId = req.body.patientId;
+      
+      // If the user is a patient, set patientId to their own patient record
+      if (role === 'patient') {
+        const patient = await storage.getPatientByUserId(userId, tenantId);
+        if (!patient) {
+          return res.status(404).json({ message: "Patient record not found" });
+        }
+        patientId = patient.id;
+      }
+      
       const validatedData = insertMedicalCommunicationSchema.parse({
         ...req.body,
-        tenantId: req.user!.tenantId,
-        senderId: req.user!.id
+        patientId,
+        tenantId,
+        senderId: userId
       });
 
       const communication = await storage.createMedicalCommunication(validatedData);
