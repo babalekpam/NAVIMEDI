@@ -1998,11 +1998,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Medical Communications routes - restricted to nurses and primary care doctors
   app.get("/api/medical-communications", authenticateToken, requireTenant, requireRole(["nurse", "physician", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
-      const communications = await storage.getMedicalCommunicationsByTenant(req.user.tenantId);
+      const communications = await storage.getMedicalCommunicationsByTenantWithSenderInfo(req.user.tenantId);
       
-      // Filter to show only patient messages for nurses and doctors
+      // Filter to show only patient messages (from users with role 'patient') for nurses and doctors
       const patientMessages = communications.filter(comm => 
-        comm.isFromPatient === true || 
+        comm.senderRole === "patient" || 
         req.user.role === "tenant_admin" || 
         req.user.role === "director" || 
         req.user.role === "super_admin"

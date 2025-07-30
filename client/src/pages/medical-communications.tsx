@@ -85,8 +85,8 @@ export default function MedicalCommunications() {
     }
   });
 
-  const patientMessages = communications.filter(comm => comm.isFromPatient === true);
-  const staffMessages = communications.filter(comm => comm.isFromPatient !== true);
+  const patientMessages = communications.filter(comm => comm.senderRole === "patient");
+  const staffMessages = communications.filter(comm => comm.senderRole !== "patient");
   
   const getFilteredMessages = (messagesList: MedicalCommunication[]) => {
     return messagesList.filter(comm => {

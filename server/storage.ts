@@ -1636,6 +1636,37 @@ export class DatabaseStorage implements IStorage {
     ).orderBy(desc(medicalCommunications.createdAt));
   }
 
+  async getMedicalCommunicationsByTenantWithSenderInfo(tenantId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: medicalCommunications.id,
+        tenantId: medicalCommunications.tenantId,
+        patientId: medicalCommunications.patientId,
+        senderId: medicalCommunications.senderId,
+        recipientId: medicalCommunications.recipientId,
+        type: medicalCommunications.type,
+        priority: medicalCommunications.priority,
+        originalLanguage: medicalCommunications.originalLanguage,
+        targetLanguages: medicalCommunications.targetLanguages,
+        originalContent: medicalCommunications.originalContent,
+        metadata: medicalCommunications.metadata,
+        appointmentId: medicalCommunications.appointmentId,
+        prescriptionId: medicalCommunications.prescriptionId,
+        labOrderId: medicalCommunications.labOrderId,
+        isRead: medicalCommunications.isRead,
+        readAt: medicalCommunications.readAt,
+        createdAt: medicalCommunications.createdAt,
+        updatedAt: medicalCommunications.updatedAt,
+        senderRole: users.role,
+        senderFirstName: users.firstName,
+        senderLastName: users.lastName
+      })
+      .from(medicalCommunications)
+      .leftJoin(users, eq(medicalCommunications.senderId, users.id))
+      .where(eq(medicalCommunications.tenantId, tenantId))
+      .orderBy(desc(medicalCommunications.createdAt));
+  }
+
   // Communication Translation management
   async createCommunicationTranslation(insertTranslation: InsertCommunicationTranslation): Promise<CommunicationTranslation> {
     const [translation] = await db.insert(communicationTranslations).values(insertTranslation).returning();
