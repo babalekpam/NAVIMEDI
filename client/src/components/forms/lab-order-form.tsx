@@ -54,9 +54,13 @@ const commonLabTests = [
 
 export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrderFormProps) => {
   // Fetch available laboratories
-  const { data: laboratories = [], isLoading: labsLoading } = useQuery<Laboratory[]>({
+  const { data: laboratories = [], isLoading: labsLoading, error: labsError } = useQuery({
     queryKey: ["/api/laboratories/active"],
   });
+
+  console.log("Laboratories data:", laboratories);
+  console.log("Laboratories loading:", labsLoading);
+  console.log("Laboratories error:", labsError);
 
   // Check for pre-selected patient from Quick Actions
   const getDefaultPatientId = () => {
@@ -159,29 +163,44 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
           name="laboratoryId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Assigned Laboratory</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormLabel className="text-base font-semibold">
+                🏥 Select Laboratory to Send Lab Order *
+              </FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select laboratory" />
+                  <SelectTrigger className={`${!field.value ? 'border-red-300 border-2' : 'border-green-300 border-2'} h-12`}>
+                    <SelectValue placeholder="🔬 Choose which laboratory will receive this lab order" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {laboratories.map((lab) => (
-                    <SelectItem key={lab.id} value={lab.id}>
-                      <div className="flex flex-col">
-                        <div className="font-medium">{lab.name}</div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-2">
-                          <Clock className="h-3 w-3" />
-                          {lab.averageTurnaroundTime}h turnaround
-                          <span className="mx-1">•</span>
-                          <Badge variant="outline" className="text-xs">
-                            {lab.specializations?.[0] || 'General'}
-                          </Badge>
+                  {labsLoading ? (
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      Loading laboratories...
+                    </div>
+                  ) : laboratories.length === 0 ? (
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      No laboratories available
+                    </div>
+                  ) : (
+                    laboratories.map((lab: any) => (
+                      <SelectItem key={lab.id} value={lab.id}>
+                        <div className="flex flex-col w-full">
+                          <div className="font-medium text-lg">🏥 {lab.name}</div>
+                          <div className="text-sm text-muted-foreground flex items-center gap-2">
+                            <MapPin className="h-3 w-3" />
+                            {lab.address || 'Laboratory Address'}
+                            {lab.phoneNumber && (
+                              <>
+                                <span className="mx-1">•</span>
+                                <Phone className="h-3 w-3" />
+                                {lab.phoneNumber}
+                              </>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </SelectItem>
-                  ))}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />
