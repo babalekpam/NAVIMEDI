@@ -3506,9 +3506,7 @@ Report ID: ${report.id}
         tenantId: patientUser.tenantId,
         patientId: patient.id,
         senderId: userId,
-        originalContent: req.body.message, // Add required originalContent field
-        sentAt: new Date().toISOString(),
-        isFromPatient: true,
+        originalContent: req.body.message || req.body.originalContent, // Support both fields
         isRead: false
       };
 
