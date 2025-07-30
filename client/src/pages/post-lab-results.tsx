@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { TestTube, Clock, CheckCircle, AlertTriangle, User, Calendar } from "lucide-react";
+import { TestTube, Clock, CheckCircle, AlertTriangle, User, Calendar, Upload, FileText, Monitor } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -28,6 +28,8 @@ type LabResultForm = z.infer<typeof labResultSchema>;
 
 export default function PostLabResults() {
   const [selectedOrderId, setSelectedOrderId] = useState<string>("");
+  const [inputMethod, setInputMethod] = useState<"manual" | "upload">("manual");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -77,6 +79,71 @@ export default function PostLabResults() {
       form.setValue("testName", selectedOrder.testName || "");
     }
   }, [selectedOrder, form]);
+
+  // Handle file upload from laboratory equipment
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setUploadedFile(file);
+      
+      // Parse common laboratory file formats
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        
+        // Try to parse CSV or text format from lab equipment
+        try {
+          // Simple parsing for common lab equipment output formats
+          const lines = content.split('\n');
+          let parsedResult = "";
+          let parsedUnit = "";
+          let parsedNormalRange = "";
+          
+          // Look for result patterns in different formats
+          for (const line of lines) {
+            // Format: "Result: 7.2 mg/dL (Normal: 3.5-7.0)"
+            const resultMatch = line.match(/Result[:\s]+([0-9.]+)\s*([a-zA-Z/]+)?.*Normal[:\s]*([0-9.-]+)/i);
+            if (resultMatch) {
+              parsedResult = resultMatch[1];
+              parsedUnit = resultMatch[2] || "";
+              parsedNormalRange = resultMatch[3];
+              break;
+            }
+            
+            // Format: "Value,Unit,Range" CSV
+            const csvMatch = line.match(/^([0-9.]+),([a-zA-Z/]+),([0-9.-]+)$/);
+            if (csvMatch) {
+              parsedResult = csvMatch[1];
+              parsedUnit = csvMatch[2];
+              parsedNormalRange = csvMatch[3];
+              break;
+            }
+          }
+          
+          // Auto-fill form with parsed data
+          if (parsedResult) {
+            form.setValue("result", parsedResult);
+            if (parsedUnit) form.setValue("unit", parsedUnit);
+            if (parsedNormalRange) form.setValue("normalRange", parsedNormalRange);
+            
+            toast({
+              title: "File Parsed",
+              description: "Laboratory results extracted from uploaded file",
+            });
+          }
+        } catch (error) {
+          console.error('Error parsing file:', error);
+          toast({
+            title: "Parse Error",
+            description: "Could not automatically parse the file. Please enter results manually.",
+            variant: "destructive",
+          });
+        }
+      };
+      
+      reader.readAsText(file);
+    }
+  };
 
   const postResultMutation = useMutation({
     mutationFn: async (data: LabResultForm & { labOrderId: string; patientId: string }) => {
@@ -241,18 +308,98 @@ export default function PostLabResults() {
         {/* Result Entry Form */}
         <Card>
           <CardHeader>
-            <CardTitle>Enter Lab Results</CardTitle>
+            <CardTitle className="flex items-center">
+              <CheckCircle className="h-5 w-5 mr-2" />
+              Post Lab Results
+            </CardTitle>
             <CardDescription>
               {selectedOrder 
                 ? `Posting results for: ${selectedOrder.testName} - ${selectedOrder.patientFirstName} ${selectedOrder.patientLastName}`
-                : "Select a lab order to enter results"
+                : "Select a lab order to enter results from your laboratory equipment"
               }
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Input Method Selection */}
+            <div className="mb-6">
+              <div className="flex items-center space-x-4 mb-4">
+                <Button
+                  type="button"
+                  variant={inputMethod === "manual" ? "default" : "outline"}
+                  onClick={() => setInputMethod("manual")}
+                  className="flex items-center"
+                >
+                  <Monitor className="w-4 h-4 mr-2" />
+                  Manual Entry
+                </Button>
+                <Button
+                  type="button"
+                  variant={inputMethod === "upload" ? "default" : "outline"}
+                  onClick={() => setInputMethod("upload")}
+                  className="flex items-center"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Results File
+                </Button>
+              </div>
+              
+              {inputMethod === "upload" && (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-900">
+                      Upload results from laboratory equipment
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Supports CSV, TXT, or other text-based result files from analyzers
+                    </p>
+                    <input
+                      type="file"
+                      accept=".csv,.txt,.tsv,.dat"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    <label
+                      htmlFor="file-upload"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Choose File
+                    </label>
+                    {uploadedFile && (
+                      <p className="text-xs text-green-600 mt-2">
+                        ✓ Uploaded: {uploadedFile.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             {selectedOrder ? (
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <>
+                {/* Equipment Integration Note */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start">
+                    <Monitor className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+                    <div>
+                      <h4 className="text-sm font-semibold text-blue-900 mb-1">
+                        Laboratory Equipment Integration
+                      </h4>
+                      <p className="text-xs text-blue-700 mb-2">
+                        Most lab equipment isn't directly connected to our database. You can:
+                      </p>
+                      <ul className="text-xs text-blue-600 space-y-1">
+                        <li>• Upload result files from analyzers (CSV, TXT formats)</li>
+                        <li>• Manually enter values from equipment displays</li>
+                        <li>• System will automatically parse common result formats</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <FormField
                     control={form.control}
                     name="testName"
@@ -386,6 +533,7 @@ export default function PostLabResults() {
                   </Button>
                 </form>
               </Form>
+              </>
             ) : (
               <div className="text-center py-8">
                 <TestTube className="h-12 w-12 mx-auto text-gray-300" />
