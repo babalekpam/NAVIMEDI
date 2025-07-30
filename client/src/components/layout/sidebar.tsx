@@ -155,15 +155,6 @@ export const Sidebar = () => {
     const laboratoryItems = filteredItems.filter(item => 
       ["dashboard", "lab-records", "lab-orders", "lab-results", "post-lab-results", "reports"].includes(item.id)
     );
-
-    // Add lab-specific item for posting results
-    laboratoryItems.push({
-      id: "post-lab-results",
-      label: "Post Lab Results",
-      icon: TestTube,
-      path: "/post-lab-results",
-      roles: ["lab_technician", "tenant_admin", "director"]
-    });
     
     return (
       <aside className="w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto">
