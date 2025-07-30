@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { 
   Calendar,
   MessageCircle,
@@ -41,103 +44,174 @@ import navimedLogo from "@assets/JPG_1753663321927.jpg";
 export default function PatientPortalStaff() {
   const { user } = useAuth();
   const [activeSection, setActiveSection] = useState("overview");
+  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Mock patient data for demonstration
-  const mockPatientData = {
-    name: "Sarah Johnson",
+  // Fetch patients list for selection
+  const { data: patients = [] } = useQuery({
+    queryKey: ['/api/patients'],
+    enabled: true
+  });
+
+  // Fetch selected patient's data
+  const { data: selectedPatient } = useQuery({
+    queryKey: ['/api/patients', selectedPatientId],
+    enabled: !!selectedPatientId
+  });
+
+  // Fetch patient's appointments
+  const { data: patientAppointments = [] } = useQuery({
+    queryKey: ['/api/appointments/patient', selectedPatientId],
+    enabled: !!selectedPatientId
+  });
+
+  // Fetch patient's lab results
+  const { data: patientLabResults = [] } = useQuery({
+    queryKey: ['/api/patient/lab-results', selectedPatientId],
+    enabled: !!selectedPatientId
+  });
+
+  // Fetch patient's prescriptions
+  const { data: patientPrescriptions = [] } = useQuery({
+    queryKey: ['/api/prescriptions/patient', selectedPatientId],
+    enabled: !!selectedPatientId
+  });
+
+  // Filter patients based on search
+  const filteredPatients = patients.filter((patient: any) =>
+    patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient?.mrn?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Get current patient data (real or mock)
+  const currentPatient = selectedPatient || {
+    firstName: "Sarah",
+    lastName: "Johnson",
     mrn: "MGH-20250001",
-    dateOfBirth: "1985-06-15",
-    lastVisit: "2025-01-28",
-    nextAppointment: "2025-02-05 10:30 AM",
-    recentResults: [
-      {
-        id: 1,
-        testName: "Complete Blood Count",
-        date: "2025-01-25",
-        status: "Normal",
-        abnormalFlag: "normal"
-      },
-      {
-        id: 2,
-        testName: "Blood Glucose",
-        date: "2025-01-20",
-        status: "High",
-        abnormalFlag: "high"
-      }
-    ],
-    medications: [
-      {
-        id: 1,
-        name: "Metformin",
-        dosage: "500mg",
-        frequency: "Twice daily",
-        prescribedBy: "Dr. Smith"
-      }
-    ],
-    appointments: [
-      {
-        id: 1,
-        date: "2025-02-05",
-        time: "10:30 AM",
-        doctor: "Dr. Michael Smith",
-        department: "Internal Medicine",
-        type: "Follow-up"
-      }
-    ]
+    dateOfBirth: "1985-06-15"
   };
+
+  const patientName = `${currentPatient.firstName} ${currentPatient.lastName}`;
+
+  const renderPatientSelector = () => (
+    <Card className="border-green-200 bg-green-50 mb-6">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Users className="h-5 w-5 text-green-600 mr-2" />
+            <CardTitle className="text-green-900 text-lg">Patient Selection</CardTitle>
+          </div>
+          <Badge variant="outline" className="bg-white text-green-700">
+            Staff View ({user?.role})
+          </Badge>
+        </div>
+        <CardDescription className="text-green-700">
+          Select a patient to view their portal experience. This shows exactly what the selected patient sees when they log in.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-green-900 mb-2 block">Search Patients</label>
+              <Input
+                placeholder="Search by name or MRN..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="border-green-200 focus:border-green-400"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-green-900 mb-2 block">Select Patient</label>
+              <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
+                <SelectTrigger className="border-green-200 focus:border-green-400">
+                  <SelectValue placeholder="Choose a patient..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredPatients.map((patient: any) => (
+                    <SelectItem key={patient.id} value={patient.id}>
+                      {patient.firstName} {patient.lastName} (MRN: {patient.mrn})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          {selectedPatientId && (
+            <div className="p-3 bg-white rounded-lg border border-green-200">
+              <p className="text-sm font-medium text-green-900">
+                Currently viewing portal for: <span className="text-green-700">{patientName}</span>
+              </p>
+              <p className="text-xs text-green-600 mt-1">
+                MRN: {currentPatient.mrn} • DOB: {currentPatient.dateOfBirth}
+              </p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   const renderOverview = () => (
     <div className="space-y-6">
-      {/* Staff Notice */}
-      <Card className="border-blue-200 bg-blue-50">
-        <CardHeader className="pb-3">
-          <div className="flex items-center">
-            <Shield className="h-5 w-5 text-blue-600 mr-2" />
-            <CardTitle className="text-blue-900 text-lg">Staff Portal View</CardTitle>
-          </div>
-          <CardDescription className="text-blue-700">
-            You are viewing the patient portal interface as hospital staff ({user?.role}). This shows what patients see when they log in.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      {renderPatientSelector()}
 
-      {/* Welcome Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <User className="h-6 w-6 mr-2 text-blue-600" />
-            Welcome, {mockPatientData.name}
-          </CardTitle>
-          <CardDescription>
-            Last login: Today at 2:30 PM
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center space-x-3">
-              <Calendar className="h-5 w-5 text-green-600" />
-              <div>
-                <p className="text-sm font-medium">Next Appointment</p>
-                <p className="text-sm text-gray-600">{mockPatientData.nextAppointment}</p>
+      {selectedPatientId ? (
+        <>
+          {/* Welcome Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <User className="h-6 w-6 mr-2 text-blue-600" />
+                Welcome, {patientName}
+              </CardTitle>
+              <CardDescription>
+                Last login: Today at 2:30 PM • MRN: {currentPatient.mrn}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex items-center space-x-3">
+                  <Calendar className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="text-sm font-medium">Appointments</p>
+                    <p className="text-sm text-gray-600">{patientAppointments?.length || 0} scheduled</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="text-sm font-medium">Lab Results</p>
+                    <p className="text-sm text-gray-600">{patientLabResults?.length || 0} results</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Pill className="h-5 w-5 text-orange-600" />
+                  <div>
+                    <p className="text-sm font-medium">Prescriptions</p>
+                    <p className="text-sm text-gray-600">{patientPrescriptions?.length || 0} active</p>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <FileText className="h-5 w-5 text-blue-600" />
-              <div>
-                <p className="text-sm font-medium">Recent Results</p>
-                <p className="text-sm text-gray-600">{mockPatientData.recentResults.length} new results</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <MessageCircle className="h-5 w-5 text-purple-600" />
-              <div>
-                <p className="text-sm font-medium">Messages</p>
-                <p className="text-sm text-gray-600">2 unread messages</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        <Card className="border-gray-200 bg-gray-50">
+          <CardContent className="p-8 text-center">
+            <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Patient Selected</h3>
+            <p className="text-gray-600 mb-4">
+              Please select a patient from the dropdown above to view their portal experience.
+            </p>
+            <p className="text-sm text-gray-500">
+              This will show you exactly what the patient sees when they log into their portal.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -213,144 +287,248 @@ export default function PatientPortalStaff() {
 
   const renderAppointments = () => (
     <div className="space-y-4">
+      {renderPatientSelector()}
+      
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">My Appointments</h3>
-        <Button>
+        <Button disabled={!selectedPatientId}>
           <Plus className="h-4 w-4 mr-2" />
           Schedule New
         </Button>
       </div>
       
-      {mockPatientData.appointments.map((appointment) => (
-        <Card key={appointment.id}>
-          <CardContent className="p-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="font-semibold">{appointment.type}</h4>
-                <p className="text-sm text-gray-600">Dr. {appointment.doctor}</p>
-                <p className="text-sm text-gray-600">{appointment.department}</p>
+      {selectedPatientId && patientAppointments?.length > 0 ? (
+        patientAppointments.map((appointment: any) => (
+          <Card key={appointment.id}>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-semibold">{appointment.type || "Medical Appointment"}</h4>
+                  <p className="text-sm text-gray-600">{appointment.doctorName || "Healthcare Provider"}</p>
+                  <p className="text-sm text-gray-600">{appointment.department || "General Medicine"}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold">{new Date(appointment.appointmentDate).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-600">{appointment.appointmentTime}</p>
+                  <Badge variant="outline" className="mt-1">
+                    {appointment.status === "confirmed" ? "Confirmed" : appointment.status}
+                  </Badge>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-semibold">{appointment.date}</p>
-                <p className="text-sm text-gray-600">{appointment.time}</p>
-                <Badge variant="outline" className="mt-1">Confirmed</Badge>
-              </div>
-            </div>
+            </CardContent>
+          </Card>
+        ))
+      ) : selectedPatientId ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h4 className="text-lg font-semibold text-gray-900 mb-2">No Appointments</h4>
+            <p className="text-gray-600">This patient has no scheduled appointments.</p>
           </CardContent>
         </Card>
-      ))}
+      ) : (
+        <Card className="border-gray-200 bg-gray-50">
+          <CardContent className="p-8 text-center">
+            <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h4 className="text-lg font-semibold text-gray-900 mb-2">Select a Patient</h4>
+            <p className="text-gray-600">Choose a patient to view their appointments.</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 
   const renderResults = () => (
     <div className="space-y-4">
+      {renderPatientSelector()}
+      
       <h3 className="text-lg font-semibold">Test Results</h3>
       
-      {mockPatientData.recentResults.map((result) => (
-        <Card key={result.id}>
-          <CardContent className="p-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="font-semibold">{result.testName}</h4>
-                <p className="text-sm text-gray-600">Completed on {result.date}</p>
-              </div>
-              <div className="text-right">
-                <Badge 
-                  variant={result.abnormalFlag === "normal" ? "default" : "destructive"}
-                  className={result.abnormalFlag === "normal" ? "bg-green-100 text-green-800" : ""}
-                >
-                  {result.status}
-                </Badge>
-                <div className="mt-2">
-                  <Button size="sm" variant="outline">
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
-                  </Button>
+      {selectedPatientId && patientLabResults?.length > 0 ? (
+        patientLabResults.map((result: any) => (
+          <Card key={result.id}>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-semibold">{result.testName}</h4>
+                  <p className="text-sm text-gray-600">
+                    Completed on {result.completedAt ? new Date(result.completedAt).toLocaleDateString() : "Processing"}
+                  </p>
+                  {result.results && result.results.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {result.results.map((res: any, idx: number) => (
+                        <p key={idx} className="text-sm text-gray-700">
+                          {res.testName}: {res.result} {res.unit} 
+                          {res.normalRange && ` (Normal: ${res.normalRange})`}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="text-right">
+                  <Badge 
+                    variant={result.status === "completed" ? "default" : "secondary"}
+                    className={result.status === "completed" ? "bg-green-100 text-green-800" : ""}
+                  >
+                    {result.status === "completed" ? "Complete" : result.status}
+                  </Badge>
+                  <div className="mt-2">
+                    <Button size="sm" variant="outline" disabled={result.status !== "completed"}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
+        ))
+      ) : selectedPatientId ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h4 className="text-lg font-semibold text-gray-900 mb-2">No Test Results</h4>
+            <p className="text-gray-600">This patient has no lab results available.</p>
           </CardContent>
         </Card>
-      ))}
+      ) : (
+        <Card className="border-gray-200 bg-gray-50">
+          <CardContent className="p-8 text-center">
+            <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h4 className="text-lg font-semibold text-gray-900 mb-2">Select a Patient</h4>
+            <p className="text-gray-600">Choose a patient to view their test results.</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 
   const renderMedications = () => (
     <div className="space-y-4">
+      {renderPatientSelector()}
+      
       <h3 className="text-lg font-semibold">Current Medications</h3>
       
-      {mockPatientData.medications.map((medication) => (
-        <Card key={medication.id}>
-          <CardContent className="p-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="font-semibold">{medication.name}</h4>
-                <p className="text-sm text-gray-600">{medication.dosage} - {medication.frequency}</p>
-                <p className="text-sm text-gray-500">Prescribed by {medication.prescribedBy}</p>
+      {selectedPatientId && patientPrescriptions?.length > 0 ? (
+        patientPrescriptions.map((prescription: any) => (
+          <Card key={prescription.id}>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-semibold">{prescription.medicationName}</h4>
+                  <p className="text-sm text-gray-600">
+                    {prescription.dosage} - {prescription.frequency}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Prescribed by {prescription.doctorName || "Healthcare Provider"}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Prescribed on {new Date(prescription.prescribedDate).toLocaleDateString()}
+                  </p>
+                </div>
+                <Badge variant="outline" className={
+                  prescription.status === "active" ? "bg-green-100 text-green-800" : ""
+                }>
+                  {prescription.status || "Active"}
+                </Badge>
               </div>
-              <Badge variant="outline">Active</Badge>
-            </div>
+            </CardContent>
+          </Card>
+        ))
+      ) : selectedPatientId ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Pill className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h4 className="text-lg font-semibold text-gray-900 mb-2">No Medications</h4>
+            <p className="text-gray-600">This patient has no current prescriptions.</p>
           </CardContent>
         </Card>
-      ))}
+      ) : (
+        <Card className="border-gray-200 bg-gray-50">
+          <CardContent className="p-8 text-center">
+            <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h4 className="text-lg font-semibold text-gray-900 mb-2">Select a Patient</h4>
+            <p className="text-gray-600">Choose a patient to view their medications.</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 
   const renderMessages = () => (
     <div className="space-y-4">
+      {renderPatientSelector()}
+      
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Messages</h3>
-        <Button>
+        <Button disabled={!selectedPatientId}>
           <Plus className="h-4 w-4 mr-2" />
           New Message
         </Button>
       </div>
       
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-start space-x-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <User className="h-4 w-4 text-blue-600" />
-            </div>
-            <div className="flex-1">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="font-semibold">Dr. Michael Smith</h4>
-                  <p className="text-sm text-gray-600">Lab Results Available</p>
+      {selectedPatientId ? (
+        <>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <User className="h-4 w-4 text-blue-600" />
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-500">2 hours ago</p>
-                  <Badge className="bg-blue-100 text-blue-800">New</Badge>
+                <div className="flex-1">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold">Dr. Michael Smith</h4>
+                      <p className="text-sm text-gray-600">Lab Results Available</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500">2 hours ago</p>
+                      <Badge className="bg-blue-100 text-blue-800">New</Badge>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-700 mt-2">
+                    Dear {patientName}, your recent blood work results are now available. 
+                    Overall results look good. Please schedule a follow-up appointment to discuss.
+                  </p>
                 </div>
               </div>
-              <p className="text-sm text-gray-700 mt-2">Your recent blood work results are now available. Overall results look good. Please schedule a follow-up appointment to discuss.</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-start space-x-3">
-            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-              <User className="h-4 w-4 text-green-600" />
-            </div>
-            <div className="flex-1">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="font-semibold">Nurse Davis</h4>
-                  <p className="text-sm text-gray-600">Appointment Reminder</p>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <User className="h-4 w-4 text-green-600" />
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-500">1 day ago</p>
-                  <Badge variant="outline">Read</Badge>
+                <div className="flex-1">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold">Nurse Davis</h4>
+                      <p className="text-sm text-gray-600">Appointment Reminder</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500">1 day ago</p>
+                      <Badge variant="outline">Read</Badge>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-700 mt-2">
+                    Reminder: You have upcoming appointments scheduled. Please arrive 15 minutes early for check-in.
+                  </p>
                 </div>
               </div>
-              <p className="text-sm text-gray-700 mt-2">Reminder: You have an appointment scheduled for February 5th at 10:30 AM with Dr. Smith. Please arrive 15 minutes early.</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        <Card className="border-gray-200 bg-gray-50">
+          <CardContent className="p-8 text-center">
+            <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h4 className="text-lg font-semibold text-gray-900 mb-2">Select a Patient</h4>
+            <p className="text-gray-600">Choose a patient to view their messages.</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 
@@ -448,7 +626,7 @@ export default function PatientPortalStaff() {
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                   <User className="h-4 w-4 text-blue-600" />
                 </div>
-                <span className="text-sm font-medium">{mockPatientData.name}</span>
+                <span className="text-sm font-medium">{selectedPatientId ? patientName : "No Patient Selected"}</span>
               </div>
             </div>
           </div>
