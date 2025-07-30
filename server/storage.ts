@@ -869,15 +869,6 @@ export class DatabaseStorage implements IStorage {
     return prescription;
   }
 
-
-
-  async getPrescription(id: string, tenantId: string): Promise<Prescription | undefined> {
-    const [prescription] = await db.select().from(prescriptions).where(
-      and(eq(prescriptions.id, id), eq(prescriptions.tenantId, tenantId))
-    );
-    return prescription || undefined;
-  }
-
   async getPrescriptionsByPatient(patientId: string, tenantId: string): Promise<Prescription[]> {
     return await db.select().from(prescriptions).where(
       and(eq(prescriptions.patientId, patientId), eq(prescriptions.tenantId, tenantId))
@@ -1116,7 +1107,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPharmacy(insertPharmacy: InsertPharmacy): Promise<Pharmacy> {
-    const [pharmacy] = await db.insert(pharmacies).values(insertPharmacy).returning();
+    const [pharmacy] = await db.insert(pharmacies).values([insertPharmacy]).returning();
     return pharmacy;
   }
 
@@ -2398,8 +2389,8 @@ export class DatabaseStorage implements IStorage {
         },
         vitalSigns: {
           id: vitalSigns.id,
-          systolicBp: vitalSigns.bloodPressureSystolic,
-          diastolicBp: vitalSigns.bloodPressureDiastolic,
+          systolicBp: vitalSigns.systolicBp,
+          diastolicBp: vitalSigns.diastolicBp,
           heartRate: vitalSigns.heartRate,
           temperature: vitalSigns.temperature,
           temperatureUnit: vitalSigns.temperatureUnit,

@@ -1201,6 +1201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             entityType: "lab_order",
             entityId: labOrder.id,
             action: "create",
+            previousData: null,
             newData: labOrder,
             ipAddress: req.ip || null,
             userAgent: req.get("User-Agent") || null
@@ -1657,11 +1658,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create audit log for both platform and target tenant
       await storage.createAuditLog({
-        tenantId: req.user.tenantId, // Platform tenant
+        tenantId: req.user!.tenantId, // Platform tenant
         userId: req.user!.id,
         entityType: "cross_tenant_report",
         entityId: report.id,
         action: "create",
+        previousData: null,
         newData: { 
           title: report.title, 
           type: report.type, 
@@ -1678,6 +1680,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "report",
         entityId: report.id,
         action: "platform_generate",
+        previousData: null,
         newData: { 
           title: report.title, 
           type: report.type, 
@@ -1833,6 +1836,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "user",
         entityId: newUser.id,
         action: "create",
+        previousData: null,
         newData: { 
           username, 
           email, 
@@ -1842,7 +1846,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           tenantId: targetTenantId
         },
         ipAddress: req.ip || null,
-        userAgent: req.get("User-Agent") || null || null
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json({
@@ -2288,6 +2292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "laboratory",
         entityId: laboratory.id,
         action: "create",
+        previousData: null,
         newData: laboratory,
         ipAddress: req.ip || null,
         userAgent: req.get("User-Agent") || null
@@ -2389,6 +2394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "lab_result",
         entityId: labResult.id,
         action: "create",
+        previousData: null,
         newData: labResult,
         ipAddress: req.ip || null,
         userAgent: req.get("User-Agent") || null
@@ -2419,7 +2425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const assignmentData = insertLabOrderAssignmentSchema.parse({
         ...req.body,
         tenantId: req.tenantId,
-        assignedBy: req.userId
+        assignedBy: req.user!.id
       });
 
       const assignment = await storage.createLabOrderAssignment(assignmentData);
@@ -2431,6 +2437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "lab_order_assignment",
         entityId: assignment.id,
         action: "create",
+        previousData: null,
         newData: assignment,
         ipAddress: req.ip || null,
         userAgent: req.get("User-Agent") || null
