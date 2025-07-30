@@ -2028,7 +2028,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertMedicalCommunicationSchema.parse({
         ...req.body,
-        tenantId: req.user.tenantId,
+        tenantId: req.user!.tenantId,
         senderId: req.user!.id
       });
 
