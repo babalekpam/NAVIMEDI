@@ -3464,23 +3464,13 @@ Report ID: ${report.id}
       
       const messages = await storage.getMedicalCommunicationsByPatient(patient.id, patientUser.tenantId);
       
-      // Add sender name for patient view
-      const messagesWithSender = await Promise.all(
-        messages.map(async (message) => {
-          try {
-            const sender = await storage.getUser(message.senderId);
-            return {
-              ...message,
-              senderName: sender ? `${sender.firstName} ${sender.lastName}` : 'Healthcare Provider'
-            };
-          } catch {
-            return {
-              ...message,
-              senderName: 'Healthcare Provider'
-            };
-          }
-        })
-      );
+      // Messages already include sender info from join
+      const messagesWithSender = messages.map(message => ({
+        ...message,
+        senderName: message.senderFirstName && message.senderLastName 
+          ? `${message.senderFirstName} ${message.senderLastName}` 
+          : 'Healthcare Provider'
+      }));
       
       res.json(messagesWithSender);
     } catch (error) {
@@ -3501,14 +3491,14 @@ Report ID: ${report.id}
         return res.status(404).json({ message: "Patient not found" });
       }
 
-      const messageData = {
+      const messageData = insertMedicalCommunicationSchema.parse({
         ...req.body,
         tenantId: patientUser.tenantId,
         patientId: patient.id,
         senderId: userId,
-        originalContent: req.body.message || req.body.originalContent, // Support both fields
+        originalContent: req.body.message || req.body.originalContent || req.body.content,
         isRead: false
-      };
+      });
 
       const message = await storage.createMedicalCommunication(messageData);
       res.json(message);

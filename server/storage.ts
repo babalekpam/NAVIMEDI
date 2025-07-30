@@ -1624,10 +1624,37 @@ export class DatabaseStorage implements IStorage {
     return communication || undefined;
   }
 
-  async getMedicalCommunicationsByPatient(patientId: string, tenantId: string): Promise<MedicalCommunication[]> {
-    return await db.select().from(medicalCommunications).where(
-      and(eq(medicalCommunications.patientId, patientId), eq(medicalCommunications.tenantId, tenantId))
-    ).orderBy(desc(medicalCommunications.createdAt));
+  async getMedicalCommunicationsByPatient(patientId: string, tenantId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: medicalCommunications.id,
+        tenantId: medicalCommunications.tenantId,
+        patientId: medicalCommunications.patientId,
+        senderId: medicalCommunications.senderId,
+        recipientId: medicalCommunications.recipientId,
+        type: medicalCommunications.type,
+        priority: medicalCommunications.priority,
+        originalLanguage: medicalCommunications.originalLanguage,
+        targetLanguages: medicalCommunications.targetLanguages,
+        originalContent: medicalCommunications.originalContent,
+        metadata: medicalCommunications.metadata,
+        appointmentId: medicalCommunications.appointmentId,
+        prescriptionId: medicalCommunications.prescriptionId,
+        labOrderId: medicalCommunications.labOrderId,
+        isRead: medicalCommunications.isRead,
+        readAt: medicalCommunications.readAt,
+        createdAt: medicalCommunications.createdAt,
+        updatedAt: medicalCommunications.updatedAt,
+        senderRole: users.role,
+        senderFirstName: users.firstName,
+        senderLastName: users.lastName
+      })
+      .from(medicalCommunications)
+      .leftJoin(users, eq(medicalCommunications.senderId, users.id))
+      .where(
+        and(eq(medicalCommunications.patientId, patientId), eq(medicalCommunications.tenantId, tenantId))
+      )
+      .orderBy(desc(medicalCommunications.createdAt));
   }
 
   async getMedicalCommunicationsByTenant(tenantId: string): Promise<MedicalCommunication[]> {

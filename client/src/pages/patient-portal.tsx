@@ -936,7 +936,11 @@ Report ID: ${labOrder.id}
               Cancel
             </Button>
             <Button 
-              onClick={() => sendMessageMutation.mutate(messageForm)}
+              onClick={() => sendMessageMutation.mutate({
+                ...messageForm,
+                originalContent: messageForm.message,
+                metadata: { subject: messageForm.subject }
+              })}
               disabled={!messageForm.subject || !messageForm.message || sendMessageMutation.isPending}
             >
               {sendMessageMutation.isPending ? (
