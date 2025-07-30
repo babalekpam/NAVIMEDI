@@ -2343,6 +2343,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const labResult = await storage.createLabResult(labResultData);
 
+      // CRITICAL: Update lab order status to 'completed' when results are posted
+      if (labResultData.labOrderId) {
+        console.log(`[LAB RESULTS] Updating lab order ${labResultData.labOrderId} status to completed`);
+        
+        try {
+          // Update the lab order status to completed
+          await storage.updateLabOrder(labResultData.labOrderId, {
+            status: 'completed',
+            resultDate: new Date(),
+            resultStatus: 'available',
+            completedAt: new Date()
+          });
+
+          // Also update any lab order assignments
+          const assignments = await storage.getLabOrderAssignmentsByOrder(labResultData.labOrderId);
+          for (const assignment of assignments) {
+            await storage.updateLabOrderAssignment(assignment.id, {
+              status: 'completed',
+              actualCompletionTime: new Date()
+            }, req.tenantId!);
+          }
+
+          console.log(`[LAB RESULTS] Successfully updated lab order ${labResultData.labOrderId} to completed status`);
+        } catch (updateError) {
+          console.error(`[LAB RESULTS] Error updating lab order status:`, updateError);
+          // Don't fail the result creation if status update fails
+        }
+      }
+
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenantId!,
@@ -2355,7 +2384,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userAgent: req.get("User-Agent") || null
       });
 
-      res.status(201).json(labResult);
+      res.status(201).json({
+        ...labResult,
+        message: "Lab result posted successfully and order status updated to completed"
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid lab result data", errors: error.errors });
@@ -3484,8 +3516,24 @@ Report ID: ${report.id}
         return res.status(404).json({ message: "Patient not found" });
       }
       
+      // Get lab orders and their associated results across all laboratories
       const labOrders = await storage.getLabOrdersByPatient(patient.id);
-      res.json(labOrders);
+      const labResults = await storage.getLabResultsForPatientAcrossTenants(patient.id);
+      
+      // Combine lab orders with their results
+      const enrichedLabOrders = labOrders.map(order => {
+        const orderResults = labResults.filter(result => result.labOrderId === order.id);
+        return {
+          ...order,
+          results: orderResults,
+          hasResults: orderResults.length > 0,
+          resultStatus: orderResults.length > 0 ? 'available' : order.status,
+          completedAt: orderResults.length > 0 ? orderResults[0].completedAt : null
+        };
+      });
+      
+      console.log(`[PATIENT PORTAL] Found ${labOrders.length} lab orders and ${labResults.length} results for patient ${patient.id}`);
+      res.json(enrichedLabOrders);
     } catch (error) {
       console.error("Get patient lab results error:", error);
       res.status(500).json({ message: "Internal server error" });

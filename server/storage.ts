@@ -1803,6 +1803,12 @@ export class DatabaseStorage implements IStorage {
     ).orderBy(desc(labOrderAssignments.createdAt));
   }
 
+  async getLabOrderAssignmentsByOrder(labOrderId: string): Promise<LabOrderAssignment[]> {
+    return await db.select().from(labOrderAssignments).where(
+      eq(labOrderAssignments.labOrderId, labOrderId)
+    ).orderBy(desc(labOrderAssignments.createdAt));
+  }
+
   // Laboratory Application Management
   async getLaboratoryApplication(id: string): Promise<LaboratoryApplication | undefined> {
     const [application] = await db.select().from(laboratoryApplications).where(

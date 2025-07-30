@@ -75,15 +75,17 @@ export default function PostLabResults() {
         }),
       });
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
       toast({
         title: "Success",
-        description: "Lab result posted successfully and sent to patient's medical record",
+        description: "Lab result posted successfully! Order status automatically updated to completed and results sent to patient's medical record.",
       });
       form.reset();
       setSelectedOrderId("");
       queryClient.invalidateQueries({ queryKey: ["/api/lab-orders/laboratory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/lab-results"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/lab-orders"] });
+      console.log("Lab result posted:", response);
     },
     onError: (error) => {
       toast({
