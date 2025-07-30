@@ -4,13 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { TestTube, Plus, Search, Filter, MoreHorizontal, AlertCircle, CheckCircle, FileText, Calendar, User } from "lucide-react";
+import { TestTube, Plus, Search, Filter, MoreHorizontal, AlertCircle, CheckCircle, FileText, Calendar, User, Edit, Trash2, Copy, Download, Share } from "lucide-react";
 import { LabOrder, Patient, LabResult } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { LabOrderForm } from "@/components/forms/lab-order-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 const statusColors = {
   ordered: "bg-blue-100 text-blue-800",
@@ -344,9 +345,73 @@ export default function LabOrders() {
                           Update Status
                         </Button>
                       )}
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedLabOrder(labOrder);
+                            setIsDetailsOpen(true);
+                          }}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
+                          {labOrder.status === 'completed' && (
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedLabOrder(labOrder);
+                              setIsResultsOpen(true);
+                            }}>
+                              <Download className="h-4 w-4 mr-2" />
+                              View Results
+                            </DropdownMenuItem>
+                          )}
+                          {(user.role === "physician" || user.role === "tenant_admin") && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => {
+                                // Copy lab order details to clipboard
+                                const orderText = `Lab Order: ${labOrder.testName}\nPatient: ${getPatientName(labOrder.patientId)}\nStatus: ${labOrder.status}\nOrdered: ${new Date(labOrder.orderedDate || '').toLocaleDateString()}`;
+                                navigator.clipboard.writeText(orderText);
+                              }}>
+                                <Copy className="h-4 w-4 mr-2" />
+                                Copy Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                // Share lab order
+                                if (navigator.share) {
+                                  navigator.share({
+                                    title: `Lab Order: ${labOrder.testName}`,
+                                    text: `Lab order for ${getPatientName(labOrder.patientId)} - ${labOrder.testName}`,
+                                  });
+                                }
+                              }}>
+                                <Share className="h-4 w-4 mr-2" />
+                                Share
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          {(user.role === "physician" || user.role === "tenant_admin") && labOrder.status === 'ordered' && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  if (confirm('Are you sure you want to cancel this lab order?')) {
+                                    // TODO: Implement cancel lab order functionality
+                                    console.log('Cancel lab order:', labOrder.id);
+                                  }
+                                }}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Cancel Order
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </div>

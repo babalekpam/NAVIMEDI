@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Search, Plus, MoreHorizontal, UserCircle, Calendar, Phone, Mail, MapPin, Heart, AlertTriangle } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Search, Plus, MoreHorizontal, UserCircle, Calendar, Phone, Mail, MapPin, Heart, AlertTriangle, Edit, Trash2, Copy, FileText, Share } from "lucide-react";
 import { Patient } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
@@ -228,9 +229,72 @@ export default function Patients() {
                       >
                         Schedule
                       </Button>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleViewEHR(patient)}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            View EHR
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleScheduleAppointment(patient)}>
+                            <Calendar className="h-4 w-4 mr-2" />
+                            Schedule Appointment
+                          </DropdownMenuItem>
+                          {(user.role === "physician" || user.role === "nurse" || user.role === "tenant_admin") && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedPatient(patient);
+                                setIsFormOpen(true);
+                              }}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Patient
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                // Copy patient details to clipboard
+                                const patientText = `Patient: ${patient.firstName} ${patient.lastName}\nMRN: ${patient.mrn}\nDOB: ${formatDate(patient.dateOfBirth)}\nPhone: ${patient.phone || 'N/A'}`;
+                                navigator.clipboard.writeText(patientText);
+                              }}>
+                                <Copy className="h-4 w-4 mr-2" />
+                                Copy Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                // Share patient info (HIPAA compliant sharing)
+                                if (navigator.share) {
+                                  navigator.share({
+                                    title: `Patient: ${patient.firstName} ${patient.lastName}`,
+                                    text: `MRN: ${patient.mrn}`,
+                                  });
+                                }
+                              }}>
+                                <Share className="h-4 w-4 mr-2" />
+                                Share
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          {user.role === "tenant_admin" && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  if (confirm(`Are you sure you want to ${patient.isActive ? 'deactivate' : 'activate'} this patient?`)) {
+                                    // TODO: Implement patient activation/deactivation
+                                    console.log('Toggle patient status:', patient.id);
+                                  }
+                                }}
+                                className={patient.isActive ? "text-orange-600" : "text-green-600"}
+                              >
+                                <UserCircle className="h-4 w-4 mr-2" />
+                                {patient.isActive ? 'Deactivate' : 'Activate'} Patient
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </div>

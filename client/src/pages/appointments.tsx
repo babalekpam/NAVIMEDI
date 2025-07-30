@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, Clock, Plus, Search, Filter, MoreHorizontal, Eye, Edit, Phone, Mail, User as UserIcon, Activity, FileText } from "lucide-react";
+import { Calendar, Clock, Plus, Search, Filter, MoreHorizontal, Eye, Edit, Phone, Mail, User as UserIcon, Activity, FileText, Trash2, Copy, Share } from "lucide-react";
 import { Appointment, Patient, User, VitalSigns } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
@@ -13,6 +13,7 @@ import { AppointmentForm } from "@/components/forms/appointment-form";
 import { VitalSignsForm } from "@/components/forms/vital-signs-form";
 import { VisitSummaryForm } from "@/components/forms/visit-summary-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -437,9 +438,76 @@ export default function Appointments() {
                         <Edit className="h-4 w-4 mr-1" />
                         Update Status
                       </Button>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleViewDetails(appointment)}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleUpdateStatus(appointment)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Update Status
+                          </DropdownMenuItem>
+                          {(user?.role === "receptionist" || user?.role === "nurse" || user?.role === "tenant_admin" || user?.role === "super_admin") && (
+                            <DropdownMenuItem onClick={() => handleVitalSigns(appointment)}>
+                              <Activity className="h-4 w-4 mr-2" />
+                              Record Vital Signs
+                            </DropdownMenuItem>
+                          )}
+                          {(user?.role === "doctor" || user?.role === "physician" || user?.role === "nurse" || user?.role === "tenant_admin" || user?.role === "super_admin") && (
+                            <DropdownMenuItem onClick={() => handleVisitSummary(appointment)}>
+                              <FileText className="h-4 w-4 mr-2" />
+                              {appointment.status === "checked_in" || appointment.status === "in_progress" 
+                                ? "Complete Consultation" 
+                                : "Visit Summary"
+                              }
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => {
+                            // Copy appointment details to clipboard
+                            const appointmentText = `Appointment: ${getPatientName(appointment.patientId)}\nProvider: ${getProviderName(appointment.providerId)}\nDate: ${new Date(appointment.appointmentDate).toLocaleDateString()}\nTime: ${formatTime(appointment.appointmentDate.toString())}\nType: ${appointment.type}\nStatus: ${appointment.status}`;
+                            navigator.clipboard.writeText(appointmentText);
+                          }}>
+                            <Copy className="h-4 w-4 mr-2" />
+                            Copy Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            // Share appointment info
+                            if (navigator.share) {
+                              navigator.share({
+                                title: `Appointment: ${getPatientName(appointment.patientId)}`,
+                                text: `${new Date(appointment.appointmentDate).toLocaleDateString()} at ${formatTime(appointment.appointmentDate.toString())}`,
+                              });
+                            }
+                          }}>
+                            <Share className="h-4 w-4 mr-2" />
+                            Share
+                          </DropdownMenuItem>
+                          {(user?.role === "tenant_admin" || user?.role === "super_admin") && appointment.status === 'scheduled' && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  if (confirm('Are you sure you want to cancel this appointment?')) {
+                                    // TODO: Implement cancel appointment functionality
+                                    console.log('Cancel appointment:', appointment.id);
+                                  }
+                                }}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Cancel Appointment
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </div>

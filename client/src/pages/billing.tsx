@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Plus, Search, Filter, MoreHorizontal, FileText, CreditCard, X, Eye, Send, Calendar, CheckCircle, Clock, AlertCircle, Trash2, Calculator } from "lucide-react";
+import { DollarSign, Plus, Search, Filter, MoreHorizontal, FileText, CreditCard, X, Eye, Send, Calendar, CheckCircle, Clock, AlertCircle, Trash2, Calculator, Copy, Edit, Share, Download } from "lucide-react";
 import { InsuranceClaim, Patient, ServicePrice, InsuranceProvider, PatientInsurance, ClaimLineItem, insertInsuranceClaimSchema, insertClaimLineItemSchema } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -796,9 +797,79 @@ export default function Billing() {
                         </Button>
                       )}
                       {!isPhysician && (
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleViewClaim(claim)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                            {claim.status === 'draft' && (
+                              <DropdownMenuItem onClick={() => handleSubmitClaim(claim.id)}>
+                                <Send className="h-4 w-4 mr-2" />
+                                Submit Claim
+                              </DropdownMenuItem>
+                            )}
+                            {claim.status === 'approved' && !claim.paidAmount && (
+                              <DropdownMenuItem onClick={() => {
+                                // TODO: Implement record payment functionality
+                                console.log('Record payment for claim:', claim.id);
+                              }}>
+                                <Calculator className="h-4 w-4 mr-2" />
+                                Record Payment
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => {
+                              // Copy claim details to clipboard
+                              const claimText = `Claim: ${claim.claimNumber}\nPatient: ${getPatientName(claim.patientId)}\nTotal Amount: $${claim.totalAmount}\nStatus: ${claim.status}\nSubmitted: ${new Date(claim.createdAt).toLocaleDateString()}`;
+                              navigator.clipboard.writeText(claimText);
+                            }}>
+                              <Copy className="h-4 w-4 mr-2" />
+                              Copy Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              // Share claim info
+                              if (navigator.share) {
+                                navigator.share({
+                                  title: `Insurance Claim: ${claim.claimNumber}`,
+                                  text: `Total: $${claim.totalAmount} - Status: ${claim.status}`,
+                                });
+                              }
+                            }}>
+                              <Share className="h-4 w-4 mr-2" />
+                              Share
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              // Download claim as PDF (placeholder)
+                              console.log('Download claim PDF:', claim.id);
+                            }}>
+                              <Download className="h-4 w-4 mr-2" />
+                              Download PDF
+                            </DropdownMenuItem>
+                            {(user.role === "tenant_admin" || user.role === "super_admin") && claim.status === 'draft' && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={() => {
+                                    if (confirm('Are you sure you want to delete this draft claim?')) {
+                                      // TODO: Implement delete claim functionality
+                                      console.log('Delete claim:', claim.id);
+                                    }
+                                  }}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Draft
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       )}
                     </div>
                   </div>

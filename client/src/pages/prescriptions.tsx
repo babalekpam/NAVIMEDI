@@ -4,13 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Pill, Plus, Search, Filter, MoreHorizontal, AlertTriangle } from "lucide-react";
+import { Pill, Plus, Search, Filter, MoreHorizontal, AlertTriangle, Edit, Trash2, Copy, FileText, Share, Download } from "lucide-react";
 import { Prescription, Patient } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
 import { PrescriptionForm } from "@/components/forms/prescription-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const statusColors = {
@@ -365,9 +366,64 @@ export default function Prescriptions() {
                           Mark Picked Up
                         </Button>
                       )}
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedPrescription(prescription);
+                            setIsDetailsOpen(true);
+                          }}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
+                          {(user.role === "physician" || user.role === "tenant_admin") && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => {
+                                // Copy prescription details to clipboard
+                                const prescriptionText = `Prescription: ${prescription.medicationName}\nPatient: ${getPatientName(prescription.patientId)}\nDosage: ${prescription.dosage}\nQuantity: ${prescription.quantity}\nStatus: ${prescription.status}`;
+                                navigator.clipboard.writeText(prescriptionText);
+                              }}>
+                                <Copy className="h-4 w-4 mr-2" />
+                                Copy Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                // Share prescription info
+                                if (navigator.share) {
+                                  navigator.share({
+                                    title: `Prescription: ${prescription.medicationName}`,
+                                    text: `Patient: ${getPatientName(prescription.patientId)} - ${prescription.medicationName}`,
+                                  });
+                                }
+                              }}>
+                                <Share className="h-4 w-4 mr-2" />
+                                Share
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          {(user.role === "physician" || user.role === "tenant_admin") && prescription.status === 'prescribed' && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  if (confirm('Are you sure you want to cancel this prescription?')) {
+                                    // TODO: Implement cancel prescription functionality
+                                    console.log('Cancel prescription:', prescription.id);
+                                  }
+                                }}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Cancel Prescription
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </div>

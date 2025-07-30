@@ -2,7 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, Phone, Mail, MapPin, AlertTriangle, MoreHorizontal } from "lucide-react";
+import { Calendar, Phone, Mail, MapPin, AlertTriangle, MoreHorizontal, Edit, FileText, Share, Copy } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Patient } from "@shared/schema";
 
 interface PatientCardProps {
@@ -178,13 +179,48 @@ export const PatientCard = ({
             >
               Schedule
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onEditPatient}
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onViewDetails?.()}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  View EHR
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onScheduleAppointment?.()}>
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Schedule Appointment
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onEditPatient?.()}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Patient
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  // Copy patient details to clipboard
+                  const patientText = `Patient: ${patient.firstName} ${patient.lastName}\nMRN: ${patient.mrn}\nDOB: ${new Date(patient.dateOfBirth).toLocaleDateString()}\nPhone: ${patient.phone || 'N/A'}`;
+                  navigator.clipboard.writeText(patientText);
+                }}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Details
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  // Share patient info (HIPAA compliant sharing)
+                  if (navigator.share) {
+                    navigator.share({
+                      title: `Patient: ${patient.firstName} ${patient.lastName}`,
+                      text: `MRN: ${patient.mrn}`,
+                    });
+                  }
+                }}>
+                  <Share className="h-4 w-4 mr-2" />
+                  Share
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </CardContent>
