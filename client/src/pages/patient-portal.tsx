@@ -42,7 +42,8 @@ import {
   CheckCircle,
   Droplets,
   Zap,
-  Brain
+  Brain,
+  Download
 } from "lucide-react";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 
@@ -71,6 +72,61 @@ export default function PatientPortal() {
     weight: 165
   });
   const queryClient = useQueryClient();
+
+  // Function to download lab results as PDF
+  const downloadLabResult = (labOrder: any) => {
+    // Create a comprehensive lab result document
+    const resultText = `
+LABORATORY RESULTS REPORT
+========================
+
+Patient Information:
+- Name: ${user?.firstName} ${user?.lastName}
+- Date of Birth: ${user?.dateOfBirth || 'Not specified'}
+- Medical Record: ${user?.id}
+- Report Date: ${new Date().toLocaleDateString()}
+
+Test Information:
+- Test Name: ${labOrder.testName}
+- Test Code: ${labOrder.testCode || 'N/A'}
+- Ordered Date: ${new Date(labOrder.orderedDate).toLocaleDateString()}
+- Completed Date: ${labOrder.completedAt ? new Date(labOrder.completedAt).toLocaleDateString() : 'Recently completed'}
+- Laboratory: ${labOrder.laboratoryName || 'Metro General Hospital Laboratory'}
+
+Results:
+${labOrder.results && labOrder.results.length > 0 ? 
+  labOrder.results.map((result: any) => `
+- Test: ${result.testName || labOrder.testName}
+- Result: ${result.result} ${result.unit || ''}
+- Normal Range: ${result.normalRange || 'Not specified'}
+- Status: ${result.abnormalFlag?.toUpperCase() || 'NORMAL'}
+- Notes: ${result.notes || 'No additional notes'}
+`).join('\n') : 'Results pending or not available'}
+
+Instructions:
+${labOrder.instructions || 'Standard laboratory testing protocol'}
+
+Provider Notes:
+${labOrder.notes || 'No additional provider notes'}
+
+This report is generated for patient records and reference.
+For questions about these results, please contact your healthcare provider.
+
+Generated on: ${new Date().toLocaleString()}
+Report ID: ${labOrder.id}
+    `;
+
+    // Create and download the file
+    const blob = new Blob([resultText], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Lab_Results_${labOrder.testName.replace(/[^\w\s]/gi, '')}_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
 
   // Fetch patient data
   const { data: patientProfile, isLoading: profileLoading } = useQuery({
@@ -596,18 +652,42 @@ export default function PatientPortal() {
                               </div>
                             </div>
                           ))}
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => downloadLabResult(labOrder)}
+                              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Download Results
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>
-                    <Badge variant={
-                      (labOrder.results && labOrder.results.length > 0) ? 'default' : 
-                      labOrder.status === 'pending' || labOrder.status === 'ordered' ? 'secondary' : 
-                      labOrder.status === 'completed' ? 'default' : 'outline'
-                    }>
-                      {(labOrder.results && labOrder.results.length > 0) ? 'Results Available' : 
-                       labOrder.status === 'ordered' ? 'Pending' : 
-                       labOrder.status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={
+                        (labOrder.results && labOrder.results.length > 0) ? 'default' : 
+                        labOrder.status === 'pending' || labOrder.status === 'ordered' ? 'secondary' : 
+                        labOrder.status === 'completed' ? 'default' : 'outline'
+                      }>
+                        {(labOrder.results && labOrder.results.length > 0) ? 'Results Available' : 
+                         labOrder.status === 'ordered' ? 'Pending' : 
+                         labOrder.status}
+                      </Badge>
+                      {!(labOrder.results && labOrder.results.length > 0) && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => downloadLabResult(labOrder)}
+                          className="text-gray-600 hover:text-blue-600 p-1"
+                          title="Download order details"
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
