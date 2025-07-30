@@ -146,6 +146,8 @@ export default function LabOrders() {
       
       const labResultData = {
         labOrderId: completionLabOrder.id,
+        laboratoryId: tenant?.id, // Current laboratory tenant ID
+        patientId: completionLabOrder.patientId,
         testName: completionLabOrder.testName,
         result: data.result,
         normalRange: data.normalRange || undefined,
@@ -153,7 +155,9 @@ export default function LabOrders() {
         abnormalFlag: data.abnormalFlag,
         notes: data.notes || undefined,
         performedBy: data.performedBy,
-        resultDate: new Date().toISOString(),
+        status: 'completed',
+        completedAt: new Date().toISOString(),
+        reportedAt: new Date().toISOString(),
       };
       
       console.log("Completing lab order with data:", labResultData);
