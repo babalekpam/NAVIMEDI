@@ -180,9 +180,17 @@ export default function LabOrders() {
     },
     onError: (error: any) => {
       console.error("Lab completion failed:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
+      
+      // Try to extract more detailed error information
+      let errorMessage = error.message || "Failed to complete lab order. Please try again.";
+      if (error.errors && Array.isArray(error.errors)) {
+        errorMessage = `Validation errors: ${error.errors.map((e: any) => `${e.path?.join('.')}: ${e.message}`).join(', ')}`;
+      }
+      
       toast({
         title: "Lab Completion Failed",
-        description: error.message || "Failed to complete lab order. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }

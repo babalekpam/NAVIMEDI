@@ -2336,10 +2336,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/lab-results", authenticateToken, requireRole(["lab_technician", "physician", "tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
     try {
-      const labResultData = insertLabResultSchema.parse({
+      console.log("[LAB RESULTS] Received data:", JSON.stringify(req.body, null, 2));
+      console.log("[LAB RESULTS] Tenant ID:", req.tenantId);
+      
+      const dataToValidate = {
         ...req.body,
         tenantId: req.tenantId
-      });
+      };
+      
+      console.log("[LAB RESULTS] Data to validate:", JSON.stringify(dataToValidate, null, 2));
+      
+      const labResultData = insertLabResultSchema.parse(dataToValidate);
 
       const labResult = await storage.createLabResult(labResultData);
 
@@ -2390,7 +2397,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid lab result data", errors: error.errors });
+        console.error("[LAB RESULTS] Zod validation errors:", JSON.stringify(error.errors, null, 2));
+        return res.status(400).json({ 
+          message: "Invalid lab result data", 
+          errors: error.errors,
+          received: req.body,
+          schema_expected: "labOrderId, laboratoryId, patientId, testName are required"
+        });
       }
       console.error("Error creating lab result:", error);
       res.status(500).json({ message: "Failed to create lab result" });
