@@ -1,9 +1,14 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { TestTube, Plus, Search, Filter, MoreHorizontal, AlertCircle, CheckCircle, FileText, Calendar, User, Edit, Trash2, Copy, Download, Share } from "lucide-react";
 import { LabOrder, Patient, LabResult } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
@@ -12,6 +17,7 @@ import { LabOrderForm } from "@/components/forms/lab-order-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 const statusColors = {
   ordered: "bg-blue-100 text-blue-800",
@@ -27,6 +33,17 @@ const priorityColors = {
   stat: "bg-red-100 text-red-800",
 };
 
+const labCompletionSchema = z.object({
+  result: z.string().min(1, "Result is required"),
+  normalRange: z.string().optional(),
+  unit: z.string().optional(),
+  abnormalFlag: z.enum(["normal", "high", "low", "critical"]).default("normal"),
+  notes: z.string().optional(),
+  performedBy: z.string().min(1, "Performed by is required"),
+});
+
+type LabCompletionForm = z.infer<typeof labCompletionSchema>;
+
 export default function LabOrders() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -35,9 +52,24 @@ export default function LabOrders() {
   const [selectedLabOrder, setSelectedLabOrder] = useState<LabOrder | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isResultsOpen, setIsResultsOpen] = useState(false);
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+  const [completionLabOrder, setCompletionLabOrder] = useState<LabOrder | null>(null);
   const { user } = useAuth();
   const { tenant } = useTenant();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const completionForm = useForm<LabCompletionForm>({
+    resolver: zodResolver(labCompletionSchema),
+    defaultValues: {
+      result: "",
+      normalRange: "",
+      unit: "",
+      abnormalFlag: "normal",
+      notes: "",
+      performedBy: "",
+    },
+  });
 
   // Check if patient was selected from Quick Actions in medical records
   useEffect(() => {
@@ -92,6 +124,69 @@ export default function LabOrders() {
       alert(`Lab order failed: ${error.message || 'Unknown error'}`);
     }
   });
+
+  const handleCompleteLabOrder = (labOrder: LabOrder) => {
+    setCompletionLabOrder(labOrder);
+    completionForm.reset({
+      result: "",
+      normalRange: "",
+      unit: "",
+      abnormalFlag: "normal",
+      notes: "",
+      performedBy: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : "",
+    });
+    setIsCompleteDialogOpen(true);
+  };
+
+  const completeLabMutation = useMutation({
+    mutationFn: async (data: LabCompletionForm) => {
+      if (!completionLabOrder) throw new Error("No lab order selected");
+      
+      const { apiRequest } = await import("@/lib/queryClient");
+      
+      const labResultData = {
+        labOrderId: completionLabOrder.id,
+        testName: completionLabOrder.testName,
+        result: data.result,
+        normalRange: data.normalRange || undefined,
+        unit: data.unit || undefined,
+        abnormalFlag: data.abnormalFlag,
+        notes: data.notes || undefined,
+        performedBy: data.performedBy,
+        resultDate: new Date().toISOString(),
+      };
+      
+      console.log("Completing lab order with data:", labResultData);
+      
+      const response = await apiRequest("POST", "/api/lab-results", labResultData);
+      return response.json();
+    },
+    onSuccess: (result) => {
+      console.log("Lab order completed successfully:", result);
+      toast({
+        title: "Lab Completed Successfully",
+        description: `Results posted for ${completionLabOrder?.testName}. Order status updated to completed and results are now visible in patient portal.`,
+        variant: "default",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/lab-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/lab-results"] });
+      setIsCompleteDialogOpen(false);
+      setCompletionLabOrder(null);
+      completionForm.reset();
+    },
+    onError: (error: any) => {
+      console.error("Lab completion failed:", error);
+      toast({
+        title: "Lab Completion Failed",
+        description: error.message || "Failed to complete lab order. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const onCompleteSubmit = (data: LabCompletionForm) => {
+    completeLabMutation.mutate(data);
+  };
 
   const filteredLabOrders = labOrders.filter(labOrder => {
     const patient = patients.find(p => p.id === labOrder.patientId);
@@ -340,9 +435,15 @@ export default function LabOrders() {
                           View Results
                         </Button>
                       )}
-                      {user.role === "lab_technician" && labOrder.status !== 'completed' && (
-                        <Button variant="ghost" size="sm" className="text-teal-600 hover:text-teal-700">
-                          Update Status
+                      {tenant?.type === 'laboratory' && labOrder.status !== 'completed' && (
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          className="bg-green-600 text-white hover:bg-green-700"
+                          onClick={() => handleCompleteLabOrder(labOrder)}
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          Complete Lab
                         </Button>
                       )}
                       <DropdownMenu>
@@ -689,6 +790,182 @@ export default function LabOrders() {
                   </Button>
                 )}
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Lab Completion Dialog */}
+      <Dialog open={isCompleteDialogOpen} onOpenChange={setIsCompleteDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+              Complete Lab Order
+            </DialogTitle>
+          </DialogHeader>
+          {completionLabOrder && (
+            <div className="space-y-6">
+              {/* Order Summary */}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-2">Order Summary</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Test Name</p>
+                    <p className="font-medium">{completionLabOrder.testName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Patient</p>
+                    <p className="font-medium">{getPatientName(completionLabOrder.patientId)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Order Date</p>
+                    <p className="font-medium">{new Date(completionLabOrder.orderedDate || '').toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Priority</p>
+                    <Badge 
+                      variant="secondary"
+                      className={priorityColors[completionLabOrder.priority as keyof typeof priorityColors] || priorityColors.routine}
+                    >
+                      {(completionLabOrder.priority || 'routine').toUpperCase()}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Results Form */}
+              <Form {...completionForm}>
+                <form onSubmit={completionForm.handleSubmit(onCompleteSubmit)} className="space-y-4">
+                  <FormField
+                    control={completionForm.control}
+                    name="result"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Test Result *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="95.5" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={completionForm.control}
+                      name="unit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Unit</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="mg/dL" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={completionForm.control}
+                      name="normalRange"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Normal Range</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="70-100 mg/dL" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={completionForm.control}
+                    name="abnormalFlag"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Result Flag</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select result flag" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="normal">Normal</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="critical">Critical</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={completionForm.control}
+                    name="performedBy"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Performed By *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Lab Technician Name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={completionForm.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Clinical Notes (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            placeholder="Additional clinical notes or observations..."
+                            rows={3}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex justify-end space-x-3 pt-4 border-t">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsCompleteDialogOpen(false)}
+                      disabled={completeLabMutation.isPending}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      className="bg-green-600 hover:bg-green-700"
+                      disabled={completeLabMutation.isPending}
+                    >
+                      {completeLabMutation.isPending ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                          Completing Lab...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Complete Lab & Post Results
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
             </div>
           )}
         </DialogContent>
