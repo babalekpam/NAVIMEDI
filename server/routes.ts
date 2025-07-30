@@ -1206,12 +1206,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/lab-orders", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
+      console.log("[LAB ORDER] Full request body:", JSON.stringify(req.body, null, 2));
+      
       // Handle multiple lab orders from form
       if (req.body.labOrders && Array.isArray(req.body.labOrders)) {
         const { labOrders, laboratoryId } = req.body;
+        console.log("[LAB ORDER] Processing", labOrders.length, "lab orders for laboratory:", laboratoryId);
         const createdOrders = [];
         
         for (const orderData of labOrders) {
+          console.log("[LAB ORDER] Processing order data:", orderData);
+          
           const labOrderData = {
             ...orderData,
             tenantId: req.tenant!.id,
