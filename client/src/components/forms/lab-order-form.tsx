@@ -112,6 +112,22 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
   }, [form]);
 
   const handleSubmit = (data: any) => {
+    console.log("Form data received:", data);
+    
+    // Validate required fields
+    if (!data.patientId) {
+      console.error("Missing patientId");
+      return;
+    }
+    if (!data.laboratoryId) {
+      console.error("Missing laboratoryId");
+      return;
+    }
+    if (!data.orders || data.orders.length === 0) {
+      console.error("Missing orders");
+      return;
+    }
+
     // Transform data to create multiple lab orders with laboratory assignment
     const labOrders = data.orders.map((order: any) => ({
       patientId: data.patientId,
@@ -119,9 +135,11 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
       testCode: order.testCode || "",
       instructions: `${order.instructions || ""} ${data.generalInstructions || ""}`.trim(),
       priority: order.priority,
-      status: "ordered",
-      labTenantId: data.laboratoryId // Add laboratory tenant ID to each order
+      status: "ordered"
     }));
+    
+    console.log("Transformed lab orders:", labOrders);
+    console.log("Laboratory ID:", data.laboratoryId);
     
     onSubmit({ 
       labOrders, 

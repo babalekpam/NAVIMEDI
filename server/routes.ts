@@ -1221,7 +1221,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             labTenantId: laboratoryId // Use selected laboratory
           };
 
+          console.log("[LAB ORDER] Validating data:", labOrderData);
           const validatedData = insertLabOrderSchema.parse(labOrderData);
+          console.log("[LAB ORDER] Validated data:", validatedData);
           const labOrder = await storage.createLabOrder(validatedData);
           
           console.log(`[LAB ORDER] Created lab order ${labOrder.id} for patient ${labOrder.patientId} -> Laboratory: ${laboratoryId}`);
@@ -1242,38 +1244,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         res.status(201).json(createdOrders);
       } else {
-        // Handle single lab order (backward compatibility)
-        const requestData = { ...req.body };
-        if (requestData.orderedDate && typeof requestData.orderedDate === 'string') {
-          requestData.orderedDate = new Date(requestData.orderedDate);
-        }
-        
-        const labOrderData = {
-          ...requestData,
-          tenantId: req.tenant!.id,
-          providerId: req.user!.id,
-          orderedDate: requestData.orderedDate || new Date(),
-          appointmentId: requestData.appointmentId || null,
-          labTenantId: requestData.labTenantId || null
-        };
-
-        const validatedData = insertLabOrderSchema.parse(labOrderData);
-        const labOrder = await storage.createLabOrder(validatedData);
-
-        // Create audit log
-        await storage.createAuditLog({
-          tenantId: req.tenant!.id,
-          userId: req.user!.id,
-          entityType: "lab_order",
-          entityId: labOrder.id,
-          action: "create",
-          newData: labOrder,
-          ipAddress: req.ip || null,
-          userAgent: req.get("User-Agent") || null
-        });
-
-        console.log(`[LAB ORDER] Created lab order ${labOrder.id} by ${req.user!.role} for patient ${labOrder.patientId}`);
-        res.status(201).json(labOrder);
+        // Handle single lab order (backward compatibility) - this should not be used by the new form
+        console.log("[LAB ORDER] Single order mode - body:", req.body);
+        res.status(400).json({ message: "Single lab order mode deprecated. Use labOrders array format." });
       }
     } catch (error) {
       console.error("Create lab order error:", error);

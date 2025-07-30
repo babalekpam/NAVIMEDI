@@ -67,14 +67,21 @@ export default function LabOrders() {
     mutationFn: async (data: any) => {
       const { apiRequest } = await import("@/lib/queryClient");
       
+      console.log("Sending lab order data to API:", data);
+      
       // Send the complete data structure to the backend
       const response = await apiRequest("POST", "/api/lab-orders", data);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log("Lab order created successfully:", result);
       queryClient.invalidateQueries({ queryKey: ["/api/lab-orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/lab-order-assignments"] });
       setIsFormOpen(false);
+    },
+    onError: (error: any) => {
+      console.error("Lab order creation failed:", error);
+      alert(`Lab order failed: ${error.message || 'Unknown error'}`);
     }
   });
 
