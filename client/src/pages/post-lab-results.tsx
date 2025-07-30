@@ -32,14 +32,21 @@ export default function PostLabResults() {
   const queryClient = useQueryClient();
 
   // Get pending lab orders for this laboratory
-  const { data: labOrders = [], isLoading } = useQuery({
+  const { data: allLabOrders = [], isLoading, error } = useQuery({
     queryKey: ["/api/lab-orders/laboratory", "pending"], 
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/lab-orders/laboratory?archived=false");
-      return response.json();
+      const data = await response.json();
+      console.log("Lab orders fetched:", data);
+      return data;
     },
     enabled: true,
   });
+
+  // Filter for orders that haven't been completed yet
+  const labOrders = allLabOrders.filter((order: any) => 
+    order.status !== "completed" && order.status !== "cancelled"
+  );
 
   // Get selected order details
   const { data: selectedOrder } = useQuery({
@@ -73,15 +80,13 @@ export default function PostLabResults() {
 
   const postResultMutation = useMutation({
     mutationFn: async (data: LabResultForm & { labOrderId: string; patientId: string }) => {
-      return apiRequest(`/api/lab-results`, {
-        method: "POST",
-        body: JSON.stringify({
-          ...data,
-          status: "completed",
-          completedAt: new Date().toISOString(),
-          reportedAt: new Date().toISOString(),
-        }),
+      const response = await apiRequest("POST", "/api/lab-results", {
+        ...data,
+        status: "completed",
+        completedAt: new Date().toISOString(),
+        reportedAt: new Date().toISOString(),
       });
+      return response.json();
     },
     onSuccess: (response) => {
       toast({
@@ -176,7 +181,16 @@ export default function PostLabResults() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {labOrders.length === 0 ? (
+              <div className="text-xs text-gray-500 mb-2">
+                Debug: Total: {allLabOrders.length}, Pending: {labOrders.length}
+                {error && <span className="text-red-500"> | Error: {error.message}</span>}
+              </div>
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <TestTube className="h-12 w-12 mx-auto text-gray-400 animate-pulse" />
+                  <p className="mt-2 text-gray-500">Loading lab orders...</p>
+                </div>
+              ) : labOrders.length === 0 ? (
                 <div className="text-center py-8">
                   <TestTube className="h-12 w-12 mx-auto text-gray-300" />
                   <p className="mt-2 text-gray-500">No pending lab orders</p>
