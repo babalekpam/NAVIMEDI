@@ -1107,7 +1107,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let labOrders;
       if (forLaboratory === 'true') {
         // Laboratory viewing orders sent to them
+        console.log(`[LAB ORDERS] Laboratory ${tenantId} requesting orders sent to them`);
         labOrders = await storage.getLabOrdersForLaboratory(tenantId);
+        console.log(`[LAB ORDERS] Found ${labOrders.length} orders for laboratory ${tenantId}`);
       } else if (patientMrn) {
         // Search by patient MRN (for laboratories to find patient orders using hospital-assigned ID)
         labOrders = await storage.getLabOrdersByPatientMrn(patientMrn as string);

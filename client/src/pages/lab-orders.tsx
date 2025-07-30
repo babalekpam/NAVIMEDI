@@ -49,7 +49,14 @@ export default function LabOrders() {
   }, []);
 
   const { data: labOrders = [], isLoading } = useQuery<LabOrder[]>({
-    queryKey: ["/api/lab-orders"],
+    queryKey: tenant?.type === 'laboratory' ? ["/api/lab-orders", { forLaboratory: 'true' }] : ["/api/lab-orders"],
+    queryFn: async () => {
+      const { apiRequest } = await import("@/lib/queryClient");
+      const url = tenant?.type === 'laboratory' ? "/api/lab-orders?forLaboratory=true" : "/api/lab-orders";
+      console.log(`[LAB ORDERS] Fetching orders for ${tenant?.type} using URL:`, url);
+      const response = await apiRequest("GET", url);
+      return response.json();
+    },
     enabled: !!user && !!tenant,
   });
 
