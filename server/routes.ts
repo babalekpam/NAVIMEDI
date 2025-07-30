@@ -1126,49 +1126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/lab-orders", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
-    try {
-      // Convert string dates to Date objects and prepare data
-      const requestData = { ...req.body };
-      if (requestData.orderedDate && typeof requestData.orderedDate === 'string') {
-        requestData.orderedDate = new Date(requestData.orderedDate);
-      }
-      
-      const labOrderData = {
-        ...requestData,
-        tenantId: req.tenant!.id,
-        providerId: req.user!.id,
-        orderedDate: requestData.orderedDate || new Date(),
-        appointmentId: requestData.appointmentId || null,
-        labTenantId: requestData.labTenantId || null
-      };
-
-      const validatedData = insertLabOrderSchema.parse(labOrderData);
-
-      const labOrder = await storage.createLabOrder(validatedData);
-
-      // Create audit log
-      await storage.createAuditLog({
-        tenantId: req.tenant!.id,
-        userId: req.user!.id,
-        entityType: "lab_order",
-        entityId: labOrder.id,
-        action: "create",
-        previousData: null,
-        newData: labOrder,
-        ipAddress: req.ip || null,
-        userAgent: req.get("User-Agent") || null
-      });
-
-      res.status(201).json(labOrder);
-    } catch (error) {
-      console.error("Create lab order error:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+  // REMOVED - Old single lab order route replaced by new multi-order route below
 
   // Lab Orders management routes
   app.use("/api/lab-orders", requireTenant);
