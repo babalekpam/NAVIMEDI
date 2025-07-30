@@ -72,6 +72,7 @@ import AWSIntegration from "@/pages/videos/aws-integration";
 import PostLabResults from "@/pages/post-lab-results";
 import LabResults from "@/pages/lab-results";
 import PatientPortal from "@/pages/patient-portal";
+import PatientPortalStaff from "@/pages/patient-portal-staff";
 import PatientPortalPublic from "@/pages/patient-portal-public";
 import TelemedicineBooking from "@/pages/telemedicine-booking";
 import PatientLogin from "@/pages/patient-login";
@@ -183,6 +184,11 @@ function AppContent() {
             <PatientPortal />
           </ProtectedRoute>
         </Route>
+        <Route path="/patient-portal-staff">
+          <ProtectedRoute>
+            <PatientPortalStaff />
+          </ProtectedRoute>
+        </Route>
         <Route path="/patient-portal-public">
           <PatientPortalPublic />
         </Route>
@@ -198,11 +204,6 @@ function AppContent() {
         </Route>
         <Route path="/patient-login">
           <PatientLogin />
-        </Route>
-        <Route path="/patient-portal">
-          <ProtectedRoute>
-            <PatientPortal />
-          </ProtectedRoute>
         </Route>
         <Route path="/billing">
           <ProtectedRoute>

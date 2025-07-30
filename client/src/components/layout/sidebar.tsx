@@ -306,7 +306,7 @@ export const Sidebar = () => {
             {(user.role === "physician" || user.role === "nurse" || user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director") && (
               <Button 
                 className="w-full bg-green-600 hover:bg-green-700 text-white shadow-md"
-                onClick={() => setLocation("/patient-portal")}
+                onClick={() => setLocation("/patient-portal-staff")}
                 title="Access patient portal to view from patient perspective"
               >
                 <Users className="h-4 w-4 mr-2" />
