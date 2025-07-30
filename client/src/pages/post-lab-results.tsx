@@ -33,13 +33,21 @@ export default function PostLabResults() {
 
   // Get pending lab orders for this laboratory
   const { data: labOrders = [], isLoading } = useQuery({
-    queryKey: ["/api/lab-orders/laboratory"],
+    queryKey: ["/api/lab-orders/laboratory", "pending"], 
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/lab-orders/laboratory?archived=false");
+      return response.json();
+    },
     enabled: true,
   });
 
   // Get selected order details
   const { data: selectedOrder } = useQuery({
     queryKey: ["/api/lab-orders", selectedOrderId],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/lab-orders/${selectedOrderId}`);
+      return response.json();
+    },
     enabled: !!selectedOrderId,
   });
 
