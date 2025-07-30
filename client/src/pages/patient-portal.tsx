@@ -553,38 +553,60 @@ export default function PatientPortal() {
                       <p className="text-sm text-gray-500 mt-1">
                         Ordered: {new Date(labOrder.createdAt).toLocaleDateString()}
                       </p>
-                      {labOrder.hasResults && labOrder.results && labOrder.results.length > 0 && (
+                      {labOrder.results && labOrder.results.length > 0 && (
                         <div className="mt-2 space-y-1">
+                          <div className="text-sm font-medium text-green-600 mb-2">
+                            ✓ Results Available
+                          </div>
                           {labOrder.results.map((result: any, idx: number) => (
-                            <div key={idx} className="text-sm p-2 bg-gray-50 rounded">
-                              <div className="flex justify-between">
-                                <span className="font-medium">{result.testName}:</span>
-                                <span className={`font-bold ${
-                                  result.abnormalFlag === 'critical' ? 'text-red-600' :
-                                  result.abnormalFlag === 'high' ? 'text-orange-600' :
-                                  result.abnormalFlag === 'low' ? 'text-yellow-600' :
-                                  'text-green-600'
-                                }`}>
-                                  {result.result} {result.unit}
-                                </span>
+                            <div key={idx} className="text-sm p-3 bg-green-50 border border-green-200 rounded-lg">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <span className="font-medium text-gray-900">{result.testName || labOrder.testName}</span>
+                                  <div className="mt-1">
+                                    <span className={`font-bold text-lg ${
+                                      result.abnormalFlag === 'critical' ? 'text-red-600' :
+                                      result.abnormalFlag === 'high' ? 'text-orange-600' :
+                                      result.abnormalFlag === 'low' ? 'text-blue-600' :
+                                      'text-green-600'
+                                    }`}>
+                                      {result.result} {result.unit}
+                                    </span>
+                                    {result.normalRange && (
+                                      <p className="text-xs text-gray-500 mt-1">Normal Range: {result.normalRange}</p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="ml-4 text-right">
+                                  <div className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                                    result.abnormalFlag === 'critical' ? 'bg-red-100 text-red-800' :
+                                    result.abnormalFlag === 'high' ? 'bg-orange-100 text-orange-800' :
+                                    result.abnormalFlag === 'low' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-green-100 text-green-800'
+                                  }`}>
+                                    {result.abnormalFlag?.toUpperCase() || 'NORMAL'}
+                                  </div>
+                                </div>
                               </div>
-                              {result.normalRange && (
-                                <p className="text-xs text-gray-500">Normal: {result.normalRange}</p>
-                              )}
                               {result.notes && (
-                                <p className="text-xs text-gray-600 mt-1">{result.notes}</p>
+                                <p className="text-xs text-gray-600 mt-2 p-2 bg-gray-50 rounded">{result.notes}</p>
                               )}
+                              <div className="mt-2 text-xs text-gray-500">
+                                Completed: {result.completedAt ? new Date(result.completedAt).toLocaleDateString() : 'Recently completed'}
+                              </div>
                             </div>
                           ))}
                         </div>
                       )}
                     </div>
                     <Badge variant={
-                      labOrder.hasResults ? 'default' : 
-                      labOrder.status === 'pending' ? 'secondary' : 
+                      (labOrder.results && labOrder.results.length > 0) ? 'default' : 
+                      labOrder.status === 'pending' || labOrder.status === 'ordered' ? 'secondary' : 
                       labOrder.status === 'completed' ? 'default' : 'outline'
                     }>
-                      {labOrder.hasResults ? 'Results Available' : labOrder.status}
+                      {(labOrder.results && labOrder.results.length > 0) ? 'Results Available' : 
+                       labOrder.status === 'ordered' ? 'Pending' : 
+                       labOrder.status}
                     </Badge>
                   </div>
                 </div>
