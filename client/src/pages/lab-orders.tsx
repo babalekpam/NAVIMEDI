@@ -82,11 +82,20 @@ export default function LabOrders() {
   }, []);
 
   const { data: labOrders = [], isLoading } = useQuery<LabOrder[]>({
-    queryKey: tenant?.type === 'laboratory' ? ["/api/lab-orders", { forLaboratory: 'true' }] : ["/api/lab-orders"],
+    queryKey: tenant?.type === 'laboratory' 
+      ? ["/api/lab-orders", { forLaboratory: 'true', archived: statusFilter === 'archived' ? 'true' : 'false' }] 
+      : ["/api/lab-orders", { archived: statusFilter === 'archived' ? 'true' : 'false' }],
     queryFn: async () => {
       const { apiRequest } = await import("@/lib/queryClient");
-      const url = tenant?.type === 'laboratory' ? "/api/lab-orders?forLaboratory=true" : "/api/lab-orders";
-      console.log(`[LAB ORDERS] Fetching orders for ${tenant?.type} using URL:`, url);
+      const params = new URLSearchParams();
+      if (tenant?.type === 'laboratory') {
+        params.append('forLaboratory', 'true');
+      }
+      if (statusFilter === 'archived') {
+        params.append('archived', 'true');
+      }
+      const url = `/api/lab-orders?${params.toString()}`;
+      console.log(`[LAB ORDERS] Fetching ${statusFilter === 'archived' ? 'archived' : 'active'} orders for ${tenant?.type} using URL:`, url);
       const response = await apiRequest("GET", url);
       return response.json();
     },
@@ -279,12 +288,11 @@ export default function LabOrders() {
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="all">All Active</SelectItem>
                 <SelectItem value="ordered">Ordered</SelectItem>
                 <SelectItem value="collected">Collected</SelectItem>
                 <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="archived">View Archived</SelectItem>
               </SelectContent>
             </Select>
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>

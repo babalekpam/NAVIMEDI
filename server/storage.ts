@@ -968,8 +968,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getLabOrdersByTenant(tenantId: string): Promise<LabOrder[]> {
-    return await db.select().from(labOrders).where(eq(labOrders.tenantId, tenantId))
-      .orderBy(desc(labOrders.orderedDate));
+    // For hospitals/clinics, show only pending orders by default (exclude completed/cancelled)
+    return await db.select().from(labOrders).where(
+      and(
+        eq(labOrders.tenantId, tenantId),
+        sql`${labOrders.status} NOT IN ('completed', 'cancelled')`
+      )
+    ).orderBy(desc(labOrders.orderedDate));
+  }
+
+  async getArchivedLabOrdersByTenant(tenantId: string): Promise<LabOrder[]> {
+    // For hospitals/clinics, show only completed/cancelled orders
+    return await db.select().from(labOrders).where(
+      and(
+        eq(labOrders.tenantId, tenantId),
+        sql`${labOrders.status} IN ('completed', 'cancelled')`
+      )
+    ).orderBy(desc(labOrders.orderedDate));
   }
 
   // Get lab orders sent TO a specific laboratory (cross-tenant)
@@ -1044,9 +1059,43 @@ export class DatabaseStorage implements IStorage {
 
   // Laboratory workflow methods - simplified to avoid query complexity issues
   async getLabOrdersForLaboratory(tenantId: string): Promise<any[]> {
-    // Get basic lab orders sent to this laboratory
+    // Get basic lab orders sent to this laboratory (exclude completed ones for active view)
     const orders = await db.select().from(labOrders)
-      .where(eq(labOrders.labTenantId, tenantId))
+      .where(
+        and(
+          eq(labOrders.labTenantId, tenantId),
+          sql`${labOrders.status} NOT IN ('completed', 'cancelled')`
+        )
+      )
+      .orderBy(desc(labOrders.orderedDate));
+      
+    // Enrich with patient and hospital information
+    const enrichedOrders = await Promise.all(orders.map(async (order) => {
+      const patient = await db.select().from(patients).where(eq(patients.id, order.patientId)).limit(1);
+      const hospital = await db.select().from(tenants).where(eq(tenants.id, order.tenantId)).limit(1);
+      
+      return {
+        ...order,
+        patientMrn: patient[0]?.mrn,
+        patientFirstName: patient[0]?.firstName,
+        patientLastName: patient[0]?.lastName,
+        patientDateOfBirth: patient[0]?.dateOfBirth,
+        originatingHospital: hospital[0]?.name
+      };
+    }));
+    
+    return enrichedOrders;
+  }
+
+  async getArchivedLabOrdersForLaboratory(tenantId: string): Promise<any[]> {
+    // Get completed/cancelled lab orders sent to this laboratory
+    const orders = await db.select().from(labOrders)
+      .where(
+        and(
+          eq(labOrders.labTenantId, tenantId),
+          sql`${labOrders.status} IN ('completed', 'cancelled')`
+        )
+      )
       .orderBy(desc(labOrders.orderedDate));
       
     // Enrich with patient and hospital information

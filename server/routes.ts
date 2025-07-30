@@ -1101,15 +1101,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Lab order management routes
   app.get("/api/lab-orders", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const { patientId, pending, forLaboratory, patientMrn } = req.query;
+      const { patientId, pending, forLaboratory, patientMrn, archived } = req.query;
       const tenantId = req.tenant!.id;
 
       let labOrders;
       if (forLaboratory === 'true') {
         // Laboratory viewing orders sent to them
-        console.log(`[LAB ORDERS] Laboratory ${tenantId} requesting orders sent to them`);
-        labOrders = await storage.getLabOrdersForLaboratory(tenantId);
-        console.log(`[LAB ORDERS] Found ${labOrders.length} orders for laboratory ${tenantId}`);
+        if (archived === 'true') {
+          console.log(`[LAB ORDERS] Laboratory ${tenantId} requesting archived orders`);
+          labOrders = await storage.getArchivedLabOrdersForLaboratory(tenantId);
+        } else {
+          console.log(`[LAB ORDERS] Laboratory ${tenantId} requesting active orders sent to them`);
+          labOrders = await storage.getLabOrdersForLaboratory(tenantId);
+        }
+        console.log(`[LAB ORDERS] Found ${labOrders.length} ${archived === 'true' ? 'archived' : 'active'} orders for laboratory ${tenantId}`);
       } else if (patientMrn) {
         // Search by patient MRN (for laboratories to find patient orders using hospital-assigned ID)
         labOrders = await storage.getLabOrdersByPatientMrn(patientMrn as string);
@@ -1117,6 +1122,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         labOrders = await storage.getLabOrdersByPatient(patientId as string, tenantId);
       } else if (pending === "true") {
         labOrders = await storage.getPendingLabOrders(tenantId);
+      } else if (archived === 'true') {
+        labOrders = await storage.getArchivedLabOrdersByTenant(tenantId);
       } else {
         labOrders = await storage.getLabOrdersByTenant(tenantId);
       }
