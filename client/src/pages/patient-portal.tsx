@@ -548,17 +548,43 @@ export default function PatientPortal() {
                 <div key={labOrder.id} className="border rounded-lg p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg">{labOrder.testType}</h3>
+                      <h3 className="font-semibold text-lg">{labOrder.testName}</h3>
                       <p className="text-gray-600">{labOrder.notes || 'No additional notes'}</p>
                       <p className="text-sm text-gray-500 mt-1">
-                        Ordered: {new Date(labOrder.orderDate).toLocaleDateString()}
+                        Ordered: {new Date(labOrder.createdAt).toLocaleDateString()}
                       </p>
+                      {labOrder.hasResults && labOrder.results && labOrder.results.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {labOrder.results.map((result: any, idx: number) => (
+                            <div key={idx} className="text-sm p-2 bg-gray-50 rounded">
+                              <div className="flex justify-between">
+                                <span className="font-medium">{result.testName}:</span>
+                                <span className={`font-bold ${
+                                  result.abnormalFlag === 'critical' ? 'text-red-600' :
+                                  result.abnormalFlag === 'high' ? 'text-orange-600' :
+                                  result.abnormalFlag === 'low' ? 'text-yellow-600' :
+                                  'text-green-600'
+                                }`}>
+                                  {result.result} {result.unit}
+                                </span>
+                              </div>
+                              {result.normalRange && (
+                                <p className="text-xs text-gray-500">Normal: {result.normalRange}</p>
+                              )}
+                              {result.notes && (
+                                <p className="text-xs text-gray-600 mt-1">{result.notes}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <Badge variant={
-                      labOrder.status === 'completed' ? 'default' : 
-                      labOrder.status === 'pending' ? 'secondary' : 'outline'
+                      labOrder.hasResults ? 'default' : 
+                      labOrder.status === 'pending' ? 'secondary' : 
+                      labOrder.status === 'completed' ? 'default' : 'outline'
                     }>
-                      {labOrder.status}
+                      {labOrder.hasResults ? 'Results Available' : labOrder.status}
                     </Badge>
                   </div>
                 </div>
