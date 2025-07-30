@@ -481,6 +481,12 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(tenants).where(eq(tenants.isActive, true));
   }
 
+  async getTenantsByType(tenantType: string): Promise<Tenant[]> {
+    return await db.select().from(tenants).where(
+      and(eq(tenants.type, tenantType as any), eq(tenants.isActive, true))
+    );
+  }
+
   // Patient management
   async getPatient(id: string, tenantId: string): Promise<Patient | undefined> {
     const [patient] = await db.select().from(patients).where(
@@ -969,6 +975,20 @@ export class DatabaseStorage implements IStorage {
   async getLabOrdersByTenant(tenantId: string): Promise<LabOrder[]> {
     return await db.select().from(labOrders).where(eq(labOrders.tenantId, tenantId))
       .orderBy(desc(labOrders.orderedDate));
+  }
+
+  // Get lab orders sent TO a specific laboratory (cross-tenant)
+  async getLabOrdersByLabTenant(labTenantId: string): Promise<LabOrder[]> {
+    return await db.select().from(labOrders).where(eq(labOrders.labTenantId, labTenantId))
+      .orderBy(desc(labOrders.orderedDate));
+  }
+
+  // Get patient record by user ID (for patient portal)
+  async getPatientByUserId(userId: string, tenantId: string): Promise<Patient | undefined> {
+    const [patient] = await db.select().from(patients).where(
+      and(eq(patients.userId, userId), eq(patients.tenantId, tenantId))
+    );
+    return patient || undefined;
   }
 
   // Get lab orders sent to a specific laboratory (cross-tenant)

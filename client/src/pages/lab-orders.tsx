@@ -67,24 +67,9 @@ export default function LabOrders() {
     mutationFn: async (data: any) => {
       const { apiRequest } = await import("@/lib/queryClient");
       
-      if (data.labOrders && Array.isArray(data.labOrders)) {
-        // Handle multiple lab orders with laboratory assignment
-        const results = await Promise.all(
-          data.labOrders.map((labOrder: any) => 
-            apiRequest("POST", "/api/lab-orders", labOrder).then(res => res.json())
-          )
-        );
-        
-        // Skip laboratory assignments for now to avoid validation errors
-        // Note: Lab assignments can be added later if needed
-        console.log('Lab orders created successfully without assignments:', results);
-        
-        return results;
-      } else {
-        // Handle single lab order (backward compatibility)
-        const response = await apiRequest("POST", "/api/lab-orders", data);
-        return response.json();
-      }
+      // Send the complete data structure to the backend
+      const response = await apiRequest("POST", "/api/lab-orders", data);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/lab-orders"] });

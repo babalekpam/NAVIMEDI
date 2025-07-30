@@ -13,10 +13,10 @@ import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-// Schema for multiple lab orders with optional laboratory assignment
+// Schema for multiple lab orders with required laboratory assignment
 const multipleLabOrderSchema = z.object({
   patientId: z.string().min(1, "Please select a patient"),
-  laboratoryId: z.string().optional(), // Make laboratory optional for now
+  laboratoryId: z.string().min(1, "Please select a laboratory"), // Make laboratory required
   orders: z.array(z.object({
     testName: z.string().min(1, "Test name is required"),
     testCode: z.string().optional(),
@@ -115,7 +115,8 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
       testCode: order.testCode || "",
       instructions: `${order.instructions || ""} ${data.generalInstructions || ""}`.trim(),
       priority: order.priority,
-      status: "ordered"
+      status: "ordered",
+      labTenantId: data.laboratoryId // Add laboratory tenant ID to each order
     }));
     
     onSubmit({ 

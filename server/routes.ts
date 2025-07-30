@@ -1183,41 +1183,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get available laboratories for lab order routing
+  app.get("/api/laboratories/active", requireTenant, async (req, res) => {
+    try {
+      const laboratories = await storage.getTenantsByType("laboratory");
+      const activeLabs = laboratories.filter(lab => lab.isActive).map(lab => ({
+        id: lab.id,
+        name: lab.name,
+        subdomain: lab.subdomain,
+        address: lab.address,
+        phoneNumber: lab.phoneNumber,
+        description: lab.description
+      }));
+      
+      console.log(`[LABORATORIES] Found ${activeLabs.length} active laboratories for routing`);
+      res.json(activeLabs);
+    } catch (error) {
+      console.error("Get laboratories error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/lab-orders", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
-      // Convert string dates to Date objects and prepare data
-      const requestData = { ...req.body };
-      if (requestData.orderedDate && typeof requestData.orderedDate === 'string') {
-        requestData.orderedDate = new Date(requestData.orderedDate);
+      // Handle multiple lab orders from form
+      if (req.body.labOrders && Array.isArray(req.body.labOrders)) {
+        const { labOrders, laboratoryId } = req.body;
+        const createdOrders = [];
+        
+        for (const orderData of labOrders) {
+          const labOrderData = {
+            ...orderData,
+            tenantId: req.tenant!.id,
+            providerId: req.user!.id,
+            orderedDate: new Date(),
+            appointmentId: orderData.appointmentId || null,
+            labTenantId: laboratoryId // Use selected laboratory
+          };
+
+          const validatedData = insertLabOrderSchema.parse(labOrderData);
+          const labOrder = await storage.createLabOrder(validatedData);
+          
+          console.log(`[LAB ORDER] Created lab order ${labOrder.id} for patient ${labOrder.patientId} -> Laboratory: ${laboratoryId}`);
+          createdOrders.push(labOrder);
+
+          // Create audit log for each order
+          await storage.createAuditLog({
+            tenantId: req.tenant!.id,
+            userId: req.user!.id,
+            entityType: "lab_order",
+            entityId: labOrder.id,
+            action: "create",
+            newData: labOrder,
+            ipAddress: req.ip || null,
+            userAgent: req.get("User-Agent") || null
+          });
+        }
+        
+        res.status(201).json(createdOrders);
+      } else {
+        // Handle single lab order (backward compatibility)
+        const requestData = { ...req.body };
+        if (requestData.orderedDate && typeof requestData.orderedDate === 'string') {
+          requestData.orderedDate = new Date(requestData.orderedDate);
+        }
+        
+        const labOrderData = {
+          ...requestData,
+          tenantId: req.tenant!.id,
+          providerId: req.user!.id,
+          orderedDate: requestData.orderedDate || new Date(),
+          appointmentId: requestData.appointmentId || null,
+          labTenantId: requestData.labTenantId || null
+        };
+
+        const validatedData = insertLabOrderSchema.parse(labOrderData);
+        const labOrder = await storage.createLabOrder(validatedData);
+
+        // Create audit log
+        await storage.createAuditLog({
+          tenantId: req.tenant!.id,
+          userId: req.user!.id,
+          entityType: "lab_order",
+          entityId: labOrder.id,
+          action: "create",
+          newData: labOrder,
+          ipAddress: req.ip || null,
+          userAgent: req.get("User-Agent") || null
+        });
+
+        console.log(`[LAB ORDER] Created lab order ${labOrder.id} by ${req.user!.role} for patient ${labOrder.patientId}`);
+        res.status(201).json(labOrder);
       }
-      
-      const labOrderData = {
-        ...requestData,
-        tenantId: req.tenant!.id,
-        providerId: req.user!.id,
-        orderedDate: requestData.orderedDate || new Date(),
-        appointmentId: requestData.appointmentId || null,
-        labTenantId: requestData.labTenantId || null
-      };
-
-      const validatedData = insertLabOrderSchema.parse(labOrderData);
-
-      const labOrder = await storage.createLabOrder(validatedData);
-
-      // Create audit log
-      await storage.createAuditLog({
-        tenantId: req.tenant!.id,
-        userId: req.user!.id,
-        entityType: "lab_order",
-        entityId: labOrder.id,
-        action: "create",
-        newData: labOrder,
-        ipAddress: req.ip || null,
-        userAgent: req.get("User-Agent") || null
-      });
-
-      console.log(`[LAB ORDER] Created lab order ${labOrder.id} by ${req.user!.role} for patient ${labOrder.patientId}`);
-      res.status(201).json(labOrder);
     } catch (error) {
       console.error("Create lab order error:", error);
       if (error instanceof z.ZodError) {
@@ -2467,11 +2524,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get lab orders for laboratory (cross-tenant)
+  // Get lab orders for laboratory (cross-tenant) - Orders sent TO this laboratory
   app.get("/api/lab-orders/laboratory", authenticateToken, requireRole(["lab_technician", "tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
     try {
       // Get lab orders sent to this laboratory tenant
-      const labOrders = await storage.getLabOrdersForLaboratory(req.tenantId!);
+      const labOrders = await storage.getLabOrdersByLabTenant(req.tenant!.id);
+      console.log(`[LABORATORY] Found ${labOrders.length} lab orders for laboratory ${req.tenant!.name}`);
       res.json(labOrders);
     } catch (error) {
       console.error("Error fetching lab orders for laboratory:", error);
@@ -3285,6 +3343,31 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Failed to fetch doctors list:", error);
       res.status(500).json({ message: "Failed to fetch doctors list" });
+    }
+  });
+
+  // Get lab orders for patient portal
+  app.get("/api/patient/lab-orders", requireRole(["patient"]), async (req, res) => {
+    try {
+      const patientUser = await storage.getUser(req.user!.id);
+      if (!patientUser) {
+        return res.status(404).json({ message: "Patient user not found" });
+      }
+
+      // Find the actual patient record for this user
+      const patientRecord = await storage.getPatientByUserId(patientUser.id, patientUser.tenantId);
+      if (!patientRecord) {
+        return res.status(404).json({ message: "Patient record not found" });
+      }
+
+      // Get lab orders for this patient
+      const labOrders = await storage.getLabOrdersByPatient(patientRecord.id, patientUser.tenantId);
+      
+      console.log(`[PATIENT PORTAL] Found ${labOrders.length} lab orders for patient ${patientRecord.firstName} ${patientRecord.lastName}`);
+      res.json(labOrders);
+    } catch (error) {
+      console.error("Failed to fetch patient lab orders:", error);
+      res.status(500).json({ message: "Failed to fetch patient lab orders" });
     }
   });
 
