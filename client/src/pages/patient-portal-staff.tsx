@@ -78,6 +78,44 @@ export default function PatientPortalStaff() {
     enabled: !!selectedPatientId
   });
 
+  // Use the same selectedPatient data for medical history (avoid duplicate API calls)
+  const patientMedicalHistory = selectedPatient;
+
+  // Combine prescriptions and medical history medications
+  const allMedications = [
+    // Current prescriptions
+    ...(patientPrescriptions || []).map((presc: any) => ({
+      id: `presc-${presc.id}`,
+      name: presc.medicationName,
+      dosage: presc.dosage,
+      frequency: presc.frequency,
+      prescribedBy: presc.doctorName || "Healthcare Provider",
+      prescribedDate: presc.prescribedDate,
+      instructions: presc.instructions,
+      status: presc.status || "active",
+      source: "prescription",
+      isActive: presc.status === "active" || !presc.status
+    })),
+    // Medical history medications
+    ...(patientMedicalHistory?.currentMedications || []).map((med: any, index: number) => ({
+      id: `med-${index}`,
+      name: med.medication || med.name || med,
+      dosage: med.dosage || "As prescribed",
+      frequency: med.frequency || "As directed",
+      prescribedBy: "Previous Provider",
+      prescribedDate: null,
+      instructions: med.instructions || "Continue as prescribed",
+      status: "ongoing",
+      source: "medical_history",
+      isActive: true
+    }))
+  ];
+
+  // Remove duplicates based on medication name
+  const uniqueMedications = allMedications.filter((med, index, arr) => 
+    arr.findIndex(m => m.name.toLowerCase() === med.name.toLowerCase()) === index
+  );
+
   // Filter patients based on search
   const filteredPatients = patients.filter((patient: any) =>
     patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -415,40 +453,95 @@ export default function PatientPortalStaff() {
     <div className="space-y-4">
       {renderPatientSelector()}
       
-      <h3 className="text-lg font-semibold">Current Medications</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Medications & Medical History</h3>
+        <Badge variant="outline" className="text-xs">
+          {uniqueMedications.filter(m => m.isActive).length} Active • {uniqueMedications.length} Total
+        </Badge>
+      </div>
       
-      {selectedPatientId && patientPrescriptions?.length > 0 ? (
-        patientPrescriptions.map((prescription: any) => (
-          <Card key={prescription.id}>
-            <CardContent className="p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="font-semibold">{prescription.medicationName}</h4>
-                  <p className="text-sm text-gray-600">
-                    {prescription.dosage} - {prescription.frequency}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Prescribed by {prescription.doctorName || "Healthcare Provider"}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Prescribed on {new Date(prescription.prescribedDate).toLocaleDateString()}
-                  </p>
-                  {prescription.instructions && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      <span className="font-medium">Instructions:</span> {prescription.instructions}
-                    </p>
-                  )}
-                </div>
-                <Badge variant="outline" className={
-                  prescription.status === "active" ? "bg-green-100 text-green-800" : 
-                  prescription.status === "pending" ? "bg-yellow-100 text-yellow-800" : ""
-                }>
-                  {prescription.status || "Active"}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        ))
+      {selectedPatientId && uniqueMedications?.length > 0 ? (
+        <div className="space-y-3">
+          {/* Active Medications Section */}
+          <div>
+            <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
+              <Pill className="h-4 w-4 mr-2 text-green-600" />
+              Current Medications ({uniqueMedications.filter(m => m.isActive).length})
+            </h4>
+            {uniqueMedications.filter(m => m.isActive).map((medication: any) => (
+              <Card key={medication.id} className="mb-3">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h5 className="font-semibold">{medication.name}</h5>
+                      <p className="text-sm text-gray-600">
+                        {medication.dosage} - {medication.frequency}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Prescribed by {medication.prescribedBy}
+                      </p>
+                      {medication.prescribedDate && (
+                        <p className="text-sm text-gray-500">
+                          Prescribed on {new Date(medication.prescribedDate).toLocaleDateString()}
+                        </p>
+                      )}
+                      {medication.instructions && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          <span className="font-medium">Instructions:</span> {medication.instructions}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <Badge 
+                        variant="outline" 
+                        className={
+                          medication.status === "active" || medication.status === "ongoing" ? "bg-green-100 text-green-800" : 
+                          medication.status === "pending" ? "bg-yellow-100 text-yellow-800" : 
+                          "bg-gray-100 text-gray-600"
+                        }
+                      >
+                        {medication.status === "ongoing" ? "Ongoing" : medication.status || "Active"}
+                      </Badge>
+                      <p className="text-xs text-gray-500 mt-1 capitalize">
+                        {medication.source === "prescription" ? "Prescription" : "Medical History"}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Past/Discontinued Medications if any */}
+          {uniqueMedications.filter(m => !m.isActive).length > 0 && (
+            <div>
+              <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
+                <Clock className="h-4 w-4 mr-2 text-gray-500" />
+                Past Medications ({uniqueMedications.filter(m => !m.isActive).length})
+              </h4>
+              {uniqueMedications.filter(m => !m.isActive).map((medication: any) => (
+                <Card key={medication.id} className="mb-3 opacity-75">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h5 className="font-semibold text-gray-700">{medication.name}</h5>
+                        <p className="text-sm text-gray-500">
+                          {medication.dosage} - {medication.frequency}
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          Prescribed by {medication.prescribedBy}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="bg-gray-100 text-gray-600">
+                        Discontinued
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       ) : selectedPatientId ? (
         <Card>
           <CardContent className="p-8 text-center">
