@@ -2000,15 +2000,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const communications = await storage.getMedicalCommunicationsByTenantWithSenderInfo(req.user.tenantId);
       
-      // Filter to show only patient messages (from users with role 'patient') for nurses and doctors
-      const patientMessages = communications.filter(comm => 
-        comm.senderRole === "patient" || 
-        req.user.role === "tenant_admin" || 
-        req.user.role === "director" || 
-        req.user.role === "super_admin"
-      );
-      
-      res.json(patientMessages);
+      // Show all communications for healthcare providers (both patient messages and staff messages)
+      res.json(communications);
     } catch (error) {
       console.error("Failed to fetch communications:", error);
       res.status(500).json({ message: "Failed to fetch communications" });
@@ -2036,8 +2029,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertMedicalCommunicationSchema.parse({
         ...req.body,
         tenantId: req.user.tenantId,
-        senderId: req.user!.id,
-        isFromPatient: false  // Messages from healthcare providers
+        senderId: req.user!.id
       });
 
       const communication = await storage.createMedicalCommunication(validatedData);
