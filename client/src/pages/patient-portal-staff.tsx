@@ -97,7 +97,7 @@ export default function PatientPortalStaff() {
       isActive: presc.status === "active" || !presc.status
     })),
     // Medical history medications
-    ...(patientMedicalHistory?.currentMedications || []).map((med: any, index: number) => ({
+    ...(patientMedicalHistory?.medications || []).map((med: any, index: number) => ({
       id: `med-${index}`,
       name: med.medication || med.name || med,
       dosage: med.dosage || "As prescribed",
