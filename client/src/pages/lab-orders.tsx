@@ -156,8 +156,6 @@ export default function LabOrders() {
         notes: data.notes || undefined,
         performedBy: data.performedBy,
         status: 'completed',
-        completedAt: new Date(),
-        reportedAt: new Date(),
       };
       
       console.log("Completing lab order with data:", labResultData);

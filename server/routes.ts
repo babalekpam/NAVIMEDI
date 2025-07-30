@@ -2339,9 +2339,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("[LAB RESULTS] Received data:", JSON.stringify(req.body, null, 2));
       console.log("[LAB RESULTS] Tenant ID:", req.tenantId);
       
+      const now = new Date();
       const dataToValidate = {
         ...req.body,
-        tenantId: req.tenantId
+        tenantId: req.tenantId,
+        completedAt: now,
+        reportedAt: now
       };
       
       console.log("[LAB RESULTS] Data to validate:", JSON.stringify(dataToValidate, null, 2));
