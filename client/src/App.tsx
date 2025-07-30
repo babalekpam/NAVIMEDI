@@ -70,6 +70,7 @@ import YoutubeIntegration from "@/pages/videos/youtube-integration";
 import VimeoIntegration from "@/pages/videos/vimeo-integration";
 import AWSIntegration from "@/pages/videos/aws-integration";
 import PostLabResults from "@/pages/post-lab-results";
+import LabResults from "@/pages/lab-results";
 import PatientPortal from "@/pages/patient-portal";
 import PatientPortalPublic from "@/pages/patient-portal-public";
 import TelemedicineBooking from "@/pages/telemedicine-booking";
@@ -422,10 +423,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <div className="text-center py-12">
-                    <h2 className="text-2xl font-bold text-gray-900">Lab Results</h2>
-                    <p className="text-gray-600 mt-2">Lab results management coming soon</p>
-                  </div>
+                  <LabResults />
                 </main>
               </div>
             </div>
