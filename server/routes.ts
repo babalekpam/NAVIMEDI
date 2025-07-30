@@ -939,6 +939,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET appointments by patient ID with doctor information (for patient portal staff interface)
+  app.get("/api/appointments/patient/:patientId", authenticateToken, setTenantContext, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req: AuthenticatedRequest, res) => {
+    try {
+      const { patientId } = req.params;
+      const tenantId = req.tenant!.id;
+      
+      const appointments = await storage.getAppointmentsByPatientWithDoctorInfo(patientId, tenantId);
+      res.json(appointments);
+    } catch (error) {
+      console.error("Get patient appointments with doctor info error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/appointments", requireTenant, authenticateToken, async (req, res) => {
     try {
       console.log("[DEBUG] Creating appointment - User:", req.user?.role, "User ID:", req.user?.id, "Tenant:", req.tenant?.id);

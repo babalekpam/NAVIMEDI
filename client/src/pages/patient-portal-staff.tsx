@@ -343,12 +343,16 @@ export default function PatientPortalStaff() {
               <div className="flex justify-between items-start">
                 <div>
                   <h4 className="font-semibold">{appointment.type || "Medical Appointment"}</h4>
-                  <p className="text-sm text-gray-600">{appointment.doctorName || "Healthcare Provider"}</p>
-                  <p className="text-sm text-gray-600">{appointment.department || "General Medicine"}</p>
+                  <p className="text-sm text-gray-600">
+                    {appointment.doctor_first_name && appointment.doctor_last_name 
+                      ? `Dr. ${appointment.doctor_first_name} ${appointment.doctor_last_name}`
+                      : appointment.doctorName || "Healthcare Provider"}
+                  </p>
+                  <p className="text-sm text-gray-600">{appointment.chief_complaint || appointment.notes || "General Medical Consultation"}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold">{new Date(appointment.appointmentDate).toLocaleDateString()}</p>
-                  <p className="text-sm text-gray-600">{appointment.appointmentTime}</p>
+                  <p className="font-semibold">{new Date(appointment.appointment_date || appointment.appointmentDate).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-600">{appointment.appointment_date ? new Date(appointment.appointment_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : appointment.appointmentTime}</p>
                   <Badge variant="outline" className="mt-1">
                     {appointment.status === "confirmed" ? "Confirmed" : appointment.status}
                   </Badge>

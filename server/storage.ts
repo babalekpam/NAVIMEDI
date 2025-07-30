@@ -856,6 +856,25 @@ export class DatabaseStorage implements IStorage {
     ).orderBy(desc(appointments.appointmentDate));
   }
 
+  async getAppointmentsByPatientWithDoctorInfo(patientId: string, tenantId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: appointments.id,
+        appointment_date: appointments.appointmentDate,
+        type: appointments.type,
+        status: appointments.status,
+        notes: appointments.notes,
+        chief_complaint: appointments.chiefComplaint,
+        doctor_first_name: users.firstName,
+        doctor_last_name: users.lastName,
+        doctor_role: users.role
+      })
+      .from(appointments)
+      .leftJoin(users, eq(appointments.providerId, users.id))
+      .where(and(eq(appointments.patientId, patientId), eq(appointments.tenantId, tenantId)))
+      .orderBy(desc(appointments.appointmentDate));
+  }
+
   // Prescription management
   async getPrescription(id: string, tenantId: string): Promise<Prescription | undefined> {
     const [prescription] = await db.select().from(prescriptions).where(
