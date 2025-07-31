@@ -512,20 +512,55 @@ export default function PharmacyDashboardEnhanced() {
       }
     }, [localTotalCost, localCoveragePercentage]);
 
-    // Manual data loading function - simplified without automatic loading
+    // Manual data loading function - user-triggered only
     const loadInsuranceData = async () => {
       if (!selectedPrescription?.patientId) return;
       
-      console.log('Skipping automatic insurance loading to prevent infinite loop');
+      console.log('Loading insurance data manually...');
       
-      // Just set default values without trying to load insurance data
-      setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
-      setLocalCoveragePercentage("80"); // Default to 80%
-      
-      toast({
-        title: "Manual Entry Required",
-        description: "Please enter insurance provider and coverage percentage manually.",
-      });
+      try {
+        const response = await fetch(`/api/patient-insurance/${selectedPrescription.patientId}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem("auth_token")}`,
+          },
+        });
+        
+        if (response.ok) {
+          const insuranceData = await response.json();
+          
+          if (insuranceData && insuranceData.length > 0) {
+            const primaryInsurance = insuranceData.find((ins: any) => ins.isPrimary) || insuranceData[0];
+            
+            console.log('Successfully loaded insurance:', primaryInsurance);
+            
+            setLocalInsuranceProvider(primaryInsurance.insuranceProvider?.name || primaryInsurance.provider || 'Unknown Provider');
+            setLocalCoveragePercentage((primaryInsurance.coveragePercentage || 80).toString());
+            
+            toast({
+              title: "Insurance Data Loaded",
+              description: `Auto-populated ${primaryInsurance.insuranceProvider?.name || 'insurance'} policy`,
+            });
+          } else {
+            toast({
+              title: "No Insurance Found",
+              description: "Patient has no insurance records on file.",
+              variant: "destructive",
+            });
+          }
+        } else {
+          throw new Error(`HTTP ${response.status}`);
+        }
+      } catch (error) {
+        console.error('Failed to load insurance data:', error);
+        toast({
+          title: "Load Failed",
+          description: "Unable to load patient insurance data. Please enter manually.",
+          variant: "destructive",
+        });
+      }
     };
 
     // Initialize form when dialog opens - completely manual
@@ -577,10 +612,21 @@ export default function PharmacyDashboardEnhanced() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="local-insurance-provider">Insurance Provider</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="local-insurance-provider">Insurance Provider</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={loadInsuranceData}
+                      className="text-xs"
+                    >
+                      Load Patient Insurance
+                    </Button>
+                  </div>
                   <Input 
                     id="local-insurance-provider"
-                    placeholder={localInsuranceProvider ? "Auto-loaded from patient records" : "e.g., Medicare, Blue Cross Blue Shield"}
+                    placeholder="e.g., Medicare, Blue Cross Blue Shield"
                     value={localInsuranceProvider}
                     onChange={(e) => setLocalInsuranceProvider(e.target.value)}
                     required 
@@ -589,7 +635,7 @@ export default function PharmacyDashboardEnhanced() {
                   />
                   {localInsuranceProvider && (
                     <p className="text-xs text-green-700 mt-1">
-                      ✅ Auto-loaded from patient insurance records
+                      ✅ Insurance provider loaded
                     </p>
                   )}
                 </div>
