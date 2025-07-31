@@ -877,10 +877,44 @@ export class DatabaseStorage implements IStorage {
       .orderBy(appointments.appointmentDate);
   }
 
-  async getAppointmentsByPatient(patientId: string, tenantId: string): Promise<Appointment[]> {
-    return await db.select().from(appointments).where(
-      and(eq(appointments.patientId, patientId), eq(appointments.tenantId, tenantId))
-    ).orderBy(desc(appointments.appointmentDate));
+  async getAppointmentsByPatient(patientId: string, tenantId: string): Promise<any[]> {
+    return await db
+      .select({
+        // Appointment details
+        id: appointments.id,
+        patientId: appointments.patientId,
+        providerId: appointments.providerId,
+        appointmentDate: appointments.appointmentDate,
+        type: appointments.type,
+        status: appointments.status,
+        notes: appointments.notes,
+        chiefComplaint: appointments.chiefComplaint,
+        tenantId: appointments.tenantId,
+        createdAt: appointments.createdAt,
+        updatedAt: appointments.updatedAt,
+        
+        // Provider information
+        providerFirstName: users.firstName,
+        providerLastName: users.lastName,
+        providerEmail: users.email,
+        providerRole: users.role,
+        
+        // Visit summary information (if exists)
+        visitSummaryId: visitSummaries.id,
+        visitSummaryStatus: visitSummaries.status,
+        visitSummaryChiefComplaint: visitSummaries.chiefComplaint,
+        visitSummaryAssessment: visitSummaries.assessment,
+        visitSummaryClinicalImpression: visitSummaries.clinicalImpression,
+        visitSummaryTreatmentPlan: visitSummaries.treatmentPlan,
+        visitSummaryReturnVisitRecommended: visitSummaries.returnVisitRecommended,
+        visitSummaryReturnVisitTimeframe: visitSummaries.returnVisitTimeframe,
+        visitSummaryProviderNotes: visitSummaries.providerNotes
+      })
+      .from(appointments)
+      .leftJoin(users, eq(appointments.providerId, users.id))
+      .leftJoin(visitSummaries, eq(appointments.id, visitSummaries.appointmentId))
+      .where(and(eq(appointments.patientId, patientId), eq(appointments.tenantId, tenantId)))
+      .orderBy(desc(appointments.appointmentDate));
   }
 
   async getAppointmentsByPatientWithDoctorInfo(patientId: string, tenantId: string): Promise<any[]> {
