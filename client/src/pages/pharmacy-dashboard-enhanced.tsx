@@ -239,17 +239,18 @@ export default function PharmacyDashboardEnhanced() {
       dosage: selectedPrescription.dosage,
       quantity: selectedPrescription.quantity,
       daysSupply: Math.ceil(selectedPrescription.quantity / parseInt(selectedPrescription.frequency.split(' ')[0] || '1')),
-      totalCost: selectedPrescription.totalCost || 0,
+      // Convert numeric values to strings for decimal fields
+      totalCost: (selectedPrescription.totalCost || 0).toString(),
       insuranceProvider: selectedPrescription.insuranceProvider || null,
-      insuranceAmount: selectedPrescription.totalCost && selectedPrescription.insuranceCopay 
+      insuranceAmount: (selectedPrescription.totalCost && selectedPrescription.insuranceCopay 
         ? selectedPrescription.totalCost - selectedPrescription.insuranceCopay 
-        : 0,
-      patientCopay: selectedPrescription.insuranceCopay || selectedPrescription.totalCost || 0,
+        : 0).toString(),
+      patientCopay: (selectedPrescription.insuranceCopay || selectedPrescription.totalCost || 0).toString(),
       paymentMethod: paymentData.paymentMethod,
-      paymentAmount: paymentData.paymentAmount,
-      changeGiven: paymentData.changeGiven,
+      paymentAmount: paymentData.paymentAmount.toString(),
+      changeGiven: paymentData.changeGiven.toString(),
       prescribedBy: selectedPrescription.providerName,
-      prescribedDate: selectedPrescription.prescribedDate,
+      prescribedDate: new Date(selectedPrescription.prescribedDate), // Convert to Date object
       refillsRemaining: selectedPrescription.refills,
       patientInstructions: paymentData.patientInstructions
     };
@@ -575,66 +576,31 @@ export default function PharmacyDashboardEnhanced() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        console.log('=== LOAD INSURANCE BUTTON CLICKED ===');
-                        
-                        // Search for all possible input elements
-                        const allInputs = document.querySelectorAll('input');
-                        console.log('Total inputs on page:', allInputs.length);
-                        
-                        const providerInput = document.getElementById('local-insurance-provider') as HTMLInputElement;
-                        const coverageInput = document.getElementById('local-coverage-percentage') as HTMLInputElement;
-                        
-                        console.log('Provider input by ID found:', !!providerInput);
-                        console.log('Coverage input by ID found:', !!coverageInput);
-                        
-                        // Log all input elements to see what's available
-                        allInputs.forEach((input, index) => {
-                          console.log(`Input ${index}: id="${input.id}", placeholder="${input.placeholder}", type="${input.type}"`);
-                        });
-                        
-                        // Try alternative selectors
-                        const providerByPlaceholder = document.querySelector('input[placeholder*="Blue Cross"]') as HTMLInputElement;
-                        const coverageByPlaceholder = document.querySelector('input[placeholder="80"]') as HTMLInputElement;
-                        
-                        console.log('Provider by placeholder found:', !!providerByPlaceholder);
-                        console.log('Coverage by placeholder found:', !!coverageByPlaceholder);
-                        
-                        // Set values using any method that works
-                        const targetProvider = providerInput || providerByPlaceholder || providerInputRef.current;
-                        const targetCoverage = coverageInput || coverageByPlaceholder || coverageInputRef.current;
-                        
-                        if (targetProvider) {
-                          console.log('Setting provider value...');
-                          targetProvider.value = "Amara Mwangi Insurance";
-                          targetProvider.dispatchEvent(new Event('input', { bubbles: true }));
-                          targetProvider.dispatchEvent(new Event('change', { bubbles: true }));
-                          console.log('Provider value set to:', targetProvider.value);
-                        } else {
-                          console.log('ERROR: No provider input found!');
+                        // Simple and direct approach using refs
+                        if (providerInputRef.current) {
+                          providerInputRef.current.value = "Amara Mwangi Insurance";
+                          providerInputRef.current.focus();
+                          providerInputRef.current.blur();
                         }
                         
-                        if (targetCoverage) {
-                          console.log('Setting coverage value...');
-                          targetCoverage.value = "80";
-                          targetCoverage.dispatchEvent(new Event('input', { bubbles: true }));
-                          targetCoverage.dispatchEvent(new Event('change', { bubbles: true }));
-                          console.log('Coverage value set to:', targetCoverage.value);
-                        } else {
-                          console.log('ERROR: No coverage input found!');
+                        if (coverageInputRef.current) {
+                          coverageInputRef.current.value = "80";
+                          coverageInputRef.current.focus();
+                          coverageInputRef.current.blur();
                         }
                         
-                        // Force visual update
+                        // Set local state directly
+                        setLocalTotalCost("125.50");
+                        
+                        // Force calculation
                         setTimeout(() => {
                           calculateFromInputs();
-                          console.log('Calculation triggered');
-                        }, 200);
+                        }, 100);
                         
                         toast({
                           title: "Insurance Data Loaded",
                           description: "Amara Mwangi Insurance with 80% coverage",
                         });
-                        
-                        console.log('=== LOAD INSURANCE COMPLETE ===');
                       }}
                       className="text-xs bg-blue-100 hover:bg-blue-200"
                     >
