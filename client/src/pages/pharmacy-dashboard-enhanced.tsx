@@ -272,17 +272,16 @@ export default function PharmacyDashboardEnhanced() {
   const readyPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'ready');
   const dispensedPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'dispensed' || p.status === 'picked_up');
   
-  // Archived prescriptions - completed workflow (dispensed/picked up) and old filled prescriptions
+  // Archived prescriptions - completed workflow (dispensed/picked up) and cancelled prescriptions
   const archivedPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => 
     p.status === 'dispensed' || 
     p.status === 'picked_up' || 
-    p.status === 'filled' || 
     p.status === 'cancelled'
   );
   
   // Active prescriptions - everything except archived
   const activePrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => 
-    !['dispensed', 'picked_up', 'filled', 'cancelled'].includes(p.status)
+    !['dispensed', 'picked_up', 'cancelled'].includes(p.status)
   );
 
   // Filter by search term
@@ -427,17 +426,18 @@ export default function PharmacyDashboardEnhanced() {
             {prescription.status === 'received' ? (
               <Button 
                 size="sm" 
-                onClick={(e) => {
-                  console.log('Verify Insurance button clicked');
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('Setting prescription:', prescription.id);
-                  setSelectedPrescription(prescription);
-                  console.log('Opening dialog...');
-                  setInsuranceDialogOpen(true);
-                  console.log('Dialog state should be true now');
+                onClick={() => {
+                  console.log('=== VERIFY INSURANCE CLICKED ===');
+                  try {
+                    setSelectedPrescription(prescription);
+                    setInsuranceDialogOpen(true);
+                    console.log('Dialog opened successfully');
+                  } catch (error) {
+                    console.error('Error in button click:', error);
+                  }
                 }}
-                disabled={updateStatusMutation.isPending}
+                disabled={false}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 <Shield className="h-4 w-4 mr-1" />
                 Verify Insurance
@@ -517,29 +517,41 @@ export default function PharmacyDashboardEnhanced() {
       if (!selectedPrescription?.patientId) return;
       
       try {
-        // Use the authenticated apiRequest function from queryClient
-        const insuranceData = await apiRequest(`/api/patient-insurance/${selectedPrescription.patientId}`);
+        // Use fetch with proper credentials handling
+        const response = await fetch(`/api/patient-insurance/${selectedPrescription.patientId}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
         
-        if (insuranceData && insuranceData.length > 0) {
-          const primaryInsurance = insuranceData.find((ins: any) => ins.isPrimary) || insuranceData[0];
+        if (response.ok) {
+          const insuranceData = await response.json();
           
-          console.log('Loading insurance data:', primaryInsurance);
-          
-          setLocalInsuranceProvider(primaryInsurance.insuranceProvider?.name || primaryInsurance.provider || 'Unknown Provider');
-          setLocalCoveragePercentage((primaryInsurance.coveragePercentage || 80).toString());
-          setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
-          
-          toast({
-            title: "Insurance Data Loaded",
-            description: `Auto-populated ${primaryInsurance.insuranceProvider?.name || 'insurance'} policy`,
-          });
+          if (insuranceData && insuranceData.length > 0) {
+            const primaryInsurance = insuranceData.find((ins: any) => ins.isPrimary) || insuranceData[0];
+            
+            console.log('Loading insurance data:', primaryInsurance);
+            
+            setLocalInsuranceProvider(primaryInsurance.insuranceProvider?.name || primaryInsurance.provider || 'Unknown Provider');
+            setLocalCoveragePercentage((primaryInsurance.coveragePercentage || 80).toString());
+            setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
+            
+            toast({
+              title: "Insurance Data Loaded",
+              description: `Auto-populated ${primaryInsurance.insuranceProvider?.name || 'insurance'} policy`,
+            });
+          } else {
+            setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
+            toast({
+              title: "No Insurance Found",
+              description: "Please enter insurance details manually.",
+              variant: "destructive",
+            });
+          }
         } else {
-          setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
-          toast({
-            title: "No Insurance Found",
-            description: "Please enter insurance details manually.",
-            variant: "destructive",
-          });
+          throw new Error(`HTTP ${response.status}`);
         }
       } catch (error) {
         console.error('Failed to load insurance data:', error);
@@ -555,6 +567,7 @@ export default function PharmacyDashboardEnhanced() {
     // Initialize form when dialog opens
     useEffect(() => {
       if (insuranceDialogOpen && selectedPrescription) {
+        console.log('Dialog opened, initializing form...');
         // Reset form
         setLocalInsuranceProvider("");
         setLocalTotalCost("");
