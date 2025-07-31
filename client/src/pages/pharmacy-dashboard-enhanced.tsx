@@ -489,14 +489,16 @@ export default function PharmacyDashboardEnhanced() {
     const [localTotalCost, setLocalTotalCost] = useState("");
     const [localNotes, setLocalNotes] = useState("");
     const [localCalculation, setLocalCalculation] = useState<InsuranceCalculation | null>(null);
+    const [insuranceProvider, setInsuranceProvider] = useState("");
+    const [coveragePercentage, setCoveragePercentage] = useState("");
     
-    // Make insurance provider and coverage completely uncontrolled
+    // Keep refs for backup compatibility
     const providerInputRef = useRef<HTMLInputElement>(null);
     const coverageInputRef = useRef<HTMLInputElement>(null);
     
-    // Get values from refs for calculations
-    const getProviderValue = () => providerInputRef.current?.value || "";
-    const getCoverageValue = () => coverageInputRef.current?.value || "";
+    // Get values - now using state first, refs as fallback
+    const getProviderValue = () => insuranceProvider || providerInputRef.current?.value || "";
+    const getCoverageValue = () => coveragePercentage || coverageInputRef.current?.value || "";
 
     console.log(`[DIALOG-DEBUG] Dialog open state: ${insuranceDialogOpen}, Selected prescription: ${selectedPrescription?.id}`);
 
@@ -575,66 +577,19 @@ export default function PharmacyDashboardEnhanced() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        console.log('=== LOAD INSURANCE BUTTON CLICKED ===');
+                        // Directly set state values - this will immediately update the controlled inputs
+                        setInsuranceProvider("Amara Mwangi Insurance");
+                        setCoveragePercentage("80");
                         
-                        // Search for all possible input elements
-                        const allInputs = document.querySelectorAll('input');
-                        console.log('Total inputs on page:', allInputs.length);
-                        
-                        const providerInput = document.getElementById('local-insurance-provider') as HTMLInputElement;
-                        const coverageInput = document.getElementById('local-coverage-percentage') as HTMLInputElement;
-                        
-                        console.log('Provider input by ID found:', !!providerInput);
-                        console.log('Coverage input by ID found:', !!coverageInput);
-                        
-                        // Log all input elements to see what's available
-                        allInputs.forEach((input, index) => {
-                          console.log(`Input ${index}: id="${input.id}", placeholder="${input.placeholder}", type="${input.type}"`);
-                        });
-                        
-                        // Try alternative selectors
-                        const providerByPlaceholder = document.querySelector('input[placeholder*="Blue Cross"]') as HTMLInputElement;
-                        const coverageByPlaceholder = document.querySelector('input[placeholder="80"]') as HTMLInputElement;
-                        
-                        console.log('Provider by placeholder found:', !!providerByPlaceholder);
-                        console.log('Coverage by placeholder found:', !!coverageByPlaceholder);
-                        
-                        // Set values using any method that works
-                        const targetProvider = providerInput || providerByPlaceholder || providerInputRef.current;
-                        const targetCoverage = coverageInput || coverageByPlaceholder || coverageInputRef.current;
-                        
-                        if (targetProvider) {
-                          console.log('Setting provider value...');
-                          targetProvider.value = "Amara Mwangi Insurance";
-                          targetProvider.dispatchEvent(new Event('input', { bubbles: true }));
-                          targetProvider.dispatchEvent(new Event('change', { bubbles: true }));
-                          console.log('Provider value set to:', targetProvider.value);
-                        } else {
-                          console.log('ERROR: No provider input found!');
-                        }
-                        
-                        if (targetCoverage) {
-                          console.log('Setting coverage value...');
-                          targetCoverage.value = "80";
-                          targetCoverage.dispatchEvent(new Event('input', { bubbles: true }));
-                          targetCoverage.dispatchEvent(new Event('change', { bubbles: true }));
-                          console.log('Coverage value set to:', targetCoverage.value);
-                        } else {
-                          console.log('ERROR: No coverage input found!');
-                        }
-                        
-                        // Force visual update
+                        // Trigger calculation after a brief delay to ensure state is updated
                         setTimeout(() => {
                           calculateFromInputs();
-                          console.log('Calculation triggered');
-                        }, 200);
+                        }, 50);
                         
                         toast({
                           title: "Insurance Data Loaded",
                           description: "Amara Mwangi Insurance with 80% coverage",
                         });
-                        
-                        console.log('=== LOAD INSURANCE COMPLETE ===');
                       }}
                       className="text-xs bg-blue-100 hover:bg-blue-200"
                     >
@@ -645,9 +600,13 @@ export default function PharmacyDashboardEnhanced() {
                     ref={providerInputRef}
                     id="local-insurance-provider"
                     placeholder="e.g., Medicare, Blue Cross Blue Shield"
+                    value={insuranceProvider}
+                    onChange={(e) => {
+                      setInsuranceProvider(e.target.value);
+                      calculateFromInputs();
+                    }}
                     required 
                     autoComplete="off"
-                    onChange={() => calculateFromInputs()}
                   />
                 </div>
                 
@@ -676,10 +635,14 @@ export default function PharmacyDashboardEnhanced() {
                         max="100" 
                         step="1" 
                         placeholder="80"
+                        value={coveragePercentage}
+                        onChange={(e) => {
+                          setCoveragePercentage(e.target.value);
+                          calculateFromInputs();
+                        }}
                         required 
                         className="flex-1"
                         autoComplete="off"
-                        onChange={() => calculateFromInputs()}
                         onFocus={(e) => e.target.select()}
                       />
                     </div>
