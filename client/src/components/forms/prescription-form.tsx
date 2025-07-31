@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useQuery } from "@tanstack/react-query";
 
 interface PrescriptionFormProps {
   onSubmit: (data: any) => void;
@@ -14,6 +15,12 @@ interface PrescriptionFormProps {
 }
 
 export const PrescriptionForm = ({ onSubmit, isLoading = false, patients }: PrescriptionFormProps) => {
+  // Fetch available pharmacies for prescription routing
+  const { data: pharmacies = [], isLoading: pharmaciesLoading } = useQuery({
+    queryKey: ["/api/pharmacies"],
+    enabled: true
+  });
+
   const form = useForm({
     resolver: zodResolver(insertPrescriptionSchema.omit({ 
       tenantId: true, 
@@ -21,7 +28,6 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients }: Pres
       expiryDate: true,
       prescribedDate: true,
       appointmentId: true,
-      pharmacyTenantId: true,
       id: true,
       createdAt: true,
       updatedAt: true
@@ -35,6 +41,7 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients }: Pres
       refills: 0,
       instructions: "",
       status: "prescribed" as const,
+      pharmacyTenantId: "",
     }
   });
 
@@ -73,6 +80,37 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients }: Pres
                       {patient.firstName} {patient.lastName} (MRN: {patient.mrn})
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="pharmacyTenantId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Send to Pharmacy</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select pharmacy" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {pharmaciesLoading ? (
+                    <SelectItem value="" disabled>Loading pharmacies...</SelectItem>
+                  ) : pharmacies.length > 0 ? (
+                    pharmacies.map((pharmacy: any) => (
+                      <SelectItem key={pharmacy.id} value={pharmacy.id}>
+                        {pharmacy.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>No pharmacies available</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />

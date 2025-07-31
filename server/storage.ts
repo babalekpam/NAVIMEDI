@@ -166,6 +166,7 @@ export interface IStorage {
   updatePharmacy(id: string, updates: Partial<Pharmacy>, tenantId: string): Promise<Pharmacy | undefined>;
   getPharmaciesByTenant(tenantId: string): Promise<Pharmacy[]>;
   getActivePharmacies(tenantId: string): Promise<Pharmacy[]>;
+  getPharmaciesForPrescriptionRouting(): Promise<any[]>;
 
   // Insurance claims management
   getInsuranceClaim(id: string, tenantId: string): Promise<InsuranceClaim | undefined>;
@@ -1205,6 +1206,21 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(pharmacies).where(
       and(eq(pharmacies.tenantId, tenantId), eq(pharmacies.isActive, true))
     ).orderBy(pharmacies.name);
+  }
+
+  async getPharmaciesForPrescriptionRouting(): Promise<any[]> {
+    // Get all pharmacy tenants for prescription routing
+    const pharmacyTenants = await db.select({
+      id: tenants.id,
+      name: tenants.name,
+      type: tenants.type,
+      subdomain: tenants.subdomain,
+      isActive: tenants.isActive
+    }).from(tenants).where(
+      and(eq(tenants.type, 'pharmacy'), eq(tenants.isActive, true))
+    ).orderBy(tenants.name);
+    
+    return pharmacyTenants;
   }
 
   // Insurance claims management

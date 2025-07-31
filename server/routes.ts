@@ -3926,6 +3926,17 @@ Report ID: ${report.id}
     }
   });
 
+  // Get available pharmacies for prescription routing
+  app.get("/api/pharmacies", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const pharmacies = await storage.getPharmaciesForPrescriptionRouting();
+      res.json(pharmacies);
+    } catch (error) {
+      console.error("Error fetching pharmacies:", error);
+      res.status(500).json({ error: "Failed to fetch pharmacies" });
+    }
+  });
+
   const server = createServer(app);
   return server;
 }
