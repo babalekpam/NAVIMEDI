@@ -88,6 +88,7 @@ export default function PharmacyDashboardEnhanced() {
   const [insuranceCalculation, setInsuranceCalculation] = useState<InsuranceCalculation | null>(null);
   const [totalCost, setTotalCost] = useState("");
   const [coveragePercentage, setCoveragePercentage] = useState("");
+  const [insuranceProvider, setInsuranceProvider] = useState("");
 
   // Fetch prescriptions sent to this pharmacy
   const { data: prescriptions = [], isLoading } = useQuery({
@@ -181,16 +182,20 @@ export default function PharmacyDashboardEnhanced() {
     };
   };
 
-  // Effect to calculate insurance coverage in real-time
+  // Effect to calculate insurance coverage in real-time with debouncing
   useEffect(() => {
-    const cost = parseFloat(totalCost);
-    const percentage = parseFloat(coveragePercentage);
-    
-    if (cost > 0 && percentage > 0) {
-      setInsuranceCalculation(calculateInsuranceCoverage(cost, percentage));
-    } else {
-      setInsuranceCalculation(null);
-    }
+    const timeoutId = setTimeout(() => {
+      const cost = parseFloat(totalCost);
+      const percentage = parseFloat(coveragePercentage);
+      
+      if (cost > 0 && percentage > 0) {
+        setInsuranceCalculation(calculateInsuranceCoverage(cost, percentage));
+      } else {
+        setInsuranceCalculation(null);
+      }
+    }, 100); // Small delay to prevent rapid updates
+
+    return () => clearTimeout(timeoutId);
   }, [totalCost, coveragePercentage]);
 
   const handleInsuranceVerification = async (formData: InsuranceVerificationForm) => {
@@ -211,6 +216,7 @@ export default function PharmacyDashboardEnhanced() {
     setInsuranceCalculation(null);
     setTotalCost("");
     setCoveragePercentage("");
+    setInsuranceProvider("");
     setInsuranceDialogOpen(false);
   };
 
@@ -350,6 +356,7 @@ export default function PharmacyDashboardEnhanced() {
         setInsuranceCalculation(null);
         setTotalCost("");
         setCoveragePercentage("");
+        setInsuranceProvider("");
       }
     }}>
       <DialogContent className="max-w-lg">
@@ -360,16 +367,18 @@ export default function PharmacyDashboardEnhanced() {
           </p>
         </DialogHeader>
         {selectedPrescription && (
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            handleInsuranceVerification({
-              insuranceProvider: formData.get('insuranceProvider') as string,
-              totalCost: parseFloat(formData.get('totalCost') as string),
-              coveragePercentage: parseFloat(formData.get('coveragePercentage') as string),
-              pharmacyNotes: formData.get('pharmacyNotes') as string
-            });
-          }}>
+          <form 
+            key={selectedPrescription.id}
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleInsuranceVerification({
+                insuranceProvider: insuranceProvider,
+                totalCost: parseFloat(totalCost),
+                coveragePercentage: parseFloat(coveragePercentage),
+                pharmacyNotes: (e.currentTarget.elements.namedItem('pharmacyNotes') as HTMLTextAreaElement)?.value || ''
+              });
+            }}
+          >
             <div className="space-y-4">
               <div className="p-3 bg-gray-50 rounded">
                 <p className="font-medium">{selectedPrescription.medicationName} {selectedPrescription.dosage}</p>
@@ -382,6 +391,8 @@ export default function PharmacyDashboardEnhanced() {
                   id="insuranceProvider" 
                   name="insuranceProvider" 
                   placeholder="e.g., Medicare, Blue Cross Blue Shield"
+                  value={insuranceProvider}
+                  onChange={(e) => setInsuranceProvider(e.target.value)}
                   required 
                 />
               </div>
