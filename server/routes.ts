@@ -1128,9 +1128,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const requestData = { ...req.body };
       
       // Convert string dates to Date objects
-      if (requestData.expiryDate && typeof requestData.expiryDate === 'string') {
-        requestData.expiryDate = new Date(requestData.expiryDate);
-      }
+      const dateFields = [
+        'expiryDate', 'prescribedDate', 'sentToPharmacyDate', 'filledDate',
+        'insuranceVerifiedDate', 'processingStartedDate', 'readyDate', 'dispensedDate'
+      ];
+      
+      dateFields.forEach(field => {
+        if (requestData[field] && typeof requestData[field] === 'string') {
+          const dateValue = new Date(requestData[field]);
+          if (!isNaN(dateValue.getTime())) {
+            requestData[field] = dateValue;
+          } else {
+            delete requestData[field]; // Remove invalid dates
+          }
+        }
+      });
+      
+      // Ensure numeric fields are proper numbers
+      const numericFields = ['insuranceCopay', 'totalCost', 'quantity', 'refills'];
+      numericFields.forEach(field => {
+        if (requestData[field] !== undefined) {
+          const numValue = Number(requestData[field]);
+          if (!isNaN(numValue)) {
+            requestData[field] = numValue;
+          }
+        }
+      });
       
       // Get existing prescription to check permissions
       // For pharmacies, look up by pharmacy tenant ID; for hospitals, by hospital tenant ID
