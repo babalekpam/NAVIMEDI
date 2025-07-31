@@ -649,46 +649,34 @@ export class DatabaseStorage implements IStorage {
 
   // Cross-tenant patient insurance access for pharmacy billing
   async getPatientInsuranceCrossTenant(patientId: string): Promise<PatientInsurance[]> {
-    const insuranceList = await db
-      .select({
-        id: patientInsurance.id,
-        tenantId: patientInsurance.tenantId,
-        patientId: patientInsurance.patientId,
-        insuranceProviderId: patientInsurance.insuranceProviderId,
-        policyNumber: patientInsurance.policyNumber,
-        groupNumber: patientInsurance.groupNumber,
-        subscriberId: patientInsurance.subscriberId,
-        relationshipToSubscriber: patientInsurance.relationshipToSubscriber,
-        coverageType: patientInsurance.coverageType,
-        effectiveDate: patientInsurance.effectiveDate,
-        expirationDate: patientInsurance.expirationDate,
-        copayAmount: patientInsurance.copayAmount,
-        deductibleAmount: patientInsurance.deductibleAmount,
-        isPrimary: patientInsurance.isPrimary,
-        isActive: patientInsurance.isActive,
-        createdAt: patientInsurance.createdAt,
-        updatedAt: patientInsurance.updatedAt,
-        // Include insurance provider information
-        insuranceProvider: {
-          id: insuranceProviders.id,
-          name: insuranceProviders.name,
-          type: insuranceProviders.type,
-          contactInfo: insuranceProviders.contactInfo,
-          website: insuranceProviders.website,
-          coveragePercentage: insuranceProviders.coveragePercentage
-        }
-      })
-      .from(patientInsurance)
-      .leftJoin(insuranceProviders, eq(patientInsurance.insuranceProviderId, insuranceProviders.id))
-      .where(
-        and(
-          eq(patientInsurance.patientId, patientId),
-          eq(patientInsurance.isActive, true)
+    try {
+      console.log(`[CROSS-TENANT INSURANCE] Searching for insurance records for patient: ${patientId}`);
+      
+      const insuranceList = await db
+        .select()
+        .from(patientInsurance)
+        .leftJoin(insuranceProviders, eq(patientInsurance.insuranceProviderId, insuranceProviders.id))
+        .where(
+          and(
+            eq(patientInsurance.patientId, patientId),
+            eq(patientInsurance.isActive, true)
+          )
         )
-      )
-      .orderBy(desc(patientInsurance.isPrimary));
+        .orderBy(desc(patientInsurance.isPrimary));
 
-    return insuranceList;
+      console.log(`[CROSS-TENANT INSURANCE] Found ${insuranceList.length} insurance records`);
+      
+      // Transform the result to match the expected PatientInsurance structure
+      const transformedResults = insuranceList.map((row) => ({
+        ...row.patient_insurance,
+        insuranceProvider: row.insurance_providers
+      }));
+
+      return transformedResults;
+    } catch (error) {
+      console.error("[CROSS-TENANT INSURANCE] Query error:", error);
+      throw error;
+    }
   }
 
   async getPatientsWithPrescriptionsForPharmacy(pharmacyTenantId: string, search?: string): Promise<Patient[]> {
