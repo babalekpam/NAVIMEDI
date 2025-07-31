@@ -85,7 +85,7 @@ interface PaymentReceiptForm {
 
 export default function PharmacyDashboardEnhanced() {
   const { user } = useAuth();
-  const { currentTenant } = useTenant();
+  const { tenant } = useTenant();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedPrescription, setSelectedPrescription] = useState<PrescriptionWorkflow | null>(null);
@@ -134,7 +134,8 @@ export default function PharmacyDashboardEnhanced() {
     mutationFn: async (receiptData: any) => {
       return await apiRequest('POST', '/api/pharmacy-receipts', receiptData);
     },
-    onSuccess: (receipt) => {
+    onSuccess: async (response) => {
+      const receipt = await response.json();
       queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] });
       toast({ 
         title: "Receipt Generated", 
@@ -171,7 +172,7 @@ export default function PharmacyDashboardEnhanced() {
           </head>
           <body>
             <div class="header">
-              <h2>${currentTenant?.name || 'Pharmacy'}</h2>
+              <h2>${tenant?.name || 'Pharmacy'}</h2>
               <h3>Prescription Receipt</h3>
               <p>Receipt #: ${receipt.receiptNumber}</p>
               <p>Date: ${format(new Date(receipt.dispensedDate), 'MMM dd, yyyy hh:mm a')}</p>
@@ -214,7 +215,7 @@ export default function PharmacyDashboardEnhanced() {
             
             <div class="section">
               <p style="text-align: center; font-size: 0.9em; margin-top: 30px;">
-                Thank you for choosing ${currentTenant?.name || 'our pharmacy'}!<br>
+                Thank you for choosing ${tenant?.name || 'our pharmacy'}!<br>
                 Please keep this receipt for your records.
               </p>
             </div>
@@ -265,14 +266,14 @@ export default function PharmacyDashboardEnhanced() {
   };
 
   // Filter prescriptions by status
-  const newPrescriptions = prescriptions.filter(p => p.status === 'prescribed' || p.status === 'sent_to_pharmacy');
-  const insuranceToVerify = prescriptions.filter(p => p.status === 'received');
-  const processingPrescriptions = prescriptions.filter(p => p.status === 'processing');
-  const readyPrescriptions = prescriptions.filter(p => p.status === 'ready');
-  const dispensedPrescriptions = prescriptions.filter(p => p.status === 'dispensed' || p.status === 'picked_up');
+  const newPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'prescribed' || p.status === 'sent_to_pharmacy');
+  const insuranceToVerify = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'received');
+  const processingPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'processing');
+  const readyPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'ready');
+  const dispensedPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'dispensed' || p.status === 'picked_up');
   
   // Archived prescriptions - completed workflow (dispensed/picked up) and old filled prescriptions
-  const archivedPrescriptions = prescriptions.filter(p => 
+  const archivedPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => 
     p.status === 'dispensed' || 
     p.status === 'picked_up' || 
     p.status === 'filled' || 
@@ -280,7 +281,7 @@ export default function PharmacyDashboardEnhanced() {
   );
   
   // Active prescriptions - everything except archived
-  const activePrescriptions = prescriptions.filter(p => 
+  const activePrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => 
     !['dispensed', 'picked_up', 'filled', 'cancelled'].includes(p.status)
   );
 
