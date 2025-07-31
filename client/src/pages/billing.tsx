@@ -67,46 +67,13 @@ export default function Billing() {
   // Check if user is a physician (read-only access)
   const isPhysician = user?.role === 'physician';
 
-  // Handle patient selection and auto-populate prescription and insurance data
+  // Handle patient selection and auto-populate prescription data
   const handlePatientSelection = async (patientId: string) => {
+    console.log(`[AUTO-INSURANCE] Patient selected: ${patientId}`);
     setFormData(prev => ({ ...prev, patientId }));
     
     try {
-      // 1. Automatically load patient insurance information (PRIORITY)
-      console.log(`[AUTO-INSURANCE] Loading insurance for patient: ${patientId}`);
-      const insuranceResponse = await apiRequest('GET', `/api/patient-insurance/${patientId}`);
-      
-      if (insuranceResponse.ok) {
-        const insuranceData = await insuranceResponse.json();
-        console.log(`[AUTO-INSURANCE] Found ${insuranceData.length} insurance records:`, insuranceData);
-        
-        if (insuranceData.length > 0) {
-          // Auto-select primary insurance or first available
-          const primaryInsurance = insuranceData.find((ins: any) => ins.isPrimary) || insuranceData[0];
-          
-          setFormData(prev => ({
-            ...prev,
-            patientId,
-            patientInsuranceId: primaryInsurance.id
-          }));
-          
-          console.log(`[AUTO-INSURANCE] Auto-selected insurance:`, primaryInsurance);
-          
-          toast({
-            title: "Insurance Auto-Loaded",
-            description: `Automatically loaded ${primaryInsurance.insuranceProvider?.name || 'insurance'} (${primaryInsurance.policyNumber})${primaryInsurance.isPrimary ? ' - Primary' : ''}`,
-          });
-        } else {
-          console.log(`[AUTO-INSURANCE] No insurance found for patient ${patientId}`);
-          toast({
-            title: "No Insurance Found",
-            description: "Patient has no insurance information on file. Please contact patient to verify insurance details.",
-            variant: "destructive",
-          });
-        }
-      }
-      
-      // 2. Also fetch prescriptions for context (secondary)
+      // Fetch prescriptions for context (insurance will be loaded automatically by the query)
       const prescriptionsResponse = await apiRequest('GET', `/api/prescriptions${patientId ? `?patientId=${patientId}` : ''}`);
       
       if (prescriptionsResponse.ok) {
@@ -133,15 +100,16 @@ export default function Billing() {
           }));
           
           console.log("[PRESCRIPTION-DATA] Auto-populated prescription data:", latestPrescription);
+          
+          toast({
+            title: "Prescription Data Loaded",
+            description: `Auto-populated form with ${latestPrescription.medicationName || latestPrescription.medication_name} prescription data.`,
+          });
         }
       }
     } catch (error) {
-      console.error("Error fetching patient data:", error);
-      toast({
-        title: "Error Loading Patient Data",
-        description: "Failed to load patient insurance information. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Error fetching prescription data:", error);
+      // Don't show error toast as this is a nice-to-have feature
     }
   };
 
@@ -168,11 +136,40 @@ export default function Billing() {
     enabled: !!user && !!tenant,
   });
 
-  // Get patient insurance when a patient is selected
-  const { data: patientInsurance = [] } = useQuery<PatientInsurance[]>({
+  // Get patient insurance when a patient is selected - this will auto-load insurance data
+  const { data: patientInsurance = [], isLoading: isLoadingInsurance } = useQuery<PatientInsurance[]>({
     queryKey: ["/api/patient-insurance", formData.patientId],
     enabled: !!formData.patientId,
   });
+
+  // Effect to auto-select insurance when patient insurance data loads
+  useEffect(() => {
+    if (patientInsurance.length > 0 && formData.patientId && !formData.patientInsuranceId) {
+      console.log(`[AUTO-INSURANCE] Query loaded ${patientInsurance.length} insurance records for patient ${formData.patientId}:`, patientInsurance);
+      
+      // Auto-select primary insurance or first available
+      const primaryInsurance = patientInsurance.find((ins: any) => ins.isPrimary) || patientInsurance[0];
+      
+      setFormData(prev => ({
+        ...prev,
+        patientInsuranceId: primaryInsurance.id
+      }));
+      
+      console.log(`[AUTO-INSURANCE] Auto-selected insurance:`, primaryInsurance);
+      
+      toast({
+        title: "Insurance Auto-Loaded",
+        description: `Automatically loaded ${primaryInsurance.insuranceProvider?.name || 'insurance'} policy ${primaryInsurance.policyNumber}${primaryInsurance.isPrimary ? ' (Primary)' : ''}`,
+      });
+    } else if (patientInsurance.length === 0 && formData.patientId && !isLoadingInsurance) {
+      console.log(`[AUTO-INSURANCE] No insurance found for patient ${formData.patientId}`);
+      toast({
+        title: "No Insurance Found",
+        description: "Patient has no insurance information on file. Please contact patient to verify insurance details.",
+        variant: "destructive",
+      });
+    }
+  }, [patientInsurance, formData.patientId, formData.patientInsuranceId, isLoadingInsurance, toast]);
 
   // Get claim line items when a claim is selected
   const { data: claimLineItems = [] } = useQuery<ClaimLineItem[]>({
