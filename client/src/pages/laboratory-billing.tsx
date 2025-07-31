@@ -80,10 +80,10 @@ export default function LaboratoryBilling() {
     enabled: !!user && !!tenant,
   });
 
-  // Fetch patients for billing
+  // Fetch patients for laboratory billing (cross-tenant access)
   const { data: patients = [] } = useQuery({
-    queryKey: ["/api/patients"],
-    enabled: !!user && !!tenant,
+    queryKey: ["/api/laboratory/billing-patients"],
+    enabled: !!user && !!tenant && isCreateDialogOpen,
   });
 
   // Fetch completed lab orders for billing
