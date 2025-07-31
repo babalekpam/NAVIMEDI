@@ -4574,12 +4574,16 @@ Report ID: ${report.id}
       // Generate receipt number
       const receiptNumber = await storage.generateReceiptNumber(req.tenantId!);
 
+      // Convert prescribedDate from string to Date if it's a string
+      const prescribedDate = req.body.prescribedDate ? new Date(req.body.prescribedDate) : new Date();
+
       const validatedData = insertPharmacyReceiptSchema.parse({
         ...req.body,
         tenantId: req.tenantId,
         dispensedBy: req.user?.id,
         receiptNumber,
-        dispensedDate: new Date()
+        dispensedDate: new Date(),
+        prescribedDate: prescribedDate
       });
 
       const receipt = await storage.createPharmacyReceipt(validatedData);
