@@ -512,73 +512,40 @@ export default function PharmacyDashboardEnhanced() {
       }
     }, [localTotalCost, localCoveragePercentage]);
 
-    // Manual data loading function using authenticated API request
+    // Manual data loading function - simplified without automatic loading
     const loadInsuranceData = async () => {
       if (!selectedPrescription?.patientId) return;
       
-      try {
-        // Use fetch with proper credentials handling
-        const response = await fetch(`/api/patient-insurance/${selectedPrescription.patientId}`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (response.ok) {
-          const insuranceData = await response.json();
-          
-          if (insuranceData && insuranceData.length > 0) {
-            const primaryInsurance = insuranceData.find((ins: any) => ins.isPrimary) || insuranceData[0];
-            
-            console.log('Loading insurance data:', primaryInsurance);
-            
-            setLocalInsuranceProvider(primaryInsurance.insuranceProvider?.name || primaryInsurance.provider || 'Unknown Provider');
-            setLocalCoveragePercentage((primaryInsurance.coveragePercentage || 80).toString());
-            setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
-            
-            toast({
-              title: "Insurance Data Loaded",
-              description: `Auto-populated ${primaryInsurance.insuranceProvider?.name || 'insurance'} policy`,
-            });
-          } else {
-            setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
-            toast({
-              title: "No Insurance Found",
-              description: "Please enter insurance details manually.",
-              variant: "destructive",
-            });
-          }
-        } else {
-          throw new Error(`HTTP ${response.status}`);
-        }
-      } catch (error) {
-        console.error('Failed to load insurance data:', error);
-        setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
-        toast({
-          title: "Authentication Error",
-          description: "Unable to load insurance data. Please try again.",
-          variant: "destructive",
-        });
-      }
+      console.log('Skipping automatic insurance loading to prevent infinite loop');
+      
+      // Just set default values without trying to load insurance data
+      setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
+      setLocalCoveragePercentage("80"); // Default to 80%
+      
+      toast({
+        title: "Manual Entry Required",
+        description: "Please enter insurance provider and coverage percentage manually.",
+      });
     };
 
-    // Initialize form when dialog opens
+    // Initialize form when dialog opens - completely manual
     useEffect(() => {
       if (insuranceDialogOpen && selectedPrescription) {
-        console.log('Dialog opened, initializing form...');
-        // Reset form
-        setLocalInsuranceProvider("");
-        setLocalTotalCost("");
-        setLocalCoveragePercentage("");
+        console.log('Dialog opened, setting manual defaults only');
+        // Just set basic defaults - no API calls whatsoever
+        if (!localTotalCost) {
+          setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
+        }
+        if (!localCoveragePercentage) {
+          setLocalCoveragePercentage("80");
+        }
+        if (!localInsuranceProvider) {
+          setLocalInsuranceProvider("");
+        }
         setLocalNotes("");
         setLocalCalculation(null);
-        
-        // Load insurance data
-        loadInsuranceData();
       }
-    }, [insuranceDialogOpen, selectedPrescription?.id]);
+    }, [insuranceDialogOpen]);
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
