@@ -1257,6 +1257,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Prescription not found" });
       }
       
+      // Auto-create insurance claim when prescription is dispensed
+      if (requestData.status === 'dispensed' && isPharmacyUser) {
+        console.log(`[BILLING SYNC] Prescription ${updatedPrescription.id} dispensed, checking for insurance claim creation...`);
+        console.log(`[BILLING SYNC] Insurance provider: ${updatedPrescription.insuranceProvider}, Total cost: ${updatedPrescription.totalCost}`);
+        
+        if (updatedPrescription.insuranceProvider && updatedPrescription.totalCost) {
+          try {
+            const totalCost = Number(updatedPrescription.totalCost);
+            const copay = Number(updatedPrescription.insuranceCopay) || 0;
+            const claimAmount = totalCost - copay;
+            
+            console.log(`[BILLING SYNC] Calculated claim amount: ${claimAmount} (Total: ${totalCost} - Copay: ${copay})`);
+            
+            if (claimAmount > 0) {
+              const claimData = {
+                tenantId: req.tenant!.id, // Pharmacy tenant for the claim
+                patientId: updatedPrescription.patientId,
+                claimNumber: `CLM-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+                totalAmount: totalCost.toString(),
+                totalPatientCopay: copay.toString(),
+                totalInsuranceAmount: claimAmount.toString(),
+                status: 'submitted' as const,
+                submittedDate: new Date(),
+                notes: `Auto-generated claim for dispensed prescription ${updatedPrescription.medicationName} ${updatedPrescription.dosage || ''}`.trim(),
+                procedureCodes: [updatedPrescription.medicationName.toUpperCase().replace(/[^A-Z0-9]/g, '_')],
+                diagnosisCodes: []
+              };
+              
+              console.log(`[BILLING SYNC] Creating insurance claim with data:`, claimData);
+              const insuranceClaim = await storage.createInsuranceClaim(claimData);
+              
+              console.log(`[BILLING SYNC] ✅ Auto-created insurance claim ${insuranceClaim.claimNumber} for prescription ${updatedPrescription.id}`);
+            } else {
+              console.log(`[BILLING SYNC] No claim created - claim amount is ${claimAmount} (not positive)`);
+            }
+          } catch (claimError) {
+            console.error("[BILLING SYNC] ❌ Failed to auto-create insurance claim:", claimError);
+            // Don't fail the prescription update if claim creation fails
+          }
+        } else {
+          console.log(`[BILLING SYNC] No claim created - missing insurance provider or total cost`);
+        }
+      }
+      
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
