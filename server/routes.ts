@@ -750,10 +750,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tenantId = req.tenant!.id;
 
       let patients;
-      if (search && typeof search === "string") {
-        patients = await storage.searchPatients(tenantId, search);
+      
+      // Check if user is authenticated and is a physician
+      if (req.user && req.user.role === 'physician') {
+        // Physicians only see assigned patients
+        patients = await storage.getAssignedPatients(req.user.id, tenantId);
+        
+        // Apply search filter if provided
+        if (search && typeof search === "string") {
+          const query = search.toLowerCase().trim();
+          patients = patients.filter(patient => 
+            patient.firstName?.toLowerCase().includes(query) ||
+            patient.lastName?.toLowerCase().includes(query) ||
+            patient.mrn?.toLowerCase().includes(query) ||
+            patient.email?.toLowerCase().includes(query) ||
+            `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(query)
+          );
+        }
+        
+        // Apply pagination to assigned patients
+        const startIndex = parseInt(offset as string);
+        const limitNum = parseInt(limit as string);
+        patients = patients.slice(startIndex, startIndex + limitNum);
       } else {
-        patients = await storage.getPatientsByTenant(tenantId, parseInt(limit as string), parseInt(offset as string));
+        // Other roles see all patients
+        if (search && typeof search === "string") {
+          patients = await storage.searchPatients(tenantId, search);
+        } else {
+          patients = await storage.getPatientsByTenant(tenantId, parseInt(limit as string), parseInt(offset as string));
+        }
       }
 
       res.json(patients);
@@ -772,7 +797,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const searchQuery = req.query.search as string;
       console.log("Medical records request for tenant:", tenantId, "by user role:", req.user?.role, "search:", searchQuery);
       
-      let medicalRecords = await storage.getPatientsWithMedicalRecords(tenantId);
+      let medicalRecords;
+      
+      // Physicians only see assigned patients
+      if (req.user?.role === 'physician') {
+        const assignedPatients = await storage.getAssignedPatients(req.user.id, tenantId);
+        
+        // Get medical records for assigned patients
+        medicalRecords = [];
+        for (const patient of assignedPatients) {
+          const patientRecord = await storage.getCompletePatientRecord(patient.id, tenantId);
+          if (patientRecord) {
+            medicalRecords.push(patientRecord);
+          }
+        }
+      } else {
+        // Nurses, admins, and directors see all patients
+        medicalRecords = await storage.getPatientsWithMedicalRecords(tenantId);
+      }
       
       // Apply search filter if provided
       if (searchQuery && searchQuery.trim()) {
@@ -858,6 +900,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const tenantId = req.tenant!.id;
       
+      // Check patient access for physicians
+      if (req.user?.role === 'physician') {
+        const hasAccess = await storage.hasPatientAccess(req.user.id, id, tenantId);
+        if (!hasAccess) {
+          return res.status(403).json({ 
+            message: "Access denied. You are not assigned to this patient.", 
+            requiresApproval: true,
+            patientId: id
+          });
+        }
+      }
+      
       console.log("Complete record request for patient:", id, "tenant:", tenantId);
       const completeRecord = await storage.getCompletePatientRecord(id, tenantId);
       if (!completeRecord) {
@@ -877,6 +931,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const tenantId = req.tenant!.id;
       const updates = req.body;
+
+      // Check patient access for physicians
+      if (req.user?.role === 'physician') {
+        const hasAccess = await storage.hasPatientAccess(req.user.id, id, tenantId);
+        if (!hasAccess) {
+          return res.status(403).json({ 
+            message: "Access denied. You are not assigned to this patient.", 
+            requiresApproval: true,
+            patientId: id
+          });
+        }
+      }
 
       // Get original patient data for audit log
       const originalPatient = await storage.getPatient(id, tenantId);
@@ -4066,6 +4132,258 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Error fetching pharmacies:", error);
       res.status(500).json({ error: "Failed to fetch pharmacies" });
+    }
+  });
+
+  // Patient Assignment Management Routes
+  app.get("/api/patient-assignments", authenticateToken, requireTenant, requireRole(['physician', 'tenant_admin', 'director']), async (req, res) => {
+    try {
+      const { physicianId } = req.query;
+      const tenantId = req.user.tenantId;
+      
+      let assignments;
+      if (physicianId && typeof physicianId === 'string') {
+        assignments = await storage.getPatientAssignmentsByPhysician(physicianId, tenantId);
+      } else if (req.user.role === 'physician') {
+        // Physicians can only see their own assignments
+        assignments = await storage.getPatientAssignmentsByPhysician(req.user.id, tenantId);
+      } else {
+        // Admins can see all assignments
+        assignments = await storage.getActivePatientAssignments(tenantId);
+      }
+      
+      res.json(assignments);
+    } catch (error) {
+      console.error("Failed to fetch patient assignments:", error);
+      res.status(500).json({ message: "Failed to fetch patient assignments" });
+    }
+  });
+
+  app.post("/api/patient-assignments", authenticateToken, requireTenant, requireRole(['tenant_admin', 'director']), async (req, res) => {
+    try {
+      const { patientId, physicianId, assignmentType = 'primary', notes } = req.body;
+      
+      if (!patientId || !physicianId) {
+        return res.status(400).json({ message: "Patient ID and Physician ID are required" });
+      }
+
+      const assignmentData = {
+        tenantId: req.user.tenantId,
+        patientId,
+        physicianId,
+        assignmentType,
+        assignedBy: req.user.id,
+        notes
+      };
+
+      const assignment = await storage.createPatientAssignment(assignmentData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId,
+        userId: req.user.id,
+        entityType: "patient_assignment",
+        entityId: assignment.id,
+        action: "CREATE",
+        newData: assignment,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.status(201).json(assignment);
+    } catch (error) {
+      console.error("Failed to create patient assignment:", error);
+      res.status(500).json({ message: "Failed to create patient assignment" });
+    }
+  });
+
+  app.delete("/api/patient-assignments/:id", authenticateToken, requireTenant, requireRole(['tenant_admin', 'director']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.removePatientAssignment(id, req.user.tenantId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Patient assignment not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId,
+        userId: req.user.id,
+        entityType: "patient_assignment",
+        entityId: id,
+        action: "DELETE",
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json({ message: "Patient assignment removed successfully" });
+    } catch (error) {
+      console.error("Failed to remove patient assignment:", error);
+      res.status(500).json({ message: "Failed to remove patient assignment" });
+    }
+  });
+
+  // Patient Access Request Routes
+  app.get("/api/patient-access-requests", authenticateToken, requireTenant, requireRole(['physician', 'tenant_admin', 'director']), async (req, res) => {
+    try {
+      const { status } = req.query;
+      const tenantId = req.user.tenantId;
+      
+      let requests;
+      if (req.user.role === 'physician') {
+        // Physicians see their own requests
+        requests = await storage.getPatientAccessRequestsByPhysician(req.user.id, tenantId);
+      } else {
+        // Admins see pending requests for approval
+        if (status === 'pending') {
+          requests = await storage.getPendingPatientAccessRequests(tenantId);
+        } else {
+          // Get all requests (would need new method)
+          requests = await storage.getPendingPatientAccessRequests(tenantId);
+        }
+      }
+      
+      res.json(requests);
+    } catch (error) {
+      console.error("Failed to fetch patient access requests:", error);
+      res.status(500).json({ message: "Failed to fetch patient access requests" });
+    }
+  });
+
+  app.post("/api/patient-access-requests", authenticateToken, requireTenant, requireRole(['physician']), async (req, res) => {
+    try {
+      const { patientId, requestType = 'access', reason, urgency = 'normal' } = req.body;
+      
+      if (!patientId || !reason) {
+        return res.status(400).json({ message: "Patient ID and reason are required" });
+      }
+
+      // Check if doctor already has access
+      const hasAccess = await storage.hasPatientAccess(req.user.id, patientId, req.user.tenantId);
+      if (hasAccess) {
+        return res.status(400).json({ message: "You already have access to this patient" });
+      }
+
+      const requestData = {
+        tenantId: req.user.tenantId,
+        patientId,
+        requestingPhysicianId: req.user.id,
+        requestType,
+        reason,
+        urgency
+      };
+
+      const request = await storage.createPatientAccessRequest(requestData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId,
+        userId: req.user.id,
+        entityType: "patient_access_request",
+        entityId: request.id,
+        action: "CREATE",
+        newData: request,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.status(201).json(request);
+    } catch (error) {
+      console.error("Failed to create patient access request:", error);
+      res.status(500).json({ message: "Failed to create patient access request" });
+    }
+  });
+
+  app.patch("/api/patient-access-requests/:id/approve", authenticateToken, requireTenant, requireRole(['tenant_admin', 'director']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { accessUntil } = req.body; // Optional expiry date
+      
+      const request = await storage.approvePatientAccessRequest(
+        id, 
+        req.user.id, 
+        req.user.tenantId, 
+        accessUntil ? new Date(accessUntil) : undefined
+      );
+      
+      if (!request) {
+        return res.status(404).json({ message: "Patient access request not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId,
+        userId: req.user.id,
+        entityType: "patient_access_request",
+        entityId: id,
+        action: "APPROVE",
+        newData: request,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json(request);
+    } catch (error) {
+      console.error("Failed to approve patient access request:", error);
+      res.status(500).json({ message: "Failed to approve patient access request" });
+    }
+  });
+
+  app.patch("/api/patient-access-requests/:id/deny", authenticateToken, requireTenant, requireRole(['tenant_admin', 'director']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reviewNotes } = req.body;
+      
+      if (!reviewNotes) {
+        return res.status(400).json({ message: "Review notes are required when denying a request" });
+      }
+      
+      const request = await storage.denyPatientAccessRequest(id, req.user.id, reviewNotes, req.user.tenantId);
+      
+      if (!request) {
+        return res.status(404).json({ message: "Patient access request not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId,
+        userId: req.user.id,
+        entityType: "patient_access_request",
+        entityId: id,
+        action: "DENY",
+        newData: request,
+        ipAddress: req.ip || null,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json(request);
+    } catch (error) {
+      console.error("Failed to deny patient access request:", error);
+      res.status(500).json({ message: "Failed to deny patient access request" });
+    }
+  });
+
+  // Enhanced Patients Route with Assignment Controls
+  app.get("/api/assigned-patients", authenticateToken, requireTenant, requireRole(['physician']), async (req, res) => {
+    try {
+      const assignedPatients = await storage.getAssignedPatients(req.user.id, req.user.tenantId);
+      res.json(assignedPatients);
+    } catch (error) {
+      console.error("Failed to fetch assigned patients:", error);
+      res.status(500).json({ message: "Failed to fetch assigned patients" });
+    }
+  });
+
+  // Check Patient Access Route
+  app.get("/api/patients/:id/access-check", authenticateToken, requireTenant, requireRole(['physician']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const hasAccess = await storage.hasPatientAccess(req.user.id, id, req.user.tenantId);
+      res.json({ hasAccess });
+    } catch (error) {
+      console.error("Failed to check patient access:", error);
+      res.status(500).json({ message: "Failed to check patient access" });
     }
   });
 

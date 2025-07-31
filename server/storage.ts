@@ -31,6 +31,8 @@ import {
   rolePermissions,
   patientBills,
   patientPayments,
+  patientAssignments,
+  patientAccessRequests,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -102,7 +104,7 @@ import {
   type InsertRolePermission
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, like, or } from "drizzle-orm";
+import { eq, and, desc, sql, like, or, isNull, gt } from "drizzle-orm";
 
 export interface IStorage {
   // User management
@@ -371,6 +373,29 @@ export interface IStorage {
   // Translations
   getTranslations(tenantId: string, language: string): Promise<any[]>;
   createTranslation(data: any): Promise<any>;
+
+  // Patient Assignment Management
+  getPatientAssignment(id: string, tenantId: string): Promise<any | undefined>;
+  createPatientAssignment(assignment: any): Promise<any>;
+  updatePatientAssignment(id: string, updates: any, tenantId: string): Promise<any | undefined>;
+  getPatientAssignmentsByPhysician(physicianId: string, tenantId: string): Promise<any[]>;
+  getPatientAssignmentsByPatient(patientId: string, tenantId: string): Promise<any[]>;
+  getActivePatientAssignments(tenantId: string): Promise<any[]>;
+  removePatientAssignment(id: string, tenantId: string): Promise<boolean>;
+
+  // Patient Access Request Management
+  getPatientAccessRequest(id: string, tenantId: string): Promise<any | undefined>;
+  createPatientAccessRequest(request: any): Promise<any>;
+  updatePatientAccessRequest(id: string, updates: any, tenantId: string): Promise<any | undefined>;
+  getPatientAccessRequestsByPhysician(physicianId: string, tenantId: string): Promise<any[]>;
+  getPendingPatientAccessRequests(tenantId: string): Promise<any[]>;
+  approvePatientAccessRequest(id: string, reviewedBy: string, tenantId: string, accessUntil?: Date): Promise<any | undefined>;
+  denyPatientAccessRequest(id: string, reviewedBy: string, reviewNotes: string, tenantId: string): Promise<any | undefined>;
+
+  // Enhanced Patient Methods with Assignment Controls
+  getAssignedPatients(physicianId: string, tenantId: string): Promise<Patient[]>;
+  hasPatientAccess(physicianId: string, patientId: string, tenantId: string): Promise<boolean>;
+  getPatientWithAccessCheck(patientId: string, physicianId: string, tenantId: string): Promise<Patient | undefined>;
 
   // Role Permissions Management
   getRolePermissions(tenantId: string): Promise<RolePermission[]>;
@@ -2782,6 +2807,295 @@ export class DatabaseStorage implements IStorage {
       console.error("Failed to send patient activation message:", error);
       return false;
     }
+  }
+
+  // Patient Assignment Management Implementation
+  async getPatientAssignment(id: string, tenantId: string): Promise<any | undefined> {
+    const [assignment] = await db.select().from(patientAssignments).where(
+      and(eq(patientAssignments.id, id), eq(patientAssignments.tenantId, tenantId))
+    );
+    return assignment || undefined;
+  }
+
+  async createPatientAssignment(assignment: any): Promise<any> {
+    const [newAssignment] = await db.insert(patientAssignments).values(assignment).returning();
+    return newAssignment;
+  }
+
+  async updatePatientAssignment(id: string, updates: any, tenantId: string): Promise<any | undefined> {
+    const [updated] = await db.update(patientAssignments)
+      .set(updates)
+      .where(and(eq(patientAssignments.id, id), eq(patientAssignments.tenantId, tenantId)))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getPatientAssignmentsByPhysician(physicianId: string, tenantId: string): Promise<any[]> {
+    return await db.select({
+      id: patientAssignments.id,
+      patientId: patientAssignments.patientId,
+      assignmentType: patientAssignments.assignmentType,
+      assignedDate: patientAssignments.assignedDate,
+      expiryDate: patientAssignments.expiryDate,
+      notes: patientAssignments.notes,
+      // Patient information
+      patientFirstName: patients.firstName,
+      patientLastName: patients.lastName,
+      patientMRN: patients.mrn,
+      patientDateOfBirth: patients.dateOfBirth,
+      patientPhone: patients.phone,
+      patientEmail: patients.email
+    })
+    .from(patientAssignments)
+    .innerJoin(patients, eq(patientAssignments.patientId, patients.id))
+    .where(and(
+      eq(patientAssignments.physicianId, physicianId),
+      eq(patientAssignments.tenantId, tenantId),
+      eq(patientAssignments.isActive, true)
+    ))
+    .orderBy(desc(patientAssignments.assignedDate));
+  }
+
+  async getPatientAssignmentsByPatient(patientId: string, tenantId: string): Promise<any[]> {
+    return await db.select({
+      id: patientAssignments.id,
+      physicianId: patientAssignments.physicianId,
+      assignmentType: patientAssignments.assignmentType,
+      assignedDate: patientAssignments.assignedDate,
+      expiryDate: patientAssignments.expiryDate,
+      notes: patientAssignments.notes,
+      // Physician information
+      physicianFirstName: users.firstName,
+      physicianLastName: users.lastName,
+      physicianEmail: users.email
+    })
+    .from(patientAssignments)
+    .innerJoin(users, eq(patientAssignments.physicianId, users.id))
+    .where(and(
+      eq(patientAssignments.patientId, patientId),
+      eq(patientAssignments.tenantId, tenantId),
+      eq(patientAssignments.isActive, true)
+    ))
+    .orderBy(desc(patientAssignments.assignedDate));
+  }
+
+  async getActivePatientAssignments(tenantId: string): Promise<any[]> {
+    return await db.select({
+      id: patientAssignments.id,
+      patientId: patientAssignments.patientId,
+      physicianId: patientAssignments.physicianId,
+      assignmentType: patientAssignments.assignmentType,
+      assignedDate: patientAssignments.assignedDate,
+      expiryDate: patientAssignments.expiryDate,
+      notes: patientAssignments.notes,
+      // Patient information
+      patientName: sql<string>`${patients.firstName} || ' ' || ${patients.lastName}`,
+      patientMRN: patients.mrn,
+      patientDateOfBirth: patients.dateOfBirth,
+      patientPhone: patients.phone,
+      patientEmail: patients.email,
+      // Physician information
+      physicianName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+      physicianEmail: users.email
+    })
+    .from(patientAssignments)
+    .innerJoin(patients, eq(patientAssignments.patientId, patients.id))
+    .innerJoin(users, eq(patientAssignments.physicianId, users.id))
+    .where(and(
+      eq(patientAssignments.tenantId, tenantId),
+      eq(patientAssignments.isActive, true)
+    ))
+    .orderBy(desc(patientAssignments.assignedDate));
+  }
+
+  async removePatientAssignment(id: string, tenantId: string): Promise<boolean> {
+    const result = await db.update(patientAssignments)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(and(eq(patientAssignments.id, id), eq(patientAssignments.tenantId, tenantId)));
+    return result.rowCount !== undefined && result.rowCount > 0;
+  }
+
+  // Patient Access Request Management Implementation
+  async getPatientAccessRequest(id: string, tenantId: string): Promise<any | undefined> {
+    const [request] = await db.select().from(patientAccessRequests).where(
+      and(eq(patientAccessRequests.id, id), eq(patientAccessRequests.tenantId, tenantId))
+    );
+    return request || undefined;
+  }
+
+  async createPatientAccessRequest(request: any): Promise<any> {
+    const [newRequest] = await db.insert(patientAccessRequests).values(request).returning();
+    return newRequest;
+  }
+
+  async updatePatientAccessRequest(id: string, updates: any, tenantId: string): Promise<any | undefined> {
+    const [updated] = await db.update(patientAccessRequests)
+      .set(updates)
+      .where(and(eq(patientAccessRequests.id, id), eq(patientAccessRequests.tenantId, tenantId)))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getPatientAccessRequestsByPhysician(physicianId: string, tenantId: string): Promise<any[]> {
+    return await db.select({
+      id: patientAccessRequests.id,
+      patientId: patientAccessRequests.patientId,
+      requestType: patientAccessRequests.requestType,
+      reason: patientAccessRequests.reason,
+      urgency: patientAccessRequests.urgency,
+      status: patientAccessRequests.status,
+      requestedDate: patientAccessRequests.requestedDate,
+      reviewedDate: patientAccessRequests.reviewedDate,
+      reviewNotes: patientAccessRequests.reviewNotes,
+      accessGrantedUntil: patientAccessRequests.accessGrantedUntil,
+      // Patient information
+      patientFirstName: patients.firstName,
+      patientLastName: patients.lastName,
+      patientMRN: patients.mrn,
+      // Target physician information (if applicable)
+      targetPhysicianFirstName: users.firstName,
+      targetPhysicianLastName: users.lastName
+    })
+    .from(patientAccessRequests)
+    .innerJoin(patients, eq(patientAccessRequests.patientId, patients.id))
+    .leftJoin(users, eq(patientAccessRequests.targetPhysicianId, users.id))
+    .where(and(
+      eq(patientAccessRequests.requestingPhysicianId, physicianId),
+      eq(patientAccessRequests.tenantId, tenantId)
+    ))
+    .orderBy(desc(patientAccessRequests.requestedDate));
+  }
+
+  async getPendingPatientAccessRequests(tenantId: string): Promise<any[]> {
+    return await db.select({
+      id: patientAccessRequests.id,
+      patientId: patientAccessRequests.patientId,
+      requestingPhysicianId: patientAccessRequests.requestingPhysicianId,
+      requestType: patientAccessRequests.requestType,
+      reason: patientAccessRequests.reason,
+      urgency: patientAccessRequests.urgency,
+      requestedDate: patientAccessRequests.requestedDate,
+      // Patient information
+      patientFirstName: patients.firstName,
+      patientLastName: patients.lastName,
+      patientMRN: patients.mrn,
+      // Requesting physician information
+      requestingPhysicianFirstName: users.firstName,
+      requestingPhysicianLastName: users.lastName,
+      requestingPhysicianEmail: users.email
+    })
+    .from(patientAccessRequests)
+    .innerJoin(patients, eq(patientAccessRequests.patientId, patients.id))
+    .innerJoin(users, eq(patientAccessRequests.requestingPhysicianId, users.id))
+    .where(and(
+      eq(patientAccessRequests.tenantId, tenantId),
+      eq(patientAccessRequests.status, 'pending')
+    ))
+    .orderBy(desc(patientAccessRequests.requestedDate));
+  }
+
+  async approvePatientAccessRequest(id: string, reviewedBy: string, tenantId: string, accessUntil?: Date): Promise<any | undefined> {
+    const [updated] = await db.update(patientAccessRequests)
+      .set({
+        status: 'approved',
+        reviewedBy,
+        reviewedDate: new Date(),
+        accessGrantedUntil: accessUntil,
+        updatedAt: new Date()
+      })
+      .where(and(eq(patientAccessRequests.id, id), eq(patientAccessRequests.tenantId, tenantId)))
+      .returning();
+    return updated || undefined;
+  }
+
+  async denyPatientAccessRequest(id: string, reviewedBy: string, reviewNotes: string, tenantId: string): Promise<any | undefined> {
+    const [updated] = await db.update(patientAccessRequests)
+      .set({
+        status: 'denied',
+        reviewedBy,
+        reviewedDate: new Date(),
+        reviewNotes,
+        updatedAt: new Date()
+      })
+      .where(and(eq(patientAccessRequests.id, id), eq(patientAccessRequests.tenantId, tenantId)))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Enhanced Patient Methods with Assignment Controls
+  async getAssignedPatients(physicianId: string, tenantId: string): Promise<Patient[]> {
+    return await db.select({
+      id: patients.id,
+      tenantId: patients.tenantId,
+      mrn: patients.mrn,
+      firstName: patients.firstName,
+      lastName: patients.lastName,
+      dateOfBirth: patients.dateOfBirth,
+      gender: patients.gender,
+      phone: patients.phone,
+      email: patients.email,
+      address: patients.address,
+      emergencyContact: patients.emergencyContact,
+      insuranceInfo: patients.insuranceInfo,
+      preferredPharmacyId: patients.preferredPharmacyId,
+      primaryPhysicianId: patients.primaryPhysicianId,
+      medicalHistory: patients.medicalHistory,
+      allergies: patients.allergies,
+      medications: patients.medications,
+      isActive: patients.isActive,
+      createdAt: patients.createdAt,
+      updatedAt: patients.updatedAt
+    })
+    .from(patients)
+    .innerJoin(patientAssignments, eq(patients.id, patientAssignments.patientId))
+    .where(and(
+      eq(patientAssignments.physicianId, physicianId),
+      eq(patientAssignments.tenantId, tenantId),
+      eq(patientAssignments.isActive, true),
+      eq(patients.isActive, true)
+    ))
+    .orderBy(patients.lastName, patients.firstName);
+  }
+
+  async hasPatientAccess(physicianId: string, patientId: string, tenantId: string): Promise<boolean> {
+    // Check for direct assignment
+    const assignment = await db.select().from(patientAssignments).where(
+      and(
+        eq(patientAssignments.physicianId, physicianId),
+        eq(patientAssignments.patientId, patientId),
+        eq(patientAssignments.tenantId, tenantId),
+        eq(patientAssignments.isActive, true)
+      )
+    ).limit(1);
+
+    if (assignment.length > 0) {
+      return true;
+    }
+
+    // Check for approved temporary access
+    const accessRequest = await db.select().from(patientAccessRequests).where(
+      and(
+        eq(patientAccessRequests.requestingPhysicianId, physicianId),
+        eq(patientAccessRequests.patientId, patientId),
+        eq(patientAccessRequests.tenantId, tenantId),
+        eq(patientAccessRequests.status, 'approved'),
+        or(
+          isNull(patientAccessRequests.accessGrantedUntil),
+          gt(patientAccessRequests.accessGrantedUntil, new Date())
+        )
+      )
+    ).limit(1);
+
+    return accessRequest.length > 0;
+  }
+
+  async getPatientWithAccessCheck(patientId: string, physicianId: string, tenantId: string): Promise<Patient | undefined> {
+    const hasAccess = await this.hasPatientAccess(physicianId, patientId, tenantId);
+    if (!hasAccess) {
+      return undefined;
+    }
+
+    return await this.getPatient(patientId, tenantId);
   }
 }
 

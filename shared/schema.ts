@@ -288,6 +288,7 @@ export const patients = pgTable("patients", {
   emergencyContact: jsonb("emergency_contact"),
   insuranceInfo: jsonb("insurance_info"),
   preferredPharmacyId: uuid("preferred_pharmacy_id").references(() => pharmacies.id),
+  primaryPhysicianId: uuid("primary_physician_id").references(() => users.id), // Assigned primary doctor
   medicalHistory: jsonb("medical_history").default('[]'),
   allergies: jsonb("allergies").default('[]'),
   medications: jsonb("medications").default('[]'),
@@ -715,6 +716,42 @@ export const medicalPhrases = pgTable("medical_phrases", {
   originalLanguage: text("original_language").notNull().default('en'),
   originalText: text("original_text").notNull(),
   isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Patient Assignment System
+export const patientAssignments = pgTable("patient_assignments", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  physicianId: uuid("physician_id").references(() => users.id).notNull(),
+  assignmentType: text("assignment_type").notNull().default('primary'), // primary, secondary, temporary
+  assignedBy: uuid("assigned_by").references(() => users.id).notNull(), // Who assigned the patient
+  assignedDate: timestamp("assigned_date").default(sql`CURRENT_TIMESTAMP`),
+  expiryDate: timestamp("expiry_date"), // For temporary assignments
+  isActive: boolean("is_active").default(true),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Patient Access Requests
+export const patientAccessRequests = pgTable("patient_access_requests", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  requestingPhysicianId: uuid("requesting_physician_id").references(() => users.id).notNull(),
+  targetPhysicianId: uuid("target_physician_id").references(() => users.id), // Chief physician or assigned doctor
+  requestType: text("request_type").notNull().default('access'), // access, transfer, consultation
+  reason: text("reason").notNull(),
+  urgency: text("urgency").notNull().default('normal'), // low, normal, high, emergency
+  status: text("status").notNull().default('pending'), // pending, approved, denied, expired
+  requestedDate: timestamp("requested_date").default(sql`CURRENT_TIMESTAMP`),
+  reviewedDate: timestamp("reviewed_date"),
+  reviewedBy: uuid("reviewed_by").references(() => users.id),
+  reviewNotes: text("review_notes"),
+  accessGrantedUntil: timestamp("access_granted_until"), // Temporary access expiry
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
