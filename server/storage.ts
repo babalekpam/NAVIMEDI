@@ -901,6 +901,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPrescriptionsByPharmacy(pharmacyTenantId: string): Promise<any[]> {
+    console.log(`[DEBUG] Getting prescriptions for pharmacy: ${pharmacyTenantId}`);
+    
+    // First, let's check if there are any prescriptions with this pharmacy ID
+    const allPrescriptionsForPharmacy = await db
+      .select({
+        id: prescriptions.id,
+        medicationName: prescriptions.medicationName,
+        pharmacyTenantId: prescriptions.pharmacyTenantId,
+        status: prescriptions.status
+      })
+      .from(prescriptions)
+      .where(eq(prescriptions.pharmacyTenantId, pharmacyTenantId));
+    
+    console.log(`[DEBUG] Direct query found ${allPrescriptionsForPharmacy.length} prescriptions:`, 
+      allPrescriptionsForPharmacy.map(p => ({ medication: p.medicationName, status: p.status })));
+    
     const result = await db
       .select({
         id: prescriptions.id,
@@ -934,9 +950,9 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(prescriptions.providerId, users.id))
       .innerJoin(tenants, eq(prescriptions.tenantId, tenants.id))
       .where(eq(prescriptions.pharmacyTenantId, pharmacyTenantId))
-      .orderBy(desc(prescriptions.sentToPharmacyDate));
+      .orderBy(desc(prescriptions.prescribedDate));
     
-    console.log(`Found ${result.length} prescriptions for pharmacy ${pharmacyTenantId}`);
+    console.log(`[DEBUG] Full query with joins found ${result.length} prescriptions for pharmacy ${pharmacyTenantId}`);
     if (result.length > 0) {
       console.log("Sample prescription with provider info:", {
         medicationName: result[0].medicationName,
