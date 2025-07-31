@@ -1014,8 +1014,17 @@ export class DatabaseStorage implements IStorage {
 
   // Get patient record by user ID (for patient portal)
   async getPatientByUserId(userId: string, tenantId: string): Promise<Patient | undefined> {
+    // Get the user first
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+    
+    // Find patient by matching first name, last name, and tenant
     const [patient] = await db.select().from(patients).where(
-      and(eq(patients.userId, userId), eq(patients.tenantId, tenantId))
+      and(
+        eq(patients.firstName, user.firstName),
+        eq(patients.lastName, user.lastName),
+        eq(patients.tenantId, tenantId)
+      )
     );
     return patient || undefined;
   }

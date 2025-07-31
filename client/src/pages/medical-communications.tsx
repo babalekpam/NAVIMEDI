@@ -1,16 +1,23 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-auth";
-import { useTenant } from "@/hooks/use-tenant";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Languages, MessageSquare, AlertCircle, Clock, Send, Eye } from "lucide-react";
-import { MedicalCommunication, Patient, SupportedLanguage } from "@shared/schema";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  MessageSquare, 
+  Search, 
+  Eye, 
+  AlertCircle, 
+  Languages,
+  Clock
+} from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useTenant } from "@/hooks/use-tenant";
+import type { MedicalCommunication, Patient, SupportedLanguage } from "@shared/schema";
 import { CommunicationForm } from "@/components/forms/communication-form";
 import { CommunicationViewer } from "@/components/communication/communication-viewer";
 import { LanguageManager } from "@/components/communication/language-manager";
@@ -41,7 +48,7 @@ export default function MedicalCommunications() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedCommunication, setSelectedCommunication] = useState<MedicalCommunication | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("patient-messages");
+  const [activeTab, setActiveTab] = useState("all-messages");
 
   const { user } = useAuth();
   const { tenant } = useTenant();
@@ -85,9 +92,6 @@ export default function MedicalCommunications() {
     }
   });
 
-  const patientMessages = communications.filter(comm => comm.senderRole === "patient");
-  const staffMessages = communications.filter(comm => comm.senderRole !== "patient");
-  
   const getFilteredMessages = (messagesList: MedicalCommunication[]) => {
     return messagesList.filter(comm => {
       const patient = patients.find(p => p.id === comm.patientId);
@@ -104,16 +108,17 @@ export default function MedicalCommunications() {
     });
   };
   
-  const filteredPatientMessages = getFilteredMessages(patientMessages);
-  const filteredStaffMessages = getFilteredMessages(staffMessages);
+  const filteredMessages = getFilteredMessages(communications);
 
   const getPatientName = (patientId: string) => {
     const patient = patients.find(p => p.id === patientId);
-    return patient ? `${patient.firstName} ${patient.lastName}` : `Patient ${patientId.slice(-4)}`;
+    return patient ? `${patient.firstName} ${patient.lastName}` : "Unknown Patient";
   };
 
-  const unreadCount = communications.filter(c => !c.isRead).length;
-  const urgentCount = communications.filter(c => c.priority === 'urgent' || c.priority === 'emergency').length;
+  const unreadCount = communications.filter(comm => !comm.isRead).length;
+  const urgentCount = communications.filter(comm => 
+    comm.priority === "urgent" || comm.priority === "emergency"
+  ).length;
 
   if (!user || !tenant) {
     return <div>Loading...</div>;
@@ -125,7 +130,7 @@ export default function MedicalCommunications() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Medical Communications</h1>
-          <p className="text-gray-600 mt-1">Multilingual patient communication and translation management</p>
+          <p className="text-gray-600 mt-1">Unified patient and provider communication interface</p>
         </div>
         <div className="flex items-center space-x-3">
           {unreadCount > 0 && (
@@ -162,14 +167,10 @@ export default function MedicalCommunications() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="patient-messages">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="all-messages">
             <MessageSquare className="h-4 w-4 mr-2" />
-            Patient Messages ({patientMessages.length})
-          </TabsTrigger>
-          <TabsTrigger value="staff-communications">
-            <Send className="h-4 w-4 mr-2" />
-            Staff Communications ({staffMessages.length})
+            All Messages ({filteredMessages.length})
           </TabsTrigger>
           <TabsTrigger value="languages">
             <Languages className="h-4 w-4 mr-2" />
@@ -181,71 +182,7 @@ export default function MedicalCommunications() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="patient-messages" className="space-y-6">
-          {/* Patient Messages - Only visible to nurses and doctors */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Patient Messages
-              </CardTitle>
-              <p className="text-sm text-gray-600">Messages sent from patients to their care team</p>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="flex items-center justify-center p-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : filteredPatientMessages.length === 0 ? (
-                <div className="text-center py-8">
-                  <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">No patient messages found</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {filteredPatientMessages.map((comm) => (
-                    <div
-                      key={comm.id}
-                      className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                      onClick={() => {
-                        setSelectedCommunication(comm);
-                        setIsViewerOpen(true);
-                        if (!comm.isRead) {
-                          markAsReadMutation.mutate(comm.id);
-                        }
-                      }}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold">{getPatientName(comm.patientId)}</h3>
-                            <Badge className={`text-xs ${priorityColors[comm.priority as keyof typeof priorityColors] || priorityColors.normal}`}>
-                              {comm.priority}
-                            </Badge>
-                            <Badge variant="outline" className={`text-xs ${typeColors[comm.type as keyof typeof typeColors] || typeColors.general_message}`}>
-                              {comm.type}
-                            </Badge>
-                            {!comm.isRead && (
-                              <Badge variant="destructive" className="text-xs">New</Badge>
-                            )}
-                          </div>
-                          <p className="text-sm font-medium mb-1">{comm.subject}</p>
-                          <p className="text-sm text-gray-600 line-clamp-2">{comm.message}</p>
-                          <p className="text-xs text-gray-400 mt-2">
-                            {new Date(comm.sentAt).toLocaleDateString()} at {new Date(comm.sentAt).toLocaleTimeString()}
-                          </p>
-                        </div>
-                        <Eye className="h-4 w-4 text-gray-400" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="staff-communications" className="space-y-6">
+        <TabsContent value="all-messages" className="space-y-6">
           {/* Filters */}
           <Card>
             <CardContent className="p-6">
@@ -307,62 +244,61 @@ export default function MedicalCommunications() {
             </CardContent>
           </Card>
 
-          {/* Staff Communications List */}
+          {/* All Messages */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Send className="h-5 w-5" />
-                Staff Communications
+                <MessageSquare className="h-5 w-5" />
+                Medical Communications
               </CardTitle>
-              <p className="text-sm text-gray-600">Messages sent between healthcare staff members</p>
+              <p className="text-sm text-gray-600">All messages between patients and healthcare providers</p>
             </CardHeader>
             <CardContent>
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
-              ) : filteredStaffMessages.length === 0 ? (
+              ) : filteredMessages.length === 0 ? (
                 <div className="text-center py-8">
-                  <Send className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">No staff communications found</p>
+                  <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">No messages found</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {filteredStaffMessages.map((communication) => (
+                  {filteredMessages.map((comm) => (
                     <div
-                      key={communication.id}
+                      key={comm.id}
                       className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
                       onClick={() => {
-                        setSelectedCommunication(communication);
+                        setSelectedCommunication(comm);
                         setIsViewerOpen(true);
-                        if (!communication.isRead) {
-                          markAsReadMutation.mutate(communication.id);
+                        if (!comm.isRead) {
+                          markAsReadMutation.mutate(comm.id);
                         }
                       }}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold">{getPatientName(communication.patientId)}</h3>
-                            <Badge className={`text-xs ${priorityColors[communication.priority as keyof typeof priorityColors] || priorityColors.normal}`}>
-                              {communication.priority}
+                            <h3 className="font-semibold">{getPatientName(comm.patientId)}</h3>
+                            <Badge className={`text-xs ${priorityColors[comm.priority as keyof typeof priorityColors] || priorityColors.normal}`}>
+                              {comm.priority}
                             </Badge>
-                            <Badge variant="outline" className={`text-xs ${typeColors[communication.type as keyof typeof typeColors] || typeColors.general_message}`}>
-                              {communication.type}
+                            <Badge variant="outline" className={`text-xs ${typeColors[comm.type as keyof typeof typeColors] || typeColors.general_message}`}>
+                              {comm.type}
                             </Badge>
-                            {!communication.isRead && (
-                              <Badge variant="destructive" className="text-xs">Unread</Badge>
+                            {!comm.isRead && (
+                              <Badge variant="destructive" className="text-xs">New</Badge>
                             )}
+                            <Badge variant="secondary" className="text-xs">
+                              {comm.senderRole === 'patient' ? 'From Patient' : 'From Staff'}
+                            </Badge>
                           </div>
-                          <p className="text-sm font-medium mb-1">{communication.subject}</p>
-                          <p className="text-sm text-gray-600 line-clamp-2">{communication.message}</p>
-                          <div className="flex items-center text-xs text-gray-400 gap-4 mt-2">
-                            <span>{new Date(communication.sentAt).toLocaleDateString()}</span>
-                            <span>Language: {communication.originalLanguage}</span>
-                            {communication.translatedLanguages && communication.translatedLanguages.length > 0 && (
-                              <span>Translated to: {communication.translatedLanguages.join(', ')}</span>
-                            )}
-                          </div>
+                          <p className="text-sm font-medium mb-1">{comm.subject}</p>
+                          <p className="text-sm text-gray-600 line-clamp-2">{comm.message}</p>
+                          <p className="text-xs text-gray-400 mt-2">
+                            {new Date(comm.sentAt).toLocaleDateString()} at {new Date(comm.sentAt).toLocaleTimeString()}
+                          </p>
                         </div>
                         <Eye className="h-4 w-4 text-gray-400" />
                       </div>
@@ -374,42 +310,40 @@ export default function MedicalCommunications() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="languages">
-          <LanguageManager supportedLanguages={supportedLanguages} />
+        <TabsContent value="languages" className="space-y-6">
+          <LanguageManager />
         </TabsContent>
 
-        <TabsContent value="analytics">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Total Communications</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">{communications.length}</div>
-                <p className="text-sm text-gray-600">All time communications</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Active Languages</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-green-600">{supportedLanguages.length}</div>
-                <p className="text-sm text-gray-600">Supported languages</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Urgent Messages</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-orange-600">{urgentCount}</div>
-                <p className="text-sm text-gray-600">Requiring attention</p>
-              </CardContent>
-            </Card>
-          </div>
+        <TabsContent value="analytics" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Communication Analytics
+              </CardTitle>
+              <p className="text-sm text-gray-600">Statistics and insights about medical communications</p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600">{communications.length}</div>
+                  <p className="text-sm text-gray-500">Total Messages</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600">{communications.filter(c => c.isRead).length}</div>
+                  <p className="text-sm text-gray-500">Read Messages</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-red-600">{unreadCount}</div>
+                  <p className="text-sm text-gray-500">Unread Messages</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-orange-600">{urgentCount}</div>
+                  <p className="text-sm text-gray-500">Urgent/Emergency</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
@@ -417,13 +351,12 @@ export default function MedicalCommunications() {
       <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Medical Communication Details</DialogTitle>
+            <DialogTitle>View Communication</DialogTitle>
           </DialogHeader>
           {selectedCommunication && (
-            <CommunicationViewer 
+            <CommunicationViewer
               communication={selectedCommunication}
-              patients={patients}
-              supportedLanguages={supportedLanguages}
+              patient={patients.find(p => p.id === selectedCommunication.patientId)}
             />
           )}
         </DialogContent>
