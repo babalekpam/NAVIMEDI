@@ -1051,12 +1051,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { patientId } = req.query;
       const tenantId = req.tenant!.id;
+      const tenantType = req.tenant!.type;
 
       let prescriptions;
       if (patientId) {
         prescriptions = await storage.getPrescriptionsByPatient(patientId as string, tenantId);
       } else {
-        prescriptions = await storage.getPrescriptionsByTenant(tenantId);
+        // For pharmacies, show prescriptions sent TO them (by pharmacyTenantId)
+        // For hospitals/clinics, show prescriptions created BY them (by tenantId)
+        if (tenantType === 'pharmacy') {
+          prescriptions = await storage.getPrescriptionsByPharmacy(tenantId);
+          console.log(`[PHARMACY] Loading prescriptions sent to pharmacy ${tenantId}:`, prescriptions.length);
+        } else {
+          prescriptions = await storage.getPrescriptionsByTenant(tenantId);
+          console.log(`[HOSPITAL] Loading prescriptions created by hospital ${tenantId}:`, prescriptions.length);
+        }
       }
 
       res.json(prescriptions);
