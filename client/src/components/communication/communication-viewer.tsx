@@ -10,8 +10,8 @@ import { Languages, User, Calendar, Clock, RefreshCw, CheckCircle, AlertTriangle
 
 interface CommunicationViewerProps {
   communication: MedicalCommunication;
-  patients: Patient[];
-  supportedLanguages: SupportedLanguage[];
+  patients?: Patient[];
+  supportedLanguages?: SupportedLanguage[];
 }
 
 const priorityColors = {
@@ -69,9 +69,9 @@ export const CommunicationViewer = ({ communication, patients, supportedLanguage
     }
   });
 
-  const patient = patients.find(p => p.id === communication.patientId);
-  const originalLanguage = supportedLanguages.find(l => l.languageCode === communication.originalLanguage);
-  const selectedLangDetails = supportedLanguages.find(l => l.languageCode === selectedLanguage);
+  const patient = patients?.find(p => p.id === communication.patientId);
+  const originalLanguage = supportedLanguages?.find(l => l.languageCode === communication.originalLanguage);
+  const selectedLangDetails = supportedLanguages?.find(l => l.languageCode === selectedLanguage);
 
   const getCurrentContent = () => {
     if (selectedLanguage === communication.originalLanguage) {

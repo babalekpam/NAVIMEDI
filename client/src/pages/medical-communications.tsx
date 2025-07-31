@@ -356,7 +356,8 @@ export default function MedicalCommunications() {
           {selectedCommunication && (
             <CommunicationViewer
               communication={selectedCommunication}
-              patient={patients.find(p => p.id === selectedCommunication.patientId)}
+              patients={patients}
+              supportedLanguages={supportedLanguages}
             />
           )}
         </DialogContent>
