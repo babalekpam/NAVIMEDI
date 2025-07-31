@@ -790,26 +790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-  // Cross-tenant patients for pharmacy billing (patients with prescriptions sent to this pharmacy)
-  app.get("/api/billing/patients", requireTenant, async (req, res) => {
-    try {
-      const tenantId = req.tenant!.id;
-      const tenantType = req.tenant!.type;
-      
-      if (tenantType === 'pharmacy') {
-        // For pharmacies, get patients who have prescriptions sent to this pharmacy
-        const patients = await storage.getPatientsWithPrescriptionsForPharmacy(tenantId);
-        res.json(patients);
-      } else {
-        // For hospitals/clinics, use regular tenant patients
-        const patients = await storage.getPatientsByTenant(tenantId);
-        res.json(patients);
-      }
-    } catch (error) {
-      console.error("Get billing patients error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+
 
   // Enhanced patient medical records endpoint for healthcare professionals - MUST be before the parameterized route
   app.get("/api/patients/medical-records", requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
