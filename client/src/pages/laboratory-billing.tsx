@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { DollarSign, Plus, Search, Filter, FileText, Calendar, User, TestTube, Receipt, Eye, Edit } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
@@ -175,9 +175,9 @@ export default function LaboratoryBilling() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Laboratory Billing</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Laboratory Insurance Claims</h1>
         <p className="text-gray-600">
-          Manage billing for laboratory services and tests
+          Create and manage insurance claims for laboratory services and tests
         </p>
       </div>
 
@@ -217,12 +217,15 @@ export default function LaboratoryBilling() {
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
-              Create Lab Bill
+              Create Lab Insurance Claim
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Create Laboratory Bill</DialogTitle>
+              <DialogTitle>Create Lab Insurance Claim</DialogTitle>
+              <DialogDescription>
+                Create a new insurance claim for lab services. Enter the lab cost and patient information.
+              </DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -267,31 +270,96 @@ export default function LaboratoryBilling() {
                     name="amount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Amount</FormLabel>
+                        <FormLabel>Lab Cost *</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             step="0.01"
-                            placeholder="0.00"
+                            placeholder="Enter total cost of lab services"
                             {...field}
                             onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                           />
                         </FormControl>
+                        <FormDescription>
+                          Total lab cost (patient copay will be calculated automatically)
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
 
+                {/* Claim Number Field */}
                 <FormField
                   control={form.control}
-                  name="description"
+                  name="claimNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Claim Number *</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Blood test analysis, CBC with differential" {...field} />
+                        <Input placeholder="Auto-generated on submit" {...field} />
                       </FormControl>
+                      <FormDescription>
+                        Claim numbers are automatically generated. You can override by typing a custom number.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Lab Codes Field */}
+                <FormField
+                  control={form.control}
+                  name="labCodes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>NDC/Lab Codes (comma-separated)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., 0069-2587-68, LAB001" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Laboratory test codes or reference numbers for this service
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Diagnosis Codes Field */}
+                <FormField
+                  control={form.control}
+                  name="diagnosisCodes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Diagnosis Codes (comma-separated)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., I10, E11.9, M79.3" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        ICD-10 diagnosis codes from the prescribing physician
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Lab Notes Field */}
+                <FormField
+                  control={form.control}
+                  name="labNotes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lab Notes (Optional)</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="e.g., Complete Blood Count, Fasting blood draw required, ordered by Dr. Smith"
+                          className="min-h-[80px]"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Laboratory test details, special instructions, and ordering physician information
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
