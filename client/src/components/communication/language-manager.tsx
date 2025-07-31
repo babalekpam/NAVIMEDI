@@ -137,12 +137,12 @@ export const LanguageManager = ({ supportedLanguages }: LanguageManagerProps) =>
   };
 
   const availablePresets = commonLanguages.filter(preset => 
-    !supportedLanguages.some(lang => lang.languageCode === preset.code)
+    !supportedLanguages?.some(lang => lang.languageCode === preset.code)
   );
 
-  const activeLanguages = supportedLanguages.filter(l => l.isActive);
-  const inactiveLanguages = supportedLanguages.filter(l => !l.isActive);
-  const primaryLanguage = supportedLanguages.find(l => l.isPrimary);
+  const activeLanguages = supportedLanguages?.filter(l => l.isActive) || [];
+  const inactiveLanguages = supportedLanguages?.filter(l => !l.isActive) || [];
+  const primaryLanguage = supportedLanguages?.find(l => l.isPrimary);
 
   return (
     <div className="space-y-6">

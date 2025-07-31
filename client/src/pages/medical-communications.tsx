@@ -311,7 +311,7 @@ export default function MedicalCommunications() {
         </TabsContent>
 
         <TabsContent value="languages" className="space-y-6">
-          <LanguageManager />
+          <LanguageManager supportedLanguages={supportedLanguages} />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
