@@ -81,29 +81,41 @@ export default function Billing() {
     setFormData(prev => ({ ...prev, patientId }));
     
     try {
-      // Fetch patient's active prescriptions for auto-population
-      const prescriptionsResponse = await apiRequest('GET', `/api/prescriptions?patientId=${patientId}&active=true`);
+      // For pharmacies, fetch prescriptions sent to this pharmacy for the patient
+      const prescriptionsResponse = await apiRequest('GET', `/api/prescriptions${patientId ? `?patientId=${patientId}` : ''}`);
       
       if (prescriptionsResponse.ok) {
         const prescriptions = await prescriptionsResponse.json();
         
-        if (prescriptions.length > 0) {
-          // Auto-populate with most recent prescription data
-          const latestPrescription = prescriptions[0];
+        // Filter for active prescriptions (not cancelled, expired, or picked up)
+        const activePrescriptions = prescriptions.filter((p: any) => 
+          p.status !== 'cancelled' && 
+          p.status !== 'expired' && 
+          p.status !== 'picked_up' &&
+          (!p.expiryDate || new Date(p.expiryDate) > new Date())
+        );
+        
+        if (activePrescriptions.length > 0) {
+          // Auto-populate with most recent active prescription data
+          const latestPrescription = activePrescriptions[0];
           
           setFormData(prev => ({
             ...prev,
             patientId,
-            totalAmount: latestPrescription.totalCost?.toString() || "",
-            notes: `${latestPrescription.medicationName} - ${latestPrescription.dosage} (Prescription from ${latestPrescription.providerName || 'Hospital'})`,
+            totalAmount: latestPrescription.total_cost?.toString() || latestPrescription.totalCost?.toString() || "",
+            notes: `${latestPrescription.medicationName || latestPrescription.medication_name} - ${latestPrescription.dosage} (${latestPrescription.quantity} units, prescribed by ${latestPrescription.providerName || latestPrescription.provider_name || 'Hospital'})`,
             procedureCodes: latestPrescription.ndc || "",
-            diagnosisCodes: latestPrescription.diagnosisCodes || ""
+            diagnosisCodes: latestPrescription.diagnosisCodes || latestPrescription.diagnosis_codes || ""
           }));
+          
+          console.log("Auto-populated prescription data:", latestPrescription);
           
           toast({
             title: "Prescription Data Loaded",
-            description: `Auto-populated form with data from ${latestPrescription.medicationName} prescription.`,
+            description: `Auto-populated form with ${latestPrescription.medicationName || latestPrescription.medication_name} prescription data.`,
           });
+        } else {
+          console.log("No active prescriptions found for patient:", patientId);
         }
       }
     } catch (error) {
