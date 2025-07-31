@@ -562,9 +562,21 @@ export default function PharmacyDashboardEnhanced() {
               80;
             
             console.log('Setting provider:', providerName, 'coverage:', coverage);
+            console.log('Current form state before update:', {
+              localInsuranceProvider,
+              localCoveragePercentage
+            });
             
             setLocalInsuranceProvider(providerName);
             setLocalCoveragePercentage(coverage.toString());
+            
+            // Log after state update attempt
+            setTimeout(() => {
+              console.log('Form state after update:', {
+                localInsuranceProvider: document.getElementById('local-insurance-provider')?.value,
+                localCoveragePercentage: document.getElementById('local-coverage-percentage')?.value
+              });
+            }, 100);
             
             toast({
               title: "Insurance Data Loaded",
@@ -648,10 +660,13 @@ export default function PharmacyDashboardEnhanced() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={loadInsuranceData}
-                      className="text-xs"
+                      onClick={() => {
+                        console.log('=== LOAD INSURANCE BUTTON CLICKED ===');
+                        loadInsuranceData();
+                      }}
+                      className="text-xs bg-blue-100 hover:bg-blue-200"
                     >
-                      Load Patient Insurance
+                      🔄 Load Patient Insurance
                     </Button>
                   </div>
                   <Input 
