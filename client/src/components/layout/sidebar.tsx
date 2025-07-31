@@ -156,7 +156,7 @@ export const Sidebar = () => {
   if (user.role === "lab_technician" || (user.role === "tenant_admin" && isLaboratoryTenant)) {
     
     const laboratoryItems = filteredItems.filter(item => 
-      ["dashboard", "lab-records", "lab-orders", "lab-results", "post-lab-results", "billing", "reports"].includes(item.id)
+      ["dashboard", "lab-records", "lab-orders", "lab-results", "post-lab-results", "reports"].includes(item.id)
     );
     
     // Add laboratory billing as a special item for lab tenants
