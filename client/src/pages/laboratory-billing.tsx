@@ -84,13 +84,23 @@ export default function LaboratoryBilling() {
   const { data: patients = [], isLoading: patientsLoading, error: patientsError } = useQuery({
     queryKey: ["/api/laboratory/billing-patients"],
     queryFn: async () => {
-      console.log("Fetching lab billing patients...");
-      const response = await apiRequest("GET", "/api/laboratory/billing-patients");
-      const data = await response.json();
-      console.log("Lab billing patients data:", data);
-      return data;
+      console.log("Fetching lab billing patients... User:", user?.id, "Tenant:", tenant?.id);
+      try {
+        const response = await apiRequest("GET", "/api/laboratory/billing-patients");
+        if (!response.ok) {
+          console.error("Failed to fetch patients:", response.status, response.statusText);
+          throw new Error(`Failed to fetch patients: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Lab billing patients data:", data);
+        return data;
+      } catch (error) {
+        console.error("Error fetching lab billing patients:", error);
+        throw error;
+      }
     },
     enabled: !!user && !!tenant && isCreateDialogOpen,
+    retry: 1,
   });
 
   // Fetch completed lab orders for billing
@@ -200,7 +210,7 @@ export default function LaboratoryBilling() {
         <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
           console.log("Dialog state changing to:", open);
           if (open) {
-            console.log("Opening dialog, patients loading:", patientsLoading, "patients:", patients);
+            console.log("Opening dialog, patients loading:", patientsLoading, "patients:", patients, "error:", patientsError);
           }
           setIsCreateDialogOpen(open);
         }}>
@@ -232,6 +242,10 @@ export default function LaboratoryBilling() {
                           <SelectContent>
                             {patientsLoading ? (
                               <div className="p-2 text-center text-gray-500">Loading patients...</div>
+                            ) : patientsError ? (
+                              <div className="p-2 text-center text-red-500">
+                                Error loading patients: {(patientsError as Error).message}
+                              </div>
                             ) : patients.length === 0 ? (
                               <div className="p-2 text-center text-gray-500">No patients found for billing</div>
                             ) : (
