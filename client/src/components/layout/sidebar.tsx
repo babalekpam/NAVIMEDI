@@ -284,7 +284,7 @@ export const Sidebar = () => {
       const labAdminIds = ["reports", "trial-status", "user-roles", "audit-logs"];
       return labAdminIds.includes(item.id);
     }
-    const adminItemIds = ["reports", "white-label-settings", "offline-mode", "trial-status", "tenant-management", "user-roles", "audit-logs"];
+    const adminItemIds = ["reports", "white-label-settings", "offline-mode", "trial-status", "tenant-management", "admin-dashboard", "user-roles", "audit-logs"];
     return adminItemIds.includes(item.id);
   });
 
