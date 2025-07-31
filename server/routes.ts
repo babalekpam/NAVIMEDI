@@ -1483,63 +1483,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Fetch claims with patient enrichment for medication claims display
       let claims;
       if (patientId) {
-        claims = await storage.db
-          .select({
-            id: storage.insuranceClaims.id,
-            tenantId: storage.insuranceClaims.tenantId,
-            patientId: storage.insuranceClaims.patientId,
-            claimNumber: storage.insuranceClaims.claimNumber,
-            status: storage.insuranceClaims.status,
-            totalAmount: storage.insuranceClaims.totalAmount,
-            approvedAmount: storage.insuranceClaims.approvedAmount,
-            totalPatientCopay: storage.insuranceClaims.totalPatientCopay,
-            submittedDate: storage.insuranceClaims.submittedDate,
-            processedDate: storage.insuranceClaims.processedDate,
-            notes: storage.insuranceClaims.notes,
-            createdAt: storage.insuranceClaims.createdAt,
-            updatedAt: storage.insuranceClaims.updatedAt,
-            // Patient info
-            patientFirstName: storage.patients.firstName,
-            patientLastName: storage.patients.lastName,
-            patientMrn: storage.patients.mrn,
-          })
-          .from(storage.insuranceClaims)
-          .leftJoin(storage.patients, eq(storage.insuranceClaims.patientId, storage.patients.id))
-          .where(and(
-            eq(storage.insuranceClaims.patientId, patientId as string), 
-            eq(storage.insuranceClaims.tenantId, tenantId)
-          ))
-          .orderBy(desc(storage.insuranceClaims.createdAt));
+        claims = await storage.getInsuranceClaimsByPatient(patientId as string, tenantId);
       } else {
-        claims = await storage.db
-          .select({
-            id: storage.insuranceClaims.id,
-            tenantId: storage.insuranceClaims.tenantId,
-            patientId: storage.insuranceClaims.patientId,
-            claimNumber: storage.insuranceClaims.claimNumber,
-            status: storage.insuranceClaims.status,
-            totalAmount: storage.insuranceClaims.totalAmount,
-            approvedAmount: storage.insuranceClaims.approvedAmount,
-            totalPatientCopay: storage.insuranceClaims.totalPatientCopay,
-            submittedDate: storage.insuranceClaims.submittedDate,
-            processedDate: storage.insuranceClaims.processedDate,
-            notes: storage.insuranceClaims.notes,
-            createdAt: storage.insuranceClaims.createdAt,
-            updatedAt: storage.insuranceClaims.updatedAt,
-            // Patient info
-            patientFirstName: storage.patients.firstName,
-            patientLastName: storage.patients.lastName,
-            patientMrn: storage.patients.mrn,
-          })
-          .from(storage.insuranceClaims)
-          .leftJoin(storage.patients, eq(storage.insuranceClaims.patientId, storage.patients.id))
-          .where(eq(storage.insuranceClaims.tenantId, tenantId))
-          .orderBy(desc(storage.insuranceClaims.createdAt));
+        claims = await storage.getInsuranceClaimsByTenant(tenantId);
       }
 
-      // Transform the results to match the expected interface for medication claims
-      const transformedClaims = claims.map(claim => {
-        const notes = claim.notes as any || {};
+      // Enrich claims with patient data for display
+      const enrichedClaims = await Promise.all(claims.map(async (claim) => {
+        const patient = await storage.getPatient(claim.patientId, tenantId);
+        const notes = claim.notes ? (typeof claim.notes === 'string' ? JSON.parse(claim.notes) : claim.notes) : {};
+        
         return {
           ...claim,
           claimAmount: parseFloat(claim.totalAmount || '0'),
@@ -1550,10 +1503,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           medicationName: notes.medicationName || '',
           dosage: notes.dosage || '',
           quantity: parseInt(notes.quantity) || 0,
+          // Patient info
+          patientFirstName: patient?.firstName || '',
+          patientLastName: patient?.lastName || '',
+          patientMrn: patient?.mrn || '',
         };
-      });
+      }));
 
-      res.json(transformedClaims);
+      res.json(enrichedClaims);
+
     } catch (error) {
       console.error("Get insurance claims error:", error);
       res.status(500).json({ message: "Internal server error" });
