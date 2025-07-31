@@ -81,8 +81,15 @@ export default function LaboratoryBilling() {
   });
 
   // Fetch patients for laboratory billing (cross-tenant access)
-  const { data: patients = [] } = useQuery({
+  const { data: patients = [], isLoading: patientsLoading, error: patientsError } = useQuery({
     queryKey: ["/api/laboratory/billing-patients"],
+    queryFn: async () => {
+      console.log("Fetching lab billing patients...");
+      const response = await apiRequest("GET", "/api/laboratory/billing-patients");
+      const data = await response.json();
+      console.log("Lab billing patients data:", data);
+      return data;
+    },
     enabled: !!user && !!tenant && isCreateDialogOpen,
   });
 
@@ -190,7 +197,13 @@ export default function LaboratoryBilling() {
           </Select>
         </div>
 
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
+          console.log("Dialog state changing to:", open);
+          if (open) {
+            console.log("Opening dialog, patients loading:", patientsLoading, "patients:", patients);
+          }
+          setIsCreateDialogOpen(open);
+        }}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
@@ -217,11 +230,17 @@ export default function LaboratoryBilling() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {patients.map((patient: any) => (
-                              <SelectItem key={patient.id} value={patient.id}>
-                                {patient.firstName} {patient.lastName} (MRN: {patient.mrn})
-                              </SelectItem>
-                            ))}
+                            {patientsLoading ? (
+                              <div className="p-2 text-center text-gray-500">Loading patients...</div>
+                            ) : patients.length === 0 ? (
+                              <div className="p-2 text-center text-gray-500">No patients found for billing</div>
+                            ) : (
+                              patients.map((patient: any) => (
+                                <SelectItem key={patient.id} value={patient.id}>
+                                  {patient.firstName} {patient.lastName} (MRN: {patient.mrn})
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
