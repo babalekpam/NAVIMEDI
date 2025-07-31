@@ -486,6 +486,12 @@ export default function PharmacyDashboardEnhanced() {
     const [localNotes, setLocalNotes] = useState("");
     const [localCalculation, setLocalCalculation] = useState<InsuranceCalculation | null>(null);
 
+    // Fetch patient insurance data when dialog opens
+    const { data: patientInsurance = [] } = useQuery({
+      queryKey: ["/api/patient-insurance", selectedPrescription?.patientId],
+      enabled: !!selectedPrescription?.patientId && insuranceDialogOpen,
+    });
+
     // Local calculation effect that's isolated from parent component
     useEffect(() => {
       const cost = parseFloat(localTotalCost);
@@ -498,16 +504,48 @@ export default function PharmacyDashboardEnhanced() {
       }
     }, [localTotalCost, localCoveragePercentage]);
 
-    // Reset local state when dialog opens/closes
+    // Auto-populate insurance data when dialog opens and patient insurance loads
     useEffect(() => {
-      if (insuranceDialogOpen) {
+      if (insuranceDialogOpen && patientInsurance.length > 0) {
+        // Auto-select primary insurance or first available
+        const primaryInsurance = patientInsurance.find((ins: any) => ins.isPrimary) || patientInsurance[0];
+        
+        console.log(`[PHARMACY-INSURANCE] Auto-loading insurance for patient ${selectedPrescription?.patientId}:`, primaryInsurance);
+        
+        setLocalInsuranceProvider(primaryInsurance.insuranceProvider?.name || primaryInsurance.provider || 'Unknown Provider');
+        setLocalCoveragePercentage((primaryInsurance.coveragePercentage || 80).toString());
+        
+        // Auto-populate total cost if available from prescription
+        if (selectedPrescription?.totalCost) {
+          setLocalTotalCost(selectedPrescription.totalCost.toString());
+        }
+        
+        toast({
+          title: "Insurance Data Loaded",
+          description: `Auto-populated ${primaryInsurance.insuranceProvider?.name || 'insurance'} policy ${primaryInsurance.policyNumber}`,
+        });
+      } else if (insuranceDialogOpen && patientInsurance.length === 0 && selectedPrescription?.patientId) {
+        // Reset to empty when no insurance found
         setLocalInsuranceProvider("");
-        setLocalTotalCost("");
+        setLocalTotalCost(selectedPrescription?.totalCost?.toString() || "");
+        setLocalCoveragePercentage("");
+        setLocalNotes("");
+        setLocalCalculation(null);
+        
+        toast({
+          title: "No Insurance Found",
+          description: "Patient has no insurance on file. Please enter insurance details manually.",
+          variant: "destructive",
+        });
+      } else if (insuranceDialogOpen) {
+        // Reset when dialog first opens
+        setLocalInsuranceProvider("");
+        setLocalTotalCost(selectedPrescription?.totalCost?.toString() || "");
         setLocalCoveragePercentage("");
         setLocalNotes("");
         setLocalCalculation(null);
       }
-    }, [insuranceDialogOpen]);
+    }, [insuranceDialogOpen, patientInsurance, selectedPrescription, toast]);
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -542,12 +580,18 @@ export default function PharmacyDashboardEnhanced() {
                   <Label htmlFor="local-insurance-provider">Insurance Provider</Label>
                   <Input 
                     id="local-insurance-provider"
-                    placeholder="e.g., Medicare, Blue Cross Blue Shield"
+                    placeholder={localInsuranceProvider ? "Auto-loaded from patient records" : "e.g., Medicare, Blue Cross Blue Shield"}
                     value={localInsuranceProvider}
                     onChange={(e) => setLocalInsuranceProvider(e.target.value)}
                     required 
                     autoComplete="off"
+                    className={localInsuranceProvider ? "bg-green-50 border-green-200" : ""}
                   />
+                  {localInsuranceProvider && (
+                    <p className="text-xs text-green-700 mt-1">
+                      ✅ Auto-loaded from patient insurance records
+                    </p>
+                  )}
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
