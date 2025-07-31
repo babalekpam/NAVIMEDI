@@ -18,6 +18,9 @@ export const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps)
   useEffect(() => {
     if (!authLoading && !user) {
       setLocation("/login");
+    } else if (user && (user.mustChangePassword || user.isTemporaryPassword)) {
+      // Redirect to change password if user has temporary password
+      setLocation("/change-password");
     }
   }, [authLoading, user, setLocation]);
 

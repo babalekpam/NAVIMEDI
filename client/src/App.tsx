@@ -73,6 +73,7 @@ import PostLabResults from "@/pages/post-lab-results";
 import LabResults from "@/pages/lab-results";
 import PatientPortal from "@/pages/patient-portal";
 import PatientPortalStaff from "@/pages/patient-portal-staff";
+import ChangePasswordPage from "@/pages/change-password";
 import PatientPortalPublic from "@/pages/patient-portal-public";
 import TelemedicineBooking from "@/pages/telemedicine-booking";
 import PatientLogin from "@/pages/patient-login";
@@ -88,6 +89,7 @@ function AppContent() {
         <Route path="/" component={LandingPage} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={RegisterOrganization} />
+        <Route path="/change-password" component={ChangePasswordPage} />
         <Route path="/dashboard">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">

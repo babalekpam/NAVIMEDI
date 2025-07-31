@@ -10,6 +10,8 @@ interface AuthUser {
   lastName: string;
   role: string;
   tenantId: string;
+  mustChangePassword?: boolean;
+  isTemporaryPassword?: boolean;
 }
 
 interface AuthContextType {
@@ -95,8 +97,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setToken(data.token);
     setUser(data.user);
     
-    // Redirect based on user role
-    if (data.user.role === 'patient') {
+    // Check if user needs to change temporary password
+    if (data.user.mustChangePassword || data.user.isTemporaryPassword) {
+      window.location.href = '/change-password';
+    } else if (data.user.role === 'patient') {
       window.location.href = '/patient-portal';
     } else {
       window.location.href = '/dashboard';

@@ -19,6 +19,7 @@ import {
   updateExchangeRate 
 } from "./currency-utils";
 import { autoDetectCurrency, getCurrencyByCountry, getAfricanCountries } from "./geo-currency-mapping";
+import { sendWelcomeEmail, generateTemporaryPassword } from "./email-service";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
@@ -121,11 +122,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
-          tenantId: user.tenantId
+          tenantId: user.tenantId,
+          mustChangePassword: user.mustChangePassword || false,
+          isTemporaryPassword: user.isTemporaryPassword || false
         }
       });
     } catch (error) {
       console.error("Login error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Change password endpoint for temporary passwords
+  app.post("/api/auth/change-password", authenticateToken, async (req, res) => {
+    try {
+      const { currentPassword, newPassword, confirmPassword } = req.body;
+      
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({ message: "All password fields are required" });
+      }
+      
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({ message: "New passwords do not match" });
+      }
+      
+      if (newPassword.length < 8) {
+        return res.status(400).json({ message: "New password must be at least 8 characters long" });
+      }
+      
+      // Get current user
+      const user = await storage.getUserById(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Verify current password
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isCurrentPasswordValid) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+      
+      // Hash new password
+      const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+      
+      // Update user password and remove temporary password flags
+      await storage.updateUser(user.id, {
+        password: hashedNewPassword,
+        isTemporaryPassword: false,
+        mustChangePassword: false,
+        updatedAt: new Date()
+      });
+      
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: user.tenantId,
+        userId: user.id,
+        entityType: "user",
+        entityId: user.id,
+        action: "password_change",
+        previousData: { isTemporaryPassword: user.isTemporaryPassword },
+        newData: { isTemporaryPassword: false, mustChangePassword: false },
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+      
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Password change error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -210,23 +273,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tenant = await storage.createTenant(tenantData);
       console.log("Created tenant:", tenant);
       
-      // Hash admin password
-      const hashedPassword = await bcrypt.hash(adminPassword, 12);
+      // Generate temporary password for admin user
+      const temporaryPassword = generateTemporaryPassword();
+      const hashedTempPassword = await bcrypt.hash(temporaryPassword, 12);
       
-      // Create admin user
+      // Create admin user with temporary password
       const adminUserData = {
         username: `${adminFirstName.toLowerCase()}_${adminLastName.toLowerCase()}_admin`,
         email: adminEmail,
-        password: hashedPassword,
+        password: hashedTempPassword,
         firstName: adminFirstName,
         lastName: adminLastName,
         role: 'tenant_admin' as const,
         tenantId: tenant.id,
-        isActive: true
+        isActive: true,
+        isTemporaryPassword: true,
+        mustChangePassword: true
       };
       
       const adminUser = await storage.createUser(adminUserData);
       console.log("Created admin user:", adminUser);
+      
+      // Send welcome email with login credentials
+      const loginUrl = process.env.NODE_ENV === 'production' 
+        ? `https://${req.get('host')}/login` 
+        : `http://localhost:5000/login`;
+        
+      const emailSent = await sendWelcomeEmail({
+        userEmail: adminEmail,
+        firstName: adminFirstName,
+        lastName: adminLastName,
+        username: adminUserData.username,
+        temporaryPassword: temporaryPassword,
+        organizationName: organizationName,
+        loginUrl: loginUrl
+      });
+      
+      if (!emailSent) {
+        console.error("Failed to send welcome email to:", adminEmail);
+        // Don't fail the registration, just log the error
+      } else {
+        console.log("Welcome email sent successfully to:", adminEmail);
+      }
       
       // Create audit log for tenant creation
       await storage.createAuditLog({
@@ -1926,22 +2014,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email already exists in this organization" });
       }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
+      // Generate temporary password instead of using provided password
+      const temporaryPassword = generateTemporaryPassword();
+      const hashedTempPassword = await bcrypt.hash(temporaryPassword, 12);
 
-      // Create user
+      // Create user with temporary password
       const newUser = await storage.createUser({
         username,
         email,
-        password: hashedPassword,
+        password: hashedTempPassword,
         firstName,
         lastName,
         role: role as any, // Cast to UserRole type
         tenantId: targetTenantId,
         isActive: true,
+        isTemporaryPassword: true,
+        mustChangePassword: true,
         createdAt: new Date(),
         updatedAt: new Date()
       });
+      
+      // Get organization name for email
+      const tenant = await storage.getTenant(targetTenantId);
+      
+      // Send welcome email with temporary credentials
+      const loginUrl = process.env.NODE_ENV === 'production' 
+        ? `https://${req.get('host')}/login` 
+        : `http://localhost:5000/login`;
+        
+      const emailSent = await sendWelcomeEmail({
+        userEmail: email,
+        firstName,
+        lastName,
+        username: username,
+        temporaryPassword: temporaryPassword,
+        organizationName: tenant?.name || 'NaviMed Organization',
+        loginUrl: loginUrl
+      });
+      
+      if (!emailSent) {
+        console.error("Failed to send welcome email to:", email);
+        // Don't fail the user creation, just log the error
+      } else {
+        console.log("Welcome email sent successfully to:", email);
+      }
 
       // Create audit log
       await storage.createAuditLog({
