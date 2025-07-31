@@ -592,14 +592,34 @@ export default function PharmacyDashboardEnhanced() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          alert('Blue button clicked!');
                           console.log('Blue button clicked');
+                          console.log('Provider ref:', providerInputRef.current);
+                          console.log('Coverage ref:', coverageInputRef.current);
+                          
                           if (providerInputRef.current) {
                             providerInputRef.current.value = "Amara Mwangi Insurance";
+                            console.log('Set provider value to:', providerInputRef.current.value);
+                          } else {
+                            console.log('Provider ref is null!');
                           }
+                          
                           if (coverageInputRef.current) {
                             coverageInputRef.current.value = "80";
+                            console.log('Set coverage value to:', coverageInputRef.current.value);
+                          } else {
+                            console.log('Coverage ref is null!');
                           }
+                          
+                          // Force trigger input events
+                          if (providerInputRef.current) {
+                            const event = new Event('input', { bubbles: true });
+                            providerInputRef.current.dispatchEvent(event);
+                          }
+                          if (coverageInputRef.current) {
+                            const event = new Event('input', { bubbles: true });
+                            coverageInputRef.current.dispatchEvent(event);
+                          }
+                          
                           calculateFromInputs();
                           toast({
                             title: "Insurance Data Loaded",
