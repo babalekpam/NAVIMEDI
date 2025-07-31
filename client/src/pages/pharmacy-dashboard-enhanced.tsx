@@ -512,11 +512,18 @@ export default function PharmacyDashboardEnhanced() {
       }
     }, [localTotalCost, localCoveragePercentage]);
 
-    // Manual data loading function - simplified to prevent render loops
+    // Manual data loading function - with debugging
     const loadInsuranceData = useCallback(async () => {
-      if (!selectedPrescription?.patientId) return;
+      console.log('Button clicked - loadInsuranceData called');
       
+      if (!selectedPrescription?.patientId) {
+        console.log('No patient ID available');
+        return;
+      }
+      
+      console.log('Patient ID:', selectedPrescription.patientId);
       const token = localStorage.getItem("auth_token");
+      console.log('Token available:', !!token);
       
       try {
         const response = await fetch(`/api/patient-insurance/${selectedPrescription.patientId}`, {
@@ -528,28 +535,37 @@ export default function PharmacyDashboardEnhanced() {
           },
         });
         
+        console.log('API response status:', response.status);
+        
         if (response.ok) {
           const insuranceData = await response.json();
+          console.log('Insurance data received:', insuranceData);
           
           if (insuranceData && insuranceData.length > 0) {
             const primaryInsurance = insuranceData.find((ins: any) => ins.isPrimary) || insuranceData[0];
+            console.log('Primary insurance:', primaryInsurance);
             
             // Extract provider name from mock data structure
             const providerName = primaryInsurance.subscriberName ? 
               `${primaryInsurance.subscriberName} Insurance` : 
               'NHIF Insurance Provider';
               
-            const coverage = 80; // Default coverage
+            const coverage = 80;
             
-            // Update state without causing render loops
+            console.log('About to set state - Provider:', providerName, 'Coverage:', coverage);
+            
+            // Update state
             setLocalInsuranceProvider(providerName);
             setLocalCoveragePercentage(coverage.toString());
+            
+            console.log('State updated successfully');
             
             toast({
               title: "Insurance Data Loaded",
               description: `Loaded ${providerName} with ${coverage}% coverage`,
             });
           } else {
+            console.log('No insurance data in response');
             toast({
               title: "No Insurance Found",
               description: "Patient has no insurance records on file.",
@@ -557,9 +573,11 @@ export default function PharmacyDashboardEnhanced() {
             });
           }
         } else {
+          console.log('API call failed with status:', response.status);
           throw new Error(`HTTP ${response.status}`);
         }
       } catch (error) {
+        console.error('Error in loadInsuranceData:', error);
         toast({
           title: "Load Failed",
           description: "Unable to load patient insurance data",
