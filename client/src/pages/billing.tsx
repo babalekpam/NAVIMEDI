@@ -606,13 +606,17 @@ export default function Billing() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="claimNumber">Claim Number (Optional)</Label>
+                    <Label htmlFor="claimNumber">Claim Number *</Label>
                     <Input
                       id="claimNumber"
-                      placeholder="Auto-generated if empty"
-                      value={formData.claimNumber}
+                      placeholder="Auto-generated automatically"
+                      value={formData.claimNumber || "Auto-generated on submit"}
                       onChange={(e) => setFormData({...formData, claimNumber: e.target.value})}
+                      className="bg-gray-50 text-gray-600"
                     />
+                    <p className="text-xs text-gray-500">
+                      Claim numbers are automatically generated. You can override by typing a custom number.
+                    </p>
                   </div>
                 </div>
 

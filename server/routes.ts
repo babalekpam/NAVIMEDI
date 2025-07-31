@@ -4649,6 +4649,58 @@ Report ID: ${report.id}
     }
   });
 
+  // General Receipts endpoint for billing system
+  app.post("/api/receipts", authenticateToken, requireTenant, requireRole(['super_admin', 'tenant_admin', 'pharmacist', 'billing_staff']), async (req, res) => {
+    try {
+      console.log("[RECEIPT] Creating receipt with data:", JSON.stringify(req.body, null, 2));
+      
+      // Generate receipt number
+      const receiptNumber = `RCP-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      
+      const receiptData = {
+        tenantId: req.tenantId!,
+        patientId: req.body.patientId,
+        receiptNumber,
+        totalAmount: parseFloat(req.body.totalAmount || '0'),
+        paymentMethod: req.body.paymentMethod || 'insurance',
+        items: req.body.items || [],
+        createdBy: req.user!.id,
+        createdAt: new Date(),
+        notes: req.body.notes || ''
+      };
+
+      console.log("[RECEIPT] Generated receipt data:", JSON.stringify(receiptData, null, 2));
+
+      // Create audit log
+      await storage.createAuditLog({
+        userId: req.user!.id,
+        tenantId: req.tenantId!,
+        action: "receipt_created",
+        entityType: "receipt",
+        entityId: receiptData.receiptNumber,
+        details: { 
+          patientId: receiptData.patientId,
+          receiptNumber: receiptData.receiptNumber,
+          totalAmount: receiptData.totalAmount,
+          paymentMethod: receiptData.paymentMethod
+        }
+      });
+
+      // For now, return the receipt data directly (in production, this would be stored in database)
+      const receipt = {
+        id: receiptData.receiptNumber,
+        ...receiptData,
+        status: 'generated'
+      };
+
+      console.log("[RECEIPT] Receipt created successfully:", receipt.receiptNumber);
+      res.status(201).json(receipt);
+    } catch (error) {
+      console.error("Error creating receipt:", error);
+      res.status(500).json({ message: "Failed to create receipt" });
+    }
+  });
+
   const server = createServer(app);
   return server;
 }
