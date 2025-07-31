@@ -12,9 +12,11 @@ interface PrescriptionFormProps {
   onSubmit: (data: any) => void;
   isLoading?: boolean;
   patients: Patient[];
+  prescription?: any; // For editing mode
+  isEditing?: boolean;
 }
 
-export const PrescriptionForm = ({ onSubmit, isLoading = false, patients }: PrescriptionFormProps) => {
+export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescription, isEditing = false }: PrescriptionFormProps) => {
   // Fetch available pharmacies for prescription routing
   const { data: pharmacies = [], isLoading: pharmaciesLoading } = useQuery({
     queryKey: ["/api/pharmacies"],
@@ -32,7 +34,17 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients }: Pres
       createdAt: true,
       updatedAt: true
     })),
-    defaultValues: {
+    defaultValues: isEditing && prescription ? {
+      patientId: prescription.patientId || "",
+      medicationName: prescription.medicationName || "",
+      dosage: prescription.dosage || "",
+      frequency: prescription.frequency || "",
+      quantity: prescription.quantity || 30,
+      refills: prescription.refills || 0,
+      instructions: prescription.instructions || "",
+      status: prescription.status || "prescribed" as const,
+      pharmacyTenantId: prescription.pharmacyTenantId || "",
+    } : {
       patientId: "",
       medicationName: "",
       dosage: "",
@@ -243,7 +255,10 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients }: Pres
             disabled={isLoading}
             className="bg-blue-600 hover:bg-blue-700"
           >
-            {isLoading ? "Creating..." : "Create Prescription"}
+            {isLoading 
+              ? (isEditing ? "Updating..." : "Creating...") 
+              : (isEditing ? "Update Prescription" : "Create Prescription")
+            }
           </Button>
         </div>
       </form>

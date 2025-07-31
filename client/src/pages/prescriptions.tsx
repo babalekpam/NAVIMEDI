@@ -26,7 +26,9 @@ export default function Prescriptions() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
+  const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const { user } = useAuth();
   const { tenant } = useTenant();
@@ -67,6 +69,19 @@ export default function Prescriptions() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
       setIsFormOpen(false);
+    }
+  });
+
+  const updatePrescriptionMutation = useMutation({
+    mutationFn: async ({ id, prescriptionData }: { id: string, prescriptionData: any }) => {
+      const { apiRequest } = await import("@/lib/queryClient");
+      const response = await apiRequest("PATCH", `/api/prescriptions/${id}`, prescriptionData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
+      setIsEditFormOpen(false);
+      setEditingPrescription(null);
     }
   });
 
@@ -170,6 +185,27 @@ export default function Prescriptions() {
           </Dialog>
         )}
       </div>
+
+      {/* Edit Prescription Dialog */}
+      <Dialog open={isEditFormOpen} onOpenChange={setIsEditFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Prescription</DialogTitle>
+          </DialogHeader>
+          {editingPrescription && (
+            <PrescriptionForm
+              onSubmit={(data) => updatePrescriptionMutation.mutate({ 
+                id: editingPrescription.id, 
+                prescriptionData: data 
+              })}
+              isLoading={updatePrescriptionMutation.isPending}
+              patients={patients}
+              prescription={editingPrescription}
+              isEditing={true}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Search and Filters */}
       <Card>
@@ -380,9 +416,17 @@ export default function Prescriptions() {
                             <FileText className="h-4 w-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
-                          {(user.role === "physician" || user.role === "tenant_admin") && (
+                          {(user.role === "physician" || user.role === "tenant_admin") && 
+                           (prescription.status === 'prescribed' || prescription.status === 'sent_to_pharmacy') && (
                             <>
                               <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => {
+                                setEditingPrescription(prescription);
+                                setIsEditFormOpen(true);
+                              }}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Prescription
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => {
                                 // Copy prescription details to clipboard
                                 const prescriptionText = `Prescription: ${prescription.medicationName}\nPatient: ${getPatientName(prescription.patientId)}\nDosage: ${prescription.dosage}\nQuantity: ${prescription.quantity}\nStatus: ${prescription.status}`;

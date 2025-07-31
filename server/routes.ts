@@ -1121,6 +1121,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update prescription route
+  app.patch("/api/prescriptions/:id", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const requestData = { ...req.body };
+      
+      // Convert string dates to Date objects
+      if (requestData.expiryDate && typeof requestData.expiryDate === 'string') {
+        requestData.expiryDate = new Date(requestData.expiryDate);
+      }
+      
+      // Get existing prescription to check permissions
+      const existingPrescription = await storage.getPrescription(id, req.tenant!.id);
+      if (!existingPrescription) {
+        return res.status(404).json({ message: "Prescription not found" });
+      }
+      
+      // Only allow updates if prescription is not yet filled/picked up
+      if (existingPrescription.status === 'filled' || existingPrescription.status === 'picked_up') {
+        return res.status(400).json({ message: "Cannot edit prescription that has already been filled or picked up" });
+      }
+      
+      const updatedPrescription = await storage.updatePrescription(id, requestData, req.tenant!.id);
+      
+      if (!updatedPrescription) {
+        return res.status(404).json({ message: "Prescription not found" });
+      }
+      
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenant!.id,
+        userId: req.user!.id,
+        entityType: "prescription",
+        entityId: id,
+        action: "update",
+        previousData: existingPrescription,
+        newData: updatedPrescription,
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+      
+      res.json(updatedPrescription);
+    } catch (error) {
+      console.error("Update prescription error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Lab order management routes
   app.get("/api/lab-orders", authenticateToken, requireTenant, async (req, res) => {
     try {
