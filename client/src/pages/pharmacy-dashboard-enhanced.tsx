@@ -592,26 +592,15 @@ export default function PharmacyDashboardEnhanced() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          console.log('🔵 BUTTON CLICKED - Load Insurance');
-                          
-                          if (!selectedPrescription?.patientId) {
-                            console.log('❌ No patient ID available');
-                            return;
-                          }
-                          
-                          // Direct DOM manipulation only
+                          alert('Blue button clicked!');
+                          console.log('Blue button clicked');
                           if (providerInputRef.current) {
                             providerInputRef.current.value = "Amara Mwangi Insurance";
-                            console.log('✅ Provider set via ref');
                           }
                           if (coverageInputRef.current) {
                             coverageInputRef.current.value = "80";
-                            console.log('✅ Coverage set via ref');
                           }
-                          
-                          // Trigger calculation
                           calculateFromInputs();
-                          
                           toast({
                             title: "Insurance Data Loaded",
                             description: "Loaded Amara Mwangi Insurance with 80% coverage",
