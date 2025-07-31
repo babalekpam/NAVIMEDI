@@ -4824,7 +4824,7 @@ Report ID: ${report.id}
       const tenantId = req.tenantId!;
       
       // Verify this is a laboratory tenant
-      const tenant = await storage.getTenantById(tenantId);
+      const tenant = await storage.getTenant(tenantId);
       if (tenant?.type !== 'laboratory') {
         return res.status(403).json({ error: "Laboratory billing access restricted to laboratory tenants" });
       }
@@ -4912,7 +4912,7 @@ Report ID: ${report.id}
       const userId = req.user!.id;
       
       // Verify this is a laboratory tenant
-      const tenant = await storage.getTenantById(tenantId);
+      const tenant = await storage.getTenant(tenantId);
       if (tenant?.type !== 'laboratory') {
         return res.status(403).json({ error: "Laboratory billing creation restricted to laboratory tenants" });
       }

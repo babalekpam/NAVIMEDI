@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,12 +20,15 @@ import { apiRequest } from "@/lib/queryClient";
 
 const labBillSchema = z.object({
   patientId: z.string().min(1, "Patient is required"),
+  labOrderId: z.string().min(1, "Lab order is required"),
   amount: z.number().min(0.01, "Amount must be greater than 0"),
+  insuranceCoverageRate: z.number().min(0).max(100, "Coverage rate must be between 0 and 100"),
+  insuranceAmount: z.number().min(0),
+  patientAmount: z.number().min(0),
   claimNumber: z.string().optional(),
   labCodes: z.string().optional(),
   diagnosisCodes: z.string().optional(),
   labNotes: z.string().optional(),
-  labOrderId: z.string().optional(),
   testName: z.string().optional(),
 });
 
@@ -64,12 +68,15 @@ export default function LaboratoryBilling() {
     resolver: zodResolver(labBillSchema),
     defaultValues: {
       patientId: "",
+      labOrderId: "",
       amount: 0,
+      insuranceCoverageRate: 80,
+      insuranceAmount: 0,
+      patientAmount: 0,
       claimNumber: "",
       labCodes: "",
       diagnosisCodes: "",
       labNotes: "",
-      labOrderId: "",
       testName: "",
     },
   });
@@ -108,6 +115,7 @@ export default function LaboratoryBilling() {
   });
 
   // Fetch completed lab orders for billing
+  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const { data: completedLabOrders = [] } = useQuery({
     queryKey: ["/api/lab-orders", { status: "completed" }],
     queryFn: async () => {
@@ -116,6 +124,11 @@ export default function LaboratoryBilling() {
     },
     enabled: !!user && !!tenant,
   });
+
+  // Filter lab orders for selected patient
+  const patientLabOrders = selectedPatientId 
+    ? completedLabOrders.filter((order: any) => order.patientId === selectedPatientId)
+    : [];
 
   // Create lab bill mutation
   const createLabBillMutation = useMutation({
@@ -154,6 +167,44 @@ export default function LaboratoryBilling() {
     
     return matchesSearch && matchesStatus;
   });
+
+  // Handle patient selection change
+  const handlePatientChange = (patientId: string) => {
+    setSelectedPatientId(patientId);
+    form.setValue("patientId", patientId);
+    form.setValue("labOrderId", "");
+    form.setValue("testName", "");
+  };
+
+  // Handle lab order selection change
+  const handleLabOrderChange = (labOrderId: string) => {
+    const selectedOrder = patientLabOrders.find((order: any) => order.id === labOrderId);
+    if (selectedOrder) {
+      form.setValue("labOrderId", labOrderId);
+      form.setValue("testName", selectedOrder.testName || "");
+      form.setValue("labCodes", selectedOrder.testCode || "");
+    }
+  };
+
+  // Calculate insurance amounts based on coverage rate
+  const calculateInsuranceAmounts = (amount: number, coverageRate: number) => {
+    const insuranceAmount = (amount * coverageRate) / 100;
+    const patientAmount = amount - insuranceAmount;
+    
+    form.setValue("insuranceAmount", Number(insuranceAmount.toFixed(2)));
+    form.setValue("patientAmount", Number(patientAmount.toFixed(2)));
+  };
+
+  // Watch form values for automatic calculations
+  const watchedAmount = form.watch("amount");
+  const watchedCoverageRate = form.watch("insuranceCoverageRate");
+
+  // Auto-calculate insurance amounts when amount or coverage rate changes
+  React.useEffect(() => {
+    if (watchedAmount && watchedCoverageRate !== undefined) {
+      calculateInsuranceAmounts(watchedAmount, watchedCoverageRate);
+    }
+  }, [watchedAmount, watchedCoverageRate]);
 
   const onSubmit = (data: LabBillForm) => {
     createLabBillMutation.mutate(data);
@@ -240,7 +291,7 @@ export default function LaboratoryBilling() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Patient</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={handlePatientChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a patient" />
@@ -369,27 +420,37 @@ export default function LaboratoryBilling() {
                   )}
                 />
 
+                {/* Lab Order Selection Row */}
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="labOrderId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Related Lab Order (Optional)</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel>Related Lab Order *</FormLabel>
+                        <Select onValueChange={handleLabOrderChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select lab order" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {completedLabOrders.map((order: any) => (
-                              <SelectItem key={order.id} value={order.id}>
-                                {order.testName} - {order.patientFirstName} {order.patientLastName}
-                              </SelectItem>
-                            ))}
+                            {patientLabOrders.length === 0 ? (
+                              <div className="p-2 text-center text-gray-500">
+                                {selectedPatientId ? "No completed lab orders for this patient" : "Select a patient first"}
+                              </div>
+                            ) : (
+                              patientLabOrders.map((order: any) => (
+                                <SelectItem key={order.id} value={order.id}>
+                                  {order.testName || order.testCode || "Unknown Test"} - ID: {order.id.slice(-8)}
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
+                        <FormDescription>
+                          Select the lab order this billing claim is for
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -400,10 +461,87 @@ export default function LaboratoryBilling() {
                     name="testName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Test Name (Optional)</FormLabel>
+                        <FormLabel>Test Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., Complete Blood Count" {...field} />
+                          <Input placeholder="Auto-populated from lab order" {...field} readOnly />
                         </FormControl>
+                        <FormDescription>
+                          Test name is automatically filled when lab order is selected
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Insurance Coverage Row */}
+                <div className="grid grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="insuranceCoverageRate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Insurance Coverage Rate (%)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="1"
+                            placeholder="80"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Percentage covered by insurance (0-100%)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="insuranceAmount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Insurance Amount</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="Auto-calculated"
+                            {...field}
+                            readOnly
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Amount covered by insurance
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="patientAmount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Patient Amount</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="Auto-calculated"
+                            {...field}
+                            readOnly
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Amount patient is responsible for
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
