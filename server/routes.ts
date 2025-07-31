@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertInsuranceProviderSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertPatientCheckInSchema, insertRolePermissionSchema } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertInsuranceProviderSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertPatientCheckInSchema, insertRolePermissionSchema, insertPharmacyReceiptSchema } from "@shared/schema";
 import { authenticateToken, requireRole, type AuthenticatedRequest, type JWTPayload } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -4384,6 +4384,118 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Failed to check patient access:", error);
       res.status(500).json({ message: "Failed to check patient access" });
+    }
+  });
+
+  // Pharmacy Receipt Routes
+  app.get("/api/pharmacy-receipts", authenticateToken, requireTenant, requireRole(['super_admin', 'tenant_admin', 'pharmacist', 'billing_staff']), async (req, res) => {
+    try {
+      const { limit = 50, offset = 0 } = req.query;
+      const receipts = await storage.getPharmacyReceiptsByTenant(req.tenantId!, Number(limit), Number(offset));
+      res.json(receipts);
+    } catch (error) {
+      console.error("Error fetching pharmacy receipts:", error);
+      res.status(500).json({ message: "Failed to fetch pharmacy receipts" });
+    }
+  });
+
+  app.get("/api/pharmacy-receipts/patient/:patientId", authenticateToken, requireTenant, requireRole(['super_admin', 'tenant_admin', 'pharmacist', 'billing_staff']), async (req, res) => {
+    try {
+      const receipts = await storage.getPharmacyReceiptsByPatient(req.params.patientId, req.tenantId!);
+      res.json(receipts);
+    } catch (error) {
+      console.error("Error fetching patient pharmacy receipts:", error);
+      res.status(500).json({ message: "Failed to fetch patient pharmacy receipts" });
+    }
+  });
+
+  app.get("/api/pharmacy-receipts/prescription/:prescriptionId", authenticateToken, requireTenant, requireRole(['super_admin', 'tenant_admin', 'pharmacist', 'billing_staff']), async (req, res) => {
+    try {
+      const receipts = await storage.getPharmacyReceiptsByPrescription(req.params.prescriptionId, req.tenantId!);
+      res.json(receipts);
+    } catch (error) {
+      console.error("Error fetching prescription pharmacy receipts:", error);
+      res.status(500).json({ message: "Failed to fetch prescription pharmacy receipts" });
+    }
+  });
+
+  app.post("/api/pharmacy-receipts", authenticateToken, requireTenant, requireRole(['super_admin', 'tenant_admin', 'pharmacist']), async (req, res) => {
+    try {
+      // Generate receipt number
+      const receiptNumber = await storage.generateReceiptNumber(req.tenantId!);
+
+      const validatedData = insertPharmacyReceiptSchema.parse({
+        ...req.body,
+        tenantId: req.tenantId,
+        dispensedBy: req.user?.id,
+        receiptNumber,
+        dispensedDate: new Date()
+      });
+
+      const receipt = await storage.createPharmacyReceipt(validatedData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        userId: req.user?.id!,
+        tenantId: req.tenantId!,
+        action: "pharmacy_receipt_created",
+        entityType: "pharmacy_receipt",
+        entityId: receipt.id,
+        details: { 
+          patientId: receipt.patientId, 
+          prescriptionId: receipt.prescriptionId,
+          receiptNumber: receipt.receiptNumber,
+          totalAmount: receipt.patientCopay
+        }
+      });
+
+      res.status(201).json(receipt);
+    } catch (error) {
+      console.error("Error creating pharmacy receipt:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create pharmacy receipt" });
+    }
+  });
+
+  app.patch("/api/pharmacy-receipts/:id", authenticateToken, requireTenant, requireRole(['super_admin', 'tenant_admin', 'pharmacist']), async (req, res) => {
+    try {
+      const receipt = await storage.updatePharmacyReceipt(req.params.id, req.body, req.tenantId!);
+      
+      if (!receipt) {
+        return res.status(404).json({ message: "Pharmacy receipt not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        userId: req.user!.id,
+        tenantId: req.tenantId!,
+        action: "pharmacy_receipt_updated",
+        entityType: "pharmacy_receipt",
+        entityId: receipt.id,
+        details: { changes: req.body }
+      });
+
+      res.json(receipt);
+    } catch (error) {
+      console.error("Error updating pharmacy receipt:", error);
+      res.status(500).json({ message: "Failed to update pharmacy receipt" });
+    }
+  });
+
+  app.get("/api/pharmacy-receipts/:id", authenticateToken, requireTenant, requireRole(['super_admin', 'tenant_admin', 'pharmacist', 'billing_staff']), async (req, res) => {
+    try {
+      const receipt = await storage.getPharmacyReceipt(req.params.id, req.tenantId!);
+      
+      if (!receipt) {
+        return res.status(404).json({ message: "Pharmacy receipt not found" });
+      }
+
+      res.json(receipt);
+    } catch (error) {
+      console.error("Error fetching pharmacy receipt:", error);
+      res.status(500).json({ message: "Failed to fetch pharmacy receipt" });
     }
   });
 

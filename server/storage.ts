@@ -33,6 +33,7 @@ import {
   patientPayments,
   patientAssignments,
   patientAccessRequests,
+  pharmacyReceipts,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -101,7 +102,9 @@ import {
   type PatientCheckIn,
   type InsertPatientCheckIn,
   type RolePermission,
-  type InsertRolePermission
+  type InsertRolePermission,
+  type PharmacyReceipt,
+  type InsertPharmacyReceipt
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or, isNull, gt } from "drizzle-orm";
@@ -400,6 +403,15 @@ export interface IStorage {
   // Role Permissions Management
   getRolePermissions(tenantId: string): Promise<RolePermission[]>;
   getRolePermissionsByRole(role: string, tenantId: string): Promise<RolePermission[]>;
+
+  // Pharmacy Receipt Management
+  getPharmacyReceipt(id: string, tenantId: string): Promise<PharmacyReceipt | undefined>;
+  createPharmacyReceipt(receipt: InsertPharmacyReceipt): Promise<PharmacyReceipt>;
+  updatePharmacyReceipt(id: string, updates: Partial<PharmacyReceipt>, tenantId: string): Promise<PharmacyReceipt | undefined>;
+  getPharmacyReceiptsByPatient(patientId: string, tenantId: string): Promise<PharmacyReceipt[]>;
+  getPharmacyReceiptsByPrescription(prescriptionId: string, tenantId: string): Promise<PharmacyReceipt[]>;
+  getPharmacyReceiptsByTenant(tenantId: string, limit?: number, offset?: number): Promise<PharmacyReceipt[]>;
+  generateReceiptNumber(tenantId: string): Promise<string>;
   createRolePermission(permission: InsertRolePermission): Promise<RolePermission>;
   updateRolePermission(id: string, updates: Partial<RolePermission>, tenantId: string): Promise<RolePermission | undefined>;
   deleteRolePermission(id: string, tenantId: string): Promise<boolean>;
@@ -3130,6 +3142,59 @@ export class DatabaseStorage implements IStorage {
     }
 
     return await this.getPatient(patientId, tenantId);
+  }
+
+  // Pharmacy Receipt Management Implementation
+  async getPharmacyReceipt(id: string, tenantId: string): Promise<PharmacyReceipt | undefined> {
+    const [receipt] = await db.select().from(pharmacyReceipts).where(
+      and(eq(pharmacyReceipts.id, id), eq(pharmacyReceipts.tenantId, tenantId))
+    );
+    return receipt || undefined;
+  }
+
+  async createPharmacyReceipt(receipt: InsertPharmacyReceipt): Promise<PharmacyReceipt> {
+    const [newReceipt] = await db.insert(pharmacyReceipts).values(receipt).returning();
+    return newReceipt;
+  }
+
+  async updatePharmacyReceipt(id: string, updates: Partial<PharmacyReceipt>, tenantId: string): Promise<PharmacyReceipt | undefined> {
+    const [updatedReceipt] = await db.update(pharmacyReceipts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(pharmacyReceipts.id, id), eq(pharmacyReceipts.tenantId, tenantId)))
+      .returning();
+    return updatedReceipt || undefined;
+  }
+
+  async getPharmacyReceiptsByPatient(patientId: string, tenantId: string): Promise<PharmacyReceipt[]> {
+    return await db.select().from(pharmacyReceipts)
+      .where(and(eq(pharmacyReceipts.patientId, patientId), eq(pharmacyReceipts.tenantId, tenantId)))
+      .orderBy(desc(pharmacyReceipts.dispensedDate));
+  }
+
+  async getPharmacyReceiptsByPrescription(prescriptionId: string, tenantId: string): Promise<PharmacyReceipt[]> {
+    return await db.select().from(pharmacyReceipts)
+      .where(and(eq(pharmacyReceipts.prescriptionId, prescriptionId), eq(pharmacyReceipts.tenantId, tenantId)))
+      .orderBy(desc(pharmacyReceipts.dispensedDate));
+  }
+
+  async getPharmacyReceiptsByTenant(tenantId: string, limit: number = 50, offset: number = 0): Promise<PharmacyReceipt[]> {
+    return await db.select().from(pharmacyReceipts)
+      .where(eq(pharmacyReceipts.tenantId, tenantId))
+      .orderBy(desc(pharmacyReceipts.dispensedDate))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async generateReceiptNumber(tenantId: string): Promise<string> {
+    // Get tenant info for receipt number prefix
+    const tenant = await this.getTenant(tenantId);
+    const prefix = tenant?.name?.substring(0, 3).toUpperCase() || 'RX';
+    
+    // Generate unique receipt number with timestamp and random component
+    const timestamp = Date.now().toString();
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    
+    return `${prefix}-${timestamp}-${random}`;
   }
 }
 

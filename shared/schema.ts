@@ -972,6 +972,53 @@ export const pricingPlans = pgTable("pricing_plans", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Pharmacy Receipts for patients after payment
+export const pharmacyReceipts = pgTable("pharmacy_receipts", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(), // Pharmacy tenant
+  prescriptionId: uuid("prescription_id").references(() => prescriptions.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  
+  // Receipt Details
+  receiptNumber: text("receipt_number").notNull().unique(),
+  dispensedBy: uuid("dispensed_by").references(() => users.id).notNull(), // Pharmacist who dispensed
+  
+  // Medication Information
+  medicationName: text("medication_name").notNull(),
+  genericName: text("generic_name"),
+  dosage: text("dosage").notNull(),
+  quantity: integer("quantity").notNull(),
+  daysSupply: integer("days_supply"),
+  
+  // Pricing Breakdown
+  totalCost: decimal("total_cost", { precision: 10, scale: 2 }).notNull(),
+  insuranceProvider: text("insurance_provider"),
+  insuranceAmount: decimal("insurance_amount", { precision: 10, scale: 2 }).default('0'),
+  patientCopay: decimal("patient_copay", { precision: 10, scale: 2 }).notNull(),
+  
+  // Payment Information
+  paymentMethod: text("payment_method").notNull(), // cash, card, check, etc.
+  paymentAmount: decimal("payment_amount", { precision: 10, scale: 2 }).notNull(),
+  changeGiven: decimal("change_given", { precision: 10, scale: 2 }).default('0'),
+  
+  // Prescription Details
+  prescribedBy: text("prescribed_by").notNull(), // Doctor name
+  prescribedDate: timestamp("prescribed_date").notNull(),
+  dispensedDate: timestamp("dispensed_date").notNull(),
+  refillsRemaining: integer("refills_remaining").default(0),
+  
+  // Receipt Notes
+  pharmacyNotes: text("pharmacy_notes"),
+  patientInstructions: text("patient_instructions"),
+  
+  // Status
+  isPrinted: boolean("is_printed").default(false),
+  isEmailed: boolean("is_emailed").default(false),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Offline Sync Data
 export const offlineSyncData = pgTable("offline_sync_data", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1995,3 +2042,8 @@ export type InsertPatientCheckIn = z.infer<typeof insertPatientCheckInSchema>;
 
 export type RolePermission = typeof rolePermissions.$inferSelect;
 export type InsertRolePermission = z.infer<typeof insertRolePermissionSchema>;
+
+// Pharmacy Receipt Types
+export const insertPharmacyReceiptSchema = createInsertSchema(pharmacyReceipts);
+export type PharmacyReceipt = typeof pharmacyReceipts.$inferSelect;
+export type InsertPharmacyReceipt = z.infer<typeof insertPharmacyReceiptSchema>;

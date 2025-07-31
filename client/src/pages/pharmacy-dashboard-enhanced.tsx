@@ -76,6 +76,13 @@ interface InsuranceCalculation {
   patientCopay: number;
 }
 
+interface PaymentReceiptForm {
+  paymentMethod: 'cash' | 'card' | 'check' | 'insurance_only';
+  paymentAmount: number;
+  changeGiven: number;
+  patientInstructions: string;
+}
+
 export default function PharmacyDashboardEnhanced() {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
@@ -84,6 +91,7 @@ export default function PharmacyDashboardEnhanced() {
   const [selectedPrescription, setSelectedPrescription] = useState<PrescriptionWorkflow | null>(null);
   const [insuranceDialogOpen, setInsuranceDialogOpen] = useState(false);
   const [workflowDialogOpen, setWorkflowDialogOpen] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [insuranceCalculation, setInsuranceCalculation] = useState<InsuranceCalculation | null>(null);
 
@@ -110,6 +118,7 @@ export default function PharmacyDashboardEnhanced() {
       });
       setInsuranceDialogOpen(false);
       setWorkflowDialogOpen(false);
+      setPaymentDialogOpen(false);
     },
     onError: (error) => {
       toast({ 
@@ -119,6 +128,141 @@ export default function PharmacyDashboardEnhanced() {
       });
     }
   });
+
+  // Create receipt mutation
+  const createReceiptMutation = useMutation({
+    mutationFn: async (receiptData: any) => {
+      return await apiRequest('POST', '/api/pharmacy-receipts', receiptData);
+    },
+    onSuccess: (receipt) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] });
+      toast({ 
+        title: "Receipt Generated", 
+        description: `Receipt #${receipt.receiptNumber} has been generated successfully.` 
+      });
+      setPaymentDialogOpen(false);
+      // Open print dialog or display receipt
+      printReceipt(receipt);
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: `Failed to generate receipt: ${error.message}`,
+        variant: "destructive" 
+      });
+    }
+  });
+
+  // Print receipt function
+  const printReceipt = (receipt: any) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Pharmacy Receipt - ${receipt.receiptNumber}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; }
+              .section { margin: 15px 0; }
+              .row { display: flex; justify-content: space-between; margin: 5px 0; }
+              .total { font-weight: bold; font-size: 1.2em; border-top: 1px solid #000; padding-top: 10px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h2>${currentTenant?.name || 'Pharmacy'}</h2>
+              <h3>Prescription Receipt</h3>
+              <p>Receipt #: ${receipt.receiptNumber}</p>
+              <p>Date: ${format(new Date(receipt.dispensedDate), 'MMM dd, yyyy hh:mm a')}</p>
+            </div>
+            
+            <div class="section">
+              <h4>Patient Information:</h4>
+              <div class="row"><span>Name:</span><span>${selectedPrescription?.patientFirstName} ${selectedPrescription?.patientLastName}</span></div>
+              <div class="row"><span>MRN:</span><span>${selectedPrescription?.patientMRN}</span></div>
+            </div>
+            
+            <div class="section">
+              <h4>Prescription Details:</h4>
+              <div class="row"><span>Medication:</span><span>${receipt.medicationName}</span></div>
+              <div class="row"><span>Dosage:</span><span>${receipt.dosage}</span></div>
+              <div class="row"><span>Quantity:</span><span>${receipt.quantity}</span></div>
+              <div class="row"><span>Days Supply:</span><span>${receipt.daysSupply || 'N/A'}</span></div>
+              <div class="row"><span>Prescribed By:</span><span>${receipt.prescribedBy}</span></div>
+              <div class="row"><span>Refills Remaining:</span><span>${receipt.refillsRemaining}</span></div>
+            </div>
+            
+            <div class="section">
+              <h4>Payment Information:</h4>
+              <div class="row"><span>Total Cost:</span><span>$${receipt.totalCost}</span></div>
+              ${receipt.insuranceProvider ? `
+                <div class="row"><span>Insurance (${receipt.insuranceProvider}):</span><span>-$${receipt.insuranceAmount}</span></div>
+              ` : ''}
+              <div class="row total"><span>Patient Copay:</span><span>$${receipt.patientCopay}</span></div>
+              <div class="row"><span>Payment Method:</span><span>${receipt.paymentMethod.toUpperCase()}</span></div>
+              <div class="row"><span>Amount Paid:</span><span>$${receipt.paymentAmount}</span></div>
+              ${receipt.changeGiven > 0 ? `<div class="row"><span>Change Given:</span><span>$${receipt.changeGiven}</span></div>` : ''}
+            </div>
+            
+            ${receipt.patientInstructions ? `
+              <div class="section">
+                <h4>Instructions:</h4>
+                <p>${receipt.patientInstructions}</p>
+              </div>
+            ` : ''}
+            
+            <div class="section">
+              <p style="text-align: center; font-size: 0.9em; margin-top: 30px;">
+                Thank you for choosing ${currentTenant?.name || 'our pharmacy'}!<br>
+                Please keep this receipt for your records.
+              </p>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
+  // Handle payment and receipt generation
+  const handlePaymentAndReceipt = async (paymentData: PaymentReceiptForm) => {
+    if (!selectedPrescription) return;
+
+    const receiptData = {
+      prescriptionId: selectedPrescription.id,
+      patientId: selectedPrescription.patientId,
+      medicationName: selectedPrescription.medicationName,
+      genericName: selectedPrescription.medicationName, // Could be separate field
+      dosage: selectedPrescription.dosage,
+      quantity: selectedPrescription.quantity,
+      daysSupply: Math.ceil(selectedPrescription.quantity / parseInt(selectedPrescription.frequency.split(' ')[0] || '1')),
+      totalCost: selectedPrescription.totalCost || 0,
+      insuranceProvider: selectedPrescription.insuranceProvider || null,
+      insuranceAmount: selectedPrescription.totalCost && selectedPrescription.insuranceCopay 
+        ? selectedPrescription.totalCost - selectedPrescription.insuranceCopay 
+        : 0,
+      patientCopay: selectedPrescription.insuranceCopay || selectedPrescription.totalCost || 0,
+      paymentMethod: paymentData.paymentMethod,
+      paymentAmount: paymentData.paymentAmount,
+      changeGiven: paymentData.changeGiven,
+      prescribedBy: selectedPrescription.providerName,
+      prescribedDate: selectedPrescription.prescribedDate,
+      refillsRemaining: selectedPrescription.refills,
+      patientInstructions: paymentData.patientInstructions
+    };
+
+    // Create receipt first
+    await createReceiptMutation.mutateAsync(receiptData);
+    
+    // Then update prescription status to dispensed
+    await updateStatusMutation.mutateAsync({
+      id: selectedPrescription.id,
+      status: 'dispensed',
+      data: { dispensedDate: new Date().toISOString() }
+    });
+  };
 
   // Filter prescriptions by status
   const newPrescriptions = prescriptions.filter(p => p.status === 'prescribed' || p.status === 'sent_to_pharmacy');
@@ -318,11 +462,14 @@ export default function PharmacyDashboardEnhanced() {
             {prescription.status === 'ready' ? (
               <Button 
                 size="sm" 
-                onClick={() => handleStatusUpdate(prescription.id, 'dispensed')}
+                onClick={() => {
+                  setSelectedPrescription(prescription);
+                  setPaymentDialogOpen(true);
+                }}
                 disabled={updateStatusMutation.isPending}
               >
-                <Truck className="h-4 w-4 mr-1" />
-                Dispense to Patient
+                <Receipt className="h-4 w-4 mr-1" />
+                Process Payment & Generate Receipt
               </Button>
             ) : null}
           </div>
@@ -783,6 +930,146 @@ export default function PharmacyDashboardEnhanced() {
       </Tabs>
 
       <InsuranceVerificationDialog />
+      <PaymentReceiptDialog />
     </div>
   );
+
+  function PaymentReceiptDialog() {
+    const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'check' | 'insurance_only'>('cash');
+    const [paymentAmount, setPaymentAmount] = useState("");
+    const [patientInstructions, setPatientInstructions] = useState("");
+
+    const requiredAmount = selectedPrescription?.insuranceCopay || selectedPrescription?.totalCost || 0;
+    const changeGiven = Math.max(0, parseFloat(paymentAmount || "0") - requiredAmount);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!selectedPrescription) return;
+      
+      await handlePaymentAndReceipt({
+        paymentMethod,
+        paymentAmount: parseFloat(paymentAmount || "0"),
+        changeGiven,
+        patientInstructions
+      });
+    };
+
+    return (
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Process Payment & Generate Receipt</DialogTitle>
+            <p className="text-sm text-gray-600">
+              Complete the payment process and generate a detailed receipt for the patient
+            </p>
+          </DialogHeader>
+          
+          {selectedPrescription && (
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4">
+                {/* Prescription Summary */}
+                <div className="p-3 bg-gray-50 rounded">
+                  <p className="font-medium">{selectedPrescription.medicationName} {selectedPrescription.dosage}</p>
+                  <p className="text-sm text-gray-600">
+                    Patient: {selectedPrescription.patientFirstName} {selectedPrescription.patientLastName} (MRN: {selectedPrescription.patientMRN})
+                  </p>
+                  <p className="text-sm text-gray-600">Quantity: {selectedPrescription.quantity}</p>
+                </div>
+
+                {/* Cost Breakdown */}
+                <div className="p-3 bg-blue-50 rounded">
+                  <h4 className="font-medium mb-2">Payment Summary</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Total Cost:</span>
+                      <span>${selectedPrescription.totalCost?.toFixed(2) || '0.00'}</span>
+                    </div>
+                    {selectedPrescription.insuranceProvider && (
+                      <div className="flex justify-between">
+                        <span>Insurance ({selectedPrescription.insuranceProvider}):</span>
+                        <span>-${((selectedPrescription.totalCost || 0) - (selectedPrescription.insuranceCopay || 0)).toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-medium border-t pt-1">
+                      <span>Patient Copay:</span>
+                      <span>${requiredAmount.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Method */}
+                <div>
+                  <Label htmlFor="payment-method">Payment Method</Label>
+                  <Select value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="card">Credit/Debit Card</SelectItem>
+                      <SelectItem value="check">Check</SelectItem>
+                      <SelectItem value="insurance_only">Insurance Only (No Copay)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Payment Amount */}
+                {paymentMethod !== 'insurance_only' && (
+                  <div>
+                    <Label htmlFor="payment-amount">Amount Received ($)</Label>
+                    <Input 
+                      id="payment-amount"
+                      type="number" 
+                      step="0.01" 
+                      placeholder={requiredAmount.toFixed(2)}
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                      required 
+                    />
+                    {changeGiven > 0 && (
+                      <p className="text-sm text-green-600 mt-1">
+                        Change to give: ${changeGiven.toFixed(2)}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Patient Instructions */}
+                <div>
+                  <Label htmlFor="patient-instructions">Special Instructions for Patient (Optional)</Label>
+                  <Textarea 
+                    id="patient-instructions"
+                    placeholder="Take with food, follow up with doctor in 2 weeks, etc."
+                    value={patientInstructions}
+                    onChange={(e) => setPatientInstructions(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setPaymentDialogOpen(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={createReceiptMutation.isPending || updateStatusMutation.isPending}
+                    className="flex-1"
+                  >
+                    <Receipt className="h-4 w-4 mr-2" />
+                    {createReceiptMutation.isPending ? 'Processing...' : 'Complete & Print Receipt'}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+    );
+  }
 }
