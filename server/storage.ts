@@ -938,6 +938,12 @@ export class DatabaseStorage implements IStorage {
         expiryDate: prescriptions.expiryDate,
         createdAt: prescriptions.createdAt,
         updatedAt: prescriptions.updatedAt,
+        // Patient information
+        patientFirstName: patients.firstName,
+        patientLastName: patients.lastName,
+        patientMRN: patients.mrn,
+        patientPhone: patients.phone,
+        patientDateOfBirth: patients.dateOfBirth,
         // Provider (doctor) information
         providerName: users.firstName,
         providerLastName: users.lastName,
@@ -949,6 +955,7 @@ export class DatabaseStorage implements IStorage {
       .from(prescriptions)
       .innerJoin(users, eq(prescriptions.providerId, users.id))
       .innerJoin(tenants, eq(prescriptions.tenantId, tenants.id))
+      .innerJoin(patients, eq(prescriptions.patientId, patients.id))
       .where(eq(prescriptions.pharmacyTenantId, pharmacyTenantId))
       .orderBy(desc(prescriptions.prescribedDate));
     

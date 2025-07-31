@@ -35,7 +35,8 @@ import { apiRequest } from "@/lib/queryClient";
 interface PrescriptionWorkflow {
   id: string;
   patientId: string;
-  patientName: string;
+  patientFirstName: string;
+  patientLastName: string;
   patientMRN: string;
   medicationName: string;
   dosage: string;
@@ -139,7 +140,7 @@ export default function PharmacyDashboardEnhanced() {
   const filterPrescriptions = (prescriptionList: PrescriptionWorkflow[]) => {
     if (!searchTerm) return prescriptionList;
     return prescriptionList.filter(p => 
-      p.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      `${p.patientFirstName} ${p.patientLastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.medicationName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.patientMRN.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -202,7 +203,7 @@ export default function PharmacyDashboardEnhanced() {
           <div>
             <CardTitle className="text-lg">{prescription.medicationName} {prescription.dosage}</CardTitle>
             <p className="text-sm text-gray-600 mt-1">
-              Patient: <span className="font-medium">{prescription.patientName}</span> (MRN: {prescription.patientMRN})
+              Patient: <span className="font-medium">{prescription.patientFirstName} {prescription.patientLastName}</span> (MRN: {prescription.patientMRN})
             </p>
             <p className="text-sm text-gray-600">
               Prescribed by: <span className="font-medium">{prescription.providerName}</span> - {prescription.hospitalName}
@@ -326,7 +327,7 @@ export default function PharmacyDashboardEnhanced() {
             <div className="space-y-4">
               <div className="p-3 bg-gray-50 rounded">
                 <p className="font-medium">{selectedPrescription.medicationName} {selectedPrescription.dosage}</p>
-                <p className="text-sm text-gray-600">Patient: {selectedPrescription.patientName}</p>
+                <p className="text-sm text-gray-600">Patient: {selectedPrescription.patientFirstName} {selectedPrescription.patientLastName}</p>
               </div>
               
               <div>
@@ -608,7 +609,7 @@ export default function PharmacyDashboardEnhanced() {
                             📁 {prescription.medicationName} {prescription.dosage}
                           </CardTitle>
                           <p className="text-sm text-gray-600 mt-1">
-                            Patient: <span className="font-medium">{prescription.patientName}</span> (MRN: {prescription.patientMRN})
+                            Patient: <span className="font-medium">{prescription.patientFirstName} {prescription.patientLastName}</span> (MRN: {prescription.patientMRN})
                           </p>
                           <p className="text-sm text-gray-600">
                             Prescribed by: <span className="font-medium">{prescription.providerName}</span> - {prescription.hospitalName}
