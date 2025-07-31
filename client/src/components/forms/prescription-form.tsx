@@ -101,7 +101,7 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients }: Pres
                 </FormControl>
                 <SelectContent>
                   {pharmaciesLoading ? (
-                    <SelectItem value="" disabled>Loading pharmacies...</SelectItem>
+                    <SelectItem value="loading" disabled>Loading pharmacies...</SelectItem>
                   ) : pharmacies.length > 0 ? (
                     pharmacies.map((pharmacy: any) => (
                       <SelectItem key={pharmacy.id} value={pharmacy.id}>
@@ -109,7 +109,7 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients }: Pres
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem value="" disabled>No pharmacies available</SelectItem>
+                    <SelectItem value="no-pharmacies" disabled>No pharmacies available</SelectItem>
                   )}
                 </SelectContent>
               </Select>
