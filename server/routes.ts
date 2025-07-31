@@ -4866,9 +4866,14 @@ Report ID: ${report.id}
     try {
       const tenantId = req.tenantId!;
       
-      // Verify this is a laboratory tenant
-      const tenant = await storage.getTenantById(tenantId);
-      if (tenant?.type !== 'laboratory') {
+      // Verify this is a laboratory tenant  
+      const tenant = await storage.db
+        .select()
+        .from(storage.tenants)
+        .where(eq(storage.tenants.id, tenantId))
+        .limit(1);
+      
+      if (!tenant[0] || tenant[0].type !== 'laboratory') {
         return res.status(403).json({ error: "Access restricted to laboratory tenants" });
       }
 
