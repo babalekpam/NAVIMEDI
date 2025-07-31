@@ -290,16 +290,50 @@ Report ID: ${labOrder.id}
           <div className="space-y-4">
             {appointments && appointments.length > 0 ? (
               appointments.slice(0, 3).map((appointment) => (
-                <div key={appointment.id} className="flex items-center justify-between border-l-4 border-blue-500 pl-4 py-2">
-                  <div>
-                    <p className="font-medium">Appointment</p>
-                    <p className="text-sm text-gray-600">
-                      {new Date(appointment.appointmentDate).toLocaleDateString()} - {appointment.type}
-                    </p>
+                <div key={appointment.id} className="border-l-4 border-blue-500 pl-4 py-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Appointment</p>
+                      <p className="text-sm text-gray-600">
+                        {new Date(appointment.appointmentDate).toLocaleDateString()} - {appointment.type}
+                      </p>
+                      {appointment.providerFirstName && appointment.providerLastName && (
+                        <p className="text-sm text-gray-500">
+                          Dr. {appointment.providerFirstName} {appointment.providerLastName}
+                        </p>
+                      )}
+                    </div>
+                    <Badge variant={appointment.status === 'completed' ? 'default' : 'secondary'}>
+                      {appointment.status}
+                    </Badge>
                   </div>
-                  <Badge variant={appointment.status === 'completed' ? 'default' : 'secondary'}>
-                    {appointment.status}
-                  </Badge>
+                  
+                  {/* Show visit summary for completed appointments */}
+                  {appointment.status === 'completed' && appointment.visitSummaryId && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-2">
+                      <div className="flex items-start gap-2">
+                        <FileText className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <div className="space-y-1 min-w-0 flex-1">
+                          <p className="text-sm font-medium text-green-800">Visit Summary Available</p>
+                          {appointment.visitSummaryAssessment && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700">Assessment:</p>
+                              <p className="text-xs text-gray-600 line-clamp-2">{appointment.visitSummaryAssessment}</p>
+                            </div>
+                          )}
+                          {appointment.visitSummaryTreatmentPlan && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700">Treatment Plan:</p>
+                              <p className="text-xs text-gray-600 line-clamp-2">{appointment.visitSummaryTreatmentPlan}</p>
+                            </div>
+                          )}
+                          <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-300">
+                            {appointment.visitSummaryStatus === 'finalized' ? 'Finalized' : appointment.visitSummaryStatus}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))
             ) : (
