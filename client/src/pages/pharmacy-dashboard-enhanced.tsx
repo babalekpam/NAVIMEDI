@@ -567,14 +567,32 @@ export default function PharmacyDashboardEnhanced() {
               localCoveragePercentage
             });
             
+            // Force update the state with direct DOM manipulation as backup
             setLocalInsuranceProvider(providerName);
             setLocalCoveragePercentage(coverage.toString());
             
+            // Force update DOM elements directly as well
+            const providerInput = document.getElementById('local-insurance-provider') as HTMLInputElement;
+            const coverageInput = document.getElementById('local-coverage-percentage') as HTMLInputElement;
+            
+            if (providerInput) {
+              providerInput.value = providerName;
+              console.log('Direct DOM update - Provider input value set to:', providerInput.value);
+            }
+            
+            if (coverageInput) {
+              coverageInput.value = coverage.toString();
+              console.log('Direct DOM update - Coverage input value set to:', coverageInput.value);
+            }
+            
             // Log after state update attempt
             setTimeout(() => {
-              console.log('Form state after update:', {
-                localInsuranceProvider: document.getElementById('local-insurance-provider')?.value,
-                localCoveragePercentage: document.getElementById('local-coverage-percentage')?.value
+              console.log('Final form state after all updates:', {
+                reactState: { localInsuranceProvider, localCoveragePercentage },
+                domValues: {
+                  localInsuranceProvider: document.getElementById('local-insurance-provider')?.value,
+                  localCoveragePercentage: document.getElementById('local-coverage-percentage')?.value
+                }
               });
             }, 100);
             
