@@ -3922,7 +3922,7 @@ Report ID: ${report.id}
   });
 
   // Cross-tenant billing patients endpoint for pharmacies
-  app.get("/api/billing/patients", requireRole(["tenant_admin", "billing_staff", "receptionist", "pharmacist"]), async (req, res) => {
+  app.get("/api/billing/patients", requireTenant, requireRole(["tenant_admin", "billing_staff", "receptionist", "pharmacist", "pharmacy_admin"]), async (req, res) => {
     try {
       console.log("[BILLING] Getting cross-tenant patients for billing - User role:", req.user!.role, "Tenant:", req.tenant?.name, "Type:", req.tenant?.type);
       

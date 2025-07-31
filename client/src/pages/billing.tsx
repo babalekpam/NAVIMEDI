@@ -133,6 +133,8 @@ export default function Billing() {
   const { data: patients = [] } = useQuery<Patient[]>({
     queryKey: ["/api/billing/patients"],
     enabled: !!user && !!tenant,
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache the results
   });
 
   const { data: servicePrices = [] } = useQuery<ServicePrice[]>({

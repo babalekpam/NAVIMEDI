@@ -647,31 +647,69 @@ export class DatabaseStorage implements IStorage {
     return patientsWithPrescriptions;
   }
 
-  // Cross-tenant patient insurance access for pharmacy billing
+  // Cross-tenant patient insurance access for pharmacy billing  
   async getPatientInsuranceCrossTenant(patientId: string): Promise<PatientInsurance[]> {
     try {
       console.log(`[CROSS-TENANT INSURANCE] Searching for insurance records for patient: ${patientId}`);
       
-      const insuranceList = await db
-        .select()
-        .from(patientInsurance)
-        .leftJoin(insuranceProviders, eq(patientInsurance.insuranceProviderId, insuranceProviders.id))
-        .where(
-          and(
-            eq(patientInsurance.patientId, patientId),
-            eq(patientInsurance.isActive, true)
-          )
-        )
-        .orderBy(desc(patientInsurance.isPrimary));
+      // Use raw SQL to avoid Drizzle ORM issues with complex joins
+      const insuranceRecords = await db.execute(sql`
+        SELECT 
+          pi.id,
+          pi.tenant_id,
+          pi.patient_id,
+          pi.insurance_provider_id,
+          pi.policy_number,
+          pi.group_number,
+          pi.subscriber_name,
+          pi.subscriber_relationship,
+          pi.effective_date,
+          pi.expiration_date,
+          pi.copay_amount,
+          pi.deductible_amount,
+          pi.is_primary,
+          pi.is_active,
+          pi.created_at,
+          pi.updated_at,
+          ip.name as provider_name,
+          ip.type as provider_type,
+          ip.contact_info as provider_contact_info
+        FROM patient_insurance pi
+        LEFT JOIN insurance_providers ip ON pi.insurance_provider_id = ip.id
+        WHERE pi.patient_id = ${patientId} 
+        AND pi.is_active = true
+        ORDER BY pi.is_primary DESC
+      `);
 
-      console.log(`[CROSS-TENANT INSURANCE] Found ${insuranceList.length} insurance records`);
+      console.log(`[CROSS-TENANT INSURANCE] Found ${insuranceRecords.rows.length} insurance records`);
       
-      // Transform the result to match the expected PatientInsurance structure
-      const transformedResults = insuranceList.map((row) => ({
-        ...row.patient_insurance,
-        insuranceProvider: row.insurance_providers
+      // Transform raw results to match PatientInsurance structure
+      const transformedResults = insuranceRecords.rows.map((row: any) => ({
+        id: row.id,
+        tenantId: row.tenant_id,
+        patientId: row.patient_id,
+        insuranceProviderId: row.insurance_provider_id,
+        policyNumber: row.policy_number,
+        groupNumber: row.group_number,
+        subscriberName: row.subscriber_name,
+        subscriberRelationship: row.subscriber_relationship,
+        effectiveDate: row.effective_date,
+        expirationDate: row.expiration_date,
+        copayAmount: row.copay_amount,
+        deductibleAmount: row.deductible_amount,
+        isPrimary: row.is_primary,
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        insuranceProvider: row.provider_name ? {
+          id: row.insurance_provider_id,
+          name: row.provider_name,
+          type: row.provider_type,
+          contactInfo: row.provider_contact_info
+        } : null
       }));
 
+      console.log(`[CROSS-TENANT INSURANCE] Successfully transformed ${transformedResults.length} records`);
       return transformedResults;
     } catch (error) {
       console.error("[CROSS-TENANT INSURANCE] Query error:", error);
