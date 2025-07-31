@@ -152,8 +152,53 @@ export default function Billing() {
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: async (claim) => {
       queryClient.invalidateQueries({ queryKey: ["/api/insurance-claims"] });
+      
+      // Auto-generate patient receipt with copay amount
+      try {
+        const totalAmount = parseFloat(formData.totalAmount) || 0;
+        const patientCopay = parseFloat(claim.totalPatientCopay) || 0;
+        
+        const receiptData = {
+          patientId: formData.patientId,
+          totalAmount: patientCopay.toString(), // Patient only pays copay
+          paymentMethod: "insurance", // Indicate this is insurance payment
+          items: [{
+            name: `Medication (Insurance Claim: ${claim.claimNumber})`,
+            quantity: 1,
+            unitPrice: totalAmount,
+            total: totalAmount,
+            copayAmount: patientCopay,
+            insuranceCovered: totalAmount - patientCopay
+          }],
+          notes: `Insurance claim processed. Total: $${totalAmount.toFixed(2)}, Insurance coverage: $${(totalAmount - patientCopay).toFixed(2)}, Patient copay: $${patientCopay.toFixed(2)}`
+        };
+
+        console.log("Auto-generating receipt with data:", receiptData);
+        
+        const receiptResponse = await apiRequest("POST", "/api/receipts", receiptData);
+        if (receiptResponse.ok) {
+          const receipt = await receiptResponse.json();
+          console.log("Receipt auto-generated:", receipt);
+          
+          toast({
+            title: "Claim Created & Receipt Generated",
+            description: `Insurance claim created successfully. Patient receipt generated for copay amount: $${patientCopay.toFixed(2)}`,
+          });
+        } else {
+          throw new Error("Failed to generate receipt");
+        }
+      } catch (receiptError) {
+        console.error("Receipt generation failed:", receiptError);
+        toast({
+          title: "Claim Created",
+          description: "Insurance claim created successfully, but receipt generation failed. Please create receipt manually.",
+          variant: "destructive",
+        });
+      }
+      
+      // Reset form
       setIsCreateDialogOpen(false);
       setSelectedLineItems([]);
       setFormData({
@@ -175,10 +220,6 @@ export default function Billing() {
         effectiveDate: "",
         copayAmount: "",
         coveragePercentage: "80"
-      });
-      toast({
-        title: "Claim Created",
-        description: "Insurance claim has been successfully created.",
       });
     },
     onError: (error: any) => {
@@ -490,7 +531,7 @@ export default function Billing() {
                 Create Claim
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create Medication Insurance Claim</DialogTitle>
                 <DialogDescription>
@@ -498,7 +539,7 @@ export default function Billing() {
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="patientId">Patient</Label>
                     <Select value={formData.patientId} onValueChange={(value) => setFormData({...formData, patientId: value})}>
