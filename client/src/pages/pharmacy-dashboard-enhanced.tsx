@@ -428,10 +428,8 @@ export default function PharmacyDashboardEnhanced() {
               <Button 
                 size="sm" 
                 onClick={() => {
-                  console.log(`[VERIFY-INSURANCE] Button clicked for prescription ${prescription.id}, patient: ${prescription.patientId}`);
                   setSelectedPrescription(prescription);
                   setInsuranceDialogOpen(true);
-                  console.log(`[VERIFY-INSURANCE] Dialog opened, selected prescription set`);
                 }}
                 disabled={updateStatusMutation.isPending}
               >
@@ -487,21 +485,14 @@ export default function PharmacyDashboardEnhanced() {
     const [localCoveragePercentage, setLocalCoveragePercentage] = useState("");
     const [localNotes, setLocalNotes] = useState("");
     const [localCalculation, setLocalCalculation] = useState<InsuranceCalculation | null>(null);
-    const [hasAutoPopulated, setHasAutoPopulated] = useState(false); // Track if we've already populated
 
-    console.log(`[INSURANCE-DIALOG] Dialog open: ${insuranceDialogOpen}, Selected: ${selectedPrescription?.id}, Auto-populated: ${hasAutoPopulated}`);
-
-    // Fetch patient insurance data when dialog opens
-    const { data: patientInsurance = [], isLoading: insuranceLoading } = useQuery({
+    // Fetch patient insurance data - but don't enable query until dialog opens
+    const { data: patientInsurance = [] } = useQuery({
       queryKey: ["/api/patient-insurance", selectedPrescription?.patientId],
-      enabled: !!selectedPrescription?.patientId && insuranceDialogOpen,
-      staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-      refetchOnWindowFocus: false, // Prevent refetching on window focus
+      enabled: false, // Manually enable this query
     });
 
-    console.log(`[INSURANCE-DIALOG] Insurance data loaded: ${patientInsurance.length} records, Loading: ${insuranceLoading}`);
-
-    // Local calculation effect that's isolated from parent component
+    // Simple calculation effect
     useEffect(() => {
       const cost = parseFloat(localTotalCost);
       const percentage = parseFloat(localCoveragePercentage);
@@ -513,65 +504,59 @@ export default function PharmacyDashboardEnhanced() {
       }
     }, [localTotalCost, localCoveragePercentage]);
 
-    // Reset form when dialog opens/closes - but only when dialog state changes
+    // Manual data loading function
+    const loadInsuranceData = async () => {
+      if (!selectedPrescription?.patientId) return;
+      
+      try {
+        // Manually fetch insurance data
+        const response = await fetch(`/api/patient-insurance/${selectedPrescription.patientId}`, {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const insuranceData = await response.json();
+          
+          if (insuranceData.length > 0) {
+            const primaryInsurance = insuranceData.find((ins: any) => ins.isPrimary) || insuranceData[0];
+            
+            setLocalInsuranceProvider(primaryInsurance.insuranceProvider?.name || primaryInsurance.provider || 'Unknown Provider');
+            setLocalCoveragePercentage((primaryInsurance.coveragePercentage || 80).toString());
+            setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
+            
+            toast({
+              title: "Insurance Data Loaded",
+              description: `Auto-populated ${primaryInsurance.insuranceProvider?.name || 'insurance'} policy`,
+            });
+          } else {
+            setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
+            toast({
+              title: "No Insurance Found",
+              description: "Please enter insurance details manually.",
+              variant: "destructive",
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load insurance data:', error);
+        setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
+      }
+    };
+
+    // Initialize form when dialog opens
     useEffect(() => {
-      if (!insuranceDialogOpen) {
-        // Reset tracking when dialog closes
-        setHasAutoPopulated(false);
-        // Clear form when dialog closes
+      if (insuranceDialogOpen && selectedPrescription) {
+        // Reset form
         setLocalInsuranceProvider("");
         setLocalTotalCost("");
         setLocalCoveragePercentage("");
         setLocalNotes("");
         setLocalCalculation(null);
-      }
-    }, [insuranceDialogOpen]);
-
-    // Auto-populate insurance data ONLY ONCE when dialog opens for the first time
-    useEffect(() => {
-      // Only run when dialog first opens and we haven't auto-populated yet
-      if (insuranceDialogOpen && !hasAutoPopulated && selectedPrescription?.id) {
-        console.log(`[INSURANCE-DIALOG] Dialog opened for first time, prescription ID: ${selectedPrescription.id}`);
         
-        // Set a timeout to allow the query to complete
-        const timeoutId = setTimeout(() => {
-          if (patientInsurance.length > 0) {
-            // Auto-select primary insurance or first available
-            const primaryInsurance = patientInsurance.find((ins: any) => ins.isPrimary) || patientInsurance[0];
-            
-            console.log(`[PHARMACY-INSURANCE] Auto-loading insurance for patient ${selectedPrescription.patientId}:`, primaryInsurance);
-            
-            setLocalInsuranceProvider(primaryInsurance.insuranceProvider?.name || primaryInsurance.provider || 'Unknown Provider');
-            setLocalCoveragePercentage((primaryInsurance.coveragePercentage || 80).toString());
-            
-            // Auto-populate total cost if available from prescription
-            if (selectedPrescription.totalCost) {
-              setLocalTotalCost(selectedPrescription.totalCost.toString());
-            } else {
-              setLocalTotalCost("50.00");
-            }
-            
-            toast({
-              title: "Insurance Data Loaded",
-              description: `Auto-populated ${primaryInsurance.insuranceProvider?.name || 'insurance'} policy ${primaryInsurance.policyNumber}`,
-            });
-          } else {
-            // Initialize form with defaults when no insurance found
-            setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
-            
-            toast({
-              title: "No Insurance Found",
-              description: "Patient has no insurance on file. Please enter insurance details manually.",
-              variant: "destructive",
-            });
-          }
-          
-          setHasAutoPopulated(true); // Mark as populated to prevent re-runs
-        }, 500); // Give time for insurance data to load
-        
-        return () => clearTimeout(timeoutId);
+        // Load insurance data
+        loadInsuranceData();
       }
-    }, [insuranceDialogOpen, selectedPrescription?.id]); // Only depend on dialog state and prescription ID
+    }, [insuranceDialogOpen, selectedPrescription?.id]);
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -660,10 +645,7 @@ export default function PharmacyDashboardEnhanced() {
                           variant="outline"
                           size="sm"
                           className="text-xs px-2 py-1 h-6"
-                          onClick={() => {
-                            console.log(`[COVERAGE-BUTTON] Setting coverage to ${percentage}%`);
-                            setLocalCoveragePercentage(percentage.toString());
-                          }}
+                          onClick={() => setLocalCoveragePercentage(percentage.toString())}
                         >
                           {percentage}%
                         </Button>
