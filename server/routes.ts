@@ -1475,26 +1475,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Insurance claims management routes
   app.use("/api/insurance-claims", requireTenant);
 
-  app.get("/api/insurance-claims", async (req, res) => {
+  app.get("/api/insurance-claims", requireRole(['super_admin', 'tenant_admin', 'billing_staff', 'pharmacist', 'pharmacy_admin', 'physician']), async (req, res) => {
     try {
       const { patientId } = req.query;
       const tenantId = req.tenant!.id;
 
+      // Fetch claims with patient enrichment for medication claims display
       let claims;
       if (patientId) {
-        claims = await storage.getInsuranceClaimsByPatient(patientId as string, tenantId);
+        claims = await storage.db
+          .select({
+            id: storage.insuranceClaims.id,
+            tenantId: storage.insuranceClaims.tenantId,
+            patientId: storage.insuranceClaims.patientId,
+            claimNumber: storage.insuranceClaims.claimNumber,
+            status: storage.insuranceClaims.status,
+            totalAmount: storage.insuranceClaims.totalAmount,
+            approvedAmount: storage.insuranceClaims.approvedAmount,
+            totalPatientCopay: storage.insuranceClaims.totalPatientCopay,
+            submittedDate: storage.insuranceClaims.submittedDate,
+            processedDate: storage.insuranceClaims.processedDate,
+            notes: storage.insuranceClaims.notes,
+            createdAt: storage.insuranceClaims.createdAt,
+            updatedAt: storage.insuranceClaims.updatedAt,
+            // Patient info
+            patientFirstName: storage.patients.firstName,
+            patientLastName: storage.patients.lastName,
+            patientMrn: storage.patients.mrn,
+          })
+          .from(storage.insuranceClaims)
+          .leftJoin(storage.patients, eq(storage.insuranceClaims.patientId, storage.patients.id))
+          .where(and(
+            eq(storage.insuranceClaims.patientId, patientId as string), 
+            eq(storage.insuranceClaims.tenantId, tenantId)
+          ))
+          .orderBy(desc(storage.insuranceClaims.createdAt));
       } else {
-        claims = await storage.getInsuranceClaimsByTenant(tenantId);
+        claims = await storage.db
+          .select({
+            id: storage.insuranceClaims.id,
+            tenantId: storage.insuranceClaims.tenantId,
+            patientId: storage.insuranceClaims.patientId,
+            claimNumber: storage.insuranceClaims.claimNumber,
+            status: storage.insuranceClaims.status,
+            totalAmount: storage.insuranceClaims.totalAmount,
+            approvedAmount: storage.insuranceClaims.approvedAmount,
+            totalPatientCopay: storage.insuranceClaims.totalPatientCopay,
+            submittedDate: storage.insuranceClaims.submittedDate,
+            processedDate: storage.insuranceClaims.processedDate,
+            notes: storage.insuranceClaims.notes,
+            createdAt: storage.insuranceClaims.createdAt,
+            updatedAt: storage.insuranceClaims.updatedAt,
+            // Patient info
+            patientFirstName: storage.patients.firstName,
+            patientLastName: storage.patients.lastName,
+            patientMrn: storage.patients.mrn,
+          })
+          .from(storage.insuranceClaims)
+          .leftJoin(storage.patients, eq(storage.insuranceClaims.patientId, storage.patients.id))
+          .where(eq(storage.insuranceClaims.tenantId, tenantId))
+          .orderBy(desc(storage.insuranceClaims.createdAt));
       }
 
-      res.json(claims);
+      // Transform the results to match the expected interface for medication claims
+      const transformedClaims = claims.map(claim => {
+        const notes = claim.notes as any || {};
+        return {
+          ...claim,
+          claimAmount: parseFloat(claim.totalAmount || '0'),
+          submittedAt: claim.submittedDate?.toISOString() || claim.createdAt?.toISOString(),
+          processedAt: claim.processedDate?.toISOString(),
+          copayAmount: parseFloat(claim.totalPatientCopay || '0'),
+          // Extract medication data from notes
+          medicationName: notes.medicationName || '',
+          dosage: notes.dosage || '',
+          quantity: parseInt(notes.quantity) || 0,
+        };
+      });
+
+      res.json(transformedClaims);
     } catch (error) {
       console.error("Get insurance claims error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.post("/api/insurance-claims", requireRole(["billing_staff", "physician", "tenant_admin", "director", "receptionist"]), async (req, res) => {
+  app.post("/api/insurance-claims", requireRole(["billing_staff", "physician", "tenant_admin", "director", "receptionist", "pharmacist", "pharmacy_admin"]), async (req, res) => {
     try {
       // Additional check for receptionists - only allow hospital/clinic receptionists
       if (req.user!.role === "receptionist" && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
@@ -1510,8 +1576,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         requestData.claimNumber = `CLM-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
       }
 
-      // Handle manual insurance data - store in notes field for now
+      // Handle medication claim data - store in notes field
       let processedData = { ...requestData };
+      
+      // For medication claims, store medication details in notes
+      if (requestData.claimType === 'medication' || requestData.medicationName) {
+        processedData.notes = JSON.stringify({
+          claimType: requestData.claimType || 'medication',
+          medicationName: requestData.medicationName,
+          dosage: requestData.dosage,
+          quantity: requestData.quantity,
+          daysSupply: requestData.daysSupply,
+          pharmacyNpi: requestData.pharmacyNpi,
+          prescriptionId: requestData.prescriptionId,
+          originalNotes: requestData.notes,
+        });
+        
+        // Map to standard insurance claim fields
+        processedData.totalAmount = requestData.claimAmount;
+        processedData.submittedDate = requestData.submittedAt ? new Date(requestData.submittedAt) : new Date();
+      }
+      
+      // Handle manual insurance data - store in notes field for regular claims
       if (requestData.manualInsurance) {
         const manualInsuranceNote = `
 Manual Insurance Information:
