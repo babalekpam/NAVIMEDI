@@ -575,56 +575,66 @@ export default function PharmacyDashboardEnhanced() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        console.log('Load Insurance button clicked');
+                        console.log('=== LOAD INSURANCE BUTTON CLICKED ===');
                         
-                        // Use both refs and DOM queries for maximum compatibility
+                        // Search for all possible input elements
+                        const allInputs = document.querySelectorAll('input');
+                        console.log('Total inputs on page:', allInputs.length);
+                        
                         const providerInput = document.getElementById('local-insurance-provider') as HTMLInputElement;
                         const coverageInput = document.getElementById('local-coverage-percentage') as HTMLInputElement;
                         
-                        console.log('Provider input found:', !!providerInput);
-                        console.log('Coverage input found:', !!coverageInput);
+                        console.log('Provider input by ID found:', !!providerInput);
+                        console.log('Coverage input by ID found:', !!coverageInput);
                         
-                        // Method 1: Direct DOM manipulation
-                        if (providerInput) {
-                          providerInput.value = "Amara Mwangi Insurance";
-                          console.log('Set provider DOM value:', providerInput.value);
-                        }
-                        
-                        if (coverageInput) {
-                          coverageInput.value = "80";
-                          console.log('Set coverage DOM value:', coverageInput.value);
-                        }
-                        
-                        // Method 2: Use refs if available
-                        if (providerInputRef.current) {
-                          providerInputRef.current.value = "Amara Mwangi Insurance";
-                          console.log('Set provider ref value:', providerInputRef.current.value);
-                        }
-                        
-                        if (coverageInputRef.current) {
-                          coverageInputRef.current.value = "80";
-                          console.log('Set coverage ref value:', coverageInputRef.current.value);
-                        }
-                        
-                        // Method 3: Force React events for both inputs
-                        [providerInput, coverageInput].forEach(input => {
-                          if (input) {
-                            const inputEvent = new Event('input', { bubbles: true });
-                            const changeEvent = new Event('change', { bubbles: true });
-                            input.dispatchEvent(inputEvent);
-                            input.dispatchEvent(changeEvent);
-                          }
+                        // Log all input elements to see what's available
+                        allInputs.forEach((input, index) => {
+                          console.log(`Input ${index}: id="${input.id}", placeholder="${input.placeholder}", type="${input.type}"`);
                         });
                         
-                        // Force recalculation
+                        // Try alternative selectors
+                        const providerByPlaceholder = document.querySelector('input[placeholder*="Blue Cross"]') as HTMLInputElement;
+                        const coverageByPlaceholder = document.querySelector('input[placeholder="80"]') as HTMLInputElement;
+                        
+                        console.log('Provider by placeholder found:', !!providerByPlaceholder);
+                        console.log('Coverage by placeholder found:', !!coverageByPlaceholder);
+                        
+                        // Set values using any method that works
+                        const targetProvider = providerInput || providerByPlaceholder || providerInputRef.current;
+                        const targetCoverage = coverageInput || coverageByPlaceholder || coverageInputRef.current;
+                        
+                        if (targetProvider) {
+                          console.log('Setting provider value...');
+                          targetProvider.value = "Amara Mwangi Insurance";
+                          targetProvider.dispatchEvent(new Event('input', { bubbles: true }));
+                          targetProvider.dispatchEvent(new Event('change', { bubbles: true }));
+                          console.log('Provider value set to:', targetProvider.value);
+                        } else {
+                          console.log('ERROR: No provider input found!');
+                        }
+                        
+                        if (targetCoverage) {
+                          console.log('Setting coverage value...');
+                          targetCoverage.value = "80";
+                          targetCoverage.dispatchEvent(new Event('input', { bubbles: true }));
+                          targetCoverage.dispatchEvent(new Event('change', { bubbles: true }));
+                          console.log('Coverage value set to:', targetCoverage.value);
+                        } else {
+                          console.log('ERROR: No coverage input found!');
+                        }
+                        
+                        // Force visual update
                         setTimeout(() => {
                           calculateFromInputs();
-                        }, 100);
+                          console.log('Calculation triggered');
+                        }, 200);
                         
                         toast({
                           title: "Insurance Data Loaded",
-                          description: "Loaded Amara Mwangi Insurance with 80% coverage",
+                          description: "Amara Mwangi Insurance with 80% coverage",
                         });
+                        
+                        console.log('=== LOAD INSURANCE COMPLETE ===');
                       }}
                       className="text-xs bg-blue-100 hover:bg-blue-200"
                     >
