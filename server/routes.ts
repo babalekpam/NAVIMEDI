@@ -1613,6 +1613,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/patient-insurance/:patientId", requireTenant, async (req, res) => {
     try {
       const { patientId } = req.params;
+      
+      // For pharmacies and cross-tenant billing, try cross-tenant lookup first
+      if (req.tenant!.type === 'pharmacy') {
+        console.log(`[CROSS-TENANT INSURANCE] Pharmacy ${req.tenant!.name} looking up insurance for patient ${patientId}`);
+        const crossTenantInsurance = await storage.getPatientInsuranceCrossTenant(patientId);
+        
+        if (crossTenantInsurance.length > 0) {
+          console.log(`[CROSS-TENANT INSURANCE] Found ${crossTenantInsurance.length} insurance records for patient`);
+          res.json(crossTenantInsurance);
+          return;
+        }
+      }
+      
+      // Regular tenant-specific lookup
       const insuranceList = await storage.getPatientInsurance(patientId, req.tenant!.id);
       res.json(insuranceList);
     } catch (error) {

@@ -188,6 +188,7 @@ export interface IStorage {
   
   // Patient Insurance management
   getPatientInsurance(patientId: string, tenantId: string): Promise<PatientInsurance[]>;
+  getPatientInsuranceCrossTenant(patientId: string): Promise<PatientInsurance[]>;
   createPatientInsurance(insurance: InsertPatientInsurance): Promise<PatientInsurance>;
 
   // Service Pricing management
@@ -1391,6 +1392,45 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(patientInsurance).where(
       and(eq(patientInsurance.patientId, patientId), eq(patientInsurance.tenantId, tenantId))
     ).orderBy(desc(patientInsurance.isPrimary), patientInsurance.effectiveDate);
+  }
+
+  async getPatientInsuranceCrossTenant(patientId: string): Promise<PatientInsurance[]> {
+    // For cross-tenant billing, get patient insurance from any tenant
+    const results = await db.select({
+      id: patientInsurance.id,
+      patientId: patientInsurance.patientId,
+      tenantId: patientInsurance.tenantId,
+      insuranceProviderId: patientInsurance.insuranceProviderId,
+      policyNumber: patientInsurance.policyNumber,
+      groupNumber: patientInsurance.groupNumber,
+      isPrimary: patientInsurance.isPrimary,
+      effectiveDate: patientInsurance.effectiveDate,
+      expirationDate: patientInsurance.expirationDate,
+      copayAmount: patientInsurance.copayAmount,
+      deductibleAmount: patientInsurance.deductibleAmount,
+      coinsurancePercent: patientInsurance.coinsurancePercent,
+      maxOutOfPocket: patientInsurance.maxOutOfPocket,
+      notes: patientInsurance.notes,
+      isActive: patientInsurance.isActive,
+      createdAt: patientInsurance.createdAt,
+      updatedAt: patientInsurance.updatedAt,
+      // Include insurance provider info
+      insuranceProviderName: insuranceProviders.name,
+      insuranceProviderType: insuranceProviders.type
+    })
+    .from(patientInsurance)
+    .leftJoin(insuranceProviders, eq(patientInsurance.insuranceProviderId, insuranceProviders.id))
+    .where(eq(patientInsurance.patientId, patientId))
+    .orderBy(desc(patientInsurance.isPrimary), patientInsurance.effectiveDate);
+
+    return results.map(result => ({
+      ...result,
+      insuranceProvider: result.insuranceProviderName ? {
+        id: result.insuranceProviderId,
+        name: result.insuranceProviderName,
+        type: result.insuranceProviderType
+      } : undefined
+    }));
   }
 
   async createPatientInsurance(insurance: InsertPatientInsurance): Promise<PatientInsurance> {
