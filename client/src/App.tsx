@@ -84,9 +84,8 @@ import DoctorCalendar from "@/pages/doctor-calendar";
 
 
 function AppContent() {
-  console.log("📱 AppContent component rendering");
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <Switch>
         <Route path="/" component={LandingPage} />
         <Route path="/login" component={Login} />
@@ -487,7 +486,6 @@ function AppContent() {
 }
 
 function App() {
-  console.log("🎯 App component rendering");
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

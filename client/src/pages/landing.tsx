@@ -46,9 +46,8 @@ const brandName = "NAVIMED";
 const tagline = "Next-Generation Healthcare Management Platform";
 
 export default function LandingPage() {
-  console.log("🏠 LandingPage component rendering");
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-emerald-50/30">
       <PublicHeader />
 
       {/* Hero Section */}
