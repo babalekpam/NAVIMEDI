@@ -592,32 +592,27 @@ export default function PharmacyDashboardEnhanced() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          console.log('Blue button clicked');
-                          console.log('Provider ref:', providerInputRef.current);
-                          console.log('Coverage ref:', coverageInputRef.current);
+                          console.log('Blue button clicked - using direct DOM queries');
                           
-                          if (providerInputRef.current) {
-                            providerInputRef.current.value = "Amara Mwangi Insurance";
-                            console.log('Set provider value to:', providerInputRef.current.value);
-                          } else {
-                            console.log('Provider ref is null!');
+                          // Use direct DOM queries instead of refs
+                          const providerInput = document.getElementById('local-insurance-provider') as HTMLInputElement;
+                          const coverageInput = document.getElementById('local-coverage-percentage') as HTMLInputElement;
+                          
+                          console.log('Provider input found:', !!providerInput);
+                          console.log('Coverage input found:', !!coverageInput);
+                          
+                          if (providerInput) {
+                            providerInput.value = "Amara Mwangi Insurance";
+                            providerInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            providerInput.dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('Provider set to:', providerInput.value);
                           }
                           
-                          if (coverageInputRef.current) {
-                            coverageInputRef.current.value = "80";
-                            console.log('Set coverage value to:', coverageInputRef.current.value);
-                          } else {
-                            console.log('Coverage ref is null!');
-                          }
-                          
-                          // Force trigger input events
-                          if (providerInputRef.current) {
-                            const event = new Event('input', { bubbles: true });
-                            providerInputRef.current.dispatchEvent(event);
-                          }
-                          if (coverageInputRef.current) {
-                            const event = new Event('input', { bubbles: true });
-                            coverageInputRef.current.dispatchEvent(event);
+                          if (coverageInput) {
+                            coverageInput.value = "80";
+                            coverageInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            coverageInput.dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('Coverage set to:', coverageInput.value);
                           }
                           
                           calculateFromInputs();
