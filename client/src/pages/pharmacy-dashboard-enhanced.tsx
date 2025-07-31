@@ -86,9 +86,6 @@ export default function PharmacyDashboardEnhanced() {
   const [workflowDialogOpen, setWorkflowDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [insuranceCalculation, setInsuranceCalculation] = useState<InsuranceCalculation | null>(null);
-  const [totalCost, setTotalCost] = useState("");
-  const [coveragePercentage, setCoveragePercentage] = useState("");
-  const [insuranceProvider, setInsuranceProvider] = useState("");
 
   // Fetch prescriptions sent to this pharmacy
   const { data: prescriptions = [], isLoading } = useQuery({
@@ -182,24 +179,13 @@ export default function PharmacyDashboardEnhanced() {
     };
   };
 
-  // Effect to calculate insurance coverage in real-time with debouncing
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      const cost = parseFloat(totalCost);
-      const percentage = parseFloat(coveragePercentage);
-      
-      if (cost > 0 && percentage > 0) {
-        setInsuranceCalculation(calculateInsuranceCoverage(cost, percentage));
-      } else {
-        setInsuranceCalculation(null);
-      }
-    }, 100); // Small delay to prevent rapid updates
 
-    return () => clearTimeout(timeoutId);
-  }, [totalCost, coveragePercentage]);
 
   const handleInsuranceVerification = async (formData: InsuranceVerificationForm) => {
-    if (!selectedPrescription || !insuranceCalculation) return;
+    if (!selectedPrescription) return;
+    
+    // Calculate the copay based on the form data
+    const calculation = calculateInsuranceCoverage(formData.totalCost, formData.coveragePercentage);
     
     await updateStatusMutation.mutateAsync({
       id: selectedPrescription.id,
@@ -207,16 +193,12 @@ export default function PharmacyDashboardEnhanced() {
       data: {
         insuranceVerifiedDate: new Date().toISOString(),
         insuranceProvider: formData.insuranceProvider,
-        insuranceCopay: insuranceCalculation.patientCopay,
+        insuranceCopay: calculation.patientCopay,
         totalCost: formData.totalCost,
         pharmacyNotes: formData.pharmacyNotes
       }
     });
     
-    setInsuranceCalculation(null);
-    setTotalCost("");
-    setCoveragePercentage("");
-    setInsuranceProvider("");
     setInsuranceDialogOpen(false);
   };
 
@@ -349,159 +331,182 @@ export default function PharmacyDashboardEnhanced() {
     </Card>
   );
 
-  const InsuranceVerificationDialog = () => (
-    <Dialog open={insuranceDialogOpen} onOpenChange={(open) => {
-      setInsuranceDialogOpen(open);
-      if (!open) {
-        setInsuranceCalculation(null);
-        setTotalCost("");
-        setCoveragePercentage("");
-        setInsuranceProvider("");
+  const InsuranceVerificationDialog = () => {
+    const [localInsuranceProvider, setLocalInsuranceProvider] = useState("");
+    const [localTotalCost, setLocalTotalCost] = useState("");
+    const [localCoveragePercentage, setLocalCoveragePercentage] = useState("");
+    const [localNotes, setLocalNotes] = useState("");
+    const [localCalculation, setLocalCalculation] = useState<InsuranceCalculation | null>(null);
+
+    // Local calculation effect that's isolated from parent component
+    useEffect(() => {
+      const cost = parseFloat(localTotalCost);
+      const percentage = parseFloat(localCoveragePercentage);
+      
+      if (cost > 0 && percentage > 0) {
+        setLocalCalculation(calculateInsuranceCoverage(cost, percentage));
+      } else {
+        setLocalCalculation(null);
       }
-    }}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Verify Insurance Coverage & Calculate Copay</DialogTitle>
-          <p className="text-sm text-gray-600">
-            Enter the total medication cost and insurance coverage percentage to automatically calculate patient copay
-          </p>
-        </DialogHeader>
-        {selectedPrescription && (
-          <form 
-            key={selectedPrescription.id}
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleInsuranceVerification({
-                insuranceProvider: insuranceProvider,
-                totalCost: parseFloat(totalCost),
-                coveragePercentage: parseFloat(coveragePercentage),
-                pharmacyNotes: (e.currentTarget.elements.namedItem('pharmacyNotes') as HTMLTextAreaElement)?.value || ''
-              });
-            }}
-          >
-            <div className="space-y-4">
-              <div className="p-3 bg-gray-50 rounded">
-                <p className="font-medium">{selectedPrescription.medicationName} {selectedPrescription.dosage}</p>
-                <p className="text-sm text-gray-600">Patient: {selectedPrescription.patientFirstName} {selectedPrescription.patientLastName}</p>
-              </div>
-              
-              <div>
-                <Label htmlFor="insuranceProvider">Insurance Provider</Label>
-                <Input 
-                  id="insuranceProvider" 
-                  name="insuranceProvider" 
-                  placeholder="e.g., Medicare, Blue Cross Blue Shield"
-                  value={insuranceProvider}
-                  onChange={(e) => setInsuranceProvider(e.target.value)}
-                  required 
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
+    }, [localTotalCost, localCoveragePercentage]);
+
+    // Reset local state when dialog opens/closes
+    useEffect(() => {
+      if (insuranceDialogOpen) {
+        setLocalInsuranceProvider("");
+        setLocalTotalCost("");
+        setLocalCoveragePercentage("");
+        setLocalNotes("");
+        setLocalCalculation(null);
+      }
+    }, [insuranceDialogOpen]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!selectedPrescription || !localCalculation) return;
+      
+      await handleInsuranceVerification({
+        insuranceProvider: localInsuranceProvider,
+        totalCost: parseFloat(localTotalCost),
+        coveragePercentage: parseFloat(localCoveragePercentage),
+        pharmacyNotes: localNotes
+      });
+    };
+
+    return (
+      <Dialog open={insuranceDialogOpen} onOpenChange={setInsuranceDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Verify Insurance Coverage & Calculate Copay</DialogTitle>
+            <p className="text-sm text-gray-600">
+              Enter the total medication cost and insurance coverage percentage to automatically calculate patient copay
+            </p>
+          </DialogHeader>
+          {selectedPrescription && (
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4">
+                <div className="p-3 bg-gray-50 rounded">
+                  <p className="font-medium">{selectedPrescription.medicationName} {selectedPrescription.dosage}</p>
+                  <p className="text-sm text-gray-600">Patient: {selectedPrescription.patientFirstName} {selectedPrescription.patientLastName}</p>
+                </div>
+                
                 <div>
-                  <Label htmlFor="totalCost">Total Medication Cost ($)</Label>
+                  <Label htmlFor="local-insurance-provider">Insurance Provider</Label>
                   <Input 
-                    id="totalCost" 
-                    name="totalCost" 
-                    type="number" 
-                    step="0.01" 
-                    placeholder="0.00"
-                    value={totalCost}
+                    id="local-insurance-provider"
+                    placeholder="e.g., Medicare, Blue Cross Blue Shield"
+                    value={localInsuranceProvider}
+                    onChange={(e) => setLocalInsuranceProvider(e.target.value)}
                     required 
-                    onChange={(e) => setTotalCost(e.target.value)}
+                    autoComplete="off"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="coveragePercentage">Insurance Coverage (%)</Label>
-                  <div className="flex gap-2">
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="local-total-cost">Total Medication Cost ($)</Label>
                     <Input 
-                      id="coveragePercentage" 
-                      name="coveragePercentage" 
+                      id="local-total-cost"
                       type="number" 
-                      min="0" 
-                      max="100" 
-                      step="1" 
-                      placeholder="80"
-                      value={coveragePercentage}
+                      step="0.01" 
+                      placeholder="0.00"
+                      value={localTotalCost}
+                      onChange={(e) => setLocalTotalCost(e.target.value)}
                       required 
-                      className="flex-1"
-                      onChange={(e) => setCoveragePercentage(e.target.value)}
+                      autoComplete="off"
                     />
                   </div>
-                  <div className="flex gap-1 mt-2">
-                    {[70, 80, 85, 90].map(percentage => (
-                      <Button
-                        key={percentage}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="text-xs px-2 py-1 h-6"
-                        onClick={() => {
-                          setCoveragePercentage(percentage.toString());
-                        }}
-                      >
-                        {percentage}%
-                      </Button>
-                    ))}
+                  <div>
+                    <Label htmlFor="local-coverage-percentage">Insurance Coverage (%)</Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        id="local-coverage-percentage"
+                        type="number" 
+                        min="0" 
+                        max="100" 
+                        step="1" 
+                        placeholder="80"
+                        value={localCoveragePercentage}
+                        onChange={(e) => setLocalCoveragePercentage(e.target.value)}
+                        required 
+                        className="flex-1"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div className="flex gap-1 mt-2">
+                      {[70, 80, 85, 90].map(percentage => (
+                        <Button
+                          key={percentage}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-xs px-2 py-1 h-6"
+                          onClick={() => setLocalCoveragePercentage(percentage.toString())}
+                        >
+                          {percentage}%
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Insurance Calculation Breakdown */}
-              {insuranceCalculation && (
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="font-medium text-blue-900 mb-3">Coverage Breakdown</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Cost:</span>
-                      <span className="font-medium">${insuranceCalculation.totalCost.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Insurance Coverage ({insuranceCalculation.coveragePercentage}%):</span>
-                      <span className="font-medium text-green-600">-${insuranceCalculation.insuranceAmount.toFixed(2)}</span>
-                    </div>
-                    <div className="border-t pt-2">
+                {/* Insurance Calculation Breakdown */}
+                {localCalculation && (
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="font-medium text-blue-900 mb-3">Coverage Breakdown</h4>
+                    <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="font-medium text-blue-900">Patient Copay:</span>
-                        <span className="font-bold text-blue-900">${insuranceCalculation.patientCopay.toFixed(2)}</span>
+                        <span className="text-gray-600">Total Cost:</span>
+                        <span className="font-medium">${localCalculation.totalCost.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Insurance Coverage ({localCalculation.coveragePercentage}%):</span>
+                        <span className="font-medium text-green-600">-${localCalculation.insuranceAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="border-t pt-2">
+                        <div className="flex justify-between">
+                          <span className="font-medium text-blue-900">Patient Copay:</span>
+                          <span className="font-bold text-blue-900">${localCalculation.patientCopay.toFixed(2)}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
+                )}
+                
+                <div>
+                  <Label htmlFor="local-pharmacy-notes">Pharmacy Notes (Optional)</Label>
+                  <Textarea 
+                    id="local-pharmacy-notes"
+                    placeholder="Any additional notes about coverage verification..."
+                    rows={2}
+                    value={localNotes}
+                    onChange={(e) => setLocalNotes(e.target.value)}
+                  />
                 </div>
-              )}
-              
-              <div>
-                <Label htmlFor="pharmacyNotes">Pharmacy Notes (Optional)</Label>
-                <Textarea 
-                  id="pharmacyNotes" 
-                  name="pharmacyNotes" 
-                  placeholder="Any additional notes about coverage verification..."
-                  rows={2}
-                />
+                
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={updateStatusMutation.isPending || !localCalculation}
+                    className="flex-1"
+                  >
+                    {updateStatusMutation.isPending ? 'Processing...' : 'Verify Insurance & Update'}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setInsuranceDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
-              
-              <div className="flex gap-2 pt-4">
-                <Button 
-                  type="submit" 
-                  disabled={updateStatusMutation.isPending || !insuranceCalculation}
-                  className="flex-1"
-                >
-                  {updateStatusMutation.isPending ? 'Processing...' : 'Verify Insurance & Update'}
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setInsuranceDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </form>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   if (isLoading) {
     return (
