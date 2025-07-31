@@ -3883,30 +3883,32 @@ Report ID: ${report.id}
         console.log("[BILLING] Pharmacy tenant - fetching patients from prescriptions");
         const prescriptions = await storage.getPrescriptionsByPharmacy(req.tenant.id);
         
-        // Extract unique patient IDs and tenant IDs from prescriptions
-        const patientTenantMap = new Map();
+        // Since prescriptions contain embedded patient info, extract unique patients directly
+        const uniquePatientIds = new Set();
+        
         prescriptions.forEach(prescription => {
-          if (prescription.patientId && prescription.hospitalTenantId) {
-            patientTenantMap.set(prescription.patientId, prescription.hospitalTenantId);
+          if (prescription.patientId) {
+            uniquePatientIds.add(prescription.patientId);
           }
         });
         
-        console.log("[BILLING] Found", patientTenantMap.size, "unique patients from prescriptions");
+        console.log("[BILLING] Found", uniquePatientIds.size, "unique patient IDs from", prescriptions.length, "prescriptions");
         
-        // Fetch patient details from their original hospitals
-        for (const [patientId, hospitalTenantId] of patientTenantMap) {
-          try {
-            const patient = await storage.getPatientById(patientId);
-            if (patient) {
-              // Add hospital tenant info for billing context
-              patients.push({
-                ...patient,
-                hospitalTenantId,
-                source: 'prescription'
-              });
-            }
-          } catch (error) {
-            console.error("[BILLING] Error fetching patient", patientId, ":", error);
+        // For each unique patient ID, create patient object from the first prescription with that patient
+        for (const patientId of uniquePatientIds) {
+          const samplePrescription = prescriptions.find(p => p.patientId === patientId);
+          if (samplePrescription) {
+            patients.push({
+              id: samplePrescription.patientId,
+              firstName: samplePrescription.patientFirstName,
+              lastName: samplePrescription.patientLastName,
+              mrn: samplePrescription.patientMRN,
+              phone: samplePrescription.patientPhone,
+              dateOfBirth: samplePrescription.patientDateOfBirth,
+              source: 'prescription',
+              hospitalName: samplePrescription.hospitalName,
+              prescriptionCount: prescriptions.filter(p => p.patientId === patientId).length
+            });
           }
         }
         
