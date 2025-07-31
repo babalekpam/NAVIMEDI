@@ -250,7 +250,7 @@ export default function PharmacyDashboardEnhanced() {
       paymentAmount: paymentData.paymentAmount.toString(),
       changeGiven: paymentData.changeGiven.toString(),
       prescribedBy: selectedPrescription.providerName,
-      prescribedDate: new Date(selectedPrescription.prescribedDate), // Convert to Date object
+      prescribedDate: new Date(selectedPrescription.prescribedDate), // Convert string to Date object
       refillsRemaining: selectedPrescription.refills,
       patientInstructions: paymentData.patientInstructions
     };
