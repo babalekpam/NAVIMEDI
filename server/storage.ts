@@ -130,6 +130,7 @@ export interface IStorage {
 
   // Patient management
   getPatient(id: string, tenantId: string): Promise<Patient | undefined>;
+  getPatientById(id: string): Promise<Patient | undefined>;
   getPatientByMRN(mrn: string, tenantId: string): Promise<Patient | undefined>;
   createPatient(patient: InsertPatient): Promise<Patient>;
   updatePatient(id: string, updates: Partial<Patient>, tenantId: string): Promise<Patient | undefined>;
@@ -531,6 +532,12 @@ export class DatabaseStorage implements IStorage {
     const [patient] = await db.select().from(patients).where(
       and(eq(patients.id, id), eq(patients.tenantId, tenantId))
     );
+    return patient || undefined;
+  }
+
+  // Get patient by ID without tenant restriction (for cross-tenant billing access)
+  async getPatientById(id: string): Promise<Patient | undefined> {
+    const [patient] = await db.select().from(patients).where(eq(patients.id, id));
     return patient || undefined;
   }
 

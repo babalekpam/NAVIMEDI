@@ -69,8 +69,9 @@ export default function Billing() {
     enabled: !!user && !!tenant,
   });
 
+  // Use specialized billing patients endpoint that includes cross-tenant patients for pharmacies
   const { data: patients = [] } = useQuery<Patient[]>({
-    queryKey: ["/api/patients"],
+    queryKey: ["/api/billing/patients"],
     enabled: !!user && !!tenant,
   });
 

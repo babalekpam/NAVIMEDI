@@ -3871,6 +3871,60 @@ Report ID: ${report.id}
     }
   });
 
+  // Cross-tenant billing patients endpoint for pharmacies
+  app.get("/api/billing/patients", requireRole(["tenant_admin", "billing_staff", "receptionist", "pharmacist"]), async (req, res) => {
+    try {
+      console.log("[BILLING] Getting cross-tenant patients for billing - User role:", req.user!.role, "Tenant:", req.tenant?.name, "Type:", req.tenant?.type);
+      
+      let patients = [];
+      
+      // For pharmacies, get patients from prescriptions sent to them
+      if (req.tenant?.type === 'pharmacy') {
+        console.log("[BILLING] Pharmacy tenant - fetching patients from prescriptions");
+        const prescriptions = await storage.getPrescriptionsByPharmacy(req.tenant.id);
+        
+        // Extract unique patient IDs and tenant IDs from prescriptions
+        const patientTenantMap = new Map();
+        prescriptions.forEach(prescription => {
+          if (prescription.patientId && prescription.hospitalTenantId) {
+            patientTenantMap.set(prescription.patientId, prescription.hospitalTenantId);
+          }
+        });
+        
+        console.log("[BILLING] Found", patientTenantMap.size, "unique patients from prescriptions");
+        
+        // Fetch patient details from their original hospitals
+        for (const [patientId, hospitalTenantId] of patientTenantMap) {
+          try {
+            const patient = await storage.getPatientById(patientId);
+            if (patient) {
+              // Add hospital tenant info for billing context
+              patients.push({
+                ...patient,
+                hospitalTenantId,
+                source: 'prescription'
+              });
+            }
+          } catch (error) {
+            console.error("[BILLING] Error fetching patient", patientId, ":", error);
+          }
+        }
+        
+        console.log("[BILLING] Successfully fetched", patients.length, "cross-tenant patients for pharmacy billing");
+      } else {
+        // For hospitals/clinics, get their own patients
+        console.log("[BILLING] Hospital/clinic tenant - fetching own patients");
+        patients = await storage.getPatientsByTenant(req.tenant!.id);
+        console.log("[BILLING] Found", patients.length, "patients for hospital billing");
+      }
+      
+      res.json(patients);
+    } catch (error) {
+      console.error("[BILLING] Error fetching billing patients:", error);
+      res.status(500).json({ message: "Failed to fetch billing patients" });
+    }
+  });
+
   // Patient Billing Routes
   app.get("/api/patient/bills", requireRole(["patient"]), async (req, res) => {
     try {
