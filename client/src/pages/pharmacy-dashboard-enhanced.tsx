@@ -64,9 +64,16 @@ interface PrescriptionWorkflow {
 
 interface InsuranceVerificationForm {
   insuranceProvider: string;
-  insuranceCopay: number;
   totalCost: number;
+  coveragePercentage: number;
   pharmacyNotes: string;
+}
+
+interface InsuranceCalculation {
+  totalCost: number;
+  coveragePercentage: number;
+  insuranceAmount: number;
+  patientCopay: number;
 }
 
 export default function PharmacyDashboardEnhanced() {
@@ -78,6 +85,7 @@ export default function PharmacyDashboardEnhanced() {
   const [insuranceDialogOpen, setInsuranceDialogOpen] = useState(false);
   const [workflowDialogOpen, setWorkflowDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [insuranceCalculation, setInsuranceCalculation] = useState<InsuranceCalculation | null>(null);
 
   // Fetch prescriptions sent to this pharmacy
   const { data: prescriptions = [], isLoading } = useQuery({
@@ -158,8 +166,21 @@ export default function PharmacyDashboardEnhanced() {
     return <Badge className={config.color}>{config.label}</Badge>;
   };
 
+  // Calculate insurance coverage breakdown
+  const calculateInsuranceCoverage = (totalCost: number, coveragePercentage: number): InsuranceCalculation => {
+    const insuranceAmount = (totalCost * coveragePercentage) / 100;
+    const patientCopay = totalCost - insuranceAmount;
+    
+    return {
+      totalCost,
+      coveragePercentage,
+      insuranceAmount: Math.round(insuranceAmount * 100) / 100, // Round to 2 decimal places
+      patientCopay: Math.round(patientCopay * 100) / 100
+    };
+  };
+
   const handleInsuranceVerification = async (formData: InsuranceVerificationForm) => {
-    if (!selectedPrescription) return;
+    if (!selectedPrescription || !insuranceCalculation) return;
     
     await updateStatusMutation.mutateAsync({
       id: selectedPrescription.id,
@@ -167,11 +188,14 @@ export default function PharmacyDashboardEnhanced() {
       data: {
         insuranceVerifiedDate: new Date().toISOString(),
         insuranceProvider: formData.insuranceProvider,
-        insuranceCopay: formData.insuranceCopay,
+        insuranceCopay: insuranceCalculation.patientCopay,
         totalCost: formData.totalCost,
         pharmacyNotes: formData.pharmacyNotes
       }
     });
+    
+    setInsuranceCalculation(null);
+    setInsuranceDialogOpen(false);
   };
 
   const handleStatusUpdate = async (prescriptionId: string, newStatus: string, additionalData = {}) => {
@@ -304,10 +328,18 @@ export default function PharmacyDashboardEnhanced() {
   );
 
   const InsuranceVerificationDialog = () => (
-    <Dialog open={insuranceDialogOpen} onOpenChange={setInsuranceDialogOpen}>
-      <DialogContent className="max-w-md">
+    <Dialog open={insuranceDialogOpen} onOpenChange={(open) => {
+      setInsuranceDialogOpen(open);
+      if (!open) {
+        setInsuranceCalculation(null);
+      }
+    }}>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Verify Insurance Coverage</DialogTitle>
+          <DialogTitle>Verify Insurance Coverage & Calculate Copay</DialogTitle>
+          <p className="text-sm text-gray-600">
+            Enter the total medication cost and insurance coverage percentage to automatically calculate patient copay
+          </p>
         </DialogHeader>
         {selectedPrescription && (
           <form onSubmit={(e) => {
@@ -315,8 +347,8 @@ export default function PharmacyDashboardEnhanced() {
             const formData = new FormData(e.currentTarget);
             handleInsuranceVerification({
               insuranceProvider: formData.get('insuranceProvider') as string,
-              insuranceCopay: parseFloat(formData.get('insuranceCopay') as string),
               totalCost: parseFloat(formData.get('totalCost') as string),
+              coveragePercentage: parseFloat(formData.get('coveragePercentage') as string),
               pharmacyNotes: formData.get('pharmacyNotes') as string
             });
           }}>
@@ -331,25 +363,14 @@ export default function PharmacyDashboardEnhanced() {
                 <Input 
                   id="insuranceProvider" 
                   name="insuranceProvider" 
-                  placeholder="e.g., Blue Cross Blue Shield"
+                  placeholder="e.g., Medicare, Blue Cross Blue Shield"
                   required 
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="insuranceCopay">Patient Copay ($)</Label>
-                  <Input 
-                    id="insuranceCopay" 
-                    name="insuranceCopay" 
-                    type="number" 
-                    step="0.01" 
-                    placeholder="0.00"
-                    required 
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="totalCost">Total Cost ($)</Label>
+                  <Label htmlFor="totalCost">Total Medication Cost ($)</Label>
                   <Input 
                     id="totalCost" 
                     name="totalCost" 
@@ -357,25 +378,113 @@ export default function PharmacyDashboardEnhanced() {
                     step="0.01" 
                     placeholder="0.00"
                     required 
+                    onChange={(e) => {
+                      const totalCost = parseFloat(e.target.value);
+                      const coverageInput = document.getElementById('coveragePercentage') as HTMLInputElement;
+                      const coverage = parseFloat(coverageInput?.value || '0');
+                      
+                      if (totalCost > 0 && coverage > 0) {
+                        setInsuranceCalculation(calculateInsuranceCoverage(totalCost, coverage));
+                      }
+                    }}
                   />
                 </div>
+                <div>
+                  <Label htmlFor="coveragePercentage">Insurance Coverage (%)</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      id="coveragePercentage" 
+                      name="coveragePercentage" 
+                      type="number" 
+                      min="0" 
+                      max="100" 
+                      step="1" 
+                      placeholder="80"
+                      required 
+                      className="flex-1"
+                      onChange={(e) => {
+                        const coverage = parseFloat(e.target.value);
+                        const costInput = document.getElementById('totalCost') as HTMLInputElement;
+                        const totalCost = parseFloat(costInput?.value || '0');
+                        
+                        if (totalCost > 0 && coverage > 0) {
+                          setInsuranceCalculation(calculateInsuranceCoverage(totalCost, coverage));
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="flex gap-1 mt-2">
+                    {[70, 80, 85, 90].map(percentage => (
+                      <Button
+                        key={percentage}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-xs px-2 py-1 h-6"
+                        onClick={() => {
+                          const costInput = document.getElementById('totalCost') as HTMLInputElement;
+                          const coverageInput = document.getElementById('coveragePercentage') as HTMLInputElement;
+                          const totalCost = parseFloat(costInput?.value || '0');
+                          
+                          coverageInput.value = percentage.toString();
+                          if (totalCost > 0) {
+                            setInsuranceCalculation(calculateInsuranceCoverage(totalCost, percentage));
+                          }
+                        }}
+                      >
+                        {percentage}%
+                      </Button>
+                    ))}
+                  </div>
+                </div>
               </div>
+
+              {/* Insurance Calculation Breakdown */}
+              {insuranceCalculation && (
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="font-medium text-blue-900 mb-3">Coverage Breakdown</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Total Cost:</span>
+                      <span className="font-medium">${insuranceCalculation.totalCost.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Insurance Coverage ({insuranceCalculation.coveragePercentage}%):</span>
+                      <span className="font-medium text-green-600">-${insuranceCalculation.insuranceAmount.toFixed(2)}</span>
+                    </div>
+                    <div className="border-t pt-2">
+                      <div className="flex justify-between">
+                        <span className="font-medium text-blue-900">Patient Copay:</span>
+                        <span className="font-bold text-blue-900">${insuranceCalculation.patientCopay.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div>
                 <Label htmlFor="pharmacyNotes">Pharmacy Notes (Optional)</Label>
                 <Textarea 
                   id="pharmacyNotes" 
                   name="pharmacyNotes" 
-                  placeholder="Any additional notes..."
-                  rows={3}
+                  placeholder="Any additional notes about coverage verification..."
+                  rows={2}
                 />
               </div>
               
               <div className="flex gap-2 pt-4">
-                <Button type="submit" disabled={updateStatusMutation.isPending}>
-                  Verify & Calculate Copay
+                <Button 
+                  type="submit" 
+                  disabled={updateStatusMutation.isPending || !insuranceCalculation}
+                  className="flex-1"
+                >
+                  {updateStatusMutation.isPending ? 'Processing...' : 'Verify Insurance & Update'}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setInsuranceDialogOpen(false)}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setInsuranceDialogOpen(false)}
+                >
                   Cancel
                 </Button>
               </div>
