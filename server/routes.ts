@@ -4866,56 +4866,40 @@ Report ID: ${report.id}
     try {
       const tenantId = req.tenantId!;
       
-      // Verify this is a laboratory tenant  
-      const tenant = await storage.db
-        .select()
-        .from(storage.tenants)
-        .where(eq(storage.tenants.id, tenantId))
-        .limit(1);
-      
-      if (!tenant[0] || tenant[0].type !== 'laboratory') {
+      // Get tenant to verify it's a laboratory
+      const tenant = await storage.getTenant(tenantId);
+      if (!tenant || tenant.type !== 'laboratory') {
         return res.status(403).json({ error: "Access restricted to laboratory tenants" });
       }
 
       console.log(`[LAB BILLING] Getting patients for laboratory billing - Lab tenant: ${tenantId}`);
 
-      // Get all lab orders assigned to this laboratory
-      const labOrdersWithPatients = await storage.db
-        .select({
-          patientId: storage.labOrders.patientId,
-          patientFirstName: storage.patients.firstName,
-          patientLastName: storage.patients.lastName,
-          patientMrn: storage.patients.mrn,
-          patientDateOfBirth: storage.patients.dateOfBirth,
-          patientEmail: storage.patients.email,
-          patientPhone: storage.patients.phone,
-          labOrderId: storage.labOrders.id,
-          testName: storage.labOrders.testName,
-          status: storage.labOrders.status,
-        })
-        .from(storage.labOrders)
-        .innerJoin(storage.patients, eq(storage.labOrders.patientId, storage.patients.id))
-        .where(eq(storage.labOrders.labTenantId, tenantId))
-        .orderBy(desc(storage.labOrders.createdAt));
-
-      // Group by patient to avoid duplicates
-      const uniquePatients = labOrdersWithPatients.reduce((acc, item) => {
-        if (!acc.find(p => p.id === item.patientId)) {
-          acc.push({
-            id: item.patientId,
-            firstName: item.patientFirstName,
-            lastName: item.patientLastName,
-            mrn: item.patientMrn,
-            dateOfBirth: item.patientDateOfBirth,
-            email: item.patientEmail,
-            phone: item.patientPhone,
+      // Get all lab orders assigned to this laboratory and their associated patients
+      const labOrders = await storage.getLabOrdersByLabTenant(tenantId);
+      
+      // Get unique patients from these lab orders
+      const patientIds = [...new Set(labOrders.map(order => order.patientId))];
+      const patients = [];
+      
+      for (const patientId of patientIds) {
+        // Cross-tenant patient access - get patient regardless of their home tenant
+        const allPatients = await storage.getAllPatients();
+        const patient = allPatients.find(p => p.id === patientId);
+        if (patient) {
+          patients.push({
+            id: patient.id,
+            firstName: patient.firstName,
+            lastName: patient.lastName,
+            mrn: patient.mrn,
+            dateOfBirth: patient.dateOfBirth,
+            email: patient.email,
+            phone: patient.phone
           });
         }
-        return acc;
-      }, [] as any[]);
+      }
 
-      console.log(`[LAB BILLING] Found ${uniquePatients.length} unique patients with lab orders for billing`);
-      res.json(uniquePatients);
+      console.log(`[LAB BILLING] Found ${patients.length} unique patients for laboratory billing`);
+      res.json(patients);
     } catch (error) {
       console.error("Error fetching lab billing patients:", error);
       res.status(500).json({ error: "Failed to fetch patients for laboratory billing" });
