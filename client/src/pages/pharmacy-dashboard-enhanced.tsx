@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -86,6 +86,8 @@ export default function PharmacyDashboardEnhanced() {
   const [workflowDialogOpen, setWorkflowDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [insuranceCalculation, setInsuranceCalculation] = useState<InsuranceCalculation | null>(null);
+  const [totalCost, setTotalCost] = useState("");
+  const [coveragePercentage, setCoveragePercentage] = useState("");
 
   // Fetch prescriptions sent to this pharmacy
   const { data: prescriptions = [], isLoading } = useQuery({
@@ -179,6 +181,18 @@ export default function PharmacyDashboardEnhanced() {
     };
   };
 
+  // Effect to calculate insurance coverage in real-time
+  useEffect(() => {
+    const cost = parseFloat(totalCost);
+    const percentage = parseFloat(coveragePercentage);
+    
+    if (cost > 0 && percentage > 0) {
+      setInsuranceCalculation(calculateInsuranceCoverage(cost, percentage));
+    } else {
+      setInsuranceCalculation(null);
+    }
+  }, [totalCost, coveragePercentage]);
+
   const handleInsuranceVerification = async (formData: InsuranceVerificationForm) => {
     if (!selectedPrescription || !insuranceCalculation) return;
     
@@ -195,6 +209,8 @@ export default function PharmacyDashboardEnhanced() {
     });
     
     setInsuranceCalculation(null);
+    setTotalCost("");
+    setCoveragePercentage("");
     setInsuranceDialogOpen(false);
   };
 
@@ -332,6 +348,8 @@ export default function PharmacyDashboardEnhanced() {
       setInsuranceDialogOpen(open);
       if (!open) {
         setInsuranceCalculation(null);
+        setTotalCost("");
+        setCoveragePercentage("");
       }
     }}>
       <DialogContent className="max-w-lg">
@@ -377,16 +395,9 @@ export default function PharmacyDashboardEnhanced() {
                     type="number" 
                     step="0.01" 
                     placeholder="0.00"
+                    value={totalCost}
                     required 
-                    onChange={(e) => {
-                      const totalCost = parseFloat(e.target.value);
-                      const coverageInput = document.getElementById('coveragePercentage') as HTMLInputElement;
-                      const coverage = parseFloat(coverageInput?.value || '0');
-                      
-                      if (totalCost > 0 && coverage > 0) {
-                        setInsuranceCalculation(calculateInsuranceCoverage(totalCost, coverage));
-                      }
-                    }}
+                    onChange={(e) => setTotalCost(e.target.value)}
                   />
                 </div>
                 <div>
@@ -400,17 +411,10 @@ export default function PharmacyDashboardEnhanced() {
                       max="100" 
                       step="1" 
                       placeholder="80"
+                      value={coveragePercentage}
                       required 
                       className="flex-1"
-                      onChange={(e) => {
-                        const coverage = parseFloat(e.target.value);
-                        const costInput = document.getElementById('totalCost') as HTMLInputElement;
-                        const totalCost = parseFloat(costInput?.value || '0');
-                        
-                        if (totalCost > 0 && coverage > 0) {
-                          setInsuranceCalculation(calculateInsuranceCoverage(totalCost, coverage));
-                        }
-                      }}
+                      onChange={(e) => setCoveragePercentage(e.target.value)}
                     />
                   </div>
                   <div className="flex gap-1 mt-2">
@@ -422,14 +426,7 @@ export default function PharmacyDashboardEnhanced() {
                         size="sm"
                         className="text-xs px-2 py-1 h-6"
                         onClick={() => {
-                          const costInput = document.getElementById('totalCost') as HTMLInputElement;
-                          const coverageInput = document.getElementById('coveragePercentage') as HTMLInputElement;
-                          const totalCost = parseFloat(costInput?.value || '0');
-                          
-                          coverageInput.value = percentage.toString();
-                          if (totalCost > 0) {
-                            setInsuranceCalculation(calculateInsuranceCoverage(totalCost, percentage));
-                          }
+                          setCoveragePercentage(percentage.toString());
                         }}
                       >
                         {percentage}%
