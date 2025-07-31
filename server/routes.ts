@@ -2090,7 +2090,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           role: newUser.role,
           isActive: newUser.isActive,
           tenantId: newUser.tenantId
-        }
+        },
+        temporaryPassword: temporaryPassword, // Include temporary password for admin display
+        emailSent: emailSent
       });
     } catch (error) {
       console.error("User creation error:", error);

@@ -171,6 +171,17 @@ export default function UserRoles() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showPermissions, setShowPermissions] = useState<string | null>(null);
   
+  // New user credentials state
+  const [showCredentialsDialog, setShowCredentialsDialog] = useState(false);
+  const [newUserCredentials, setNewUserCredentials] = useState<{
+    username: string;
+    temporaryPassword: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+  } | null>(null);
+  
   // Permission editing state
   const [selectedRoleForEdit, setSelectedRoleForEdit] = useState<string>("");
   const [editingPermissions, setEditingPermissions] = useState<Record<string, boolean>>({});
@@ -209,13 +220,25 @@ export default function UserRoles() {
       const response = await apiRequest("POST", "/api/users", data);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (responseData, formData) => {
       queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
       setIsCreateDialogOpen(false);
       form.reset();
+      
+      // Store credentials and show popup
+      setNewUserCredentials({
+        username: responseData.username || formData.username,
+        temporaryPassword: responseData.temporaryPassword || "Not available",
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        role: formData.role
+      });
+      setShowCredentialsDialog(true);
+      
       toast({
-        title: "Success",
-        description: "User created successfully",
+        title: "Success", 
+        description: "User created successfully and email sent with login credentials",
       });
     },
     onError: (error: Error) => {
@@ -1001,6 +1024,92 @@ export default function UserRoles() {
           </Card>
         )}
       </div>
+
+      {/* User Credentials Dialog */}
+      <Dialog open={showCredentialsDialog} onOpenChange={setShowCredentialsDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Key className="h-5 w-5 text-green-600" />
+              <span>User Created Successfully!</span>
+            </DialogTitle>
+            <DialogDescription>
+              The new user has been created and an email has been sent with login instructions.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {newUserCredentials && (
+            <div className="space-y-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h4 className="font-semibold text-green-800 mb-3">Login Credentials</h4>
+                
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Full Name:</label>
+                    <p className="text-sm font-mono bg-white border rounded px-2 py-1">
+                      {newUserCredentials.firstName} {newUserCredentials.lastName}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Role:</label>
+                    <p className="text-sm font-mono bg-white border rounded px-2 py-1 capitalize">
+                      {newUserCredentials.role.replace('_', ' ')}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Username:</label>
+                    <p className="text-sm font-mono bg-white border rounded px-2 py-1 font-semibold text-blue-800">
+                      {newUserCredentials.username}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Email:</label>
+                    <p className="text-sm font-mono bg-white border rounded px-2 py-1">
+                      {newUserCredentials.email}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Temporary Password:</label>
+                    <p className="text-sm font-mono bg-white border rounded px-2 py-1 font-semibold text-red-700">
+                      {newUserCredentials.temporaryPassword}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-start space-x-2">
+                  <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-blue-800">
+                    <p className="font-medium mb-1">Important:</p>
+                    <ul className="text-xs space-y-1">
+                      <li>• User will receive an email with these credentials</li>
+                      <li>• Temporary password must be changed on first login</li>
+                      <li>• Email sent from info@navimedi.com</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              onClick={() => {
+                setShowCredentialsDialog(false);
+                setNewUserCredentials(null);
+              }}
+              className="w-full"
+            >
+              Got it, thanks!
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }
