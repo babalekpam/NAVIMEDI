@@ -570,40 +570,58 @@ export default function PharmacyDashboardEnhanced() {
                 <div>
                   <div className="flex items-center justify-between">
                     <Label htmlFor="local-insurance-provider">Insurance Provider</Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        console.log('🔵 BUTTON CLICKED - Load Insurance');
-                        
-                        if (!selectedPrescription?.patientId) {
-                          console.log('❌ No patient ID available');
-                          return;
-                        }
-                        
-                        // Direct DOM manipulation only
-                        if (providerInputRef.current) {
-                          providerInputRef.current.value = "Amara Mwangi Insurance";
-                          console.log('✅ Provider set via ref');
-                        }
-                        if (coverageInputRef.current) {
-                          coverageInputRef.current.value = "80";
-                          console.log('✅ Coverage set via ref');
-                        }
-                        
-                        // Trigger calculation
-                        calculateFromInputs();
-                        
-                        toast({
-                          title: "Insurance Data Loaded",
-                          description: "Loaded Amara Mwangi Insurance with 80% coverage",
-                        });
-                      }}
-                      className="text-xs bg-blue-100 hover:bg-blue-200"
-                    >
-                      Load Patient Insurance
-                    </Button>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          alert('BUTTON CLICKED!');
+                          console.log('ALERT BUTTON CLICKED');
+                          if (providerInputRef.current) {
+                            providerInputRef.current.value = "Amara Mwangi Insurance";
+                          }
+                          if (coverageInputRef.current) {
+                            coverageInputRef.current.value = "80";
+                          }
+                        }}
+                        className="text-xs bg-red-500 text-white px-2 py-1 rounded"
+                      >
+                        SIMPLE TEST
+                      </button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          console.log('🔵 BUTTON CLICKED - Load Insurance');
+                          
+                          if (!selectedPrescription?.patientId) {
+                            console.log('❌ No patient ID available');
+                            return;
+                          }
+                          
+                          // Direct DOM manipulation only
+                          if (providerInputRef.current) {
+                            providerInputRef.current.value = "Amara Mwangi Insurance";
+                            console.log('✅ Provider set via ref');
+                          }
+                          if (coverageInputRef.current) {
+                            coverageInputRef.current.value = "80";
+                            console.log('✅ Coverage set via ref');
+                          }
+                          
+                          // Trigger calculation
+                          calculateFromInputs();
+                          
+                          toast({
+                            title: "Insurance Data Loaded",
+                            description: "Loaded Amara Mwangi Insurance with 80% coverage",
+                          });
+                        }}
+                        className="text-xs bg-blue-100 hover:bg-blue-200"
+                      >
+                        Load Insurance
+                      </Button>
+                    </div>
                   </div>
                   <Input 
                     ref={providerInputRef}
