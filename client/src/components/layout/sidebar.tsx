@@ -72,6 +72,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   
   // Platform Administration Section (only for super admins)
   { id: "tenant-management", label: t("tenant-management"), icon: Building, path: "/tenant-management", roles: ["super_admin"] },
+  { id: "admin-dashboard", label: "Hospital Administration", icon: UserCheck, path: "/admin-dashboard", roles: ["tenant_admin", "director"] },
   { id: "user-roles", label: t("user-roles"), icon: UserCheck, path: "/user-roles", roles: ["tenant_admin", "director", "super_admin"] },
   { id: "audit-logs", label: t("audit-logs"), icon: Shield, path: "/audit-logs", roles: ["tenant_admin", "director", "super_admin"] },
 ];

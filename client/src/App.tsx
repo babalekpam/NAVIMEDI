@@ -74,6 +74,7 @@ import LabResults from "@/pages/lab-results";
 import PatientPortal from "@/pages/patient-portal";
 import PatientPortalStaff from "@/pages/patient-portal-staff";
 import ChangePasswordPage from "@/pages/change-password";
+import AdminDashboard from "@/pages/admin-dashboard";
 import PatientPortalPublic from "@/pages/patient-portal-public";
 import TelemedicineBooking from "@/pages/telemedicine-booking";
 import PatientLogin from "@/pages/patient-login";
@@ -241,6 +242,19 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <AuditLogs />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/admin-dashboard">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <AdminDashboard />
                 </main>
               </div>
             </div>
