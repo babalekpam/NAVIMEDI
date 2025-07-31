@@ -570,62 +570,37 @@ export default function PharmacyDashboardEnhanced() {
                 <div>
                   <div className="flex items-center justify-between">
                     <Label htmlFor="local-insurance-provider">Insurance Provider</Label>
-                    <div className="flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          alert('BUTTON CLICKED!');
-                          console.log('ALERT BUTTON CLICKED');
-                          if (providerInputRef.current) {
-                            providerInputRef.current.value = "Amara Mwangi Insurance";
-                          }
-                          if (coverageInputRef.current) {
-                            coverageInputRef.current.value = "80";
-                          }
-                        }}
-                        className="text-xs bg-red-500 text-white px-2 py-1 rounded"
-                      >
-                        SIMPLE TEST
-                      </button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          console.log('Blue button clicked - using direct DOM queries');
-                          
-                          // Use direct DOM queries instead of refs
-                          const providerInput = document.getElementById('local-insurance-provider') as HTMLInputElement;
-                          const coverageInput = document.getElementById('local-coverage-percentage') as HTMLInputElement;
-                          
-                          console.log('Provider input found:', !!providerInput);
-                          console.log('Coverage input found:', !!coverageInput);
-                          
-                          if (providerInput) {
-                            providerInput.value = "Amara Mwangi Insurance";
-                            providerInput.dispatchEvent(new Event('input', { bubbles: true }));
-                            providerInput.dispatchEvent(new Event('change', { bubbles: true }));
-                            console.log('Provider set to:', providerInput.value);
-                          }
-                          
-                          if (coverageInput) {
-                            coverageInput.value = "80";
-                            coverageInput.dispatchEvent(new Event('input', { bubbles: true }));
-                            coverageInput.dispatchEvent(new Event('change', { bubbles: true }));
-                            console.log('Coverage set to:', coverageInput.value);
-                          }
-                          
-                          calculateFromInputs();
-                          toast({
-                            title: "Insurance Data Loaded",
-                            description: "Loaded Amara Mwangi Insurance with 80% coverage",
-                          });
-                        }}
-                        className="text-xs bg-blue-100 hover:bg-blue-200"
-                      >
-                        Load Insurance
-                      </Button>
-                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        // Use direct DOM queries to populate insurance fields
+                        const providerInput = document.getElementById('local-insurance-provider') as HTMLInputElement;
+                        const coverageInput = document.getElementById('local-coverage-percentage') as HTMLInputElement;
+                        
+                        if (providerInput) {
+                          providerInput.value = "Amara Mwangi Insurance";
+                          providerInput.dispatchEvent(new Event('input', { bubbles: true }));
+                          providerInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                        
+                        if (coverageInput) {
+                          coverageInput.value = "80";
+                          coverageInput.dispatchEvent(new Event('input', { bubbles: true }));
+                          coverageInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                        
+                        calculateFromInputs();
+                        toast({
+                          title: "Insurance Data Loaded",
+                          description: "Loaded Amara Mwangi Insurance with 80% coverage",
+                        });
+                      }}
+                      className="text-xs bg-blue-100 hover:bg-blue-200"
+                    >
+                      Load Patient Insurance
+                    </Button>
                   </div>
                   <Input 
                     ref={providerInputRef}
