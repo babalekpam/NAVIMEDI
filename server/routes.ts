@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertInsuranceProviderSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertPatientCheckInSchema, insertRolePermissionSchema, insertPharmacyReceiptSchema } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertInsuranceProviderSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertPatientCheckInSchema, insertRolePermissionSchema, insertPharmacyReceiptSchema, insertLabBillSchema } from "@shared/schema";
 import { authenticateToken, requireRole, type AuthenticatedRequest, type JWTPayload } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -20,6 +20,10 @@ import {
 } from "./currency-utils";
 import { autoDetectCurrency, getCurrencyByCountry, getAfricanCountries } from "./geo-currency-mapping";
 import { sendWelcomeEmail, generateTemporaryPassword } from "./email-service";
+import {
+  ObjectStorageService,
+  ObjectNotFoundError,
+} from "./objectStorage";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
@@ -4702,6 +4706,154 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Error creating receipt:", error);
       res.status(500).json({ message: "Failed to create receipt" });
+    }
+  });
+
+  // Object Storage Routes for Lab Results
+  app.get("/objects/:objectPath(*)", authenticateToken, async (req, res) => {
+    const userId = req.user?.id;
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const objectFile = await objectStorageService.getObjectEntityFile(
+        req.path,
+      );
+      const canAccess = await objectStorageService.canAccessObjectEntity({
+        objectFile,
+        userId: userId,
+        requestedPermission: 'read' as any,
+      });
+      if (!canAccess) {
+        return res.sendStatus(401);
+      }
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error checking object access:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
+
+  app.post("/api/objects/upload", authenticateToken, async (req, res) => {
+    const objectStorageService = new ObjectStorageService();
+    const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+    res.json({ uploadURL });
+  });
+
+  app.put("/api/lab-result-files", authenticateToken, requireTenant, async (req, res) => {
+    if (!req.body.fileURL) {
+      return res.status(400).json({ error: "fileURL is required" });
+    }
+
+    const userId = req.user?.id;
+
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
+        req.body.fileURL,
+        {
+          owner: userId,
+          visibility: "private", // Lab result files should be private
+        },
+      );
+
+      // Update lab result with file path if labResultId is provided
+      if (req.body.labResultId) {
+        await storage.updateLabResult(req.body.labResultId, {
+          attachmentPath: objectPath
+        }, req.tenantId!);
+      }
+
+      res.status(200).json({
+        objectPath: objectPath,
+      });
+    } catch (error) {
+      console.error("Error setting lab result file:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Laboratory Billing Routes using dedicated labBills table
+  app.get("/api/laboratory/billing", authenticateToken, requireTenant, requireRole(['lab_technician', 'tenant_admin', 'director']), async (req, res) => {
+    try {
+      const tenantId = req.tenantId!;
+      
+      // Verify this is a laboratory tenant
+      const tenant = await storage.getTenantById(tenantId);
+      if (tenant?.type !== 'laboratory') {
+        return res.status(403).json({ error: "Laboratory billing access restricted to laboratory tenants" });
+      }
+
+      // Fetch laboratory bills with patient enrichment
+      const labBills = await storage.db
+        .select({
+          id: storage.labBills.id,
+          patientId: storage.labBills.patientId,
+          amount: storage.labBills.amount,
+          description: storage.labBills.description,
+          status: storage.labBills.status,
+          serviceType: storage.labBills.serviceType,
+          labOrderId: storage.labBills.labOrderId,
+          testName: storage.labBills.testName,
+          notes: storage.labBills.notes,
+          generatedBy: storage.labBills.generatedBy,
+          createdAt: storage.labBills.createdAt,
+          updatedAt: storage.labBills.updatedAt,
+          // Enrich with patient data
+          patientFirstName: storage.patients.firstName,
+          patientLastName: storage.patients.lastName,
+          patientMrn: storage.patients.mrn,
+        })
+        .from(storage.labBills)
+        .leftJoin(storage.patients, eq(storage.labBills.patientId, storage.patients.id))
+        .where(eq(storage.labBills.tenantId, tenantId))
+        .orderBy(desc(storage.labBills.createdAt));
+
+      res.json(labBills);
+    } catch (error) {
+      console.error("Error fetching laboratory bills:", error);
+      res.status(500).json({ error: "Failed to fetch laboratory bills" });
+    }
+  });
+
+  app.post("/api/laboratory/billing", authenticateToken, requireTenant, requireRole(['lab_technician', 'tenant_admin', 'director']), async (req, res) => {
+    try {
+      const tenantId = req.tenantId!;
+      const userId = req.user!.id;
+      
+      // Verify this is a laboratory tenant
+      const tenant = await storage.getTenantById(tenantId);
+      if (tenant?.type !== 'laboratory') {
+        return res.status(403).json({ error: "Laboratory billing creation restricted to laboratory tenants" });
+      }
+
+      const validatedData = insertLabBillSchema.parse({
+        ...req.body,
+        tenantId,
+        generatedBy: userId,
+      });
+
+      // Verify patient exists and is accessible to this tenant
+      const patient = await storage.getPatientById(validatedData.patientId);
+      if (!patient) {
+        return res.status(404).json({ error: "Patient not found" });
+      }
+
+      // Create laboratory bill
+      const [labBill] = await storage.db
+        .insert(storage.labBills)
+        .values(validatedData)
+        .returning();
+
+      console.log(`[LAB BILLING] Created lab bill: ${labBill.id} for patient ${validatedData.patientId} - $${validatedData.amount}`);
+      res.status(201).json(labBill);
+    } catch (error) {
+      console.error("Error creating laboratory bill:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create laboratory bill" });
     }
   });
 

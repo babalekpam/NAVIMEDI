@@ -1019,6 +1019,30 @@ export const pharmacyReceipts = pgTable("pharmacy_receipts", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Laboratory Bills for patients after lab services
+export const labBills = pgTable("lab_bills", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(), // Laboratory tenant
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  
+  // Bill Details
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  description: text("description").notNull(),
+  status: text("status").default("pending").notNull(), // pending, paid, overdue, cancelled
+  serviceType: text("service_type").default("laboratory_test").notNull(),
+  
+  // Lab Order Reference
+  labOrderId: uuid("lab_order_id").references(() => labOrders.id),
+  testName: text("test_name"),
+  
+  // Additional Information
+  notes: text("notes"),
+  generatedBy: uuid("generated_by").references(() => users.id).notNull(),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Offline Sync Data
 export const offlineSyncData = pgTable("offline_sync_data", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -2047,3 +2071,8 @@ export type InsertRolePermission = z.infer<typeof insertRolePermissionSchema>;
 export const insertPharmacyReceiptSchema = createInsertSchema(pharmacyReceipts);
 export type PharmacyReceipt = typeof pharmacyReceipts.$inferSelect;
 export type InsertPharmacyReceipt = z.infer<typeof insertPharmacyReceiptSchema>;
+
+// Laboratory Bill Types
+export const insertLabBillSchema = createInsertSchema(labBills);
+export type LabBill = typeof labBills.$inferSelect;
+export type InsertLabBill = z.infer<typeof insertLabBillSchema>;

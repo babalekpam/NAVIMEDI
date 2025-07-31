@@ -21,7 +21,8 @@ import {
   CalendarPlus,
   Stethoscope,
   Video,
-  MessageSquare
+  MessageSquare,
+  Receipt
 } from "lucide-react";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 import { Button } from "@/components/ui/button";
@@ -154,8 +155,17 @@ export const Sidebar = () => {
   if (user.role === "lab_technician" || (user.role === "tenant_admin" && isLaboratoryTenant)) {
     
     const laboratoryItems = filteredItems.filter(item => 
-      ["dashboard", "lab-records", "lab-orders", "lab-results", "post-lab-results", "reports"].includes(item.id)
+      ["dashboard", "lab-records", "lab-orders", "lab-results", "post-lab-results", "billing", "reports"].includes(item.id)
     );
+    
+    // Add laboratory billing as a special item for lab tenants
+    laboratoryItems.push({
+      id: "laboratory-billing",
+      label: "Lab Billing",
+      icon: Receipt,
+      path: "/laboratory-billing",
+      roles: ["lab_technician", "tenant_admin", "director"]
+    });
     
     return (
       <aside className="w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto">

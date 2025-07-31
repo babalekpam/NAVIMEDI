@@ -34,6 +34,7 @@ import {
   patientAssignments,
   patientAccessRequests,
   pharmacyReceipts,
+  labBills,
   type Tenant,
   type InsertTenant,
   type User, 

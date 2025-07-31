@@ -10,9 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { TestTube, Clock, CheckCircle, AlertTriangle, User, Calendar, Upload, FileText, Monitor } from "lucide-react";
+import { TestTube, Clock, CheckCircle, AlertTriangle, User, Calendar, Upload, FileText, Monitor, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import type { UploadResult } from "@uppy/core";
 
 const labResultSchema = z.object({
   testName: z.string().min(1, "Test name is required"),
@@ -29,7 +31,7 @@ type LabResultForm = z.infer<typeof labResultSchema>;
 export default function PostLabResults() {
   const [selectedOrderId, setSelectedOrderId] = useState<string>("");
   const [inputMethod, setInputMethod] = useState<"manual" | "upload">("manual");
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -80,71 +82,31 @@ export default function PostLabResults() {
     }
   }, [selectedOrder, form]);
 
-  // Handle file upload from laboratory equipment
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setUploadedFile(file);
+  // Handle file upload completion
+  const handleFileUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    if (result.successful && result.successful.length > 0) {
+      const uploadedFile = result.successful[0];
+      const fileUrl = uploadedFile.uploadURL;
+      setUploadedFileUrl(fileUrl);
       
-      // Parse common laboratory file formats
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target?.result as string;
-        
-        // Try to parse CSV or text format from lab equipment
-        try {
-          // Simple parsing for common lab equipment output formats
-          const lines = content.split('\n');
-          let parsedResult = "";
-          let parsedUnit = "";
-          let parsedNormalRange = "";
-          
-          // Look for result patterns in different formats
-          for (const line of lines) {
-            // Format: "Result: 7.2 mg/dL (Normal: 3.5-7.0)"
-            const resultMatch = line.match(/Result[:\s]+([0-9.]+)\s*([a-zA-Z/]+)?.*Normal[:\s]*([0-9.-]+)/i);
-            if (resultMatch) {
-              parsedResult = resultMatch[1];
-              parsedUnit = resultMatch[2] || "";
-              parsedNormalRange = resultMatch[3];
-              break;
-            }
-            
-            // Format: "Value,Unit,Range" CSV
-            const csvMatch = line.match(/^([0-9.]+),([a-zA-Z/]+),([0-9.-]+)$/);
-            if (csvMatch) {
-              parsedResult = csvMatch[1];
-              parsedUnit = csvMatch[2];
-              parsedNormalRange = csvMatch[3];
-              break;
-            }
-          }
-          
-          // Auto-fill form with parsed data
-          if (parsedResult) {
-            form.setValue("result", parsedResult);
-            if (parsedUnit) form.setValue("unit", parsedUnit);
-            if (parsedNormalRange) form.setValue("normalRange", parsedNormalRange);
-            
-            toast({
-              title: "File Parsed",
-              description: "Laboratory results extracted from uploaded file",
-            });
-          }
-        } catch (error) {
-          console.error('Error parsing file:', error);
-          toast({
-            title: "Parse Error",
-            description: "Could not automatically parse the file. Please enter results manually.",
-            variant: "destructive",
-          });
-        }
-      };
-      
-      reader.readAsText(file);
+      toast({
+        title: "File uploaded successfully",
+        description: "Lab result file has been uploaded and can be attached to the result.",
+      });
     }
   };
 
+  // Get upload parameters for lab result files
+  const getUploadParameters = async () => {
+    const response = await apiRequest("POST", "/api/objects/upload");
+    const data = await response.json();
+    return {
+      method: "PUT" as const,
+      url: data.uploadURL,
+    };
+  };
+
+  // Create lab result with file attachment
   const postResultMutation = useMutation({
     mutationFn: async (data: LabResultForm & { labOrderId: string; patientId: string }) => {
       const response = await apiRequest("POST", "/api/lab-results", {
@@ -153,7 +115,17 @@ export default function PostLabResults() {
         completedAt: new Date().toISOString(),
         reportedAt: new Date().toISOString(),
       });
-      return response.json();
+      const labResult = await response.json();
+      
+      // If there's an uploaded file, associate it with the lab result
+      if (uploadedFileUrl) {
+        await apiRequest("PUT", "/api/lab-result-files", {
+          fileURL: uploadedFileUrl,
+          labResultId: labResult.id,
+        });
+      }
+      
+      return labResult;
     },
     onSuccess: (response) => {
       toast({
@@ -162,6 +134,7 @@ export default function PostLabResults() {
       });
       form.reset();
       setSelectedOrderId("");
+      setUploadedFileUrl("");
       queryClient.invalidateQueries({ queryKey: ["/api/lab-orders/laboratory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/lab-results"] });
       queryClient.invalidateQueries({ queryKey: ["/api/lab-orders"] });
@@ -344,35 +317,25 @@ export default function PostLabResults() {
               </div>
               
               {inputMethod === "upload" && (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-900">
-                      Upload results from laboratory equipment
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <ObjectUploader
+                    maxNumberOfFiles={1}
+                    maxFileSize={10485760} // 10MB
+                    onGetUploadParameters={getUploadParameters}
+                    onComplete={handleFileUploadComplete}
+                    buttonClassName="w-full"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <Upload className="w-8 h-8 text-gray-400" />
+                      <span>Upload Lab Equipment File</span>
+                      <span className="text-xs text-gray-500">Supports PDF, CSV, TXT, and common lab formats</span>
+                    </div>
+                  </ObjectUploader>
+                  {uploadedFileUrl && (
+                    <p className="text-sm text-green-600 mt-2 text-center">
+                      Lab file uploaded successfully and will be attached to the result
                     </p>
-                    <p className="text-xs text-gray-500">
-                      Supports CSV, TXT, or other text-based result files from analyzers
-                    </p>
-                    <input
-                      type="file"
-                      accept=".csv,.txt,.tsv,.dat"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      id="file-upload"
-                    />
-                    <label
-                      htmlFor="file-upload"
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                    >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Choose File
-                    </label>
-                    {uploadedFile && (
-                      <p className="text-xs text-green-600 mt-2">
-                        ✓ Uploaded: {uploadedFile.name}
-                      </p>
-                    )}
-                  </div>
+                  )}
                 </div>
               )}
             </div>

@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   TestTube, 
   Search, 
@@ -19,10 +20,12 @@ import {
   Activity,
   Clock,
   FileText,
-  Download
+  Download,
+  Eye
 } from "lucide-react";
 import { useTenant } from "@/hooks/use-tenant";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 
 interface LabResult {
   id: string;
@@ -40,6 +43,7 @@ interface LabResult {
   patientId: string;
   tenantId: string;
   labTenantId: string;
+  attachmentPath?: string;
   createdAt: string;
   updatedAt: string;
   // Enriched fields
@@ -59,6 +63,37 @@ export default function LabResults() {
   
   const { user } = useAuth();
   const { tenant } = useTenant();
+  const { toast } = useToast();
+
+  // Handle file download
+  const handleFileDownload = async (attachmentPath: string, testName: string) => {
+    try {
+      const response = await fetch(attachmentPath);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `${testName}_results.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Download started",
+        description: "Lab result file is being downloaded.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: "Could not download the lab result file.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Fetch lab results based on user type
   const { data: labResults = [], isLoading } = useQuery<LabResult[]>({
