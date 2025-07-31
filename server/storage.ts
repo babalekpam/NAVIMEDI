@@ -144,6 +144,7 @@ export interface IStorage {
 
   // Prescription management
   getPrescription(id: string, tenantId: string): Promise<Prescription | undefined>;
+  getPrescriptionForPharmacy(id: string, pharmacyTenantId: string): Promise<Prescription | undefined>;
   createPrescription(prescription: InsertPrescription): Promise<Prescription>;
   updatePrescription(id: string, updates: Partial<Prescription>, tenantId: string): Promise<Prescription | undefined>;
   getPrescriptionsByPatient(patientId: string, tenantId: string): Promise<Prescription[]>;
@@ -880,6 +881,14 @@ export class DatabaseStorage implements IStorage {
   async getPrescription(id: string, tenantId: string): Promise<Prescription | undefined> {
     const [prescription] = await db.select().from(prescriptions).where(
       and(eq(prescriptions.id, id), eq(prescriptions.tenantId, tenantId))
+    );
+    return prescription || undefined;
+  }
+
+  // Get prescription by ID for pharmacy (regardless of which hospital created it)
+  async getPrescriptionForPharmacy(id: string, pharmacyTenantId: string): Promise<Prescription | undefined> {
+    const [prescription] = await db.select().from(prescriptions).where(
+      and(eq(prescriptions.id, id), eq(prescriptions.pharmacyTenantId, pharmacyTenantId))
     );
     return prescription || undefined;
   }

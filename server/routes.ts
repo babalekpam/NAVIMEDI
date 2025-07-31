@@ -1133,7 +1133,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get existing prescription to check permissions
-      const existingPrescription = await storage.getPrescription(id, req.tenant!.id);
+      // For pharmacies, look up by pharmacy tenant ID; for hospitals, by hospital tenant ID
+      const isPharmacyTenant = req.tenant!.type === 'pharmacy';
+      const existingPrescription = isPharmacyTenant 
+        ? await storage.getPrescriptionForPharmacy(id, req.tenant!.id)
+        : await storage.getPrescription(id, req.tenant!.id);
+        
       if (!existingPrescription) {
         return res.status(404).json({ message: "Prescription not found" });
       }
@@ -1146,7 +1151,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Cannot edit prescription that has already been filled or picked up" });
       }
       
-      const updatedPrescription = await storage.updatePrescription(id, requestData, req.tenant!.id);
+      // Use the original tenant ID (hospital) for the update, not the pharmacy tenant ID
+      const updateTenantId = isPharmacyTenant ? existingPrescription.tenantId : req.tenant!.id;
+      const updatedPrescription = await storage.updatePrescription(id, requestData, updateTenantId);
       
       if (!updatedPrescription) {
         return res.status(404).json({ message: "Prescription not found" });
