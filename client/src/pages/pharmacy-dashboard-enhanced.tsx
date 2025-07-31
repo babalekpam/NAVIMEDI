@@ -526,12 +526,7 @@ export default function PharmacyDashboardEnhanced() {
         if (!localTotalCost) {
           setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
         }
-        if (!localCoveragePercentage) {
-          setLocalCoveragePercentage("80");
-        }
-        if (!localInsuranceProvider) {
-          setLocalInsuranceProvider("");
-        }
+        // DO NOT reset insurance provider - let button set it
         setLocalNotes("");
         setLocalCalculation(null);
       }
@@ -574,30 +569,46 @@ export default function PharmacyDashboardEnhanced() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        console.log('Load Insurance button clicked');
+                        console.log('🔵 Load Insurance button clicked');
+                        console.log('🔵 Current provider state:', localInsuranceProvider);
+                        console.log('🔵 Current coverage state:', localCoveragePercentage);
+                        
                         if (!selectedPrescription?.patientId) {
-                          console.log('No patient ID available');
+                          console.log('❌ No patient ID available');
                           return;
                         }
                         
+                        console.log('🔵 Setting state values...');
                         // Try both React state and direct DOM manipulation
                         setLocalInsuranceProvider("Amara Mwangi Insurance");
                         setLocalCoveragePercentage("80");
                         
+                        console.log('🔵 State set, now trying DOM manipulation...');
                         // Direct DOM backup method
                         if (providerInputRef.current) {
                           providerInputRef.current.value = "Amara Mwangi Insurance";
-                          console.log('Set provider input directly via ref');
+                          console.log('✅ Set provider input directly via ref');
+                        } else {
+                          console.log('❌ Provider ref not found');
                         }
                         if (coverageInputRef.current) {
                           coverageInputRef.current.value = "80";
-                          console.log('Set coverage input directly via ref');
+                          console.log('✅ Set coverage input directly via ref');
+                        } else {
+                          console.log('❌ Coverage ref not found');
                         }
                         
+                        console.log('🔵 Showing toast...');
                         toast({
                           title: "Insurance Data Loaded",
                           description: "Loaded Amara Mwangi Insurance with 80% coverage",
                         });
+                        
+                        // Check final state after a brief delay
+                        setTimeout(() => {
+                          console.log('🔵 Final check - provider state:', localInsuranceProvider);
+                          console.log('🔵 Final check - coverage state:', localCoveragePercentage);
+                        }, 100);
                       }}
                       className="text-xs bg-blue-100 hover:bg-blue-200"
                     >
