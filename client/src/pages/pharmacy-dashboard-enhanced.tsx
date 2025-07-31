@@ -505,22 +505,19 @@ export default function PharmacyDashboardEnhanced() {
       }
     }, [localTotalCost, localCoveragePercentage]);
 
-    // Reset form when dialog opens/closes
+    // Reset form when dialog opens/closes - but only when dialog state changes
     useEffect(() => {
-      if (insuranceDialogOpen) {
-        // Only reset if dialog is opening (not if it's already open)
-        if (!hasAutoPopulated) {
-          setLocalInsuranceProvider("");
-          setLocalTotalCost(selectedPrescription?.totalCost?.toString() || "");
-          setLocalCoveragePercentage("");
-          setLocalNotes("");
-          setLocalCalculation(null);
-        }
-      } else {
+      if (!insuranceDialogOpen) {
         // Reset tracking when dialog closes
         setHasAutoPopulated(false);
+        // Clear form when dialog closes
+        setLocalInsuranceProvider("");
+        setLocalTotalCost("");
+        setLocalCoveragePercentage("");
+        setLocalNotes("");
+        setLocalCalculation(null);
       }
-    }, [insuranceDialogOpen, hasAutoPopulated, selectedPrescription?.totalCost]);
+    }, [insuranceDialogOpen]);
 
     // Auto-populate insurance data ONLY ONCE when insurance data first loads
     useEffect(() => {
@@ -530,29 +527,39 @@ export default function PharmacyDashboardEnhanced() {
         
         console.log(`[PHARMACY-INSURANCE] Auto-loading insurance for patient ${selectedPrescription?.patientId}:`, primaryInsurance);
         
-        setLocalInsuranceProvider(primaryInsurance.insuranceProvider?.name || primaryInsurance.provider || 'Unknown Provider');
-        setLocalCoveragePercentage((primaryInsurance.coveragePercentage || 80).toString());
+        // Use setTimeout to avoid interfering with form field focus
+        setTimeout(() => {
+          setLocalInsuranceProvider(primaryInsurance.insuranceProvider?.name || primaryInsurance.provider || 'Unknown Provider');
+          setLocalCoveragePercentage((primaryInsurance.coveragePercentage || 80).toString());
+          
+          // Auto-populate total cost if available from prescription
+          if (selectedPrescription?.totalCost) {
+            setLocalTotalCost(selectedPrescription.totalCost.toString());
+          } else {
+            // Set a reasonable default if no cost available
+            setLocalTotalCost("50.00");
+          }
+          
+          setHasAutoPopulated(true); // Mark as populated to prevent re-runs
+          
+          toast({
+            title: "Insurance Data Loaded",
+            description: `Auto-populated ${primaryInsurance.insuranceProvider?.name || 'insurance'} policy ${primaryInsurance.policyNumber}`,
+          });
+        }, 100); // Small delay to prevent focus interference
         
-        // Auto-populate total cost if available from prescription
-        if (selectedPrescription?.totalCost) {
-          setLocalTotalCost(selectedPrescription.totalCost.toString());
-        }
-        
-        setHasAutoPopulated(true); // Mark as populated to prevent re-runs
-        
-        toast({
-          title: "Insurance Data Loaded",
-          description: `Auto-populated ${primaryInsurance.insuranceProvider?.name || 'insurance'} policy ${primaryInsurance.policyNumber}`,
-        });
       } else if (insuranceDialogOpen && patientInsurance.length === 0 && selectedPrescription?.patientId && !hasAutoPopulated) {
-        // Show message only once when no insurance found
-        setHasAutoPopulated(true);
-        
-        toast({
-          title: "No Insurance Found",
-          description: "Patient has no insurance on file. Please enter insurance details manually.",
-          variant: "destructive",
-        });
+        // Initialize form with defaults when no insurance found
+        setTimeout(() => {
+          setLocalTotalCost(selectedPrescription?.totalCost?.toString() || "50.00");
+          setHasAutoPopulated(true);
+          
+          toast({
+            title: "No Insurance Found",
+            description: "Patient has no insurance on file. Please enter insurance details manually.",
+            variant: "destructive",
+          });
+        }, 100);
       }
     }, [insuranceDialogOpen, patientInsurance, selectedPrescription, hasAutoPopulated, toast]);
 
@@ -632,6 +639,7 @@ export default function PharmacyDashboardEnhanced() {
                         required 
                         className="flex-1"
                         autoComplete="off"
+                        onFocus={(e) => e.target.select()} // Select all text on focus
                       />
                     </div>
                     <div className="flex gap-1 mt-2">
