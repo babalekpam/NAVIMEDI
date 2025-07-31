@@ -72,6 +72,8 @@ export default function PatientPortal() {
     weight: 165
   });
   const [expandedVisitSummary, setExpandedVisitSummary] = useState<string | null>(null);
+  const [directoryTab, setDirectoryTab] = useState("doctors");
+  const [searchTerm, setSearchTerm] = useState("");
   const queryClient = useQueryClient();
 
   // Function to download lab results as PDF
@@ -1877,8 +1879,6 @@ Report ID: ${labOrder.id}
   };
 
   const renderDirectory = () => {
-    const [directoryTab, setDirectoryTab] = useState("doctors");
-    const [searchTerm, setSearchTerm] = useState("");
     
     const filteredDoctors = (hospitalDoctors as any[]).filter((doctor: any) => 
       doctor.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
