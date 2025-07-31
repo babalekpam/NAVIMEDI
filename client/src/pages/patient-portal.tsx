@@ -71,6 +71,7 @@ export default function PatientPortal() {
     exercise: 30,
     weight: 165
   });
+  const [expandedVisitSummary, setExpandedVisitSummary] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   // Function to download lab results as PDF
@@ -314,19 +315,81 @@ Report ID: ${labOrder.id}
                       <div className="flex items-start gap-2">
                         <FileText className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                         <div className="space-y-1 min-w-0 flex-1">
-                          <p className="text-sm font-medium text-green-800">Visit Summary Available</p>
-                          {appointment.visitSummaryAssessment && (
-                            <div>
-                              <p className="text-xs font-medium text-gray-700">Assessment:</p>
-                              <p className="text-xs text-gray-600 line-clamp-2">{appointment.visitSummaryAssessment}</p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium text-green-800">Visit Summary Available</p>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setExpandedVisitSummary(
+                                expandedVisitSummary === appointment.visitSummaryId ? null : appointment.visitSummaryId
+                              )}
+                              className="h-6 px-2 text-green-700 hover:bg-green-100"
+                            >
+                              {expandedVisitSummary === appointment.visitSummaryId ? 'Hide' : 'View Details'}
+                              <ChevronRight className={`h-3 w-3 ml-1 transition-transform ${
+                                expandedVisitSummary === appointment.visitSummaryId ? 'rotate-90' : ''
+                              }`} />
+                            </Button>
+                          </div>
+                          
+                          {expandedVisitSummary === appointment.visitSummaryId ? (
+                            <div className="space-y-3 pt-2 border-t border-green-200">
+                              {appointment.visitSummaryChiefComplaint && (
+                                <div>
+                                  <p className="text-sm font-medium text-gray-800">Chief Complaint:</p>
+                                  <p className="text-sm text-gray-700 bg-white p-2 rounded border">{appointment.visitSummaryChiefComplaint}</p>
+                                </div>
+                              )}
+                              {appointment.visitSummaryAssessment && (
+                                <div>
+                                  <p className="text-sm font-medium text-gray-800">Clinical Assessment:</p>
+                                  <p className="text-sm text-gray-700 bg-white p-2 rounded border">{appointment.visitSummaryAssessment}</p>
+                                </div>
+                              )}
+                              {appointment.visitSummaryClinicalImpression && (
+                                <div>
+                                  <p className="text-sm font-medium text-gray-800">Clinical Impression:</p>
+                                  <p className="text-sm text-gray-700 bg-white p-2 rounded border">{appointment.visitSummaryClinicalImpression}</p>
+                                </div>
+                              )}
+                              {appointment.visitSummaryTreatmentPlan && (
+                                <div>
+                                  <p className="text-sm font-medium text-gray-800">Treatment Plan:</p>
+                                  <p className="text-sm text-gray-700 bg-white p-2 rounded border">{appointment.visitSummaryTreatmentPlan}</p>
+                                </div>
+                              )}
+                              {appointment.visitSummaryProviderNotes && (
+                                <div>
+                                  <p className="text-sm font-medium text-gray-800">Provider Notes:</p>
+                                  <p className="text-sm text-gray-700 bg-white p-2 rounded border">{appointment.visitSummaryProviderNotes}</p>
+                                </div>
+                              )}
+                              {appointment.visitSummaryReturnVisitRecommended && (
+                                <div>
+                                  <p className="text-sm font-medium text-gray-800">Follow-up Recommendation:</p>
+                                  <p className="text-sm text-gray-700 bg-white p-2 rounded border">
+                                    Return visit recommended{appointment.visitSummaryReturnVisitTimeframe ? ` in ${appointment.visitSummaryReturnVisitTimeframe}` : ''}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="space-y-1">
+                              {appointment.visitSummaryAssessment && (
+                                <div>
+                                  <p className="text-xs font-medium text-gray-700">Assessment:</p>
+                                  <p className="text-xs text-gray-600 line-clamp-2">{appointment.visitSummaryAssessment}</p>
+                                </div>
+                              )}
+                              {appointment.visitSummaryTreatmentPlan && (
+                                <div>
+                                  <p className="text-xs font-medium text-gray-700">Treatment Plan:</p>
+                                  <p className="text-xs text-gray-600 line-clamp-2">{appointment.visitSummaryTreatmentPlan}</p>
+                                </div>
+                              )}
                             </div>
                           )}
-                          {appointment.visitSummaryTreatmentPlan && (
-                            <div>
-                              <p className="text-xs font-medium text-gray-700">Treatment Plan:</p>
-                              <p className="text-xs text-gray-600 line-clamp-2">{appointment.visitSummaryTreatmentPlan}</p>
-                            </div>
-                          )}
+                          
                           <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-300">
                             {appointment.visitSummaryStatus === 'finalized' ? 'Finalized' : appointment.visitSummaryStatus}
                           </Badge>
