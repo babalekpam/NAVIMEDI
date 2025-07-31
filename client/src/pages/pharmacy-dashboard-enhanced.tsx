@@ -486,15 +486,17 @@ export default function PharmacyDashboardEnhanced() {
   );
 
   const InsuranceVerificationDialog = () => {
-    const [localInsuranceProvider, setLocalInsuranceProvider] = useState("");
     const [localTotalCost, setLocalTotalCost] = useState("");
-    const [localCoveragePercentage, setLocalCoveragePercentage] = useState("");
     const [localNotes, setLocalNotes] = useState("");
     const [localCalculation, setLocalCalculation] = useState<InsuranceCalculation | null>(null);
     
-    // Create refs for direct DOM manipulation as backup
+    // Make insurance provider and coverage completely uncontrolled
     const providerInputRef = useRef<HTMLInputElement>(null);
     const coverageInputRef = useRef<HTMLInputElement>(null);
+    
+    // Get values from refs for calculations
+    const getProviderValue = () => providerInputRef.current?.value || "";
+    const getCoverageValue = () => coverageInputRef.current?.value || "";
 
     console.log(`[DIALOG-DEBUG] Dialog open state: ${insuranceDialogOpen}, Selected prescription: ${selectedPrescription?.id}`);
 
@@ -504,17 +506,21 @@ export default function PharmacyDashboardEnhanced() {
       enabled: false, // Manually enable this query
     });
 
-    // Simple calculation effect
-    useEffect(() => {
+    // Simple calculation effect - now using refs
+    const calculateFromInputs = () => {
       const cost = parseFloat(localTotalCost);
-      const percentage = parseFloat(localCoveragePercentage);
+      const percentage = parseFloat(getCoverageValue());
       
       if (cost > 0 && percentage > 0) {
         setLocalCalculation(calculateInsuranceCoverage(cost, percentage));
       } else {
         setLocalCalculation(null);
       }
-    }, [localTotalCost, localCoveragePercentage]);
+    };
+    
+    useEffect(() => {
+      calculateFromInputs();
+    }, [localTotalCost]);
 
 
 
@@ -537,9 +543,9 @@ export default function PharmacyDashboardEnhanced() {
       if (!selectedPrescription || !localCalculation) return;
       
       await handleInsuranceVerification({
-        insuranceProvider: localInsuranceProvider,
+        insuranceProvider: getProviderValue(),
         totalCost: parseFloat(localTotalCost),
-        coveragePercentage: parseFloat(localCoveragePercentage),
+        coveragePercentage: parseFloat(getCoverageValue()),
         pharmacyNotes: localNotes
       });
     };
@@ -569,46 +575,30 @@ export default function PharmacyDashboardEnhanced() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        console.log('🔵 Load Insurance button clicked');
-                        console.log('🔵 Current provider state:', localInsuranceProvider);
-                        console.log('🔵 Current coverage state:', localCoveragePercentage);
+                        console.log('🔵 BUTTON CLICKED - Load Insurance');
                         
                         if (!selectedPrescription?.patientId) {
                           console.log('❌ No patient ID available');
                           return;
                         }
                         
-                        console.log('🔵 Setting state values...');
-                        // Try both React state and direct DOM manipulation
-                        setLocalInsuranceProvider("Amara Mwangi Insurance");
-                        setLocalCoveragePercentage("80");
-                        
-                        console.log('🔵 State set, now trying DOM manipulation...');
-                        // Direct DOM backup method
+                        // Direct DOM manipulation only
                         if (providerInputRef.current) {
                           providerInputRef.current.value = "Amara Mwangi Insurance";
-                          console.log('✅ Set provider input directly via ref');
-                        } else {
-                          console.log('❌ Provider ref not found');
+                          console.log('✅ Provider set via ref');
                         }
                         if (coverageInputRef.current) {
                           coverageInputRef.current.value = "80";
-                          console.log('✅ Set coverage input directly via ref');
-                        } else {
-                          console.log('❌ Coverage ref not found');
+                          console.log('✅ Coverage set via ref');
                         }
                         
-                        console.log('🔵 Showing toast...');
+                        // Trigger calculation
+                        calculateFromInputs();
+                        
                         toast({
                           title: "Insurance Data Loaded",
                           description: "Loaded Amara Mwangi Insurance with 80% coverage",
                         });
-                        
-                        // Check final state after a brief delay
-                        setTimeout(() => {
-                          console.log('🔵 Final check - provider state:', localInsuranceProvider);
-                          console.log('🔵 Final check - coverage state:', localCoveragePercentage);
-                        }, 100);
                       }}
                       className="text-xs bg-blue-100 hover:bg-blue-200"
                     >
@@ -619,17 +609,10 @@ export default function PharmacyDashboardEnhanced() {
                     ref={providerInputRef}
                     id="local-insurance-provider"
                     placeholder="e.g., Medicare, Blue Cross Blue Shield"
-                    value={localInsuranceProvider}
-                    onChange={(e) => setLocalInsuranceProvider(e.target.value)}
                     required 
                     autoComplete="off"
-                    className={localInsuranceProvider ? "bg-green-50 border-green-200" : ""}
+                    onChange={() => calculateFromInputs()}
                   />
-                  {localInsuranceProvider && (
-                    <p className="text-xs text-green-700 mt-1">
-                      ✅ Insurance provider loaded
-                    </p>
-                  )}
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
@@ -657,12 +640,11 @@ export default function PharmacyDashboardEnhanced() {
                         max="100" 
                         step="1" 
                         placeholder="80"
-                        value={localCoveragePercentage}
-                        onChange={(e) => setLocalCoveragePercentage(e.target.value)}
                         required 
                         className="flex-1"
                         autoComplete="off"
-                        onFocus={(e) => e.target.select()} // Select all text on focus
+                        onChange={() => calculateFromInputs()}
+                        onFocus={(e) => e.target.select()}
                       />
                     </div>
                     <div className="flex gap-1 mt-2">
@@ -673,7 +655,12 @@ export default function PharmacyDashboardEnhanced() {
                           variant="outline"
                           size="sm"
                           className="text-xs px-2 py-1 h-6"
-                          onClick={() => setLocalCoveragePercentage(percentage.toString())}
+                          onClick={() => {
+                            if (coverageInputRef.current) {
+                              coverageInputRef.current.value = percentage.toString();
+                              calculateFromInputs();
+                            }
+                          }}
                         >
                           {percentage}%
                         </Button>
