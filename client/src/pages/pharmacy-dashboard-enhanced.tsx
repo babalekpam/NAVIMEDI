@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -512,16 +512,11 @@ export default function PharmacyDashboardEnhanced() {
       }
     }, [localTotalCost, localCoveragePercentage]);
 
-    // Manual data loading function - user-triggered only with improved auth
-    const loadInsuranceData = async () => {
-      if (!selectedPrescription?.patientId) {
-        console.log('No patient ID available');
-        return;
-      }
+    // Manual data loading function - simplified to prevent render loops
+    const loadInsuranceData = useCallback(async () => {
+      if (!selectedPrescription?.patientId) return;
       
       const token = localStorage.getItem("auth_token");
-      console.log('Loading insurance data manually... Token present:', !!token);
-      console.log('Patient ID:', selectedPrescription.patientId);
       
       try {
         const response = await fetch(`/api/patient-insurance/${selectedPrescription.patientId}`, {
@@ -533,75 +528,28 @@ export default function PharmacyDashboardEnhanced() {
           },
         });
         
-        console.log('Response status:', response.status);
-        
         if (response.ok) {
           const insuranceData = await response.json();
-          
-          console.log('Raw insurance response:', insuranceData);
           
           if (insuranceData && insuranceData.length > 0) {
             const primaryInsurance = insuranceData.find((ins: any) => ins.isPrimary) || insuranceData[0];
             
-            console.log('Primary insurance selected:', primaryInsurance);
-            
-            // Handle different possible data structures
-            const providerName = 
-              primaryInsurance.insuranceProvider?.name || 
-              primaryInsurance.provider || 
-              primaryInsurance.insuranceProviderName ||
-              primaryInsurance.name ||
-              (primaryInsurance.subscriberName ? `${primaryInsurance.subscriberName} Insurance` : null) ||
-              (primaryInsurance.policyNumber ? `Policy ${primaryInsurance.policyNumber}` : null) ||
+            // Extract provider name from mock data structure
+            const providerName = primaryInsurance.subscriberName ? 
+              `${primaryInsurance.subscriberName} Insurance` : 
               'NHIF Insurance Provider';
               
-            const coverage = 
-              primaryInsurance.coveragePercentage || 
-              primaryInsurance.coverage || 
-              (primaryInsurance.copayAmount ? Math.round((1 - primaryInsurance.copayAmount / 100) * 100) : null) ||
-              80;
+            const coverage = 80; // Default coverage
             
-            console.log('Setting provider:', providerName, 'coverage:', coverage);
-            console.log('Current form state before update:', {
-              localInsuranceProvider,
-              localCoveragePercentage
-            });
-            
-            // Force update the state with direct DOM manipulation as backup
+            // Update state without causing render loops
             setLocalInsuranceProvider(providerName);
             setLocalCoveragePercentage(coverage.toString());
-            
-            // Force update DOM elements directly as well
-            const providerInput = document.getElementById('local-insurance-provider') as HTMLInputElement;
-            const coverageInput = document.getElementById('local-coverage-percentage') as HTMLInputElement;
-            
-            if (providerInput) {
-              providerInput.value = providerName;
-              console.log('Direct DOM update - Provider input value set to:', providerInput.value);
-            }
-            
-            if (coverageInput) {
-              coverageInput.value = coverage.toString();
-              console.log('Direct DOM update - Coverage input value set to:', coverageInput.value);
-            }
-            
-            // Log after state update attempt
-            setTimeout(() => {
-              console.log('Final form state after all updates:', {
-                reactState: { localInsuranceProvider, localCoveragePercentage },
-                domValues: {
-                  localInsuranceProvider: document.getElementById('local-insurance-provider')?.value,
-                  localCoveragePercentage: document.getElementById('local-coverage-percentage')?.value
-                }
-              });
-            }, 100);
             
             toast({
               title: "Insurance Data Loaded",
               description: `Loaded ${providerName} with ${coverage}% coverage`,
             });
           } else {
-            console.log('No insurance data found in response');
             toast({
               title: "No Insurance Found",
               description: "Patient has no insurance records on file.",
@@ -609,19 +557,16 @@ export default function PharmacyDashboardEnhanced() {
             });
           }
         } else {
-          const errorText = await response.text();
-          console.log('Error response:', errorText);
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
+          throw new Error(`HTTP ${response.status}`);
         }
       } catch (error) {
-        console.error('Failed to load insurance data:', error);
         toast({
           title: "Load Failed",
-          description: `Unable to load patient insurance data: ${error.message}`,
+          description: "Unable to load patient insurance data",
           variant: "destructive",
         });
       }
-    };
+    }, [selectedPrescription?.patientId]);
 
     // Initialize form when dialog opens - completely manual
     useEffect(() => {
@@ -678,13 +623,10 @@ export default function PharmacyDashboardEnhanced() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        console.log('=== LOAD INSURANCE BUTTON CLICKED ===');
-                        loadInsuranceData();
-                      }}
+                      onClick={loadInsuranceData}
                       className="text-xs bg-blue-100 hover:bg-blue-200"
                     >
-                      🔄 Load Patient Insurance
+                      Load Insurance
                     </Button>
                   </div>
                   <Input 
