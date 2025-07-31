@@ -27,7 +27,7 @@ import Reports from "@/pages/reports";
 import MedicalCommunications from "@/pages/medical-communications";
 import LaboratoryRegistration from "@/pages/laboratory-registration";
 import HealthRecommendations from "@/pages/health-recommendations";
-import PharmacyDashboard from "@/pages/pharmacy-dashboard";
+import PharmacyDashboardEnhanced from "@/pages/pharmacy-dashboard-enhanced";
 import PharmacyRegistration from "@/pages/pharmacy-registration";
 import PricingPage from "@/pages/pricing";
 import ServicePricingManagement from "@/pages/service-pricing-management";
@@ -303,7 +303,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <PharmacyDashboard />
+                  <PharmacyDashboardEnhanced />
                 </main>
               </div>
             </div>

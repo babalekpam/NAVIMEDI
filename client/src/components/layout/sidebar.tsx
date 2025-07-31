@@ -204,7 +204,7 @@ export const Sidebar = () => {
   if (user.role === "pharmacist" || (user.role === "tenant_admin" && isPharmacyTenant)) {
     
     const pharmacyItems = filteredItems.filter(item => 
-      ["dashboard", "pharmacy-dashboard", "prescriptions", "billing"].includes(item.id)
+      ["dashboard", "pharmacy-dashboard", "billing"].includes(item.id)
     );
     
     return (

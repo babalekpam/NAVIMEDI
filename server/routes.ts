@@ -1121,8 +1121,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update prescription route
-  app.patch("/api/prescriptions/:id", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+  // Update prescription route - expanded to support pharmacy workflow
+  app.patch("/api/prescriptions/:id", requireRole(["physician", "nurse", "pharmacist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
       const { id } = req.params;
       const requestData = { ...req.body };
@@ -1138,8 +1138,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Prescription not found" });
       }
       
-      // Only allow updates if prescription is not yet filled/picked up
-      if (existingPrescription.status === 'filled' || existingPrescription.status === 'picked_up') {
+      // Only allow updates if prescription is not yet filled/picked up (but allow pharmacy workflow updates)
+      const isPharmacyWorkflowUpdate = ['received', 'insurance_verified', 'processing', 'ready', 'dispensed'].includes(requestData.status);
+      const isPharmacyUser = req.user!.role === 'pharmacist' || (req.user!.role === 'tenant_admin' && req.tenant!.type === 'pharmacy');
+      
+      if (!isPharmacyWorkflowUpdate && (existingPrescription.status === 'filled' || existingPrescription.status === 'picked_up')) {
         return res.status(400).json({ message: "Cannot edit prescription that has already been filled or picked up" });
       }
       

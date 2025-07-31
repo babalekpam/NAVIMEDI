@@ -965,9 +965,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updatePrescription(id: string, updates: Partial<Prescription>, tenantId: string): Promise<Prescription | undefined> {
+    // For pharmacy updates, we need to check both tenantId (hospital) and pharmacyTenantId (pharmacy)
     const [prescription] = await db.update(prescriptions)
       .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
-      .where(and(eq(prescriptions.id, id), eq(prescriptions.tenantId, tenantId)))
+      .where(
+        and(
+          eq(prescriptions.id, id),
+          or(
+            eq(prescriptions.tenantId, tenantId), // Hospital/clinic that created it
+            eq(prescriptions.pharmacyTenantId, tenantId) // Pharmacy that received it
+          )
+        )
+      )
       .returning();
     return prescription || undefined;
   }

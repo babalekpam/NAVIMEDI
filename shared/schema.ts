@@ -39,11 +39,16 @@ export const appointmentStatusEnum = pgEnum("appointment_status", [
 ]);
 
 export const prescriptionStatusEnum = pgEnum("prescription_status", [
-  "prescribed",
-  "sent_to_pharmacy",
-  "filled",
-  "picked_up",
-  "cancelled"
+  "prescribed", // Prescribed by doctor
+  "sent_to_pharmacy", // Sent to pharmacy
+  "received", // Received by pharmacy - new workflow starts
+  "insurance_verified", // Insurance coverage verified and copay calculated
+  "processing", // Being processed by pharmacy
+  "ready", // Ready for pickup
+  "dispensed", // Dispensed to patient
+  "filled", // Legacy status - same as dispensed
+  "picked_up", // Picked up by patient
+  "cancelled" // Cancelled
 ]);
 
 export const labOrderStatusEnum = pgEnum("lab_order_status", [
@@ -325,6 +330,15 @@ export const prescriptions = pgTable("prescriptions", {
   sentToPharmacyDate: timestamp("sent_to_pharmacy_date"),
   filledDate: timestamp("filled_date"),
   expiryDate: timestamp("expiry_date"),
+  // Pharmacy workflow fields
+  insuranceVerifiedDate: timestamp("insurance_verified_date"),
+  insuranceProvider: text("insurance_provider"),
+  insuranceCopay: decimal("insurance_copay", { precision: 10, scale: 2 }),
+  totalCost: decimal("total_cost", { precision: 10, scale: 2 }),
+  processingStartedDate: timestamp("processing_started_date"),
+  readyDate: timestamp("ready_date"),
+  dispensedDate: timestamp("dispensed_date"),
+  pharmacyNotes: text("pharmacy_notes"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
