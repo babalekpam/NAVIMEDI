@@ -512,11 +512,16 @@ export default function PharmacyDashboardEnhanced() {
       }
     }, [localTotalCost, localCoveragePercentage]);
 
-    // Manual data loading function - user-triggered only
+    // Manual data loading function - user-triggered only with improved auth
     const loadInsuranceData = async () => {
-      if (!selectedPrescription?.patientId) return;
+      if (!selectedPrescription?.patientId) {
+        console.log('No patient ID available');
+        return;
+      }
       
-      console.log('Loading insurance data manually...');
+      const token = localStorage.getItem("auth_token");
+      console.log('Loading insurance data manually... Token present:', !!token);
+      console.log('Patient ID:', selectedPrescription.patientId);
       
       try {
         const response = await fetch(`/api/patient-insurance/${selectedPrescription.patientId}`, {
@@ -524,26 +529,46 @@ export default function PharmacyDashboardEnhanced() {
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem("auth_token")}`,
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
           },
         });
+        
+        console.log('Response status:', response.status);
         
         if (response.ok) {
           const insuranceData = await response.json();
           
+          console.log('Raw insurance response:', insuranceData);
+          
           if (insuranceData && insuranceData.length > 0) {
             const primaryInsurance = insuranceData.find((ins: any) => ins.isPrimary) || insuranceData[0];
             
-            console.log('Successfully loaded insurance:', primaryInsurance);
+            console.log('Primary insurance selected:', primaryInsurance);
             
-            setLocalInsuranceProvider(primaryInsurance.insuranceProvider?.name || primaryInsurance.provider || 'Unknown Provider');
-            setLocalCoveragePercentage((primaryInsurance.coveragePercentage || 80).toString());
+            // Handle different possible data structures
+            const providerName = 
+              primaryInsurance.insuranceProvider?.name || 
+              primaryInsurance.provider || 
+              primaryInsurance.insuranceProviderName ||
+              primaryInsurance.name || 
+              'Mock Insurance Provider';
+              
+            const coverage = 
+              primaryInsurance.coveragePercentage || 
+              primaryInsurance.coverage || 
+              80;
+            
+            console.log('Setting provider:', providerName, 'coverage:', coverage);
+            
+            setLocalInsuranceProvider(providerName);
+            setLocalCoveragePercentage(coverage.toString());
             
             toast({
               title: "Insurance Data Loaded",
-              description: `Auto-populated ${primaryInsurance.insuranceProvider?.name || 'insurance'} policy`,
+              description: `Loaded ${providerName} with ${coverage}% coverage`,
             });
           } else {
+            console.log('No insurance data found in response');
             toast({
               title: "No Insurance Found",
               description: "Patient has no insurance records on file.",
@@ -551,13 +576,15 @@ export default function PharmacyDashboardEnhanced() {
             });
           }
         } else {
-          throw new Error(`HTTP ${response.status}`);
+          const errorText = await response.text();
+          console.log('Error response:', errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
       } catch (error) {
         console.error('Failed to load insurance data:', error);
         toast({
           title: "Load Failed",
-          description: "Unable to load patient insurance data. Please enter manually.",
+          description: `Unable to load patient insurance data: ${error.message}`,
           variant: "destructive",
         });
       }
