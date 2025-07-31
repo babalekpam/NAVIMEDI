@@ -637,15 +637,34 @@ export default function PharmacyDashboardEnhanced() {
                 <div>
                   <div className="flex items-center justify-between">
                     <Label htmlFor="local-insurance-provider">Insurance Provider</Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={loadInsuranceData}
-                      className="text-xs bg-blue-100 hover:bg-blue-200"
-                    >
-                      Load Insurance
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={loadInsuranceData}
+                        className="text-xs bg-blue-100 hover:bg-blue-200"
+                      >
+                        Load Insurance
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          console.log('TEST BUTTON: Setting test values');
+                          setLocalInsuranceProvider("Amara Mwangi Insurance");
+                          setLocalCoveragePercentage("80");
+                          toast({
+                            title: "Test Values Set",
+                            description: "Manually set insurance provider",
+                          });
+                        }}
+                        className="text-xs bg-green-100 hover:bg-green-200"
+                      >
+                        Test
+                      </Button>
+                    </div>
                   </div>
                   <Input 
                     id="local-insurance-provider"
