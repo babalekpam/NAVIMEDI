@@ -1423,14 +1423,17 @@ export class DatabaseStorage implements IStorage {
     .where(eq(patientInsurance.patientId, patientId))
     .orderBy(desc(patientInsurance.isPrimary), patientInsurance.effectiveDate);
 
-    return results.map(result => ({
-      ...result,
-      insuranceProvider: result.insuranceProviderName ? {
-        id: result.insuranceProviderId,
-        name: result.insuranceProviderName,
-        type: result.insuranceProviderType
-      } : undefined
-    }));
+    return results.map(result => {
+      const { insuranceProviderName, insuranceProviderType, ...baseResult } = result;
+      return {
+        ...baseResult,
+        insuranceProvider: insuranceProviderName ? {
+          id: result.insuranceProviderId || '',
+          name: insuranceProviderName,
+          type: insuranceProviderType || ''
+        } : undefined
+      };
+    }) as PatientInsurance[];
   }
 
   async createPatientInsurance(insurance: InsertPatientInsurance): Promise<PatientInsurance> {

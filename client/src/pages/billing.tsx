@@ -76,6 +76,42 @@ export default function Billing() {
   // Check if user is a physician (read-only access)
   const isPhysician = user?.role === 'physician';
 
+  // Handle patient selection and auto-populate prescription data
+  const handlePatientSelection = async (patientId: string) => {
+    setFormData(prev => ({ ...prev, patientId }));
+    
+    try {
+      // Fetch patient's active prescriptions for auto-population
+      const prescriptionsResponse = await apiRequest('GET', `/api/prescriptions?patientId=${patientId}&active=true`);
+      
+      if (prescriptionsResponse.ok) {
+        const prescriptions = await prescriptionsResponse.json();
+        
+        if (prescriptions.length > 0) {
+          // Auto-populate with most recent prescription data
+          const latestPrescription = prescriptions[0];
+          
+          setFormData(prev => ({
+            ...prev,
+            patientId,
+            totalAmount: latestPrescription.totalCost?.toString() || "",
+            notes: `${latestPrescription.medicationName} - ${latestPrescription.dosage} (Prescription from ${latestPrescription.providerName || 'Hospital'})`,
+            procedureCodes: latestPrescription.ndc || "",
+            diagnosisCodes: latestPrescription.diagnosisCodes || ""
+          }));
+          
+          toast({
+            title: "Prescription Data Loaded",
+            description: `Auto-populated form with data from ${latestPrescription.medicationName} prescription.`,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching prescription data:", error);
+      // Don't show error toast as this is a nice-to-have feature
+    }
+  };
+
   const { data: claims = [], isLoading } = useQuery<InsuranceClaim[]>({
     queryKey: ["/api/insurance-claims"],
     enabled: !!user && !!tenant,
@@ -542,7 +578,7 @@ export default function Billing() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="patientId">Patient</Label>
-                    <Select value={formData.patientId} onValueChange={(value) => setFormData({...formData, patientId: value})}>
+                    <Select value={formData.patientId} onValueChange={handlePatientSelection}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select patient" />
                       </SelectTrigger>

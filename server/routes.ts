@@ -1124,13 +1124,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Prescription management routes
   app.get("/api/prescriptions", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const { patientId } = req.query;
+      const { patientId, active } = req.query;
       const tenantId = req.tenant!.id;
       const tenantType = req.tenant!.type;
 
       let prescriptions;
       if (patientId) {
         prescriptions = await storage.getPrescriptionsByPatient(patientId as string, tenantId);
+        
+        // Filter for active prescriptions if requested
+        if (active === 'true') {
+          prescriptions = prescriptions.filter(p => 
+            p.status !== 'cancelled' && 
+            p.status !== 'expired' && 
+            p.status !== 'picked_up' &&
+            (!p.expiryDate || new Date(p.expiryDate) > new Date())
+          );
+        }
       } else {
         // For pharmacies, show prescriptions sent TO them (by pharmacyTenantId)
         // For hospitals/clinics, show prescriptions created BY them (by tenantId)
