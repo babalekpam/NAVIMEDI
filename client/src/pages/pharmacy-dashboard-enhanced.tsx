@@ -22,7 +22,9 @@ import {
   Shield,
   Truck,
   Search,
-  ArrowRight
+  ArrowRight,
+  Archive,
+  FolderOpen
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useTenant } from "@/hooks/use-tenant";
@@ -119,6 +121,19 @@ export default function PharmacyDashboardEnhanced() {
   const processingPrescriptions = prescriptions.filter(p => p.status === 'processing');
   const readyPrescriptions = prescriptions.filter(p => p.status === 'ready');
   const dispensedPrescriptions = prescriptions.filter(p => p.status === 'dispensed' || p.status === 'picked_up');
+  
+  // Archived prescriptions - completed workflow (dispensed/picked up) and old filled prescriptions
+  const archivedPrescriptions = prescriptions.filter(p => 
+    p.status === 'dispensed' || 
+    p.status === 'picked_up' || 
+    p.status === 'filled' || 
+    p.status === 'cancelled'
+  );
+  
+  // Active prescriptions - everything except archived
+  const activePrescriptions = prescriptions.filter(p => 
+    !['dispensed', 'picked_up', 'filled', 'cancelled'].includes(p.status)
+  );
 
   // Filter by search term
   const filterPrescriptions = (prescriptionList: PrescriptionWorkflow[]) => {
@@ -408,17 +423,23 @@ export default function PharmacyDashboardEnhanced() {
       </div>
 
       {/* Workflow Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-blue-600">{activePrescriptions.length}</div>
+            <div className="text-sm text-gray-600">Active Total</div>
+          </CardContent>
+        </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-blue-600">{newPrescriptions.length}</div>
-            <div className="text-sm text-gray-600">New Prescriptions</div>
+            <div className="text-sm text-gray-600">New</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-yellow-600">{insuranceToVerify.length}</div>
-            <div className="text-sm text-gray-600">Insurance to Verify</div>
+            <div className="text-sm text-gray-600">Insurance Verify</div>
           </CardContent>
         </Card>
         <Card>
@@ -430,20 +451,20 @@ export default function PharmacyDashboardEnhanced() {
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-green-600">{readyPrescriptions.length}</div>
-            <div className="text-sm text-gray-600">Ready for Pickup</div>
+            <div className="text-sm text-gray-600">Ready</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-gray-600">{dispensedPrescriptions.length}</div>
-            <div className="text-sm text-gray-600">Dispensed</div>
+            <div className="text-2xl font-bold text-gray-600">{archivedPrescriptions.length}</div>
+            <div className="text-sm text-gray-600">Archived</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Workflow Tabs */}
       <Tabs defaultValue="new" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="new" className="text-xs">
             New ({newPrescriptions.length})
           </TabsTrigger>
@@ -457,7 +478,10 @@ export default function PharmacyDashboardEnhanced() {
             Ready ({readyPrescriptions.length})
           </TabsTrigger>
           <TabsTrigger value="dispensed" className="text-xs">
-            Dispensed ({dispensedPrescriptions.length})
+            Recent ({dispensedPrescriptions.length})
+          </TabsTrigger>
+          <TabsTrigger value="archived" className="text-xs">
+            📁 Archived ({archivedPrescriptions.length})
           </TabsTrigger>
         </TabsList>
 
@@ -531,17 +555,109 @@ export default function PharmacyDashboardEnhanced() {
 
         <TabsContent value="dispensed" className="mt-4">
           <div className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium">Recently Dispensed</h3>
+              <p className="text-sm text-gray-500">Last 30 days of dispensed prescriptions</p>
+            </div>
             {filterPrescriptions(dispensedPrescriptions).length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center">
                   <Truck className="h-8 w-8 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-500">No dispensed prescriptions</p>
+                  <p className="text-gray-500">No recently dispensed prescriptions</p>
                 </CardContent>
               </Card>
             ) : (
               filterPrescriptions(dispensedPrescriptions).map(prescription => (
                 <PrescriptionCard key={prescription.id} prescription={prescription} showActions={false} />
               ))
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="archived" className="mt-4">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-medium flex items-center gap-2">
+                  📁 Archived Prescriptions
+                </h3>
+                <p className="text-sm text-gray-500">All completed, dispensed, filled, and cancelled prescriptions</p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-gray-600">{archivedPrescriptions.length}</p>
+                <p className="text-sm text-gray-500">Total Archived</p>
+              </div>
+            </div>
+            
+            {filterPrescriptions(archivedPrescriptions).length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <div className="text-gray-400 text-6xl mb-4">📁</div>
+                  <p className="text-gray-500 text-lg">No archived prescriptions</p>
+                  <p className="text-gray-400 text-sm mt-2">Completed prescriptions will appear here</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {filterPrescriptions(archivedPrescriptions).map(prescription => (
+                  <Card key={prescription.id} className="opacity-75 hover:opacity-100 transition-opacity">
+                    <CardHeader className="pb-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            📁 {prescription.medicationName} {prescription.dosage}
+                          </CardTitle>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Patient: <span className="font-medium">{prescription.patientName}</span> (MRN: {prescription.patientMRN})
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Prescribed by: <span className="font-medium">{prescription.providerName}</span> - {prescription.hospitalName}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          {getStatusBadge(prescription.status)}
+                          <p className="text-xs text-gray-500 mt-1">
+                            Archived: {prescription.dispensedDate ? 
+                              format(new Date(prescription.dispensedDate), 'MMM dd, yyyy') : 
+                              format(new Date(prescription.updatedAt), 'MMM dd, yyyy')
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p><strong>Frequency:</strong> {prescription.frequency}</p>
+                          <p><strong>Quantity:</strong> {prescription.quantity}</p>
+                          <p><strong>Refills:</strong> {prescription.refills}</p>
+                        </div>
+                        <div>
+                          <p><strong>Prescribed:</strong> {format(new Date(prescription.prescribedDate), 'MMM dd, yyyy')}</p>
+                          {prescription.insuranceCopay && (
+                            <p><strong>Patient Copay:</strong> ${prescription.insuranceCopay.toFixed(2)}</p>
+                          )}
+                          {prescription.totalCost && (
+                            <p><strong>Total Cost:</strong> ${prescription.totalCost.toFixed(2)}</p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {prescription.instructions && (
+                        <div className="mt-3 p-2 bg-gray-50 rounded">
+                          <p className="text-sm"><strong>Instructions:</strong> {prescription.instructions}</p>
+                        </div>
+                      )}
+                      
+                      {prescription.pharmacyNotes && (
+                        <div className="mt-3 p-2 bg-blue-50 rounded">
+                          <p className="text-sm"><strong>Pharmacy Notes:</strong> {prescription.pharmacyNotes}</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             )}
           </div>
         </TabsContent>
