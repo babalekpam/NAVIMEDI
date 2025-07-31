@@ -504,42 +504,43 @@ export default function PharmacyDashboardEnhanced() {
       }
     }, [localTotalCost, localCoveragePercentage]);
 
-    // Manual data loading function
+    // Manual data loading function using authenticated API request
     const loadInsuranceData = async () => {
       if (!selectedPrescription?.patientId) return;
       
       try {
-        // Manually fetch insurance data
-        const response = await fetch(`/api/patient-insurance/${selectedPrescription.patientId}`, {
-          credentials: 'include'
-        });
+        // Use the authenticated apiRequest function from queryClient
+        const insuranceData = await apiRequest(`/api/patient-insurance/${selectedPrescription.patientId}`);
         
-        if (response.ok) {
-          const insuranceData = await response.json();
+        if (insuranceData && insuranceData.length > 0) {
+          const primaryInsurance = insuranceData.find((ins: any) => ins.isPrimary) || insuranceData[0];
           
-          if (insuranceData.length > 0) {
-            const primaryInsurance = insuranceData.find((ins: any) => ins.isPrimary) || insuranceData[0];
-            
-            setLocalInsuranceProvider(primaryInsurance.insuranceProvider?.name || primaryInsurance.provider || 'Unknown Provider');
-            setLocalCoveragePercentage((primaryInsurance.coveragePercentage || 80).toString());
-            setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
-            
-            toast({
-              title: "Insurance Data Loaded",
-              description: `Auto-populated ${primaryInsurance.insuranceProvider?.name || 'insurance'} policy`,
-            });
-          } else {
-            setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
-            toast({
-              title: "No Insurance Found",
-              description: "Please enter insurance details manually.",
-              variant: "destructive",
-            });
-          }
+          console.log('Loading insurance data:', primaryInsurance);
+          
+          setLocalInsuranceProvider(primaryInsurance.insuranceProvider?.name || primaryInsurance.provider || 'Unknown Provider');
+          setLocalCoveragePercentage((primaryInsurance.coveragePercentage || 80).toString());
+          setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
+          
+          toast({
+            title: "Insurance Data Loaded",
+            description: `Auto-populated ${primaryInsurance.insuranceProvider?.name || 'insurance'} policy`,
+          });
+        } else {
+          setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
+          toast({
+            title: "No Insurance Found",
+            description: "Please enter insurance details manually.",
+            variant: "destructive",
+          });
         }
       } catch (error) {
         console.error('Failed to load insurance data:', error);
         setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
+        toast({
+          title: "Authentication Error",
+          description: "Unable to load insurance data. Please try again.",
+          variant: "destructive",
+        });
       }
     };
 
