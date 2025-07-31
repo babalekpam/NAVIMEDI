@@ -1487,15 +1487,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const requestData = { ...req.body };
       
+      console.log("[INSURANCE CLAIM] Request data:", JSON.stringify(requestData, null, 2));
+      
       // Generate unique claim number if not provided
       if (!requestData.claimNumber) {
         requestData.claimNumber = `CLM-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
       }
 
+      // Handle manual insurance data - store in notes field for now
+      let processedData = { ...requestData };
+      if (requestData.manualInsurance) {
+        const manualInsuranceNote = `
+Manual Insurance Information:
+- Company: ${requestData.manualInsurance.insuranceCompany}
+- Policy Number: ${requestData.manualInsurance.policyNumber}
+- Group Number: ${requestData.manualInsurance.groupNumber || 'N/A'}
+- Subscriber: ${requestData.manualInsurance.subscriberName || 'N/A'}
+- Coverage: ${requestData.manualInsurance.coveragePercentage}%
+${requestData.manualInsurance.copayAmount ? `- Fixed Copay: $${requestData.manualInsurance.copayAmount}` : ''}
+
+Original Notes: ${requestData.notes || 'None'}`;
+        
+        processedData.notes = manualInsuranceNote;
+        delete processedData.manualInsurance; // Remove manual insurance object before schema validation
+      }
+
+      console.log("[INSURANCE CLAIM] Processed data before validation:", JSON.stringify(processedData, null, 2));
+
       const claimData = insertInsuranceClaimSchema.parse({
-        ...requestData,
+        ...processedData,
         tenantId: req.tenant!.id
       });
+
+      console.log("[INSURANCE CLAIM] Validated claim data:", JSON.stringify(claimData, null, 2));
 
       const claim = await storage.createInsuranceClaim(claimData);
 
