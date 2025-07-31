@@ -47,16 +47,7 @@ export default function Billing() {
   });
   
   // Manual insurance entry form data
-  const [insuranceEntryMode, setInsuranceEntryMode] = useState<"patient" | "manual">("patient");
-  const [manualInsurance, setManualInsurance] = useState({
-    insuranceCompany: "",
-    policyNumber: "",
-    groupNumber: "",
-    subscriberName: "",
-    effectiveDate: "",
-    copayAmount: "",
-    coveragePercentage: "80"
-  });
+  // Auto insurance verification only - no manual entry needed
   const [serviceFormData, setServiceFormData] = useState({
     servicePriceId: "",
     quantity: "1",
@@ -76,12 +67,46 @@ export default function Billing() {
   // Check if user is a physician (read-only access)
   const isPhysician = user?.role === 'physician';
 
-  // Handle patient selection and auto-populate prescription data
+  // Handle patient selection and auto-populate prescription and insurance data
   const handlePatientSelection = async (patientId: string) => {
     setFormData(prev => ({ ...prev, patientId }));
     
     try {
-      // For pharmacies, fetch prescriptions sent to this pharmacy for the patient
+      // 1. Automatically load patient insurance information (PRIORITY)
+      console.log(`[AUTO-INSURANCE] Loading insurance for patient: ${patientId}`);
+      const insuranceResponse = await apiRequest('GET', `/api/patient-insurance/${patientId}`);
+      
+      if (insuranceResponse.ok) {
+        const insuranceData = await insuranceResponse.json();
+        console.log(`[AUTO-INSURANCE] Found ${insuranceData.length} insurance records:`, insuranceData);
+        
+        if (insuranceData.length > 0) {
+          // Auto-select primary insurance or first available
+          const primaryInsurance = insuranceData.find((ins: any) => ins.isPrimary) || insuranceData[0];
+          
+          setFormData(prev => ({
+            ...prev,
+            patientId,
+            patientInsuranceId: primaryInsurance.id
+          }));
+          
+          console.log(`[AUTO-INSURANCE] Auto-selected insurance:`, primaryInsurance);
+          
+          toast({
+            title: "Insurance Auto-Loaded",
+            description: `Automatically loaded ${primaryInsurance.insuranceProvider?.name || 'insurance'} (${primaryInsurance.policyNumber})${primaryInsurance.isPrimary ? ' - Primary' : ''}`,
+          });
+        } else {
+          console.log(`[AUTO-INSURANCE] No insurance found for patient ${patientId}`);
+          toast({
+            title: "No Insurance Found",
+            description: "Patient has no insurance information on file. Please contact patient to verify insurance details.",
+            variant: "destructive",
+          });
+        }
+      }
+      
+      // 2. Also fetch prescriptions for context (secondary)
       const prescriptionsResponse = await apiRequest('GET', `/api/prescriptions${patientId ? `?patientId=${patientId}` : ''}`);
       
       if (prescriptionsResponse.ok) {
@@ -101,26 +126,22 @@ export default function Billing() {
           
           setFormData(prev => ({
             ...prev,
-            patientId,
-            totalAmount: latestPrescription.total_cost?.toString() || latestPrescription.totalCost?.toString() || "",
+            totalAmount: latestPrescription.total_cost?.toString() || latestPrescription.totalCost?.toString() || prev.totalAmount,
             notes: `${latestPrescription.medicationName || latestPrescription.medication_name} - ${latestPrescription.dosage} (${latestPrescription.quantity} units, prescribed by ${latestPrescription.providerName || latestPrescription.provider_name || 'Hospital'})`,
             procedureCodes: latestPrescription.ndc || "",
             diagnosisCodes: latestPrescription.diagnosisCodes || latestPrescription.diagnosis_codes || ""
           }));
           
-          console.log("Auto-populated prescription data:", latestPrescription);
-          
-          toast({
-            title: "Prescription Data Loaded",
-            description: `Auto-populated form with ${latestPrescription.medicationName || latestPrescription.medication_name} prescription data.`,
-          });
-        } else {
-          console.log("No active prescriptions found for patient:", patientId);
+          console.log("[PRESCRIPTION-DATA] Auto-populated prescription data:", latestPrescription);
         }
       }
     } catch (error) {
-      console.error("Error fetching prescription data:", error);
-      // Don't show error toast as this is a nice-to-have feature
+      console.error("Error fetching patient data:", error);
+      toast({
+        title: "Error Loading Patient Data",
+        description: "Failed to load patient insurance information. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -134,7 +155,7 @@ export default function Billing() {
     queryKey: ["/api/billing/patients"],
     enabled: !!user && !!tenant,
     staleTime: 0, // Always fetch fresh data
-    cacheTime: 0, // Don't cache the results
+    gcTime: 0, // Don't cache the results (gcTime is the new name for cacheTime in TanStack Query v5)
   });
 
   const { data: servicePrices = [] } = useQuery<ServicePrice[]>({
@@ -261,16 +282,7 @@ export default function Billing() {
         appointmentId: "",
         notes: ""
       });
-      setInsuranceEntryMode("patient");
-      setManualInsurance({
-        insuranceCompany: "",
-        policyNumber: "",
-        groupNumber: "",
-        subscriberName: "",
-        effectiveDate: "",
-        copayAmount: "",
-        coveragePercentage: "80"
-      });
+      // Form reset complete - auto insurance verification will reload when patient is selected again
     },
     onError: (error: any) => {
       toast({
@@ -363,8 +375,7 @@ export default function Billing() {
     try {
       // Debug logging
       console.log("Form data:", formData);
-      console.log("Insurance entry mode:", insuranceEntryMode);
-      console.log("Manual insurance:", manualInsurance);
+      console.log("Auto-insurance verification mode active");
       
       // Check required fields
       if (!formData.patientId) {
@@ -376,25 +387,14 @@ export default function Billing() {
         return;
       }
       
-      // Validate insurance information based on entry mode
-      if (insuranceEntryMode === "patient") {
-        if (!formData.patientInsuranceId) {
-          toast({
-            title: "Error",
-            description: "Please select patient's insurance or switch to manual entry mode.",
-            variant: "destructive",
-          });
-          return;
-        }
-      } else if (insuranceEntryMode === "manual") {
-        if (!manualInsurance.insuranceCompany || !manualInsurance.policyNumber) {
-          toast({
-            title: "Error",
-            description: "Please enter insurance company name and policy number.",
-            variant: "destructive",
-          });
-          return;
-        }
+      // Validate patient insurance is automatically loaded
+      if (!formData.patientInsuranceId) {
+        toast({
+          title: "Error",
+          description: "Patient insurance information is required. Please ensure the patient has insurance on file.",
+          variant: "destructive",
+        });
+        return;
       }
       
       // For pharmacy claims, we don't require line items - we work with medication costs directly
@@ -409,26 +409,26 @@ export default function Billing() {
         return;
       }
 
-      // Calculate copay based on insurance mode
+      // Calculate copay based on patient's actual insurance information
       let totalPatientCopay = 0;
       let totalInsuranceAmount = 0;
       
-      if (insuranceEntryMode === "manual") {
-        // Use manual insurance calculation
-        if (manualInsurance.copayAmount) {
-          // Fixed copay amount
-          totalPatientCopay = parseFloat(manualInsurance.copayAmount);
-          totalInsuranceAmount = totalAmount - totalPatientCopay;
-        } else {
-          // Percentage-based calculation
-          const coveragePercent = parseInt(manualInsurance.coveragePercentage || "80") / 100;
-          totalInsuranceAmount = totalAmount * coveragePercent;
-          totalPatientCopay = totalAmount - totalInsuranceAmount;
-        }
+      // Find the selected patient insurance to get actual coverage details
+      const selectedInsurance = patientInsurance.find(ins => ins.id === formData.patientInsuranceId);
+      
+      if (selectedInsurance) {
+        // Use actual coverage percentage from patient's insurance record
+        const coveragePercent = (selectedInsurance.coveragePercentage || 80) / 100;
+        totalInsuranceAmount = totalAmount * coveragePercent;
+        totalPatientCopay = totalAmount - totalInsuranceAmount;
+        
+        console.log(`[AUTO-COPAY] Using real insurance data: ${selectedInsurance.insuranceProvider?.name}, Coverage: ${selectedInsurance.coveragePercentage || 80}%`);
+        console.log(`[AUTO-COPAY] Total: $${totalAmount}, Insurance pays: $${totalInsuranceAmount.toFixed(2)}, Patient copay: $${totalPatientCopay.toFixed(2)}`);
       } else {
-        // Default calculation for patient insurance (20% patient copay, 80% insurance)
+        // Fallback (should not happen with validation above)
         totalPatientCopay = totalAmount * 0.2;
         totalInsuranceAmount = totalAmount * 0.8;
+        console.log(`[AUTO-COPAY] Using fallback 80/20 split`);
       }
 
       // Generate unique claim number if not provided
@@ -436,7 +436,7 @@ export default function Billing() {
 
       const rawClaimData = {
         patientId: formData.patientId,
-        patientInsuranceId: insuranceEntryMode === "patient" ? formData.patientInsuranceId : null,
+        patientInsuranceId: formData.patientInsuranceId, // Always use patient's actual insurance
         claimNumber,
         diagnosisCodes: formData.diagnosisCodes.split(',').map(code => code.trim()).filter(Boolean),
         procedureCodes: formData.procedureCodes.split(',').map(code => code.trim()).filter(Boolean),
@@ -445,18 +445,7 @@ export default function Billing() {
         totalInsuranceAmount: totalInsuranceAmount.toString(),
         status: 'draft',
         appointmentId: formData.appointmentId || null,
-        notes: formData.notes || `Pharmacy medication claim for $${totalAmount}`,
-        // Include manual insurance data if using manual mode
-        ...(insuranceEntryMode === "manual" && {
-          manualInsurance: {
-            insuranceCompany: manualInsurance.insuranceCompany,
-            policyNumber: manualInsurance.policyNumber,
-            groupNumber: manualInsurance.groupNumber,
-            subscriberName: manualInsurance.subscriberName,
-            coveragePercentage: manualInsurance.coveragePercentage,
-            copayAmount: manualInsurance.copayAmount
-          }
-        })
+        notes: formData.notes || `Pharmacy medication claim for $${totalAmount} (Auto-verified insurance: ${selectedInsurance?.insuranceProvider?.name || 'Insurance'} - ${selectedInsurance?.policyNumber || 'Policy'})`
       };
       
       console.log("Raw claim data before validation:", rawClaimData);
@@ -620,156 +609,71 @@ export default function Billing() {
                   </div>
                 </div>
 
-                {/* Insurance Entry Method Selection */}
+                {/* Auto-Loaded Insurance Information */}
                 {formData.patientId && (
                   <>
-                    <div className="space-y-3 border rounded-lg p-4 bg-gray-50">
-                      <Label className="text-base font-semibold">Insurance Information *</Label>
+                    <div className="space-y-3 border rounded-lg p-4 bg-green-50 border-green-200">
+                      <Label className="text-base font-semibold text-green-800">Patient Insurance Information</Label>
                       
-                      {/* Insurance Entry Mode Toggle */}
-                      <div className="flex space-x-4">
-                        <button
-                          type="button"
-                          onClick={() => setInsuranceEntryMode("patient")}
-                          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                            insuranceEntryMode === "patient" 
-                              ? "bg-blue-600 text-white" 
-                              : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                          }`}
-                        >
-                          Use Patient's Insurance
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setInsuranceEntryMode("manual")}
-                          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                            insuranceEntryMode === "manual" 
-                              ? "bg-blue-600 text-white" 
-                              : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                          }`}
-                        >
-                          Enter Insurance Manually
-                        </button>
-                      </div>
-
-                      {/* Patient Insurance Selection */}
-                      {insuranceEntryMode === "patient" && (
-                        <div className="space-y-2">
-                          <Label htmlFor="patientInsuranceId">Select Patient's Insurance</Label>
+                      {/* Auto-loaded Insurance Display */}
+                      <div className="space-y-2">
+                        <Label htmlFor="patientInsuranceId">Automatically Loaded Insurance</Label>
+                        {patientInsurance.length > 0 ? (
                           <Select
                             value={formData.patientInsuranceId}
-                            onValueChange={(value) => setFormData(prev => ({ ...prev, patientInsuranceId: value }))}
+                            onValueChange={(value) => {
+                              setFormData(prev => ({ ...prev, patientInsuranceId: value }));
+                              
+                              // Show confirmation of selection
+                              const selectedInsurance = patientInsurance.find((ins: any) => ins.id === value);
+                              if (selectedInsurance) {
+                                toast({
+                                  title: "Insurance Selected",
+                                  description: `Using ${selectedInsurance.insuranceProvider?.name || 'insurance'} - ${selectedInsurance.policyNumber}`,
+                                });
+                              }
+                            }}
                           >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select insurance provider" />
+                            <SelectTrigger className="bg-white">
+                              <SelectValue placeholder="Insurance auto-loaded - select to confirm" />
                             </SelectTrigger>
                             <SelectContent>
                               {patientInsurance.map((insurance: any) => (
                                 <SelectItem key={insurance.id} value={insurance.id}>
-                                  {insurance.insuranceProvider?.name || 'Unknown Provider'} - {insurance.policyNumber}
-                                  {insurance.isPrimary && ' (Primary)'}
+                                  <div className="flex flex-col">
+                                    <div className="font-medium">
+                                      {insurance.insuranceProvider?.name || 'Unknown Provider'}
+                                      {insurance.isPrimary && ' (PRIMARY)'}
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                      Policy: {insurance.policyNumber} | Coverage: {insurance.coveragePercentage || 80}%
+                                    </div>
+                                  </div>
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
-                          {patientInsurance.length === 0 && (
-                            <p className="text-sm text-amber-600">
-                              No insurance found for this patient. Switch to "Enter Insurance Manually" to add insurance details.
+                        ) : (
+                          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                            <p className="text-sm text-yellow-800 font-medium">
+                              ⚠️ No Insurance Found
                             </p>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Manual Insurance Entry */}
-                      {insuranceEntryMode === "manual" && (
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="insuranceCompany">Insurance Company *</Label>
-                              <Input
-                                id="insuranceCompany"
-                                placeholder="e.g., Blue Cross Blue Shield"
-                                value={manualInsurance.insuranceCompany}
-                                onChange={(e) => setManualInsurance({...manualInsurance, insuranceCompany: e.target.value})}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="policyNumber">Policy Number *</Label>
-                              <Input
-                                id="policyNumber"
-                                placeholder="e.g., ABC123456789"
-                                value={manualInsurance.policyNumber}
-                                onChange={(e) => setManualInsurance({...manualInsurance, policyNumber: e.target.value})}
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="groupNumber">Group Number</Label>
-                              <Input
-                                id="groupNumber"
-                                placeholder="e.g., GRP123 (optional)"
-                                value={manualInsurance.groupNumber}
-                                onChange={(e) => setManualInsurance({...manualInsurance, groupNumber: e.target.value})}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="subscriberName">Subscriber Name</Label>
-                              <Input
-                                id="subscriberName"
-                                placeholder="e.g., John Doe"
-                                value={manualInsurance.subscriberName}
-                                onChange={(e) => setManualInsurance({...manualInsurance, subscriberName: e.target.value})}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="coveragePercentage">Coverage Percentage *</Label>
-                              <Select
-                                value={manualInsurance.coveragePercentage}
-                                onValueChange={(value) => setManualInsurance({...manualInsurance, coveragePercentage: value})}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select coverage %" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="70">70% (30% copay)</SelectItem>
-                                  <SelectItem value="80">80% (20% copay)</SelectItem>
-                                  <SelectItem value="85">85% (15% copay)</SelectItem>
-                                  <SelectItem value="90">90% (10% copay)</SelectItem>
-                                  <SelectItem value="100">100% (No copay)</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="copayAmount">Fixed Copay Amount</Label>
-                              <Input
-                                id="copayAmount"
-                                type="number"
-                                step="0.01"
-                                placeholder="e.g., $25.00 (optional)"
-                                value={manualInsurance.copayAmount}
-                                onChange={(e) => setManualInsurance({...manualInsurance, copayAmount: e.target.value})}
-                              />
-                              <p className="text-xs text-gray-500">
-                                Leave empty to use coverage percentage
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className="bg-blue-50 p-3 rounded-md">
-                            <p className="text-sm text-blue-700">
-                              <strong>Copay Calculation:</strong> {manualInsurance.copayAmount ? 
-                                `Fixed copay of $${manualInsurance.copayAmount}` : 
-                                `${100 - parseInt(manualInsurance.coveragePercentage || "80")}% of total cost (${manualInsurance.coveragePercentage || "80"}% insurance coverage)`
-                              }
+                            <p className="text-sm text-yellow-700 mt-1">
+                              This patient has no insurance information on file. Please contact patient to verify insurance details before creating claim.
                             </p>
                           </div>
-                        </div>
-                      )}
+                        )}
+                        
+                        {formData.patientInsuranceId && (
+                          <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                            <p className="text-sm text-green-800">
+                              ✅ Insurance verified and ready for claim processing
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+
                     </div>
                   </>
                 )}
