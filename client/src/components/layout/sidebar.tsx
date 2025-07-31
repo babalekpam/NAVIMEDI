@@ -162,7 +162,7 @@ export const Sidebar = () => {
     // Add laboratory billing as a special item for lab tenants
     laboratoryItems.push({
       id: "laboratory-billing",
-      label: "Lab Billing",
+      label: "Lab Insurance Claims",
       icon: Receipt,
       path: "/laboratory-billing",
       roles: ["lab_technician", "tenant_admin", "director"]
