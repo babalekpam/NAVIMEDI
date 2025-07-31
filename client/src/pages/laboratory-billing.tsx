@@ -20,10 +20,12 @@ import { apiRequest } from "@/lib/queryClient";
 const labBillSchema = z.object({
   patientId: z.string().min(1, "Patient is required"),
   amount: z.number().min(0.01, "Amount must be greater than 0"),
-  description: z.string().min(1, "Description is required"),
+  claimNumber: z.string().optional(),
+  labCodes: z.string().optional(),
+  diagnosisCodes: z.string().optional(),
+  labNotes: z.string().optional(),
   labOrderId: z.string().optional(),
   testName: z.string().optional(),
-  notes: z.string().optional(),
 });
 
 type LabBillForm = z.infer<typeof labBillSchema>;
@@ -63,10 +65,12 @@ export default function LaboratoryBilling() {
     defaultValues: {
       patientId: "",
       amount: 0,
-      description: "",
+      claimNumber: "",
+      labCodes: "",
+      diagnosisCodes: "",
+      labNotes: "",
       labOrderId: "",
       testName: "",
-      notes: "",
     },
   });
 
@@ -406,26 +410,14 @@ export default function LaboratoryBilling() {
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notes (Optional)</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="Additional billing notes..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
 
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={createLabBillMutation.isPending}>
-                    {createLabBillMutation.isPending ? "Creating..." : "Create Bill"}
+                    {createLabBillMutation.isPending ? "Creating..." : "Create Claim"}
                   </Button>
                 </div>
               </form>
