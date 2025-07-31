@@ -427,6 +427,9 @@ export interface IStorage {
   createPatientPayment(payment: InsertPatientPayment): Promise<PatientPayment>;
   getPatientPayments(patientBillId: string, tenantId: string): Promise<PatientPayment[]>;
   
+  // Cross-tenant patient access for pharmacies
+  getPatientsWithPrescriptionsForPharmacy(pharmacyTenantId: string): Promise<Patient[]>;
+  
   // Patient Account Activation
   generatePatientCredentials(patientId: string, tenantId: string): Promise<{tempPassword: string, activationToken: string}>;
   sendPatientActivationMessage(patient: Patient, tempPassword: string, activationToken: string): Promise<boolean>;
@@ -599,6 +602,46 @@ export class DatabaseStorage implements IStorage {
              ${patients.mrn} LIKE '%' || ${query} || '%')`
       )
     );
+  }
+
+  // Cross-tenant patients for pharmacy billing (patients with prescriptions sent to this pharmacy)
+  async getPatientsWithPrescriptionsForPharmacy(pharmacyTenantId: string): Promise<Patient[]> {
+    const patientsWithPrescriptions = await db
+      .select({
+        id: patients.id,
+        tenantId: patients.tenantId,
+        firstName: patients.firstName,
+        lastName: patients.lastName,
+        dateOfBirth: patients.dateOfBirth,
+        gender: patients.gender,
+        phone: patients.phone,
+        email: patients.email,
+        address: patients.address,
+        mrn: patients.mrn,
+        emergencyContact: patients.emergencyContact,
+        allergies: patients.allergies,
+        medications: patients.medications,
+        medicalHistory: patients.medicalHistory,
+        isActive: patients.isActive,
+        createdAt: patients.createdAt,
+        updatedAt: patients.updatedAt
+      })
+      .from(patients)
+      .innerJoin(prescriptions, eq(prescriptions.patientId, patients.id))
+      .where(
+        and(
+          eq(prescriptions.pharmacyTenantId, pharmacyTenantId),
+          eq(patients.isActive, true)
+        )
+      )
+      .groupBy(patients.id, patients.tenantId, patients.firstName, patients.lastName, 
+               patients.dateOfBirth, patients.gender, patients.phone, patients.email, 
+               patients.address, patients.mrn, patients.emergencyContact, patients.allergies, 
+               patients.medications, patients.medicalHistory, patients.isActive, 
+               patients.createdAt, patients.updatedAt)
+      .orderBy(patients.lastName, patients.firstName);
+
+    return patientsWithPrescriptions;
   }
 
   async getPatientsWithPrescriptionsForPharmacy(pharmacyTenantId: string, search?: string): Promise<Patient[]> {

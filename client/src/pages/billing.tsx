@@ -597,7 +597,7 @@ export default function Billing() {
                       <SelectContent>
                         {patients.map((patient) => (
                           <SelectItem key={patient.id} value={patient.id}>
-                            {patient.firstName} {patient.lastName}
+                            {patient.firstName} {patient.lastName} ({patient.mrn})
                           </SelectItem>
                         ))}
                       </SelectContent>
