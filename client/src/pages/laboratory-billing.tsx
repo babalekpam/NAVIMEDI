@@ -114,24 +114,38 @@ export default function LaboratoryBilling() {
     retry: 1,
   });
 
-  // Fetch completed lab orders for billing
+  // Fetch completed lab orders for billing - orders sent TO this laboratory
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const { data: completedLabOrders = [], isLoading: labOrdersLoading } = useQuery({
-    queryKey: ["/api/lab-orders", { status: "completed" }],
+    queryKey: ["/api/lab-orders", "laboratory", { status: "completed" }],
     queryFn: async () => {
-      console.log("Fetching completed lab orders...");
-      const response = await apiRequest("GET", "/api/lab-orders?status=completed");
+      console.log("Fetching completed lab orders sent to laboratory...");
+      const response = await apiRequest("GET", "/api/lab-orders/laboratory?status=completed");
       const data = await response.json();
-      console.log("Completed lab orders:", data);
+      console.log("Completed lab orders sent to laboratory:", data);
       return data;
     },
     enabled: !!user && !!tenant,
   });
 
   // Filter lab orders for selected patient
-  const patientLabOrders = selectedPatientId 
-    ? completedLabOrders.filter((order: any) => order.patientId === selectedPatientId)
-    : [];
+  const patientLabOrders = React.useMemo(() => {
+    if (!selectedPatientId) {
+      console.log("No patient selected, returning empty array");
+      return [];
+    }
+    
+    console.log("Filtering lab orders for patient:", selectedPatientId);
+    console.log("Available completed lab orders:", completedLabOrders);
+    
+    const filtered = completedLabOrders.filter((order: any) => {
+      console.log(`Checking order ${order.id}: patientId=${order.patientId} vs selectedPatientId=${selectedPatientId}`);
+      return order.patientId === selectedPatientId;
+    });
+    
+    console.log("Filtered lab orders for patient:", filtered);
+    return filtered;
+  }, [selectedPatientId, completedLabOrders]);
 
   // Create lab bill mutation
   const createLabBillMutation = useMutation({
@@ -173,19 +187,29 @@ export default function LaboratoryBilling() {
 
   // Handle patient selection change
   const handlePatientChange = (patientId: string) => {
+    console.log("Patient selection changed to:", patientId);
     setSelectedPatientId(patientId);
     form.setValue("patientId", patientId);
     form.setValue("labOrderId", "");
     form.setValue("testName", "");
+    form.setValue("labCodes", "");
   };
 
   // Handle lab order selection change
   const handleLabOrderChange = (labOrderId: string) => {
+    console.log("Lab order selection changed to:", labOrderId);
+    console.log("Available lab orders for current patient:", patientLabOrders);
+    
     const selectedOrder = patientLabOrders.find((order: any) => order.id === labOrderId);
+    console.log("Selected lab order:", selectedOrder);
+    
     if (selectedOrder) {
       form.setValue("labOrderId", labOrderId);
-      form.setValue("testName", selectedOrder.testName || "");
+      form.setValue("testName", selectedOrder.testName || selectedOrder.testCode || "");
       form.setValue("labCodes", selectedOrder.testCode || "");
+      console.log("Updated form with test name:", selectedOrder.testName);
+    } else {
+      console.log("No matching lab order found for ID:", labOrderId);
     }
   };
 
@@ -431,7 +455,7 @@ export default function LaboratoryBilling() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Related Lab Order *</FormLabel>
-                        <Select onValueChange={handleLabOrderChange} defaultValue={field.value}>
+                        <Select onValueChange={handleLabOrderChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select lab order" />

@@ -2898,9 +2898,19 @@ Original Notes: ${requestData.notes || 'None'}`;
   // Get lab orders for laboratory (cross-tenant) - Orders sent TO this laboratory
   app.get("/api/lab-orders/laboratory", authenticateToken, requireRole(["lab_technician", "tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
     try {
+      const { status } = req.query;
+      console.log(`[LAB ORDERS] Laboratory ${req.tenant!.id} requesting lab orders sent to them${status ? ` with status: ${status}` : ''}`);
+      
       // Get lab orders sent to this laboratory tenant
-      const labOrders = await storage.getLabOrdersByLabTenant(req.tenant!.id);
-      console.log(`[LABORATORY] Found ${labOrders.length} lab orders for laboratory ${req.tenant!.name}`);
+      let labOrders = await storage.getLabOrdersByLabTenant(req.tenant!.id);
+      
+      // Filter by status if provided
+      if (status) {
+        labOrders = labOrders.filter(order => order.status === status);
+        console.log(`[LAB ORDERS] Filtered to ${labOrders.length} orders with status: ${status}`);
+      }
+      
+      console.log(`[LAB ORDERS] Found ${labOrders.length} active orders for laboratory ${req.tenant!.name}`);
       res.json(labOrders);
     } catch (error) {
       console.error("Error fetching lab orders for laboratory:", error);
