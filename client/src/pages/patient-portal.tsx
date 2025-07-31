@@ -145,7 +145,7 @@ Report ID: ${labOrder.id}
   });
 
   const { data: messages, isLoading: messagesLoading } = useQuery({
-    queryKey: ["/api/patient/messages"],
+    queryKey: ["/api/medical-communications"],
     enabled: !!user && user.role === "patient"
   });
 
@@ -175,11 +175,11 @@ Report ID: ${labOrder.id}
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: any) => {
-      const response = await apiRequest("POST", "/api/patient/messages", messageData);
+      const response = await apiRequest("POST", "/api/medical-communications", messageData);
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/patient/messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/medical-communications"] });
       setMessageForm({ subject: "", message: "", priority: "normal", type: "general_message" });
       setActiveSection("messages");
     },
@@ -937,9 +937,18 @@ Report ID: ${labOrder.id}
             </Button>
             <Button 
               onClick={() => sendMessageMutation.mutate({
-                ...messageForm,
-                originalContent: messageForm.message,
-                metadata: { subject: messageForm.subject }
+                type: messageForm.type,
+                priority: messageForm.priority,
+                originalLanguage: "en",
+                targetLanguages: ["en"],
+                originalContent: {
+                  title: messageForm.subject,
+                  content: messageForm.message
+                },
+                metadata: {
+                  sourceType: "patient_portal",
+                  category: "patient_message"
+                }
               })}
               disabled={!messageForm.subject || !messageForm.message || sendMessageMutation.isPending}
             >
