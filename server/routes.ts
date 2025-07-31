@@ -4830,29 +4830,7 @@ Report ID: ${report.id}
       }
 
       // Fetch laboratory bills with cross-tenant patient enrichment
-      const labBills = await storage.db
-        .select({
-          id: storage.labBills.id,
-          patientId: storage.labBills.patientId,
-          amount: storage.labBills.amount,
-          description: storage.labBills.description,
-          status: storage.labBills.status,
-          serviceType: storage.labBills.serviceType,
-          labOrderId: storage.labBills.labOrderId,
-          testName: storage.labBills.testName,
-          notes: storage.labBills.notes,
-          generatedBy: storage.labBills.generatedBy,
-          createdAt: storage.labBills.createdAt,
-          updatedAt: storage.labBills.updatedAt,
-          // Cross-tenant patient enrichment
-          patientFirstName: storage.patients.firstName,
-          patientLastName: storage.patients.lastName,
-          patientMrn: storage.patients.mrn,
-        })
-        .from(storage.labBills)
-        .leftJoin(storage.patients, eq(storage.labBills.patientId, storage.patients.id))
-        .where(eq(storage.labBills.tenantId, tenantId))
-        .orderBy(desc(storage.labBills.createdAt));
+      const labBills = await storage.getLabBillsByTenant(tenantId);
 
       res.json(labBills);
     } catch (error) {

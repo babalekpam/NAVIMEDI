@@ -116,11 +116,14 @@ export default function LaboratoryBilling() {
 
   // Fetch completed lab orders for billing
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const { data: completedLabOrders = [] } = useQuery({
+  const { data: completedLabOrders = [], isLoading: labOrdersLoading } = useQuery({
     queryKey: ["/api/lab-orders", { status: "completed" }],
     queryFn: async () => {
+      console.log("Fetching completed lab orders...");
       const response = await apiRequest("GET", "/api/lab-orders?status=completed");
-      return response.json();
+      const data = await response.json();
+      console.log("Completed lab orders:", data);
+      return data;
     },
     enabled: !!user && !!tenant,
   });
@@ -435,9 +438,18 @@ export default function LaboratoryBilling() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {patientLabOrders.length === 0 ? (
+                            {labOrdersLoading ? (
+                              <div className="p-2 text-center text-gray-500">Loading lab orders...</div>
+                            ) : !selectedPatientId ? (
+                              <div className="p-2 text-center text-gray-500">Select a patient first</div>
+                            ) : patientLabOrders.length === 0 ? (
                               <div className="p-2 text-center text-gray-500">
-                                {selectedPatientId ? "No completed lab orders for this patient" : "Select a patient first"}
+                                No completed lab orders for this patient
+                                {completedLabOrders.length > 0 && (
+                                  <div className="text-xs mt-1">
+                                    ({completedLabOrders.length} total lab orders found)
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               patientLabOrders.map((order: any) => (

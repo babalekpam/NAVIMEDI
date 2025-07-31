@@ -434,6 +434,9 @@ export interface IStorage {
   // Cross-tenant patient insurance access
   getPatientInsuranceCrossTenant(patientId: string): Promise<PatientInsurance[]>;
   
+  // Lab Bills Management
+  getLabBillsByTenant(tenantId: string): Promise<any[]>;
+  
   // Patient Account Activation
   generatePatientCredentials(patientId: string, tenantId: string): Promise<{tempPassword: string, activationToken: string}>;
   sendPatientActivationMessage(patient: Patient, tempPassword: string, activationToken: string): Promise<boolean>;
@@ -2921,6 +2924,17 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(patientPayments)
       .where(and(eq(patientPayments.patientBillId, patientBillId), eq(patientPayments.tenantId, tenantId)))
       .orderBy(desc(patientPayments.paymentDate));
+  }
+
+  // Lab Bills Management
+  async getLabBillsByTenant(tenantId: string): Promise<any[]> {
+    try {
+      // Return empty array for now - will be implemented when lab billing is fully developed
+      return [];
+    } catch (error) {
+      console.error('Error fetching lab bills:', error);
+      return [];
+    }
   }
 
   // Patient Account Activation
