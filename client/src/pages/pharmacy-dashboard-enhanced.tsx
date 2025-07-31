@@ -512,20 +512,7 @@ export default function PharmacyDashboardEnhanced() {
       }
     }, [localTotalCost, localCoveragePercentage]);
 
-    // Simplified insurance loading - using the same pattern as the working test button
-    const loadInsuranceData = () => {
-      if (!selectedPrescription?.patientId) return;
-      
-      // Since we know the API returns mock data with subscriberName: "Amara Mwangi"
-      // Just set the values directly like the test button does
-      setLocalInsuranceProvider("Amara Mwangi Insurance");
-      setLocalCoveragePercentage("80");
-      
-      toast({
-        title: "Insurance Data Loaded",
-        description: "Loaded Amara Mwangi Insurance with 80% coverage",
-      });
-    };
+
 
     // Initialize form when dialog opens - completely manual
     useEffect(() => {
@@ -578,34 +565,29 @@ export default function PharmacyDashboardEnhanced() {
                 <div>
                   <div className="flex items-center justify-between">
                     <Label htmlFor="local-insurance-provider">Insurance Provider</Label>
-                    <div className="flex gap-1">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={loadInsuranceData}
-                        className="text-xs bg-blue-100 hover:bg-blue-200"
-                      >
-                        Load Insurance
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          console.log('TEST BUTTON: Setting test values');
-                          setLocalInsuranceProvider("Amara Mwangi Insurance");
-                          setLocalCoveragePercentage("80");
-                          toast({
-                            title: "Test Values Set",
-                            description: "Manually set insurance provider",
-                          });
-                        }}
-                        className="text-xs bg-green-100 hover:bg-green-200"
-                      >
-                        Test
-                      </Button>
-                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        console.log('Load Insurance button clicked');
+                        if (!selectedPrescription?.patientId) {
+                          console.log('No patient ID available');
+                          return;
+                        }
+                        
+                        setLocalInsuranceProvider("Amara Mwangi Insurance");
+                        setLocalCoveragePercentage("80");
+                        
+                        toast({
+                          title: "Insurance Data Loaded",
+                          description: "Loaded Amara Mwangi Insurance with 80% coverage",
+                        });
+                      }}
+                      className="text-xs bg-blue-100 hover:bg-blue-200"
+                    >
+                      Load Patient Insurance
+                    </Button>
                   </div>
                   <Input 
                     id="local-insurance-provider"
