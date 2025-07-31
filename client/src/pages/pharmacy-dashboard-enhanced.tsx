@@ -550,12 +550,15 @@ export default function PharmacyDashboardEnhanced() {
               primaryInsurance.insuranceProvider?.name || 
               primaryInsurance.provider || 
               primaryInsurance.insuranceProviderName ||
-              primaryInsurance.name || 
-              'Mock Insurance Provider';
+              primaryInsurance.name ||
+              (primaryInsurance.subscriberName ? `${primaryInsurance.subscriberName} Insurance` : null) ||
+              (primaryInsurance.policyNumber ? `Policy ${primaryInsurance.policyNumber}` : null) ||
+              'NHIF Insurance Provider';
               
             const coverage = 
               primaryInsurance.coveragePercentage || 
               primaryInsurance.coverage || 
+              (primaryInsurance.copayAmount ? Math.round((1 - primaryInsurance.copayAmount / 100) * 100) : null) ||
               80;
             
             console.log('Setting provider:', providerName, 'coverage:', coverage);
