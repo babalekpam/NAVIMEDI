@@ -82,11 +82,7 @@ export default function PharmacyDashboardEnhanced() {
   // Fetch prescriptions sent to this pharmacy
   const { data: prescriptions = [], isLoading } = useQuery({
     queryKey: ['/api/prescriptions'],
-    queryFn: async () => {
-      const response = await fetch('/api/prescriptions');
-      if (!response.ok) throw new Error('Failed to fetch prescriptions');
-      return response.json() as Promise<PrescriptionWorkflow[]>;
-    }
+    enabled: !!user // Only fetch when user is authenticated
   });
 
   // Update prescription status mutation
