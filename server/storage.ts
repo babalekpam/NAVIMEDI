@@ -430,6 +430,9 @@ export interface IStorage {
   // Cross-tenant patient access for pharmacies
   getPatientsWithPrescriptionsForPharmacy(pharmacyTenantId: string): Promise<Patient[]>;
   
+  // Cross-tenant patient insurance access
+  getPatientInsuranceCrossTenant(patientId: string): Promise<PatientInsurance[]>;
+  
   // Patient Account Activation
   generatePatientCredentials(patientId: string, tenantId: string): Promise<{tempPassword: string, activationToken: string}>;
   sendPatientActivationMessage(patient: Patient, tempPassword: string, activationToken: string): Promise<boolean>;
@@ -642,6 +645,50 @@ export class DatabaseStorage implements IStorage {
       .orderBy(patients.lastName, patients.firstName);
 
     return patientsWithPrescriptions;
+  }
+
+  // Cross-tenant patient insurance access for pharmacy billing
+  async getPatientInsuranceCrossTenant(patientId: string): Promise<PatientInsurance[]> {
+    const insuranceList = await db
+      .select({
+        id: patientInsurance.id,
+        tenantId: patientInsurance.tenantId,
+        patientId: patientInsurance.patientId,
+        insuranceProviderId: patientInsurance.insuranceProviderId,
+        policyNumber: patientInsurance.policyNumber,
+        groupNumber: patientInsurance.groupNumber,
+        subscriberId: patientInsurance.subscriberId,
+        relationshipToSubscriber: patientInsurance.relationshipToSubscriber,
+        coverageType: patientInsurance.coverageType,
+        effectiveDate: patientInsurance.effectiveDate,
+        expirationDate: patientInsurance.expirationDate,
+        copayAmount: patientInsurance.copayAmount,
+        deductibleAmount: patientInsurance.deductibleAmount,
+        isPrimary: patientInsurance.isPrimary,
+        isActive: patientInsurance.isActive,
+        createdAt: patientInsurance.createdAt,
+        updatedAt: patientInsurance.updatedAt,
+        // Include insurance provider information
+        insuranceProvider: {
+          id: insuranceProviders.id,
+          name: insuranceProviders.name,
+          type: insuranceProviders.type,
+          contactInfo: insuranceProviders.contactInfo,
+          website: insuranceProviders.website,
+          coveragePercentage: insuranceProviders.coveragePercentage
+        }
+      })
+      .from(patientInsurance)
+      .leftJoin(insuranceProviders, eq(patientInsurance.insuranceProviderId, insuranceProviders.id))
+      .where(
+        and(
+          eq(patientInsurance.patientId, patientId),
+          eq(patientInsurance.isActive, true)
+        )
+      )
+      .orderBy(desc(patientInsurance.isPrimary));
+
+    return insuranceList;
   }
 
   async getPatientsWithPrescriptionsForPharmacy(pharmacyTenantId: string, search?: string): Promise<Patient[]> {
