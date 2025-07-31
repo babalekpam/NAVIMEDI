@@ -575,23 +575,52 @@ export default function PharmacyDashboardEnhanced() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        // Use direct DOM queries to populate insurance fields
+                        console.log('Load Insurance button clicked');
+                        
+                        // Use both refs and DOM queries for maximum compatibility
                         const providerInput = document.getElementById('local-insurance-provider') as HTMLInputElement;
                         const coverageInput = document.getElementById('local-coverage-percentage') as HTMLInputElement;
                         
+                        console.log('Provider input found:', !!providerInput);
+                        console.log('Coverage input found:', !!coverageInput);
+                        
+                        // Method 1: Direct DOM manipulation
                         if (providerInput) {
                           providerInput.value = "Amara Mwangi Insurance";
-                          providerInput.dispatchEvent(new Event('input', { bubbles: true }));
-                          providerInput.dispatchEvent(new Event('change', { bubbles: true }));
+                          console.log('Set provider DOM value:', providerInput.value);
                         }
                         
                         if (coverageInput) {
                           coverageInput.value = "80";
-                          coverageInput.dispatchEvent(new Event('input', { bubbles: true }));
-                          coverageInput.dispatchEvent(new Event('change', { bubbles: true }));
+                          console.log('Set coverage DOM value:', coverageInput.value);
                         }
                         
-                        calculateFromInputs();
+                        // Method 2: Use refs if available
+                        if (providerInputRef.current) {
+                          providerInputRef.current.value = "Amara Mwangi Insurance";
+                          console.log('Set provider ref value:', providerInputRef.current.value);
+                        }
+                        
+                        if (coverageInputRef.current) {
+                          coverageInputRef.current.value = "80";
+                          console.log('Set coverage ref value:', coverageInputRef.current.value);
+                        }
+                        
+                        // Method 3: Force React events for both inputs
+                        [providerInput, coverageInput].forEach(input => {
+                          if (input) {
+                            const inputEvent = new Event('input', { bubbles: true });
+                            const changeEvent = new Event('change', { bubbles: true });
+                            input.dispatchEvent(inputEvent);
+                            input.dispatchEvent(changeEvent);
+                          }
+                        });
+                        
+                        // Force recalculation
+                        setTimeout(() => {
+                          calculateFromInputs();
+                        }, 100);
+                        
                         toast({
                           title: "Insurance Data Loaded",
                           description: "Loaded Amara Mwangi Insurance with 80% coverage",
