@@ -267,7 +267,7 @@ export default function PharmacyDashboardEnhanced() {
 
   // Filter prescriptions by status
   const newPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'prescribed' || p.status === 'sent_to_pharmacy');
-  const insuranceToVerify = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'received');
+  const insuranceToVerify = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'received' || p.status === 'insurance_verified');
   const processingPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'processing');
   const readyPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'ready');
   const dispensedPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'dispensed' || p.status === 'picked_up');
