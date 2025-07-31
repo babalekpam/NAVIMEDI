@@ -427,9 +427,15 @@ export default function PharmacyDashboardEnhanced() {
             {prescription.status === 'received' ? (
               <Button 
                 size="sm" 
-                onClick={() => {
+                onClick={(e) => {
+                  console.log('Verify Insurance button clicked');
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Setting prescription:', prescription.id);
                   setSelectedPrescription(prescription);
+                  console.log('Opening dialog...');
                   setInsuranceDialogOpen(true);
+                  console.log('Dialog state should be true now');
                 }}
                 disabled={updateStatusMutation.isPending}
               >
@@ -485,6 +491,8 @@ export default function PharmacyDashboardEnhanced() {
     const [localCoveragePercentage, setLocalCoveragePercentage] = useState("");
     const [localNotes, setLocalNotes] = useState("");
     const [localCalculation, setLocalCalculation] = useState<InsuranceCalculation | null>(null);
+
+    console.log(`[DIALOG-DEBUG] Dialog open state: ${insuranceDialogOpen}, Selected prescription: ${selectedPrescription?.id}`);
 
     // Fetch patient insurance data - but don't enable query until dialog opens
     const { data: patientInsurance = [] } = useQuery({
