@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -491,6 +491,10 @@ export default function PharmacyDashboardEnhanced() {
     const [localCoveragePercentage, setLocalCoveragePercentage] = useState("");
     const [localNotes, setLocalNotes] = useState("");
     const [localCalculation, setLocalCalculation] = useState<InsuranceCalculation | null>(null);
+    
+    // Create refs for direct DOM manipulation as backup
+    const providerInputRef = useRef<HTMLInputElement>(null);
+    const coverageInputRef = useRef<HTMLInputElement>(null);
 
     console.log(`[DIALOG-DEBUG] Dialog open state: ${insuranceDialogOpen}, Selected prescription: ${selectedPrescription?.id}`);
 
@@ -576,8 +580,19 @@ export default function PharmacyDashboardEnhanced() {
                           return;
                         }
                         
+                        // Try both React state and direct DOM manipulation
                         setLocalInsuranceProvider("Amara Mwangi Insurance");
                         setLocalCoveragePercentage("80");
+                        
+                        // Direct DOM backup method
+                        if (providerInputRef.current) {
+                          providerInputRef.current.value = "Amara Mwangi Insurance";
+                          console.log('Set provider input directly via ref');
+                        }
+                        if (coverageInputRef.current) {
+                          coverageInputRef.current.value = "80";
+                          console.log('Set coverage input directly via ref');
+                        }
                         
                         toast({
                           title: "Insurance Data Loaded",
@@ -590,6 +605,7 @@ export default function PharmacyDashboardEnhanced() {
                     </Button>
                   </div>
                   <Input 
+                    ref={providerInputRef}
                     id="local-insurance-provider"
                     placeholder="e.g., Medicare, Blue Cross Blue Shield"
                     value={localInsuranceProvider}
@@ -623,6 +639,7 @@ export default function PharmacyDashboardEnhanced() {
                     <Label htmlFor="local-coverage-percentage">Insurance Coverage (%)</Label>
                     <div className="flex gap-2">
                       <Input 
+                        ref={coverageInputRef}
                         id="local-coverage-percentage"
                         type="number" 
                         min="0" 
