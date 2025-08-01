@@ -4088,32 +4088,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(pharmacyPatientInsurance.insuranceProviderName);
   }
 
-  async generateShiftReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
-    const { start, end } = dateRange;
-    
-    let query = db
-      .select({
-        shiftDate: sql<string>`DATE(${workShifts.startTime})`,
-        shiftType: workShifts.shiftType,
-        totalShifts: sql<number>`COUNT(*)`,
-        completedShifts: sql<number>`COUNT(${workShifts.endTime})`,
-        averageDuration: sql<number>`AVG(EXTRACT(EPOCH FROM (${workShifts.endTime} - ${workShifts.startTime})) / 3600)`,
-        totalHours: sql<number>`SUM(EXTRACT(EPOCH FROM (${workShifts.endTime} - ${workShifts.startTime})) / 3600)`,
-      })
-      .from(workShifts)
-      .where(eq(workShifts.tenantId, tenantId));
 
-    if (start) {
-      query = query.where(sql`${workShifts.startTime} >= ${start}`);
-    }
-    if (end) {
-      query = query.where(sql`${workShifts.startTime} <= ${end}`);
-    }
-
-    return await query
-      .groupBy(sql`DATE(${workShifts.startTime})`, workShifts.shiftType)
-      .orderBy(sql`DATE(${workShifts.startTime}) DESC`);
-  }
 
   async getPharmacyReportTemplatesByTenant(tenantId: string): Promise<PharmacyReportTemplate[]> {
     return await db.select().from(pharmacyReportTemplates).where(eq(pharmacyReportTemplates.tenantId, tenantId));

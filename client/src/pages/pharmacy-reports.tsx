@@ -75,7 +75,6 @@ const reportTypes = [
   { value: "inventory", label: "Inventory Report", icon: BarChart3, description: "Stock levels and medication usage" },
   { value: "patient", label: "Patient Report", icon: Users, description: "Patient demographics and visit patterns" },
   { value: "insurance", label: "Insurance Report", icon: FileText, description: "Insurance claims and coverage analysis" },
-  { value: "shift", label: "Shift Report", icon: Calendar, description: "Work shift activities and performance" },
 ];
 
 export default function PharmacyReports() {

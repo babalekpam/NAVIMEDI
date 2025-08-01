@@ -5705,71 +5705,7 @@ Report ID: ${report.id}
     }
   });
 
-  // Work Shift Management Routes
-  app.get("/api/work-shifts", authenticateToken, requireTenant, async (req, res) => {
-    try {
-      const shifts = await storage.getActiveWorkShifts(req.tenantId!);
-      res.json(shifts);
-    } catch (error) {
-      console.error("Error fetching work shifts:", error);
-      res.status(500).json({ message: "Failed to fetch work shifts" });
-    }
-  });
 
-  app.get("/api/work-shifts/current", authenticateToken, requireTenant, async (req, res) => {
-    try {
-      const currentShift = await storage.getCurrentWorkShift(req.user!.id, req.tenantId!);
-      res.json(currentShift || null);
-    } catch (error) {
-      console.error("Error fetching current work shift:", error);
-      res.status(500).json({ message: "Failed to fetch current work shift" });
-    }
-  });
-
-  app.post("/api/work-shifts", authenticateToken, requireTenant, async (req, res) => {
-    try {
-      const { shiftType, notes } = req.body;
-      
-      // Check if user already has an active shift
-      const existingShift = await storage.getCurrentWorkShift(req.user!.id, req.tenantId!);
-      if (existingShift) {
-        return res.status(400).json({ message: "You already have an active shift" });
-      }
-
-      const shiftData = {
-        tenantId: req.tenantId!,
-        userId: req.user!.id,
-        shiftType,
-        startTime: new Date(),
-        notes
-      };
-
-      const shift = await storage.createWorkShift(shiftData);
-      res.status(201).json(shift);
-    } catch (error) {
-      console.error("Error creating work shift:", error);
-      res.status(500).json({ message: "Failed to create work shift" });
-    }
-  });
-
-  app.patch("/api/work-shifts/:id/end", authenticateToken, requireTenant, async (req, res) => {
-    try {
-      const { id } = req.params;
-      const shift = await storage.endWorkShift(id, req.tenantId!);
-      
-      if (!shift) {
-        return res.status(404).json({ message: "Work shift not found" });
-      }
-
-      // Trigger archive process for the ended shift
-      await storage.archiveRecordsForShift(id, req.tenantId!);
-
-      res.json(shift);
-    } catch (error) {
-      console.error("Error ending work shift:", error);
-      res.status(500).json({ message: "Failed to end work shift" });
-    }
-  });
 
   // Pharmacy Patient Insurance Routes
   app.get("/api/pharmacy-patient-insurance/:patientId", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
@@ -5839,16 +5775,7 @@ Report ID: ${report.id}
     }
   });
 
-  app.get("/api/archived-records/shift/:shiftId", authenticateToken, requireTenant, async (req, res) => {
-    try {
-      const { shiftId } = req.params;
-      const records = await storage.getArchivedRecordsByShift(shiftId, req.tenantId!);
-      res.json(records);
-    } catch (error) {
-      console.error("Error fetching archived records by shift:", error);
-      res.status(500).json({ message: "Failed to fetch archived records by shift" });
-    }
-  });
+
 
   app.get("/api/archived-records/patient/:patientId", authenticateToken, requireTenant, async (req, res) => {
     try {
@@ -5885,9 +5812,7 @@ Report ID: ${report.id}
         case 'insurance':
           reportData = await storage.generateInsuranceReport(tenantId, dateRange);
           break;
-        case 'shift':
-          reportData = await storage.generateShiftReport(tenantId, dateRange);
-          break;
+
         default:
           return res.status(400).json({ message: "Invalid report type" });
       }
