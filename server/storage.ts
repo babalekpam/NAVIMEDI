@@ -124,6 +124,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or, isNull, gt } from "drizzle-orm";
+import { randomUUID } from "crypto";
 
 export interface IStorage {
   // User management
@@ -398,6 +399,7 @@ export interface IStorage {
   // Patient Assignment Management
   getPatientAssignment(id: string, tenantId: string): Promise<any | undefined>;
   createPatientAssignment(assignment: any): Promise<any>;
+  assignPatientToPhysician(data: any): Promise<any>;
   updatePatientAssignment(id: string, updates: any, tenantId: string): Promise<any | undefined>;
   getPatientAssignmentsByPhysician(physicianId: string, tenantId: string): Promise<any[]>;
   getPatientAssignmentsByPatient(patientId: string, tenantId: string): Promise<any[]>;
@@ -3120,6 +3122,24 @@ export class DatabaseStorage implements IStorage {
   async createPatientAssignment(assignment: any): Promise<any> {
     const [newAssignment] = await db.insert(patientAssignments).values(assignment).returning();
     return newAssignment;
+  }
+
+  async assignPatientToPhysician(data: any): Promise<any> {
+    // Use createPatientAssignment with proper data structure
+    return await this.createPatientAssignment({
+      id: randomUUID(),
+      tenantId: data.tenantId,
+      patientId: data.patientId,
+      physicianId: data.physicianId,
+      assignmentType: data.assignmentType || 'primary_care',
+      assignedBy: data.assignedBy,
+      assignedDate: data.assignedDate || new Date(),
+      expiryDate: data.expiryDate || null,
+      isActive: data.isActive !== undefined ? data.isActive : true,
+      notes: data.notes || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
   }
 
   async updatePatientAssignment(id: string, updates: any, tenantId: string): Promise<any | undefined> {

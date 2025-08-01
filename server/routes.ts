@@ -1066,6 +1066,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const appointment = await storage.createAppointment(appointmentData);
 
+      // Automatically assign patient to doctor if this is a new patient for the doctor
+      if (appointment.patientId && appointment.providerId) {
+        try {
+          console.log("[AUTO ASSIGN] Checking if patient", appointment.patientId, "is assigned to doctor", appointment.providerId);
+          
+          // Check if patient is already assigned to this doctor
+          const existingAssignment = await storage.hasPatientAccess(appointment.providerId, appointment.patientId, req.tenant!.id);
+          
+          if (!existingAssignment) {
+            console.log("[AUTO ASSIGN] Patient not assigned to doctor, creating assignment");
+            
+            // Create patient assignment
+            await storage.assignPatientToPhysician({
+              tenantId: req.tenant!.id,
+              patientId: appointment.patientId,
+              physicianId: appointment.providerId,
+              assignmentType: 'primary_care',
+              assignedBy: req.user!.id,
+              assignedDate: new Date(),
+              isActive: true,
+              notes: `Auto-assigned during appointment scheduling on ${new Date().toLocaleDateString()}`
+            });
+            
+            console.log("[AUTO ASSIGN] Successfully assigned patient", appointment.patientId, "to doctor", appointment.providerId);
+          } else {
+            console.log("[AUTO ASSIGN] Patient already assigned to doctor");
+          }
+        } catch (assignError) {
+          console.error("[AUTO ASSIGN] Error during patient assignment:", assignError);
+          // Continue even if assignment fails - appointment is still created
+        }
+      }
+
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
