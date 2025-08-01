@@ -5136,6 +5136,10 @@ Report ID: ${report.id}
     try {
       const { reportType } = req.body;
       const tenantId = req.tenantId!;
+      const userId = req.user?.id;
+      
+      console.log("Quick Report Debug - User ID:", userId, "Tenant ID:", tenantId, "Report Type:", reportType);
+      console.log("Quick Report Debug - Full req.user:", JSON.stringify(req.user, null, 2));
       
       // Verify this is a laboratory tenant
       const tenant = await storage.getTenant(tenantId);
@@ -5161,11 +5165,13 @@ Report ID: ${report.id}
         format: 'pdf',
         parameters: { reportType, tenantId },
         tenantId,
-        createdBy: req.user!.id,
+        createdBy: userId || tenantId, // Use tenantId as fallback if user ID not available
         status: 'completed' as const,
         fileUrl: `/api/reports/${Date.now()}/download`, // Use standard reports download endpoint
       };
 
+      console.log("Creating report with data:", JSON.stringify(reportData, null, 2));
+      
       const report = await storage.createReport(reportData);
       res.json(report);
     } catch (error) {
