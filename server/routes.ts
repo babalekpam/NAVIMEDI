@@ -5933,6 +5933,47 @@ Report ID: ${report.id}
     }
   });
 
+  // Pharmacy Report Generation Endpoint
+  app.post("/api/reports/generate", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
+    try {
+      const { type, dateRange, templateId } = req.body;
+      const tenantId = req.tenantId!;
+      
+      // Verify this is a pharmacy tenant
+      const tenant = await storage.getTenant(tenantId);
+      if (tenant?.type !== 'pharmacy') {
+        return res.status(403).json({ message: "Report generation restricted to pharmacy tenants" });
+      }
+
+      let reportData: any[] = [];
+      
+      switch (type) {
+        case 'sales':
+          reportData = await storage.generateSalesReport(tenantId, dateRange);
+          break;
+        case 'prescription':
+          reportData = await storage.generatePrescriptionReport(tenantId, dateRange);
+          break;
+        case 'inventory':
+          reportData = await storage.generateInventoryReport(tenantId, dateRange);
+          break;
+        case 'patient':
+          reportData = await storage.generatePatientReport(tenantId, dateRange);
+          break;
+        case 'insurance':
+          reportData = await storage.generateInsuranceReport(tenantId, dateRange);
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid report type" });
+      }
+
+      res.json(reportData);
+    } catch (error) {
+      console.error("Error generating pharmacy report:", error);
+      res.status(500).json({ message: "Failed to generate pharmacy report" });
+    }
+  });
+
   const server = createServer(app);
   return server;
 }
