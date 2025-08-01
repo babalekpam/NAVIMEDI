@@ -5,7 +5,7 @@ import {
   patients, prescriptions, appointments, labOrders, labResults, 
   vitalSigns, insuranceClaims, patientInsurance, visitSummaries,
   medicalCommunications, patientCheckIns, auditLogs, patientAssignments,
-  healthAnalyses, labBills, pharmacyReceipts
+  healthAnalyses, labBills, pharmacyReceipts, reports
 } from '../shared/schema.js';
 
 const pool = new Pool({
@@ -21,6 +21,9 @@ async function resetCounters() {
     // Delete all data tables while preserving tenants, users, and admin accounts
     await db.delete(healthAnalyses);
     console.log('✅ Cleared health analyses');
+    
+    await db.delete(reports);
+    console.log('✅ Cleared reports');
     
     await db.delete(auditLogs);
     console.log('✅ Cleared audit logs');
