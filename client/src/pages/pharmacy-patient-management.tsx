@@ -335,7 +335,9 @@ export default function PharmacyPatientManagement() {
                           <Label className="text-sm font-medium">Copay Amount</Label>
                           <p className="text-sm flex items-center gap-1">
                             <DollarSign className="h-3 w-3" />
-                            {patientInsurance.copayAmount.toFixed(2)}
+${typeof patientInsurance.copayAmount === 'number' 
+                              ? patientInsurance.copayAmount.toFixed(2) 
+                              : parseFloat(patientInsurance.copayAmount.toString()).toFixed(2)}
                           </p>
                         </div>
                       )}
@@ -344,7 +346,9 @@ export default function PharmacyPatientManagement() {
                           <Label className="text-sm font-medium">Deductible Amount</Label>
                           <p className="text-sm flex items-center gap-1">
                             <DollarSign className="h-3 w-3" />
-                            {patientInsurance.deductibleAmount.toFixed(2)}
+${typeof patientInsurance.deductibleAmount === 'number' 
+                              ? patientInsurance.deductibleAmount.toFixed(2) 
+                              : parseFloat(patientInsurance.deductibleAmount.toString()).toFixed(2)}
                           </p>
                         </div>
                       )}
