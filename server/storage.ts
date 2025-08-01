@@ -1169,6 +1169,15 @@ export class DatabaseStorage implements IStorage {
         sentToPharmacyDate: prescriptions.sentToPharmacyDate,
         filledDate: prescriptions.filledDate,
         expiryDate: prescriptions.expiryDate,
+        // Pharmacy workflow fields
+        insuranceProvider: prescriptions.insuranceProvider,
+        insuranceCopay: prescriptions.insuranceCopay,
+        totalCost: prescriptions.totalCost,
+        insuranceVerifiedDate: prescriptions.insuranceVerifiedDate,
+        processingStartedDate: prescriptions.processingStartedDate,
+        readyDate: prescriptions.readyDate,
+        dispensedDate: prescriptions.dispensedDate,
+        pharmacyNotes: prescriptions.pharmacyNotes,
         createdAt: prescriptions.createdAt,
         updatedAt: prescriptions.updatedAt,
         // Patient information
