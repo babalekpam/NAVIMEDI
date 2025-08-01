@@ -22,6 +22,7 @@ const labBillSchema = z.object({
   patientId: z.string().min(1, "Patient is required"),
   labOrderId: z.string().min(1, "Lab order is required"),
   amount: z.number().min(0.01, "Amount must be greater than 0"),
+  description: z.string().min(1, "Description is required"),
   insuranceCoverageRate: z.number().min(0).max(100, "Coverage rate must be between 0 and 100"),
   insuranceAmount: z.number().min(0),
   patientAmount: z.number().min(0),
@@ -70,6 +71,7 @@ export default function LaboratoryBilling() {
       patientId: "",
       labOrderId: "",
       amount: 0,
+      description: "",
       insuranceCoverageRate: 80,
       insuranceAmount: 0,
       patientAmount: 0,
@@ -207,6 +209,9 @@ export default function LaboratoryBilling() {
       form.setValue("labOrderId", labOrderId);
       form.setValue("testName", selectedOrder.testName || selectedOrder.testCode || "");
       form.setValue("labCodes", selectedOrder.testCode || "");
+      // Set description based on test name
+      const description = `Laboratory test: ${selectedOrder.testName || selectedOrder.testCode}`;
+      form.setValue("description", description);
       console.log("Updated form with test name:", selectedOrder.testName);
     } else {
       console.log("No matching lab order found for ID:", labOrderId);
@@ -234,7 +239,13 @@ export default function LaboratoryBilling() {
   }, [watchedAmount, watchedCoverageRate]);
 
   const onSubmit = (data: LabBillForm) => {
-    createLabBillMutation.mutate(data);
+    // Convert numeric fields to strings for backend compatibility
+    const formattedData = {
+      ...data,
+      amount: data.amount.toString(),
+      notes: data.labNotes || undefined,
+    };
+    createLabBillMutation.mutate(formattedData);
   };
 
   const getStatusBadge = (status: string) => {
@@ -302,7 +313,7 @@ export default function LaboratoryBilling() {
               Create Lab Insurance Claim
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create Lab Insurance Claim</DialogTitle>
               <DialogDescription>
@@ -370,6 +381,24 @@ export default function LaboratoryBilling() {
                     )}
                   />
                 </div>
+
+                {/* Description Field */}
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Description of lab services" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Brief description of the laboratory services provided
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 {/* Claim Number Field */}
                 <FormField
