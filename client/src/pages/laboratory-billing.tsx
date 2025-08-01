@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { DollarSign, Plus, Search, Filter, FileText, Calendar, User, TestTube, Receipt, Eye, Edit } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DollarSign, Plus, Search, Filter, FileText, Calendar, User, TestTube, Receipt, Eye, Edit, BarChart3, TrendingUp, Download, Printer, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { useToast } from "@/hooks/use-toast";
@@ -60,11 +61,171 @@ export default function LaboratoryBilling() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedBill, setSelectedBill] = useState<LabBill | null>(null);
+  const [activeTab, setActiveTab] = useState("billing");
   
   const { user } = useAuth();
   const { tenant } = useTenant();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Analytics queries
+  const { data: analyticsData = {}, isLoading: analyticsLoading } = useQuery({
+    queryKey: ["/api/laboratory/analytics"],
+    enabled: !!user && !!tenant,
+    staleTime: 0,
+    cacheTime: 0,
+    refetchInterval: 5000,
+  });
+
+  const { data: reportsData = [], isLoading: reportsLoading } = useQuery({
+    queryKey: ["/api/reports"],
+    enabled: !!user && !!tenant,
+    staleTime: 0,
+    cacheTime: 0,
+    refetchInterval: 5000,
+  });
+
+  // Report generation mutations
+  const generateReportMutation = useMutation({
+    mutationFn: async (reportData: { type: string; format: string; title: string }) => {
+      return await apiRequest("POST", "/api/reports", reportData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Report Generated",
+        description: "Your laboratory billing report has been created successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to generate report. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Download report function
+  const downloadReport = async (fileUrl: string, title: string, format: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const response = await fetch(fileUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Download Started",
+        description: `${title} is downloading...`
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Could not download the report. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Print report function  
+  const printReport = async (bill: LabBill) => {
+    try {
+      const printContent = `
+        <html>
+          <head>
+            <title>Laboratory Bill - ${bill.patientFirstName} ${bill.patientLastName}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+              .bill-info { margin: 20px 0; }
+              .amount { font-size: 24px; font-weight: bold; color: #10b981; }
+              .status { padding: 4px 8px; border-radius: 4px; }
+              .completed { background-color: #dcfce7; color: #15803d; }
+              .pending { background-color: #fef3c7; color: #d97706; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>JOY Laboratory</h1>
+              <h2>Laboratory Bill Receipt</h2>
+            </div>
+            <div class="bill-info">
+              <p><strong>Patient:</strong> ${bill.patientFirstName} ${bill.patientLastName}</p>
+              <p><strong>MRN:</strong> ${bill.patientMrn}</p>
+              <p><strong>Test:</strong> ${bill.testName || 'N/A'}</p>
+              <p><strong>Description:</strong> ${bill.description}</p>
+              <p><strong>Amount:</strong> <span class="amount">$${parseFloat(bill.amount.toString()).toFixed(2)}</span></p>
+              <p><strong>Status:</strong> <span class="status ${bill.status}">${bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}</span></p>
+              <p><strong>Date:</strong> ${new Date(bill.createdAt).toLocaleDateString()}</p>
+              ${bill.notes ? `<p><strong>Notes:</strong> ${bill.notes}</p>` : ''}
+            </div>
+            <div style="margin-top: 40px; text-align: center; color: #666;">
+              <p>Thank you for using JOY Laboratory services</p>
+            </div>
+          </body>
+        </html>
+      `;
+      
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+        
+        toast({
+          title: "Print Started",
+          description: "Laboratory bill is being printed..."
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Print Failed",
+        description: "Could not print the report. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Generate quick reports
+  const generateQuickReport = (type: string) => {
+    const reportTypes = {
+      'billing_summary': 'Laboratory Billing Summary',
+      'revenue_analysis': 'Revenue Analysis Report',
+      'patient_billing': 'Patient Billing Report',
+      'test_analysis': 'Test Analysis Report'
+    };
+    
+    generateReportMutation.mutate({
+      type,
+      format: 'pdf',
+      title: reportTypes[type as keyof typeof reportTypes] || 'Laboratory Report'
+    });
+  };
 
   const form = useForm<LabBillForm>({
     resolver: zodResolver(labBillSchema),
@@ -326,8 +487,16 @@ export default function LaboratoryBilling() {
   };
 
   const handlePrintInvoice = (billId: string) => {
-    // For now, use the same receipt function
-    handleViewReceipt(billId);
+    const bill = labBills?.find(b => b.id === billId);
+    if (bill) {
+      printReport(bill);
+    } else {
+      toast({
+        title: "Error",
+        description: "Bill not found",
+        variant: "destructive"
+      });
+    }
   };
 
   // Filter bills
@@ -425,18 +594,40 @@ export default function LaboratoryBilling() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Laboratory Insurance Claims</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Laboratory Billing Management</h1>
         <p className="text-gray-600">
-          Create and manage insurance claims for laboratory services and tests
+          Comprehensive billing, analytics, and reporting system for laboratory services
         </p>
       </div>
 
-      {/* Actions Bar */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="billing">
+            <DollarSign className="w-4 h-4 mr-2" />
+            Billing
+          </TabsTrigger>
+          <TabsTrigger value="analytics">
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="reports">
+            <FileText className="w-4 h-4 mr-2" />
+            Reports
+          </TabsTrigger>
+          <TabsTrigger value="trends">
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Trends
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="billing" className="mt-6">
+          <div className="space-y-6">
+            {/* Actions Bar */}
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
               placeholder="Search bills..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -961,8 +1152,216 @@ export default function LaboratoryBilling() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-6">
+          <div className="space-y-6">
+            {/* Analytics Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Total Bills</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{analyticsData.totalBills || 0}</div>
+                  <p className="text-xs text-gray-600">Laboratory bills</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${analyticsData.totalRevenue || 0}</div>
+                  <p className="text-xs text-gray-600">This month</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Pending Bills</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{analyticsData.pendingBills || 0}</div>
+                  <p className="text-xs text-gray-600">Awaiting payment</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{analyticsData.completionRate || 0}%</div>
+                  <p className="text-xs text-gray-600">Bills completed</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Report Generation</CardTitle>
+                <CardDescription>Generate common laboratory billing reports</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => generateQuickReport('billing_summary')}
+                    disabled={generateReportMutation.isPending}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Billing Summary
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => generateQuickReport('revenue_analysis')}
+                    disabled={generateReportMutation.isPending}
+                  >
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Revenue Analysis
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => generateQuickReport('patient_billing')}
+                    disabled={generateReportMutation.isPending}
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Patient Billing
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => generateQuickReport('test_analysis')}
+                    disabled={generateReportMutation.isPending}
+                  >
+                    <TestTube className="w-4 h-4 mr-2" />
+                    Test Analysis
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="reports" className="mt-6">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Generated Reports</CardTitle>
+                <CardDescription>Download and manage your laboratory billing reports</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {reportsLoading ? (
+                  <div className="flex items-center justify-center p-8">
+                    <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
+                  </div>
+                ) : reportsData.length === 0 ? (
+                  <div className="text-center p-8 text-gray-500">
+                    <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <p>No reports generated yet</p>
+                    <p className="text-sm">Use the Analytics tab to generate reports</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {reportsData.map((report: any) => (
+                      <div key={report.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <FileText className="w-8 h-8 text-blue-500" />
+                          <div>
+                            <h3 className="font-medium">{report.title}</h3>
+                            <p className="text-sm text-gray-600">
+                              {report.format.toUpperCase()} • {new Date(report.createdAt).toLocaleDateString()}
+                            </p>
+                            <Badge className={report.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                              {report.status}
+                            </Badge>
+                          </div>
+                        </div>
+                        {report.status === 'completed' && report.fileUrl && (
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => downloadReport(report.fileUrl, report.title, report.format)}
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Download
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => window.open(report.fileUrl, '_blank')}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              View
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="trends" className="mt-6">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Billing Trends & Insights</CardTitle>
+                <CardDescription>Visual analytics for laboratory billing performance</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h3 className="font-medium">Revenue Trends</h3>
+                    <div className="h-48 flex items-center justify-center border rounded-lg bg-gray-50">
+                      <p className="text-gray-500">Revenue chart will be displayed here</p>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <h3 className="font-medium">Test Volume Analysis</h3>
+                    <div className="h-48 flex items-center justify-center border rounded-lg bg-gray-50">
+                      <p className="text-gray-500">Test volume chart will be displayed here</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6">
+                  <h3 className="font-medium mb-4">Key Performance Indicators</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Average Bill Amount</span>
+                        <TrendingUp className="w-4 h-4 text-green-500" />
+                      </div>
+                      <div className="text-2xl font-bold mt-2">${analyticsData.averageBillAmount || 0}</div>
+                    </div>
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Bills This Month</span>
+                        <BarChart3 className="w-4 h-4 text-blue-500" />
+                      </div>
+                      <div className="text-2xl font-bold mt-2">{analyticsData.billsThisMonth || 0}</div>
+                    </div>
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Processing Time</span>
+                        <Calendar className="w-4 h-4 text-purple-500" />
+                      </div>
+                      <div className="text-2xl font-bold mt-2">{analyticsData.avgProcessingTime || 0}h</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -5054,6 +5054,98 @@ Report ID: ${report.id}
     }
   });
 
+  // Laboratory Analytics API endpoints
+  app.get("/api/laboratory/analytics", authenticateToken, requireTenant, requireRole(['lab_technician', 'tenant_admin', 'director']), async (req, res) => {
+    try {
+      const tenantId = req.tenantId!;
+      
+      // Verify this is a laboratory tenant
+      const tenant = await storage.getTenant(tenantId);
+      if (tenant?.type !== 'laboratory') {
+        return res.status(403).json({ error: "Analytics access restricted to laboratory tenants" });
+      }
+
+      // Get all lab bills for this laboratory
+      const labBills = await storage.getLabBillsByTenant(tenantId);
+      
+      // Calculate analytics
+      const totalBills = labBills.length;
+      const totalRevenue = labBills.reduce((sum, bill) => sum + parseFloat(bill.amount.toString()), 0);
+      const pendingBills = labBills.filter(bill => bill.status === 'pending').length;
+      const completedBills = labBills.filter(bill => bill.status === 'completed').length;
+      const completionRate = totalBills > 0 ? Math.round((completedBills / totalBills) * 100) : 0;
+      const averageBillAmount = totalBills > 0 ? Math.round(totalRevenue / totalBills) : 0;
+      
+      // Calculate bills this month
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const billsThisMonth = labBills.filter(bill => 
+        new Date(bill.createdAt) >= startOfMonth
+      ).length;
+      
+      // Mock processing time for now (could be calculated from actual data)
+      const avgProcessingTime = 2.5;
+
+      const analytics = {
+        totalBills,
+        totalRevenue,
+        pendingBills,
+        completionRate,
+        averageBillAmount,
+        billsThisMonth,
+        avgProcessingTime
+      };
+
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching laboratory analytics:", error);
+      res.status(500).json({ error: "Failed to fetch analytics" });
+    }
+  });
+
+  // Quick report generation for laboratory
+  app.post("/api/laboratory/quick-reports", authenticateToken, requireTenant, requireRole(['lab_technician', 'tenant_admin', 'director']), async (req, res) => {
+    try {
+      const { reportType } = req.body;
+      const tenantId = req.tenantId!;
+      
+      // Verify this is a laboratory tenant
+      const tenant = await storage.getTenant(tenantId);
+      if (tenant?.type !== 'laboratory') {
+        return res.status(403).json({ error: "Report generation restricted to laboratory tenants" });
+      }
+
+      // Generate report title based on type
+      const reportTitles = {
+        'billing_summary': 'Laboratory Billing Summary Report',
+        'revenue_analysis': 'Laboratory Revenue Analysis Report',
+        'patient_billing': 'Patient Billing Report',
+        'test_analysis': 'Laboratory Test Analysis Report'
+      };
+
+      const title = reportTitles[reportType as keyof typeof reportTitles] || 'Laboratory Report';
+      
+      // Create the report entry
+      const reportData = {
+        title,
+        description: `Generated ${title.toLowerCase()} for ${tenant.name}`,
+        type: 'laboratory_analytics',
+        format: 'pdf',
+        parameters: { reportType, tenantId },
+        tenantId,
+        createdBy: req.user!.id,
+        status: 'completed' as const,
+        fileUrl: `/api/laboratory/reports/${Date.now()}/download`, // Mock URL for now
+      };
+
+      const report = await storage.createReport(reportData);
+      res.json(report);
+    } catch (error) {
+      console.error("Error generating quick report:", error);
+      res.status(500).json({ error: "Failed to generate report" });
+    }
+  });
+
   const server = createServer(app);
   return server;
 }
