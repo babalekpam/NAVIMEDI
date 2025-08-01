@@ -51,11 +51,18 @@ interface PharmacyReportTemplate {
   tenantId: string;
   name: string;
   description?: string;
-  templateType: string;
-  fields: any;
+  reportType: string;
+  dataFields: any;
+  groupBy?: string[];
+  orderBy?: string[];
   layoutConfig?: any;
   filters?: any;
+  isScheduled?: boolean;
+  scheduleFrequency?: string;
+  scheduleTime?: string;
+  lastGenerated?: string;
   isActive: boolean;
+  isDefault?: boolean;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -88,13 +95,15 @@ export default function PharmacyReports() {
   const queryClient = useQueryClient();
 
   // Query for report templates
-  const { data: templates = [], isLoading: templatesLoading } = useQuery({
+  const { data: templates = [], isLoading: templatesLoading, error: templatesError } = useQuery({
     queryKey: ["/api/pharmacy-report-templates"],
+    retry: false,
   });
 
   // Query for active templates
-  const { data: activeTemplates = [] } = useQuery({
+  const { data: activeTemplates = [], error: activeTemplatesError } = useQuery({
     queryKey: ["/api/pharmacy-report-templates/active"],
+    retry: false,
   });
 
   // Mutation to create/update report template
@@ -151,7 +160,7 @@ export default function PharmacyReports() {
         body: JSON.stringify({
           type: selectedReportType,
           dateRange,
-          templateId: activeTemplates.find(t => t.templateType === selectedReportType)?.id,
+          templateId: activeTemplates.find(t => t.reportType === selectedReportType)?.id,
         }),
       });
 
@@ -184,8 +193,8 @@ export default function PharmacyReports() {
     const data = {
       name: formData.get("name"),
       description: formData.get("description"),
-      templateType: formData.get("templateType"),
-      fields: JSON.parse(formData.get("fields") as string || "{}"),
+      reportType: formData.get("reportType"),
+      dataFields: JSON.parse(formData.get("dataFields") as string || "{}"),
       layoutConfig: JSON.parse(formData.get("layoutConfig") as string || "{}"),
       filters: JSON.parse(formData.get("filters") as string || "{}"),
       isActive: formData.get("isActive") === "true",
@@ -215,6 +224,36 @@ export default function PharmacyReports() {
     const rows = data.map(row => Object.values(row).join(",")).join("\n");
     return `${headers}\n${rows}`;
   };
+
+  // Check for permission errors
+  const hasPermissionError = (templatesError as any)?.message?.includes("Insufficient permissions") || 
+                             (activeTemplatesError as any)?.message?.includes("Insufficient permissions");
+
+  if (hasPermissionError) {
+    return (
+      <div className="p-6 space-y-6">
+        <h1 className="text-3xl font-bold">Pharmacy Reports</h1>
+        
+        <Card>
+          <CardContent className="p-8 text-center">
+            <div className="space-y-4">
+              <div className="text-red-500">
+                <FileText className="h-16 w-16 mx-auto mb-4" />
+              </div>
+              <h2 className="text-xl font-semibold">Access Restricted</h2>
+              <p className="text-gray-600 max-w-md mx-auto">
+                Pharmacy reports are only available to pharmacy staff. Please log in with a pharmacy account 
+                (pharmacist, billing staff, or pharmacy admin) to access this feature.
+              </p>
+              <Button onClick={() => window.location.href = '/login'} className="mt-4">
+                Switch to Pharmacy Login
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -358,7 +397,7 @@ export default function PharmacyReports() {
                     <TableCell className="font-medium">{template.name}</TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {reportTypes.find(t => t.value === template.templateType)?.label || template.templateType}
+                        {reportTypes.find(t => t.value === template.reportType)?.label || template.reportType}
                       </Badge>
                     </TableCell>
                     <TableCell>{template.description || "-"}</TableCell>
