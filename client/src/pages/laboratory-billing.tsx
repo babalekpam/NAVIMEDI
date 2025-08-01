@@ -85,10 +85,10 @@ export default function LaboratoryBilling() {
     refetchInterval: 5000,
   });
 
-  // Report generation mutations
+  // Report generation mutations for laboratory quick reports
   const generateReportMutation = useMutation({
-    mutationFn: async (reportData: { type: string; format: string; title: string }) => {
-      return await apiRequest("POST", "/api/reports", reportData);
+    mutationFn: async (reportData: { reportType: string }) => {
+      return await apiRequest("POST", "/api/laboratory/quick-reports", reportData);
     },
     onSuccess: () => {
       toast({
@@ -97,10 +97,11 @@ export default function LaboratoryBilling() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Report generation error:", error);
       toast({
         title: "Error",
-        description: "Failed to generate report. Please try again.",
+        description: error?.response?.data?.error || "Failed to generate report. Please try again.",
         variant: "destructive",
       });
     },
@@ -212,18 +213,10 @@ export default function LaboratoryBilling() {
   };
 
   // Generate quick reports
-  const generateQuickReport = (type: string) => {
-    const reportTypes = {
-      'billing_summary': 'Laboratory Billing Summary',
-      'revenue_analysis': 'Revenue Analysis Report',
-      'patient_billing': 'Patient Billing Report',
-      'test_analysis': 'Test Analysis Report'
-    };
-    
+  const generateQuickReport = (reportType: string) => {
+    console.log('Generating quick report:', reportType);
     generateReportMutation.mutate({
-      type,
-      format: 'pdf',
-      title: reportTypes[type as keyof typeof reportTypes] || 'Laboratory Report'
+      reportType
     });
   };
 

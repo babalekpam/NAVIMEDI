@@ -5163,7 +5163,7 @@ Report ID: ${report.id}
         tenantId,
         createdBy: req.user!.id,
         status: 'completed' as const,
-        fileUrl: `/api/laboratory/reports/${Date.now()}/download`, // Mock URL for now
+        fileUrl: `/api/reports/${Date.now()}/download`, // Use standard reports download endpoint
       };
 
       const report = await storage.createReport(reportData);
