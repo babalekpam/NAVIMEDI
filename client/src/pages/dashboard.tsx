@@ -1246,7 +1246,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Staff</p>
-                <p className="text-3xl font-bold text-gray-900">127</p>
+                <p className="text-3xl font-bold text-gray-900">{metrics?.todayAppointments || 0}</p>
               </div>
               <Users className="h-8 w-8 text-blue-600" />
             </div>
@@ -1257,7 +1257,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Patients</p>
-                <p className="text-3xl font-bold text-gray-900">2,456</p>
+                <p className="text-3xl font-bold text-gray-900">{metrics?.pendingLabResults || 0}</p>
               </div>
               <UserCheck className="h-8 w-8 text-green-600" />
             </div>
@@ -1268,7 +1268,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
-                <p className="text-3xl font-bold text-gray-900">$485K</p>
+                <p className="text-3xl font-bold text-gray-900">${metrics?.monthlyClaimsTotal || 0}</p>
               </div>
               <DollarSign className="h-8 w-8 text-green-600" />
             </div>
@@ -1279,7 +1279,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">System Alerts</p>
-                <p className="text-3xl font-bold text-gray-900">5</p>
+                <p className="text-3xl font-bold text-gray-900">{metrics?.activePrescriptions || 0}</p>
               </div>
               <AlertTriangle className="h-8 w-8 text-orange-600" />
             </div>
