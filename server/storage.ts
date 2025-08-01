@@ -1195,6 +1195,33 @@ export class DatabaseStorage implements IStorage {
       .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
       .where(and(eq(labOrders.id, id), eq(labOrders.tenantId, tenantId)))
       .returning();
+    
+    // If lab order status is changed to 'completed', update associated laboratory bill status
+    if (labOrder && updates.status === 'completed') {
+      try {
+        // Find the laboratory bill associated with this lab order
+        const [associatedBill] = await db
+          .select()
+          .from(labBills)
+          .where(eq(labBills.labOrderId, id));
+        
+        if (associatedBill) {
+          // Update the bill status to 'completed' when lab work is done
+          await db
+            .update(labBills)
+            .set({ 
+              status: 'completed',
+              updatedAt: sql`CURRENT_TIMESTAMP`
+            })
+            .where(eq(labBills.id, associatedBill.id));
+          
+          console.log(`[LAB BILLING SYNC] Updated bill status to 'completed' for lab order ${id}, bill ID: ${associatedBill.id}`);
+        }
+      } catch (error) {
+        console.error(`[LAB BILLING SYNC] Error updating bill status for lab order ${id}:`, error);
+      }
+    }
+    
     return labOrder || undefined;
   }
 
@@ -2972,6 +2999,14 @@ export class DatabaseStorage implements IStorage {
   async createLabBill(bill: any): Promise<any> {
     const [labBill] = await db.insert(labBills).values(bill).returning();
     return labBill;
+  }
+
+  async updateLabBill(id: string, updates: Partial<any>, tenantId: string): Promise<any | undefined> {
+    const [bill] = await db.update(labBills)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(labBills.id, id), eq(labBills.tenantId, tenantId)))
+      .returning();
+    return bill || undefined;
   }
 
   async getLabBill(id: string, tenantId: string): Promise<any | undefined> {

@@ -4935,6 +4935,52 @@ Report ID: ${report.id}
     }
   });
 
+  // Update lab order status (this triggers automatic bill status synchronization)
+  app.patch("/api/lab-orders/:id/status", authenticateToken, requireTenant, requireRole(['lab_technician', 'tenant_admin', 'director']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      // Validate status
+      const validStatuses = ['ordered', 'collected', 'processing', 'completed', 'cancelled'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: "Invalid status. Must be one of: " + validStatuses.join(', ') });
+      }
+
+      // Get the current lab order to determine which tenant it belongs to
+      const currentOrder = await storage.getLabOrder(id);
+      if (!currentOrder) {
+        return res.status(404).json({ error: "Lab order not found" });
+      }
+
+      // For laboratory staff, they should be able to update orders sent to their lab
+      let tenantId: string;
+      if (req.tenant!.type === 'laboratory') {
+        // Laboratory staff can update orders assigned to their lab
+        tenantId = currentOrder.tenantId; // Original hospital tenant
+        if (currentOrder.labTenantId !== req.tenant!.id) {
+          return res.status(403).json({ error: "You can only update lab orders assigned to your laboratory" });
+        }
+      } else {
+        // Hospital staff can update their own orders
+        tenantId = req.tenant!.id;
+      }
+
+      // Update the lab order status (this will trigger bill status synchronization)
+      const updatedOrder = await storage.updateLabOrder(id, { status }, tenantId);
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ error: "Lab order not found or not updated" });
+      }
+
+      console.log(`[LAB ORDER STATUS] Updated lab order ${id} status to '${status}' by user ${req.user!.id}`);
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error("Error updating lab order status:", error);
+      res.status(500).json({ error: "Failed to update lab order status" });
+    }
+  });
+
   // Generate lab receipt
   app.get("/api/laboratory/billing/:id/receipt", authenticateToken, requireTenant, requireRole(['lab_technician', 'tenant_admin', 'director']), async (req, res) => {
     try {
