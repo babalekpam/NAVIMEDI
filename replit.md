@@ -9,6 +9,7 @@ This project is a comprehensive multi-tenant healthcare management platform desi
 - Prioritize working features over perfect TypeScript compliance
 
 ## Recent Changes
+- **Laboratory Bill Status Synchronization Fixed (August 1, 2025)**: Resolved issue where laboratory bill statuses weren't updating in real-time when lab orders were completed. Implemented auto-refresh with 5-second intervals and disabled React Query caching to ensure immediate status updates. Bill synchronization now works correctly - when lab orders are marked "completed", associated bills automatically update to "completed" status.
 - **Insurance Auto-Population Fixed (July 31, 2025)**: Resolved complex issue with insurance provider field not populating in pharmacy dashboard. Root cause was React controlled component state conflicts. Final solution implemented using React refs with focus/blur triggers for reliable field population.
 - **Pharmacy Receipt Validation Fixed (July 31, 2025)**: Resolved date validation errors in pharmacy receipt creation. Backend now properly converts prescribedDate strings to Date objects during API processing, eliminating JSON serialization issues.
 

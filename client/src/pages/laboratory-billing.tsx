@@ -88,10 +88,14 @@ export default function LaboratoryBilling() {
     queryKey: ["/api/laboratory/billing"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/laboratory/billing");
-      return response.json();
+      const data = await response.json();
+      console.log("Laboratory bills API response:", data);
+      return data;
     },
     enabled: !!user && !!tenant,
-    refetchInterval: 10000, // Auto-refresh every 10 seconds to catch status changes
+    refetchInterval: 5000, // Reduced to 5 seconds for faster updates
+    staleTime: 0, // Always consider data stale
+    cacheTime: 0, // Don't cache data
   });
 
   // Fetch patients for laboratory billing (cross-tenant access)
