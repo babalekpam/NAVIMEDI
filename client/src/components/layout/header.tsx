@@ -1,4 +1,4 @@
-import { Bell, ChevronDown, Building2, Wifi, WifiOff } from "lucide-react";
+import { Bell, ChevronDown, Building2, Wifi, WifiOff, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -17,16 +17,30 @@ import { useTranslation } from "@/contexts/translation-context";
 import { useLocation } from "wouter";
 import { TenantSwitcher } from "@/components/tenant/tenant-switcher";
 import { LanguageSelector } from "@/components/language-selector";
+import { useState } from "react";
 
 export const Header = () => {
   const { user, logout } = useAuth();
   const { tenant } = useTenant();
   const [, setLocation] = useLocation();
   const { t } = useTranslation();
+  const [notifications, setNotifications] = useState([
+    { id: 1, type: "lab_result", message: "Lab results available for Patient #1254", time: "2 min ago", urgent: true },
+    { id: 2, type: "insurance", message: "Insurance claim approved - $150", time: "5 min ago", urgent: false },
+    { id: 3, type: "appointment", message: "New appointment request", time: "10 min ago", urgent: false }
+  ]);
 
   const handleLogout = () => {
     logout();
     setLocation("/login");
+  };
+
+  const dismissNotification = (notificationId: number) => {
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
   };
 
   if (!user) return null;
@@ -139,39 +153,63 @@ export const Header = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="relative hover:bg-blue-50">
                   <Bell className="h-5 w-5 text-blue-600" />
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-red-500 text-white animate-pulse">
-                    3
-                  </Badge>
+                  {notifications.length > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-red-500 text-white animate-pulse">
+                      {notifications.length}
+                    </Badge>
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80">
                 <DropdownMenuLabel className="flex items-center justify-between">
                   <span>Notifications</span>
-                  <Badge variant="secondary">3 new</Badge>
+                  {notifications.length > 0 ? (
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="secondary">{notifications.length} new</Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearAllNotifications}
+                        className="text-xs hover:bg-gray-100"
+                      >
+                        Clear all
+                      </Button>
+                    </div>
+                  ) : (
+                    <Badge variant="secondary">All clear!</Badge>
+                  )}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <div className="max-h-64 overflow-y-auto">
-                  <DropdownMenuItem className="flex flex-col items-start p-3 space-y-1">
-                    <div className="flex items-center justify-between w-full">
-                      <span className="font-medium text-sm">Lab Results Available</span>
-                      <span className="text-xs text-gray-500">2m ago</span>
+                  {notifications.length === 0 ? (
+                    <div className="p-4 text-center text-gray-500 text-sm">
+                      No new notifications
                     </div>
-                    <p className="text-xs text-gray-600">New lab results for Patient ID: MRN001</p>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex flex-col items-start p-3 space-y-1">
-                    <div className="flex items-center justify-between w-full">
-                      <span className="font-medium text-sm">Insurance Claim Updated</span>
-                      <span className="text-xs text-gray-500">15m ago</span>
-                    </div>
-                    <p className="text-xs text-gray-600">Claim #12345 status changed to approved</p>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex flex-col items-start p-3 space-y-1">
-                    <div className="flex items-center justify-between w-full">
-                      <span className="font-medium text-sm">New Appointment Scheduled</span>
-                      <span className="text-xs text-gray-500">1h ago</span>
-                    </div>
-                    <p className="text-xs text-gray-600">Dr. Johnson - Tomorrow at 2:00 PM</p>
-                  </DropdownMenuItem>
+                  ) : (
+                    notifications.map((notification) => (
+                      <DropdownMenuItem 
+                        key={notification.id}
+                        className="flex flex-col items-start p-3 space-y-1 cursor-pointer hover:bg-gray-50"
+                        onClick={() => dismissNotification(notification.id)}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className={`font-medium text-sm ${notification.urgent ? 'text-red-600' : ''}`}>
+                            {notification.type === 'lab_result' && 'Lab Results Available'}
+                            {notification.type === 'insurance' && 'Insurance Claim Updated'}
+                            {notification.type === 'appointment' && 'New Appointment Scheduled'}
+                          </span>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">{notification.time}</span>
+                            <X className="h-3 w-3 text-gray-400 hover:text-gray-600" />
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-600">{notification.message}</p>
+                        {notification.urgent && (
+                          <Badge variant="destructive" className="text-xs">Urgent</Badge>
+                        )}
+                      </DropdownMenuItem>
+                    ))
+                  )}
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-center text-blue-600 font-medium">
