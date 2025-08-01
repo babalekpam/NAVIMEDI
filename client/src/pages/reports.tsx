@@ -41,7 +41,7 @@ export default function Reports() {
   
   const isSuperAdmin = user?.role === 'super_admin';
 
-  // Download function with authentication
+  // Download function with authentication and better error handling
   const downloadReport = async (fileUrl: string, title: string, format: string) => {
     try {
       const token = localStorage.getItem('auth_token');
@@ -49,39 +49,52 @@ export default function Reports() {
         throw new Error('No authentication token found');
       }
       
-      console.log('Download token:', token.substring(0, 20) + '...');
+      console.log('Downloading report:', fileUrl);
       
       const response = await fetch(fileUrl, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          // Remove content-type header for download requests
         }
       });
 
       if (!response.ok) {
-        throw new Error('Download failed');
+        const errorText = await response.text();
+        console.error('Download error response:', errorText);
+        throw new Error(`Download failed: ${response.status} ${response.statusText}`);
       }
 
+      // Get the blob with proper content type
       const blob = await response.blob();
+      console.log('Downloaded blob:', { size: blob.size, type: blob.type });
+      
+      // Create download URL
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
-      a.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.${format}`;
+      a.download = `${title.replace(/[^a-zA-Z0-9\-_\s]/g, '_')}.${format}`;
+      
+      // Trigger download
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      
+      // Cleanup
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
 
       toast({
-        title: "Download Started",
-        description: `${title} is downloading...`
+        title: "Download Completed",
+        description: `${title}.${format} has been downloaded successfully.`
       });
     } catch (error) {
+      console.error('Download error:', error);
       toast({
         title: "Download Failed",
-        description: "Could not download the report. Please try again.",
+        description: error instanceof Error ? error.message : "Could not download the report. Please try again.",
         variant: "destructive"
       });
     }
