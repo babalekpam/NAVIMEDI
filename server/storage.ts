@@ -2929,12 +2929,67 @@ export class DatabaseStorage implements IStorage {
   // Lab Bills Management
   async getLabBillsByTenant(tenantId: string): Promise<any[]> {
     try {
-      // Return empty array for now - will be implemented when lab billing is fully developed
-      return [];
+      // Fetch lab bills with patient information for cross-tenant enrichment
+      const bills = await db
+        .select({
+          id: labBills.id,
+          tenantId: labBills.tenantId,
+          patientId: labBills.patientId,
+          amount: labBills.amount,
+          description: labBills.description,
+          status: labBills.status,
+          serviceType: labBills.serviceType,
+          labOrderId: labBills.labOrderId,
+          testName: labBills.testName,
+          notes: labBills.notes,
+          generatedBy: labBills.generatedBy,
+          createdAt: labBills.createdAt,
+          updatedAt: labBills.updatedAt,
+        })
+        .from(labBills)
+        .where(eq(labBills.tenantId, tenantId))
+        .orderBy(desc(labBills.createdAt));
+
+      // Enrich with patient information (cross-tenant access)
+      const enrichedBills = [];
+      for (const bill of bills) {
+        const patient = await this.getPatientById(bill.patientId);
+        enrichedBills.push({
+          ...bill,
+          patientFirstName: patient?.firstName,
+          patientLastName: patient?.lastName,
+          patientMrn: patient?.mrn,
+        });
+      }
+
+      return enrichedBills;
     } catch (error) {
       console.error('Error fetching lab bills:', error);
       return [];
     }
+  }
+
+  async createLabBill(bill: any): Promise<any> {
+    const [labBill] = await db.insert(labBills).values(bill).returning();
+    return labBill;
+  }
+
+  async getLabBill(id: string, tenantId: string): Promise<any | undefined> {
+    const [bill] = await db.select().from(labBills)
+      .where(and(eq(labBills.id, id), eq(labBills.tenantId, tenantId)));
+    
+    if (bill) {
+      // Enrich with patient information
+      const patient = await this.getPatientById(bill.patientId);
+      return {
+        ...bill,
+        patientFirstName: patient?.firstName,
+        patientLastName: patient?.lastName,
+        patientMrn: patient?.mrn,
+      };
+    }
+    
+    return undefined;
   }
 
   // Patient Account Activation

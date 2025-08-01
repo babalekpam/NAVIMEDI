@@ -4935,6 +4935,51 @@ Report ID: ${report.id}
     }
   });
 
+  // Generate lab receipt
+  app.get("/api/laboratory/billing/:id/receipt", authenticateToken, requireTenant, requireRole(['lab_technician', 'tenant_admin', 'director']), async (req, res) => {
+    try {
+      const tenantId = req.tenantId!;
+      const billId = req.params.id;
+      
+      // Verify this is a laboratory tenant
+      const tenant = await storage.getTenant(tenantId);
+      if (tenant?.type !== 'laboratory') {
+        return res.status(403).json({ error: "Receipt access restricted to laboratory tenants" });
+      }
+
+      // Get the lab bill with patient information
+      const labBill = await storage.getLabBill(billId, tenantId);
+      if (!labBill) {
+        return res.status(404).json({ error: "Lab bill not found" });
+      }
+
+      // Generate receipt number if not exists
+      const receiptNumber = `LAB-${Date.now()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+      
+      // Format the receipt data
+      const receipt = {
+        id: labBill.id,
+        receiptNumber,
+        tenantName: tenant.name,
+        patientName: `${labBill.patientFirstName} ${labBill.patientLastName}`,
+        patientMrn: labBill.patientMrn,
+        testName: labBill.testName,
+        description: labBill.description,
+        amount: labBill.amount,
+        status: labBill.status,
+        serviceType: labBill.serviceType,
+        notes: labBill.notes,
+        createdAt: labBill.createdAt,
+        labOrderId: labBill.labOrderId,
+      };
+
+      res.json(receipt);
+    } catch (error) {
+      console.error("Error generating lab receipt:", error);
+      res.status(500).json({ error: "Failed to generate lab receipt" });
+    }
+  });
+
   const server = createServer(app);
   return server;
 }

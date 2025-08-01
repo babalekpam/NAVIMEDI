@@ -173,6 +173,79 @@ export default function LaboratoryBilling() {
     },
   });
 
+  // Receipt handling functions
+  const handleViewReceipt = async (billId: string) => {
+    try {
+      const response = await apiRequest("GET", `/api/laboratory/billing/${billId}/receipt`);
+      const receipt = await response.json();
+      
+      // Create a printable receipt view
+      const receiptWindow = window.open('', '_blank');
+      if (receiptWindow) {
+        receiptWindow.document.write(`
+          <html>
+            <head>
+              <title>Laboratory Receipt - ${receipt.receiptNumber}</title>
+              <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
+                .receipt-info { margin-bottom: 20px; }
+                .amount { font-size: 24px; font-weight: bold; color: #2563eb; }
+                .details { margin: 10px 0; }
+                .print-btn { background: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+                @media print { .print-btn { display: none; } }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h1>${receipt.tenantName} Laboratory</h1>
+                <h2>Laboratory Service Receipt</h2>
+                <p><strong>Receipt #:</strong> ${receipt.receiptNumber}</p>
+              </div>
+              
+              <div class="receipt-info">
+                <div class="details"><strong>Patient:</strong> ${receipt.patientName}</div>
+                <div class="details"><strong>MRN:</strong> ${receipt.patientMrn}</div>
+                <div class="details"><strong>Test:</strong> ${receipt.testName || 'N/A'}</div>
+                <div class="details"><strong>Description:</strong> ${receipt.description}</div>
+                <div class="details"><strong>Service Type:</strong> ${receipt.serviceType}</div>
+                <div class="details"><strong>Date:</strong> ${new Date(receipt.createdAt).toLocaleDateString()}</div>
+                <div class="details"><strong>Status:</strong> ${receipt.status.toUpperCase()}</div>
+                ${receipt.notes ? `<div class="details"><strong>Notes:</strong> ${receipt.notes}</div>` : ''}
+              </div>
+              
+              <div class="amount">
+                <p><strong>Total Amount: $${parseFloat(receipt.amount).toFixed(2)}</strong></p>
+              </div>
+              
+              <div style="margin-top: 30px; text-align: center;">
+                <button class="print-btn" onclick="window.print()">Print Receipt</button>
+                <button class="print-btn" onclick="window.close()" style="background: #6b7280; margin-left: 10px;">Close</button>
+              </div>
+              
+              <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #6b7280;">
+                <p>This is an official laboratory service receipt.</p>
+                <p>For questions, please contact ${receipt.tenantName} Laboratory.</p>
+              </div>
+            </body>
+          </html>
+        `);
+        receiptWindow.document.close();
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate receipt",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePrintInvoice = (billId: string) => {
+    // For now, use the same receipt function
+    handleViewReceipt(billId);
+  };
+
   // Filter bills
   const filteredBills = bills.filter((bill) => {
     const matchesSearch = 
@@ -695,17 +768,17 @@ export default function LaboratoryBilling() {
                   )}
 
                   <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="outline">
-                      <Eye className="w-3 h-3 mr-1" />
-                      View
+                    <Button size="sm" variant="outline" onClick={() => handleViewReceipt(bill.id)}>
+                      <Receipt className="w-3 h-3 mr-1" />
+                      Receipt
                     </Button>
                     <Button size="sm" variant="outline">
                       <Edit className="w-3 h-3 mr-1" />
                       Edit
                     </Button>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => handlePrintInvoice(bill.id)}>
                       <FileText className="w-3 h-3 mr-1" />
-                      Invoice
+                      Print Invoice
                     </Button>
                   </div>
                 </div>
