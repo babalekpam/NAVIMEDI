@@ -23,7 +23,14 @@ import {
   AlertCircle,
   User,
   Heart,
-  FileText
+  FileText,
+  Shield,
+  Plus,
+  Edit,
+  CreditCard,
+  Mail,
+  Phone,
+  DollarSign
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -118,6 +125,9 @@ export default function ReceptionistDashboard() {
   const [isVitalsDialogOpen, setIsVitalsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('Emergency');
+  const [selectedPatientForInsurance, setSelectedPatientForInsurance] = useState<Patient | null>(null);
+  const [showInsuranceDialog, setShowInsuranceDialog] = useState(false);
+  const [editingInsurance, setEditingInsurance] = useState<any>(null);
 
   // Forms
   const patientForm = useForm({
@@ -183,6 +193,12 @@ export default function ReceptionistDashboard() {
     queryKey: ['/api/patients'],
   });
 
+  // Query for insurance info for selected patient
+  const { data: patientInsurance, isLoading: insuranceLoading } = useQuery({
+    queryKey: ["/api/hospital-patient-insurance", selectedPatientForInsurance?.id],
+    enabled: !!selectedPatientForInsurance?.id,
+  });
+
   // Mutations
   const [isRegistering, setIsRegistering] = useState(false);
 
@@ -202,6 +218,33 @@ export default function ReceptionistDashboard() {
       queryClient.invalidateQueries({ queryKey: ['/api/patient-check-ins/today'] });
       setIsVitalsDialogOpen(false);
       vitalSignsForm.reset();
+    },
+  });
+
+  // Mutation to create/update hospital patient insurance
+  const saveInsuranceMutation = useMutation({
+    mutationFn: (data: any) => {
+      if (editingInsurance) {
+        return apiRequest(`/api/hospital-patient-insurance/${editingInsurance.id}`, {
+          method: "PATCH",
+          body: JSON.stringify(data),
+        });
+      } else {
+        return apiRequest("/api/hospital-patient-insurance", {
+          method: "POST",
+          body: JSON.stringify(data),
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/hospital-patient-insurance", selectedPatientForInsurance?.id] 
+      });
+      setShowInsuranceDialog(false);
+      setEditingInsurance(null);
+    },
+    onError: (error: any) => {
+      console.error("Failed to save insurance information:", error);
     },
   });
 
@@ -267,6 +310,40 @@ export default function ReceptionistDashboard() {
     }
   };
 
+  const handleSaveInsurance = (formData: FormData) => {
+    const data = {
+      patientId: selectedPatientForInsurance?.id,
+      insuranceProviderName: formData.get("insuranceProviderName"),
+      policyNumber: formData.get("policyNumber"),
+      groupNumber: formData.get("groupNumber") || undefined,
+      memberId: formData.get("memberId") || undefined,
+      cardholderName: formData.get("cardholderName"),
+      relationshipToCardholder: formData.get("relationshipToCardholder"),
+      effectiveDate: formData.get("effectiveDate") || undefined,
+      expirationDate: formData.get("expirationDate") || undefined,
+      copayAmount: formData.get("copayAmount") ? parseFloat(formData.get("copayAmount") as string) : undefined,
+      deductibleAmount: formData.get("deductibleAmount") ? parseFloat(formData.get("deductibleAmount") as string) : undefined,
+      coveragePercentage: formData.get("coveragePercentage") ? parseInt(formData.get("coveragePercentage") as string) : undefined,
+      isPrimary: formData.get("isPrimary") === "true",
+      isActive: formData.get("isActive") === "true",
+      verificationStatus: formData.get("verificationStatus"),
+    };
+
+    saveInsuranceMutation.mutate(data);
+  };
+
+  const handleEditInsurance = () => {
+    if (patientInsurance) {
+      setEditingInsurance(patientInsurance);
+      setShowInsuranceDialog(true);
+    }
+  };
+
+  const handleAddInsurance = () => {
+    setEditingInsurance(null);
+    setShowInsuranceDialog(true);
+  };
+
   const getPriorityBadgeColor = (priority: string) => {
     switch (priority) {
       case 'emergency': return 'bg-red-100 text-red-800 border-red-200';
@@ -323,12 +400,13 @@ export default function ReceptionistDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">{t('overview')}</TabsTrigger>
           <TabsTrigger value="check-in">{t('patient-checkin')}</TabsTrigger>
           <TabsTrigger value="waiting">{t('waiting-room')}</TabsTrigger>
           <TabsTrigger value="vitals">{t('vital-signs')}</TabsTrigger>
           <TabsTrigger value="patients">{t('patient-search')}</TabsTrigger>
+          <TabsTrigger value="insurance">Insurance</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -535,6 +613,138 @@ export default function ReceptionistDashboard() {
           </Card>
         </TabsContent>
 
+        {/* Insurance Management Tab */}
+        <TabsContent value="insurance" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Patient List */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Select Patient for Insurance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {loadingPatients ? (
+                    <div>Loading patients...</div>
+                  ) : (
+                    filteredPatients.map((patient: Patient) => (
+                      <div
+                        key={patient.id}
+                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                          selectedPatientForInsurance?.id === patient.id
+                            ? "bg-blue-50 border-blue-200"
+                            : "hover:bg-gray-50"
+                        }`}
+                        onClick={() => setSelectedPatientForInsurance(patient)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-medium">
+                              {patient.firstName} {patient.lastName}
+                            </h3>
+                            <p className="text-sm text-gray-600">MRN: {patient.mrn}</p>
+                            {patient.email && (
+                              <p className="text-sm text-gray-600 flex items-center gap-1">
+                                <Mail className="h-3 w-3" />
+                                {patient.email}
+                              </p>
+                            )}
+                            {patient.phone && (
+                              <p className="text-sm text-gray-600 flex items-center gap-1">
+                                <Phone className="h-3 w-3" />
+                                {patient.phone}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Insurance Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Insurance Information
+                  {selectedPatientForInsurance && (
+                    <span className="text-sm font-normal text-gray-600">
+                      - {selectedPatientForInsurance.firstName} {selectedPatientForInsurance.lastName}
+                    </span>
+                  )}
+                </CardTitle>
+                {selectedPatientForInsurance && (
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      onClick={handleAddInsurance}
+                      disabled={!!patientInsurance}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Insurance
+                    </Button>
+                    {patientInsurance && (
+                      <Button size="sm" variant="outline" onClick={handleEditInsurance}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit Insurance
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent>
+                {!selectedPatientForInsurance ? (
+                  <p className="text-gray-600 text-center py-8">
+                    Select a patient to view insurance information
+                  </p>
+                ) : insuranceLoading ? (
+                  <div>Loading insurance information...</div>
+                ) : patientInsurance ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium">Insurance Provider</label>
+                        <p className="text-sm">{patientInsurance.insuranceProviderName}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Policy Number</label>
+                        <p className="text-sm font-mono">{patientInsurance.policyNumber}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Coverage Percentage</label>
+                        <p className="text-sm font-semibold text-green-600">{patientInsurance.coveragePercentage}%</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Verification Status</label>
+                        <Badge variant={
+                          patientInsurance.verificationStatus === 'verified' ? 'default' :
+                          patientInsurance.verificationStatus === 'pending' ? 'secondary' : 'destructive'
+                        }>
+                          {patientInsurance.verificationStatus}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <CreditCard className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600 mb-4">No insurance information found</p>
+                    <Button onClick={handleAddInsurance}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Insurance Information
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
         <TabsContent value="patients" className="space-y-6">
           <Card>
             <CardHeader>
@@ -694,6 +904,77 @@ export default function ReceptionistDashboard() {
           isLoading={recordVitalsMutation.isPending}
           patient={selectedCheckIn?.patient}
         />
+      </Dialog>
+
+      {/* Insurance Dialog */}
+      <Dialog open={showInsuranceDialog} onOpenChange={setShowInsuranceDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingInsurance ? "Edit" : "Add"} Insurance Information
+            </DialogTitle>
+          </DialogHeader>
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSaveInsurance(new FormData(e.currentTarget));
+            }}
+            className="space-y-4"
+          >
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="insuranceProviderName">Insurance Provider*</label>
+                <Input
+                  id="insuranceProviderName"
+                  name="insuranceProviderName"
+                  defaultValue={editingInsurance?.insuranceProviderName}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="policyNumber">Policy Number*</label>
+                <Input
+                  id="policyNumber"
+                  name="policyNumber"
+                  defaultValue={editingInsurance?.policyNumber}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="coveragePercentage">Coverage Percentage (%)*</label>
+                <Input
+                  id="coveragePercentage"
+                  name="coveragePercentage"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  placeholder="80"
+                  defaultValue={editingInsurance?.coveragePercentage}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="cardholderName">Cardholder Name*</label>
+                <Input
+                  id="cardholderName"
+                  name="cardholderName"
+                  defaultValue={editingInsurance?.cardholderName}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={() => setShowInsuranceDialog(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={saveInsuranceMutation.isPending}>
+                {saveInsuranceMutation.isPending ? "Saving..." : "Save Insurance"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
       </Dialog>
     </div>
   );

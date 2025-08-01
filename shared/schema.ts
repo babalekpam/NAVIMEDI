@@ -681,6 +681,104 @@ export const workShifts = pgTable("work_shifts", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Enhanced Patient Insurance Information specifically for hospitals
+export const hospitalPatientInsurance = pgTable("hospital_patient_insurance", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  
+  // Primary Insurance
+  primaryInsuranceProvider: text("primary_insurance_provider"),
+  primaryPolicyNumber: text("primary_policy_number"),
+  primaryGroupNumber: text("primary_group_number"),
+  primaryMemberId: text("primary_member_id"),
+  primarySubscriberName: text("primary_subscriber_name"),
+  primarySubscriberRelationship: text("primary_subscriber_relationship"),
+  primarySubscriberDob: timestamp("primary_subscriber_dob"),
+  primaryEffectiveDate: timestamp("primary_effective_date"),
+  primaryExpirationDate: timestamp("primary_expiration_date"),
+  primaryCopayAmount: decimal("primary_copay_amount", { precision: 10, scale: 2 }),
+  primaryDeductibleAmount: decimal("primary_deductible_amount", { precision: 10, scale: 2 }),
+  primaryCoveragePercentage: integer("primary_coverage_percentage"),
+  primaryIsActive: boolean("primary_is_active").default(true),
+  
+  // Secondary Insurance
+  secondaryInsuranceProvider: text("secondary_insurance_provider"),
+  secondaryPolicyNumber: text("secondary_policy_number"),
+  secondaryGroupNumber: text("secondary_group_number"),
+  secondaryMemberId: text("secondary_member_id"),
+  secondarySubscriberName: text("secondary_subscriber_name"),
+  secondarySubscriberRelationship: text("secondary_subscriber_relationship"),
+  secondarySubscriberDob: timestamp("secondary_subscriber_dob"),
+  secondaryEffectiveDate: timestamp("secondary_effective_date"),
+  secondaryExpirationDate: timestamp("secondary_expiration_date"),
+  secondaryCoveragePercentage: integer("secondary_coverage_percentage"),
+  secondaryIsActive: boolean("secondary_is_active").default(false),
+  
+  // Verification details
+  lastVerificationDate: timestamp("last_verification_date"),
+  verificationStatus: text("verification_status").default('pending'),
+  verificationNotes: text("verification_notes"),
+  verifiedBy: uuid("verified_by").references(() => users.id),
+  
+  // Additional details
+  emergencyContact: jsonb("emergency_contact"),
+  specialPrograms: text("special_programs").array(),
+  copayCards: jsonb("copay_cards").default('[]'),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Enhanced Patient Insurance Information specifically for laboratories
+export const laboratoryPatientInsurance = pgTable("laboratory_patient_insurance", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  
+  // Primary Insurance
+  primaryInsuranceProvider: text("primary_insurance_provider"),
+  primaryPolicyNumber: text("primary_policy_number"),
+  primaryGroupNumber: text("primary_group_number"),
+  primaryMemberId: text("primary_member_id"),
+  primarySubscriberName: text("primary_subscriber_name"),
+  primarySubscriberRelationship: text("primary_subscriber_relationship"),
+  primarySubscriberDob: timestamp("primary_subscriber_dob"),
+  primaryEffectiveDate: timestamp("primary_effective_date"),
+  primaryExpirationDate: timestamp("primary_expiration_date"),
+  primaryCopayAmount: decimal("primary_copay_amount", { precision: 10, scale: 2 }),
+  primaryDeductibleAmount: decimal("primary_deductible_amount", { precision: 10, scale: 2 }),
+  primaryCoveragePercentage: integer("primary_coverage_percentage"),
+  primaryIsActive: boolean("primary_is_active").default(true),
+  
+  // Secondary Insurance
+  secondaryInsuranceProvider: text("secondary_insurance_provider"),
+  secondaryPolicyNumber: text("secondary_policy_number"),
+  secondaryGroupNumber: text("secondary_group_number"),
+  secondaryMemberId: text("secondary_member_id"),
+  secondarySubscriberName: text("secondary_subscriber_name"),
+  secondarySubscriberRelationship: text("secondary_subscriber_relationship"),
+  secondarySubscriberDob: timestamp("secondary_subscriber_dob"),
+  secondaryEffectiveDate: timestamp("secondary_effective_date"),
+  secondaryExpirationDate: timestamp("secondary_expiration_date"),
+  secondaryCoveragePercentage: integer("secondary_coverage_percentage"),
+  secondaryIsActive: boolean("secondary_is_active").default(false),
+  
+  // Verification details
+  lastVerificationDate: timestamp("last_verification_date"),
+  verificationStatus: text("verification_status").default('pending'),
+  verificationNotes: text("verification_notes"),
+  verifiedBy: uuid("verified_by").references(() => users.id),
+  
+  // Additional details
+  emergencyContact: jsonb("emergency_contact"),
+  specialPrograms: text("special_programs").array(),
+  copayCards: jsonb("copay_cards").default('[]'),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Enhanced Patient Insurance Information specifically for pharmacies
 export const pharmacyPatientInsurance = pgTable("pharmacy_patient_insurance", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),

@@ -4194,7 +4194,6 @@ export class DatabaseStorage implements IStorage {
 
   async getPharmacyReportTemplatesByTenant(tenantId: string): Promise<PharmacyReportTemplate[]> {
     return await db.select().from(pharmacyReportTemplates).where(eq(pharmacyReportTemplates.tenantId, tenantId));
-  },
 
   // Hospital Patient Insurance Management
   async createHospitalPatientInsurance(data: any): Promise<any> {
