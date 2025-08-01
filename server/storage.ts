@@ -40,6 +40,10 @@ import {
   userStats,
   leaderboards,
   activityLogs,
+  workShifts,
+  pharmacyPatientInsurance,
+  archivedRecords,
+  pharmacyReportTemplates,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -120,7 +124,15 @@ import {
   type Leaderboard,
   type InsertLeaderboard,
   type ActivityLog,
-  type InsertActivityLog
+  type InsertActivityLog,
+  type WorkShift,
+  type InsertWorkShift,
+  type PharmacyPatientInsurance,
+  type InsertPharmacyPatientInsurance,
+  type ArchivedRecord,
+  type InsertArchivedRecord,
+  type PharmacyReportTemplate,
+  type InsertPharmacyReportTemplate
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or, isNull, gt } from "drizzle-orm";
@@ -484,6 +496,34 @@ export interface IStorage {
   checkAndUpdateAchievements(userId: string, tenantId: string, activityType: string, metadata?: any): Promise<UserAchievement[]>;
   calculateUserLevel(totalPoints: number): number;
   updateUserStatsFromActivity(userId: string, tenantId: string, activityType: string, metadata?: any): Promise<UserStats | undefined>;
+
+  // Work Shift Management
+  getWorkShift(id: string, tenantId: string): Promise<WorkShift | undefined>;
+  createWorkShift(shift: InsertWorkShift): Promise<WorkShift>;
+  updateWorkShift(id: string, updates: Partial<WorkShift>, tenantId: string): Promise<WorkShift | undefined>;
+  getActiveWorkShifts(tenantId: string): Promise<WorkShift[]>;
+  endWorkShift(id: string, tenantId: string): Promise<WorkShift | undefined>;
+  getCurrentWorkShift(userId: string, tenantId: string): Promise<WorkShift | undefined>;
+
+  // Pharmacy Patient Insurance Management
+  getPharmacyPatientInsurance(patientId: string, tenantId: string): Promise<PharmacyPatientInsurance | undefined>;
+  createPharmacyPatientInsurance(insurance: InsertPharmacyPatientInsurance): Promise<PharmacyPatientInsurance>;
+  updatePharmacyPatientInsurance(id: string, updates: Partial<PharmacyPatientInsurance>, tenantId: string): Promise<PharmacyPatientInsurance | undefined>;
+  getPharmacyPatientInsuranceByTenant(tenantId: string): Promise<PharmacyPatientInsurance[]>;
+
+  // Archived Records Management
+  createArchivedRecord(record: InsertArchivedRecord): Promise<ArchivedRecord>;
+  searchArchivedRecords(tenantId: string, query: string): Promise<ArchivedRecord[]>;
+  getArchivedRecordsByShift(workShiftId: string, tenantId: string): Promise<ArchivedRecord[]>;
+  getArchivedRecordsByPatient(patientId: string, tenantId: string): Promise<ArchivedRecord[]>;
+  archiveRecordsForShift(workShiftId: string, tenantId: string): Promise<void>;
+
+  // Pharmacy Report Templates Management
+  getPharmacyReportTemplate(id: string, tenantId: string): Promise<PharmacyReportTemplate | undefined>;
+  createPharmacyReportTemplate(template: InsertPharmacyReportTemplate): Promise<PharmacyReportTemplate>;
+  updatePharmacyReportTemplate(id: string, updates: Partial<PharmacyReportTemplate>, tenantId: string): Promise<PharmacyReportTemplate | undefined>;
+  getPharmacyReportTemplatesByTenant(tenantId: string): Promise<PharmacyReportTemplate[]>;
+  getActivePharmacyReportTemplates(tenantId: string): Promise<PharmacyReportTemplate[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3786,6 +3826,144 @@ export class DatabaseStorage implements IStorage {
     }
 
     return await this.updateUserStats(userId, tenantId, updates);
+  }
+
+  // Work Shift Management Implementation
+  async getWorkShift(id: string, tenantId: string): Promise<WorkShift | undefined> {
+    const [shift] = await db.select().from(workShifts).where(
+      and(eq(workShifts.id, id), eq(workShifts.tenantId, tenantId))
+    );
+    return shift || undefined;
+  }
+
+  async createWorkShift(shift: InsertWorkShift): Promise<WorkShift> {
+    const [newShift] = await db.insert(workShifts).values(shift).returning();
+    return newShift;
+  }
+
+  async updateWorkShift(id: string, updates: Partial<WorkShift>, tenantId: string): Promise<WorkShift | undefined> {
+    const [updatedShift] = await db.update(workShifts)
+      .set(updates)
+      .where(and(eq(workShifts.id, id), eq(workShifts.tenantId, tenantId)))
+      .returning();
+    return updatedShift || undefined;
+  }
+
+  async getActiveWorkShifts(tenantId: string): Promise<WorkShift[]> {
+    return await db.select().from(workShifts).where(
+      and(eq(workShifts.tenantId, tenantId), isNull(workShifts.endTime))
+    );
+  }
+
+  async endWorkShift(id: string, tenantId: string): Promise<WorkShift | undefined> {
+    const [shift] = await db.update(workShifts)
+      .set({ endTime: new Date() })
+      .where(and(eq(workShifts.id, id), eq(workShifts.tenantId, tenantId)))
+      .returning();
+    return shift || undefined;
+  }
+
+  async getCurrentWorkShift(userId: string, tenantId: string): Promise<WorkShift | undefined> {
+    const [shift] = await db.select().from(workShifts).where(
+      and(
+        eq(workShifts.userId, userId),
+        eq(workShifts.tenantId, tenantId),
+        isNull(workShifts.endTime)
+      )
+    );
+    return shift || undefined;
+  }
+
+  // Pharmacy Patient Insurance Management Implementation
+  async getPharmacyPatientInsurance(patientId: string, tenantId: string): Promise<PharmacyPatientInsurance | undefined> {
+    const [insurance] = await db.select().from(pharmacyPatientInsurance).where(
+      and(eq(pharmacyPatientInsurance.patientId, patientId), eq(pharmacyPatientInsurance.tenantId, tenantId))
+    );
+    return insurance || undefined;
+  }
+
+  async createPharmacyPatientInsurance(insurance: InsertPharmacyPatientInsurance): Promise<PharmacyPatientInsurance> {
+    const [newInsurance] = await db.insert(pharmacyPatientInsurance).values(insurance).returning();
+    return newInsurance;
+  }
+
+  async updatePharmacyPatientInsurance(id: string, updates: Partial<PharmacyPatientInsurance>, tenantId: string): Promise<PharmacyPatientInsurance | undefined> {
+    const [updatedInsurance] = await db.update(pharmacyPatientInsurance)
+      .set(updates)
+      .where(and(eq(pharmacyPatientInsurance.id, id), eq(pharmacyPatientInsurance.tenantId, tenantId)))
+      .returning();
+    return updatedInsurance || undefined;
+  }
+
+  async getPharmacyPatientInsuranceByTenant(tenantId: string): Promise<PharmacyPatientInsurance[]> {
+    return await db.select().from(pharmacyPatientInsurance).where(eq(pharmacyPatientInsurance.tenantId, tenantId));
+  }
+
+  // Archived Records Management Implementation
+  async createArchivedRecord(record: InsertArchivedRecord): Promise<ArchivedRecord> {
+    const [newRecord] = await db.insert(archivedRecords).values(record).returning();
+    return newRecord;
+  }
+
+  async searchArchivedRecords(tenantId: string, query: string): Promise<ArchivedRecord[]> {
+    return await db.select().from(archivedRecords).where(
+      and(
+        eq(archivedRecords.tenantId, tenantId),
+        or(
+          like(archivedRecords.recordType, `%${query}%`),
+          like(archivedRecords.searchableContent, `%${query}%`)
+        )
+      )
+    ).orderBy(desc(archivedRecords.createdAt));
+  }
+
+  async getArchivedRecordsByShift(workShiftId: string, tenantId: string): Promise<ArchivedRecord[]> {
+    return await db.select().from(archivedRecords).where(
+      and(eq(archivedRecords.workShiftId, workShiftId), eq(archivedRecords.tenantId, tenantId))
+    );
+  }
+
+  async getArchivedRecordsByPatient(patientId: string, tenantId: string): Promise<ArchivedRecord[]> {
+    return await db.select().from(archivedRecords).where(
+      and(eq(archivedRecords.patientId, patientId), eq(archivedRecords.tenantId, tenantId))
+    ).orderBy(desc(archivedRecords.createdAt));
+  }
+
+  async archiveRecordsForShift(workShiftId: string, tenantId: string): Promise<void> {
+    // This would implement the logic to automatically archive records when a shift ends
+    // For now, this is a placeholder that could trigger the archival process
+    console.log(`Archiving records for shift ${workShiftId} in tenant ${tenantId}`);
+  }
+
+  // Pharmacy Report Templates Management Implementation
+  async getPharmacyReportTemplate(id: string, tenantId: string): Promise<PharmacyReportTemplate | undefined> {
+    const [template] = await db.select().from(pharmacyReportTemplates).where(
+      and(eq(pharmacyReportTemplates.id, id), eq(pharmacyReportTemplates.tenantId, tenantId))
+    );
+    return template || undefined;
+  }
+
+  async createPharmacyReportTemplate(template: InsertPharmacyReportTemplate): Promise<PharmacyReportTemplate> {
+    const [newTemplate] = await db.insert(pharmacyReportTemplates).values(template).returning();
+    return newTemplate;
+  }
+
+  async updatePharmacyReportTemplate(id: string, updates: Partial<PharmacyReportTemplate>, tenantId: string): Promise<PharmacyReportTemplate | undefined> {
+    const [updatedTemplate] = await db.update(pharmacyReportTemplates)
+      .set(updates)
+      .where(and(eq(pharmacyReportTemplates.id, id), eq(pharmacyReportTemplates.tenantId, tenantId)))
+      .returning();
+    return updatedTemplate || undefined;
+  }
+
+  async getPharmacyReportTemplatesByTenant(tenantId: string): Promise<PharmacyReportTemplate[]> {
+    return await db.select().from(pharmacyReportTemplates).where(eq(pharmacyReportTemplates.tenantId, tenantId));
+  }
+
+  async getActivePharmacyReportTemplates(tenantId: string): Promise<PharmacyReportTemplate[]> {
+    return await db.select().from(pharmacyReportTemplates).where(
+      and(eq(pharmacyReportTemplates.tenantId, tenantId), eq(pharmacyReportTemplates.isActive, true))
+    );
   }
 }
 

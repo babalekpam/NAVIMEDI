@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertInsuranceProviderSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertPatientCheckInSchema, insertRolePermissionSchema, insertPharmacyReceiptSchema, insertLabBillSchema, labBills } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertInsuranceProviderSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertPatientCheckInSchema, insertRolePermissionSchema, insertPharmacyReceiptSchema, insertLabBillSchema, labBills, insertWorkShiftSchema, insertPharmacyPatientInsuranceSchema, insertArchivedRecordSchema, insertPharmacyReportTemplateSchema } from "@shared/schema";
 import { authenticateToken, requireRole, type AuthenticatedRequest, type JWTPayload } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -5699,6 +5699,231 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Error fetching financial transactions:", error);
       res.status(500).json({ error: "Failed to fetch financial transactions" });
+    }
+  });
+
+  // Work Shift Management Routes
+  app.get("/api/work-shifts", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const shifts = await storage.getActiveWorkShifts(req.tenantId!);
+      res.json(shifts);
+    } catch (error) {
+      console.error("Error fetching work shifts:", error);
+      res.status(500).json({ message: "Failed to fetch work shifts" });
+    }
+  });
+
+  app.get("/api/work-shifts/current", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const currentShift = await storage.getCurrentWorkShift(req.user!.id, req.tenantId!);
+      res.json(currentShift || null);
+    } catch (error) {
+      console.error("Error fetching current work shift:", error);
+      res.status(500).json({ message: "Failed to fetch current work shift" });
+    }
+  });
+
+  app.post("/api/work-shifts", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { shiftType, notes } = req.body;
+      
+      // Check if user already has an active shift
+      const existingShift = await storage.getCurrentWorkShift(req.user!.id, req.tenantId!);
+      if (existingShift) {
+        return res.status(400).json({ message: "You already have an active shift" });
+      }
+
+      const shiftData = {
+        tenantId: req.tenantId!,
+        userId: req.user!.id,
+        shiftType,
+        startTime: new Date(),
+        notes
+      };
+
+      const shift = await storage.createWorkShift(shiftData);
+      res.status(201).json(shift);
+    } catch (error) {
+      console.error("Error creating work shift:", error);
+      res.status(500).json({ message: "Failed to create work shift" });
+    }
+  });
+
+  app.patch("/api/work-shifts/:id/end", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const shift = await storage.endWorkShift(id, req.tenantId!);
+      
+      if (!shift) {
+        return res.status(404).json({ message: "Work shift not found" });
+      }
+
+      // Trigger archive process for the ended shift
+      await storage.archiveRecordsForShift(id, req.tenantId!);
+
+      res.json(shift);
+    } catch (error) {
+      console.error("Error ending work shift:", error);
+      res.status(500).json({ message: "Failed to end work shift" });
+    }
+  });
+
+  // Pharmacy Patient Insurance Routes
+  app.get("/api/pharmacy-patient-insurance/:patientId", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const insurance = await storage.getPharmacyPatientInsurance(patientId, req.tenantId!);
+      res.json(insurance || null);
+    } catch (error) {
+      console.error("Error fetching pharmacy patient insurance:", error);
+      res.status(500).json({ message: "Failed to fetch pharmacy patient insurance" });
+    }
+  });
+
+  app.post("/api/pharmacy-patient-insurance", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
+    try {
+      const insuranceData = {
+        ...req.body,
+        tenantId: req.tenantId!,
+        verifiedBy: req.user!.id,
+        verifiedAt: new Date()
+      };
+
+      const insurance = await storage.createPharmacyPatientInsurance(insuranceData);
+      res.status(201).json(insurance);
+    } catch (error) {
+      console.error("Error creating pharmacy patient insurance:", error);
+      res.status(500).json({ message: "Failed to create pharmacy patient insurance" });
+    }
+  });
+
+  app.patch("/api/pharmacy-patient-insurance/:id", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = {
+        ...req.body,
+        verifiedBy: req.user!.id,
+        verifiedAt: new Date()
+      };
+
+      const insurance = await storage.updatePharmacyPatientInsurance(id, updates, req.tenantId!);
+      
+      if (!insurance) {
+        return res.status(404).json({ message: "Pharmacy patient insurance not found" });
+      }
+
+      res.json(insurance);
+    } catch (error) {
+      console.error("Error updating pharmacy patient insurance:", error);
+      res.status(500).json({ message: "Failed to update pharmacy patient insurance" });
+    }
+  });
+
+  // Archived Records Routes
+  app.get("/api/archived-records/search", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { query } = req.query;
+      
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+
+      const records = await storage.searchArchivedRecords(req.tenantId!, query);
+      res.json(records);
+    } catch (error) {
+      console.error("Error searching archived records:", error);
+      res.status(500).json({ message: "Failed to search archived records" });
+    }
+  });
+
+  app.get("/api/archived-records/shift/:shiftId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { shiftId } = req.params;
+      const records = await storage.getArchivedRecordsByShift(shiftId, req.tenantId!);
+      res.json(records);
+    } catch (error) {
+      console.error("Error fetching archived records by shift:", error);
+      res.status(500).json({ message: "Failed to fetch archived records by shift" });
+    }
+  });
+
+  app.get("/api/archived-records/patient/:patientId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const records = await storage.getArchivedRecordsByPatient(patientId, req.tenantId!);
+      res.json(records);
+    } catch (error) {
+      console.error("Error fetching archived records by patient:", error);
+      res.status(500).json({ message: "Failed to fetch archived records by patient" });
+    }
+  });
+
+  // Pharmacy Report Templates Routes
+  app.get("/api/pharmacy-report-templates", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
+    try {
+      const templates = await storage.getPharmacyReportTemplatesByTenant(req.tenantId!);
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching pharmacy report templates:", error);
+      res.status(500).json({ message: "Failed to fetch pharmacy report templates" });
+    }
+  });
+
+  app.get("/api/pharmacy-report-templates/active", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
+    try {
+      const templates = await storage.getActivePharmacyReportTemplates(req.tenantId!);
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching active pharmacy report templates:", error);
+      res.status(500).json({ message: "Failed to fetch active pharmacy report templates" });
+    }
+  });
+
+  app.get("/api/pharmacy-report-templates/:id", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const template = await storage.getPharmacyReportTemplate(id, req.tenantId!);
+      
+      if (!template) {
+        return res.status(404).json({ message: "Pharmacy report template not found" });
+      }
+
+      res.json(template);
+    } catch (error) {
+      console.error("Error fetching pharmacy report template:", error);
+      res.status(500).json({ message: "Failed to fetch pharmacy report template" });
+    }
+  });
+
+  app.post("/api/pharmacy-report-templates", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
+    try {
+      const templateData = {
+        ...req.body,
+        tenantId: req.tenantId!,
+        createdBy: req.user!.id
+      };
+
+      const template = await storage.createPharmacyReportTemplate(templateData);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error("Error creating pharmacy report template:", error);
+      res.status(500).json({ message: "Failed to create pharmacy report template" });
+    }
+  });
+
+  app.patch("/api/pharmacy-report-templates/:id", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const template = await storage.updatePharmacyReportTemplate(id, req.body, req.tenantId!);
+      
+      if (!template) {
+        return res.status(404).json({ message: "Pharmacy report template not found" });
+      }
+
+      res.json(template);
+    } catch (error) {
+      console.error("Error updating pharmacy report template:", error);
+      res.status(500).json({ message: "Failed to update pharmacy report template" });
     }
   });
 

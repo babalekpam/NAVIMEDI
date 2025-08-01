@@ -663,6 +663,143 @@ export const reports = pgTable("reports", {
   completedAt: timestamp("completed_at")
 });
 
+// Work Shifts - for tracking pharmacy shifts and accessing archived records
+export const workShifts = pgTable("work_shifts", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  userId: uuid("user_id").references(() => users.id).notNull(), // Pharmacist or staff
+  shiftType: text("shift_type").notNull(), // morning, afternoon, evening, night
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time"),
+  status: shiftStatusEnum("status").default('active'),
+  notes: text("notes"),
+  totalPrescriptionsProcessed: integer("total_prescriptions_processed").default(0),
+  totalRevenue: decimal("total_revenue", { precision: 10, scale: 2 }).default('0'),
+  totalInsuranceClaims: integer("total_insurance_claims").default(0),
+  shiftSummary: jsonb("shift_summary").default('{}'), // Summary statistics for the shift
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Enhanced Patient Insurance Information specifically for pharmacies
+export const pharmacyPatientInsurance = pgTable("pharmacy_patient_insurance", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(), // Pharmacy tenant
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  
+  // Primary Insurance
+  primaryInsuranceProvider: text("primary_insurance_provider"),
+  primaryPolicyNumber: text("primary_policy_number"),
+  primaryGroupNumber: text("primary_group_number"),
+  primaryMemberId: text("primary_member_id"),
+  primarySubscriberName: text("primary_subscriber_name"),
+  primarySubscriberRelationship: text("primary_subscriber_relationship"), // self, spouse, child, parent
+  primarySubscriberDob: timestamp("primary_subscriber_dob"),
+  primaryEffectiveDate: timestamp("primary_effective_date"),
+  primaryExpirationDate: timestamp("primary_expiration_date"),
+  primaryCopayAmount: decimal("primary_copay_amount", { precision: 10, scale: 2 }),
+  primaryDeductibleAmount: decimal("primary_deductible_amount", { precision: 10, scale: 2 }),
+  primaryIsActive: boolean("primary_is_active").default(true),
+  
+  // Secondary Insurance (if applicable)
+  secondaryInsuranceProvider: text("secondary_insurance_provider"),
+  secondaryPolicyNumber: text("secondary_policy_number"),
+  secondaryGroupNumber: text("secondary_group_number"),
+  secondaryMemberId: text("secondary_member_id"),
+  secondarySubscriberName: text("secondary_subscriber_name"),
+  secondarySubscriberRelationship: text("secondary_subscriber_relationship"),
+  secondarySubscriberDob: timestamp("secondary_subscriber_dob"),
+  secondaryEffectiveDate: timestamp("secondary_effective_date"),
+  secondaryExpirationDate: timestamp("secondary_expiration_date"),
+  secondaryIsActive: boolean("secondary_is_active").default(false),
+  
+  // Pharmacy-specific insurance details
+  preferredPharmacyNetwork: text("preferred_pharmacy_network"),
+  formularyTier: text("formulary_tier"), // Tier 1, 2, 3, 4, specialty
+  mailOrderBenefit: boolean("mail_order_benefit").default(false),
+  maxDaysSupply: integer("max_days_supply").default(30),
+  refillLimitations: text("refill_limitations"),
+  priorAuthRequired: boolean("prior_auth_required").default(false),
+  stepTherapyRequired: boolean("step_therapy_required").default(false),
+  
+  // Verification details
+  lastVerificationDate: timestamp("last_verification_date"),
+  verificationStatus: verificationStatusEnum("verification_status").default('pending'),
+  verificationNotes: text("verification_notes"),
+  verifiedBy: uuid("verified_by").references(() => users.id), // Pharmacist who verified
+  
+  // Additional details
+  emergencyContact: jsonb("emergency_contact"),
+  specialPrograms: text("special_programs").array().default([]), // Medicare Part D, Medicaid, etc.
+  copayCards: jsonb("copay_cards").default('[]'), // Manufacturer copay cards
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Archived Records - stores records that are hidden after each shift
+export const archivedRecords = pgTable("archived_records", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  workShiftId: uuid("work_shift_id").references(() => workShifts.id).notNull(),
+  recordType: text("record_type").notNull(), // prescription, receipt, payment, insurance_claim
+  recordId: uuid("record_id").notNull(), // Reference to the actual record
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  
+  // Search metadata for quick retrieval
+  patientName: text("patient_name").notNull(),
+  patientMrn: text("patient_mrn"),
+  medicationName: text("medication_name"),
+  prescriptionNumber: text("prescription_number"),
+  receiptNumber: text("receipt_number"),
+  insuranceProvider: text("insurance_provider"),
+  
+  // Archive details
+  archivedAt: timestamp("archived_at").default(sql`CURRENT_TIMESTAMP`),
+  archivedBy: uuid("archived_by").references(() => users.id).notNull(),
+  
+  // Access tracking
+  accessCount: integer("access_count").default(0),
+  lastAccessedAt: timestamp("last_accessed_at"),
+  lastAccessedBy: uuid("last_accessed_by").references(() => users.id),
+  
+  // Additional metadata
+  recordData: jsonb("record_data"), // Snapshot of the record at time of archiving
+  tags: text("tags").array().default([]), // For categorization
+  notes: text("notes"),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Pharmacy Report Templates - predefined reports for pharmacy operations
+export const pharmacyReportTemplates = pgTable("pharmacy_report_templates", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  reportType: text("report_type").notNull(), // daily_sales, insurance_summary, patient_demographics, medication_dispensing, etc.
+  
+  // Template configuration
+  dataFields: jsonb("data_fields").notNull(), // Which fields to include
+  groupBy: text("group_by").array().default([]), // How to group data
+  orderBy: text("order_by").array().default([]), // How to sort data
+  filters: jsonb("filters").default('{}'), // Default filters
+  
+  // Scheduling options
+  isScheduled: boolean("is_scheduled").default(false),
+  scheduleFrequency: text("schedule_frequency"), // daily, weekly, monthly
+  scheduleTime: text("schedule_time"), // Time to generate
+  lastGenerated: timestamp("last_generated"),
+  
+  // Template settings
+  isActive: boolean("is_active").default(true),
+  isDefault: boolean("is_default").default(false),
+  
+  createdBy: uuid("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Multilingual Communication Tables
 export const medicalCommunications = pgTable("medical_communications", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -2062,6 +2199,73 @@ export const financialTransactionsRelations = relations(financialTransactions, (
   })
 }));
 
+// Work Shifts Relations
+export const workShiftsRelations = relations(workShifts, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [workShifts.tenantId],
+    references: [tenants.id]
+  }),
+  user: one(users, {
+    fields: [workShifts.userId],
+    references: [users.id]
+  }),
+  archivedRecords: many(archivedRecords)
+}));
+
+// Pharmacy Patient Insurance Relations
+export const pharmacyPatientInsuranceRelations = relations(pharmacyPatientInsurance, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [pharmacyPatientInsurance.tenantId],
+    references: [tenants.id]
+  }),
+  patient: one(patients, {
+    fields: [pharmacyPatientInsurance.patientId],
+    references: [patients.id]
+  }),
+  verifiedByUser: one(users, {
+    fields: [pharmacyPatientInsurance.verifiedBy],
+    references: [users.id]
+  })
+}));
+
+// Archived Records Relations
+export const archivedRecordsRelations = relations(archivedRecords, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [archivedRecords.tenantId],
+    references: [tenants.id]
+  }),
+  workShift: one(workShifts, {
+    fields: [archivedRecords.workShiftId],
+    references: [workShifts.id]
+  }),
+  patient: one(patients, {
+    fields: [archivedRecords.patientId],
+    references: [patients.id]
+  }),
+  archivedByUser: one(users, {
+    fields: [archivedRecords.archivedBy],
+    references: [users.id],
+    relationName: "archivedBy"
+  }),
+  lastAccessedByUser: one(users, {
+    fields: [archivedRecords.lastAccessedBy],
+    references: [users.id],
+    relationName: "lastAccessedBy"
+  })
+}));
+
+// Pharmacy Report Templates Relations
+export const pharmacyReportTemplatesRelations = relations(pharmacyReportTemplates, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [pharmacyReportTemplates.tenantId],
+    references: [tenants.id]
+  }),
+  createdByUser: one(users, {
+    fields: [pharmacyReportTemplates.createdBy],
+    references: [users.id]
+  })
+}));
+
 // Insert Schemas
 export const insertTenantSchema = createInsertSchema(tenants).omit({
   id: true,
@@ -2473,3 +2677,42 @@ export type InsertLeaderboard = z.infer<typeof insertLeaderboardSchema>;
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+
+// Work Shifts Schema and Types
+export const insertWorkShiftSchema = createInsertSchema(workShifts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export type WorkShift = typeof workShifts.$inferSelect;
+export type InsertWorkShift = z.infer<typeof insertWorkShiftSchema>;
+
+// Pharmacy Patient Insurance Schema and Types
+export const insertPharmacyPatientInsuranceSchema = createInsertSchema(pharmacyPatientInsurance).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export type PharmacyPatientInsurance = typeof pharmacyPatientInsurance.$inferSelect;
+export type InsertPharmacyPatientInsurance = z.infer<typeof insertPharmacyPatientInsuranceSchema>;
+
+// Archived Records Schema and Types
+export const insertArchivedRecordSchema = createInsertSchema(archivedRecords).omit({
+  id: true,
+  createdAt: true
+});
+
+export type ArchivedRecord = typeof archivedRecords.$inferSelect;
+export type InsertArchivedRecord = z.infer<typeof insertArchivedRecordSchema>;
+
+// Pharmacy Report Templates Schema and Types
+export const insertPharmacyReportTemplateSchema = createInsertSchema(pharmacyReportTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export type PharmacyReportTemplate = typeof pharmacyReportTemplates.$inferSelect;
+export type InsertPharmacyReportTemplate = z.infer<typeof insertPharmacyReportTemplateSchema>;

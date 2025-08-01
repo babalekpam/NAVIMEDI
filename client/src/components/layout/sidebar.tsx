@@ -23,7 +23,9 @@ import {
   Video,
   MessageSquare,
   Receipt,
-  Trophy
+  Trophy,
+  Timer,
+  Archive
 } from "lucide-react";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 import { Button } from "@/components/ui/button";
@@ -60,6 +62,8 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "post-lab-results", label: "Post Lab Results", icon: Plus, path: "/post-lab-results", roles: ["lab_technician", "tenant_admin", "director"] },
   { id: "achievements", label: "Laboratory Achievements", icon: Trophy, path: "/achievements", roles: ["lab_technician", "tenant_admin", "director"] },
   { id: "pharmacy-dashboard", label: t("pharmacy-dashboard"), icon: Building2, path: "/pharmacy-dashboard", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "pharmacy-patient-management", label: "Pharmacy Patient Management", icon: Users, path: "/pharmacy-patient-management", roles: ["pharmacist", "billing_staff", "tenant_admin", "director"] },
+  { id: "shift-management", label: "Shift Management", icon: Timer, path: "/shift-management", roles: ["pharmacist", "nurse", "lab_technician", "billing_staff", "tenant_admin", "director"] },
   { id: "health-recommendations", label: t("health-recommendations"), icon: Brain, path: "/health-recommendations", roles: ["physician", "nurse", "tenant_admin", "director"] },
   { id: "medical-communications", label: t("medical-communications"), icon: Languages, path: "/medical-communications", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   
