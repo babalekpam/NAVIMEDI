@@ -46,7 +46,6 @@ interface SidebarItem {
 const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   // Clinical Section (only for tenant users)
   { id: "dashboard", label: t("dashboard"), icon: BarChart3, path: "/dashboard", roles: ["physician", "nurse", "pharmacist", "lab_technician", "receptionist", "billing_staff", "tenant_admin", "director", "super_admin"] },
-  { id: "patient-portal", label: "Patient Portal", icon: Users, path: "/patient-portal", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "telemedicine-booking", label: "Telemedicine Booking", icon: Video, path: "/telemedicine-booking", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "register-patient", label: t("register-patient"), icon: UserPlus, path: "/patients?action=register", roles: ["receptionist", "tenant_admin", "director"] },
   { id: "book-appointment", label: t("book-appointment"), icon: CalendarPlus, path: "/appointments?action=book", roles: ["receptionist", "tenant_admin", "director"] },
