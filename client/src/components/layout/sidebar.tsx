@@ -337,7 +337,7 @@ export const Sidebar = () => {
             )}
             <Button 
               className="w-full bg-blue-600 hover:bg-blue-700"
-              onClick={() => setLocation("/patients/new")}
+              onClick={() => setLocation("/patients?action=register")}
             >
               <Plus className="h-4 w-4 mr-2" />
               New Patient
