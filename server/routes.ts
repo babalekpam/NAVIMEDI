@@ -1473,6 +1473,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Hospital Billing Routes
+  app.get("/api/hospital/billing", authenticateToken, requireTenant, requireRole(['physician', 'nurse', 'receptionist', 'billing_staff', 'tenant_admin', 'director']), async (req, res) => {
+    try {
+      const tenantId = req.tenantId!;
+      
+      // Verify this is a hospital tenant
+      const tenant = await storage.getTenant(tenantId);
+      if (tenant?.type !== 'hospital') {
+        return res.status(403).json({ error: "Hospital billing access restricted to hospital tenants" });
+      }
+
+      // Get insurance claims for hospital billing (using existing claims table)
+      const claims = await storage.getInsuranceClaimsByTenant(tenantId);
+
+      res.json(claims);
+    } catch (error) {
+      console.error("Error fetching hospital bills:", error);
+      res.status(500).json({ error: "Failed to fetch hospital bills" });
+    }
+  });
+
+  // Hospital Analytics API endpoints  
+  app.get("/api/hospital/analytics", authenticateToken, requireTenant, requireRole(['physician', 'nurse', 'receptionist', 'billing_staff', 'tenant_admin', 'director']), async (req, res) => {
+    try {
+      const tenantId = req.tenantId!;
+      
+      // Verify this is a hospital tenant
+      const tenant = await storage.getTenant(tenantId);
+      if (tenant?.type !== 'hospital') {
+        return res.status(403).json({ error: "Analytics access restricted to hospital tenants" });
+      }
+
+      // Get claims and calculate hospital analytics
+      const claims = await storage.getInsuranceClaimsByTenant(tenantId);
+      const appointments = await storage.getAppointmentsByTenant(tenantId);
+      
+      const totalClaims = claims.length;
+      const totalRevenue = claims.reduce((sum, claim) => sum + parseFloat(claim.claimAmount.toString()), 0);
+      const pendingClaims = claims.filter(claim => claim.status === 'pending').length;
+      const approvedClaims = claims.filter(claim => claim.status === 'approved').length;
+      const claimApprovalRate = totalClaims > 0 ? Math.round((approvedClaims / totalClaims) * 100) : 0;
+      const averageClaimAmount = totalClaims > 0 ? Math.round(totalRevenue / totalClaims) : 0;
+      
+      // Calculate appointments this month
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const appointmentsThisMonth = appointments.filter(appt => 
+        new Date(appt.appointmentDate) >= startOfMonth
+      ).length;
+
+      const analytics = {
+        totalClaims,
+        totalRevenue,
+        pendingClaims,
+        claimApprovalRate,
+        averageClaimAmount,
+        appointmentsThisMonth,
+        totalPatients: await storage.getPatientsByTenant(tenantId).then(patients => patients.length)
+      };
+
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching hospital analytics:", error);
+      res.status(500).json({ error: "Failed to fetch analytics" });
+    }
+  });
+
+  // Pharmacy Billing Routes
+  app.get("/api/pharmacy/billing", authenticateToken, requireTenant, requireRole(['pharmacist', 'pharmacy_admin', 'tenant_admin', 'director']), async (req, res) => {
+    try {
+      const tenantId = req.tenantId!;
+      
+      // Verify this is a pharmacy tenant
+      const tenant = await storage.getTenant(tenantId);
+      if (tenant?.type !== 'pharmacy') {
+        return res.status(403).json({ error: "Pharmacy billing access restricted to pharmacy tenants" });
+      }
+
+      // Get pharmacy receipts for billing (using existing receipts table)
+      const receipts = await storage.getPharmacyReceiptsByTenant(tenantId);
+
+      res.json(receipts);
+    } catch (error) {
+      console.error("Error fetching pharmacy bills:", error);
+      res.status(500).json({ error: "Failed to fetch pharmacy bills" });
+    }
+  });
+
+  // Pharmacy Analytics API endpoints
+  app.get("/api/pharmacy/analytics", authenticateToken, requireTenant, requireRole(['pharmacist', 'pharmacy_admin', 'tenant_admin', 'director']), async (req, res) => {
+    try {
+      const tenantId = req.tenantId!;
+      
+      // Verify this is a pharmacy tenant
+      const tenant = await storage.getTenant(tenantId);
+      if (tenant?.type !== 'pharmacy') {
+        return res.status(403).json({ error: "Analytics access restricted to pharmacy tenants" });
+      }
+
+      // Get receipts and prescriptions for pharmacy analytics
+      const receipts = await storage.getPharmacyReceiptsByTenant(tenantId);
+      const prescriptions = await storage.getPrescriptionsByTenant(tenantId);
+      
+      const totalReceipts = receipts.length;
+      const totalRevenue = receipts.reduce((sum, receipt) => sum + parseFloat(receipt.totalAmount.toString()), 0);
+      const pendingPrescriptions = prescriptions.filter(rx => rx.status === 'pending').length;
+      const dispensedPrescriptions = prescriptions.filter(rx => rx.status === 'dispensed').length;
+      const dispensingRate = prescriptions.length > 0 ? Math.round((dispensedPrescriptions / prescriptions.length) * 100) : 0;
+      const averageReceiptAmount = totalReceipts > 0 ? Math.round(totalRevenue / totalReceipts) : 0;
+      
+      // Calculate receipts this month
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const receiptsThisMonth = receipts.filter(receipt => 
+        new Date(receipt.createdAt) >= startOfMonth
+      ).length;
+
+      const analytics = {
+        totalReceipts,
+        totalRevenue,
+        pendingPrescriptions,
+        dispensingRate,
+        averageReceiptAmount,
+        receiptsThisMonth,
+        totalPrescriptions: prescriptions.length
+      };
+
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching pharmacy analytics:", error);
+      res.status(500).json({ error: "Failed to fetch analytics" });
+    }
+  });
+
   // Insurance claims management routes
   app.use("/api/insurance-claims", requireTenant);
 

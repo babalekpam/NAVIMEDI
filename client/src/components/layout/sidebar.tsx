@@ -63,6 +63,9 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   
   // Operations Section (only for tenant users)
   { id: "billing", label: t("billing"), icon: DollarSign, path: "/billing", roles: ["billing_staff", "receptionist", "physician", "tenant_admin", "director"] },
+  { id: "hospital-billing", label: "Hospital Billing", icon: DollarSign, path: "/hospital-billing", roles: ["billing_staff", "receptionist", "physician", "tenant_admin", "director"] },
+  { id: "pharmacy-billing", label: "Pharmacy Billing", icon: DollarSign, path: "/pharmacy-billing", roles: ["pharmacist", "pharmacy_admin", "tenant_admin", "director"] },
+  { id: "laboratory-billing", label: "Laboratory Billing", icon: DollarSign, path: "/laboratory-billing", roles: ["lab_technician", "tenant_admin", "director"] },
   { id: "medication-insurance-claims", label: "Medication Claims", icon: Receipt, path: "/medication-insurance-claims", roles: ["tenant_admin", "billing_staff", "pharmacist", "pharmacy_admin", "physician"] },
   { id: "service-prices", label: t("service-prices"), icon: ClipboardList, path: "/service-pricing-management", roles: ["receptionist", "billing_staff", "tenant_admin", "director"] },
   { id: "reports", label: t("reports"), icon: BarChart3, path: "/reports", roles: ["physician", "nurse", "pharmacist", "lab_technician", "billing_staff", "tenant_admin", "director", "super_admin"] },

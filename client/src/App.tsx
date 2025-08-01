@@ -72,6 +72,8 @@ import AWSIntegration from "@/pages/videos/aws-integration";
 import PostLabResults from "@/pages/post-lab-results";
 import LabResults from "@/pages/lab-results";
 import LaboratoryBilling from "@/pages/laboratory-billing";
+import HospitalBilling from "@/pages/hospital-billing";
+import PharmacyBilling from "@/pages/pharmacy-billing";
 import MedicationInsuranceClaims from "@/pages/medication-insurance-claims";
 import PatientPortal from "@/pages/patient-portal";
 import PatientPortalStaff from "@/pages/patient-portal-staff";
@@ -462,14 +464,27 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
-        <Route path="/laboratory/billing">
+        <Route path="/hospital-billing">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
               <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <LaboratoryBilling />
+                  <HospitalBilling />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/pharmacy-billing">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PharmacyBilling />
                 </main>
               </div>
             </div>
