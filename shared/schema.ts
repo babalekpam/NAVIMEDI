@@ -1067,6 +1067,113 @@ export const labBills = pgTable("lab_bills", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Hospital Bills for patient services and procedures
+export const hospitalBills = pgTable("hospital_bills", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(), // Hospital tenant
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  appointmentId: uuid("appointment_id").references(() => appointments.id),
+  
+  // Bill Details
+  billNumber: text("bill_number").notNull().unique(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  description: text("description").notNull(),
+  status: billStatusEnum("status").default("pending").notNull(),
+  serviceType: serviceTypeEnum("service_type").notNull(),
+  
+  // Insurance Information
+  insuranceProvider: text("insurance_provider"),
+  insuranceAmount: decimal("insurance_amount", { precision: 10, scale: 2 }).default('0'),
+  patientCopay: decimal("patient_copay", { precision: 10, scale: 2 }).notNull(),
+  
+  // Additional Information
+  procedureCodes: text("procedure_codes").array().default([]),
+  diagnosisCodes: text("diagnosis_codes").array().default([]),
+  notes: text("notes"),
+  generatedBy: uuid("generated_by").references(() => users.id).notNull(),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Pharmacy Bills for medication sales
+export const pharmacyBills = pgTable("pharmacy_bills", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(), // Pharmacy tenant
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  prescriptionId: uuid("prescription_id").references(() => prescriptions.id),
+  
+  // Bill Details
+  billNumber: text("bill_number").notNull().unique(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  description: text("description").notNull(),
+  status: billStatusEnum("status").default("pending").notNull(),
+  
+  // Medication Information
+  medicationName: text("medication_name").notNull(),
+  quantity: integer("quantity").notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  
+  // Insurance Information
+  insuranceProvider: text("insurance_provider"),
+  insuranceAmount: decimal("insurance_amount", { precision: 10, scale: 2 }).default('0'),
+  patientCopay: decimal("patient_copay", { precision: 10, scale: 2 }).notNull(),
+  
+  // Additional Information
+  notes: text("notes"),
+  generatedBy: uuid("generated_by").references(() => users.id).notNull(),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Comprehensive Financial Transactions Ledger for Bookkeeping
+export const financialTransactions = pgTable("financial_transactions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  
+  // Transaction Identification
+  transactionNumber: text("transaction_number").notNull().unique(),
+  transactionType: text("transaction_type").notNull(), // payment, refund, adjustment, fee, copay, insurance_payment
+  category: text("category").notNull(), // pharmacy_sale, hospital_service, lab_test, insurance_claim
+  
+  // Financial Details
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: currencyEnum("currency").notNull().default("USD"),
+  description: text("description").notNull(),
+  
+  // Related Entities
+  patientId: uuid("patient_id").references(() => patients.id),
+  billId: uuid("bill_id"), // References any bill (hospital, pharmacy, lab)
+  receiptId: uuid("receipt_id"), // References any receipt
+  paymentId: uuid("payment_id"), // References payment records
+  
+  // Payment Method Details
+  paymentMethod: text("payment_method"), // cash, card, check, insurance, online
+  paymentReference: text("payment_reference"), // transaction ID, check number, etc.
+  
+  // Accounting Categories
+  accountCode: text("account_code"), // Chart of accounts code
+  debitAccount: text("debit_account"), // Account being debited
+  creditAccount: text("credit_account"), // Account being credited
+  
+  // Status and Dates
+  status: text("status").notNull().default("completed"), // pending, completed, reversed, failed
+  transactionDate: timestamp("transaction_date").notNull(),
+  postedDate: timestamp("posted_date"),
+  
+  // Audit Trail
+  recordedBy: uuid("recorded_by").references(() => users.id).notNull(),
+  approvedBy: uuid("approved_by").references(() => users.id),
+  
+  // Additional Information
+  notes: text("notes"),
+  metadata: jsonb("metadata"), // Additional transaction-specific data
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Offline Sync Data
 export const offlineSyncData = pgTable("offline_sync_data", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1345,6 +1452,9 @@ export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   patientCheckIns: many(patientCheckIns),
   patientBills: many(patientBills),
   patientPayments: many(patientPayments),
+  hospitalBills: many(hospitalBills),
+  pharmacyBills: many(pharmacyBills),
+  financialTransactions: many(financialTransactions),
   userAchievements: many(userAchievements),
   userStats: many(userStats),
   leaderboards: many(leaderboards),
@@ -1879,6 +1989,66 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   })
 }));
 
+// Hospital Bills Relations
+export const hospitalBillsRelations = relations(hospitalBills, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [hospitalBills.tenantId],
+    references: [tenants.id]
+  }),
+  patient: one(patients, {
+    fields: [hospitalBills.patientId],
+    references: [patients.id]
+  }),
+  appointment: one(appointments, {
+    fields: [hospitalBills.appointmentId],
+    references: [appointments.id]
+  }),
+  generatedByUser: one(users, {
+    fields: [hospitalBills.generatedBy],
+    references: [users.id]
+  })
+}));
+
+// Pharmacy Bills Relations
+export const pharmacyBillsRelations = relations(pharmacyBills, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [pharmacyBills.tenantId],
+    references: [tenants.id]
+  }),
+  patient: one(patients, {
+    fields: [pharmacyBills.patientId],
+    references: [patients.id]
+  }),
+  prescription: one(prescriptions, {
+    fields: [pharmacyBills.prescriptionId],
+    references: [prescriptions.id]
+  }),
+  generatedByUser: one(users, {
+    fields: [pharmacyBills.generatedBy],
+    references: [users.id]
+  })
+}));
+
+// Financial Transactions Relations
+export const financialTransactionsRelations = relations(financialTransactions, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [financialTransactions.tenantId],
+    references: [tenants.id]
+  }),
+  patient: one(patients, {
+    fields: [financialTransactions.patientId],
+    references: [patients.id]
+  }),
+  recordedByUser: one(users, {
+    fields: [financialTransactions.recordedBy],
+    references: [users.id]
+  }),
+  approvedByUser: one(users, {
+    fields: [financialTransactions.approvedBy],
+    references: [users.id]
+  })
+}));
+
 // Insert Schemas
 export const insertTenantSchema = createInsertSchema(tenants).omit({
   id: true,
@@ -2231,6 +2401,21 @@ export type InsertPharmacyReceipt = z.infer<typeof insertPharmacyReceiptSchema>;
 export const insertLabBillSchema = createInsertSchema(labBills);
 export type LabBill = typeof labBills.$inferSelect;
 export type InsertLabBill = z.infer<typeof insertLabBillSchema>;
+
+// Hospital Bill Types
+export const insertHospitalBillSchema = createInsertSchema(hospitalBills);
+export type HospitalBill = typeof hospitalBills.$inferSelect;
+export type InsertHospitalBill = z.infer<typeof insertHospitalBillSchema>;
+
+// Pharmacy Bill Types
+export const insertPharmacyBillSchema = createInsertSchema(pharmacyBills);
+export type PharmacyBill = typeof pharmacyBills.$inferSelect;
+export type InsertPharmacyBill = z.infer<typeof insertPharmacyBillSchema>;
+
+// Financial Transaction Types
+export const insertFinancialTransactionSchema = createInsertSchema(financialTransactions);
+export type FinancialTransaction = typeof financialTransactions.$inferSelect;
+export type InsertFinancialTransaction = z.infer<typeof insertFinancialTransactionSchema>;
 
 // Achievement System Schemas and Types
 export const insertAchievementSchema = createInsertSchema(achievements).omit({

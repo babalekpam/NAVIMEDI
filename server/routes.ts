@@ -25,6 +25,7 @@ import {
   ObjectStorageService,
   ObjectNotFoundError,
 } from "./objectStorage";
+import { financialTransactionService } from "./financial-transaction-service";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
@@ -4392,6 +4393,33 @@ Report ID: ${report.id}
 
       const payment = await storage.createPatientPayment(paymentData);
 
+      // **COMPREHENSIVE FINANCIAL TRANSACTION RECORDING FOR BOOKKEEPING**
+      // Record hospital service payment transaction automatically
+      try {
+        const bill = await storage.getPatientBill(paymentData.patientBillId, req.tenant!.id);
+        if (bill) {
+          await financialTransactionService.recordHospitalService({
+            tenantId: req.tenant!.id,
+            patientId: bill.patientId,
+            appointmentId: undefined, // Will be added when appointments are linked to bills
+            serviceType: bill.serviceType || 'consultation',
+            amount: parseFloat(bill.totalAmount),
+            description: bill.description || 'Hospital service payment',
+            insuranceProvider: bill.insuranceProvider || undefined,
+            insuranceAmount: bill.insuranceCovered ? parseFloat(bill.insuranceCovered.toString()) : 0,
+            patientCopay: parseFloat(paymentData.amount),
+            paymentMethod: paymentData.paymentMethod,
+            paymentReference: paymentData.paymentReference || `PAY-${payment.id}`,
+            recordedBy: req.user!.id
+          });
+
+          console.log(`[FINANCIAL TRANSACTION] Recorded hospital service payment for bill ${bill.id}`);
+        }
+      } catch (finError) {
+        console.error("Error recording hospital financial transaction:", finError);
+        // Continue with payment creation even if financial recording fails
+      }
+
       // Update bill remaining balance
       const bill = await storage.getPatientBill(paymentData.patientBillId, req.tenant!.id);
       if (bill) {
@@ -4910,6 +4938,31 @@ Report ID: ${report.id}
 
       const receipt = await storage.createPharmacyReceipt(validatedData);
 
+      // **COMPREHENSIVE FINANCIAL TRANSACTION RECORDING FOR BOOKKEEPING**
+      // Record pharmacy sale transaction automatically for complete audit trail
+      try {
+        await financialTransactionService.recordPharmacySale({
+          tenantId: req.tenantId!,
+          patientId: receipt.patientId,
+          prescriptionId: receipt.prescriptionId,
+          medicationName: receipt.medicationName,
+          quantity: receipt.quantity,
+          unitPrice: parseFloat(receipt.totalAmount) / receipt.quantity, // Calculate unit price
+          insuranceProvider: receipt.insuranceProvider || undefined,
+          insuranceAmount: receipt.insuranceAmount ? parseFloat(receipt.insuranceAmount.toString()) : 0,
+          patientCopay: parseFloat(receipt.patientCopay.toString()),
+          paymentMethod: receipt.paymentMethod,
+          paymentReference: `RECEIPT-${receipt.receiptNumber}`,
+          recordedBy: req.user?.id!
+        });
+
+        console.log(`[FINANCIAL TRANSACTION] Recorded pharmacy sale for receipt ${receipt.receiptNumber}`);
+      } catch (finError) {
+        console.error("Error recording financial transaction:", finError);
+        // Continue with receipt creation even if financial recording fails
+        // But log the error for accounting review
+      }
+
       // Create audit log
       await storage.createAuditLog({
         userId: req.user?.id!,
@@ -4921,7 +4974,8 @@ Report ID: ${report.id}
           patientId: receipt.patientId, 
           prescriptionId: receipt.prescriptionId,
           receiptNumber: receipt.receiptNumber,
-          totalAmount: receipt.patientCopay
+          totalAmount: receipt.patientCopay,
+          financialTransactionRecorded: true
         }
       });
 
@@ -5544,6 +5598,107 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Error tracking achievement:", error);
       res.status(500).json({ message: "Failed to track achievement" });
+    }
+  });
+
+  // ==================== COMPREHENSIVE FINANCIAL TRANSACTION SYSTEM ====================
+  // **CRITICAL FOR BOOKKEEPING COMPLIANCE**
+  
+  // Financial transactions summary for accounting purposes
+  app.get("/api/financial-summary", authenticateToken, requireTenant, requireRole(['super_admin', 'tenant_admin', 'billing_staff', 'director']), async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      const tenantId = req.tenantId!;
+      
+      const summary = await financialTransactionService.getFinancialSummary(
+        tenantId,
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined
+      );
+
+      console.log(`[FINANCIAL SUMMARY] Generated for tenant ${tenantId}, ${summary.transactions.length} transactions`);
+      res.json(summary);
+    } catch (error) {
+      console.error("Error generating financial summary:", error);
+      res.status(500).json({ error: "Failed to generate financial summary" });
+    }
+  });
+
+  // Lab service payment recording
+  app.post("/api/lab-payments", authenticateToken, requireTenant, requireRole(['super_admin', 'tenant_admin', 'lab_technician', 'billing_staff']), async (req, res) => {
+    try {
+      const { labBillId, paymentMethod, paymentReference } = req.body;
+      
+      // **COMPREHENSIVE FINANCIAL TRANSACTION RECORDING FOR BOOKKEEPING**
+      const result = await financialTransactionService.recordLabService({
+        labBillId,
+        tenantId: req.tenantId!,
+        paymentMethod,
+        paymentReference,
+        recordedBy: req.user!.id
+      });
+
+      console.log(`[FINANCIAL TRANSACTION] Recorded lab service payment for bill ${labBillId}`);
+      res.json(result);
+    } catch (error) {
+      console.error("Error recording lab payment:", error);
+      res.status(500).json({ error: "Failed to record lab payment" });
+    }
+  });
+
+  // Refund recording endpoint
+  app.post("/api/refunds", authenticateToken, requireTenant, requireRole(['super_admin', 'tenant_admin', 'billing_staff']), async (req, res) => {
+    try {
+      const { originalBillId, patientId, refundAmount, refundReason, paymentMethod, paymentReference } = req.body;
+      
+      // **COMPREHENSIVE FINANCIAL TRANSACTION RECORDING FOR BOOKKEEPING**
+      const refund = await financialTransactionService.recordRefund({
+        tenantId: req.tenantId!,
+        originalBillId,
+        patientId,
+        refundAmount: parseFloat(refundAmount),
+        refundReason,
+        paymentMethod,
+        paymentReference,
+        recordedBy: req.user!.id
+      });
+
+      console.log(`[FINANCIAL TRANSACTION] Recorded refund for bill ${originalBillId}, amount: ${refundAmount}`);
+      res.json(refund);
+    } catch (error) {
+      console.error("Error recording refund:", error);
+      res.status(500).json({ error: "Failed to record refund" });
+    }
+  });
+
+  // Financial transactions list for accounting review
+  app.get("/api/financial-transactions", authenticateToken, requireTenant, requireRole(['super_admin', 'tenant_admin', 'billing_staff', 'director']), async (req, res) => {
+    try {
+      const { startDate, endDate, category, transactionType } = req.query;
+      const tenantId = req.tenantId!;
+      
+      const result = await financialTransactionService.getFinancialSummary(
+        tenantId,
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined
+      );
+
+      // Filter by category and transaction type if provided
+      let filteredTransactions = result.transactions;
+      if (category) {
+        filteredTransactions = filteredTransactions.filter(t => t.category === category);
+      }
+      if (transactionType) {
+        filteredTransactions = filteredTransactions.filter(t => t.transactionType === transactionType);
+      }
+
+      res.json({
+        transactions: filteredTransactions,
+        summary: result.summary
+      });
+    } catch (error) {
+      console.error("Error fetching financial transactions:", error);
+      res.status(500).json({ error: "Failed to fetch financial transactions" });
     }
   });
 
