@@ -135,12 +135,50 @@ export const Header = () => {
             <LanguageSelector compact={true} />
             
             {/* Notifications */}
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="h-5 w-5" />
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-red-500">
-                3
-              </Badge>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="relative hover:bg-blue-50">
+                  <Bell className="h-5 w-5 text-blue-600" />
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-red-500 text-white animate-pulse">
+                    3
+                  </Badge>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel className="flex items-center justify-between">
+                  <span>Notifications</span>
+                  <Badge variant="secondary">3 new</Badge>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <div className="max-h-64 overflow-y-auto">
+                  <DropdownMenuItem className="flex flex-col items-start p-3 space-y-1">
+                    <div className="flex items-center justify-between w-full">
+                      <span className="font-medium text-sm">Lab Results Available</span>
+                      <span className="text-xs text-gray-500">2m ago</span>
+                    </div>
+                    <p className="text-xs text-gray-600">New lab results for Patient ID: MRN001</p>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="flex flex-col items-start p-3 space-y-1">
+                    <div className="flex items-center justify-between w-full">
+                      <span className="font-medium text-sm">Insurance Claim Updated</span>
+                      <span className="text-xs text-gray-500">15m ago</span>
+                    </div>
+                    <p className="text-xs text-gray-600">Claim #12345 status changed to approved</p>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="flex flex-col items-start p-3 space-y-1">
+                    <div className="flex items-center justify-between w-full">
+                      <span className="font-medium text-sm">New Appointment Scheduled</span>
+                      <span className="text-xs text-gray-500">1h ago</span>
+                    </div>
+                    <p className="text-xs text-gray-600">Dr. Johnson - Tomorrow at 2:00 PM</p>
+                  </DropdownMenuItem>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-center text-blue-600 font-medium">
+                  View All Notifications
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             
             {/* Tenant Switcher */}
             <TenantSwitcher />

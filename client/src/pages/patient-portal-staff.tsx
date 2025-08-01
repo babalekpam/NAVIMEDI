@@ -727,8 +727,9 @@ export default function PatientPortalStaff() {
             </nav>
 
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm">
-                <Bell className="h-4 w-4" />
+              <Button variant="ghost" size="sm" className="relative hover:bg-blue-50">
+                <Bell className="h-4 w-4 text-blue-600" />
+                <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse"></span>
               </Button>
               <Button variant="ghost" size="sm">
                 <Settings className="h-4 w-4" />
