@@ -73,6 +73,12 @@ export default function HospitalBilling() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Billing permissions check
+  const { data: permissions = {}, isLoading: permissionsLoading } = useQuery({
+    queryKey: ["/api/user/billing-permissions"],
+    enabled: !!user,
+  });
+
   // Analytics queries
   const { data: analyticsData = {}, isLoading: analyticsLoading } = useQuery({
     queryKey: ["/api/hospital/analytics"],
@@ -273,6 +279,23 @@ export default function HospitalBilling() {
 
         <TabsContent value="billing" className="mt-6">
           <div className="space-y-6">
+            {/* Access Notice for Physicians */}
+            {permissions.isPhysicianWithRestrictedAccess && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center space-x-2">
+                  <Stethoscope className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">
+                      Physician View - Limited Access
+                    </p>
+                    <p className="text-sm text-blue-700">
+                      You are viewing only bills for services you performed. Contact administration for broader billing access.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* Billing Controls */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <div className="flex flex-1 gap-4 items-center">
@@ -307,13 +330,14 @@ export default function HospitalBilling() {
                   <RefreshCw className={`h-4 w-4 mr-2 ${billsLoading ? 'animate-spin' : ''}`} />
                   Refresh
                 </Button>
-                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      New Bill
-                    </Button>
-                  </DialogTrigger>
+                {permissions.canCreateBills && (
+                  <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        New Bill
+                      </Button>
+                    </DialogTrigger>
                   <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>Create Hospital Bill</DialogTitle>
@@ -477,7 +501,8 @@ export default function HospitalBilling() {
                       </form>
                     </Form>
                   </DialogContent>
-                </Dialog>
+                  </Dialog>
+                )}
               </div>
             </div>
 
@@ -612,13 +637,15 @@ export default function HospitalBilling() {
                             </td>
                             <td className="py-4 px-4">
                               <div className="flex items-center space-x-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditBill(bill)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
+                                {permissions.canEditBills && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditBill(bill)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                )}
                                 <Button variant="ghost" size="sm">
                                   <Eye className="h-4 w-4" />
                                 </Button>

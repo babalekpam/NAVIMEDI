@@ -46,6 +46,7 @@ import {
   laboratoryPatientInsurance,
   archivedRecords,
   pharmacyReportTemplates,
+  hospitalBills,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -134,7 +135,9 @@ import {
   type ArchivedRecord,
   type InsertArchivedRecord,
   type PharmacyReportTemplate,
-  type InsertPharmacyReportTemplate
+  type InsertPharmacyReportTemplate,
+  type HospitalBill,
+  type InsertHospitalBill
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or, isNull, gt } from "drizzle-orm";
@@ -526,6 +529,15 @@ export interface IStorage {
   updatePharmacyReportTemplate(id: string, updates: Partial<PharmacyReportTemplate>, tenantId: string): Promise<PharmacyReportTemplate | undefined>;
   getPharmacyReportTemplatesByTenant(tenantId: string): Promise<PharmacyReportTemplate[]>;
   getActivePharmacyReportTemplates(tenantId: string): Promise<PharmacyReportTemplate[]>;
+
+  // Hospital Billing Management
+  getHospitalBill(id: string, tenantId: string): Promise<HospitalBill | undefined>;
+  getHospitalBills(tenantId: string): Promise<HospitalBill[]>;
+  getHospitalBillsByProvider(providerId: string, tenantId: string): Promise<HospitalBill[]>;
+  createHospitalBill(bill: InsertHospitalBill): Promise<HospitalBill>;
+  updateHospitalBill(id: string, updates: Partial<HospitalBill>, tenantId: string): Promise<HospitalBill | undefined>;
+  getHospitalAnalytics(tenantId: string): Promise<any>;
+  getHospitalAnalyticsByProvider(providerId: string, tenantId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4250,6 +4262,158 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(pharmacyReportTemplates).where(
       and(eq(pharmacyReportTemplates.tenantId, tenantId), eq(pharmacyReportTemplates.isActive, true))
     );
+  }
+
+  // Hospital Billing Management Implementation
+  async getHospitalBill(id: string, tenantId: string): Promise<HospitalBill | undefined> {
+    const [bill] = await db.select().from(hospitalBills).where(
+      and(eq(hospitalBills.id, id), eq(hospitalBills.tenantId, tenantId))
+    );
+    return bill || undefined;
+  }
+
+  async getHospitalBills(tenantId: string): Promise<HospitalBill[]> {
+    return await db.select({
+      ...hospitalBills,
+      patientFirstName: patients.firstName,
+      patientLastName: patients.lastName,
+      patientMrn: patients.mrn,
+      physicianName: sql<string>`CONCAT(physician.first_name, ' ', physician.last_name)`.as('physicianName'),
+      departmentName: sql<string>`department.name`.as('departmentName')
+    })
+    .from(hospitalBills)
+    .leftJoin(patients, eq(hospitalBills.patientId, patients.id))
+    .leftJoin(appointments, eq(hospitalBills.appointmentId, appointments.id))
+    .leftJoin(users.as('physician'), eq(appointments.providerId, sql`physician.id`))
+    .leftJoin(sql`departments AS department`, eq(sql`appointments.department_id`, sql`department.id`))
+    .where(eq(hospitalBills.tenantId, tenantId))
+    .orderBy(desc(hospitalBills.createdAt));
+  }
+
+  async getHospitalBillsByProvider(providerId: string, tenantId: string): Promise<HospitalBill[]> {
+    return await db.select({
+      ...hospitalBills,
+      patientFirstName: patients.firstName,
+      patientLastName: patients.lastName,
+      patientMrn: patients.mrn,
+      physicianName: sql<string>`CONCAT(physician.first_name, ' ', physician.last_name)`.as('physicianName'),
+      departmentName: sql<string>`department.name`.as('departmentName')
+    })
+    .from(hospitalBills)
+    .leftJoin(patients, eq(hospitalBills.patientId, patients.id))
+    .leftJoin(appointments, eq(hospitalBills.appointmentId, appointments.id))
+    .leftJoin(users.as('physician'), eq(appointments.providerId, sql`physician.id`))
+    .leftJoin(sql`departments AS department`, eq(sql`appointments.department_id`, sql`department.id`))
+    .where(
+      and(
+        eq(hospitalBills.tenantId, tenantId),
+        eq(appointments.providerId, providerId)
+      )
+    )
+    .orderBy(desc(hospitalBills.createdAt));
+  }
+
+  async createHospitalBill(bill: InsertHospitalBill): Promise<HospitalBill> {
+    const billNumber = `HB-${Date.now()}`;
+    const [newBill] = await db.insert(hospitalBills).values({
+      ...bill,
+      billNumber
+    }).returning();
+    return newBill;
+  }
+
+  async updateHospitalBill(id: string, updates: Partial<HospitalBill>, tenantId: string): Promise<HospitalBill | undefined> {
+    const [updatedBill] = await db.update(hospitalBills)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(hospitalBills.id, id), eq(hospitalBills.tenantId, tenantId)))
+      .returning();
+    return updatedBill || undefined;
+  }
+
+  async getHospitalAnalytics(tenantId: string): Promise<any> {
+    const totalBills = await db.select({ count: sql<number>`COUNT(*)`.as('count') })
+      .from(hospitalBills)
+      .where(eq(hospitalBills.tenantId, tenantId));
+
+    const totalRevenue = await db.select({ 
+      revenue: sql<number>`SUM(CAST(amount AS DECIMAL))`.as('revenue') 
+    })
+      .from(hospitalBills)
+      .where(eq(hospitalBills.tenantId, tenantId));
+
+    const pendingBills = await db.select({ count: sql<number>`COUNT(*)`.as('count') })
+      .from(hospitalBills)
+      .where(and(eq(hospitalBills.tenantId, tenantId), eq(hospitalBills.status, 'pending')));
+
+    const paidBills = await db.select({ count: sql<number>`COUNT(*)`.as('count') })
+      .from(hospitalBills)
+      .where(and(eq(hospitalBills.tenantId, tenantId), eq(hospitalBills.status, 'paid')));
+
+    return {
+      totalBills: totalBills[0]?.count || 0,
+      totalRevenue: totalRevenue[0]?.revenue || 0,
+      pendingBills: pendingBills[0]?.count || 0,
+      paidBills: paidBills[0]?.count || 0,
+      completionRate: totalBills[0]?.count > 0 
+        ? ((paidBills[0]?.count || 0) / totalBills[0].count * 100).toFixed(1)
+        : 0
+    };
+  }
+
+  async getHospitalAnalyticsByProvider(providerId: string, tenantId: string): Promise<any> {
+    const totalBills = await db.select({ count: sql<number>`COUNT(*)`.as('count') })
+      .from(hospitalBills)
+      .leftJoin(appointments, eq(hospitalBills.appointmentId, appointments.id))
+      .where(
+        and(
+          eq(hospitalBills.tenantId, tenantId),
+          eq(appointments.providerId, providerId)
+        )
+      );
+
+    const totalRevenue = await db.select({ 
+      revenue: sql<number>`SUM(CAST(hospital_bills.amount AS DECIMAL))`.as('revenue') 
+    })
+      .from(hospitalBills)
+      .leftJoin(appointments, eq(hospitalBills.appointmentId, appointments.id))
+      .where(
+        and(
+          eq(hospitalBills.tenantId, tenantId),
+          eq(appointments.providerId, providerId)
+        )
+      );
+
+    const pendingBills = await db.select({ count: sql<number>`COUNT(*)`.as('count') })
+      .from(hospitalBills)
+      .leftJoin(appointments, eq(hospitalBills.appointmentId, appointments.id))
+      .where(
+        and(
+          eq(hospitalBills.tenantId, tenantId),
+          eq(appointments.providerId, providerId),
+          eq(hospitalBills.status, 'pending')
+        )
+      );
+
+    const paidBills = await db.select({ count: sql<number>`COUNT(*)`.as('count') })
+      .from(hospitalBills)
+      .leftJoin(appointments, eq(hospitalBills.appointmentId, appointments.id))
+      .where(
+        and(
+          eq(hospitalBills.tenantId, tenantId),
+          eq(appointments.providerId, providerId),
+          eq(hospitalBills.status, 'paid')
+        )
+      );
+
+    return {
+      totalBills: totalBills[0]?.count || 0,
+      totalRevenue: totalRevenue[0]?.revenue || 0,
+      pendingBills: pendingBills[0]?.count || 0,
+      paidBills: paidBills[0]?.count || 0,
+      completionRate: totalBills[0]?.count > 0 
+        ? ((paidBills[0]?.count || 0) / totalBills[0].count * 100).toFixed(1)
+        : 0
+    };
   }
 }
 

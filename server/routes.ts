@@ -2288,6 +2288,135 @@ Report ID: ${report.id}
     }
   });
 
+  // Hospital Billing Routes with Access Control
+  app.get("/api/hospital/billing", requireTenant, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+      const tenantId = req.tenant!.id;
+
+      // Check if user has admin privileges or billing access
+      const hasFullBillingAccess = userRole && [
+        'tenant_admin', 
+        'director', 
+        'billing_staff', 
+        'super_admin'
+      ].includes(userRole);
+
+      // For physicians without admin privileges, only show bills for services they performed
+      if (userRole === 'physician' && !hasFullBillingAccess) {
+        // Get bills only for appointments where this doctor was the provider
+        const doctorBills = await storage.getHospitalBillsByProvider(userId, tenantId);
+        return res.json(doctorBills);
+      }
+
+      // For users with full access, return all bills
+      const allBills = await storage.getHospitalBills(tenantId);
+      res.json(allBills);
+    } catch (error) {
+      console.error("Error fetching hospital bills:", error);
+      res.status(500).json({ message: "Failed to fetch hospital bills" });
+    }
+  });
+
+  app.post("/api/hospital/billing", requireRole(["physician", "billing_staff", "tenant_admin", "director"]), async (req, res) => {
+    try {
+      const billData = {
+        ...req.body,
+        tenantId: req.tenant!.id,
+        generatedBy: req.user!.id
+      };
+
+      const bill = await storage.createHospitalBill(billData);
+      res.json(bill);
+    } catch (error) {
+      console.error("Error creating hospital bill:", error);
+      res.status(500).json({ message: "Failed to create hospital bill" });
+    }
+  });
+
+  app.put("/api/hospital/billing/:id", requireRole(["billing_staff", "tenant_admin", "director"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      const tenantId = req.tenant!.id;
+
+      const updatedBill = await storage.updateHospitalBill(id, updateData, tenantId);
+      res.json(updatedBill);
+    } catch (error) {
+      console.error("Error updating hospital bill:", error);
+      res.status(500).json({ message: "Failed to update hospital bill" });
+    }
+  });
+
+  app.get("/api/hospital/analytics", requireTenant, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+      const tenantId = req.tenant!.id;
+
+      // Check if user has admin privileges
+      const hasFullAnalyticsAccess = userRole && [
+        'tenant_admin', 
+        'director', 
+        'billing_staff', 
+        'super_admin'
+      ].includes(userRole);
+
+      let analytics;
+      if (userRole === 'physician' && !hasFullAnalyticsAccess) {
+        // Get analytics only for this doctor's services
+        analytics = await storage.getHospitalAnalyticsByProvider(userId, tenantId);
+      } else {
+        // Get full analytics for users with access
+        analytics = await storage.getHospitalAnalytics(tenantId);
+      }
+
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching hospital analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
+  // User permissions endpoint to check billing access
+  app.get("/api/user/billing-permissions", authenticateToken, async (req, res) => {
+    try {
+      const userRole = req.user?.role;
+      
+      const permissions = {
+        canViewAllBills: userRole && [
+          'tenant_admin', 
+          'director', 
+          'billing_staff', 
+          'super_admin'
+        ].includes(userRole),
+        canCreateBills: userRole && [
+          'physician', 
+          'billing_staff', 
+          'tenant_admin', 
+          'director'
+        ].includes(userRole),
+        canEditBills: userRole && [
+          'billing_staff', 
+          'tenant_admin', 
+          'director'
+        ].includes(userRole),
+        isPhysicianWithRestrictedAccess: userRole === 'physician' && ![
+          'tenant_admin', 
+          'director', 
+          'billing_staff', 
+          'super_admin'
+        ].includes(userRole)
+      };
+
+      res.json(permissions);
+    } catch (error) {
+      console.error("Error checking billing permissions:", error);
+      res.status(500).json({ message: "Failed to check permissions" });
+    }
+  });
+
   const server = createServer(app);
   return server;
 }
