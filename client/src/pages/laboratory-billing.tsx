@@ -755,7 +755,7 @@ export default function LaboratoryBilling() {
                     </div>
                     <div className="text-right">
                       <div className="text-lg font-bold text-gray-900">
-                        ${bill.amount.toFixed(2)}
+                        ${parseFloat(bill.amount).toFixed(2)}
                       </div>
                       {getStatusBadge(bill.status)}
                     </div>
