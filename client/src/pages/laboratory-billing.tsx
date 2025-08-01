@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, Plus, Search, Filter, FileText, Calendar, Receipt, Eye, Edit, TrendingUp, Download, Printer, RefreshCw } from "lucide-react";
+import { DollarSign, Plus, Search, Filter, FileText, Calendar, Receipt, Eye, Edit, TrendingUp, Download, Printer, RefreshCw, BarChart3 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { useToast } from "@/hooks/use-toast";
