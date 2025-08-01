@@ -5712,7 +5712,36 @@ Report ID: ${report.id}
     try {
       const { patientId } = req.params;
       const insurance = await storage.getPharmacyPatientInsurance(patientId, req.tenantId!);
-      res.json(insurance || null);
+      
+      if (!insurance) {
+        return res.json(null);
+      }
+      
+      // Transform database schema to frontend format
+      const transformedInsurance = {
+        id: insurance.id,
+        tenantId: insurance.tenantId,
+        patientId: insurance.patientId,
+        insuranceProviderName: insurance.primaryInsuranceProvider,
+        policyNumber: insurance.primaryPolicyNumber,
+        groupNumber: insurance.primaryGroupNumber,
+        memberId: insurance.primaryMemberId,
+        cardholderName: insurance.primarySubscriberName,
+        relationshipToCardholder: insurance.primarySubscriberRelationship,
+        effectiveDate: insurance.primaryEffectiveDate,
+        expirationDate: insurance.primaryExpirationDate,
+        copayAmount: insurance.primaryCopayAmount,
+        deductibleAmount: insurance.primaryDeductibleAmount,
+        coveragePercentage: insurance.primaryCoveragePercentage,
+        isPrimary: insurance.primaryIsActive,
+        isActive: true,
+        verificationStatus: insurance.verificationStatus || 'pending',
+        verifiedBy: insurance.verifiedBy,
+        createdAt: insurance.createdAt,
+        updatedAt: insurance.updatedAt
+      };
+      
+      res.json(transformedInsurance);
     } catch (error) {
       console.error("Error fetching pharmacy patient insurance:", error);
       res.status(500).json({ message: "Failed to fetch pharmacy patient insurance" });
@@ -5721,15 +5750,56 @@ Report ID: ${report.id}
 
   app.post("/api/pharmacy-patient-insurance", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
     try {
+      // Transform simplified frontend data to database schema
       const insuranceData = {
-        ...req.body,
         tenantId: req.tenantId!,
-        verifiedBy: req.user!.id,
-        verifiedAt: new Date()
+        patientId: req.body.patientId,
+        // Map simple fields to primary insurance fields
+        primaryInsuranceProvider: req.body.insuranceProviderName,
+        primaryPolicyNumber: req.body.policyNumber,
+        primaryGroupNumber: req.body.groupNumber,
+        primaryMemberId: req.body.memberId,
+        primarySubscriberName: req.body.cardholderName,
+        primarySubscriberRelationship: req.body.relationshipToCardholder,
+        primaryEffectiveDate: req.body.effectiveDate ? new Date(req.body.effectiveDate) : null,
+        primaryExpirationDate: req.body.expirationDate ? new Date(req.body.expirationDate) : null,
+        primaryCopayAmount: req.body.copayAmount ? parseFloat(req.body.copayAmount) : null,
+        primaryDeductibleAmount: req.body.deductibleAmount ? parseFloat(req.body.deductibleAmount) : null,
+        primaryCoveragePercentage: req.body.coveragePercentage ? parseInt(req.body.coveragePercentage) : null,
+        primaryIsActive: req.body.isPrimary === "true" || req.body.isPrimary === true,
+        // Additional fields for compatibility
+        verificationStatus: 'pending',
+        lastVerificationDate: new Date(),
+        verifiedBy: req.user!.id
       };
 
       const insurance = await storage.createPharmacyPatientInsurance(insuranceData);
-      res.status(201).json(insurance);
+      
+      // Transform back to frontend format
+      const transformedInsurance = {
+        id: insurance.id,
+        tenantId: insurance.tenantId,
+        patientId: insurance.patientId,
+        insuranceProviderName: insurance.primaryInsuranceProvider,
+        policyNumber: insurance.primaryPolicyNumber,
+        groupNumber: insurance.primaryGroupNumber,
+        memberId: insurance.primaryMemberId,
+        cardholderName: insurance.primarySubscriberName,
+        relationshipToCardholder: insurance.primarySubscriberRelationship,
+        effectiveDate: insurance.primaryEffectiveDate,
+        expirationDate: insurance.primaryExpirationDate,
+        copayAmount: insurance.primaryCopayAmount,
+        deductibleAmount: insurance.primaryDeductibleAmount,
+        coveragePercentage: insurance.primaryCoveragePercentage,
+        isPrimary: insurance.primaryIsActive,
+        isActive: true,
+        verificationStatus: insurance.verificationStatus,
+        verifiedBy: insurance.verifiedBy,
+        createdAt: insurance.createdAt,
+        updatedAt: insurance.updatedAt
+      };
+      
+      res.status(201).json(transformedInsurance);
     } catch (error) {
       console.error("Error creating pharmacy patient insurance:", error);
       res.status(500).json({ message: "Failed to create pharmacy patient insurance" });
@@ -5739,10 +5809,24 @@ Report ID: ${report.id}
   app.patch("/api/pharmacy-patient-insurance/:id", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
     try {
       const { id } = req.params;
+      
+      // Transform simplified frontend data to database schema for updates
       const updates = {
-        ...req.body,
-        verifiedBy: req.user!.id,
-        verifiedAt: new Date()
+        primaryInsuranceProvider: req.body.insuranceProviderName,
+        primaryPolicyNumber: req.body.policyNumber,
+        primaryGroupNumber: req.body.groupNumber,
+        primaryMemberId: req.body.memberId,
+        primarySubscriberName: req.body.cardholderName,
+        primarySubscriberRelationship: req.body.relationshipToCardholder,
+        primaryEffectiveDate: req.body.effectiveDate ? new Date(req.body.effectiveDate) : null,
+        primaryExpirationDate: req.body.expirationDate ? new Date(req.body.expirationDate) : null,
+        primaryCopayAmount: req.body.copayAmount ? parseFloat(req.body.copayAmount) : null,
+        primaryDeductibleAmount: req.body.deductibleAmount ? parseFloat(req.body.deductibleAmount) : null,
+        primaryCoveragePercentage: req.body.coveragePercentage ? parseInt(req.body.coveragePercentage) : null,
+        primaryIsActive: req.body.isPrimary === "true" || req.body.isPrimary === true,
+        verificationStatus: req.body.verificationStatus || 'pending',
+        lastVerificationDate: new Date(),
+        verifiedBy: req.user!.id
       };
 
       const insurance = await storage.updatePharmacyPatientInsurance(id, updates, req.tenantId!);
@@ -5751,7 +5835,31 @@ Report ID: ${report.id}
         return res.status(404).json({ message: "Pharmacy patient insurance not found" });
       }
 
-      res.json(insurance);
+      // Transform back to frontend format
+      const transformedInsurance = {
+        id: insurance.id,
+        tenantId: insurance.tenantId,
+        patientId: insurance.patientId,
+        insuranceProviderName: insurance.primaryInsuranceProvider,
+        policyNumber: insurance.primaryPolicyNumber,
+        groupNumber: insurance.primaryGroupNumber,
+        memberId: insurance.primaryMemberId,
+        cardholderName: insurance.primarySubscriberName,
+        relationshipToCardholder: insurance.primarySubscriberRelationship,
+        effectiveDate: insurance.primaryEffectiveDate,
+        expirationDate: insurance.primaryExpirationDate,
+        copayAmount: insurance.primaryCopayAmount,
+        deductibleAmount: insurance.primaryDeductibleAmount,
+        coveragePercentage: insurance.primaryCoveragePercentage,
+        isPrimary: insurance.primaryIsActive,
+        isActive: true,
+        verificationStatus: insurance.verificationStatus,
+        verifiedBy: insurance.verifiedBy,
+        createdAt: insurance.createdAt,
+        updatedAt: insurance.updatedAt
+      };
+
+      res.json(transformedInsurance);
     } catch (error) {
       console.error("Error updating pharmacy patient insurance:", error);
       res.status(500).json({ message: "Failed to update pharmacy patient insurance" });

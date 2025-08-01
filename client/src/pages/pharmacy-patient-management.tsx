@@ -59,6 +59,7 @@ interface PharmacyPatientInsurance {
   expirationDate?: string;
   copayAmount?: number;
   deductibleAmount?: number;
+  coveragePercentage?: number;
   isPrimary: boolean;
   isActive: boolean;
   verificationStatus: string;
@@ -149,6 +150,7 @@ export default function PharmacyPatientManagement() {
       expirationDate: formData.get("expirationDate") || undefined,
       copayAmount: formData.get("copayAmount") ? parseFloat(formData.get("copayAmount") as string) : undefined,
       deductibleAmount: formData.get("deductibleAmount") ? parseFloat(formData.get("deductibleAmount") as string) : undefined,
+      coveragePercentage: formData.get("coveragePercentage") ? parseInt(formData.get("coveragePercentage") as string) : undefined,
       isPrimary: formData.get("isPrimary") === "true",
       isActive: formData.get("isActive") === "true",
       verificationStatus: formData.get("verificationStatus"),
@@ -318,10 +320,16 @@ export default function PharmacyPatientManagement() {
                   </div>
                 </div>
 
-                {(patientInsurance.copayAmount || patientInsurance.deductibleAmount) && (
+                {(patientInsurance.copayAmount || patientInsurance.deductibleAmount || patientInsurance.coveragePercentage) && (
                   <div className="pt-4 border-t">
                     <Label className="text-sm font-medium mb-2 block">Financial Information</Label>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
+                      {patientInsurance.coveragePercentage && (
+                        <div>
+                          <Label className="text-sm font-medium">Coverage Percentage</Label>
+                          <p className="text-sm font-semibold text-green-600">{patientInsurance.coveragePercentage}%</p>
+                        </div>
+                      )}
                       {patientInsurance.copayAmount && (
                         <div>
                           <Label className="text-sm font-medium">Copay Amount</Label>
@@ -516,6 +524,20 @@ export default function PharmacyPatientManagement() {
                   type="number"
                   step="0.01"
                   defaultValue={editingInsurance?.deductibleAmount}
+                />
+              </div>
+              <div>
+                <Label htmlFor="coveragePercentage">Coverage Percentage (%)*</Label>
+                <Input
+                  id="coveragePercentage"
+                  name="coveragePercentage"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  placeholder="80"
+                  defaultValue={editingInsurance?.coveragePercentage}
+                  required
                 />
               </div>
               <div>
