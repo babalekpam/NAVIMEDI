@@ -2260,26 +2260,36 @@ Original Notes: ${requestData.notes || 'None'}`;
       }
 
       // Generate mock report content based on type and format
-      const reportContent = generateReportContent(report);
+      const { content, buffer } = generateReportContent(report);
       const filename = `${report.title.replace(/[^a-zA-Z0-9]/g, '_')}.${report.format}`;
 
       // Set appropriate headers based on format
       switch (report.format) {
         case 'pdf':
           res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+          // For PDF, send the buffer if available, otherwise send content as binary
+          if (buffer) {
+            res.send(buffer);
+          } else {
+            res.send(Buffer.from(content, 'utf8'));
+          }
           break;
         case 'excel':
           res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+          res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+          res.send(Buffer.from(content, 'utf8'));
           break;
         case 'csv':
           res.setHeader('Content-Type', 'text/csv');
+          res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+          res.send(content);
           break;
         default:
           res.setHeader('Content-Type', 'application/octet-stream');
+          res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+          res.send(Buffer.from(content, 'utf8'));
       }
-
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.send(reportContent);
 
     } catch (error) {
       console.error("Report download error:", error);
@@ -2307,26 +2317,35 @@ Original Notes: ${requestData.notes || 'None'}`;
       }
 
       // Generate mock report content
-      const reportContent = generateReportContent(report);
+      const { content, buffer } = generateReportContent(report);
       const filename = `${report.title.replace(/[^a-zA-Z0-9]/g, '_')}.${report.format}`;
 
       // Set headers
       switch (report.format) {
         case 'pdf':
           res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+          if (buffer) {
+            res.send(buffer);
+          } else {
+            res.send(Buffer.from(content, 'utf8'));
+          }
           break;
         case 'excel':
           res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+          res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+          res.send(Buffer.from(content, 'utf8'));
           break;
         case 'csv':
           res.setHeader('Content-Type', 'text/csv');
+          res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+          res.send(content);
           break;
         default:
           res.setHeader('Content-Type', 'application/octet-stream');
+          res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+          res.send(Buffer.from(content, 'utf8'));
       }
-
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.send(reportContent);
 
     } catch (error) {
       console.error("Platform report download error:", error);
@@ -3189,13 +3208,13 @@ Original Notes: ${requestData.notes || 'None'}`;
   });
 
   // Helper function to generate mock report content
-function generateReportContent(report: any): string {
+function generateReportContent(report: any): { content: string; buffer?: Buffer } {
   const timestamp = new Date().toISOString();
   
   if (report.format === 'csv') {
-    return generateCSVContent(report, timestamp);
+    return { content: generateCSVContent(report, timestamp) };
   } else if (report.format === 'excel') {
-    return generateExcelContent(report, timestamp);
+    return { content: generateExcelContent(report, timestamp) };
   } else {
     return generatePDFContent(report, timestamp);
   }
