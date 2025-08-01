@@ -227,7 +227,7 @@ export default function DoctorCalendar() {
   };
 
   // Filter doctors based on search and department
-  const filteredDoctors = doctors?.filter((doctor: Doctor) => {
+  const filteredDoctors = doctors?.filter ? doctors.filter((doctor: Doctor) => {
     const matchesSearch = !searchFilter || 
       `${doctor.firstName} ${doctor.lastName}`.toLowerCase().includes(searchFilter.toLowerCase()) ||
       doctor.specialization.toLowerCase().includes(searchFilter.toLowerCase());
@@ -237,7 +237,7 @@ export default function DoctorCalendar() {
       doctor.specialization.toLowerCase().includes(departmentFilter);
     
     return matchesSearch && matchesDepartment;
-  });
+  }) : [];
 
   const timeSlots = selectedDoctor ? generateTimeSlots(selectedDoctor, selectedDate) : [];
 
@@ -257,12 +257,22 @@ export default function DoctorCalendar() {
       reason: string;
       notes?: string;
     }) => {
-      if (!patientProfile?.patient?.id) {
+      // Handle different user roles and patient ID sources
+      let patientId: string;
+      
+      if (user?.role === "patient" && patientProfile?.patient?.id) {
+        patientId = patientProfile.patient.id;
+      } else if (user?.role === "patient" && patientProfile?.id) {
+        patientId = patientProfile.id;
+      } else if (user?.role === "patient") {
+        // For patient users, try to use their user ID as patient ID
+        patientId = user.id;
+      } else {
         throw new Error("Patient profile not loaded. Please refresh the page.");
       }
 
       const requestBody = {
-        patientId: patientProfile.patient.id,
+        patientId: patientId,
         providerId: appointmentData.doctorId,
         appointmentDate: appointmentData.date.toISOString(),
         appointmentTime: appointmentData.time,
