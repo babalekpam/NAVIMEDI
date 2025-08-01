@@ -4190,17 +4190,17 @@ export class DatabaseStorage implements IStorage {
     return await query
       .groupBy(pharmacyPatientInsurance.insuranceProviderName, pharmacyPatientInsurance.verificationStatus)
       .orderBy(pharmacyPatientInsurance.insuranceProviderName);
-  },
+  }
 
   async getPharmacyReportTemplatesByTenant(tenantId: string): Promise<PharmacyReportTemplate[]> {
     return await db.select().from(pharmacyReportTemplates).where(eq(pharmacyReportTemplates.tenantId, tenantId));
-  },
+  }
 
   // Hospital Patient Insurance Management
   async createHospitalPatientInsurance(data: any): Promise<any> {
     const result = await db.insert(hospitalPatientInsurance).values(data).returning();
     return result[0];
-  },
+  }
 
   async getHospitalPatientInsuranceByPatientId(patientId: string): Promise<any | null> {
     const result = await db.select()
@@ -4208,7 +4208,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(hospitalPatientInsurance.patientId, patientId))
       .limit(1);
     return result[0] || null;
-  },
+  }
 
   async updateHospitalPatientInsurance(id: string, data: any): Promise<any> {
     const result = await db.update(hospitalPatientInsurance)
@@ -4216,13 +4216,13 @@ export class DatabaseStorage implements IStorage {
       .where(eq(hospitalPatientInsurance.id, id))
       .returning();
     return result[0];
-  },
+  }
 
   // Laboratory Patient Insurance Management
   async createLaboratoryPatientInsurance(data: any): Promise<any> {
     const result = await db.insert(laboratoryPatientInsurance).values(data).returning();
     return result[0];
-  },
+  }
 
   async getLaboratoryPatientInsuranceByPatientId(patientId: string): Promise<any | null> {
     const result = await db.select()
@@ -4230,7 +4230,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(laboratoryPatientInsurance.patientId, patientId))
       .limit(1);
     return result[0] || null;
-  },
+  }
 
   async updateLaboratoryPatientInsurance(id: string, data: any): Promise<any> {
     const result = await db.update(laboratoryPatientInsurance)
@@ -4238,13 +4238,13 @@ export class DatabaseStorage implements IStorage {
       .where(eq(laboratoryPatientInsurance.id, id))
       .returning();
     return result[0];
-  },
+  }
 
   async getActivePharmacyReportTemplatesByTenant(tenantId: string): Promise<PharmacyReportTemplate[]> {
     return await db.select().from(pharmacyReportTemplates).where(
       and(eq(pharmacyReportTemplates.tenantId, tenantId), eq(pharmacyReportTemplates.isActive, true))
     );
-  },
+  }
 
   async getActivePharmacyReportTemplates(tenantId: string): Promise<PharmacyReportTemplate[]> {
     return await db.select().from(pharmacyReportTemplates).where(

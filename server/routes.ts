@@ -172,7 +172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User profile
   app.get("/api/user/profile", async (req, res) => {
     try {
-      const user = await storage.getUser(req.user!.userId);
+      const user = await storage.getUser(req.user!.id);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -231,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: tenant.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "tenant",
         entityId: tenant.id,
         action: "create",
@@ -308,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "patient",
         entityId: patient.id,
         action: "create",
@@ -397,7 +397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "appointment",
         entityId: appointment.id,
         action: "create",
@@ -436,7 +436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "appointment",
         entityId: id,
         action: "update",
@@ -487,7 +487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const prescriptionData = {
         ...requestData,
         tenantId: req.tenant!.id,
-        providerId: req.user!.userId,
+        providerId: req.user!.id,
         appointmentId: requestData.appointmentId || null,
         pharmacyTenantId: requestData.pharmacyTenantId || null,
         prescribedDate: new Date(),
@@ -501,7 +501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "prescription",
         entityId: prescription.id,
         action: "create",
@@ -553,7 +553,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const labOrderData = {
         ...requestData,
         tenantId: req.tenant!.id,
-        providerId: req.user!.userId,
+        providerId: req.user!.id,
         orderedDate: requestData.orderedDate || new Date(),
         appointmentId: requestData.appointmentId || null,
         labTenantId: requestData.labTenantId || null
@@ -566,7 +566,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "lab_order",
         entityId: labOrder.id,
         action: "create",
@@ -626,7 +626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "insurance_claim",
         entityId: claim.id,
         action: "create",
@@ -666,7 +666,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant!.id,
-        userId: req.user!.userId,
+        userId: req.user!.id,
         entityType: "insurance_claim",
         entityId: id,
         action: "update",
@@ -2034,11 +2034,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const httpServer = createServer(app);
-  return httpServer;
-}
-
-// Helper function to generate mock report content
+  // Helper function to generate mock report content
 function generateReportContent(report: any): string {
   const timestamp = new Date().toISOString();
   
@@ -2287,7 +2283,7 @@ Report ID: ${report.id}
       console.error("Error generating health analysis:", error);
       res.status(500).json({ 
         message: "Failed to generate health analysis",
-        error: error.message 
+        error: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
