@@ -5788,6 +5788,40 @@ Report ID: ${report.id}
     }
   });
 
+  // Test route for direct report generation (no auth for testing)
+  app.post("/api/reports/test", async (req, res) => {
+    try {
+      const { type, dateRange, tenantId } = req.body;
+      
+      let reportData = [];
+      
+      switch (type) {
+        case 'sales':
+          reportData = await storage.generateSalesReport(tenantId, dateRange);
+          break;
+        case 'prescription':
+          reportData = await storage.generatePrescriptionReport(tenantId, dateRange);
+          break;
+        case 'inventory':
+          reportData = await storage.generateInventoryReport(tenantId, dateRange);
+          break;
+        case 'patient':
+          reportData = await storage.generatePatientReport(tenantId, dateRange);
+          break;
+        case 'insurance':
+          reportData = await storage.generateInsuranceReport(tenantId, dateRange);
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid report type" });
+      }
+
+      res.json(reportData);
+    } catch (error) {
+      console.error("Error generating test report:", error);
+      res.status(500).json({ message: "Failed to generate report", error: error.message });
+    }
+  });
+
   // Report Generation Routes
   app.post("/api/reports/generate", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
     try {

@@ -4134,7 +4134,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(sql`SUM(${prescriptions.quantity}) DESC`);
   }
 
-  async generatePatientReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
+  async generatePatientReportForPharmacy(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
     const { start, end } = dateRange;
     
     // Get patient data from prescriptions for pharmacy tenants
