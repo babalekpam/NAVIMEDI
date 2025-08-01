@@ -2417,6 +2417,84 @@ Report ID: ${report.id}
     }
   });
 
+  // Patient Access Request Routes for Multi-Doctor Separation
+  app.post("/api/patient-access-requests", requireRole(["physician"]), async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const tenantId = req.tenant!.id;
+
+      const request = await storage.createPatientAccessRequest({
+        ...req.body,
+        requestingPhysicianId: userId,
+        tenantId: tenantId
+      });
+
+      res.json(request);
+    } catch (error) {
+      console.error("Error creating patient access request:", error);
+      res.status(500).json({ message: "Failed to create access request" });
+    }
+  });
+
+  app.get("/api/patient-access-requests", requireTenant, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+      const tenantId = req.tenant!.id;
+      
+      let requests;
+      if (['tenant_admin', 'director', 'super_admin'].includes(userRole || '')) {
+        // Admins see all requests
+        requests = await storage.getPatientAccessRequests(tenantId);
+      } else if (userRole === 'physician') {
+        // Physicians see requests involving them
+        requests = await storage.getPatientAccessRequests(tenantId, userId);
+      } else {
+        return res.status(403).json({ message: "Access denied to patient access requests" });
+      }
+      
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching patient access requests:", error);
+      res.status(500).json({ message: "Failed to fetch access requests" });
+    }
+  });
+
+  app.put("/api/patient-access-requests/:id", requireRole(["tenant_admin", "director", "physician"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.tenant!.id;
+
+      const updatedRequest = await storage.updatePatientAccessRequest(id, req.body, tenantId);
+      if (!updatedRequest) {
+        return res.status(404).json({ message: "Access request not found" });
+      }
+
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error updating patient access request:", error);
+      res.status(500).json({ message: "Failed to update access request" });
+    }
+  });
+
+  app.get("/api/patient-access-audit", requireRole(["tenant_admin", "director", "super_admin"]), async (req, res) => {
+    try {
+      const tenantId = req.tenant!.id;
+      const { patientId, doctorId } = req.query;
+
+      const logs = await storage.getPatientAccessLogs(
+        tenantId, 
+        patientId as string, 
+        doctorId as string
+      );
+      
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching patient access logs:", error);
+      res.status(500).json({ message: "Failed to fetch access logs" });
+    }
+  });
+
   const server = createServer(app);
   return server;
 }

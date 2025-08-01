@@ -66,6 +66,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "pharmacy-reports", label: "Pharmacy Reports", icon: FileText, path: "/pharmacy-reports", roles: ["pharmacist", "billing_staff", "tenant_admin", "director"] },
   { id: "health-recommendations", label: t("health-recommendations"), icon: Brain, path: "/health-recommendations", roles: ["physician", "nurse", "tenant_admin", "director"] },
   { id: "medical-communications", label: t("medical-communications"), icon: Languages, path: "/medical-communications", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
+  { id: "patient-access-management", label: "Patient Access Management", icon: Shield, path: "/patient-access-management", roles: ["physician", "tenant_admin", "director", "super_admin"] },
   
   // Operations Section (only for tenant users)
   { id: "billing", label: t("billing"), icon: DollarSign, path: "/billing", roles: ["billing_staff", "receptionist", "physician", "tenant_admin", "director"] },
@@ -286,7 +287,7 @@ export const Sidebar = () => {
       return true;
     }
     // Include core clinical items - exclude laboratory-specific items for non-laboratory tenants
-    const clinicalItemIds = ["dashboard", "patient-portal", "telemedicine-booking", "register-patient", "book-appointment", "patients", "patient-medical-records", "patient-messages", "consultation-history", "appointments", "prescriptions", "lab-orders", "lab-results", "health-recommendations", "medical-communications"];
+    const clinicalItemIds = ["dashboard", "patient-portal", "telemedicine-booking", "register-patient", "book-appointment", "patients", "patient-medical-records", "patient-messages", "consultation-history", "appointments", "prescriptions", "lab-orders", "lab-results", "health-recommendations", "medical-communications", "patient-access-management"];
     // For laboratory tenants, exclude prescription-related items and medical communications
     if (currentTenant?.type === "laboratory") {
       const labClinicalIds = ["dashboard", "patients", "lab-records", "lab-orders", "lab-results"];

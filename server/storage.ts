@@ -4273,44 +4273,73 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getHospitalBills(tenantId: string): Promise<HospitalBill[]> {
-    return await db.select({
-      ...hospitalBills,
-      patientFirstName: patients.firstName,
-      patientLastName: patients.lastName,
-      patientMrn: patients.mrn,
-      physicianName: sql<string>`CONCAT(physician.first_name, ' ', physician.last_name)`.as('physicianName'),
-      departmentName: sql<string>`department.name`.as('departmentName')
-    })
-    .from(hospitalBills)
-    .leftJoin(patients, eq(hospitalBills.patientId, patients.id))
-    .leftJoin(appointments, eq(hospitalBills.appointmentId, appointments.id))
-    .leftJoin(users.as('physician'), eq(appointments.providerId, sql`physician.id`))
-    .leftJoin(sql`departments AS department`, eq(sql`appointments.department_id`, sql`department.id`))
-    .where(eq(hospitalBills.tenantId, tenantId))
-    .orderBy(desc(hospitalBills.createdAt));
+    // First get basic hospital bills
+    const bills = await db.select().from(hospitalBills)
+      .where(eq(hospitalBills.tenantId, tenantId))
+      .orderBy(desc(hospitalBills.createdAt));
+    
+    // Enrich with patient data
+    const enrichedBills = [];
+    for (const bill of bills) {
+      const patient = await db.select().from(patients)
+        .where(eq(patients.id, bill.patientId))
+        .limit(1);
+      
+      enrichedBills.push({
+        ...bill,
+        patientFirstName: patient[0]?.firstName || '',
+        patientLastName: patient[0]?.lastName || '',
+        patientMrn: patient[0]?.mrn || '',
+        physicianName: '' // Will be populated when appointment data is linked
+      });
+    }
+    
+    return enrichedBills;
   }
 
   async getHospitalBillsByProvider(providerId: string, tenantId: string): Promise<HospitalBill[]> {
-    return await db.select({
-      ...hospitalBills,
-      patientFirstName: patients.firstName,
-      patientLastName: patients.lastName,
-      patientMrn: patients.mrn,
-      physicianName: sql<string>`CONCAT(physician.first_name, ' ', physician.last_name)`.as('physicianName'),
-      departmentName: sql<string>`department.name`.as('departmentName')
-    })
-    .from(hospitalBills)
-    .leftJoin(patients, eq(hospitalBills.patientId, patients.id))
-    .leftJoin(appointments, eq(hospitalBills.appointmentId, appointments.id))
-    .leftJoin(users.as('physician'), eq(appointments.providerId, sql`physician.id`))
-    .leftJoin(sql`departments AS department`, eq(sql`appointments.department_id`, sql`department.id`))
-    .where(
-      and(
-        eq(hospitalBills.tenantId, tenantId),
-        eq(appointments.providerId, providerId)
+    // Get appointments for this provider to find associated bills
+    const providerAppointments = await db.select().from(appointments)
+      .where(and(eq(appointments.providerId, providerId), eq(appointments.tenantId, tenantId)));
+    
+    const appointmentIds = providerAppointments.map(apt => apt.id);
+    
+    if (appointmentIds.length === 0) {
+      return [];
+    }
+    
+    // Get bills for these appointments
+    const bills = await db.select().from(hospitalBills)
+      .where(
+        and(
+          eq(hospitalBills.tenantId, tenantId),
+          sql`${hospitalBills.appointmentId} = ANY(${appointmentIds})`
+        )
       )
-    )
-    .orderBy(desc(hospitalBills.createdAt));
+      .orderBy(desc(hospitalBills.createdAt));
+    
+    // Enrich with patient data
+    const enrichedBills = [];
+    for (const bill of bills) {
+      const patient = await db.select().from(patients)
+        .where(eq(patients.id, bill.patientId))
+        .limit(1);
+      
+      // Get physician name from the provider user
+      const physician = await db.select().from(users)
+        .where(eq(users.id, providerId))
+        .limit(1);
+      
+      enrichedBills.push({
+        ...bill,
+        patientFirstName: patient[0]?.firstName || '',
+        patientLastName: patient[0]?.lastName || '',
+        patientMrn: patient[0]?.mrn || '',
+        physicianName: physician[0] ? `${physician[0].firstName} ${physician[0].lastName}` : ''
+      });
+    }
+    
+    return enrichedBills;
   }
 
   async createHospitalBill(bill: InsertHospitalBill): Promise<HospitalBill> {
@@ -4358,6 +4387,85 @@ export class DatabaseStorage implements IStorage {
         ? ((paidBills[0]?.count || 0) / totalBills[0].count * 100).toFixed(1)
         : 0
     };
+  }
+
+  // Patient Access Request Management for Multi-Doctor Separation
+  async createPatientAccessRequest(request: InsertPatientAccessRequest): Promise<PatientAccessRequest> {
+    const [newRequest] = await db.insert(patientAccessRequests).values(request).returning();
+    return newRequest;
+  }
+
+  async getPatientAccessRequests(tenantId: string, doctorId?: string): Promise<PatientAccessRequest[]> {
+    const whereClause = doctorId 
+      ? and(eq(patientAccessRequests.tenantId, tenantId), 
+            or(eq(patientAccessRequests.requestingPhysicianId, doctorId), 
+               eq(patientAccessRequests.targetPhysicianId, doctorId)))
+      : eq(patientAccessRequests.tenantId, tenantId);
+
+    return await db.select().from(patientAccessRequests)
+      .where(whereClause)
+      .orderBy(desc(patientAccessRequests.createdAt));
+  }
+
+  async updatePatientAccessRequest(id: string, updates: Partial<PatientAccessRequest>, tenantId: string): Promise<PatientAccessRequest | undefined> {
+    const [updatedRequest] = await db.update(patientAccessRequests)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(patientAccessRequests.id, id), eq(patientAccessRequests.tenantId, tenantId)))
+      .returning();
+    return updatedRequest || undefined;
+  }
+
+  async logPatientAccess(log: InsertPatientAccessAuditLog): Promise<PatientAccessAuditLog> {
+    const [newLog] = await db.insert(patientAccessAuditLog).values(log).returning();
+    return newLog;
+  }
+
+  async getPatientAccessLogs(tenantId: string, patientId?: string, doctorId?: string): Promise<PatientAccessAuditLog[]> {
+    let whereClause = eq(patientAccessAuditLog.tenantId, tenantId);
+    
+    if (patientId) {
+      whereClause = and(whereClause, eq(patientAccessAuditLog.patientId, patientId));
+    }
+    if (doctorId) {
+      whereClause = and(whereClause, eq(patientAccessAuditLog.doctorId, doctorId));
+    }
+
+    return await db.select().from(patientAccessAuditLog)
+      .where(whereClause)
+      .orderBy(desc(patientAccessAuditLog.accessedAt));
+  }
+
+  async checkDoctorPatientAccess(doctorId: string, patientId: string, tenantId: string): Promise<boolean> {
+    // Check if doctor has direct assignment to patient
+    const assignment = await db.select().from(patientAssignments)
+      .where(
+        and(
+          eq(patientAssignments.tenantId, tenantId),
+          eq(patientAssignments.patientId, patientId),
+          eq(patientAssignments.physicianId, doctorId),
+          eq(patientAssignments.isActive, true)
+        )
+      )
+      .limit(1);
+
+    if (assignment.length > 0) {
+      return true;
+    }
+
+    // Check if doctor has approved access request
+    const activeRequest = await db.select().from(patientAccessRequests)
+      .where(
+        and(
+          eq(patientAccessRequests.tenantId, tenantId),
+          eq(patientAccessRequests.patientId, patientId),
+          eq(patientAccessRequests.requestingPhysicianId, doctorId),
+          eq(patientAccessRequests.status, 'approved'),
+          sql`${patientAccessRequests.accessGrantedUntil} > NOW()`
+        )
+      )
+      .limit(1);
+
+    return activeRequest.length > 0;
   }
 
   async getHospitalAnalyticsByProvider(providerId: string, tenantId: string): Promise<any> {

@@ -188,6 +188,14 @@ export const billStatusEnum = pgEnum("bill_status", [
   "refunded"
 ]);
 
+// Patient Access Request Status for Multi-Doctor Separation
+export const accessRequestStatusEnum = pgEnum("access_request_status", [
+  "pending",
+  "approved", 
+  "rejected",
+  "expired"
+]);
+
 export const serviceTypeEnum = pgEnum("service_type", [
   "procedure",
   "consultation", 
@@ -1008,7 +1016,7 @@ export const patientAssignments = pgTable("patient_assignments", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
-// Patient Access Requests
+// Enhanced Patient Access Requests for Multi-Doctor Separation
 export const patientAccessRequests = pgTable("patient_access_requests", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
@@ -1018,14 +1026,39 @@ export const patientAccessRequests = pgTable("patient_access_requests", {
   requestType: text("request_type").notNull().default('access'), // access, transfer, consultation
   reason: text("reason").notNull(),
   urgency: text("urgency").notNull().default('normal'), // low, normal, high, emergency
-  status: text("status").notNull().default('pending'), // pending, approved, denied, expired
+  status: accessRequestStatusEnum("status").default("pending").notNull(),
   requestedDate: timestamp("requested_date").default(sql`CURRENT_TIMESTAMP`),
   reviewedDate: timestamp("reviewed_date"),
   reviewedBy: uuid("reviewed_by").references(() => users.id),
   reviewNotes: text("review_notes"),
   accessGrantedUntil: timestamp("access_granted_until"), // Temporary access expiry
+  accessType: text("access_type").default("read").notNull(), // read, write, full
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Patient Access Audit Log for Compliance
+export const patientAccessAuditLog = pgTable("patient_access_audit_log", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  
+  // Access Details
+  doctorId: uuid("doctor_id").references(() => users.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  accessRequestId: uuid("access_request_id").references(() => patientAccessRequests.id),
+  
+  // Action Information  
+  actionType: text("action_type").notNull(), // view, edit, create, delete
+  resourceType: text("resource_type").notNull(), // medical_record, billing, appointment, prescription
+  resourceId: text("resource_id"),
+  
+  // Context
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  accessMethod: text("access_method").default("direct").notNull(), // direct, requested, emergency
+  
+  // Metadata
+  accessedAt: timestamp("accessed_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
 export const phraseTranslations = pgTable("phrase_translations", {
@@ -1674,6 +1707,8 @@ export const activityLogs = pgTable("activity_logs", {
   metadata: jsonb("metadata"), // Additional activity-specific data
   timestamp: timestamp("timestamp").default(sql`CURRENT_TIMESTAMP`)
 });
+
+
 
 // Relations
 export const tenantsRelations = relations(tenants, ({ one, many }) => ({
@@ -2760,6 +2795,20 @@ export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
   timestamp: true
 });
 
+// Patient Access Request Insert Schemas
+export const insertPatientAccessRequestSchema = createInsertSchema(patientAccessRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  requestedDate: true,
+  reviewedDate: true
+});
+
+export const insertPatientAccessAuditLogSchema = createInsertSchema(patientAccessAuditLog).omit({
+  id: true,
+  accessedAt: true
+});
+
 // Achievement System Types
 export type Achievement = typeof achievements.$inferSelect;
 export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
@@ -2775,6 +2824,13 @@ export type InsertLeaderboard = z.infer<typeof insertLeaderboardSchema>;
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+
+// Patient Access Request System Types
+export type PatientAccessRequest = typeof patientAccessRequests.$inferSelect;
+export type InsertPatientAccessRequest = z.infer<typeof insertPatientAccessRequestSchema>;
+
+export type PatientAccessAuditLog = typeof patientAccessAuditLog.$inferSelect;
+export type InsertPatientAccessAuditLog = z.infer<typeof insertPatientAccessAuditLogSchema>;
 
 // Work Shifts Schema and Types
 export const insertWorkShiftSchema = createInsertSchema(workShifts).omit({
