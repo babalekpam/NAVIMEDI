@@ -9,6 +9,43 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
+  url: string,
+  options: {
+    method?: string;
+    body?: string;
+  } = {}
+): Promise<any> {
+  const method = options.method || "GET";
+  const data = options.body ? JSON.parse(options.body) : undefined;
+  const token = localStorage.getItem("auth_token");
+  
+  // Clear corrupted tokens
+  if (token && (token === 'undefined' || token === 'null' || token.length < 10)) {
+    console.warn('Clearing corrupted token:', token?.substring(0, 20));
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
+    window.location.href = '/login';
+    throw new Error('Invalid token - redirecting to login');
+  }
+  
+  const headers: Record<string, string> = {
+    ...(data ? { "Content-Type": "application/json" } : {}),
+    ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+  };
+
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: data ? JSON.stringify(data) : undefined,
+    credentials: "include",
+  });
+
+  await throwIfResNotOk(res);
+  return res.json();
+}
+
+// Legacy function for backward compatibility
+export async function legacyApiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
