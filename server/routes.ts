@@ -1011,9 +1011,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/appointments/provider/:providerId", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { providerId } = req.params;
-      console.log("[DEBUG] Getting appointments for provider:", providerId);
+      console.log("[PROVIDER APPOINTMENTS] Getting appointments for provider:", providerId, "tenant:", req.tenant!.id);
       
       const appointments = await storage.getAppointmentsByProvider(providerId, req.tenant!.id);
+      console.log("[PROVIDER APPOINTMENTS] Found", appointments.length, "appointments for provider", providerId);
+      
       res.json(appointments);
     } catch (error) {
       console.error("Get provider appointments error:", error);

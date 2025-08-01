@@ -40,8 +40,11 @@ export default function Dashboard() {
   
   console.log('Dashboard Debug:', {
     user: user?.role,
+    userId: user?.id || user?.userId,
     isSuperAdmin,
-    tenantType: tenant?.type
+    tenantType: tenant?.type,
+    isPhysician: user?.role === 'physician',
+    queryEnabled: !!user && !!tenant && user?.role === 'physician' && !!(user?.id || user?.userId)
   });
 
   // Platform metrics for super admin
@@ -63,21 +66,8 @@ export default function Dashboard() {
 
   // Get doctor's specific appointments if user is a physician
   const { data: doctorAppointments = [], isLoading: doctorAppointmentsLoading } = useQuery({
-    queryKey: ["/api/appointments", "provider", user?.id || user?.userId],
+    queryKey: ["/api/appointments/provider", user?.id || user?.userId],
     enabled: !!user && !!tenant && user?.role === 'physician' && !!(user?.id || user?.userId),
-    queryFn: async () => {
-      const providerId = user?.id || user?.userId;
-      if (!providerId) {
-        throw new Error("User ID not available");
-      }
-      const response = await fetch(`/api/appointments?providerId=${providerId}`, {
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
-        }
-      });
-      if (!response.ok) throw new Error("Failed to fetch appointments");
-      return response.json();
-    }
   });
 
   const { data: pendingLabOrders = [], isLoading: labOrdersLoading } = useQuery({
