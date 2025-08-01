@@ -391,10 +391,10 @@ export default function PharmacyDashboardEnhanced() {
           <div>
             <p><strong>Prescribed:</strong> {format(new Date(prescription.prescribedDate), 'MMM dd, yyyy')}</p>
             {prescription.insuranceCopay && (
-              <p><strong>Copay:</strong> ${prescription.insuranceCopay.toFixed(2)}</p>
+              <p><strong>Copay:</strong> ${parseFloat(prescription.insuranceCopay).toFixed(2)}</p>
             )}
             {prescription.totalCost && (
-              <p><strong>Total Cost:</strong> ${prescription.totalCost.toFixed(2)}</p>
+              <p><strong>Total Cost:</strong> ${parseFloat(prescription.totalCost).toFixed(2)}</p>
             )}
           </div>
         </div>
