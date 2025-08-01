@@ -86,6 +86,7 @@ import DoctorCalendar from "@/pages/doctor-calendar";
 import Achievements from "@/pages/achievements";
 import ShiftManagement from "@/pages/shift-management";
 import PharmacyPatientManagement from "@/pages/pharmacy-patient-management";
+import PharmacyReports from "@/pages/pharmacy-reports";
 
 
 
@@ -340,6 +341,19 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <PharmacyPatientManagement />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/pharmacy-reports">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PharmacyReports />
                 </main>
               </div>
             </div>

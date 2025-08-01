@@ -3956,8 +3956,173 @@ export class DatabaseStorage implements IStorage {
     return updatedTemplate || undefined;
   }
 
+  // Report Generation Methods
+  async generateSalesReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
+    const { start, end } = dateRange;
+    let query = db
+      .select({
+        date: sql<string>`DATE(${pharmacyReceipts.createdAt})`,
+        totalAmount: sql<number>`SUM(${pharmacyReceipts.totalAmount})`,
+        transactionCount: sql<number>`COUNT(*)`,
+        averageAmount: sql<number>`AVG(${pharmacyReceipts.totalAmount})`,
+      })
+      .from(pharmacyReceipts)
+      .where(eq(pharmacyReceipts.tenantId, tenantId));
+
+    if (start) {
+      query = query.where(sql`${pharmacyReceipts.createdAt} >= ${start}`);
+    }
+    if (end) {
+      query = query.where(sql`${pharmacyReceipts.createdAt} <= ${end}`);
+    }
+
+    return await query
+      .groupBy(sql`DATE(${pharmacyReceipts.createdAt})`)
+      .orderBy(sql`DATE(${pharmacyReceipts.createdAt}) DESC`);
+  }
+
+  async generatePrescriptionReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
+    const { start, end } = dateRange;
+    let query = db
+      .select({
+        medicationName: prescriptions.medicationName,
+        prescriptionCount: sql<number>`COUNT(*)`,
+        totalQuantity: sql<number>`SUM(${prescriptions.quantity})`,
+        status: prescriptions.status,
+        lastDispensed: sql<string>`MAX(${prescriptions.updatedAt})`,
+      })
+      .from(prescriptions)
+      .where(eq(prescriptions.pharmacyId, tenantId));
+
+    if (start) {
+      query = query.where(sql`${prescriptions.createdAt} >= ${start}`);
+    }
+    if (end) {
+      query = query.where(sql`${prescriptions.createdAt} <= ${end}`);
+    }
+
+    return await query
+      .groupBy(prescriptions.medicationName, prescriptions.status)
+      .orderBy(prescriptions.medicationName);
+  }
+
+  async generateInventoryReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
+    // This would typically query an inventory table, but for now we'll use prescription data
+    const { start, end } = dateRange;
+    let query = db
+      .select({
+        medication: prescriptions.medicationName,
+        totalDispensed: sql<number>`SUM(${prescriptions.quantity})`,
+        timesDispensed: sql<number>`COUNT(*)`,
+        lastDispensed: sql<string>`MAX(${prescriptions.updatedAt})`,
+        avgQuantityPerDispense: sql<number>`AVG(${prescriptions.quantity})`,
+      })
+      .from(prescriptions)
+      .where(eq(prescriptions.pharmacyId, tenantId));
+
+    if (start) {
+      query = query.where(sql`${prescriptions.createdAt} >= ${start}`);
+    }
+    if (end) {
+      query = query.where(sql`${prescriptions.createdAt} <= ${end}`);
+    }
+
+    return await query
+      .groupBy(prescriptions.medicationName)
+      .orderBy(sql`SUM(${prescriptions.quantity}) DESC`);
+  }
+
+  async generatePatientReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
+    const { start, end } = dateRange;
+    
+    // Get patient data from prescriptions for pharmacy tenants
+    let query = db
+      .select({
+        patientId: prescriptions.patientId,
+        patientName: sql<string>`CONCAT(${patients.firstName}, ' ', ${patients.lastName})`,
+        prescriptionCount: sql<number>`COUNT(*)`,
+        totalMedications: sql<number>`SUM(${prescriptions.quantity})`,
+        lastVisit: sql<string>`MAX(${prescriptions.createdAt})`,
+        averageQuantity: sql<number>`AVG(${prescriptions.quantity})`,
+      })
+      .from(prescriptions)
+      .innerJoin(patients, eq(prescriptions.patientId, patients.id))
+      .where(eq(prescriptions.pharmacyId, tenantId));
+
+    if (start) {
+      query = query.where(sql`${prescriptions.createdAt} >= ${start}`);
+    }
+    if (end) {
+      query = query.where(sql`${prescriptions.createdAt} <= ${end}`);
+    }
+
+    return await query
+      .groupBy(prescriptions.patientId, patients.firstName, patients.lastName)
+      .orderBy(sql`COUNT(*) DESC`);
+  }
+
+  async generateInsuranceReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
+    const { start, end } = dateRange;
+    
+    let query = db
+      .select({
+        insuranceProvider: pharmacyPatientInsurance.insuranceProviderName,
+        policyCount: sql<number>`COUNT(DISTINCT ${pharmacyPatientInsurance.policyNumber})`,
+        patientCount: sql<number>`COUNT(DISTINCT ${pharmacyPatientInsurance.patientId})`,
+        verificationStatus: pharmacyPatientInsurance.verificationStatus,
+        averageCopay: sql<number>`AVG(${pharmacyPatientInsurance.copayAmount})`,
+        averageDeductible: sql<number>`AVG(${pharmacyPatientInsurance.deductibleAmount})`,
+      })
+      .from(pharmacyPatientInsurance)
+      .where(eq(pharmacyPatientInsurance.tenantId, tenantId));
+
+    if (start) {
+      query = query.where(sql`${pharmacyPatientInsurance.createdAt} >= ${start}`);
+    }
+    if (end) {
+      query = query.where(sql`${pharmacyPatientInsurance.createdAt} <= ${end}`);
+    }
+
+    return await query
+      .groupBy(pharmacyPatientInsurance.insuranceProviderName, pharmacyPatientInsurance.verificationStatus)
+      .orderBy(pharmacyPatientInsurance.insuranceProviderName);
+  }
+
+  async generateShiftReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
+    const { start, end } = dateRange;
+    
+    let query = db
+      .select({
+        shiftDate: sql<string>`DATE(${workShifts.startTime})`,
+        shiftType: workShifts.shiftType,
+        totalShifts: sql<number>`COUNT(*)`,
+        completedShifts: sql<number>`COUNT(${workShifts.endTime})`,
+        averageDuration: sql<number>`AVG(EXTRACT(EPOCH FROM (${workShifts.endTime} - ${workShifts.startTime})) / 3600)`,
+        totalHours: sql<number>`SUM(EXTRACT(EPOCH FROM (${workShifts.endTime} - ${workShifts.startTime})) / 3600)`,
+      })
+      .from(workShifts)
+      .where(eq(workShifts.tenantId, tenantId));
+
+    if (start) {
+      query = query.where(sql`${workShifts.startTime} >= ${start}`);
+    }
+    if (end) {
+      query = query.where(sql`${workShifts.startTime} <= ${end}`);
+    }
+
+    return await query
+      .groupBy(sql`DATE(${workShifts.startTime})`, workShifts.shiftType)
+      .orderBy(sql`DATE(${workShifts.startTime}) DESC`);
+  }
+
   async getPharmacyReportTemplatesByTenant(tenantId: string): Promise<PharmacyReportTemplate[]> {
     return await db.select().from(pharmacyReportTemplates).where(eq(pharmacyReportTemplates.tenantId, tenantId));
+  }
+
+  async getActivePharmacyReportTemplatesByTenant(tenantId: string): Promise<PharmacyReportTemplate[]> {
+    return await db.select().from(pharmacyReportTemplates).where(
+      and(eq(pharmacyReportTemplates.tenantId, tenantId), eq(pharmacyReportTemplates.isActive, true))
+    );
   }
 
   async getActivePharmacyReportTemplates(tenantId: string): Promise<PharmacyReportTemplate[]> {

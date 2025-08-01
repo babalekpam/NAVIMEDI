@@ -5858,6 +5858,44 @@ Report ID: ${report.id}
     }
   });
 
+  // Report Generation Routes
+  app.post("/api/reports/generate", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
+    try {
+      const { type, dateRange, templateId } = req.body;
+      const tenantId = req.tenantId!;
+      
+      let reportData = [];
+      
+      switch (type) {
+        case 'sales':
+          reportData = await storage.generateSalesReport(tenantId, dateRange);
+          break;
+        case 'prescription':
+          reportData = await storage.generatePrescriptionReport(tenantId, dateRange);
+          break;
+        case 'inventory':
+          reportData = await storage.generateInventoryReport(tenantId, dateRange);
+          break;
+        case 'patient':
+          reportData = await storage.generatePatientReport(tenantId, dateRange);
+          break;
+        case 'insurance':
+          reportData = await storage.generateInsuranceReport(tenantId, dateRange);
+          break;
+        case 'shift':
+          reportData = await storage.generateShiftReport(tenantId, dateRange);
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid report type" });
+      }
+
+      res.json(reportData);
+    } catch (error) {
+      console.error("Error generating report:", error);
+      res.status(500).json({ message: "Failed to generate report" });
+    }
+  });
+
   // Pharmacy Report Templates Routes
   app.get("/api/pharmacy-report-templates", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
     try {
@@ -5866,6 +5904,46 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Error fetching pharmacy report templates:", error);
       res.status(500).json({ message: "Failed to fetch pharmacy report templates" });
+    }
+  });
+
+  app.get("/api/pharmacy-report-templates/active", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
+    try {
+      const templates = await storage.getActivePharmacyReportTemplatesByTenant(req.tenantId!);
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching active pharmacy report templates:", error);
+      res.status(500).json({ message: "Failed to fetch active pharmacy report templates" });
+    }
+  });
+
+  app.post("/api/pharmacy-report-templates", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
+    try {
+      const templateData = {
+        ...req.body,
+        tenantId: req.tenantId!,
+        createdBy: req.user!.id,
+      };
+      const template = await storage.createPharmacyReportTemplate(templateData);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error("Error creating pharmacy report template:", error);
+      res.status(500).json({ message: "Failed to create pharmacy report template" });
+    }
+  });
+
+  app.patch("/api/pharmacy-report-templates/:id", authenticateToken, requireTenant, requireRole(['pharmacist', 'billing_staff', 'tenant_admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const template = await storage.updatePharmacyReportTemplate(id, updates, req.tenantId!);
+      if (!template) {
+        return res.status(404).json({ message: "Report template not found" });
+      }
+      res.json(template);
+    } catch (error) {
+      console.error("Error updating pharmacy report template:", error);
+      res.status(500).json({ message: "Failed to update pharmacy report template" });
     }
   });
 
