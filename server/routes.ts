@@ -4935,6 +4935,34 @@ Report ID: ${report.id}
     }
   });
 
+  // PATCH route for updating laboratory bills
+  app.patch("/api/laboratory/billing/:id", authenticateToken, requireTenant, requireRole(['lab_technician', 'tenant_admin', 'director']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.tenantId!;
+      const updates = req.body;
+      
+      // Verify this is a laboratory tenant
+      const tenant = await storage.getTenant(tenantId);
+      if (tenant?.type !== 'laboratory') {
+        return res.status(403).json({ error: "Laboratory billing update restricted to laboratory tenants" });
+      }
+
+      // Update the bill
+      const updatedBill = await storage.updateLabBill(id, updates, tenantId);
+      
+      if (!updatedBill) {
+        return res.status(404).json({ error: "Laboratory bill not found" });
+      }
+
+      console.log(`[LAB BILLING] Updated lab bill: ${id} - $${updatedBill.amount}`);
+      res.json(updatedBill);
+    } catch (error) {
+      console.error("Error updating laboratory bill:", error);
+      res.status(500).json({ error: "Failed to update laboratory bill" });
+    }
+  });
+
   // Update lab order status (this triggers automatic bill status synchronization)
   app.patch("/api/lab-orders/:id/status", authenticateToken, requireTenant, requireRole(['lab_technician', 'tenant_admin', 'director']), async (req, res) => {
     try {

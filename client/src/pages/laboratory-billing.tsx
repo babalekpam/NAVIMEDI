@@ -58,6 +58,7 @@ export default function LaboratoryBilling() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedBill, setSelectedBill] = useState<LabBill | null>(null);
   
   const { user } = useAuth();
@@ -66,6 +67,24 @@ export default function LaboratoryBilling() {
   const queryClient = useQueryClient();
 
   const form = useForm<LabBillForm>({
+    resolver: zodResolver(labBillSchema),
+    defaultValues: {
+      patientId: "",
+      labOrderId: "",
+      amount: 0,
+      description: "",
+      insuranceCoverageRate: 80,
+      insuranceAmount: 0,
+      patientAmount: 0,
+      claimNumber: "",
+      labCodes: "",
+      diagnosisCodes: "",
+      labNotes: "",
+      testName: "",
+    },
+  });
+
+  const editForm = useForm<LabBillForm>({
     resolver: zodResolver(labBillSchema),
     defaultValues: {
       patientId: "",
@@ -177,6 +196,66 @@ export default function LaboratoryBilling() {
       });
     },
   });
+
+  // Update lab bill mutation
+  const updateLabBillMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<LabBillForm> }) => {
+      const response = await apiRequest("PATCH", `/api/laboratory/billing/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Bill updated",
+        description: "Laboratory bill has been updated successfully.",
+      });
+      editForm.reset();
+      setIsEditDialogOpen(false);
+      setSelectedBill(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/laboratory/billing"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error updating bill",
+        description: error.message || "Failed to update laboratory bill.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle edit bill
+  const handleEditBill = (bill: LabBill) => {
+    setSelectedBill(bill);
+    editForm.reset({
+      patientId: bill.patientId,
+      labOrderId: bill.labOrderId || "",
+      amount: parseFloat(bill.amount.toString()),
+      description: bill.description,
+      insuranceCoverageRate: 80,
+      insuranceAmount: 0,
+      patientAmount: 0,
+      claimNumber: "",
+      labCodes: "",
+      diagnosisCodes: "",
+      labNotes: bill.notes || "",
+      testName: bill.testName || "",
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  // Handle edit form submission
+  const handleEditSubmit = (data: LabBillForm) => {
+    if (!selectedBill) return;
+    
+    updateLabBillMutation.mutate({
+      id: selectedBill.id,
+      data: {
+        amount: data.amount,
+        description: data.description,
+        labNotes: data.labNotes,
+        testName: data.testName,
+      }
+    });
+  };
 
   // Receipt handling functions
   const handleViewReceipt = async (billId: string) => {
@@ -705,6 +784,98 @@ export default function LaboratoryBilling() {
             </Form>
           </DialogContent>
         </Dialog>
+
+        {/* Edit Laboratory Bill Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Laboratory Bill</DialogTitle>
+              <DialogDescription>
+                Update the laboratory bill details.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="amount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Amount ($)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editForm.control}
+                    name="testName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Test Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter test name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={editForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter description" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="labNotes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lab Notes</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Enter any additional notes..." 
+                          className="min-h-[80px]"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={updateLabBillMutation.isPending}>
+                    {updateLabBillMutation.isPending ? "Updating..." : "Update Bill"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Bills List */}
@@ -777,7 +948,7 @@ export default function LaboratoryBilling() {
                       <Receipt className="w-3 h-3 mr-1" />
                       Receipt
                     </Button>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => handleEditBill(bill)}>
                       <Edit className="w-3 h-3 mr-1" />
                       Edit
                     </Button>
