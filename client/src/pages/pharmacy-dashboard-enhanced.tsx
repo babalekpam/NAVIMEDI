@@ -975,10 +975,10 @@ export default function PharmacyDashboardEnhanced() {
                         <div>
                           <p><strong>Prescribed:</strong> {format(new Date(prescription.prescribedDate), 'MMM dd, yyyy')}</p>
                           {prescription.insuranceCopay && (
-                            <p><strong>Patient Copay:</strong> ${prescription.insuranceCopay.toFixed(2)}</p>
+                            <p><strong>Patient Copay:</strong> ${parseFloat(prescription.insuranceCopay).toFixed(2)}</p>
                           )}
                           {prescription.totalCost && (
-                            <p><strong>Total Cost:</strong> ${prescription.totalCost.toFixed(2)}</p>
+                            <p><strong>Total Cost:</strong> ${parseFloat(prescription.totalCost).toFixed(2)}</p>
                           )}
                         </div>
                       </div>
@@ -1013,7 +1013,7 @@ export default function PharmacyDashboardEnhanced() {
     const [paymentAmount, setPaymentAmount] = useState("");
     const [patientInstructions, setPatientInstructions] = useState("");
 
-    const requiredAmount = selectedPrescription?.insuranceCopay || selectedPrescription?.totalCost || 0;
+    const requiredAmount = parseFloat(selectedPrescription?.insuranceCopay || selectedPrescription?.totalCost || "0");
     const changeGiven = Math.max(0, parseFloat(paymentAmount || "0") - requiredAmount);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -1056,12 +1056,12 @@ export default function PharmacyDashboardEnhanced() {
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
                       <span>Total Cost:</span>
-                      <span>${selectedPrescription.totalCost?.toFixed(2) || '0.00'}</span>
+                      <span>${parseFloat(selectedPrescription.totalCost || "0").toFixed(2)}</span>
                     </div>
                     {selectedPrescription.insuranceProvider && (
                       <div className="flex justify-between">
                         <span>Insurance ({selectedPrescription.insuranceProvider}):</span>
-                        <span>-${((selectedPrescription.totalCost || 0) - (selectedPrescription.insuranceCopay || 0)).toFixed(2)}</span>
+                        <span>-${(parseFloat(selectedPrescription.totalCost || "0") - parseFloat(selectedPrescription.insuranceCopay || "0")).toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between font-medium border-t pt-1">
