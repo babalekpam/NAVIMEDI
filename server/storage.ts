@@ -3962,9 +3962,12 @@ export class DatabaseStorage implements IStorage {
     let query = db
       .select({
         date: sql<string>`DATE(${pharmacyReceipts.createdAt})`,
-        totalAmount: sql<number>`SUM(${pharmacyReceipts.totalAmount})`,
+        totalAmount: sql<number>`SUM(${pharmacyReceipts.paymentAmount})`,
         transactionCount: sql<number>`COUNT(*)`,
-        averageAmount: sql<number>`AVG(${pharmacyReceipts.totalAmount})`,
+        averageAmount: sql<number>`AVG(${pharmacyReceipts.paymentAmount})`,
+        totalCost: sql<number>`SUM(${pharmacyReceipts.totalCost})`,
+        insuranceAmount: sql<number>`SUM(${pharmacyReceipts.insuranceAmount})`,
+        copayAmount: sql<number>`SUM(${pharmacyReceipts.patientCopay})`,
       })
       .from(pharmacyReceipts)
       .where(eq(pharmacyReceipts.tenantId, tenantId));
