@@ -218,11 +218,69 @@ export default function PharmacyReports() {
   };
 
   const convertToCSV = (data: any) => {
-    if (!data || !Array.isArray(data)) return "";
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return "No data available";
+    }
     
-    const headers = Object.keys(data[0] || {}).join(",");
-    const rows = data.map(row => Object.values(row).join(",")).join("\n");
+    const headers = Object.keys(data[0]).join(",");
+    const rows = data.map(row => 
+      Object.values(row).map(value => 
+        typeof value === 'string' && value.includes(',') ? `"${value}"` : value
+      ).join(",")
+    ).join("\n");
     return `${headers}\n${rows}`;
+  };
+
+  const viewReport = (report: GeneratedReport) => {
+    if (!report.data || !Array.isArray(report.data) || report.data.length === 0) {
+      toast({
+        title: "No data to view",
+        description: "This report contains no data",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create a simple table view
+    const tableHTML = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${report.title}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .header { margin-bottom: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>${report.title}</h1>
+            <p>Generated: ${new Date(report.generatedAt).toLocaleString()}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                ${Object.keys(report.data[0]).map(key => `<th>${key}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${report.data.map(row => 
+                `<tr>${Object.values(row).map(value => `<td>${value || ''}</td>`).join('')}</tr>`
+              ).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      newWindow.document.write(tableHTML);
+      newWindow.document.close();
+    }
   };
 
   // Check for permission errors
@@ -352,13 +410,17 @@ export default function PharmacyReports() {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => viewReport(report)}
+                    >
                       <Eye className="h-4 w-4 mr-2" />
                       View
                     </Button>
                     <Button size="sm" onClick={() => downloadReport(report)}>
                       <Download className="h-4 w-4 mr-2" />
-                      Download
+                      Download CSV
                     </Button>
                   </div>
                 </div>
