@@ -645,7 +645,7 @@ export default function PharmacyBilling() {
                               <div className="font-medium text-gray-900">{bill.quantity}</div>
                             </td>
                             <td className="py-4 px-4">
-                              <div className="font-medium text-gray-900">${bill.amount.toFixed(2)}</div>
+                              <div className="font-medium text-gray-900">${bill.amount ? bill.amount.toFixed(2) : '0.00'}</div>
                             </td>
                             <td className="py-4 px-4">
                               {getStatusBadge(bill.status)}

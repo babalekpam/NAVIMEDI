@@ -1613,7 +1613,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const prescriptions = await storage.getPrescriptionsByTenant(tenantId);
       
       const totalReceipts = receipts.length;
-      const totalRevenue = receipts.reduce((sum, receipt) => sum + parseFloat(receipt.totalAmount.toString()), 0);
+      const totalRevenue = receipts.reduce((sum, receipt) => {
+        const amount = receipt.totalAmount ? parseFloat(receipt.totalAmount.toString()) : 0;
+        return sum + (isNaN(amount) ? 0 : amount);
+      }, 0);
       const pendingPrescriptions = prescriptions.filter(rx => rx.status === 'pending').length;
       const dispensedPrescriptions = prescriptions.filter(rx => rx.status === 'dispensed').length;
       const dispensingRate = prescriptions.length > 0 ? Math.round((dispensedPrescriptions / prescriptions.length) * 100) : 0;
