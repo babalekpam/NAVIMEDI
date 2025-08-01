@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, Plus, Search, Filter, FileText, Calendar, User, TestTube, Receipt, Eye, Edit, BarChart3, TrendingUp, Download, Printer, RefreshCw } from "lucide-react";
+import { DollarSign, Plus, Search, Filter, FileText, Calendar, Receipt, Eye, Edit, TrendingUp, Download, Printer, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { useToast } from "@/hooks/use-toast";
@@ -85,27 +85,7 @@ export default function LaboratoryBilling() {
     refetchInterval: 5000,
   });
 
-  // Report generation mutations for laboratory quick reports
-  const generateReportMutation = useMutation({
-    mutationFn: async (reportData: { reportType: string }) => {
-      return await apiRequest("POST", "/api/laboratory/quick-reports", reportData);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Report Generated",
-        description: "Your laboratory billing report has been created successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
-    },
-    onError: (error: any) => {
-      console.error("Report generation error:", error);
-      toast({
-        title: "Error",
-        description: error?.response?.data?.error || "Failed to generate report. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+
 
   // Download report function
   const downloadReport = async (fileUrl: string, title: string, format: string) => {
@@ -212,13 +192,7 @@ export default function LaboratoryBilling() {
     }
   };
 
-  // Generate quick reports
-  const generateQuickReport = (reportType: string) => {
-    console.log('Generating quick report:', reportType);
-    generateReportMutation.mutate({
-      reportType
-    });
-  };
+
 
   const form = useForm<LabBillForm>({
     resolver: zodResolver(labBillSchema),
@@ -1192,49 +1166,7 @@ export default function LaboratoryBilling() {
               </Card>
             </div>
 
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Report Generation</CardTitle>
-                <CardDescription>Generate common laboratory billing reports</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => generateQuickReport('billing_summary')}
-                    disabled={generateReportMutation.isPending}
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    Billing Summary
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => generateQuickReport('revenue_analysis')}
-                    disabled={generateReportMutation.isPending}
-                  >
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Revenue Analysis
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => generateQuickReport('patient_billing')}
-                    disabled={generateReportMutation.isPending}
-                  >
-                    <User className="w-4 h-4 mr-2" />
-                    Patient Billing
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => generateQuickReport('test_analysis')}
-                    disabled={generateReportMutation.isPending}
-                  >
-                    <TestTube className="w-4 h-4 mr-2" />
-                    Test Analysis
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+
           </div>
         </TabsContent>
 
