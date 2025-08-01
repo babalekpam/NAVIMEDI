@@ -123,6 +123,32 @@ export const translationStatusEnum = pgEnum("translation_status", [
   "manual_review"
 ]);
 
+export const shiftStatusEnum = pgEnum("shift_status", [
+  "active",
+  "completed",
+  "cancelled"
+]);
+
+export const verificationStatusEnum = pgEnum("verification_status", [
+  "pending",
+  "verified",
+  "expired",
+  "denied"
+]);
+
+export const shiftStatusEnum = pgEnum("shift_status", [
+  "active",
+  "completed",
+  "cancelled"
+]);
+
+export const verificationStatusEnum = pgEnum("verification_status", [
+  "pending",
+  "verified",
+  "expired",
+  "denied"
+]);
+
 export const currencyEnum = pgEnum("currency", [
   // Major International Currencies
   "USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "CNY",
