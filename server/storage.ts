@@ -35,6 +35,11 @@ import {
   patientAccessRequests,
   pharmacyReceipts,
   labBills,
+  achievements,
+  userAchievements,
+  userStats,
+  leaderboards,
+  activityLogs,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -105,7 +110,17 @@ import {
   type RolePermission,
   type InsertRolePermission,
   type PharmacyReceipt,
-  type InsertPharmacyReceipt
+  type InsertPharmacyReceipt,
+  type Achievement,
+  type InsertAchievement,
+  type UserAchievement,
+  type InsertUserAchievement,
+  type UserStats,
+  type InsertUserStats,
+  type Leaderboard,
+  type InsertLeaderboard,
+  type ActivityLog,
+  type InsertActivityLog
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or, isNull, gt } from "drizzle-orm";
@@ -440,6 +455,33 @@ export interface IStorage {
   // Patient Account Activation
   generatePatientCredentials(patientId: string, tenantId: string): Promise<{tempPassword: string, activationToken: string}>;
   sendPatientActivationMessage(patient: Patient, tempPassword: string, activationToken: string): Promise<boolean>;
+
+  // Achievement System Management
+  getAchievements(): Promise<Achievement[]>;
+  getAchievement(id: string): Promise<Achievement | undefined>;
+  createAchievement(achievement: InsertAchievement): Promise<Achievement>;
+  updateAchievement(id: string, updates: Partial<Achievement>): Promise<Achievement | undefined>;
+  deleteAchievement(id: string): Promise<boolean>;
+  
+  getUserAchievements(userId: string, tenantId: string): Promise<UserAchievement[]>;
+  getUserAchievement(userId: string, achievementId: string, tenantId: string): Promise<UserAchievement | undefined>;
+  createUserAchievement(userAchievement: InsertUserAchievement): Promise<UserAchievement>;
+  updateUserAchievement(id: string, updates: Partial<UserAchievement>): Promise<UserAchievement | undefined>;
+  
+  getUserStats(userId: string, tenantId: string): Promise<UserStats | undefined>;
+  createUserStats(userStats: InsertUserStats): Promise<UserStats>;
+  updateUserStats(userId: string, tenantId: string, updates: Partial<UserStats>): Promise<UserStats | undefined>;
+  
+  getLeaderboard(tenantId: string, period: string, limit?: number): Promise<Leaderboard[]>;
+  updateLeaderboard(tenantId: string, period: string): Promise<void>;
+  
+  getActivityLogs(userId: string, tenantId: string, limit?: number): Promise<ActivityLog[]>;
+  createActivityLog(activityLog: InsertActivityLog): Promise<ActivityLog>;
+  
+  // Achievement tracking methods
+  checkAndUpdateAchievements(userId: string, tenantId: string, activityType: string, metadata?: any): Promise<UserAchievement[]>;
+  calculateUserLevel(totalPoints: number): number;
+  updateUserStatsFromActivity(userId: string, tenantId: string, activityType: string, metadata?: any): Promise<UserStats | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3407,6 +3449,314 @@ export class DatabaseStorage implements IStorage {
     const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
     
     return `${prefix}-${timestamp}-${random}`;
+  }
+
+  // Achievement System Implementation
+  async getAchievements(): Promise<Achievement[]> {
+    return await db.select().from(achievements).where(eq(achievements.isActive, true)).orderBy(achievements.name);
+  }
+
+  async getAchievement(id: string): Promise<Achievement | undefined> {
+    const [achievement] = await db.select().from(achievements).where(eq(achievements.id, id));
+    return achievement || undefined;
+  }
+
+  async createAchievement(achievement: InsertAchievement): Promise<Achievement> {
+    const [created] = await db.insert(achievements).values(achievement).returning();
+    return created;
+  }
+
+  async updateAchievement(id: string, updates: Partial<Achievement>): Promise<Achievement | undefined> {
+    const [updated] = await db.update(achievements)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(achievements.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteAchievement(id: string): Promise<boolean> {
+    const result = await db.update(achievements)
+      .set({ isActive: false })
+      .where(eq(achievements.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getUserAchievements(userId: string, tenantId: string): Promise<UserAchievement[]> {
+    return await db.select()
+      .from(userAchievements)
+      .where(and(eq(userAchievements.userId, userId), eq(userAchievements.tenantId, tenantId)))
+      .orderBy(desc(userAchievements.earnedAt));
+  }
+
+  async getUserAchievement(userId: string, achievementId: string, tenantId: string): Promise<UserAchievement | undefined> {
+    const [userAchievement] = await db.select()
+      .from(userAchievements)
+      .where(and(
+        eq(userAchievements.userId, userId), 
+        eq(userAchievements.achievementId, achievementId),
+        eq(userAchievements.tenantId, tenantId)
+      ));
+    return userAchievement || undefined;
+  }
+
+  async createUserAchievement(userAchievement: InsertUserAchievement): Promise<UserAchievement> {
+    const [created] = await db.insert(userAchievements).values(userAchievement).returning();
+    return created;
+  }
+
+  async updateUserAchievement(id: string, updates: Partial<UserAchievement>): Promise<UserAchievement | undefined> {
+    const [updated] = await db.update(userAchievements)
+      .set(updates)
+      .where(eq(userAchievements.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getUserStats(userId: string, tenantId: string): Promise<UserStats | undefined> {
+    const [stats] = await db.select()
+      .from(userStats)
+      .where(and(eq(userStats.userId, userId), eq(userStats.tenantId, tenantId)));
+    return stats || undefined;
+  }
+
+  async createUserStats(userStatsData: InsertUserStats): Promise<UserStats> {
+    const [created] = await db.insert(userStats).values(userStatsData).returning();
+    return created;
+  }
+
+  async updateUserStats(userId: string, tenantId: string, updates: Partial<UserStats>): Promise<UserStats | undefined> {
+    const [updated] = await db.update(userStats)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(userStats.userId, userId), eq(userStats.tenantId, tenantId)))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getLeaderboard(tenantId: string, period: string, limit = 10): Promise<Leaderboard[]> {
+    return await db.select()
+      .from(leaderboards)
+      .where(and(eq(leaderboards.tenantId, tenantId), eq(leaderboards.period, period)))
+      .orderBy(leaderboards.position)
+      .limit(limit);
+  }
+
+  async updateLeaderboard(tenantId: string, period: string): Promise<void> {
+    // Calculate current period dates
+    const now = new Date();
+    let periodStart: Date;
+    let periodEnd: Date;
+
+    switch (period) {
+      case 'daily':
+        periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        periodEnd = new Date(periodStart.getTime() + 24 * 60 * 60 * 1000);
+        break;
+      case 'weekly':
+        const startOfWeek = now.getDate() - now.getDay();
+        periodStart = new Date(now.getFullYear(), now.getMonth(), startOfWeek);
+        periodEnd = new Date(periodStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'monthly':
+        periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        break;
+      default:
+        // all-time
+        periodStart = new Date(0);
+        periodEnd = now;
+    }
+
+    // Get top users by points
+    const topUsers = await db.select({
+      userId: userStats.userId,
+      userName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+      points: userStats.totalPoints,
+      level: userStats.level,
+      testsCompleted: userStats.testsCompleted,
+      qualityScore: userStats.qualityScore
+    })
+    .from(userStats)
+    .innerJoin(users, eq(userStats.userId, users.id))
+    .where(eq(userStats.tenantId, tenantId))
+    .orderBy(desc(userStats.totalPoints))
+    .limit(50);
+
+    // Clear existing leaderboard for this period
+    await db.delete(leaderboards)
+      .where(and(eq(leaderboards.tenantId, tenantId), eq(leaderboards.period, period)));
+
+    // Insert new leaderboard entries
+    if (topUsers.length > 0) {
+      const leaderboardEntries = topUsers.map((user, index) => ({
+        tenantId,
+        userId: user.userId,
+        userName: user.userName,
+        position: index + 1,
+        points: user.points,
+        level: user.level,
+        testsCompleted: user.testsCompleted,
+        qualityScore: user.qualityScore || 0,
+        period,
+        periodStart,
+        periodEnd
+      }));
+
+      await db.insert(leaderboards).values(leaderboardEntries);
+    }
+  }
+
+  async getActivityLogs(userId: string, tenantId: string, limit = 50): Promise<ActivityLog[]> {
+    return await db.select()
+      .from(activityLogs)
+      .where(and(eq(activityLogs.userId, userId), eq(activityLogs.tenantId, tenantId)))
+      .orderBy(desc(activityLogs.timestamp))
+      .limit(limit);
+  }
+
+  async createActivityLog(activityLog: InsertActivityLog): Promise<ActivityLog> {
+    const [created] = await db.insert(activityLogs).values(activityLog).returning();
+    return created;
+  }
+
+  async checkAndUpdateAchievements(userId: string, tenantId: string, activityType: string, metadata?: any): Promise<UserAchievement[]> {
+    const newAchievements: UserAchievement[] = [];
+    
+    // Get user stats
+    const stats = await this.getUserStats(userId, tenantId);
+    if (!stats) return newAchievements;
+
+    // Get all active achievements
+    const allAchievements = await this.getAchievements();
+    
+    // Check each achievement criteria
+    for (const achievement of allAchievements) {
+      const existingUserAchievement = await this.getUserAchievement(userId, achievement.id, tenantId);
+      
+      if (!existingUserAchievement) {
+        // Check if user meets achievement criteria
+        const criteria = achievement.criteria as any;
+        let meetsRequirement = false;
+
+        switch (achievement.type) {
+          case 'productivity':
+            if (criteria.testsCompleted && stats.testsCompleted >= criteria.testsCompleted) {
+              meetsRequirement = true;
+            }
+            break;
+          case 'quality':
+            if (criteria.qualityScore && parseFloat(stats.qualityScore.toString()) >= criteria.qualityScore) {
+              meetsRequirement = true;
+            }
+            break;
+          case 'consistency':
+            if (criteria.streakDays && stats.consistencyStreak >= criteria.streakDays) {
+              meetsRequirement = true;
+            }
+            break;
+          case 'milestone':
+            if (criteria.totalPoints && stats.totalPoints >= criteria.totalPoints) {
+              meetsRequirement = true;
+            }
+            break;
+        }
+
+        if (meetsRequirement) {
+          const userAchievement = await this.createUserAchievement({
+            userId,
+            tenantId,
+            achievementId: achievement.id,
+            progress: 100,
+            maxProgress: 100,
+            isCompleted: true,
+            completedAt: new Date()
+          });
+          
+          newAchievements.push(userAchievement);
+
+          // Award points
+          await this.updateUserStats(userId, tenantId, {
+            totalPoints: stats.totalPoints + achievement.points
+          });
+
+          // Log achievement
+          await this.createActivityLog({
+            userId,
+            tenantId,
+            activityType: 'achievement_earned',
+            points: achievement.points,
+            metadata: { achievementId: achievement.id, achievementName: achievement.name }
+          });
+        }
+      }
+    }
+
+    return newAchievements;
+  }
+
+  calculateUserLevel(totalPoints: number): number {
+    // Simple level calculation: 100 points per level
+    return Math.floor(totalPoints / 100) + 1;
+  }
+
+  async updateUserStatsFromActivity(userId: string, tenantId: string, activityType: string, metadata?: any): Promise<UserStats | undefined> {
+    let stats = await this.getUserStats(userId, tenantId);
+    
+    if (!stats) {
+      // Create initial stats
+      stats = await this.createUserStats({
+        userId,
+        tenantId,
+        level: 1,
+        totalPoints: 0,
+        testsCompleted: 0,
+        averageCompletionTime: 0,
+        qualityScore: 0,
+        consistencyStreak: 0,
+        lastActivityDate: new Date()
+      });
+    }
+
+    const updates: Partial<UserStats> = {
+      lastActivityDate: new Date()
+    };
+
+    // Update stats based on activity type
+    switch (activityType) {
+      case 'lab_test_completed':
+        updates.testsCompleted = stats.testsCompleted + 1;
+        updates.totalPoints = stats.totalPoints + 10; // Base points for test completion
+        
+        if (metadata?.completionTime) {
+          const currentAvg = stats.averageCompletionTime;
+          const newAvg = ((currentAvg * (stats.testsCompleted - 1)) + metadata.completionTime) / stats.testsCompleted;
+          updates.averageCompletionTime = Math.round(newAvg);
+        }
+        
+        if (metadata?.quality) {
+          const currentScore = parseFloat(stats.qualityScore.toString());
+          const newScore = ((currentScore * (stats.testsCompleted - 1)) + metadata.quality) / stats.testsCompleted;
+          updates.qualityScore = Math.round(newScore * 100) / 100;
+        }
+
+        // Update consistency streak
+        const lastActivity = stats.lastActivityDate;
+        const today = new Date();
+        const daysDiff = Math.floor((today.getTime() - (lastActivity?.getTime() || 0)) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff <= 1) {
+          updates.consistencyStreak = stats.consistencyStreak + 1;
+        } else if (daysDiff > 1) {
+          updates.consistencyStreak = 1; // Reset streak
+        }
+        break;
+    }
+
+    // Calculate new level
+    if (updates.totalPoints) {
+      updates.level = this.calculateUserLevel(updates.totalPoints);
+    }
+
+    return await this.updateUserStats(userId, tenantId, updates);
   }
 }
 

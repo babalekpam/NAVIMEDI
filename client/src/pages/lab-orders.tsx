@@ -174,13 +174,26 @@ export default function LabOrders() {
     },
     onSuccess: (result) => {
       console.log("Lab order completed successfully:", result);
+      
+      // Check for achievement information in response
+      let toastDescription = `Results posted for ${completionLabOrder?.testName}. Order status updated to completed and results are now visible in patient portal.`;
+      
+      if (result.achievements?.newAchievements?.length > 0) {
+        const achievementTitles = result.achievements.newAchievements.map((a: any) => a.achievement.title).join(', ');
+        toastDescription += ` 🏆 Achievement unlocked: ${achievementTitles}!`;
+      }
+      
       toast({
-        title: "Lab Completed Successfully",
-        description: `Results posted for ${completionLabOrder?.testName}. Order status updated to completed and results are now visible in patient portal.`,
+        title: result.achievements?.newAchievements?.length > 0 ? "Lab Completed - Achievement Unlocked!" : "Lab Completed Successfully",
+        description: toastDescription,
         variant: "default",
       });
+      
       queryClient.invalidateQueries({ queryKey: ["/api/lab-orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/lab-results"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user-achievements"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activity-logs"] });
       setIsCompleteDialogOpen(false);
       setCompletionLabOrder(null);
       completionForm.reset();

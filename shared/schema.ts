@@ -142,6 +142,30 @@ export const priorityLevelEnum = pgEnum("priority_level", [
   "emergency"
 ]);
 
+// Achievement System Enums
+export const achievementTypeEnum = pgEnum("achievement_type", [
+  "productivity", // Speed and volume achievements
+  "quality", // Accuracy and quality achievements  
+  "milestone", // Major milestones and targets
+  "consistency", // Streaks and regular performance
+  "teamwork", // Collaboration achievements
+  "efficiency" // Time and resource optimization
+]);
+
+export const achievementDifficultyEnum = pgEnum("achievement_difficulty", [
+  "bronze",
+  "silver", 
+  "gold",
+  "platinum",
+  "legendary"
+]);
+
+export const badgeStatusEnum = pgEnum("badge_status", [
+  "locked",
+  "unlocked",
+  "earned"
+]);
+
 export const billStatusEnum = pgEnum("bill_status", [
   "pending",
   "overdue",
@@ -1226,6 +1250,76 @@ export const patientPayments = pgTable("patient_payments", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Achievement System Tables
+export const achievements = pgTable("achievements", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  type: achievementTypeEnum("type").notNull(),
+  difficulty: achievementDifficultyEnum("difficulty").notNull(),
+  points: integer("points").notNull().default(0),
+  iconName: text("icon_name").notNull(), // Lucide icon name
+  criteria: jsonb("criteria").notNull(), // JSON criteria for achievement
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const userAchievements = pgTable("user_achievements", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  achievementId: uuid("achievement_id").references(() => achievements.id).notNull(),
+  progress: integer("progress").default(0), // Current progress toward achievement
+  maxProgress: integer("max_progress").notNull(), // Target progress to complete
+  isCompleted: boolean("is_completed").default(false),
+  completedAt: timestamp("completed_at"),
+  earnedAt: timestamp("earned_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const userStats = pgTable("user_stats", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  level: integer("level").default(1),
+  totalPoints: integer("total_points").default(0),
+  testsCompleted: integer("tests_completed").default(0),
+  averageCompletionTime: integer("average_completion_time").default(0), // in minutes
+  qualityScore: decimal("quality_score", { precision: 5, scale: 2 }).default('0.00'), // 0-100
+  consistencyStreak: integer("consistency_streak").default(0), // days
+  lastActivityDate: timestamp("last_activity_date"),
+  weeklyGoal: integer("weekly_goal").default(50), // weekly test completion goal
+  monthlyGoal: integer("monthly_goal").default(200), // monthly test completion goal
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const leaderboards = pgTable("leaderboards", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  userName: text("user_name").notNull(),
+  position: integer("position").notNull(),
+  points: integer("points").notNull(),
+  level: integer("level").notNull(),
+  testsCompleted: integer("tests_completed").notNull(),
+  qualityScore: decimal("quality_score", { precision: 5, scale: 2 }).notNull(),
+  period: text("period").notNull(), // daily, weekly, monthly, all-time
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const activityLogs = pgTable("activity_logs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  activityType: text("activity_type").notNull(), // lab_test_completed, achievement_earned, streak_milestone, etc.
+  points: integer("points").default(0),
+  metadata: jsonb("metadata"), // Additional activity-specific data
+  timestamp: timestamp("timestamp").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Relations
 export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   users: many(users),
@@ -1250,7 +1344,11 @@ export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   visitSummaries: many(visitSummaries),
   patientCheckIns: many(patientCheckIns),
   patientBills: many(patientBills),
-  patientPayments: many(patientPayments)
+  patientPayments: many(patientPayments),
+  userAchievements: many(userAchievements),
+  userStats: many(userStats),
+  leaderboards: many(leaderboards),
+  activityLogs: many(activityLogs)
 }));
 
 export const insuranceProvidersRelations = relations(insuranceProviders, ({ one, many }) => ({
@@ -1447,7 +1545,11 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   labOrderAssignments: many(labOrderAssignments),
   vitalSignsRecorded: many(vitalSigns, { relationName: "recordedBy" }),
   visitSummariesAsProvider: many(visitSummaries, { relationName: "providerSummaries" }),
-  medicationCopaysAsDefined: many(medicationCopays, { relationName: "pharmacistCopays" })
+  medicationCopaysAsDefined: many(medicationCopays, { relationName: "pharmacistCopays" }),
+  userAchievements: many(userAchievements),
+  userStats: many(userStats),
+  leaderboards: many(leaderboards),
+  activityLogs: many(activityLogs)
 }));
 
 export const pharmaciesRelations = relations(pharmacies, ({ one, many }) => ({
@@ -1721,6 +1823,59 @@ export const patientPaymentsRelations = relations(patientPayments, ({ one }) => 
   processedByUser: one(users, {
     fields: [patientPayments.processedBy],
     references: [users.id]
+  })
+}));
+
+// Achievement System Relations
+export const achievementsRelations = relations(achievements, ({ many }) => ({
+  userAchievements: many(userAchievements)
+}));
+
+export const userAchievementsRelations = relations(userAchievements, ({ one }) => ({
+  user: one(users, {
+    fields: [userAchievements.userId],
+    references: [users.id]
+  }),
+  tenant: one(tenants, {
+    fields: [userAchievements.tenantId],
+    references: [tenants.id]
+  }),
+  achievement: one(achievements, {
+    fields: [userAchievements.achievementId],
+    references: [achievements.id]
+  })
+}));
+
+export const userStatsRelations = relations(userStats, ({ one }) => ({
+  user: one(users, {
+    fields: [userStats.userId],
+    references: [users.id]
+  }),
+  tenant: one(tenants, {
+    fields: [userStats.tenantId],
+    references: [tenants.id]
+  })
+}));
+
+export const leaderboardsRelations = relations(leaderboards, ({ one }) => ({
+  user: one(users, {
+    fields: [leaderboards.userId],
+    references: [users.id]
+  }),
+  tenant: one(tenants, {
+    fields: [leaderboards.tenantId],
+    references: [tenants.id]
+  })
+}));
+
+export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [activityLogs.userId],
+    references: [users.id]
+  }),
+  tenant: one(tenants, {
+    fields: [activityLogs.tenantId],
+    references: [tenants.id]
   })
 }));
 
@@ -2076,3 +2231,47 @@ export type InsertPharmacyReceipt = z.infer<typeof insertPharmacyReceiptSchema>;
 export const insertLabBillSchema = createInsertSchema(labBills);
 export type LabBill = typeof labBills.$inferSelect;
 export type InsertLabBill = z.infer<typeof insertLabBillSchema>;
+
+// Achievement System Schemas and Types
+export const insertAchievementSchema = createInsertSchema(achievements).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertUserAchievementSchema = createInsertSchema(userAchievements).omit({
+  id: true,
+  earnedAt: true
+});
+
+export const insertUserStatsSchema = createInsertSchema(userStats).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertLeaderboardSchema = createInsertSchema(leaderboards).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
+  id: true,
+  timestamp: true
+});
+
+// Achievement System Types
+export type Achievement = typeof achievements.$inferSelect;
+export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
+
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type InsertUserAchievement = z.infer<typeof insertUserAchievementSchema>;
+
+export type UserStats = typeof userStats.$inferSelect;
+export type InsertUserStats = z.infer<typeof insertUserStatsSchema>;
+
+export type Leaderboard = typeof leaderboards.$inferSelect;
+export type InsertLeaderboard = z.infer<typeof insertLeaderboardSchema>;
+
+export type ActivityLog = typeof activityLogs.$inferSelect;
+export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;

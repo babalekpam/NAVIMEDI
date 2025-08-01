@@ -2932,10 +2932,76 @@ Original Notes: ${requestData.notes || 'None'}`;
         userAgent: req.get("User-Agent") || null
       });
 
-      res.status(201).json({
-        ...labResult,
-        message: "Lab result posted successfully and order status updated to completed"
-      });
+      // ACHIEVEMENT TRACKING: Track lab test completion
+      try {
+        console.log(`[ACHIEVEMENT] Tracking lab test completion for user ${req.user!.id}`);
+        
+        // Calculate completion time (mock quality score for now)
+        const completionTimeMinutes = Math.floor(Math.random() * 20) + 5; // Random 5-25 minutes
+        const qualityScore = labResult.abnormalFlag === 'critical' ? 95 : (Math.random() * 10) + 90; // 90-100%
+        
+        const achievementData = await storage.updateUserStatsFromActivity(
+          req.user!.id, 
+          req.tenantId!, 
+          'lab_test_completed', 
+          {
+            completionTime: completionTimeMinutes,
+            quality: qualityScore,
+            testName: labResult.testName,
+            points: 10 // Base points for test completion
+          }
+        );
+
+        // Check for new achievements
+        const newAchievements = await storage.checkAndUpdateAchievements(
+          req.user!.id, 
+          req.tenantId!, 
+          'lab_test_completed',
+          {
+            completionTime: completionTimeMinutes,
+            quality: qualityScore,
+            testName: labResult.testName
+          }
+        );
+
+        // Create activity log
+        await storage.createActivityLog({
+          userId: req.user!.id,
+          tenantId: req.tenantId!,
+          activityType: 'lab_test_completed',
+          points: 10,
+          metadata: {
+            testName: labResult.testName,
+            completionTime: completionTimeMinutes,
+            quality: qualityScore,
+            labOrderId: labResult.labOrderId
+          }
+        });
+
+        console.log(`[ACHIEVEMENT] Successfully tracked achievement. New achievements: ${newAchievements.length}`);
+        
+        // Include achievement info in response
+        const achievementMessage = newAchievements.length > 0 
+          ? ` Congratulations! You earned ${newAchievements.length} new achievement(s)!`
+          : '';
+
+        res.status(201).json({
+          ...labResult,
+          message: "Lab result posted successfully and order status updated to completed" + achievementMessage,
+          achievements: {
+            newAchievements,
+            stats: achievementData
+          }
+        });
+
+      } catch (achievementError) {
+        console.error("[ACHIEVEMENT] Error tracking achievement:", achievementError);
+        // Don't fail lab result creation if achievement tracking fails
+        res.status(201).json({
+          ...labResult,
+          message: "Lab result posted successfully and order status updated to completed"
+        });
+      }
     } catch (error) {
       if (error instanceof z.ZodError) {
         console.error("[LAB RESULTS] Zod validation errors:", JSON.stringify(error.errors, null, 2));
@@ -5320,6 +5386,129 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Error generating quick report:", error);
       res.status(500).json({ error: "Failed to generate report" });
+    }
+  });
+
+  // ==================== ACHIEVEMENT SYSTEM ROUTES ====================
+  
+  // Get all achievements
+  app.get("/api/achievements", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const achievements = await storage.getAchievements();
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      res.status(500).json({ message: "Failed to fetch achievements" });
+    }
+  });
+
+  // Get user achievements 
+  app.get("/api/user-achievements", authenticateToken, setTenantContext, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const tenantId = req.tenant!.id;
+      
+      const userAchievements = await storage.getUserAchievements(userId, tenantId);
+      res.json(userAchievements);
+    } catch (error) {
+      console.error("Error fetching user achievements:", error);
+      res.status(500).json({ message: "Failed to fetch user achievements" });
+    }
+  });
+
+  // Get user stats
+  app.get("/api/user-stats", authenticateToken, setTenantContext, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const tenantId = req.tenant!.id;
+      
+      let userStats = await storage.getUserStats(userId, tenantId);
+      
+      // Create initial stats if they don't exist
+      if (!userStats) {
+        userStats = await storage.createUserStats({
+          userId,
+          tenantId,
+          level: 1,
+          totalPoints: 0,
+          testsCompleted: 0,
+          averageCompletionTime: 0,
+          qualityScore: 0,
+          consistencyStreak: 0,
+          lastActivityDate: new Date()
+        });
+      }
+      
+      res.json(userStats);
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      res.status(500).json({ message: "Failed to fetch user stats" });
+    }
+  });
+
+  // Get leaderboard
+  app.get("/api/leaderboard", authenticateToken, setTenantContext, async (req: AuthenticatedRequest, res) => {
+    try {
+      const tenantId = req.tenant!.id;
+      const period = (req.query.period as string) || 'all-time';
+      const limit = parseInt(req.query.limit as string) || 10;
+      
+      // Update leaderboard first
+      await storage.updateLeaderboard(tenantId, period);
+      
+      const leaderboard = await storage.getLeaderboard(tenantId, period, limit);
+      res.json(leaderboard);
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+      res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+  });
+
+  // Get activity logs
+  app.get("/api/activity-logs", authenticateToken, setTenantContext, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const tenantId = req.tenant!.id;
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      const activityLogs = await storage.getActivityLogs(userId, tenantId, limit);
+      res.json(activityLogs);
+    } catch (error) {
+      console.error("Error fetching activity logs:", error);
+      res.status(500).json({ message: "Failed to fetch activity logs" });
+    }
+  });
+
+  // Achievement progress tracking (called when lab test is completed)
+  app.post("/api/track-achievement", authenticateToken, setTenantContext, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const tenantId = req.tenant!.id;
+      const { activityType, metadata } = req.body;
+      
+      // Update user stats based on activity
+      const updatedStats = await storage.updateUserStatsFromActivity(userId, tenantId, activityType, metadata);
+      
+      // Check for new achievements
+      const newAchievements = await storage.checkAndUpdateAchievements(userId, tenantId, activityType, metadata);
+      
+      // Create activity log
+      await storage.createActivityLog({
+        userId,
+        tenantId,
+        activityType,
+        points: metadata?.points || 0,
+        metadata
+      });
+      
+      res.json({
+        stats: updatedStats,
+        newAchievements,
+        message: newAchievements.length > 0 ? `Congratulations! You earned ${newAchievements.length} new achievement(s)!` : undefined
+      });
+    } catch (error) {
+      console.error("Error tracking achievement:", error);
+      res.status(500).json({ message: "Failed to track achievement" });
     }
   });
 

@@ -83,6 +83,7 @@ import PatientPortalPublic from "@/pages/patient-portal-public";
 import TelemedicineBooking from "@/pages/telemedicine-booking";
 import PatientLogin from "@/pages/patient-login";
 import DoctorCalendar from "@/pages/doctor-calendar";
+import Achievements from "@/pages/achievements";
 
 
 
@@ -194,6 +195,19 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <LaboratoryBilling />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/achievements">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <Achievements />
                 </main>
               </div>
             </div>
