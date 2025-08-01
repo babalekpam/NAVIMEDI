@@ -3851,8 +3851,8 @@ export class DatabaseStorage implements IStorage {
 
   async getActiveWorkShifts(tenantId: string): Promise<WorkShift[]> {
     return await db.select().from(workShifts).where(
-      and(eq(workShifts.tenantId, tenantId), isNull(workShifts.endTime))
-    );
+      eq(workShifts.tenantId, tenantId)
+    ).orderBy(desc(workShifts.startTime));
   }
 
   async endWorkShift(id: string, tenantId: string): Promise<WorkShift | undefined> {
