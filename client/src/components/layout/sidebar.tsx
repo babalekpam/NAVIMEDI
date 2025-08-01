@@ -102,19 +102,7 @@ export const Sidebar = () => {
     item.roles.includes(user.role)
   );
 
-  // Debug logging to help identify filtering issues
-  console.log("Sidebar Debug Info:", {
-    userRole: user.role,
-    tenantType: currentTenant?.type,
-    totalSidebarItems: sidebarItems.length,
-    filteredItems: filteredItems.length,
-    patientAccessItem: sidebarItems.find(item => item.id === "patient-access-management"),
-    userCanAccessPatientAccess: filteredItems.some(item => item.id === "patient-access-management"),
-    clinicalItemsAfterFilter: filteredItems.filter(item => {
-      const clinicalItemIds = ["dashboard", "patient-portal", "telemedicine-booking", "register-patient", "book-appointment", "patients", "patient-medical-records", "patient-messages", "consultation-history", "appointments", "prescriptions", "lab-orders", "lab-results", "health-recommendations", "medical-communications", "patient-access-management"];
-      return clinicalItemIds.includes(item.id) && !["pharmacy-dashboard", "lab-records"].includes(item.id);
-    }).map(item => item.id)
-  });
+
 
   // For super admin, show platform management and enterprise features
   if (user.role === "super_admin") {

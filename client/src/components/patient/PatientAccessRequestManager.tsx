@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, CheckCircle, Clock, XCircle, Users, FileText } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, XCircle, Users, FileText, Search, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import type { PatientAccessRequest, Patient, User } from '@/../../shared/schema';
@@ -25,6 +25,16 @@ export function PatientAccessRequestManager({ userRole }: PatientAccessRequestMa
   const [urgency, setUrgency] = useState('normal');
   const [accessType, setAccessType] = useState('read');
   const [accessDuration, setAccessDuration] = useState('24'); // Hours
+  
+  // Search states
+  const [patientSearchTerm, setPatientSearchTerm] = useState('');
+  const [doctorSearchTerm, setDoctorSearchTerm] = useState('');
+  const [showPatientResults, setShowPatientResults] = useState(false);
+  const [showDoctorResults, setShowDoctorResults] = useState(false);
+  
+  // Quick lookup states
+  const [quickSearchTerm, setQuickSearchTerm] = useState('');
+  const [showQuickResults, setShowQuickResults] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -110,6 +120,54 @@ export function PatientAccessRequestManager({ userRole }: PatientAccessRequestMa
     setUrgency('normal');
     setAccessType('read');
     setAccessDuration('24');
+    setPatientSearchTerm('');
+    setDoctorSearchTerm('');
+    setShowPatientResults(false);
+    setShowDoctorResults(false);
+  };
+
+  // Filter patients based on search term (name or MRN)
+  const filteredPatients = patients.filter(patient => {
+    if (!patientSearchTerm) return false;
+    const searchLower = patientSearchTerm.toLowerCase();
+    const fullName = `${patient.firstName} ${patient.lastName}`.toLowerCase();
+    const mrn = patient.mrn?.toLowerCase() || '';
+    return fullName.includes(searchLower) || mrn.includes(searchLower);
+  });
+
+  // Filter doctors based on search term (name or ID)
+  const filteredDoctors = doctors.filter(doctor => {
+    if (!doctorSearchTerm) return false;
+    const searchLower = doctorSearchTerm.toLowerCase();
+    const fullName = `${doctor.firstName} ${doctor.lastName}`.toLowerCase();
+    const email = doctor.email.toLowerCase();
+    return fullName.includes(searchLower) || email.includes(searchLower) || doctor.id.includes(searchLower);
+  });
+
+  const handlePatientSelect = (patient: Patient) => {
+    setSelectedPatientId(patient.id);
+    setPatientSearchTerm(`${patient.firstName} ${patient.lastName} (MRN: ${patient.mrn})`);
+    setShowPatientResults(false);
+  };
+
+  const handleDoctorSelect = (doctor: User) => {
+    setSelectedDoctorId(doctor.id);
+    setDoctorSearchTerm(`${doctor.firstName} ${doctor.lastName}`);
+    setShowDoctorResults(false);
+  };
+
+  // Filter patients for quick lookup (name or MRN)
+  const quickFilteredPatients = patients.filter(patient => {
+    if (!quickSearchTerm) return false;
+    const searchLower = quickSearchTerm.toLowerCase();
+    const fullName = `${patient.firstName} ${patient.lastName}`.toLowerCase();
+    const mrn = patient.mrn?.toLowerCase() || '';
+    return fullName.includes(searchLower) || mrn.includes(searchLower);
+  });
+
+  const handleQuickPatientAccess = (patient: Patient) => {
+    // Navigate to patient medical records
+    window.open(`/patient-medical-records?patientId=${patient.id}`, '_blank');
   };
 
   const handleCreateRequest = () => {
@@ -214,36 +272,74 @@ export function PatientAccessRequestManager({ userRole }: PatientAccessRequestMa
                 <DialogTitle>Request Patient Access</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
-                <div>
-                  <Label htmlFor="patient">Patient *</Label>
-                  <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select patient" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {patients.map((patient) => (
-                        <SelectItem key={patient.id} value={patient.id}>
-                          {patient.firstName} {patient.lastName} (MRN: {patient.mrn})
-                        </SelectItem>
+                <div className="relative">
+                  <Label htmlFor="patient">Patient * (Search by name or MRN)</Label>
+                  <Input
+                    value={patientSearchTerm}
+                    onChange={(e) => {
+                      setPatientSearchTerm(e.target.value);
+                      setShowPatientResults(e.target.value.length > 0);
+                      if (!e.target.value) {
+                        setSelectedPatientId('');
+                      }
+                    }}
+                    placeholder="Type patient name or MRN..."
+                    className="w-full"
+                  />
+                  {showPatientResults && filteredPatients.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                      {filteredPatients.map((patient) => (
+                        <div
+                          key={patient.id}
+                          onClick={() => handlePatientSelect(patient)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="font-medium">{patient.firstName} {patient.lastName}</div>
+                          <div className="text-sm text-gray-500">MRN: {patient.mrn}</div>
+                        </div>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                  )}
+                  {showPatientResults && patientSearchTerm && filteredPatients.length === 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-4">
+                      <div className="text-sm text-gray-500">No patients found matching "{patientSearchTerm}"</div>
+                    </div>
+                  )}
                 </div>
 
-                <div>
-                  <Label htmlFor="doctor">Target Physician (Optional)</Label>
-                  <Select value={selectedDoctorId} onValueChange={setSelectedDoctorId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select target physician" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {doctors.map((doctor) => (
-                        <SelectItem key={doctor.id} value={doctor.id}>
-                          Dr. {doctor.firstName} {doctor.lastName}
-                        </SelectItem>
+                <div className="relative">
+                  <Label htmlFor="doctor">Target Physician (Optional - Search by name or ID)</Label>
+                  <Input
+                    value={doctorSearchTerm}
+                    onChange={(e) => {
+                      setDoctorSearchTerm(e.target.value);
+                      setShowDoctorResults(e.target.value.length > 0);
+                      if (!e.target.value) {
+                        setSelectedDoctorId('');
+                      }
+                    }}
+                    placeholder="Type doctor name or ID..."
+                    className="w-full"
+                  />
+                  {showDoctorResults && filteredDoctors.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                      {filteredDoctors.map((doctor) => (
+                        <div
+                          key={doctor.id}
+                          onClick={() => handleDoctorSelect(doctor)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="font-medium">Dr. {doctor.firstName} {doctor.lastName}</div>
+                          <div className="text-sm text-gray-500">{doctor.email}</div>
+                        </div>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                  )}
+                  {showDoctorResults && doctorSearchTerm && filteredDoctors.length === 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-4">
+                      <div className="text-sm text-gray-500">No doctors found matching "{doctorSearchTerm}"</div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -319,6 +415,60 @@ export function PatientAccessRequestManager({ userRole }: PatientAccessRequestMa
           </Dialog>
         )}
       </div>
+
+      {/* Quick Patient Lookup for Doctors */}
+      {userRole === 'physician' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Search className="w-5 h-5" />
+              Quick Patient Lookup
+            </CardTitle>
+            <p className="text-sm text-gray-600">Search for patients by name or MRN to access their health records</p>
+          </CardHeader>
+          <CardContent>
+            <div className="relative">
+              <Input
+                value={quickSearchTerm}
+                onChange={(e) => {
+                  setQuickSearchTerm(e.target.value);
+                  setShowQuickResults(e.target.value.length > 0);
+                }}
+                placeholder="Search patient by name or MRN..."
+                className="w-full"
+              />
+              {showQuickResults && quickFilteredPatients.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                  {quickFilteredPatients.map((patient) => (
+                    <div
+                      key={patient.id}
+                      className="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 flex justify-between items-center"
+                    >
+                      <div>
+                        <div className="font-medium">{patient.firstName} {patient.lastName}</div>
+                        <div className="text-sm text-gray-500">MRN: {patient.mrn}</div>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => handleQuickPatientAccess(patient)}
+                        className="flex items-center gap-1"
+                      >
+                        <Eye className="w-3 h-3" />
+                        View Records
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {showQuickResults && quickSearchTerm && quickFilteredPatients.length === 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-4">
+                  <div className="text-sm text-gray-500">No patients found matching "{quickSearchTerm}"</div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Access Requests List */}
       <Card>
