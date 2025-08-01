@@ -5,7 +5,7 @@ import {
   patients, prescriptions, appointments, labOrders, labResults, 
   vitalSigns, insuranceClaims, patientInsurance, visitSummaries,
   medicalCommunications, patientCheckIns, auditLogs, patientAssignments,
-  healthAnalyses
+  healthAnalyses, labBills, pharmacyReceipts
 } from '../shared/schema.js';
 
 const pool = new Pool({
@@ -49,8 +49,14 @@ async function resetCounters() {
     await db.delete(labResults);
     console.log('✅ Cleared lab results');
     
+    await db.delete(labBills);
+    console.log('✅ Cleared lab bills');
+    
     await db.delete(labOrders);
     console.log('✅ Cleared lab orders');
+    
+    await db.delete(pharmacyReceipts);
+    console.log('✅ Cleared pharmacy receipts');
     
     await db.delete(prescriptions);
     console.log('✅ Cleared prescriptions');
