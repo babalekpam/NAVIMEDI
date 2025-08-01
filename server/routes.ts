@@ -5157,7 +5157,7 @@ Report ID: ${report.id}
       const reportData = {
         title,
         description: `Generated ${title.toLowerCase()} for ${tenant.name}`,
-        type: 'laboratory_analytics',
+        type: 'operational', // Use valid enum value for laboratory reports
         format: 'pdf',
         parameters: { reportType, tenantId },
         tenantId,
