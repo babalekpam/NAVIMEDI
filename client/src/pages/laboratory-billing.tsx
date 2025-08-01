@@ -84,13 +84,14 @@ export default function LaboratoryBilling() {
   });
 
   // Fetch laboratory bills
-  const { data: bills = [], isLoading } = useQuery<LabBill[]>({
+  const { data: bills = [], isLoading, refetch: refetchBills } = useQuery<LabBill[]>({
     queryKey: ["/api/laboratory/billing"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/laboratory/billing");
       return response.json();
     },
     enabled: !!user && !!tenant,
+    refetchInterval: 10000, // Auto-refresh every 10 seconds to catch status changes
   });
 
   // Fetch patients for laboratory billing (cross-tenant access)
