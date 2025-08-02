@@ -1707,68 +1707,120 @@ Completed Prescriptions\t198\tDispensed prescriptions
 Pending Prescriptions\t24\tAwaiting processing
 Ready for Pickup\t25\tProcessed, awaiting patient`;
                         } else {
-                          // Default PDF-style formatted text
-                          reportContent = `NAVIMED PHARMACY
-${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report
+                          // Generate actual PDF using HTML and print functionality
+                          const generatePDF = () => {
+                            const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>NaviMed Pharmacy Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        .header { text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; }
+        .logo { font-size: 28px; font-weight: bold; color: #2563eb; margin-bottom: 10px; }
+        .report-title { font-size: 20px; color: #374151; margin-bottom: 5px; }
+        .report-meta { font-size: 14px; color: #6b7280; }
+        .section { margin: 30px 0; }
+        .section-title { font-size: 18px; font-weight: bold; color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; margin-bottom: 15px; }
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .metric-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; }
+        .metric-label { font-size: 14px; color: #64748b; margin-bottom: 5px; }
+        .metric-value { font-size: 20px; font-weight: bold; color: #1e293b; }
+        .breakdown-list { list-style: none; padding: 0; }
+        .breakdown-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+        .footer { margin-top: 50px; text-align: center; color: #6b7280; font-size: 12px; }
+        @media print { body { margin: 20px; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">NAVIMED PHARMACY</div>
+        <div class="report-title">${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report</div>
+        <div class="report-meta">Generated: ${currentDate} | Period: ${startDate} to ${endDate}</div>
+    </div>
 
-Report Generated: ${currentDate}
-Report Period: ${startDate} to ${endDate}
+    <div class="section">
+        <div class="section-title">Pharmacy Performance Summary</div>
+        <div class="metrics-grid">
+            <div class="metric-box">
+                <div class="metric-label">Total Prescriptions</div>
+                <div class="metric-value">247</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Revenue Generated</div>
+                <div class="metric-value">$8,547.50</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Insurance Claims</div>
+                <div class="metric-value">156</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Avg. Processing Time</div>
+                <div class="metric-value">12 min</div>
+            </div>
+        </div>
+    </div>
 
-==============================================
-PHARMACY PERFORMANCE SUMMARY
-==============================================
+    <div class="section">
+        <div class="section-title">Prescription Breakdown</div>
+        <ul class="breakdown-list">
+            <li class="breakdown-item"><span>Completed & Dispensed</span><span>198</span></li>
+            <li class="breakdown-item"><span>Currently Pending</span><span>24</span></li>
+            <li class="breakdown-item"><span>Ready for Pickup</span><span>25</span></li>
+        </ul>
+    </div>
 
-Prescription Metrics:
-• Total Prescriptions Processed: 247
-• Completed & Dispensed: 198
-• Currently Pending: 24
-• Ready for Pickup: 25
+    <div class="section">
+        <div class="section-title">Top Medications Dispensed</div>
+        <ul class="breakdown-list">
+            <li class="breakdown-item"><span>Metformin 500mg</span><span>45 prescriptions</span></li>
+            <li class="breakdown-item"><span>Lisinopril 10mg</span><span>38 prescriptions</span></li>
+            <li class="breakdown-item"><span>Atorvastatin 20mg</span><span>32 prescriptions</span></li>
+            <li class="breakdown-item"><span>Amlodipine 5mg</span><span>28 prescriptions</span></li>
+            <li class="breakdown-item"><span>Omeprazole 20mg</span><span>24 prescriptions</span></li>
+        </ul>
+    </div>
 
-Financial Summary:
-• Total Revenue Generated: $8,547.50
-• Insurance Claims Processed: 156
-• Average Revenue per Prescription: $34.62
+    <div class="section">
+        <div class="section-title">Insurance Coverage Analysis</div>
+        <ul class="breakdown-list">
+            <li class="breakdown-item"><span>Verified Coverage</span><span>85%</span></li>
+            <li class="breakdown-item"><span>Pending Verification</span><span>10%</span></li>
+            <li class="breakdown-item"><span>Self-Pay Patients</span><span>5%</span></li>
+        </ul>
+    </div>
 
-Operational Metrics:
-• Average Processing Time: 12 minutes
-• Patient Satisfaction Score: 96.5%
-• Fill Rate Accuracy: 99.2%
-
-Inventory Status:
-• Total Active Items: 125
-• Low Stock Alerts: 3
-• Items Requiring Reorder: 5
-
-==============================================
-DETAILED BREAKDOWN
-==============================================
-
-Top Medications Dispensed:
-1. Metformin 500mg - 45 prescriptions
-2. Lisinopril 10mg - 38 prescriptions
-3. Atorvastatin 20mg - 32 prescriptions
-4. Amlodipine 5mg - 28 prescriptions
-5. Omeprazole 20mg - 24 prescriptions
-
-Insurance Coverage Analysis:
-• Verified Coverage: 85%
-• Pending Verification: 10%
-• Self-Pay Patients: 5%
-
-Patient Demographics:
-• Age 18-35: 15%
-• Age 36-55: 35%
-• Age 56-75: 40%
-• Age 75+: 10%
-
-==============================================
-Thank you for choosing NaviMed Pharmacy
-Report generated by Pharmacy Management System`;
+    <div class="footer">
+        <p>Thank you for choosing NaviMed Pharmacy</p>
+        <p>Report generated by Pharmacy Management System</p>
+    </div>
+</body>
+</html>`;
+                            
+                            // Open new window with HTML content and trigger print dialog
+                            const printWindow = window.open('', '_blank');
+                            printWindow.document.write(htmlContent);
+                            printWindow.document.close();
+                            
+                            // Wait for content to load then print
+                            printWindow.onload = () => {
+                              printWindow.print();
+                              // Close the window after a delay
+                              setTimeout(() => {
+                                printWindow.close();
+                              }, 1000);
+                            };
+                          };
+                          
+                          generatePDF();
+                          closeModal();
+                          return; // Exit early for PDF generation
                         }
                         
-                        // Create and download file
+                        // Create and download file for CSV and Excel
                         const filename = `NaviMed_${reportType}_Report_${startDate}_to_${endDate}.${format === 'excel' ? 'tsv' : format}`;
-                        const mimeType = format === 'csv' ? 'text/csv' : format === 'excel' ? 'text/tab-separated-values' : 'text/plain';
+                        const mimeType = format === 'csv' ? 'text/csv' : 'text/tab-separated-values';
                         
                         const blob = new Blob([reportContent], { type: mimeType });
                         const url = window.URL.createObjectURL(blob);
