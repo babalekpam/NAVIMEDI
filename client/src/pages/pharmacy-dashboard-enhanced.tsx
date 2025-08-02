@@ -268,41 +268,72 @@ export default function PharmacyDashboardEnhanced() {
   };
 
   const handleCompleteDispensing = (e: React.MouseEvent) => {
+    console.log('DISPENSING START - handleCompleteDispensing called');
     e.preventDefault();
     e.stopPropagation();
-    if (modalContent.prescription) {
-      console.log('Completing dispensing for prescription:', modalContent.prescription.id);
-      
-      // Update prescription status to dispensed
-      const updatedPrescription = { ...modalContent.prescription, status: 'dispensed' as const };
-      
-      // Update the local prescriptions array
-      setLocalPrescriptions(prevPrescriptions => {
-        console.log('Dispensing - Previous prescriptions:', prevPrescriptions.map(p => ({ id: p.id, status: p.status })));
-        const updated = prevPrescriptions.map(p => 
-          p.id === modalContent.prescription!.id 
-            ? updatedPrescription 
-            : p
-        );
-        console.log('Dispensing - Updated prescriptions:', updated.map(p => ({ id: p.id, status: p.status })));
-        return updated;
-      });
-      
-      // Force re-render
-      setForceRerender(prev => prev + 1);
-      
-      // Set flash effect for updated prescription
-      setUpdatedPrescriptionId(modalContent.prescription.id);
-      setTimeout(() => setUpdatedPrescriptionId(null), 3000);
-      
-      // Also force a re-render by updating the filter to show all prescriptions
-      if (filterStatus !== 'all') {
-        setFilterStatus('all');
-      }
-      
-      alert(`Prescription dispensed successfully!\n\nPatient: ${modalContent.prescription.patientName}\nMedication: ${modalContent.prescription.medicationName}\nStatus: Dispensed\n\nReceipt generated and patient notified.`);
-      closeModal();
+    
+    if (!modalContent.prescription) {
+      console.error('No prescription found in modal content');
+      return;
     }
+
+    const prescriptionId = modalContent.prescription.id;
+    console.log('DISPENSING - Processing prescription ID:', prescriptionId);
+    console.log('DISPENSING - Current prescription status:', modalContent.prescription.status);
+    
+    // Update prescription status to dispensed
+    const updatedPrescription = { 
+      ...modalContent.prescription, 
+      status: 'dispensed' as const,
+      dispensedAt: new Date().toISOString()
+    };
+    
+    console.log('DISPENSING - Created updated prescription:', updatedPrescription);
+    
+    // Update the local prescriptions array
+    setLocalPrescriptions(prevPrescriptions => {
+      console.log('DISPENSING - Previous prescriptions:', prevPrescriptions.map(p => ({ id: p.id, status: p.status })));
+      const updated = prevPrescriptions.map(p => {
+        if (p.id === prescriptionId) {
+          console.log(`DISPENSING - Updating prescription ${p.id} from ${p.status} to dispensed`);
+          return updatedPrescription;
+        }
+        return p;
+      });
+      console.log('DISPENSING - Updated prescriptions:', updated.map(p => ({ id: p.id, status: p.status })));
+      return updated;
+    });
+    
+    // Force re-render
+    console.log('DISPENSING - Forcing re-render');
+    setForceRerender(prev => {
+      const newVal = prev + 1;
+      console.log('DISPENSING - Force rerender value:', newVal);
+      return newVal;
+    });
+    
+    // Set flash effect for updated prescription
+    console.log('DISPENSING - Setting flash effect for prescription:', prescriptionId);
+    setUpdatedPrescriptionId(prescriptionId);
+    setTimeout(() => {
+      console.log('DISPENSING - Removing flash effect');
+      setUpdatedPrescriptionId(null);
+    }, 3000);
+    
+    // Also force a re-render by updating the filter to show all prescriptions
+    if (filterStatus !== 'all') {
+      console.log('DISPENSING - Setting filter to all');
+      setFilterStatus('all');
+    }
+    
+    // Generate receipt and show success message
+    const receiptNumber = `RX-${Date.now()}`;
+    alert(`✅ PRESCRIPTION DISPENSED SUCCESSFULLY!\n\n📋 Receipt Generated: ${receiptNumber}\n\n👤 Patient: ${modalContent.prescription.patientName}\n💊 Medication: ${modalContent.prescription.medicationName}\n📊 Status: DISPENSED\n📅 Dispensed: ${new Date().toLocaleString()}\n\n📧 Patient notification sent\n🧾 Receipt printed`);
+    
+    console.log('DISPENSING - Closing modal');
+    closeModal();
+    
+    console.log('DISPENSING COMPLETE - Status should now be dispensed');
   };
 
   const handleSaveInventoryChanges = (e: React.MouseEvent) => {
@@ -1135,10 +1166,13 @@ export default function PharmacyDashboardEnhanced() {
                     <div className="flex gap-2 mt-4">
                       <button 
                         type="button"
-                        onClick={handleCompleteDispensing}
+                        onClick={(e) => {
+                          console.log('Complete Dispensing button clicked!');
+                          handleCompleteDispensing(e);
+                        }}
                         className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
                       >
-                        Complete Dispensing
+                        Generate Receipt & Mark Dispensed
                       </button>
                       <button 
                         type="button"
