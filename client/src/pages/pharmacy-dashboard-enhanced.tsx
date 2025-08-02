@@ -789,7 +789,11 @@ export default function PharmacyDashboardEnhanced() {
                     </div>
                   ))}
                 </div>
-                <Button variant="outline" className="w-full mt-4">
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-4"
+                  onClick={() => setActiveView('prescriptions')}
+                >
                   View All Prescriptions
                 </Button>
               </CardContent>
