@@ -80,6 +80,8 @@ export default function PharmacyDashboardEnhanced() {
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '', prescription: null as Prescription | null, inventoryItem: null as InventoryItem | null });
+  const [currentStep, setCurrentStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
   // Debug tab changes
   const handleTabChange = (value: string) => {
@@ -113,6 +115,8 @@ export default function PharmacyDashboardEnhanced() {
       prescription,
       inventoryItem: null
     });
+    setCurrentStep(0);
+    setCompletedSteps([]);
     setModalOpen(true);
     console.log('Modal should be open now');
   };
@@ -130,6 +134,8 @@ export default function PharmacyDashboardEnhanced() {
   const closeModal = () => {
     setModalOpen(false);
     setModalContent({ title: '', content: '', prescription: null, inventoryItem: null });
+    setCurrentStep(0);
+    setCompletedSteps([]);
   };
 
   // Inventory modal functions
@@ -153,33 +159,37 @@ export default function PharmacyDashboardEnhanced() {
     setModalOpen(true);
   };
 
-  // Handle prescription processing - completely prevent any navigation
+  const processingSteps = [
+    { id: 0, title: "Verify Insurance Coverage", description: "Check patient insurance status and coverage details" },
+    { id: 1, title: "Check Drug Interactions", description: "Review potential interactions with current medications" },
+    { id: 2, title: "Prepare Medication", description: "Count, label, and package the medication" },
+    { id: 3, title: "Update Status to Ready", description: "Mark prescription as ready for pickup" }
+  ];
+
+  const handleStepComplete = (stepId: number) => {
+    if (!completedSteps.includes(stepId)) {
+      setCompletedSteps([...completedSteps, stepId]);
+    }
+    
+    // Show step completion message
+    const step = processingSteps[stepId];
+    alert(`✅ Step ${stepId + 1} Complete!\n\n${step.title}\n${step.description}\n\nStep completed successfully!`);
+    
+    // Check if all steps are completed
+    const newCompletedSteps = [...completedSteps, stepId];
+    if (newCompletedSteps.length === processingSteps.length) {
+      setTimeout(() => {
+        alert(`🎉 All Steps Complete!\n\nPrescription for ${modalContent.prescription?.patientName} is now ready for pickup.\n\nStatus updated to: Ready`);
+        closeModal();
+      }, 500);
+    }
+  };
+
   const handleStartProcessing = (e: React.MouseEvent) => {
-    console.log('handleStartProcessing called!');
     e.preventDefault();
     e.stopPropagation();
-    e.nativeEvent.preventDefault();
-    e.nativeEvent.stopImmediatePropagation();
-    
-    // Prevent any default link behavior
-    if (e.target instanceof HTMLElement) {
-      e.target.blur();
-    }
-    
-    if (modalContent.prescription) {
-      // Here you would typically make an API call to update the prescription status
-      console.log('Starting processing for prescription:', modalContent.prescription.id);
-      
-      // Use a more obvious alert to test
-      setTimeout(() => {
-        alert(`✅ SUCCESS! Processing started for ${modalContent.prescription!.patientName}\n\nMedication: ${modalContent.prescription!.medicationName}\nStatus: In Progress\n\nThis message shows the button worked correctly!`);
-        closeModal();
-      }, 100);
-    } else {
-      console.log('No prescription in modalContent');
-    }
-    
-    return false;
+    setCurrentStep(0);
+    setCompletedSteps([]);
   };
 
   const handleCompleteDispensing = (e: React.MouseEvent) => {
@@ -848,64 +858,123 @@ export default function PharmacyDashboardEnhanced() {
               {modalContent.content === 'process' && modalContent.prescription && (
                 <div>
                   <h3 className="font-semibold mb-3">Process Prescription</h3>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div className="p-3 bg-blue-50 rounded">
                       <h4 className="font-medium">Patient: {modalContent.prescription.patientName}</h4>
                       <p className="text-sm text-gray-600">{modalContent.prescription.medicationName}</p>
                     </div>
                     
-                    <div className="space-y-2">
-                      <h4 className="font-medium">Processing Steps:</h4>
-                      <div className="space-y-1 text-sm">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <span>Verify insurance coverage</span>
+                    {completedSteps.length === 0 ? (
+                      // Initial view - show overview and start button
+                      <div className="space-y-3">
+                        <h4 className="font-medium">Processing Steps Overview:</h4>
+                        <div className="space-y-2 text-sm">
+                          {processingSteps.map((step) => (
+                            <div key={step.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                              <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center text-xs font-medium text-gray-600">
+                                {step.id + 1}
+                              </div>
+                              <div>
+                                <div className="font-medium">{step.title}</div>
+                                <div className="text-gray-600 text-xs">{step.description}</div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                          <span>Check drug interactions</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                          <span>Prepare medication</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                          <span>Update status to Ready</span>
+                        
+                        <div className="flex gap-2 mt-4">
+                          <div 
+                            role="button"
+                            tabIndex={0}
+                            onClick={handleStartProcessing}
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm cursor-pointer select-none text-center"
+                          >
+                            Start Processing
+                          </div>
+                          <div 
+                            role="button"
+                            tabIndex={0}
+                            onClick={closeModal}
+                            className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm cursor-pointer select-none text-center"
+                          >
+                            Cancel
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex gap-2 mt-4">
-                      <div 
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleStartProcessing(e as any);
-                          }
-                        }}
-                        onClick={handleStartProcessing}
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm cursor-pointer select-none text-center"
-                      >
-                        Start Processing
+                    ) : (
+                      // Step-by-step processing view
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="text-sm font-medium">Progress:</div>
+                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${(completedSteps.length / processingSteps.length) * 100}%` }}
+                            ></div>
+                          </div>
+                          <div className="text-xs text-gray-600">{completedSteps.length}/{processingSteps.length}</div>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          {processingSteps.map((step) => {
+                            const isCompleted = completedSteps.includes(step.id);
+                            const isCurrent = !isCompleted && step.id === Math.min(...processingSteps.filter(s => !completedSteps.includes(s.id)).map(s => s.id));
+                            
+                            return (
+                              <div key={step.id} className={`p-3 rounded border ${
+                                isCompleted ? 'bg-green-50 border-green-200' :
+                                isCurrent ? 'bg-blue-50 border-blue-200' :
+                                'bg-gray-50 border-gray-200'
+                              }`}>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                                      isCompleted ? 'bg-green-500 text-white' :
+                                      isCurrent ? 'bg-blue-500 text-white' :
+                                      'bg-gray-300 text-gray-600'
+                                    }`}>
+                                      {isCompleted ? '✓' : step.id + 1}
+                                    </div>
+                                    <div>
+                                      <div className="font-medium">{step.title}</div>
+                                      <div className="text-sm text-gray-600">{step.description}</div>
+                                    </div>
+                                  </div>
+                                  
+                                  {isCurrent && (
+                                    <div 
+                                      role="button"
+                                      tabIndex={0}
+                                      onClick={() => handleStepComplete(step.id)}
+                                      className="px-3 py-1 bg-blue-600 text-white rounded text-sm cursor-pointer hover:bg-blue-700"
+                                    >
+                                      Complete Step
+                                    </div>
+                                  )}
+                                  
+                                  {isCompleted && (
+                                    <div className="text-sm text-green-600 font-medium">Completed</div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        
+                        {completedSteps.length < processingSteps.length && (
+                          <div className="flex gap-2 mt-4">
+                            <div 
+                              role="button"
+                              tabIndex={0}
+                              onClick={closeModal}
+                              className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm cursor-pointer select-none text-center"
+                            >
+                              Cancel Processing
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div 
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            closeModal();
-                          }
-                        }}
-                        onClick={closeModal}
-                        className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm cursor-pointer select-none text-center"
-                      >
-                        Cancel
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               )}
