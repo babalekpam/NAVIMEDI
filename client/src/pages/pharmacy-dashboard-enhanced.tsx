@@ -85,8 +85,15 @@ export default function PharmacyDashboardEnhanced() {
   const [updatedPrescriptionId, setUpdatedPrescriptionId] = useState<string | null>(null);
   const [forceRerender, setForceRerender] = useState(0);
   
-  // Local state for prescriptions to allow updates
-  const [localPrescriptions, setLocalPrescriptions] = useState<Prescription[]>([
+  // Local state for prescriptions with status tracking
+  const [prescriptionStatuses, setPrescriptionStatuses] = useState<Record<string, string>>({
+    '1': 'new',
+    '2': 'processing', 
+    '3': 'ready'
+  });
+
+  // Base prescription data
+  const basePrescriptions: Prescription[] = [
     {
       id: '1',
       patientName: 'Sarah Johnson',
@@ -118,7 +125,13 @@ export default function PharmacyDashboardEnhanced() {
       pickupDate: '2025-08-02T14:00:00Z',
       insuranceStatus: 'verified'
     }
-  ]);
+  ];
+
+  // Merge base data with current statuses
+  const localPrescriptions = basePrescriptions.map(prescription => ({
+    ...prescription,
+    status: (prescriptionStatuses[prescription.id] || prescription.status) as Prescription['status']
+  }));
 
   // Debug tab changes
   const handleTabChange = (value: string) => {
@@ -221,15 +234,11 @@ export default function PharmacyDashboardEnhanced() {
           console.log('Updating prescription status for ID:', modalContent.prescription.id);
           const updatedPrescription = { ...modalContent.prescription, status: 'ready' as const };
           
-          // Update the local prescriptions array
-          setLocalPrescriptions(prevPrescriptions => {
-            console.log('Previous prescriptions:', prevPrescriptions.map(p => ({ id: p.id, status: p.status })));
-            const updated = prevPrescriptions.map(p => 
-              p.id === modalContent.prescription!.id 
-                ? updatedPrescription 
-                : p
-            );
-            console.log('Updated prescriptions:', updated.map(p => ({ id: p.id, status: p.status })));
+          // Update prescription status directly
+          console.log('Updating prescription status from', modalContent.prescription.status, 'to ready');
+          setPrescriptionStatuses(prev => {
+            const updated = { ...prev, [modalContent.prescription!.id]: 'ready' };
+            console.log('Updated prescription statuses:', updated);
             return updated;
           });
           
@@ -290,17 +299,11 @@ export default function PharmacyDashboardEnhanced() {
     
     console.log('DISPENSING - Created updated prescription:', updatedPrescription);
     
-    // Update the local prescriptions array
-    setLocalPrescriptions(prevPrescriptions => {
-      console.log('DISPENSING - Previous prescriptions:', prevPrescriptions.map(p => ({ id: p.id, status: p.status })));
-      const updated = prevPrescriptions.map(p => {
-        if (p.id === prescriptionId) {
-          console.log(`DISPENSING - Updating prescription ${p.id} from ${p.status} to dispensed`);
-          return updatedPrescription;
-        }
-        return p;
-      });
-      console.log('DISPENSING - Updated prescriptions:', updated.map(p => ({ id: p.id, status: p.status })));
+    // Update prescription status directly
+    console.log('DISPENSING - Updating prescription status from', modalContent.prescription.status, 'to dispensed');
+    setPrescriptionStatuses(prev => {
+      const updated = { ...prev, [prescriptionId]: 'dispensed' };
+      console.log('DISPENSING - Updated prescription statuses:', updated);
       return updated;
     });
     
