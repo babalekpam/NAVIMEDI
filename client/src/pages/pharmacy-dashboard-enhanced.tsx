@@ -333,6 +333,22 @@ export default function PharmacyDashboardEnhanced() {
     const receiptNumber = `RX-${Date.now()}`;
     const dispensedDate = new Date();
     
+    // Calculate payment breakdown based on insurance status
+    const medicationCost = 85.50; // Base medication cost
+    let patientPayment = 0;
+    let insurancePayment = 0;
+    let savings = 0;
+    
+    if (modalContent.prescription.insuranceStatus === 'verified') {
+      patientPayment = 15.00; // Patient copay
+      insurancePayment = 70.50; // Insurance covers remainder
+      savings = medicationCost - patientPayment; // Total savings
+    } else {
+      patientPayment = medicationCost; // Patient pays full amount
+      insurancePayment = 0;
+      savings = 0;
+    }
+    
     // Create receipt content
     const receiptContent = `
       <!DOCTYPE html>
@@ -340,32 +356,65 @@ export default function PharmacyDashboardEnhanced() {
       <head>
         <title>Prescription Receipt</title>
         <style>
-          body { font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; }
-          .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-          .receipt-info { margin: 10px 0; }
-          .receipt-info strong { display: inline-block; width: 120px; }
-          .footer { text-align: center; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; font-size: 12px; }
-          @media print { body { margin: 0; padding: 10px; } }
+          body { font-family: Arial, sans-serif; max-width: 450px; margin: 0 auto; padding: 20px; line-height: 1.4; }
+          .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; }
+          .pharmacy-name { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+          .receipt-info { margin: 8px 0; }
+          .receipt-info div { margin: 5px 0; }
+          .receipt-info strong { display: inline-block; width: 140px; }
+          .payment-section { border-top: 1px solid #333; border-bottom: 1px solid #333; padding: 15px 0; margin: 20px 0; }
+          .payment-line { display: flex; justify-content: space-between; margin: 5px 0; }
+          .total-line { font-weight: bold; font-size: 16px; border-top: 1px solid #333; padding-top: 8px; margin-top: 8px; }
+          .savings { color: #008000; font-weight: bold; }
+          .footer { text-align: center; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 15px; font-size: 12px; }
+          @media print { body { margin: 0; padding: 15px; } }
         </style>
       </head>
       <body>
         <div class="header">
-          <h2>PHARMACY RECEIPT</h2>
-          <p>NaviMed Healthcare</p>
-          <p>Receipt #: ${receiptNumber}</p>
+          <div class="pharmacy-name">NAVIMED PHARMACY</div>
+          <p>123 Healthcare Blvd, Medical Center<br>Phone: (555) 123-4567</p>
+          <p><strong>Receipt #: ${receiptNumber}</strong></p>
         </div>
+        
         <div class="receipt-info">
-          <div><strong>Patient:</strong> ${modalContent.prescription.patientName}</div>
+          <div><strong>Patient Name:</strong> ${modalContent.prescription.patientName}</div>
           <div><strong>Medication:</strong> ${modalContent.prescription.medicationName}</div>
-          <div><strong>Prescribed by:</strong> ${modalContent.prescription.prescribedBy}</div>
-          <div><strong>Dispensed:</strong> ${dispensedDate.toLocaleString()}</div>
-          <div><strong>Status:</strong> DISPENSED</div>
-          <div><strong>Insurance:</strong> ${modalContent.prescription.insuranceStatus.toUpperCase()}</div>
+          <div><strong>Prescribing Doctor:</strong> ${modalContent.prescription.prescribedBy}</div>
+          <div><strong>Dispensed Date:</strong> ${dispensedDate.toLocaleDateString()} at ${dispensedDate.toLocaleTimeString()}</div>
+          <div><strong>Insurance Status:</strong> ${modalContent.prescription.insuranceStatus.toUpperCase()}</div>
         </div>
+        
+        <div class="payment-section">
+          <div style="text-align: center; font-weight: bold; margin-bottom: 10px;">PAYMENT BREAKDOWN</div>
+          <div class="payment-line">
+            <span>Medication Cost:</span>
+            <span>$${medicationCost.toFixed(2)}</span>
+          </div>
+          <div class="payment-line">
+            <span>Insurance Payment:</span>
+            <span>$${insurancePayment.toFixed(2)}</span>
+          </div>
+          <div class="payment-line total-line">
+            <span>Patient Payment:</span>
+            <span>$${patientPayment.toFixed(2)}</span>
+          </div>
+          ${savings > 0 ? `
+          <div class="payment-line savings">
+            <span>Your Insurance Savings:</span>
+            <span>$${savings.toFixed(2)}</span>
+          </div>
+          ` : ''}
+        </div>
+        
         <div class="footer">
-          <p>Thank you for choosing NaviMed Healthcare</p>
-          <p>Please keep this receipt for your records</p>
-          <p>For questions, contact: (555) 123-4567</p>
+          <p><strong>Thank you for choosing NaviMed Pharmacy!</strong></p>
+          <p>Please keep this receipt for your records and insurance claims.</p>
+          <p>For questions about this prescription, call: (555) 123-4567</p>
+          <p style="margin-top: 15px; font-size: 10px;">
+            This receipt serves as proof of purchase and dispensing.<br>
+            Prescription filled by: Licensed Pharmacist
+          </p>
         </div>
       </body>
       </html>
