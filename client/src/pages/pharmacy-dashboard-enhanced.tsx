@@ -106,6 +106,7 @@ export default function PharmacyDashboardEnhanced() {
   };
 
   const openProcessModal = (prescription: Prescription) => {
+    console.log('openProcessModal called with:', prescription);
     setModalContent({
       title: 'Process Prescription',
       content: 'process',
@@ -113,6 +114,7 @@ export default function PharmacyDashboardEnhanced() {
       inventoryItem: null
     });
     setModalOpen(true);
+    console.log('Modal should be open now');
   };
 
   const openDispenseModal = (prescription: Prescription) => {
@@ -153,6 +155,7 @@ export default function PharmacyDashboardEnhanced() {
 
   // Handle prescription processing
   const handleStartProcessing = (e: React.MouseEvent) => {
+    console.log('handleStartProcessing called!');
     e.preventDefault();
     e.stopPropagation();
     if (modalContent.prescription) {
@@ -160,6 +163,8 @@ export default function PharmacyDashboardEnhanced() {
       console.log('Starting processing for prescription:', modalContent.prescription.id);
       alert(`Started processing prescription for ${modalContent.prescription.patientName}\n\nStatus updated to: In Progress\nMedication: ${modalContent.prescription.medicationName}`);
       closeModal();
+    } else {
+      console.log('No prescription in modalContent');
     }
   };
 
