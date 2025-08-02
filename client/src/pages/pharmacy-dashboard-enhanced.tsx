@@ -83,6 +83,9 @@ export default function PharmacyDashboardEnhanced() {
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [updatedPrescriptionId, setUpdatedPrescriptionId] = useState<string | null>(null);
+  
+  // Local state for prescriptions to allow updates
+  const [localPrescriptions, setLocalPrescriptions] = useState<Prescription[]>([]);
 
   // Debug tab changes
   const handleTabChange = (value: string) => {
@@ -180,8 +183,19 @@ export default function PharmacyDashboardEnhanced() {
     const newCompletedSteps = [...completedSteps, stepId];
     if (newCompletedSteps.length === processingSteps.length) {
       setTimeout(() => {
-        // Show visual feedback that prescription was updated
+        // Update prescription status in local state
         if (modalContent.prescription) {
+          const updatedPrescription = { ...modalContent.prescription, status: 'ready' as const };
+          
+          // Update the local prescriptions array
+          setLocalPrescriptions(prevPrescriptions => 
+            prevPrescriptions.map(p => 
+              p.id === modalContent.prescription!.id 
+                ? updatedPrescription 
+                : p
+            )
+          );
+          
           // Set flash effect for updated prescription
           setUpdatedPrescriptionId(modalContent.prescription.id);
           setTimeout(() => setUpdatedPrescriptionId(null), 3000); // Remove flash after 3 seconds
@@ -253,8 +267,8 @@ export default function PharmacyDashboardEnhanced() {
     }
   });
 
-  // Fetch recent prescriptions
-  const { data: prescriptions = [] } = useQuery<Prescription[]>({
+  // Fetch recent prescriptions and initialize local state
+  const { data: prescriptionsFromQuery = [] } = useQuery<Prescription[]>({
     queryKey: ['/api/prescriptions', { status: filterStatus }],
     initialData: [
       {
@@ -290,6 +304,16 @@ export default function PharmacyDashboardEnhanced() {
       }
     ]
   });
+
+  // Initialize local prescriptions when query data changes
+  React.useEffect(() => {
+    if (prescriptionsFromQuery.length > 0 && localPrescriptions.length === 0) {
+      setLocalPrescriptions(prescriptionsFromQuery);
+    }
+  }, [prescriptionsFromQuery, localPrescriptions.length]);
+
+  // Use local prescriptions for display
+  const prescriptions = localPrescriptions.length > 0 ? localPrescriptions : prescriptionsFromQuery;
 
   // Fetch inventory items
   const { data: inventory = [] } = useQuery<InventoryItem[]>({
