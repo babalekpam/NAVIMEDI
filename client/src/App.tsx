@@ -29,6 +29,7 @@ import LaboratoryRegistration from "@/pages/laboratory-registration";
 import HealthRecommendations from "@/pages/health-recommendations";
 // import PharmacyDashboardEnhanced from "@/pages/pharmacy-dashboard-enhanced";
 import PharmacyDashboardSimple from "@/pages/pharmacy-dashboard-simple";
+import PharmacyDashboardEnhancedV2 from "@/pages/pharmacy-dashboard-enhanced-v2";
 import PharmacyRegistration from "@/pages/pharmacy-registration";
 import { PharmacyInventoryManager } from "@/components/pharmacy/PharmacyInventoryManager";
 import { PharmacyPrescriptionManager } from "@/components/pharmacy/PharmacyPrescriptionManager";
@@ -392,6 +393,19 @@ function AppContent() {
           </ProtectedRoute>
         </Route>
         <Route path="/pharmacy-dashboard">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto">
+                  <PharmacyDashboardEnhancedV2 />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/pharmacy-dashboard-simple">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
               <Header />
