@@ -70,6 +70,9 @@ export default function PharmacyDashboardEnhanced() {
   const { user } = useAuth();
   const { tenant } = useTenant();
   const [activeView, setActiveView] = useState('overview');
+  
+  // Debug logging for state changes
+  console.log('Current activeView state:', activeView);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
@@ -324,7 +327,10 @@ export default function PharmacyDashboardEnhanced() {
         <div className="grid w-full grid-cols-4 bg-gray-100 rounded-lg p-1 gap-1">
           <Button
             variant={activeView === 'overview' ? 'default' : 'ghost'}
-            onClick={() => setActiveView('overview')}
+            onClick={() => {
+              console.log('Overview button clicked');
+              setActiveView('overview');
+            }}
             className={`${activeView === 'overview' 
               ? 'bg-white text-blue-600 shadow-sm' 
               : 'text-gray-600 hover:bg-gray-50'
@@ -334,7 +340,10 @@ export default function PharmacyDashboardEnhanced() {
           </Button>
           <Button
             variant={activeView === 'prescriptions' ? 'default' : 'ghost'}
-            onClick={() => setActiveView('prescriptions')}
+            onClick={() => {
+              console.log('Prescriptions button clicked');
+              setActiveView('prescriptions');
+            }}
             className={`${activeView === 'prescriptions' 
               ? 'bg-white text-blue-600 shadow-sm' 
               : 'text-gray-600 hover:bg-gray-50'
@@ -344,7 +353,10 @@ export default function PharmacyDashboardEnhanced() {
           </Button>
           <Button
             variant={activeView === 'inventory' ? 'default' : 'ghost'}
-            onClick={() => setActiveView('inventory')}
+            onClick={() => {
+              console.log('Inventory button clicked');
+              setActiveView('inventory');
+            }}
             className={`${activeView === 'inventory' 
               ? 'bg-white text-blue-600 shadow-sm' 
               : 'text-gray-600 hover:bg-gray-50'
@@ -354,7 +366,10 @@ export default function PharmacyDashboardEnhanced() {
           </Button>
           <Button
             variant={activeView === 'analytics' ? 'default' : 'ghost'}
-            onClick={() => setActiveView('analytics')}
+            onClick={() => {
+              console.log('Analytics button clicked');
+              setActiveView('analytics');
+            }}
             className={`${activeView === 'analytics' 
               ? 'bg-white text-blue-600 shadow-sm' 
               : 'text-gray-600 hover:bg-gray-50'
