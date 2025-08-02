@@ -29,6 +29,10 @@ The platform is built on a modern stack ensuring scalability, security, and main
     -   **Complete Pharmacy Workflow Management**: Features a comprehensive workflow (New → Insurance Verification → Processing → Ready → Dispensed) with real-time status updates, visual feedback, and professional receipt generation including payment breakdowns.
     -   **Professional Receipt System**: Automated receipt generation with pharmacy branding, complete payment breakdown (medication cost, insurance payment, patient payment, savings), and browser print functionality.
     -   **Interactive Prescription Processing**: Modal-based workflow with 4-step processing, status badge updates, button state management, and inactive edit functionality for dispensed prescriptions.
+    -   **Advanced Inventory Management**: Full CRUD operations for pharmacy inventory with controlled form inputs, real-time stock updates, automatic status calculations, and persistent state management across sessions.
+    -   **Complete Reorder System**: Professional reordering functionality with quantity control, dynamic cost calculation, stock level previews, automatic inventory updates, and status adjustments upon order completion.
+    -   **Enhanced Notification System**: Real-time notifications with proper state management, "Mark All Read" functionality, badge control, modal closing, and empty state display.
+    -   **Professional Reporting System**: Comprehensive report generation with multiple formats (PDF, CSV, Excel), dynamic content based on report type, and real file downloads with browser integration.
     -   **Bidirectional Medical Communications**: A unified messaging system allows secure and compliant communication between patients and doctors.
     -   **Lab Order & Results Management**: Supports creation and routing of lab orders and comprehensive management/viewing of lab results.
     -   **Patient Portal & Telemedicine**: Provides a secure patient portal with features like appointment booking, health tracking, and integrated telemedicine consultation setup.
@@ -38,7 +42,6 @@ The platform is built on a modern stack ensuring scalability, security, and main
     -   **Enterprise Features**: Includes white-label branding capabilities, tiered pricing plans, and offline synchronization.
     -   **Gamified Achievement System**: For laboratory performance tracking with automatic tracking, real-time progress updates, and leaderboards.
     -   **Unified Billing Systems**: Comprehensive billing for hospital, pharmacy, and laboratory with analytics and reporting.
-    -   **Notification System**: Real-time notifications for lab results, insurance claims, and appointments.
     -   **Multi-Doctor Patient Data Separation**: Strict data separation between doctors in the same hospital via patient access request system with approval workflow and audit logging.
 
 ## External Dependencies
