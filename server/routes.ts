@@ -928,56 +928,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced Pharmacy Dashboard report generation (dedicated endpoint)
-  app.post("/api/pharmacy/reports/enhanced", authenticateToken, requireTenant, async (req, res) => {
+  // Multi-Tenant Pharmacy Dashboard API Endpoints
+  app.get("/api/pharmacy/metrics", authenticateToken, requireTenant, async (req, res) => {
     try {
-      // Log the full request body for debugging
-      console.log('Enhanced Pharmacy Report Body:', JSON.stringify(req.body, null, 2));
+      const tenantId = req.tenant!.id;
+      const tenantName = req.tenant!.name;
       
-      const { reportType, startDate, endDate, format } = req.body;
+      // Get real tenant-specific prescription data
+      const prescriptions = await storage.getPrescriptionsByTenant(tenantId);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       
-      // Generate comprehensive report data
-      const generateEnhancedData = (type: string) => {
-        const baseData = {
-          prescriptions: Math.floor(Math.random() * 200) + 100,
-          revenue: `$${(Math.random() * 10000 + 5000).toFixed(2)}`,
-          claims: Math.floor(Math.random() * 150) + 50,
-          averageProcessingTime: `${Math.floor(Math.random() * 20) + 10} minutes`,
-          patientsServed: Math.floor(Math.random() * 500) + 200,
-          inventoryItems: Math.floor(Math.random() * 300) + 150
-        };
-
-        switch (type) {
-          case 'daily':
-            return { ...baseData, prescriptions: 89, revenue: '$3,247.50', claims: 67 };
-          case 'weekly':
-            return { ...baseData, prescriptions: 612, revenue: '$21,834.75', claims: 445 };
-          case 'monthly':
-            return { ...baseData, prescriptions: 2847, revenue: '$98,547.50', claims: 2156 };
-          case 'inventory':
-            return { ...baseData, prescriptions: 125, revenue: '$8,934.50', claims: 98 };
-          case 'prescriptions':
-            return { ...baseData, prescriptions: 247, revenue: '$12,456.75', claims: 201 };
-          case 'insurance':
-            return { ...baseData, prescriptions: 178, revenue: '$9,876.25', claims: 145 };
-          default:
-            return baseData;
-        }
+      const todayPrescriptions = prescriptions.filter(p => 
+        new Date(p.prescribedDate) >= today
+      );
+      
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - 7);
+      const weekPrescriptions = prescriptions.filter(p => 
+        new Date(p.prescribedDate) >= weekStart
+      );
+      
+      // Calculate metrics from real data
+      const metrics = {
+        prescriptionsToday: todayPrescriptions.length,
+        prescriptionsWeek: weekPrescriptions.length,
+        revenueToday: todayPrescriptions.length * 32.45, // Average prescription value
+        revenueWeek: weekPrescriptions.length * 32.45,
+        patientsToday: new Set(todayPrescriptions.map(p => p.patientId)).size,
+        averageWaitTime: 12, // Default until we track wait times
+        inventoryAlerts: 8, // Mock until inventory system is implemented
+        insuranceClaims: Math.floor(weekPrescriptions.length * 0.8), // 80% have insurance
+        tenantId,
+        tenantName
       };
       
-      const reportData = generateEnhancedData(reportType || 'daily');
+      res.json(metrics);
+    } catch (error) {
+      console.error("Get pharmacy metrics error:", error);
+      res.status(500).json({ message: "Failed to fetch pharmacy metrics" });
+    }
+  });
+
+  app.get("/api/pharmacy/prescriptions", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.tenant!.id;
+      const prescriptions = await storage.getPrescriptionsByTenant(tenantId);
       
-      console.log(`Enhanced Pharmacy Report: ${reportType} from ${startDate} to ${endDate} in ${format} format`);
+      // Transform to match frontend interface
+      const formattedPrescriptions = prescriptions.map(p => ({
+        id: p.id,
+        patientName: p.patientName || 'Patient Name',
+        medication: p.medication,
+        status: p.status || 'new',
+        waitTime: Math.floor(Math.random() * 30), // Mock until tracking implemented
+        priority: p.priority || 'normal',
+        insuranceStatus: p.insuranceStatus || 'pending',
+        tenantId
+      }));
+      
+      res.json(formattedPrescriptions);
+    } catch (error) {
+      console.error("Get pharmacy prescriptions error:", error);
+      res.status(500).json({ message: "Failed to fetch pharmacy prescriptions" });
+    }
+  });
+
+  app.get("/api/pharmacy/inventory-alerts", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.tenant!.id;
+      
+      // Mock inventory alerts until inventory system is implemented
+      const mockAlerts = [
+        { 
+          id: `${tenantId}-I001`, 
+          medication: 'Insulin Glargine', 
+          currentStock: 5, 
+          reorderLevel: 20, 
+          supplier: 'Sanofi', 
+          urgency: 'critical',
+          tenantId 
+        },
+        { 
+          id: `${tenantId}-I002`, 
+          medication: 'Albuterol Inhaler', 
+          currentStock: 12, 
+          reorderLevel: 25, 
+          supplier: 'GSK', 
+          urgency: 'high',
+          tenantId 
+        },
+        { 
+          id: `${tenantId}-I003`, 
+          medication: 'Amoxicillin 500mg', 
+          currentStock: 45, 
+          reorderLevel: 100, 
+          supplier: 'Teva', 
+          urgency: 'medium',
+          tenantId 
+        }
+      ];
+      
+      res.json(mockAlerts);
+    } catch (error) {
+      console.error("Get inventory alerts error:", error);
+      res.status(500).json({ message: "Failed to fetch inventory alerts" });
+    }
+  });
+
+  app.post("/api/pharmacy/reports/enhanced", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.tenant!.id;
+      const tenantName = req.tenant!.name;
+      const { reportType, startDate, endDate, format } = req.body;
+      
+      // Get real tenant data for reports
+      const prescriptions = await storage.getPrescriptionsByTenant(tenantId);
+      
+      const generateTenantData = (type: string) => {
+        const baseData = {
+          prescriptions: prescriptions.length,
+          revenue: `$${(prescriptions.length * 32.45).toFixed(2)}`,
+          claims: Math.floor(prescriptions.length * 0.8),
+          averageProcessingTime: `12 minutes`,
+          patientsServed: new Set(prescriptions.map(p => p.patientId)).size,
+          inventoryItems: 250,
+          tenantId,
+          tenantName
+        };
+
+        return baseData;
+      };
+      
+      const reportData = generateTenantData(reportType || 'daily');
       
       const response = {
         success: true,
-        message: "Enhanced pharmacy report generated successfully",
+        message: "Tenant-specific pharmacy report generated successfully",
         reportType: reportType || 'daily',
         startDate: startDate || new Date().toISOString().split('T')[0],
         endDate: endDate || new Date().toISOString().split('T')[0],
         format: format || 'pdf',
         generatedAt: new Date().toISOString(),
         data: reportData,
-        enhanced: true
+        multiTenant: true,
+        tenantId,
+        tenantName
       };
       
       res.json(response);
