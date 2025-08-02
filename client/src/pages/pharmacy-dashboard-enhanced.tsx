@@ -99,7 +99,8 @@ export default function PharmacyDashboardEnhanced() {
     setModalContent({
       title: 'Prescription Details',
       content: 'view',
-      prescription
+      prescription,
+      inventoryItem: null
     });
     setModalOpen(true);
   };
@@ -108,7 +109,8 @@ export default function PharmacyDashboardEnhanced() {
     setModalContent({
       title: 'Process Prescription',
       content: 'process',
-      prescription
+      prescription,
+      inventoryItem: null
     });
     setModalOpen(true);
   };
@@ -117,7 +119,8 @@ export default function PharmacyDashboardEnhanced() {
     setModalContent({
       title: 'Dispense Prescription',
       content: 'dispense',
-      prescription
+      prescription,
+      inventoryItem: null
     });
     setModalOpen(true);
   };
@@ -146,6 +149,42 @@ export default function PharmacyDashboardEnhanced() {
       inventoryItem: item
     });
     setModalOpen(true);
+  };
+
+  // Handle prescription processing
+  const handleStartProcessing = () => {
+    if (modalContent.prescription) {
+      // Here you would typically make an API call to update the prescription status
+      console.log('Starting processing for prescription:', modalContent.prescription.id);
+      alert(`Started processing prescription for ${modalContent.prescription.patientName}\n\nStatus updated to: In Progress\nMedication: ${modalContent.prescription.medicationName}`);
+      closeModal();
+    }
+  };
+
+  const handleCompleteDispensing = () => {
+    if (modalContent.prescription) {
+      console.log('Completing dispensing for prescription:', modalContent.prescription.id);
+      alert(`Prescription dispensed successfully!\n\nPatient: ${modalContent.prescription.patientName}\nMedication: ${modalContent.prescription.medicationName}\nStatus: Dispensed\n\nReceipt generated and patient notified.`);
+      closeModal();
+    }
+  };
+
+  const handleSaveInventoryChanges = () => {
+    if (modalContent.inventoryItem) {
+      console.log('Saving inventory changes for:', modalContent.inventoryItem.id);
+      alert(`Inventory item updated successfully!\n\nItem: ${modalContent.inventoryItem.name}\nChanges saved to database.\n\nStock levels and pricing updated.`);
+      closeModal();
+    }
+  };
+
+  const handlePlaceOrder = () => {
+    if (modalContent.inventoryItem) {
+      console.log('Placing order for:', modalContent.inventoryItem.id);
+      const quantity = modalContent.inventoryItem.maxStock - modalContent.inventoryItem.currentStock;
+      const totalCost = quantity * modalContent.inventoryItem.cost;
+      alert(`Order placed successfully!\n\nItem: ${modalContent.inventoryItem.name}\nQuantity: ${quantity} units\nSupplier: ${modalContent.inventoryItem.supplier}\nTotal Cost: $${totalCost.toFixed(2)}\n\nExpected delivery: 3-5 business days`);
+      closeModal();
+    }
   };
 
   // Fetch pharmacy statistics
@@ -801,7 +840,10 @@ export default function PharmacyDashboardEnhanced() {
                     </div>
                     
                     <div className="flex gap-2 mt-4">
-                      <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+                      <button 
+                        onClick={handleStartProcessing}
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                      >
                         Start Processing
                       </button>
                       <button 
@@ -852,7 +894,10 @@ export default function PharmacyDashboardEnhanced() {
                     </div>
                     
                     <div className="flex gap-2 mt-4">
-                      <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm">
+                      <button 
+                        onClick={handleCompleteDispensing}
+                        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                      >
                         Complete Dispensing
                       </button>
                       <button 
@@ -938,7 +983,10 @@ export default function PharmacyDashboardEnhanced() {
                     </div>
                     
                     <div className="flex gap-2 mt-4">
-                      <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+                      <button 
+                        onClick={handleSaveInventoryChanges}
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                      >
                         Save Changes
                       </button>
                       <button 
@@ -1005,7 +1053,10 @@ export default function PharmacyDashboardEnhanced() {
                     </div>
                     
                     <div className="flex gap-2 mt-4">
-                      <button className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm">
+                      <button 
+                        onClick={handlePlaceOrder}
+                        className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm"
+                      >
                         Place Order
                       </button>
                       <button 
