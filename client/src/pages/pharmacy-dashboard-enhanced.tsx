@@ -23,7 +23,8 @@ import {
   Activity,
   Calendar,
   Star,
-  Truck
+  Truck,
+  X
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useTenant } from '@/hooks/use-tenant';
@@ -75,6 +76,10 @@ export default function PharmacyDashboardEnhanced() {
   console.log('Current activeView state:', activeView);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState({ title: '', content: '', prescription: null as Prescription | null });
 
   // Debug tab changes
   const handleTabChange = (value: string) => {
@@ -87,6 +92,39 @@ export default function PharmacyDashboardEnhanced() {
     event.preventDefault();
     console.log('Manual tab click:', tabValue);
     setActiveView(tabValue);
+  };
+
+  // Modal functions
+  const openViewModal = (prescription: Prescription) => {
+    setModalContent({
+      title: 'Prescription Details',
+      content: 'view',
+      prescription
+    });
+    setModalOpen(true);
+  };
+
+  const openProcessModal = (prescription: Prescription) => {
+    setModalContent({
+      title: 'Process Prescription',
+      content: 'process',
+      prescription
+    });
+    setModalOpen(true);
+  };
+
+  const openDispenseModal = (prescription: Prescription) => {
+    setModalContent({
+      title: 'Dispense Prescription',
+      content: 'dispense',
+      prescription
+    });
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setModalContent({ title: '', content: '', prescription: null });
   };
 
   // Fetch pharmacy statistics
@@ -515,32 +553,14 @@ export default function PharmacyDashboardEnhanced() {
                       <div className="flex gap-2">
                         <span
                           className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 cursor-pointer select-none"
-                          onPointerDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          onPointerUp={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('View prescription clicked for:', prescription.id);
-                            alert(`Viewing prescription details for ${prescription.patientName}\n\nMedication: ${prescription.medicationName}\nPrescribed by: ${prescription.prescribedBy}\nStatus: ${prescription.status}\nInsurance: ${prescription.insuranceStatus}`);
-                          }}
+                          onClick={() => openViewModal(prescription)}
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           View
                         </span>
                         <span
                           className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 cursor-pointer select-none"
-                          onPointerDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          onPointerUp={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('Process prescription clicked for:', prescription.id);
-                            alert(`Processing prescription for ${prescription.patientName}\n\nNext steps:\n• Verify insurance coverage\n• Check drug interactions\n• Prepare medication\n• Update status to Ready`);
-                          }}
+                          onClick={() => openProcessModal(prescription)}
                         >
                           <Edit className="w-4 h-4 mr-1" />
                           Process
@@ -548,16 +568,7 @@ export default function PharmacyDashboardEnhanced() {
                         {prescription.status === 'ready' && (
                           <span
                             className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer select-none"
-                            onPointerDown={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                            }}
-                            onPointerUp={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              console.log('Dispense prescription clicked for:', prescription.id);
-                              alert(`Dispensing prescription for ${prescription.patientName}\n\nMedication: ${prescription.medicationName}\n• Print labels\n• Package medication\n• Update status to Dispensed\n• Generate receipt`);
-                            }}
+                            onClick={() => openDispenseModal(prescription)}
                           >
                             <Truck className="w-4 h-4 mr-1" />
                             Dispense
@@ -721,6 +732,140 @@ export default function PharmacyDashboardEnhanced() {
           </div>
         )}
       </div>
+      
+      {/* Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">{modalContent.title}</h2>
+              <button
+                onClick={closeModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              {modalContent.content === 'view' && modalContent.prescription && (
+                <div>
+                  <h3 className="font-semibold mb-3">Prescription Details</h3>
+                  <div className="space-y-2 text-sm">
+                    <div><strong>Patient:</strong> {modalContent.prescription.patientName}</div>
+                    <div><strong>Medication:</strong> {modalContent.prescription.medicationName}</div>
+                    <div><strong>Prescribed By:</strong> {modalContent.prescription.prescribedBy}</div>
+                    <div><strong>Status:</strong> {modalContent.prescription.status}</div>
+                    <div><strong>Priority:</strong> {modalContent.prescription.priority}</div>
+                    <div><strong>Insurance:</strong> {modalContent.prescription.insuranceStatus}</div>
+                    <div><strong>Created:</strong> {new Date(modalContent.prescription.createdAt).toLocaleDateString()}</div>
+                    {modalContent.prescription.pickupDate && (
+                      <div><strong>Pickup Date:</strong> {new Date(modalContent.prescription.pickupDate).toLocaleDateString()}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {modalContent.content === 'process' && modalContent.prescription && (
+                <div>
+                  <h3 className="font-semibold mb-3">Process Prescription</h3>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-blue-50 rounded">
+                      <h4 className="font-medium">Patient: {modalContent.prescription.patientName}</h4>
+                      <p className="text-sm text-gray-600">{modalContent.prescription.medicationName}</p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Processing Steps:</h4>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span>Verify insurance coverage</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          <span>Check drug interactions</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                          <span>Prepare medication</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                          <span>Update status to Ready</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 mt-4">
+                      <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+                        Start Processing
+                      </button>
+                      <button 
+                        onClick={closeModal}
+                        className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {modalContent.content === 'dispense' && modalContent.prescription && (
+                <div>
+                  <h3 className="font-semibold mb-3">Dispense Prescription</h3>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-green-50 rounded">
+                      <h4 className="font-medium">Patient: {modalContent.prescription.patientName}</h4>
+                      <p className="text-sm text-gray-600">{modalContent.prescription.medicationName}</p>
+                      <p className="text-xs text-green-600 mt-1">Ready for dispensing</p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Dispensing Checklist:</h4>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Print medication labels</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Package medication securely</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Verify patient identity</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Provide counseling</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Generate receipt</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 mt-4">
+                      <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm">
+                        Complete Dispensing
+                      </button>
+                      <button 
+                        onClick={closeModal}
+                        className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
