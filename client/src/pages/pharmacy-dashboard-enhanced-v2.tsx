@@ -11,6 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useQuery } from '@tanstack/react-query';
 
 interface PharmacyMetrics {
@@ -47,6 +50,12 @@ export default function PharmacyDashboardEnhancedV2() {
   const [selectedTimeframe, setSelectedTimeframe] = useState<'today' | 'week' | 'month'>('today');
   const [onlineStatus, setOnlineStatus] = useState(true);
   const [notifications, setNotifications] = useState<number>(12);
+  const [smsModalOpen, setSmsModalOpen] = useState(false);
+  const [reminderModalOpen, setReminderModalOpen] = useState(false);
+  const [smsPhone, setSmsPhone] = useState('');
+  const [reminderMedication, setReminderMedication] = useState('');
+  const [reminderTime, setReminderTime] = useState('');
+  const [reminderFrequency, setReminderFrequency] = useState('');
   
   // Mock data - replace with real API calls
   const metrics: PharmacyMetrics = {
@@ -396,38 +405,130 @@ Report generated on: ${new Date().toLocaleString()}
                   <span>Generate QR Pickup Code</span>
                 </button>
                 
-                <button 
-                  className="flex items-center gap-2 text-sm w-full p-2 rounded hover:bg-indigo-100 transition-colors"
-                  onClick={() => {
-                    // SMS Notification demo
-                    const patientPhone = prompt('Enter patient phone number for SMS notification:');
-                    if (patientPhone) {
-                      alert(`SMS Notification sent to ${patientPhone}:\n\n"Your prescription is ready for pickup at NaviMED Pharmacy. QR code: PICKUP_${Date.now()}. Business hours: 9AM-9PM."`);
-                      console.log('SMS sent to:', patientPhone);
-                    }
-                  }}
-                >
-                  <MessageSquare className="w-4 h-4 text-indigo-600" />
-                  <span>Send SMS Notification</span>
-                </button>
+                <Dialog open={smsModalOpen} onOpenChange={setSmsModalOpen}>
+                  <DialogTrigger asChild>
+                    <button className="flex items-center gap-2 text-sm w-full p-2 rounded hover:bg-indigo-100 transition-colors">
+                      <MessageSquare className="w-4 h-4 text-indigo-600" />
+                      <span>Send SMS Notification</span>
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <MessageSquare className="w-5 h-5 text-indigo-600" />
+                        Send SMS Notification
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Patient Phone Number</Label>
+                        <Input
+                          id="phone"
+                          type="tel"
+                          placeholder="+1 (555) 123-4567"
+                          value={smsPhone}
+                          onChange={(e) => setSmsPhone(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Message Preview</Label>
+                        <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                          "Your prescription is ready for pickup at NaviMED Pharmacy. QR code: PICKUP_{Date.now()}. Business hours: 9AM-9PM."
+                        </div>
+                      </div>
+                      <div className="flex gap-3 pt-4">
+                        <Button
+                          onClick={() => {
+                            if (smsPhone) {
+                              alert(`SMS Notification sent to ${smsPhone} successfully!`);
+                              setSmsPhone('');
+                              setSmsModalOpen(false);
+                            }
+                          }}
+                          className="flex-1"
+                          disabled={!smsPhone}
+                        >
+                          Send SMS
+                        </Button>
+                        <Button variant="outline" onClick={() => setSmsModalOpen(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
                 
-                <button 
-                  className="flex items-center gap-2 text-sm w-full p-2 rounded hover:bg-indigo-100 transition-colors"
-                  onClick={() => {
-                    // Medication Reminder setup
-                    const medicationName = prompt('Enter medication name for reminder:');
-                    if (medicationName) {
-                      const reminderTime = prompt('Set reminder time (e.g., 8:00 AM, 2:00 PM):');
-                      if (reminderTime) {
-                        alert(`Medication reminder set for ${medicationName} at ${reminderTime}.\n\nReminder will be sent daily via SMS and app notification.`);
-                        console.log('Reminder set:', medicationName, 'at', reminderTime);
-                      }
-                    }
-                  }}
-                >
-                  <Calendar className="w-4 h-4 text-indigo-600" />
-                  <span>Set Medication Reminder</span>
-                </button>
+                <Dialog open={reminderModalOpen} onOpenChange={setReminderModalOpen}>
+                  <DialogTrigger asChild>
+                    <button className="flex items-center gap-2 text-sm w-full p-2 rounded hover:bg-indigo-100 transition-colors">
+                      <Calendar className="w-4 h-4 text-indigo-600" />
+                      <span>Set Medication Reminder</span>
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Calendar className="w-5 h-5 text-indigo-600" />
+                        Set Medication Reminder
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="medication">Medication Name</Label>
+                        <Input
+                          id="medication"
+                          placeholder="e.g., Lisinopril, Metformin"
+                          value={reminderMedication}
+                          onChange={(e) => setReminderMedication(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="time">Reminder Time</Label>
+                        <Input
+                          id="time"
+                          type="time"
+                          value={reminderTime}
+                          onChange={(e) => setReminderTime(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="frequency">Frequency</Label>
+                        <Select value={reminderFrequency} onValueChange={setReminderFrequency}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select frequency" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="daily">Daily</SelectItem>
+                            <SelectItem value="twice-daily">Twice Daily</SelectItem>
+                            <SelectItem value="three-times">Three Times Daily</SelectItem>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="as-needed">As Needed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex gap-3 pt-4">
+                        <Button
+                          onClick={() => {
+                            if (reminderMedication && reminderTime && reminderFrequency) {
+                              alert(`Medication reminder set successfully!\n\nMedication: ${reminderMedication}\nTime: ${reminderTime}\nFrequency: ${reminderFrequency}\n\nReminders will be sent via SMS and app notification.`);
+                              setReminderMedication('');
+                              setReminderTime('');
+                              setReminderFrequency('');
+                              setReminderModalOpen(false);
+                            }
+                          }}
+                          className="flex-1"
+                          disabled={!reminderMedication || !reminderTime || !reminderFrequency}
+                        >
+                          Set Reminder
+                        </Button>
+                        <Button variant="outline" onClick={() => setReminderModalOpen(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
                 
                 <Button 
                   size="sm" 
