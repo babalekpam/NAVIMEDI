@@ -410,215 +410,153 @@ Report generated on: ${new Date().toLocaleString()}
                   <p className="text-xs text-gray-600">Save $2,340 this month</p>
                 </div>
                 
-                {/* Large, obvious working report button */}
-                <div className="mt-4 space-y-2">
-                  <button
-                    className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-bold text-base rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                {/* Download format selection buttons */}
+                <div className="mt-4 space-y-3">
+                  <div className="bg-white p-4 rounded-lg border border-purple-200">
+                    <h4 className="text-sm font-medium text-purple-800 mb-3 text-center">Download AI Insights Report</h4>
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      <button 
+                        className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-2 rounded text-sm transition-all transform hover:scale-105"
+                        onClick={() => {
+                          try {
+                            console.log('📄 Generating PDF report...');
+                            alert('Generating PDF report...');
+                            
+                            // Generate simple PDF content (basic PDF structure)
+                            const pdfContent = `%PDF-1.4
+1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj
+2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj
+3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]/Contents 4 0 R>>endobj
+4 0 obj<</Length 800>>stream
+BT /F1 12 Tf 50 750 Td (AI INSIGHTS REPORT - NaviMED) Tj
+0 -20 Td (Generated: ${new Date().toLocaleString()}) Tj
+0 -20 Td (Pharmacy: Working Test Pharmacy) Tj
+0 -40 Td (DRUG INTERACTION ALERTS) Tj
+0 -20 Td (Total Interactions: 3, High Priority: 1, Medium: 2) Tj
+0 -30 Td (ADHERENCE PREDICTION) Tj
+0 -20 Td (Compliance Rate: 89%, Patients at Risk: 12) Tj
+0 -30 Td (INVENTORY OPTIMIZATION) Tj
+0 -20 Td (Monthly Savings: $2,340, Overstocked: 8, Understocked: 5) Tj
+0 -30 Td (AI RECOMMENDATIONS) Tj
+0 -20 Td (1. Implement automated drug interaction screening) Tj
+0 -15 Td (2. Set up patient adherence reminders) Tj
+0 -15 Td (3. Optimize inventory based on seasonal trends) Tj
+0 -15 Td (4. Consider therapeutic substitutions for cost savings) Tj
+ET endstream endobj
+xref 0 5
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000206 00000 n 
+trailer<</Size 5/Root 1 0 R>>startxref 1059 %%EOF`;
+
+                            const blob = new Blob([pdfContent], { type: 'application/pdf' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `ai-insights-report-${Date.now()}.pdf`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            
+                            console.log('✅ PDF report downloaded!');
+                            alert('PDF report downloaded successfully!');
+                          } catch (error) {
+                            console.error('❌ PDF generation error:', error);
+                            alert('Error generating PDF: ' + error);
+                          }
+                        }}
+                      >
+                        📄 PDF
+                      </button>
                       
-                      console.log('🔥 AI INSIGHTS REPORT BUTTON CLICKED!');
-                      alert('Generating AI Insights Report...');
+                      <button 
+                        className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-2 rounded text-sm transition-all transform hover:scale-105"
+                        onClick={() => {
+                          try {
+                            console.log('📊 Generating Excel report...');
+                            alert('Generating Excel report...');
+                            
+                            // Generate Excel-compatible CSV content
+                            const excelContent = `AI Insights Report - NaviMED\n\nGenerated,${new Date().toLocaleString()}\nPharmacy,Working Test Pharmacy\n\nSection,Metric,Value\nDrug Interactions,Total Detected,3\nDrug Interactions,High Priority,1\nDrug Interactions,Medium Priority,2\nAdherence,Compliance Rate,89%\nAdherence,Patients at Risk,12\nAdherence,Improvement Opportunities,23\nInventory,Monthly Savings,$2340\nInventory,Overstocked Items,8\nInventory,Understocked Items,5\nInventory,Reorder Points Calculated,156\n\nDrug Interaction Details\nWarfarin + Aspirin,Increased bleeding risk\nMetformin + Alcohol,Enhanced hypoglycemic effect\nLisinopril + Potassium,Hyperkalemia risk\n\nNon-Adherent Medications\nInsulin,72% compliance\nBlood Pressure Medications,81% compliance\nCholesterol Medications,85% compliance\n\nCost Reduction Opportunities\nGeneric Substitutions,$1200/month\nBulk Purchase Discounts,$890/month\nWaste Reduction,$250/month\n\nAI Recommendations\n1,Implement automated drug interaction screening\n2,Set up patient adherence reminders\n3,Optimize inventory based on seasonal trends\n4,Consider therapeutic substitutions for cost savings`;
+
+                            const blob = new Blob([excelContent], { type: 'application/vnd.ms-excel' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `ai-insights-report-${Date.now()}.xls`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            
+                            console.log('✅ Excel report downloaded!');
+                            alert('Excel report downloaded successfully!');
+                          } catch (error) {
+                            console.error('❌ Excel generation error:', error);
+                            alert('Error generating Excel: ' + error);
+                          }
+                        }}
+                      >
+                        📊 Excel
+                      </button>
                       
-                      try {
-                        // Generate AI Insights Report directly
-                        const reportContent = `AI INSIGHTS REPORT
-Generated: ${new Date().toLocaleString()}
-Pharmacy: Working Test Pharmacy
+                      <button 
+                        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-2 rounded text-sm transition-all transform hover:scale-105"
+                        onClick={() => {
+                          try {
+                            console.log('📋 Generating CSV report...');
+                            alert('Generating CSV report...');
+                            
+                            const csvContent = `"Section","Metric","Value"
+"Report Info","Title","AI Insights Report - NaviMED"
+"Report Info","Generated","${new Date().toLocaleString()}"
+"Report Info","Pharmacy","Working Test Pharmacy"
+"Drug Interactions","Total Detected","3"
+"Drug Interactions","High Priority","1"
+"Drug Interactions","Medium Priority","2"
+"Adherence","Compliance Rate","89%"
+"Adherence","Patients at Risk","12"
+"Adherence","Improvement Opportunities","23"
+"Inventory","Monthly Savings","$2,340"
+"Inventory","Overstocked Items","8"
+"Inventory","Understocked Items","5"
+"Inventory","Reorder Points Calculated","156"
+"Interaction Details","Warfarin + Aspirin","Increased bleeding risk"
+"Interaction Details","Metformin + Alcohol","Enhanced hypoglycemic effect"
+"Interaction Details","Lisinopril + Potassium","Hyperkalemia risk"
+"Non-Adherent Medications","Insulin","72% compliance"
+"Non-Adherent Medications","Blood Pressure Medications","81% compliance"
+"Non-Adherent Medications","Cholesterol Medications","85% compliance"
+"Cost Reduction","Generic Substitutions","$1,200/month"
+"Cost Reduction","Bulk Purchase Discounts","$890/month"
+"Cost Reduction","Waste Reduction","$250/month"
+"AI Recommendations","1","Implement automated drug interaction screening"
+"AI Recommendations","2","Set up patient adherence reminders"
+"AI Recommendations","3","Optimize inventory based on seasonal trends"
+"AI Recommendations","4","Consider therapeutic substitutions for cost savings"`;
 
-=== DRUG INTERACTION ALERTS ===
-Total Interactions Detected: 3
-High Priority: 1
-Medium Priority: 2
-
-Interaction Details:
-1. Warfarin + Aspirin - Increased bleeding risk
-2. Metformin + Alcohol - Enhanced hypoglycemic effect  
-3. Lisinopril + Potassium - Hyperkalemia risk
-
-=== ADHERENCE PREDICTION ===
-Overall Compliance Rate: 89%
-Patients at Risk: 12
-Improvement Opportunities: 23
-
-Top Non-Adherent Medications:
-- Insulin (72% compliance)
-- Blood Pressure Medications (81% compliance)
-- Cholesterol Medications (85% compliance)
-
-=== INVENTORY OPTIMIZATION ===
-Potential Monthly Savings: $2,340
-Overstocked Items: 8
-Understocked Items: 5
-Optimal Reorder Points Calculated: 156
-
-Cost Reduction Opportunities:
-- Generic Substitutions: $1,200/month
-- Bulk Purchase Discounts: $890/month
-- Waste Reduction: $250/month
-
-=== AI RECOMMENDATIONS ===
-1. Implement automated drug interaction screening
-2. Set up patient adherence reminders
-3. Optimize inventory based on seasonal trends
-4. Consider therapeutic substitutions for cost savings
-
-Report generated by NaviMED AI Analytics Engine
-`;
-
-                        console.log('📄 Creating report popup...');
-                        
-                        // Create popup window with report content
-                        const popup = window.open('', 'aiInsightsReport', 'width=800,height=600,scrollbars=yes,resizable=yes');
-                        
-                        if (popup) {
-                          popup.document.write(`
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                              <title>AI Insights Report - NaviMED</title>
-                              <style>
-                                body { 
-                                  font-family: Arial, sans-serif; 
-                                  margin: 20px; 
-                                  background-color: #f9fafb;
-                                }
-                                .header {
-                                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                  color: white;
-                                  padding: 20px;
-                                  border-radius: 8px;
-                                  margin-bottom: 20px;
-                                }
-                                .section {
-                                  background: white;
-                                  padding: 15px;
-                                  margin: 10px 0;
-                                  border-radius: 6px;
-                                  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                                }
-                                .section h3 {
-                                  color: #4338ca;
-                                  border-bottom: 2px solid #e5e7eb;
-                                  padding-bottom: 5px;
-                                }
-                                .metric { margin: 8px 0; }
-                                .metric strong { color: #1f2937; }
-                                .buttons {
-                                  position: fixed;
-                                  top: 10px;
-                                  right: 10px;
-                                  z-index: 1000;
-                                }
-                                button {
-                                  background: #10b981;
-                                  color: white;
-                                  border: none;
-                                  padding: 10px 15px;
-                                  margin: 5px;
-                                  border-radius: 5px;
-                                  cursor: pointer;
-                                  font-weight: bold;
-                                }
-                                button:hover { background: #059669; }
-                                .print-btn { background: #3b82f6; }
-                                .print-btn:hover { background: #2563eb; }
-                              </style>
-                            </head>
-                            <body>
-                              <div class="buttons">
-                                <button onclick="window.print()" class="print-btn">🖨️ Print Report</button>
-                                <button onclick="window.close()">❌ Close</button>
-                              </div>
-                              
-                              <div class="header">
-                                <h1>🤖 AI Insights Report</h1>
-                                <p>Generated: ${new Date().toLocaleString()}</p>
-                                <p>Pharmacy: Working Test Pharmacy</p>
-                              </div>
-
-                              <div class="section">
-                                <h3>🚨 Drug Interaction Alerts</h3>
-                                <div class="metric"><strong>Total Interactions Detected:</strong> 3</div>
-                                <div class="metric"><strong>High Priority:</strong> 1</div>
-                                <div class="metric"><strong>Medium Priority:</strong> 2</div>
-                                <br>
-                                <strong>Interaction Details:</strong>
-                                <ul>
-                                  <li>Warfarin + Aspirin - Increased bleeding risk</li>
-                                  <li>Metformin + Alcohol - Enhanced hypoglycemic effect</li>
-                                  <li>Lisinopril + Potassium - Hyperkalemia risk</li>
-                                </ul>
-                              </div>
-
-                              <div class="section">
-                                <h3>📊 Adherence Prediction</h3>
-                                <div class="metric"><strong>Overall Compliance Rate:</strong> 89%</div>
-                                <div class="metric"><strong>Patients at Risk:</strong> 12</div>
-                                <div class="metric"><strong>Improvement Opportunities:</strong> 23</div>
-                                <br>
-                                <strong>Top Non-Adherent Medications:</strong>
-                                <ul>
-                                  <li>Insulin (72% compliance)</li>
-                                  <li>Blood Pressure Medications (81% compliance)</li>
-                                  <li>Cholesterol Medications (85% compliance)</li>
-                                </ul>
-                              </div>
-
-                              <div class="section">
-                                <h3>📦 Inventory Optimization</h3>
-                                <div class="metric"><strong>Potential Monthly Savings:</strong> $2,340</div>
-                                <div class="metric"><strong>Overstocked Items:</strong> 8</div>
-                                <div class="metric"><strong>Understocked Items:</strong> 5</div>
-                                <div class="metric"><strong>Optimal Reorder Points Calculated:</strong> 156</div>
-                                <br>
-                                <strong>Cost Reduction Opportunities:</strong>
-                                <ul>
-                                  <li>Generic Substitutions: $1,200/month</li>
-                                  <li>Bulk Purchase Discounts: $890/month</li>
-                                  <li>Waste Reduction: $250/month</li>
-                                </ul>
-                              </div>
-
-                              <div class="section">
-                                <h3>💡 AI Recommendations</h3>
-                                <ol>
-                                  <li>Implement automated drug interaction screening</li>
-                                  <li>Set up patient adherence reminders</li>
-                                  <li>Optimize inventory based on seasonal trends</li>
-                                  <li>Consider therapeutic substitutions for cost savings</li>
-                                </ol>
-                              </div>
-
-                              <div class="section" style="text-align: center; font-style: italic; color: #6b7280;">
-                                Report generated by NaviMED AI Analytics Engine
-                              </div>
-
-                              <script>
-                                // No download functionality - popup only
-                                window.focus(); // Focus the popup window
-                              </script>
-                            </body>
-                            </html>
-                          `);
-                          popup.document.close();
-                          console.log('✅ AI Insights report popup opened successfully!');
-                          alert('AI Insights report opened in new window!');
-                        } else {
-                          alert('Please allow popups for this site to view the report.');
-                        }
-                      } catch (error) {
-                        console.error('❌ AI Insights report error:', error);
-                        alert('Error generating report: ' + error);
-                      }
-                    }}
-                  >
-                    🚀 VIEW AI INSIGHTS REPORT - POPUP!
-                  </button>
-                  <p className="text-xs text-center text-purple-600 font-medium">
-                    ✅ Opens professional report in popup window!
-                  </p>
+                            const blob = new Blob([csvContent], { type: 'text/csv' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `ai-insights-report-${Date.now()}.csv`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            
+                            console.log('✅ CSV report downloaded!');
+                            alert('CSV report downloaded successfully!');
+                          } catch (error) {
+                            console.error('❌ CSV generation error:', error);
+                            alert('Error generating CSV: ' + error);
+                          }
+                        }}
+                      >
+                        📋 CSV
+                      </button>
+                    </div>
+                    <p className="text-xs text-center text-purple-600 font-medium">
+                      ✅ Choose format to download AI Insights report
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>
