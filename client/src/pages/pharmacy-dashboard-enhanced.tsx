@@ -513,49 +513,55 @@ export default function PharmacyDashboardEnhanced() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <button
-                          type="button"
-                          className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        <div
+                          className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 cursor-pointer select-none"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             console.log('View prescription clicked for:', prescription.id);
                             alert(`Viewing prescription details for ${prescription.patientName}\n\nMedication: ${prescription.medicationName}\nPrescribed by: ${prescription.prescribedBy}\nStatus: ${prescription.status}\nInsurance: ${prescription.insuranceStatus}`);
-                            return false;
                           }}
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           View
-                        </button>
-                        <button
-                          type="button"
-                          className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        </div>
+                        <div
+                          className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 cursor-pointer select-none"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             console.log('Process prescription clicked for:', prescription.id);
                             alert(`Processing prescription for ${prescription.patientName}\n\nNext steps:\n• Verify insurance coverage\n• Check drug interactions\n• Prepare medication\n• Update status to Ready`);
-                            return false;
                           }}
                         >
                           <Edit className="w-4 h-4 mr-1" />
                           Process
-                        </button>
+                        </div>
                         {prescription.status === 'ready' && (
-                          <button
-                            type="button"
-                            className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          <div
+                            className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer select-none"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               console.log('Dispense prescription clicked for:', prescription.id);
                               alert(`Dispensing prescription for ${prescription.patientName}\n\nMedication: ${prescription.medicationName}\n• Print labels\n• Package medication\n• Update status to Dispensed\n• Generate receipt`);
-                              return false;
                             }}
                           >
                             <Truck className="w-4 h-4 mr-1" />
                             Dispense
-                          </button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -610,34 +616,38 @@ export default function PharmacyDashboardEnhanced() {
                     </div>
                     
                     <div className="flex justify-end gap-2 mt-3">
-                      <button
-                        type="button"
-                        className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      <div
+                        className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 cursor-pointer select-none"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           console.log('Edit inventory item clicked for:', item.id);
                           alert(`Editing inventory item: ${item.name}\n\nCurrent Details:\n• Stock: ${item.currentStock} units\n• Min/Max: ${item.minStock}/${item.maxStock}\n• Cost: $${item.cost.toFixed(2)}\n• Price: $${item.price.toFixed(2)}\n• Expiry: ${new Date(item.expiryDate).toLocaleDateString()}`);
-                          return false;
                         }}
                       >
                         <Edit className="w-4 h-4 mr-1" />
                         Edit
-                      </button>
-                      <button
-                        type="button"
-                        className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      </div>
+                      <div
+                        className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 cursor-pointer select-none"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           console.log('Reorder item clicked for:', item.id);
                           alert(`Reordering: ${item.name}\n\nReorder Details:\n• Current Stock: ${item.currentStock} units\n• Minimum Level: ${item.minStock} units\n• Suggested Quantity: ${item.maxStock - item.currentStock} units\n• Supplier: ${item.supplier}\n• Cost per Unit: $${item.cost.toFixed(2)}`);
-                          return false;
                         }}
                       >
                         <ShoppingCart className="w-4 h-4 mr-1" />
                         Reorder
-                      </button>
+                      </div>
                     </div>
                   </div>
                 ))}
