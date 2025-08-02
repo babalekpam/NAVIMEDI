@@ -405,35 +405,7 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
-        <Route path="/pharmacy-dashboard-simple">
-          <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto">
-                  <PharmacyDashboardSimple />
-                </main>
-              </div>
-            </div>
-          </ProtectedRoute>
-        </Route>
-        <Route path="/pharmacy-test">
-          <PharmacyDashboardSimple />
-        </Route>
-        {/* <Route path="/pharmacy-dashboard-enhanced">
-          <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <PharmacyDashboardEnhanced />
-                </main>
-              </div>
-            </div>
-          </ProtectedRoute>
-        </Route> */}
+        
         <Route path="/pharmacy-inventory">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">

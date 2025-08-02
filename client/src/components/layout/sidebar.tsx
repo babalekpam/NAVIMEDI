@@ -62,10 +62,11 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "lab-results", label: t("lab-results"), icon: FileText, path: "/lab-results", roles: ["physician", "nurse", "lab_technician", "tenant_admin", "director"] },
   { id: "post-lab-results", label: "Post Lab Results", icon: Plus, path: "/post-lab-results", roles: ["lab_technician", "tenant_admin", "director"] },
   { id: "achievements", label: "Laboratory Achievements", icon: Trophy, path: "/achievements", roles: ["lab_technician", "tenant_admin", "director"] },
-  { id: "pharmacy-dashboard", label: t("pharmacy-dashboard"), icon: Building2, path: "/pharmacy-dashboard", roles: ["pharmacist", "tenant_admin", "director"] },
+  
+  // Pharmacy Section - Enhanced Dashboard with all features integrated
+  { id: "pharmacy-dashboard", label: "Pharmacy Dashboard", icon: Building2, path: "/pharmacy-dashboard", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "pharmacy-inventory", label: "Inventory Management", icon: Package, path: "/pharmacy-inventory", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "pharmacy-prescriptions", label: "Prescription Manager", icon: Pill, path: "/pharmacy-prescriptions", roles: ["pharmacist", "tenant_admin", "director"] },
-  { id: "pharmacy-pos", label: "Point of Sale", icon: ShoppingCart, path: "/pharmacy-pos", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "pharmacy-patient-management", label: "Pharmacy Patient Management", icon: Users, path: "/pharmacy-patient-management", roles: ["pharmacist", "billing_staff", "tenant_admin", "director"] },
 
   { id: "health-recommendations", label: t("health-recommendations"), icon: Brain, path: "/health-recommendations", roles: ["physician", "nurse", "tenant_admin", "director"] },
