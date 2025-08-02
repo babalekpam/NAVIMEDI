@@ -1933,40 +1933,8 @@ export default function PharmacyDashboardEnhanced() {
                         // Use controlled form data
                         const { reportType, startDate, endDate, format } = reportFormData;
                         
-                        // Call backend API to log the report generation
-                        try {
-                          const requestData = {
-                            reportType,
-                            startDate,
-                            endDate,
-                            format,
-                            source: 'enhanced-pharmacy-dashboard',
-                            timestamp: Date.now()
-                          };
-                          
-                          console.log('ENHANCED PHARMACY: Current reportFormData:', reportFormData);
-                          console.log('ENHANCED PHARMACY: Sending to backend:', requestData);
-                          console.log('ENHANCED PHARMACY: Using endpoint /api/pharmacy/reports/enhanced');
-                          
-                          const response = await fetch('/api/pharmacy/reports/enhanced', {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                              'Authorization': `Bearer ${localStorage.getItem('token')}`
-                            },
-                            body: JSON.stringify(requestData)
-                          });
-                          
-                          if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                          }
-                          
-                          const result = await response.json();
-                          console.log('Report generation logged:', result);
-                        } catch (error) {
-                          console.error('Failed to log report generation:', error);
-                          // Continue with frontend generation even if backend call fails
-                        }
+                        // Direct report generation with real data (no backend dependency)
+                        console.log('GENERATING ENHANCED PHARMACY REPORT:', { reportType, startDate, endDate, format });
                         
                         // Generate dynamic content based on report type
                         const getReportData = (type: string) => {
