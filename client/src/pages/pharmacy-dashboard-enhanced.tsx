@@ -1929,9 +1929,36 @@ export default function PharmacyDashboardEnhanced() {
                     </button>
                     <button 
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         // Use controlled form data
                         const { reportType, startDate, endDate, format } = reportFormData;
+                        
+                        // Call backend API to log the report generation
+                        try {
+                          const response = await fetch('/api/reports/generate', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            },
+                            body: JSON.stringify({
+                              reportType,
+                              startDate,
+                              endDate,
+                              format
+                            })
+                          });
+                          
+                          if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                          }
+                          
+                          const result = await response.json();
+                          console.log('Report generation logged:', result);
+                        } catch (error) {
+                          console.error('Failed to log report generation:', error);
+                          // Continue with frontend generation even if backend call fails
+                        }
                         
                         // Generate dynamic content based on report type
                         const getReportData = (type: string) => {
