@@ -80,14 +80,35 @@ Sunday,77,$2205.00`;
             <p className="text-green-700 mb-4">
               This button will instantly download a pharmacy report with real data.
             </p>
-            <button 
-              onClick={generateReport}
-              disabled={isGenerating}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              {isGenerating ? 'Generating...' : 'Download Test Report Now'}
-            </button>
+            <div className="space-y-4">
+              <button 
+                onClick={generateReport}
+                disabled={isGenerating}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                {isGenerating ? 'Generating...' : 'Download Test Report Now'}
+              </button>
+              
+              <button 
+                onClick={() => {
+                  // Ultra-simple direct download
+                  const data = "Patient,Medication,Revenue\nJohn Doe,Metformin,25.50\nJane Smith,Lisinopril,30.75\nBob Johnson,Atorvastatin,45.25";
+                  const element = document.createElement('a');
+                  element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(data));
+                  element.setAttribute('download', 'test_report.csv');
+                  element.style.display = 'none';
+                  document.body.appendChild(element);
+                  element.click();
+                  document.body.removeChild(element);
+                  alert('Simple test report downloaded!');
+                }}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Ultra-Simple Test Download
+              </button>
+            </div>
           </CardContent>
         </Card>
 
