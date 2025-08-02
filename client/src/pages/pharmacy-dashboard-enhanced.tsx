@@ -1945,7 +1945,7 @@ export default function PharmacyDashboardEnhanced() {
                           console.log('Current reportFormData:', reportFormData);
                           console.log('Sending to backend:', requestData);
                           
-                          const response = await fetch('/api/reports/generate', {
+                          const response = await fetch('/api/pharmacy/reports/enhanced', {
                             method: 'POST',
                             headers: {
                               'Content-Type': 'application/json',
