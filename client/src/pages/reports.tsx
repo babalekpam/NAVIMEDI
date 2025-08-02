@@ -117,7 +117,10 @@ export default function Reports() {
       const endpoint = isSuperAdmin && reportData.targetTenantId 
         ? "/api/platform/reports/generate" 
         : "/api/reports";
-      return await apiRequest("POST", endpoint, reportData);
+      return await apiRequest(endpoint, {
+        method: "POST",
+        body: JSON.stringify(reportData)
+      });
     },
     onSuccess: () => {
       toast({
