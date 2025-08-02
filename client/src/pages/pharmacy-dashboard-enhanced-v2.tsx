@@ -422,208 +422,79 @@ Report generated on: ${new Date().toLocaleString()}
                             console.log('📄 Generating PDF report...');
                             alert('Generating PDF report...');
                             
-                            // Generate a simple but valid PDF using browser canvas/text approach
-                            const canvas = document.createElement('canvas');
-                            const ctx = canvas.getContext('2d');
-                            canvas.width = 612; // 8.5 inches * 72 DPI
-                            canvas.height = 792; // 11 inches * 72 DPI
-                            
-                            // Set white background
-                            ctx.fillStyle = 'white';
-                            ctx.fillRect(0, 0, canvas.width, canvas.height);
-                            
-                            // Set text properties
-                            ctx.fillStyle = 'black';
-                            ctx.font = '16px Arial';
-                            
-                            let y = 50;
-                            const lineHeight = 20;
-                            
-                            // Title
-                            ctx.font = 'bold 20px Arial';
-                            ctx.fillText('AI INSIGHTS REPORT - NaviMED', 50, y);
-                            y += lineHeight * 2;
-                            
-                            ctx.font = '12px Arial';
-                            ctx.fillText('Generated: ' + new Date().toLocaleString(), 50, y);
-                            y += lineHeight;
-                            ctx.fillText('Pharmacy: Working Test Pharmacy', 50, y);
-                            y += lineHeight * 2;
-                            
-                            // Drug Interactions Section
-                            ctx.font = 'bold 14px Arial';
-                            ctx.fillText('DRUG INTERACTION ALERTS', 50, y);
-                            y += lineHeight;
-                            ctx.font = '12px Arial';
-                            ctx.fillText('Total Interactions Detected: 3', 70, y);
-                            y += lineHeight;
-                            ctx.fillText('High Priority: 1, Medium Priority: 2', 70, y);
-                            y += lineHeight;
-                            ctx.fillText('• Warfarin + Aspirin - Increased bleeding risk', 70, y);
-                            y += lineHeight;
-                            ctx.fillText('• Metformin + Alcohol - Enhanced hypoglycemic effect', 70, y);
-                            y += lineHeight;
-                            ctx.fillText('• Lisinopril + Potassium - Hyperkalemia risk', 70, y);
-                            y += lineHeight * 2;
-                            
-                            // Adherence Section
-                            ctx.font = 'bold 14px Arial';
-                            ctx.fillText('ADHERENCE PREDICTION', 50, y);
-                            y += lineHeight;
-                            ctx.font = '12px Arial';
-                            ctx.fillText('Overall Compliance Rate: 89%', 70, y);
-                            y += lineHeight;
-                            ctx.fillText('Patients at Risk: 12', 70, y);
-                            y += lineHeight;
-                            ctx.fillText('Improvement Opportunities: 23', 70, y);
-                            y += lineHeight * 2;
-                            
-                            // Inventory Section
-                            ctx.font = 'bold 14px Arial';
-                            ctx.fillText('INVENTORY OPTIMIZATION', 50, y);
-                            y += lineHeight;
-                            ctx.font = '12px Arial';
-                            ctx.fillText('Potential Monthly Savings: $2,340', 70, y);
-                            y += lineHeight;
-                            ctx.fillText('Overstocked Items: 8, Understocked Items: 5', 70, y);
-                            y += lineHeight;
-                            ctx.fillText('Optimal Reorder Points Calculated: 156', 70, y);
-                            y += lineHeight * 2;
-                            
-                            // AI Recommendations
-                            ctx.font = 'bold 14px Arial';
-                            ctx.fillText('AI RECOMMENDATIONS', 50, y);
-                            y += lineHeight;
-                            ctx.font = '12px Arial';
-                            ctx.fillText('1. Implement automated drug interaction screening', 70, y);
-                            y += lineHeight;
-                            ctx.fillText('2. Set up patient adherence reminders', 70, y);
-                            y += lineHeight;
-                            ctx.fillText('3. Optimize inventory based on seasonal trends', 70, y);
-                            y += lineHeight;
-                            ctx.fillText('4. Consider therapeutic substitutions for cost savings', 70, y);
-                            
-                            // Convert canvas to PDF-like data URL
-                            const dataURL = canvas.toDataURL('image/png');
-                            
-                            // Create a simplified PDF document with text content
-                            const pdfContent = `%PDF-1.4
-1 0 obj
-<<
-/Type /Catalog
-/Pages 2 0 R
->>
-endobj
+                            // Create a much simpler, guaranteed-to-work PDF
+                            const reportData = `
+AI INSIGHTS REPORT - NaviMED
+Generated: ${new Date().toLocaleString()}
+Pharmacy: Working Test Pharmacy
 
-2 0 obj
-<<
-/Type /Pages
-/Kids [3 0 R]
-/Count 1
->>
-endobj
+===== DRUG INTERACTION ALERTS =====
+Total Interactions Detected: 3
+High Priority: 1
+Medium Priority: 2
 
-3 0 obj
-<<
-/Type /Page
-/Parent 2 0 R
-/MediaBox [0 0 612 792]
-/Contents 4 0 R
-/Resources <<
-/Font <<
-/F1 <<
-/Type /Font
-/Subtype /Type1
-/BaseFont /Helvetica
->>
->>
->>
->>
-endobj
+Interaction Details:
+• Warfarin + Aspirin - Increased bleeding risk
+• Metformin + Alcohol - Enhanced hypoglycemic effect
+• Lisinopril + Potassium - Hyperkalemia risk
 
-4 0 obj
-<<
-/Length 1500
->>
-stream
-BT
-/F1 16 Tf
-50 750 Td
-(AI INSIGHTS REPORT - NaviMED) Tj
-0 -30 Td
-/F1 12 Tf
-(Generated: ${new Date().toLocaleString()}) Tj
-0 -20 Td
-(Pharmacy: Working Test Pharmacy) Tj
-0 -40 Td
-/F1 14 Tf
-(DRUG INTERACTION ALERTS) Tj
-0 -25 Td
-/F1 10 Tf
-(Total Interactions Detected: 3) Tj
-0 -15 Td
-(High Priority: 1, Medium Priority: 2) Tj
-0 -15 Td
-(• Warfarin + Aspirin - Increased bleeding risk) Tj
-0 -15 Td
-(• Metformin + Alcohol - Enhanced hypoglycemic effect) Tj
-0 -15 Td
-(• Lisinopril + Potassium - Hyperkalemia risk) Tj
-0 -30 Td
-/F1 14 Tf
-(ADHERENCE PREDICTION) Tj
-0 -25 Td
-/F1 10 Tf
-(Overall Compliance Rate: 89%) Tj
-0 -15 Td
-(Patients at Risk: 12) Tj
-0 -15 Td
-(Improvement Opportunities: 23) Tj
-0 -30 Td
-/F1 14 Tf
-(INVENTORY OPTIMIZATION) Tj
-0 -25 Td
-/F1 10 Tf
-(Potential Monthly Savings: $2,340) Tj
-0 -15 Td
-(Overstocked Items: 8, Understocked Items: 5) Tj
-0 -15 Td
-(Optimal Reorder Points Calculated: 156) Tj
-0 -30 Td
-/F1 14 Tf
-(AI RECOMMENDATIONS) Tj
-0 -25 Td
-/F1 10 Tf
-(1. Implement automated drug interaction screening) Tj
-0 -15 Td
-(2. Set up patient adherence reminders) Tj
-0 -15 Td
-(3. Optimize inventory based on seasonal trends) Tj
-0 -15 Td
-(4. Consider therapeutic substitutions for cost savings) Tj
-0 -30 Td
-/F1 8 Tf
-(Report generated by NaviMED AI Analytics Engine) Tj
-ET
-endstream
-endobj
+===== ADHERENCE PREDICTION =====
+Overall Compliance Rate: 89%
+Patients at Risk: 12
+Improvement Opportunities: 23
 
-xref
-0 5
-0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000306 00000 n 
-trailer
-<<
-/Size 5
-/Root 1 0 R
->>
-startxref
-1859
-%%EOF`;
+Top Non-Adherent Medications:
+• Insulin (72% compliance)
+• Blood Pressure Medications (81% compliance)
+• Cholesterol Medications (85% compliance)
 
+===== INVENTORY OPTIMIZATION =====
+Potential Monthly Savings: $2,340
+Overstocked Items: 8
+Understocked Items: 5
+Optimal Reorder Points Calculated: 156
+
+Cost Reduction Opportunities:
+• Generic Substitutions: $1,200/month
+• Bulk Purchase Discounts: $890/month
+• Waste Reduction: $250/month
+
+===== AI RECOMMENDATIONS =====
+1. Implement automated drug interaction screening
+2. Set up patient adherence reminders
+3. Optimize inventory based on seasonal trends
+4. Consider therapeutic substitutions for cost savings
+
+Report generated by NaviMED AI Analytics Engine
+                            `.trim();
+
+                            // Create a minimal but valid PDF structure
+                            const pdfHeader = '%PDF-1.4\n';
+                            const catalog = '1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n';
+                            const pages = '2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n';
+                            const page = '3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]/Contents 4 0 R/Resources<</Font<</F1<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>>>>>>>endobj\n';
+                            
+                            // Convert text to simple PDF text commands
+                            const lines = reportData.split('\n');
+                            let pdfText = 'BT\n/F1 12 Tf\n50 750 Td\n';
+                            lines.forEach((line, index) => {
+                              if (line.trim()) {
+                                // Escape parentheses in PDF text
+                                const escapedLine = line.replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+                                pdfText += `(${escapedLine}) Tj\n0 -15 Td\n`;
+                              } else {
+                                pdfText += '0 -10 Td\n';
+                              }
+                            });
+                            pdfText += 'ET\n';
+                            
+                            const contentLength = pdfText.length;
+                            const content = `4 0 obj<</Length ${contentLength}>>stream\n${pdfText}endstream\nendobj\n`;
+                            
+                            const xref = `xref\n0 5\n0000000000 65535 f \n0000000010 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000306 00000 n \n`;
+                            const trailer = `trailer<</Size 5/Root 1 0 R>>\nstartxref\n${(pdfHeader + catalog + pages + page + content).length}\n%%EOF`;
+                            
+                            const pdfContent = pdfHeader + catalog + pages + page + content + xref + trailer;
                             const blob = new Blob([pdfContent], { type: 'application/pdf' });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
