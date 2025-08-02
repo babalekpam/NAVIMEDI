@@ -79,6 +79,13 @@ export default function PharmacyDashboardEnhanced() {
     setActiveView(value);
   };
 
+  // Manual tab click handlers for debugging
+  const handleTabClick = (tabValue: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    console.log('Manual tab click:', tabValue);
+    setActiveView(tabValue);
+  };
+
   // Fetch pharmacy statistics
   const { data: stats } = useQuery<PharmacyStats>({
     queryKey: ['/api/pharmacy/stats'],
@@ -312,36 +319,53 @@ export default function PharmacyDashboardEnhanced() {
         </Card>
       </div>
 
-      {/* Main Content Tabs */}
-      <Tabs value={activeView} onValueChange={handleTabChange} defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 bg-gray-100 rounded-lg p-1">
-          <TabsTrigger 
-            value="overview" 
-            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md px-4 py-2 font-medium transition-all"
+      {/* Main Content Tabs - Custom Implementation */}
+      <div className="space-y-4">
+        <div className="grid w-full grid-cols-4 bg-gray-100 rounded-lg p-1 gap-1">
+          <Button
+            variant={activeView === 'overview' ? 'default' : 'ghost'}
+            onClick={() => setActiveView('overview')}
+            className={`${activeView === 'overview' 
+              ? 'bg-white text-blue-600 shadow-sm' 
+              : 'text-gray-600 hover:bg-gray-50'
+            } rounded-md px-4 py-2 font-medium transition-all`}
           >
             Overview
-          </TabsTrigger>
-          <TabsTrigger 
-            value="prescriptions" 
-            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md px-4 py-2 font-medium transition-all"
+          </Button>
+          <Button
+            variant={activeView === 'prescriptions' ? 'default' : 'ghost'}
+            onClick={() => setActiveView('prescriptions')}
+            className={`${activeView === 'prescriptions' 
+              ? 'bg-white text-blue-600 shadow-sm' 
+              : 'text-gray-600 hover:bg-gray-50'
+            } rounded-md px-4 py-2 font-medium transition-all`}
           >
             Prescriptions
-          </TabsTrigger>
-          <TabsTrigger 
-            value="inventory" 
-            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md px-4 py-2 font-medium transition-all"
+          </Button>
+          <Button
+            variant={activeView === 'inventory' ? 'default' : 'ghost'}
+            onClick={() => setActiveView('inventory')}
+            className={`${activeView === 'inventory' 
+              ? 'bg-white text-blue-600 shadow-sm' 
+              : 'text-gray-600 hover:bg-gray-50'
+            } rounded-md px-4 py-2 font-medium transition-all`}
           >
             Inventory
-          </TabsTrigger>
-          <TabsTrigger 
-            value="analytics" 
-            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md px-4 py-2 font-medium transition-all"
+          </Button>
+          <Button
+            variant={activeView === 'analytics' ? 'default' : 'ghost'}
+            onClick={() => setActiveView('analytics')}
+            className={`${activeView === 'analytics' 
+              ? 'bg-white text-blue-600 shadow-sm' 
+              : 'text-gray-600 hover:bg-gray-50'
+            } rounded-md px-4 py-2 font-medium transition-all`}
           >
             Analytics
-          </TabsTrigger>
-        </TabsList>
+          </Button>
+        </div>
 
-        <TabsContent value="overview" className="space-y-4">
+        {/* Tab Content */}
+        {activeView === 'overview' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Recent Prescriptions */}
             <Card>
@@ -403,11 +427,12 @@ export default function PharmacyDashboardEnhanced() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
+        )}
 
-        <TabsContent value="prescriptions" className="space-y-4">
-          {/* Search and Filter */}
-          <div className="flex gap-4">
+        {activeView === 'prescriptions' && (
+          <div className="space-y-4">
+            {/* Search and Filter */}
+            <div className="flex gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
@@ -494,9 +519,10 @@ export default function PharmacyDashboardEnhanced() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+          </div>
+        )}
 
-        <TabsContent value="inventory" className="space-y-4">
+        {activeView === 'inventory' && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -553,9 +579,9 @@ export default function PharmacyDashboardEnhanced() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        )}
 
-        <TabsContent value="analytics" className="space-y-4">
+        {activeView === 'analytics' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -618,8 +644,8 @@ export default function PharmacyDashboardEnhanced() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
     </div>
   );
 }
