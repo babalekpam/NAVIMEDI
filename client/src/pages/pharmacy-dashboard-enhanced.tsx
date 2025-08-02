@@ -185,16 +185,20 @@ export default function PharmacyDashboardEnhanced() {
       setTimeout(() => {
         // Update prescription status in local state
         if (modalContent.prescription) {
+          console.log('Updating prescription status for ID:', modalContent.prescription.id);
           const updatedPrescription = { ...modalContent.prescription, status: 'ready' as const };
           
           // Update the local prescriptions array
-          setLocalPrescriptions(prevPrescriptions => 
-            prevPrescriptions.map(p => 
+          setLocalPrescriptions(prevPrescriptions => {
+            console.log('Previous prescriptions:', prevPrescriptions.map(p => ({ id: p.id, status: p.status })));
+            const updated = prevPrescriptions.map(p => 
               p.id === modalContent.prescription!.id 
                 ? updatedPrescription 
                 : p
-            )
-          );
+            );
+            console.log('Updated prescriptions:', updated.map(p => ({ id: p.id, status: p.status })));
+            return updated;
+          });
           
           // Set flash effect for updated prescription
           setUpdatedPrescriptionId(modalContent.prescription.id);
@@ -307,13 +311,16 @@ export default function PharmacyDashboardEnhanced() {
 
   // Initialize local prescriptions when query data changes
   React.useEffect(() => {
+    console.log('useEffect - prescriptionsFromQuery:', prescriptionsFromQuery.length, 'localPrescriptions:', localPrescriptions.length);
     if (prescriptionsFromQuery.length > 0 && localPrescriptions.length === 0) {
+      console.log('Initializing localPrescriptions with query data');
       setLocalPrescriptions(prescriptionsFromQuery);
     }
   }, [prescriptionsFromQuery, localPrescriptions.length]);
 
   // Use local prescriptions for display
   const prescriptions = localPrescriptions.length > 0 ? localPrescriptions : prescriptionsFromQuery;
+  console.log('Current prescriptions for display:', prescriptions.length, prescriptions.map(p => ({ id: p.id, status: p.status })));
 
   // Fetch inventory items
   const { data: inventory = [] } = useQuery<InventoryItem[]>({
