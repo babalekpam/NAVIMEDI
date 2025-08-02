@@ -329,9 +329,65 @@ export default function PharmacyDashboardEnhanced() {
       setFilterStatus('all');
     }
     
-    // Generate receipt and show success message
+    // Generate and print receipt
     const receiptNumber = `RX-${Date.now()}`;
-    alert(`✅ PRESCRIPTION DISPENSED SUCCESSFULLY!\n\n📋 Receipt Generated: ${receiptNumber}\n\n👤 Patient: ${modalContent.prescription.patientName}\n💊 Medication: ${modalContent.prescription.medicationName}\n📊 Status: DISPENSED\n📅 Dispensed: ${new Date().toLocaleString()}\n\n📧 Patient notification sent\n🧾 Receipt printed`);
+    const dispensedDate = new Date();
+    
+    // Create receipt content
+    const receiptContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Prescription Receipt</title>
+        <style>
+          body { font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; }
+          .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+          .receipt-info { margin: 10px 0; }
+          .receipt-info strong { display: inline-block; width: 120px; }
+          .footer { text-align: center; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; font-size: 12px; }
+          @media print { body { margin: 0; padding: 10px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>PHARMACY RECEIPT</h2>
+          <p>NaviMed Healthcare</p>
+          <p>Receipt #: ${receiptNumber}</p>
+        </div>
+        <div class="receipt-info">
+          <div><strong>Patient:</strong> ${modalContent.prescription.patientName}</div>
+          <div><strong>Medication:</strong> ${modalContent.prescription.medicationName}</div>
+          <div><strong>Prescribed by:</strong> ${modalContent.prescription.prescribedBy}</div>
+          <div><strong>Dispensed:</strong> ${dispensedDate.toLocaleString()}</div>
+          <div><strong>Status:</strong> DISPENSED</div>
+          <div><strong>Insurance:</strong> ${modalContent.prescription.insuranceStatus.toUpperCase()}</div>
+        </div>
+        <div class="footer">
+          <p>Thank you for choosing NaviMed Healthcare</p>
+          <p>Please keep this receipt for your records</p>
+          <p>For questions, contact: (555) 123-4567</p>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    // Open receipt in new window and trigger print
+    const receiptWindow = window.open('', '_blank', 'width=600,height=800');
+    if (receiptWindow) {
+      receiptWindow.document.write(receiptContent);
+      receiptWindow.document.close();
+      
+      // Wait for content to load then print
+      receiptWindow.onload = () => {
+        receiptWindow.print();
+        // Close the receipt window after printing (optional)
+        receiptWindow.onafterprint = () => {
+          receiptWindow.close();
+        };
+      };
+    }
+    
+    alert(`✅ PRESCRIPTION DISPENSED SUCCESSFULLY!\n\n📋 Receipt Generated: ${receiptNumber}\n\n👤 Patient: ${modalContent.prescription.patientName}\n💊 Medication: ${modalContent.prescription.medicationName}\n📊 Status: DISPENSED\n📅 Dispensed: ${dispensedDate.toLocaleString()}\n\n📧 Patient notification sent\n🖨️ Receipt sent to printer`);
     
     console.log('DISPENSING - Closing modal');
     closeModal();
