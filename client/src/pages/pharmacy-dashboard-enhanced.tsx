@@ -112,6 +112,8 @@ export default function PharmacyDashboardEnhanced() {
         return JSON.parse(saved);
       } catch (e) {
         console.error('Failed to parse saved prescription statuses:', e);
+        // Clear corrupted data
+        localStorage.removeItem('pharmacy-prescription-statuses');
       }
     }
     // Default initial statuses
@@ -1898,10 +1900,26 @@ export default function PharmacyDashboardEnhanced() {
                           createdAt: new Date().toISOString()
                         };
                         
-                        // Save template to localStorage for persistence
-                        const existingTemplates = JSON.parse(localStorage.getItem('pharmacy-report-templates') || '[]');
+                        // Save template to localStorage for persistence with error handling
+                        let existingTemplates = [];
+                        try {
+                          const stored = localStorage.getItem('pharmacy-report-templates');
+                          existingTemplates = stored ? JSON.parse(stored) : [];
+                        } catch (error) {
+                          console.warn('Invalid JSON in pharmacy-report-templates, resetting:', error);
+                          existingTemplates = [];
+                          localStorage.removeItem('pharmacy-report-templates');
+                        }
+                        
                         existingTemplates.push(template);
-                        localStorage.setItem('pharmacy-report-templates', JSON.stringify(existingTemplates));
+                        
+                        try {
+                          localStorage.setItem('pharmacy-report-templates', JSON.stringify(existingTemplates));
+                        } catch (error) {
+                          console.error('Failed to save template:', error);
+                          alert('Error saving template. Please try again.');
+                          return;
+                        }
                         
                         alert(`✅ Template Created Successfully!\n\n📋 Template Name: ${templateName}\n📊 Report Type: ${reportFormData.reportType.charAt(0).toUpperCase() + reportFormData.reportType.slice(1)}\n📄 Format: ${reportFormData.format.toUpperCase()}\n📅 Date Range: ${reportFormData.startDate} to ${reportFormData.endDate}\n\n✅ Template saved and can be reused for future reports!`);
                       }}
