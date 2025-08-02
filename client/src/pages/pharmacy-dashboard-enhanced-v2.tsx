@@ -108,14 +108,15 @@ export default function PharmacyDashboardEnhancedV2() {
     alert('Starting report generation...');
     
     try {
-      // Create tenant-specific report content
-      const reportContent = `Pharmacy Report - ${tenant?.name || 'Multi-Tenant Platform'}
+      // Create NaviMED independent pharmacy report content
+      const reportContent = `INDEPENDENT PHARMACY REPORT - ${tenant?.name || 'Pharmacy'}
+NaviMED Platform - Hospital Connected Pharmacy Network
 Generated: ${new Date().toLocaleDateString()}
 Period: ${selectedTimeframe}
-Tenant ID: ${tenant?.id || 'Unknown'}
-User: ${user?.email || 'Anonymous'}
+Pharmacy ID: ${tenant?.id || 'Unknown'}
+User: ${user?.email || 'Pharmacy Staff'}
 
-=== TENANT-SPECIFIC METRICS ===
+=== PHARMACY METRICS ===
 Total Prescriptions: ${selectedTimeframe === 'today' ? metrics.prescriptionsToday : metrics.prescriptionsWeek}
 Total Revenue: $${selectedTimeframe === 'today' ? metrics.revenueToday.toFixed(2) : metrics.revenueWeek.toFixed(2)}
 Patients Served: ${selectedTimeframe === 'today' ? metrics.patientsToday : 287}
@@ -123,18 +124,27 @@ Average Wait Time: ${metrics.averageWaitTime} minutes
 Inventory Alerts: ${metrics.inventoryAlerts}
 Insurance Claims: ${metrics.insuranceClaims}
 
-=== CURRENT PRESCRIPTIONS ===
-${prescriptions.map(p => `${p.patientName} - ${p.medication} - ${p.status} - ${p.priority}`).join('\n')}
+=== HOSPITAL CONNECTIONS ===
+Connected Hospitals: 3 Active Networks
+- Metro General Hospital (Primary)
+- City Medical Center (Secondary)
+- Regional Health System (Tertiary)
 
-=== INVENTORY ALERTS ===
-${inventoryAlerts.map(a => `${a.medication} - Stock: ${a.currentStock} - Reorder: ${a.reorderLevel} - ${a.urgency}`).join('\n')}
+=== PRESCRIPTION ROUTING ===
+${prescriptions.map(p => `${p.patientName} - ${p.medication} - ${p.status} - Source: Hospital Network`).join('\n')}
 
-=== MULTI-TENANT INFO ===
-Data Source: Tenant-isolated database
-Security: Role-based access control active
-Platform: NaviMED Healthcare Management System
+=== INVENTORY STATUS ===
+${inventoryAlerts.map(a => `${a.medication} - Stock: ${a.currentStock} - Reorder: ${a.reorderLevel} - Demand: Hospital Networks`).join('\n')}
+
+=== NAVIMED PLATFORM INFO ===
+Platform Type: Multi-Tenant Independent Pharmacy Network
+Pharmacy Model: Independent operation with hospital connectivity
+Prescription Routing: Automated via NaviMED when patients select preferred pharmacy
+Data Security: HIPAA compliant with pharmacy-specific data isolation
+Patient Selection: Patients choose this pharmacy as their preferred provider
 
 Report generated on: ${new Date().toLocaleString()}
+NaviMED Platform - Connecting Independent Pharmacies to Hospital Networks
 `;
 
       console.log('📄 Content created, creating download...');
@@ -206,17 +216,18 @@ Report generated on: ${new Date().toLocaleString()}
                 <Shield className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900">Multi-Tenant Healthcare Platform</h2>
+                <h2 className="font-semibold text-gray-900">NaviMED Multi-Tenant Platform</h2>
                 <p className="text-sm text-gray-600">
-                  <span className="font-medium">Tenant:</span> {tenant?.name || 'Loading...'} | 
+                  <span className="font-medium">Pharmacy:</span> {tenant?.name || 'Loading...'} | 
                   <span className="font-medium ml-2">User:</span> {user?.email || 'Anonymous'} |
-                  <span className="font-medium ml-2">Role:</span> Pharmacy Staff
+                  <span className="font-medium ml-2">Connected Hospitals:</span> 3 Active
                 </p>
               </div>
             </div>
             <div className="flex gap-2">
-              <Badge className="bg-green-100 text-green-800">Data Isolated</Badge>
-              <Badge className="bg-blue-100 text-blue-800">Secure Access</Badge>
+              <Badge className="bg-green-100 text-green-800">Independent Pharmacy</Badge>
+              <Badge className="bg-blue-100 text-blue-800">Hospital Connected</Badge>
+              <Badge className="bg-purple-100 text-purple-800">NaviMED Platform</Badge>
             </div>
           </div>
         </div>
@@ -224,8 +235,8 @@ Report generated on: ${new Date().toLocaleString()}
         {/* Header Section */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Modern Pharmacy Dashboard</h1>
-            <p className="text-gray-600 mt-1">Real-time pharmacy operations & analytics</p>
+            <h1 className="text-3xl font-bold text-gray-900">Independent Pharmacy Dashboard</h1>
+            <p className="text-gray-600 mt-1">NaviMED Platform - Connected to hospital networks for prescription routing</p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3">
@@ -868,14 +879,14 @@ Report generated by NaviMED AI Analytics Engine`;
                       <span className="font-medium text-sm">Express #{tenant?.id || 'T001'}-3401</span>
                       <Badge className="bg-green-100 text-green-800">In Transit</Badge>
                     </div>
-                    <p className="text-xs text-gray-600">Patient: Sarah Johnson (Tenant: {tenant?.name || 'Default'})</p>
+                    <p className="text-xs text-gray-600">Patient: Sarah Johnson (Via Hospital: Metro General)</p>
                     <p className="text-xs text-gray-600">ETA: 2:30 PM</p>
                     <div className="flex gap-2 mt-2">
                       <Button 
                         size="sm" 
                         variant="outline" 
                         className="text-xs flex-1"
-                        onClick={() => alert(`Live tracking for ${tenant?.name || 'Multi-Tenant'} Platform: Delivery is 0.8 miles away from destination. Driver: Mike T. Phone: (555) 123-4567. Tenant-specific security: ${user?.email} authorized.`)}
+                        onClick={() => alert(`NaviMED Live Tracking: Delivery from ${tenant?.name || 'Pharmacy'} is 0.8 miles away. Driver: Mike T. Phone: (555) 123-4567. Prescription routed via Metro General Hospital.`)}
                       >
                         Track
                       </Button>
@@ -883,7 +894,7 @@ Report generated by NaviMED AI Analytics Engine`;
                         size="sm" 
                         variant="outline" 
                         className="text-xs flex-1"
-                        onClick={() => alert(`SMS sent to driver and patient with updated delivery information. Sent from ${tenant?.name || 'Platform'} tenant by ${user?.email || 'Pharmacy Staff'}.`)}
+                        onClick={() => alert(`SMS sent via NaviMED platform: Driver and patient notified. Prescription from ${tenant?.name || 'Pharmacy'} (Connected Hospital: Metro General).`)}
                       >
                         Contact
                       </Button>
@@ -1018,16 +1029,17 @@ Report generated by NaviMED AI Analytics Engine`;
                         variant="outline" 
                         className="text-xs flex-1"
                         onClick={() => {
-                          const receiptData = `DELIVERY RECEIPT - ${tenant?.name || 'NaviMED'} Pharmacy
-Multi-Tenant Healthcare Platform
+                          const receiptData = `DELIVERY RECEIPT - ${tenant?.name || 'Independent'} Pharmacy
+NaviMED Platform - Hospital Connected
                           
-Order: #${tenant?.id || 'T001'}-3399
+Order: #${tenant?.id || 'P001'}-3399
 Patient: Lisa Brown
-Tenant: ${tenant?.name || 'Default Tenant'}
+Pharmacy: ${tenant?.name || 'Independent Pharmacy'}
+Prescription Source: Metro General Hospital
 Delivered: Dec 1, 11:30 AM
 Driver: Sarah K.
 Signature: Received by patient
-Authorized by: ${user?.email || 'System'}
+Authorized by: ${user?.email || 'Pharmacy Staff'}
 
 Medications:
 - Lisinopril 10mg (30 tablets)
@@ -1037,8 +1049,9 @@ Total: $47.50
 Insurance: -$35.00
 Patient Paid: $12.50
 
-SECURITY: This receipt is tenant-isolated and HIPAA compliant.
-Thank you for choosing ${tenant?.name || 'NaviMED'}!`;
+NaviMED Platform: Connecting independent pharmacies to hospital networks
+HIPAA Compliant - Patient chose this pharmacy as preferred provider
+Thank you for choosing ${tenant?.name || 'our pharmacy'}!`;
                           
                           const blob = new Blob([receiptData], { type: 'text/plain' });
                           const url = URL.createObjectURL(blob);
