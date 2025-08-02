@@ -930,6 +930,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Pharmacy report generation endpoint
   app.post("/api/reports/generate", authenticateToken, requireTenant, async (req, res) => {
     try {
+      // Log the full request body for debugging
+      console.log('Full request body:', JSON.stringify(req.body, null, 2));
+      
       // Simply return success - frontend handles all report generation
       // This endpoint exists to satisfy the API call from the frontend
       const { reportType, startDate, endDate, format } = req.body;

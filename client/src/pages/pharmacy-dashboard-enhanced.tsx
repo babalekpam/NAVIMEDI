@@ -1935,18 +1935,22 @@ export default function PharmacyDashboardEnhanced() {
                         
                         // Call backend API to log the report generation
                         try {
+                          const requestData = {
+                            reportType,
+                            startDate,
+                            endDate,
+                            format
+                          };
+                          
+                          console.log('Sending to backend:', requestData);
+                          
                           const response = await fetch('/api/reports/generate', {
                             method: 'POST',
                             headers: {
                               'Content-Type': 'application/json',
                               'Authorization': `Bearer ${localStorage.getItem('token')}`
                             },
-                            body: JSON.stringify({
-                              reportType,
-                              startDate,
-                              endDate,
-                              format
-                            })
+                            body: JSON.stringify(requestData)
                           });
                           
                           if (!response.ok) {
