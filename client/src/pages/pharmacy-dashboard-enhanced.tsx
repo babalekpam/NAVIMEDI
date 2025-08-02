@@ -221,6 +221,26 @@ export default function PharmacyDashboardEnhanced() {
     setModalOpen(true);
   };
 
+  const openNotificationsModal = () => {
+    setModalContent({
+      title: 'Pharmacy Notifications',
+      content: 'notifications',
+      prescription: null,
+      inventoryItem: null
+    });
+    setModalOpen(true);
+  };
+
+  const openReportModal = () => {
+    setModalContent({
+      title: 'Generate Pharmacy Report',
+      content: 'report',
+      prescription: null,
+      inventoryItem: null
+    });
+    setModalOpen(true);
+  };
+
   const processingSteps = [
     { id: 0, title: "Verify Insurance Coverage", description: "Check patient insurance status and coverage details" },
     { id: 1, title: "Check Drug Interactions", description: "Review potential interactions with current medications" },
@@ -632,14 +652,21 @@ export default function PharmacyDashboardEnhanced() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={() => openNotificationsModal()}
+          >
             <Bell className="w-4 h-4" />
             Notifications
             {stats?.inventoryAlerts ? (
               <Badge className="bg-red-100 text-red-800 ml-1">{stats.inventoryAlerts}</Badge>
             ) : null}
           </Button>
-          <Button className="flex items-center gap-2">
+          <Button 
+            className="flex items-center gap-2"
+            onClick={() => openReportModal()}
+          >
             <FileText className="w-4 h-4" />
             Generate Report
           </Button>
@@ -1495,6 +1522,161 @@ export default function PharmacyDashboardEnhanced() {
                         Cancel
                       </button>
                     </div>
+                  </div>
+                </div>
+              )}
+              
+              {modalContent.content === 'notifications' && (
+                <div>
+                  <h3 className="font-semibold mb-3">Pharmacy Notifications</h3>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-red-50 border-l-4 border-red-500 rounded">
+                      <div className="flex items-start">
+                        <Bell className="w-4 h-4 text-red-500 mt-0.5 mr-2" />
+                        <div>
+                          <h4 className="font-medium text-red-800">Low Stock Alert</h4>
+                          <p className="text-sm text-red-700">Lisinopril 10mg is below minimum stock level (25/30 units)</p>
+                          <p className="text-xs text-red-600 mt-1">2 hours ago</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-3 bg-yellow-50 border-l-4 border-yellow-500 rounded">
+                      <div className="flex items-start">
+                        <Bell className="w-4 h-4 text-yellow-500 mt-0.5 mr-2" />
+                        <div>
+                          <h4 className="font-medium text-yellow-800">Prescription Ready</h4>
+                          <p className="text-sm text-yellow-700">Emily Davis - Atorvastatin 20mg ready for pickup</p>
+                          <p className="text-xs text-yellow-600 mt-1">4 hours ago</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+                      <div className="flex items-start">
+                        <Bell className="w-4 h-4 text-blue-500 mt-0.5 mr-2" />
+                        <div>
+                          <h4 className="font-medium text-blue-800">New Prescription</h4>
+                          <p className="text-sm text-blue-700">Michael Brown - Lisinopril 10mg received from Dr. Wilson</p>
+                          <p className="text-xs text-blue-600 mt-1">6 hours ago</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-3 bg-green-50 border-l-4 border-green-500 rounded">
+                      <div className="flex items-start">
+                        <Bell className="w-4 h-4 text-green-500 mt-0.5 mr-2" />
+                        <div>
+                          <h4 className="font-medium text-green-800">Insurance Verified</h4>
+                          <p className="text-sm text-green-700">Sarah Johnson insurance coverage confirmed for Metformin 500mg</p>
+                          <p className="text-xs text-green-600 mt-1">8 hours ago</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2 mt-4">
+                    <button 
+                      type="button"
+                      onClick={() => alert('All notifications marked as read!')}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                    >
+                      Mark All Read
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={closeModal}
+                      className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {modalContent.content === 'report' && (
+                <div>
+                  <h3 className="font-semibold mb-3">Generate Pharmacy Report</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block font-medium mb-2 text-sm">Report Type</label>
+                      <select className="w-full p-2 border border-gray-300 rounded">
+                        <option value="daily">Daily Sales Report</option>
+                        <option value="weekly">Weekly Performance Report</option>
+                        <option value="monthly">Monthly Financial Report</option>
+                        <option value="inventory">Inventory Status Report</option>
+                        <option value="prescriptions">Prescription Analytics Report</option>
+                        <option value="insurance">Insurance Claims Report</option>
+                      </select>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block font-medium mb-1 text-sm">Start Date</label>
+                        <input 
+                          type="date" 
+                          defaultValue={new Date().toISOString().split('T')[0]}
+                          className="w-full p-2 border border-gray-300 rounded"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-medium mb-1 text-sm">End Date</label>
+                        <input 
+                          type="date" 
+                          defaultValue={new Date().toISOString().split('T')[0]}
+                          className="w-full p-2 border border-gray-300 rounded"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block font-medium mb-2 text-sm">Format</label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center">
+                          <input type="radio" name="format" value="pdf" defaultChecked className="mr-2" />
+                          PDF
+                        </label>
+                        <label className="flex items-center">
+                          <input type="radio" name="format" value="excel" className="mr-2" />
+                          Excel
+                        </label>
+                        <label className="flex items-center">
+                          <input type="radio" name="format" value="csv" className="mr-2" />
+                          CSV
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div className="p-3 bg-blue-50 rounded">
+                      <h4 className="font-medium text-blue-800 mb-2">Report Preview</h4>
+                      <div className="text-sm text-blue-700 space-y-1">
+                        <p>• Total Prescriptions: 247</p>
+                        <p>• Revenue Generated: $8,547.50</p>
+                        <p>• Insurance Claims: 156</p>
+                        <p>• Average Processing Time: 12 minutes</p>
+                        <p>• Patient Satisfaction: 96.5%</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2 mt-4">
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        alert('Report generated successfully! Download started.');
+                        closeModal();
+                      }}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                    >
+                      Generate & Download
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={closeModal}
+                      className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
               )}
