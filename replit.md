@@ -26,7 +26,9 @@ The platform is built on a modern stack ensuring scalability, security, and main
 -   **Technical Implementations**:
     -   **Automated Insurance Verification & Copay Calculation**: System automatically fetches patient insurance details, identifies primary policies, and calculates copays based on coverage rules.
     -   **Cross-Tenant Patient & Data Synchronization**: Enables secure and compliant sharing of patient and insurance data across relevant tenants.
-    -   **Pharmacy Workflow Management**: Features a complete workflow (New → Insurance Verification → Processing → Ready → Dispensed) with real-time status updates and archiving capabilities.
+    -   **Complete Pharmacy Workflow Management**: Features a comprehensive workflow (New → Insurance Verification → Processing → Ready → Dispensed) with real-time status updates, visual feedback, and professional receipt generation including payment breakdowns.
+    -   **Professional Receipt System**: Automated receipt generation with pharmacy branding, complete payment breakdown (medication cost, insurance payment, patient payment, savings), and browser print functionality.
+    -   **Interactive Prescription Processing**: Modal-based workflow with 4-step processing, status badge updates, button state management, and inactive edit functionality for dispensed prescriptions.
     -   **Bidirectional Medical Communications**: A unified messaging system allows secure and compliant communication between patients and doctors.
     -   **Lab Order & Results Management**: Supports creation and routing of lab orders and comprehensive management/viewing of lab results.
     -   **Patient Portal & Telemedicine**: Provides a secure patient portal with features like appointment booking, health tracking, and integrated telemedicine consultation setup.
