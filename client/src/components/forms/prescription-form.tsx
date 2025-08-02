@@ -3,10 +3,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertPrescriptionSchema, Patient } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 interface PrescriptionFormProps {
   onSubmit: (data: any) => void;
@@ -57,6 +58,18 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescr
     }
   });
 
+  // Watch for patient selection changes to auto-set preferred pharmacy
+  const selectedPatientId = form.watch("patientId");
+  
+  useEffect(() => {
+    if (selectedPatientId && !isEditing) {
+      const selectedPatient = patients.find(p => p.id === selectedPatientId);
+      if (selectedPatient?.preferredPharmacyId) {
+        form.setValue("pharmacyTenantId", selectedPatient.preferredPharmacyId);
+      }
+    }
+  }, [selectedPatientId, patients, form, isEditing]);
+
   const handleSubmit = (data: any) => {
     console.log("[DEBUG] Form data being submitted:", data);
     const expiryDate = new Date();
@@ -102,32 +115,48 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescr
         <FormField
           control={form.control}
           name="pharmacyTenantId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Send to Pharmacy</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select pharmacy" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {pharmaciesLoading ? (
-                    <SelectItem value="loading" disabled>Loading pharmacies...</SelectItem>
-                  ) : pharmacies.length > 0 ? (
-                    pharmacies.map((pharmacy: any) => (
-                      <SelectItem key={pharmacy.id} value={pharmacy.id}>
-                        {pharmacy.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="no-pharmacies" disabled>No pharmacies available</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            const selectedPatient = patients.find(p => p.id === selectedPatientId);
+            const preferredPharmacy = pharmacies.find((pharmacy: any) => pharmacy.id === selectedPatient?.preferredPharmacyId);
+            
+            return (
+              <FormItem>
+                <FormLabel>Send to Pharmacy</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select pharmacy" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {pharmaciesLoading ? (
+                      <SelectItem value="loading" disabled>Loading pharmacies...</SelectItem>
+                    ) : pharmacies.length > 0 ? (
+                      pharmacies.map((pharmacy: any) => (
+                        <SelectItem key={pharmacy.id} value={pharmacy.id}>
+                          {pharmacy.name}
+                          {pharmacy.id === selectedPatient?.preferredPharmacyId && " (Patient's Preferred)"}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-pharmacies" disabled>No pharmacies available</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                {preferredPharmacy && (
+                  <FormDescription>
+                    Auto-selected {preferredPharmacy.name} as patient's preferred pharmacy. You can change this if needed.
+                  </FormDescription>
+                )}
+                {selectedPatient && !selectedPatient.preferredPharmacyId && (
+                  <FormDescription>
+                    Patient has no preferred pharmacy set. Please select one manually.
+                  </FormDescription>
+                )}
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         <FormField

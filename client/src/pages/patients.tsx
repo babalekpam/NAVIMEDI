@@ -8,12 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Search, Plus, MoreHorizontal, UserCircle, Calendar, Phone, Mail, MapPin, Heart, AlertTriangle, Edit, Trash2, Copy, FileText, Share } from "lucide-react";
+import { Search, Plus, MoreHorizontal, UserCircle, Calendar, Phone, Mail, MapPin, Heart, AlertTriangle, Edit, Trash2, Copy, FileText, Share, Pill } from "lucide-react";
 import { Patient } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
 import { PatientForm } from "@/components/forms/patient-form";
+import { PatientPharmacyUpdate } from "@/components/patient-pharmacy-update";
 import { useLocation } from "wouter";
 
 export default function Patients() {
@@ -21,6 +22,8 @@ export default function Patients() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [isEHROpen, setIsEHROpen] = useState(false);
+  const [isPharmacyUpdateOpen, setIsPharmacyUpdateOpen] = useState(false);
+  const [pharmacyUpdatePatient, setPharmacyUpdatePatient] = useState<Patient | null>(null);
   const { user } = useAuth();
   const { tenant } = useTenant();
   const { t } = useTranslation();
@@ -274,6 +277,14 @@ export default function Patients() {
                                 <Share className="h-4 w-4 mr-2" />
                                 Share
                               </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => {
+                                setPharmacyUpdatePatient(patient);
+                                setIsPharmacyUpdateOpen(true);
+                              }}>
+                                <Pill className="h-4 w-4 mr-2" />
+                                Update Preferred Pharmacy
+                              </DropdownMenuItem>
                             </>
                           )}
                           {user.role === "tenant_admin" && (
@@ -479,6 +490,16 @@ export default function Patients() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Patient Pharmacy Update Dialog */}
+      <Dialog open={isPharmacyUpdateOpen} onOpenChange={setIsPharmacyUpdateOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Update Preferred Pharmacy</DialogTitle>
+          </DialogHeader>
+          {pharmacyUpdatePatient && <PatientPharmacyUpdate patient={pharmacyUpdatePatient} currentUser={user} />}
         </DialogContent>
       </Dialog>
     </div>

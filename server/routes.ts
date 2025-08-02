@@ -1701,6 +1701,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pharmacies routes
+  app.get("/api/pharmacies", authenticateToken, async (req, res) => {
+    try {
+      // Get all active pharmacy tenants for prescription routing
+      const pharmacies = await storage.getPharmaciesForPrescriptionRouting();
+      res.json(pharmacies);
+    } catch (error) {
+      console.error("Failed to fetch pharmacies:", error);
+      res.status(500).json({ message: "Failed to fetch pharmacies" });
+    }
+  });
+
+  // Update patient preferred pharmacy (requires patient approval)
+  app.patch("/api/patients/:id/preferred-pharmacy", authenticateToken, requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { preferredPharmacyId, updatedBy, reason, requiresPatientApproval } = req.body;
+
+      // Get the patient to verify they belong to this tenant
+      const patient = await storage.getPatient(id, req.user.tenantId);
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      // For now, we'll update the preferred pharmacy directly
+      // In a real system, this would create a pending approval request
+      const updatedPatient = await storage.updatePatient(id, {
+        preferredPharmacyId: preferredPharmacyId
+      }, req.user.tenantId);
+
+      // Create audit log for the pharmacy change
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId,
+        userId: req.user.userId,
+        entityType: "patient",
+        entityId: id,
+        action: "UPDATE_PREFERRED_PHARMACY",
+        oldData: { preferredPharmacyId: patient.preferredPharmacyId },
+        newData: { preferredPharmacyId: preferredPharmacyId, updatedBy, reason },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json({
+        message: "Preferred pharmacy updated successfully",
+        patient: updatedPatient,
+        requiresPatientApproval: requiresPatientApproval
+      });
+    } catch (error) {
+      console.error("Failed to update preferred pharmacy:", error);
+      res.status(500).json({ message: "Failed to update preferred pharmacy" });
+    }
+  });
+
   // Medical Phrases routes
   app.get("/api/medical-phrases", authenticateToken, requireTenant, async (req, res) => {
     try {

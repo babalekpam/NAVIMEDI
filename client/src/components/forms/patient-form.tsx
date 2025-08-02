@@ -26,9 +26,14 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
   const [newAllergy, setNewAllergy] = useState("");
   const [newMedication, setNewMedication] = useState("");
 
-  // Fetch insurance providers
+  // Fetch insurance providers and pharmacies
   const { data: insuranceProviders = [] } = useQuery({
     queryKey: ["/api/insurance-providers"],
+    enabled: true,
+  });
+
+  const { data: pharmacies = [] } = useQuery({
+    queryKey: ["/api/pharmacies"],
     enabled: true,
   });
 
@@ -53,7 +58,9 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
     subscriberName: z.string().optional(),
     subscriberRelationship: z.string().optional(),
     copayAmount: z.string().optional(),
-    deductibleAmount: z.string().optional()
+    deductibleAmount: z.string().optional(),
+    // Preferred pharmacy
+    preferredPharmacyId: z.string().optional()
   });
 
   const form = useForm({
@@ -77,7 +84,8 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
       subscriberName: "",
       subscriberRelationship: "",
       copayAmount: "",
-      deductibleAmount: ""
+      deductibleAmount: "",
+      preferredPharmacyId: ""
     }
   });
 
@@ -107,7 +115,8 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
       medicalHistory: medicalConditions,
       allergies: allergies,
       medications: medications,
-      insuranceInfo: insuranceData
+      insuranceInfo: insuranceData,
+      preferredPharmacyId: data.preferredPharmacyId || undefined
     };
     onSubmit(patientData);
   };
@@ -566,6 +575,49 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
                 )}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Preferred Pharmacy Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Pill className="h-5 w-5" />
+              Preferred Pharmacy
+            </CardTitle>
+            <FormDescription>
+              Select a preferred pharmacy for prescriptions. This can be changed later by healthcare providers with patient approval.
+            </FormDescription>
+          </CardHeader>
+          <CardContent>
+            <FormField
+              control={form.control}
+              name="preferredPharmacyId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Preferred Pharmacy (Optional)</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a preferred pharmacy" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">No preference</SelectItem>
+                      {pharmacies.map((pharmacy: any) => (
+                        <SelectItem key={pharmacy.id} value={pharmacy.id}>
+                          {pharmacy.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Prescriptions will be routed to this pharmacy when possible. Healthcare providers can override this selection when medically necessary.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </CardContent>
         </Card>
 
