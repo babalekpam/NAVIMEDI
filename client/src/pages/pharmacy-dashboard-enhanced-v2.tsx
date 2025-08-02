@@ -419,55 +419,105 @@ Report generated on: ${new Date().toLocaleString()}
                         className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-2 rounded text-sm transition-all transform hover:scale-105"
                         onClick={() => {
                           try {
-                            console.log('📄 Generating PDF report...');
-                            alert('Generating PDF report...');
+                            console.log('📄 Generating HTML report...');
+                            alert('Generating HTML report...');
                             
-                            // Generate simple PDF content (basic PDF structure)
-                            const pdfContent = `%PDF-1.4
-1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj
-2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj
-3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]/Contents 4 0 R>>endobj
-4 0 obj<</Length 800>>stream
-BT /F1 12 Tf 50 750 Td (AI INSIGHTS REPORT - NaviMED) Tj
-0 -20 Td (Generated: ${new Date().toLocaleString()}) Tj
-0 -20 Td (Pharmacy: Working Test Pharmacy) Tj
-0 -40 Td (DRUG INTERACTION ALERTS) Tj
-0 -20 Td (Total Interactions: 3, High Priority: 1, Medium: 2) Tj
-0 -30 Td (ADHERENCE PREDICTION) Tj
-0 -20 Td (Compliance Rate: 89%, Patients at Risk: 12) Tj
-0 -30 Td (INVENTORY OPTIMIZATION) Tj
-0 -20 Td (Monthly Savings: $2,340, Overstocked: 8, Understocked: 5) Tj
-0 -30 Td (AI RECOMMENDATIONS) Tj
-0 -20 Td (1. Implement automated drug interaction screening) Tj
-0 -15 Td (2. Set up patient adherence reminders) Tj
-0 -15 Td (3. Optimize inventory based on seasonal trends) Tj
-0 -15 Td (4. Consider therapeutic substitutions for cost savings) Tj
-ET endstream endobj
-xref 0 5
-0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000206 00000 n 
-trailer<</Size 5/Root 1 0 R>>startxref 1059 %%EOF`;
+                            // Generate HTML content for PDF printing
+                            const htmlContent = `
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                              <title>AI Insights Report</title>
+                              <style>
+                                body { font-family: Arial, sans-serif; margin: 20px; }
+                                .header { text-align: center; margin-bottom: 30px; }
+                                .section { margin: 20px 0; }
+                                .section h2 { color: #333; border-bottom: 2px solid #666; padding-bottom: 5px; }
+                                .metric { margin: 10px 0; }
+                                ul, ol { margin: 10px 0; padding-left: 20px; }
+                              </style>
+                            </head>
+                            <body>
+                              <div class="header">
+                                <h1>AI INSIGHTS REPORT - NaviMED</h1>
+                                <p>Generated: ${new Date().toLocaleString()}</p>
+                                <p>Pharmacy: Working Test Pharmacy</p>
+                              </div>
+                              
+                              <div class="section">
+                                <h2>DRUG INTERACTION ALERTS</h2>
+                                <div class="metric">Total Interactions Detected: 3</div>
+                                <div class="metric">High Priority: 1</div>
+                                <div class="metric">Medium Priority: 2</div>
+                                <h3>Interaction Details:</h3>
+                                <ul>
+                                  <li>Warfarin + Aspirin - Increased bleeding risk</li>
+                                  <li>Metformin + Alcohol - Enhanced hypoglycemic effect</li>
+                                  <li>Lisinopril + Potassium - Hyperkalemia risk</li>
+                                </ul>
+                              </div>
+                              
+                              <div class="section">
+                                <h2>ADHERENCE PREDICTION</h2>
+                                <div class="metric">Overall Compliance Rate: 89%</div>
+                                <div class="metric">Patients at Risk: 12</div>
+                                <div class="metric">Improvement Opportunities: 23</div>
+                                <h3>Top Non-Adherent Medications:</h3>
+                                <ul>
+                                  <li>Insulin (72% compliance)</li>
+                                  <li>Blood Pressure Medications (81% compliance)</li>
+                                  <li>Cholesterol Medications (85% compliance)</li>
+                                </ul>
+                              </div>
+                              
+                              <div class="section">
+                                <h2>INVENTORY OPTIMIZATION</h2>
+                                <div class="metric">Potential Monthly Savings: $2,340</div>
+                                <div class="metric">Overstocked Items: 8</div>
+                                <div class="metric">Understocked Items: 5</div>
+                                <div class="metric">Optimal Reorder Points Calculated: 156</div>
+                                <h3>Cost Reduction Opportunities:</h3>
+                                <ul>
+                                  <li>Generic Substitutions: $1,200/month</li>
+                                  <li>Bulk Purchase Discounts: $890/month</li>
+                                  <li>Waste Reduction: $250/month</li>
+                                </ul>
+                              </div>
+                              
+                              <div class="section">
+                                <h2>AI RECOMMENDATIONS</h2>
+                                <ol>
+                                  <li>Implement automated drug interaction screening</li>
+                                  <li>Set up patient adherence reminders</li>
+                                  <li>Optimize inventory based on seasonal trends</li>
+                                  <li>Consider therapeutic substitutions for cost savings</li>
+                                </ol>
+                              </div>
+                              
+                              <div style="text-align: center; margin-top: 40px; font-style: italic;">
+                                Report generated by NaviMED AI Analytics Engine
+                              </div>
+                            </body>
+                            </html>
+                            `;
 
-                            const blob = new Blob([pdfContent], { type: 'application/pdf' });
+                            const blob = new Blob([htmlContent], { type: 'text/html' });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
-                            a.download = `ai-insights-report-${Date.now()}.pdf`;
+                            a.download = `ai-insights-report-${Date.now()}.html`;
                             a.click();
                             URL.revokeObjectURL(url);
                             
-                            console.log('✅ PDF report downloaded!');
-                            alert('PDF report downloaded successfully!');
+                            console.log('✅ HTML report downloaded!');
+                            alert('HTML report downloaded successfully! You can open it in any browser or print as PDF.');
                           } catch (error) {
-                            console.error('❌ PDF generation error:', error);
-                            alert('Error generating PDF: ' + error);
+                            console.error('❌ HTML generation error:', error);
+                            alert('Error generating HTML: ' + error);
                           }
                         }}
                       >
-                        📄 PDF
+                        📄 HTML
                       </button>
                       
                       <button 
@@ -477,8 +527,40 @@ trailer<</Size 5/Root 1 0 R>>startxref 1059 %%EOF`;
                             console.log('📊 Generating Excel report...');
                             alert('Generating Excel report...');
                             
-                            // Generate Excel-compatible CSV content
-                            const excelContent = `AI Insights Report - NaviMED\n\nGenerated,${new Date().toLocaleString()}\nPharmacy,Working Test Pharmacy\n\nSection,Metric,Value\nDrug Interactions,Total Detected,3\nDrug Interactions,High Priority,1\nDrug Interactions,Medium Priority,2\nAdherence,Compliance Rate,89%\nAdherence,Patients at Risk,12\nAdherence,Improvement Opportunities,23\nInventory,Monthly Savings,$2340\nInventory,Overstocked Items,8\nInventory,Understocked Items,5\nInventory,Reorder Points Calculated,156\n\nDrug Interaction Details\nWarfarin + Aspirin,Increased bleeding risk\nMetformin + Alcohol,Enhanced hypoglycemic effect\nLisinopril + Potassium,Hyperkalemia risk\n\nNon-Adherent Medications\nInsulin,72% compliance\nBlood Pressure Medications,81% compliance\nCholesterol Medications,85% compliance\n\nCost Reduction Opportunities\nGeneric Substitutions,$1200/month\nBulk Purchase Discounts,$890/month\nWaste Reduction,$250/month\n\nAI Recommendations\n1,Implement automated drug interaction screening\n2,Set up patient adherence reminders\n3,Optimize inventory based on seasonal trends\n4,Consider therapeutic substitutions for cost savings`;
+                            // Generate proper Excel XML format
+                            const excelContent = `<?xml version="1.0"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Worksheet ss:Name="AI Insights Report">
+    <Table>
+      <Row><Cell><Data ss:Type="String">AI Insights Report - NaviMED</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Generated: ${new Date().toLocaleString()}</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Pharmacy: Working Test Pharmacy</Data></Cell></Row>
+      <Row></Row>
+      <Row><Cell><Data ss:Type="String">Section</Data></Cell><Cell><Data ss:Type="String">Metric</Data></Cell><Cell><Data ss:Type="String">Value</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Drug Interactions</Data></Cell><Cell><Data ss:Type="String">Total Detected</Data></Cell><Cell><Data ss:Type="Number">3</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Drug Interactions</Data></Cell><Cell><Data ss:Type="String">High Priority</Data></Cell><Cell><Data ss:Type="Number">1</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Drug Interactions</Data></Cell><Cell><Data ss:Type="String">Medium Priority</Data></Cell><Cell><Data ss:Type="Number">2</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Adherence</Data></Cell><Cell><Data ss:Type="String">Compliance Rate</Data></Cell><Cell><Data ss:Type="String">89%</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Adherence</Data></Cell><Cell><Data ss:Type="String">Patients at Risk</Data></Cell><Cell><Data ss:Type="Number">12</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Adherence</Data></Cell><Cell><Data ss:Type="String">Improvement Opportunities</Data></Cell><Cell><Data ss:Type="Number">23</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Inventory</Data></Cell><Cell><Data ss:Type="String">Monthly Savings</Data></Cell><Cell><Data ss:Type="String">$2,340</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Inventory</Data></Cell><Cell><Data ss:Type="String">Overstocked Items</Data></Cell><Cell><Data ss:Type="Number">8</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Inventory</Data></Cell><Cell><Data ss:Type="String">Understocked Items</Data></Cell><Cell><Data ss:Type="Number">5</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Inventory</Data></Cell><Cell><Data ss:Type="String">Reorder Points Calculated</Data></Cell><Cell><Data ss:Type="Number">156</Data></Cell></Row>
+      <Row></Row>
+      <Row><Cell><Data ss:Type="String">Drug Interaction Details</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Warfarin + Aspirin</Data></Cell><Cell><Data ss:Type="String">Increased bleeding risk</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Metformin + Alcohol</Data></Cell><Cell><Data ss:Type="String">Enhanced hypoglycemic effect</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">Lisinopril + Potassium</Data></Cell><Cell><Data ss:Type="String">Hyperkalemia risk</Data></Cell></Row>
+      <Row></Row>
+      <Row><Cell><Data ss:Type="String">AI Recommendations</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">1. Implement automated drug interaction screening</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">2. Set up patient adherence reminders</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">3. Optimize inventory based on seasonal trends</Data></Cell></Row>
+      <Row><Cell><Data ss:Type="String">4. Consider therapeutic substitutions for cost savings</Data></Cell></Row>
+    </Table>
+  </Worksheet>
+</Workbook>`;
 
                             const blob = new Blob([excelContent], { type: 'application/vnd.ms-excel' });
                             const url = URL.createObjectURL(blob);
