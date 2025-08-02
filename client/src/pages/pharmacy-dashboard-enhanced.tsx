@@ -1942,6 +1942,7 @@ export default function PharmacyDashboardEnhanced() {
                             format
                           };
                           
+                          console.log('Current reportFormData:', reportFormData);
                           console.log('Sending to backend:', requestData);
                           
                           const response = await fetch('/api/reports/generate', {
