@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { z } from "zod";
 
 interface PrescriptionFormProps {
   onSubmit: (data: any) => void;
@@ -24,17 +25,21 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescr
     enabled: true
   });
 
+  // Create a simplified schema just for the form fields we need
+  const prescriptionFormSchema = z.object({
+    patientId: z.string().min(1, "Patient is required"),
+    medicationName: z.string().min(1, "Medication name is required"),
+    dosage: z.string().min(1, "Dosage is required"),
+    frequency: z.string().min(1, "Frequency is required"),
+    quantity: z.number().min(1, "Quantity must be at least 1"),
+    refills: z.number().min(0, "Refills cannot be negative"),
+    instructions: z.string().optional(),
+    status: z.enum(["prescribed", "sent_to_pharmacy", "filled", "picked_up", "cancelled"]).default("prescribed"),
+    pharmacyTenantId: z.string().optional(),
+  });
+
   const form = useForm({
-    resolver: zodResolver(insertPrescriptionSchema.omit({ 
-      tenantId: true, 
-      providerId: true, 
-      expiryDate: true,
-      prescribedDate: true,
-      appointmentId: true,
-      id: true,
-      createdAt: true,
-      updatedAt: true
-    })),
+    resolver: zodResolver(prescriptionFormSchema),
     defaultValues: isEditing && prescription ? {
       patientId: prescription.patientId || "",
       medicationName: prescription.medicationName || "",
@@ -72,6 +77,7 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescr
 
   const handleSubmit = (data: any) => {
     console.log("[DEBUG] Form data being submitted:", data);
+    console.log("[DEBUG] Form validation errors:", form.formState.errors);
     const expiryDate = new Date();
     expiryDate.setFullYear(expiryDate.getFullYear() + 1); // Default 1 year expiry
     
@@ -117,7 +123,7 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescr
           name="pharmacyTenantId"
           render={({ field }) => {
             const selectedPatient = patients.find(p => p.id === selectedPatientId);
-            const preferredPharmacy = pharmacies.find((pharmacy: any) => pharmacy.id === selectedPatient?.preferredPharmacyId);
+            const preferredPharmacy = (pharmacies as any[]).find((pharmacy: any) => pharmacy.id === selectedPatient?.preferredPharmacyId);
             
             return (
               <FormItem>
@@ -131,8 +137,8 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescr
                   <SelectContent>
                     {pharmaciesLoading ? (
                       <SelectItem value="loading" disabled>Loading pharmacies...</SelectItem>
-                    ) : pharmacies.length > 0 ? (
-                      pharmacies.map((pharmacy: any) => (
+                    ) : (pharmacies as any[]).length > 0 ? (
+                      (pharmacies as any[]).map((pharmacy: any) => (
                         <SelectItem key={pharmacy.id} value={pharmacy.id}>
                           {pharmacy.name}
                           {pharmacy.id === selectedPatient?.preferredPharmacyId && " (Patient's Preferred)"}
