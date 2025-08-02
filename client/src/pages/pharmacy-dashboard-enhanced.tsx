@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useTenant } from '@/hooks/use-tenant';
+import { SimpleReportGenerator } from '@/components/pharmacy/SimpleReportGenerator';
 
 interface PharmacyStats {
   totalPrescriptions: number;
@@ -1748,9 +1749,17 @@ export default function PharmacyDashboardEnhanced() {
               {modalContent.content === 'report' && (
                 <div>
                   <h3 className="font-semibold mb-3">Generate Pharmacy Report</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block font-medium mb-2 text-sm">Report Type</label>
+                  
+                  {/* Simple Report Generator - Works Immediately */}
+                  <div className="mb-6">
+                    <SimpleReportGenerator />
+                  </div>
+                  
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium text-gray-600 mb-3">Advanced Report Builder (Legacy)</h4>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block font-medium mb-2 text-sm">Report Type</label>
                       <select 
                         value={reportFormData.reportType}
                         onChange={(e) => setReportFormData(prev => ({ ...prev, reportType: e.target.value }))}
@@ -2271,7 +2280,8 @@ Data Quality\tVerified\tAll data points cross-referenced and accurate`;
                       Cancel
                     </button>
                   </div>
-                </div>
+                    </div>
+                  </div>
               )}
             </div>
           </div>
