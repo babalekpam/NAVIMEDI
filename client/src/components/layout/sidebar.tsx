@@ -67,7 +67,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "pharmacy-prescriptions", label: "Prescription Manager", icon: Pill, path: "/pharmacy-prescriptions", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "pharmacy-pos", label: "Point of Sale", icon: ShoppingCart, path: "/pharmacy-pos", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "pharmacy-patient-management", label: "Pharmacy Patient Management", icon: Users, path: "/pharmacy-patient-management", roles: ["pharmacist", "billing_staff", "tenant_admin", "director"] },
-  { id: "pharmacy-reports", label: "Pharmacy Reports", icon: FileText, path: "/pharmacy-reports", roles: ["pharmacist", "billing_staff", "tenant_admin", "director"] },
+
   { id: "health-recommendations", label: t("health-recommendations"), icon: Brain, path: "/health-recommendations", roles: ["physician", "nurse", "tenant_admin", "director"] },
   { id: "medical-communications", label: t("medical-communications"), icon: Languages, path: "/medical-communications", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "patient-access-management", label: "Patient Access Management", icon: Shield, path: "/patient-access-management", roles: ["physician", "tenant_admin", "director", "super_admin"] },
@@ -232,7 +232,7 @@ export const Sidebar = () => {
   if (user.role === "pharmacist" || (user.role === "tenant_admin" && isPharmacyTenant)) {
     
     const pharmacyItems = filteredItems.filter(item => 
-      ["dashboard", "pharmacy-dashboard", "billing", "pharmacy-billing", "pharmacy-patient-management", "pharmacy-reports"].includes(item.id)
+      ["dashboard", "pharmacy-dashboard", "billing", "pharmacy-billing", "pharmacy-patient-management"].includes(item.id)
     );
     
     return (
