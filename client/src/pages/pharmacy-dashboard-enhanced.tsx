@@ -92,6 +92,12 @@ export default function PharmacyDashboardEnhanced() {
     supplier: string;
   } | null>(null);
   const [reorderQuantity, setReorderQuantity] = useState<number>(0);
+  const [reportFormData, setReportFormData] = useState({
+    reportType: 'daily',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+    format: 'pdf'
+  });
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [updatedPrescriptionId, setUpdatedPrescriptionId] = useState<string | null>(null);
@@ -258,6 +264,14 @@ export default function PharmacyDashboardEnhanced() {
   };
 
   const openReportModal = () => {
+    // Reset form data when opening modal
+    setReportFormData({
+      reportType: 'daily',
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: new Date().toISOString().split('T')[0],
+      format: 'pdf'
+    });
+    
     setModalContent({
       title: 'Generate Pharmacy Report',
       content: 'report',
@@ -1735,7 +1749,11 @@ export default function PharmacyDashboardEnhanced() {
                   <div className="space-y-4">
                     <div>
                       <label className="block font-medium mb-2 text-sm">Report Type</label>
-                      <select className="w-full p-2 border border-gray-300 rounded">
+                      <select 
+                        value={reportFormData.reportType}
+                        onChange={(e) => setReportFormData(prev => ({ ...prev, reportType: e.target.value }))}
+                        className="w-full p-2 border border-gray-300 rounded"
+                      >
                         <option value="daily">Daily Sales Report</option>
                         <option value="weekly">Weekly Performance Report</option>
                         <option value="monthly">Monthly Financial Report</option>
@@ -1750,7 +1768,8 @@ export default function PharmacyDashboardEnhanced() {
                         <label className="block font-medium mb-1 text-sm">Start Date</label>
                         <input 
                           type="date" 
-                          defaultValue={new Date().toISOString().split('T')[0]}
+                          value={reportFormData.startDate}
+                          onChange={(e) => setReportFormData(prev => ({ ...prev, startDate: e.target.value }))}
                           className="w-full p-2 border border-gray-300 rounded"
                         />
                       </div>
@@ -1758,7 +1777,8 @@ export default function PharmacyDashboardEnhanced() {
                         <label className="block font-medium mb-1 text-sm">End Date</label>
                         <input 
                           type="date" 
-                          defaultValue={new Date().toISOString().split('T')[0]}
+                          value={reportFormData.endDate}
+                          onChange={(e) => setReportFormData(prev => ({ ...prev, endDate: e.target.value }))}
                           className="w-full p-2 border border-gray-300 rounded"
                         />
                       </div>
@@ -1768,15 +1788,36 @@ export default function PharmacyDashboardEnhanced() {
                       <label className="block font-medium mb-2 text-sm">Format</label>
                       <div className="flex gap-4">
                         <label className="flex items-center">
-                          <input type="radio" name="format" value="pdf" defaultChecked className="mr-2" />
+                          <input 
+                            type="radio" 
+                            name="format" 
+                            value="pdf" 
+                            checked={reportFormData.format === 'pdf'}
+                            onChange={(e) => setReportFormData(prev => ({ ...prev, format: e.target.value }))}
+                            className="mr-2" 
+                          />
                           PDF
                         </label>
                         <label className="flex items-center">
-                          <input type="radio" name="format" value="excel" className="mr-2" />
+                          <input 
+                            type="radio" 
+                            name="format" 
+                            value="excel" 
+                            checked={reportFormData.format === 'excel'}
+                            onChange={(e) => setReportFormData(prev => ({ ...prev, format: e.target.value }))}
+                            className="mr-2" 
+                          />
                           Excel
                         </label>
                         <label className="flex items-center">
-                          <input type="radio" name="format" value="csv" className="mr-2" />
+                          <input 
+                            type="radio" 
+                            name="format" 
+                            value="csv" 
+                            checked={reportFormData.format === 'csv'}
+                            onChange={(e) => setReportFormData(prev => ({ ...prev, format: e.target.value }))}
+                            className="mr-2" 
+                          />
                           CSV
                         </label>
                       </div>
@@ -1785,11 +1826,60 @@ export default function PharmacyDashboardEnhanced() {
                     <div className="p-3 bg-blue-50 rounded">
                       <h4 className="font-medium text-blue-800 mb-2">Report Preview</h4>
                       <div className="text-sm text-blue-700 space-y-1">
-                        <p>• Total Prescriptions: 247</p>
-                        <p>• Revenue Generated: $8,547.50</p>
-                        <p>• Insurance Claims: 156</p>
-                        <p>• Average Processing Time: 12 minutes</p>
-                        <p>• Patient Satisfaction: 96.5%</p>
+                        {reportFormData.reportType === 'daily' && (
+                          <>
+                            <p>• Total Prescriptions: 89</p>
+                            <p>• Revenue Generated: $3,247.50</p>
+                            <p>• Insurance Claims: 67</p>
+                            <p>• Average Processing Time: 8 minutes</p>
+                            <p>• Rush Hour Peak: 28 prescriptions (4-6PM)</p>
+                          </>
+                        )}
+                        {reportFormData.reportType === 'weekly' && (
+                          <>
+                            <p>• Total Prescriptions: 612</p>
+                            <p>• Revenue Generated: $21,834.75</p>
+                            <p>• Insurance Claims: 445</p>
+                            <p>• Average Processing Time: 11 minutes</p>
+                            <p>• Peak Day: Wednesday (198 prescriptions)</p>
+                          </>
+                        )}
+                        {reportFormData.reportType === 'monthly' && (
+                          <>
+                            <p>• Total Prescriptions: 2,847</p>
+                            <p>• Revenue Generated: $98,547.50</p>
+                            <p>• Insurance Claims: 2,156</p>
+                            <p>• Average Processing Time: 12 minutes</p>
+                            <p>• Best Week: Week 2 ($26,890.50)</p>
+                          </>
+                        )}
+                        {reportFormData.reportType === 'inventory' && (
+                          <>
+                            <p>• Total Items: 125</p>
+                            <p>• In Stock: 98 medications</p>
+                            <p>• Low Stock Alerts: 15 items</p>
+                            <p>• Out of Stock: 7 items</p>
+                            <p>• Expiring Soon: 12 items</p>
+                          </>
+                        )}
+                        {reportFormData.reportType === 'prescriptions' && (
+                          <>
+                            <p>• Total Prescriptions: 247</p>
+                            <p>• New Prescriptions: 89</p>
+                            <p>• Refills Processed: 158</p>
+                            <p>• Insurance Verified: 201</p>
+                            <p>• Ready for Pickup: 34</p>
+                          </>
+                        )}
+                        {reportFormData.reportType === 'insurance' && (
+                          <>
+                            <p>• Total Claims: 178</p>
+                            <p>• Approved Claims: 145</p>
+                            <p>• Pending Review: 18</p>
+                            <p>• Rejected Claims: 11</p>
+                            <p>• Average Processing: 2.5 hours</p>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1798,11 +1888,32 @@ export default function PharmacyDashboardEnhanced() {
                     <button 
                       type="button"
                       onClick={() => {
-                        // Get form data with proper casting
-                        const reportType = (document.querySelector('select') as HTMLSelectElement)?.value || 'daily';
-                        const startDate = (document.querySelectorAll('input[type="date"]')[0] as HTMLInputElement)?.value || new Date().toISOString().split('T')[0];
-                        const endDate = (document.querySelectorAll('input[type="date"]')[1] as HTMLInputElement)?.value || new Date().toISOString().split('T')[0];
-                        const format = (document.querySelector('input[name="format"]:checked') as HTMLInputElement)?.value || 'pdf';
+                        // Create Template functionality
+                        const templateName = `${reportFormData.reportType.charAt(0).toUpperCase() + reportFormData.reportType.slice(1)} Report Template`;
+                        const template = {
+                          name: templateName,
+                          type: reportFormData.reportType,
+                          format: reportFormData.format,
+                          dateRange: `${reportFormData.startDate} to ${reportFormData.endDate}`,
+                          createdAt: new Date().toISOString()
+                        };
+                        
+                        // Save template to localStorage for persistence
+                        const existingTemplates = JSON.parse(localStorage.getItem('pharmacy-report-templates') || '[]');
+                        existingTemplates.push(template);
+                        localStorage.setItem('pharmacy-report-templates', JSON.stringify(existingTemplates));
+                        
+                        alert(`✅ Template Created Successfully!\n\n📋 Template Name: ${templateName}\n📊 Report Type: ${reportFormData.reportType.charAt(0).toUpperCase() + reportFormData.reportType.slice(1)}\n📄 Format: ${reportFormData.format.toUpperCase()}\n📅 Date Range: ${reportFormData.startDate} to ${reportFormData.endDate}\n\n✅ Template saved and can be reused for future reports!`);
+                      }}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                    >
+                      Create Template
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        // Use controlled form data
+                        const { reportType, startDate, endDate, format } = reportFormData;
                         
                         // Generate dynamic content based on report type
                         const getReportData = (type: string) => {
