@@ -81,6 +81,7 @@ export default function PharmacyDashboardEnhanced() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '', prescription: null as Prescription | null, inventoryItem: null as InventoryItem | null });
   const [notificationsRead, setNotificationsRead] = useState(false);
+  const [showNotificationBadge, setShowNotificationBadge] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [updatedPrescriptionId, setUpdatedPrescriptionId] = useState<string | null>(null);
@@ -660,7 +661,7 @@ export default function PharmacyDashboardEnhanced() {
           >
             <Bell className="w-4 h-4" />
             Notifications
-            {stats?.inventoryAlerts && !notificationsRead ? (
+            {stats?.inventoryAlerts && showNotificationBadge ? (
               <Badge className="bg-red-100 text-red-800 ml-1">{stats.inventoryAlerts}</Badge>
             ) : null}
           </Button>
@@ -1591,7 +1592,7 @@ export default function PharmacyDashboardEnhanced() {
                       type="button"
                       onClick={() => {
                         // Clear notifications and close modal
-                        setStats(prev => prev ? { ...prev, inventoryAlerts: 0 } : null);
+                        setShowNotificationBadge(false);
                         setNotificationsRead(true);
                         alert('All notifications marked as read!');
                         closeModal();
