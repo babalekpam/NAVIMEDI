@@ -73,112 +73,49 @@ export default function PharmacyDashboardEnhancedV2() {
     { id: 'I003', medication: 'Amoxicillin 500mg', currentStock: 45, reorderLevel: 100, supplier: 'Teva', urgency: 'medium' },
   ];
 
-  const generateComprehensiveReport = async () => {
-    try {
-      console.log('🚀 Starting report generation...');
-      alert('Starting report generation...');
-      
-      const csvContent = `Comprehensive Pharmacy Analytics Report
-Generated: ${new Date().toLocaleString()}
-Period: ${selectedTimeframe === 'today' ? 'Today' : selectedTimeframe === 'week' ? 'This Week' : 'This Month'}
+  const generateComprehensiveReport = () => {
+    console.log('🚀 REPORT GENERATION STARTED');
+    
+    // Simple CSV data
+    const csvData = [
+      ['Pharmacy Report - ' + new Date().toLocaleDateString()],
+      ['Period: ' + selectedTimeframe],
+      [''],
+      ['Metric', 'Value'],
+      ['Total Prescriptions', selectedTimeframe === 'today' ? metrics.prescriptionsToday : metrics.prescriptionsWeek],
+      ['Total Revenue', '$' + (selectedTimeframe === 'today' ? metrics.revenueToday : metrics.revenueWeek)],
+      ['Patients Served', selectedTimeframe === 'today' ? metrics.patientsToday : 287],
+      ['Average Wait Time', metrics.averageWaitTime + ' minutes'],
+      ['Inventory Alerts', metrics.inventoryAlerts],
+      ['Insurance Claims', metrics.insuranceClaims],
+      [''],
+      ['Current Prescriptions'],
+      ['Patient Name', 'Medication', 'Status', 'Priority'],
+      ...prescriptions.map(p => [p.patientName, p.medication, p.status, p.priority]),
+      [''],
+      ['Inventory Alerts'],
+      ['Medication', 'Current Stock', 'Reorder Level', 'Urgency'],
+      ...inventoryAlerts.map(a => [a.medication, a.currentStock, a.reorderLevel, a.urgency])
+    ];
 
-=== EXECUTIVE SUMMARY ===
-Total Prescriptions,${selectedTimeframe === 'today' ? metrics.prescriptionsToday : metrics.prescriptionsWeek}
-Total Revenue,$${selectedTimeframe === 'today' ? metrics.revenueToday : metrics.revenueWeek}
-Patients Served,${selectedTimeframe === 'today' ? metrics.patientsToday : 287}
-Average Wait Time,${metrics.averageWaitTime} minutes
-Patient Satisfaction,94.2%
-Insurance Claims Processed,${metrics.insuranceClaims}
-Claims Approval Rate,92.8%
+    // Convert to CSV string
+    const csvContent = csvData.map(row => 
+      Array.isArray(row) ? row.join(',') : row
+    ).join('\n');
 
-=== PRESCRIPTION ANALYTICS ===
-Status,Count,Percentage
-New,${prescriptions.filter(p => p.status === 'new').length},${(prescriptions.filter(p => p.status === 'new').length / prescriptions.length * 100).toFixed(1)}%
-Processing,${prescriptions.filter(p => p.status === 'processing').length},${(prescriptions.filter(p => p.status === 'processing').length / prescriptions.length * 100).toFixed(1)}%
-Ready,${prescriptions.filter(p => p.status === 'ready').length},${(prescriptions.filter(p => p.status === 'ready').length / prescriptions.length * 100).toFixed(1)}%
-Dispensed,${prescriptions.filter(p => p.status === 'dispensed').length},${(prescriptions.filter(p => p.status === 'dispensed').length / prescriptions.length * 100).toFixed(1)}%
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `pharmacy_report_${selectedTimeframe}_${Date.now()}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
 
-=== TOP MEDICATIONS ===
-Medication,Prescriptions,Revenue,Margin
-Metformin 500mg,89,$2,456.78,34.2%
-Lisinopril 10mg,76,$1,987.45,28.9%
-Atorvastatin 20mg,65,$3,245.67,41.3%
-Amlodipine 5mg,54,$1,678.23,32.1%
-Omeprazole 20mg,48,$1,234.89,29.7%
-Insulin Glargine,42,$4,567.89,18.5%
-Albuterol Inhaler,38,$2,345.67,35.8%
-Simvastatin 40mg,35,$1,456.78,31.2%
-
-=== INVENTORY ALERTS ===
-Medication,Current Stock,Reorder Level,Urgency,Supplier
-${inventoryAlerts.map(alert => `${alert.medication},${alert.currentStock},${alert.reorderLevel},${alert.urgency},${alert.supplier}`).join('\n')}
-
-=== FINANCIAL PERFORMANCE ===
-Revenue Stream,Amount,Percentage
-Prescription Sales,$${(metrics.revenueWeek * 0.75).toFixed(2)},75.0%
-Insurance Copays,$${(metrics.revenueWeek * 0.15).toFixed(2)},15.0%
-OTC Sales,$${(metrics.revenueWeek * 0.08).toFixed(2)},8.0%
-Consultation Fees,$${(metrics.revenueWeek * 0.02).toFixed(2)},2.0%
-
-=== OPERATIONAL EFFICIENCY ===
-Metric,Value,Target,Performance
-Average Processing Time,${metrics.averageWaitTime} min,15 min,80.0%
-First Fill Rate,94.2%,95.0%,99.2%
-Generic Substitution Rate,78.5%,75.0%,104.7%
-Medication Therapy Management,156 consultations,120,130.0%
-Vaccination Services,89 vaccines,80,111.3%
-
-=== PATIENT DEMOGRAPHICS ===
-Age Group,Count,Percentage
-0-18,45,15.7%
-19-34,78,27.2%
-35-54,98,34.1%
-55-74,87,30.3%
-75+,79,27.5%
-
-Insurance Type,Count,Percentage
-Medicare,134,46.7%
-Medicaid,67,23.3%
-Commercial,98,34.1%
-Cash Pay,23,8.0%
-Other,15,5.2%
-
-=== CLINICAL SERVICES ===
-Service,This Period,Last Period,Growth
-Medication Counseling,234,198,+18.2%
-Drug Interaction Screening,456,423,+7.8%
-Adherence Monitoring,123,145,-15.2%
-Immunizations,89,67,+32.8%
-Health Screenings,45,38,+18.4%
-MTM Consultations,67,52,+28.8%
-
-=== QUALITY METRICS ===
-Metric,Score,Benchmark,Status
-Prescription Accuracy,99.8%,99.5%,Exceeds
-Customer Satisfaction,4.8/5.0,4.5/5.0,Exceeds
-Wait Time Compliance,85.6%,90.0%,Below Target
-Insurance Processing,92.8%,95.0%,Below Target
-Inventory Turnover,12.4x,10.0x,Exceeds`;
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `comprehensive_pharmacy_report_${selectedTimeframe}_${Date.now()}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      
-      console.log('📄 CSV file created, triggering download...');
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      alert('✅ Report downloaded successfully!');
-      console.log('✅ Report generation completed successfully');
-    } catch (error) {
-      console.error('❌ Report generation failed:', error);
-      alert('❌ Report generation failed: ' + (error instanceof Error ? error.message : String(error)));
-    }
+    console.log('✅ REPORT DOWNLOAD COMPLETED');
+    alert('Report downloaded successfully!');
   };
 
   const getPriorityColor = (priority: string) => {
