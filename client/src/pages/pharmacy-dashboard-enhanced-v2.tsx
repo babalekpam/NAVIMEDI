@@ -75,47 +75,59 @@ export default function PharmacyDashboardEnhancedV2() {
 
   const generateComprehensiveReport = () => {
     console.log('🚀 REPORT GENERATION STARTED');
+    alert('Starting report generation...');
     
-    // Simple CSV data
-    const csvData = [
-      ['Pharmacy Report - ' + new Date().toLocaleDateString()],
-      ['Period: ' + selectedTimeframe],
-      [''],
-      ['Metric', 'Value'],
-      ['Total Prescriptions', selectedTimeframe === 'today' ? metrics.prescriptionsToday : metrics.prescriptionsWeek],
-      ['Total Revenue', '$' + (selectedTimeframe === 'today' ? metrics.revenueToday : metrics.revenueWeek)],
-      ['Patients Served', selectedTimeframe === 'today' ? metrics.patientsToday : 287],
-      ['Average Wait Time', metrics.averageWaitTime + ' minutes'],
-      ['Inventory Alerts', metrics.inventoryAlerts],
-      ['Insurance Claims', metrics.insuranceClaims],
-      [''],
-      ['Current Prescriptions'],
-      ['Patient Name', 'Medication', 'Status', 'Priority'],
-      ...prescriptions.map(p => [p.patientName, p.medication, p.status, p.priority]),
-      [''],
-      ['Inventory Alerts'],
-      ['Medication', 'Current Stock', 'Reorder Level', 'Urgency'],
-      ...inventoryAlerts.map(a => [a.medication, a.currentStock, a.reorderLevel, a.urgency])
-    ];
+    try {
+      // Create simple text content
+      const reportContent = `Pharmacy Report - ${new Date().toLocaleDateString()}
+Period: ${selectedTimeframe}
 
-    // Convert to CSV string
-    const csvContent = csvData.map(row => 
-      Array.isArray(row) ? row.join(',') : row
-    ).join('\n');
+=== SUMMARY METRICS ===
+Total Prescriptions: ${selectedTimeframe === 'today' ? metrics.prescriptionsToday : metrics.prescriptionsWeek}
+Total Revenue: $${selectedTimeframe === 'today' ? metrics.revenueToday : metrics.revenueWeek}
+Patients Served: ${selectedTimeframe === 'today' ? metrics.patientsToday : 287}
+Average Wait Time: ${metrics.averageWaitTime} minutes
+Inventory Alerts: ${metrics.inventoryAlerts}
+Insurance Claims: ${metrics.insuranceClaims}
 
-    // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `pharmacy_report_${selectedTimeframe}_${Date.now()}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+=== CURRENT PRESCRIPTIONS ===
+${prescriptions.map(p => `${p.patientName} - ${p.medication} - ${p.status} - ${p.priority}`).join('\n')}
 
-    console.log('✅ REPORT DOWNLOAD COMPLETED');
-    alert('Report downloaded successfully!');
+=== INVENTORY ALERTS ===
+${inventoryAlerts.map(a => `${a.medication} - Stock: ${a.currentStock} - Reorder: ${a.reorderLevel} - ${a.urgency}`).join('\n')}
+
+Report generated on: ${new Date().toLocaleString()}
+`;
+
+      console.log('📄 Content created, creating download...');
+      
+      // Create blob and download
+      const blob = new Blob([reportContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      
+      link.href = url;
+      link.download = `pharmacy-report-${selectedTimeframe}-${Date.now()}.txt`;
+      link.style.display = 'none';
+      
+      document.body.appendChild(link);
+      console.log('🔗 Link created, triggering download...');
+      
+      link.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        console.log('🧹 Cleanup completed');
+      }, 100);
+
+      console.log('✅ REPORT DOWNLOAD INITIATED');
+      alert('Report download started! Check your downloads folder.');
+      
+    } catch (error) {
+      console.error('❌ Error:', error);
+      alert('Error generating report: ' + error);
+    }
   };
 
   const getPriorityColor = (priority: string) => {
@@ -463,7 +475,13 @@ export default function PharmacyDashboardEnhancedV2() {
                   <option value="week">This Week</option>
                   <option value="month">This Month</option>
                 </select>
-                <Button onClick={generateComprehensiveReport} className="bg-green-600 hover:bg-green-700">
+                <Button 
+                  onClick={() => {
+                    console.log('🔥 BUTTON CLICKED!');
+                    generateComprehensiveReport();
+                  }} 
+                  className="bg-green-600 hover:bg-green-700"
+                >
                   <Download className="w-4 h-4 mr-2" />
                   Export Report
                 </Button>
