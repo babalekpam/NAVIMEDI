@@ -27,7 +27,8 @@ import Reports from "@/pages/reports";
 import MedicalCommunications from "@/pages/medical-communications";
 import LaboratoryRegistration from "@/pages/laboratory-registration";
 import HealthRecommendations from "@/pages/health-recommendations";
-import PharmacyDashboardEnhanced from "@/pages/pharmacy-dashboard-enhanced";
+// import PharmacyDashboardEnhanced from "@/pages/pharmacy-dashboard-enhanced";
+import PharmacyDashboardSimple from "@/pages/pharmacy-dashboard-simple";
 import PharmacyRegistration from "@/pages/pharmacy-registration";
 import { PharmacyInventoryManager } from "@/components/pharmacy/PharmacyInventoryManager";
 import { PharmacyPrescriptionManager } from "@/components/pharmacy/PharmacyPrescriptionManager";
@@ -392,18 +393,10 @@ function AppContent() {
         </Route>
         <Route path="/pharmacy-dashboard">
           <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <PharmacyDashboardEnhanced />
-                </main>
-              </div>
-            </div>
+            <PharmacyDashboardSimple />
           </ProtectedRoute>
         </Route>
-        <Route path="/pharmacy-dashboard-enhanced">
+        {/* <Route path="/pharmacy-dashboard-enhanced">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
               <Header />
@@ -415,7 +408,7 @@ function AppContent() {
               </div>
             </div>
           </ProtectedRoute>
-        </Route>
+        </Route> */}
         <Route path="/pharmacy-inventory">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
