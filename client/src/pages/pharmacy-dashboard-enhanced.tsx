@@ -1942,8 +1942,9 @@ export default function PharmacyDashboardEnhanced() {
                             format
                           };
                           
-                          console.log('Current reportFormData:', reportFormData);
-                          console.log('Sending to backend:', requestData);
+                          console.log('ENHANCED PHARMACY: Current reportFormData:', reportFormData);
+                          console.log('ENHANCED PHARMACY: Sending to backend:', requestData);
+                          console.log('ENHANCED PHARMACY: Using endpoint /api/pharmacy/reports/enhanced');
                           
                           const response = await fetch('/api/pharmacy/reports/enhanced', {
                             method: 'POST',
