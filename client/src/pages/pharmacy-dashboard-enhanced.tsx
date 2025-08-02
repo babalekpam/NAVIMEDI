@@ -373,7 +373,7 @@ export default function PharmacyDashboardEnhanced() {
 
   // Use local prescriptions directly
   const prescriptions = localPrescriptions;
-  console.log('Current prescriptions for display:', prescriptions.length, prescriptions.map(p => ({ id: p.id, status: p.status })));
+  console.log('RENDER - Current prescriptions for display:', prescriptions.length, prescriptions.map(p => ({ id: p.id, status: p.status, patientName: p.patientName })));
 
   // Fetch inventory items
   const { data: inventory = [] } = useQuery<InventoryItem[]>({
@@ -415,6 +415,7 @@ export default function PharmacyDashboardEnhanced() {
   });
 
   const getStatusBadge = (status: string) => {
+    console.log('BADGE - Rendering badge for status:', status);
     const statusConfig = {
       new: { color: 'bg-blue-100 text-blue-800', label: 'New' },
       processing: { color: 'bg-yellow-100 text-yellow-800', label: 'Processing' },
@@ -424,6 +425,7 @@ export default function PharmacyDashboardEnhanced() {
     };
     
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.new;
+    console.log('BADGE - Using config:', config);
     return <Badge className={config.color}>{config.label}</Badge>;
   };
 
@@ -733,6 +735,7 @@ export default function PharmacyDashboardEnhanced() {
                         <p className="text-sm text-gray-500">Prescribed by {prescription.prescribedBy}</p>
                       </div>
                       <div className="text-right space-y-2">
+                        <div>Status: {prescription.status}</div>
                         {getStatusBadge(prescription.status)}
                         {getPriorityBadge(prescription.priority)}
                         <span className={`inline-block px-2 py-1 text-xs rounded-full ${
