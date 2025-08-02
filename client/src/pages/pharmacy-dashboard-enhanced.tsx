@@ -91,6 +91,7 @@ export default function PharmacyDashboardEnhanced() {
     expiryDate: string;
     supplier: string;
   } | null>(null);
+  const [reorderQuantity, setReorderQuantity] = useState<number>(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [updatedPrescriptionId, setUpdatedPrescriptionId] = useState<string | null>(null);
@@ -234,6 +235,9 @@ export default function PharmacyDashboardEnhanced() {
   };
 
   const openReorderModal = (item: InventoryItem) => {
+    // Initialize reorder quantity with suggested amount
+    setReorderQuantity(item.maxStock - item.currentStock);
+    
     setModalContent({
       title: 'Reorder Item',
       content: 'reorder',
@@ -534,12 +538,28 @@ export default function PharmacyDashboardEnhanced() {
   const handlePlaceOrder = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (modalContent.inventoryItem) {
-      console.log('Placing order for:', modalContent.inventoryItem.id);
-      const quantity = modalContent.inventoryItem.maxStock - modalContent.inventoryItem.currentStock;
-      const totalCost = quantity * modalContent.inventoryItem.cost;
-      alert(`Order placed successfully!\n\nItem: ${modalContent.inventoryItem.name}\nQuantity: ${quantity} units\nSupplier: ${modalContent.inventoryItem.supplier}\nTotal Cost: $${totalCost.toFixed(2)}\n\nExpected delivery: 3-5 business days`);
+    if (modalContent.inventoryItem && reorderQuantity > 0) {
+      // Update the local inventory with new stock
+      setLocalInventoryItems(prev => 
+        prev.map(item => 
+          item.id === modalContent.inventoryItem?.id 
+            ? { 
+                ...item, 
+                currentStock: item.currentStock + reorderQuantity,
+                status: (item.currentStock + reorderQuantity) > item.minStock ? 'in_stock' as const : item.status
+              }
+            : item
+        )
+      );
+      
+      const totalCost = reorderQuantity * modalContent.inventoryItem.cost;
+      const newStockLevel = modalContent.inventoryItem.currentStock + reorderQuantity;
+      
+      console.log('Order placed for:', modalContent.inventoryItem.id, 'Quantity:', reorderQuantity);
+      alert(`✅ Order Placed Successfully!\n\n📦 Item: ${modalContent.inventoryItem.name}\n📊 Quantity Ordered: ${reorderQuantity} units\n🏪 Supplier: ${modalContent.inventoryItem.supplier}\n💰 Total Cost: $${totalCost.toFixed(2)}\n\n📈 New Stock Level: ${newStockLevel} units\n🚚 Expected Delivery: 3-5 business days\n\n✅ Inventory will be updated upon delivery`);
       closeModal();
+    } else {
+      alert('Please enter a valid quantity to order.');
     }
   };
 
@@ -1569,7 +1589,9 @@ export default function PharmacyDashboardEnhanced() {
                         <label className="block font-medium mb-1 text-sm">Suggested Quantity</label>
                         <input 
                           type="number" 
-                          defaultValue={modalContent.inventoryItem.maxStock - modalContent.inventoryItem.currentStock}
+                          value={reorderQuantity}
+                          onChange={(e) => setReorderQuantity(parseInt(e.target.value) || 0)}
+                          min="1"
                           className="w-full p-2 border border-gray-300 rounded"
                         />
                       </div>
@@ -1582,8 +1604,18 @@ export default function PharmacyDashboardEnhanced() {
                         <div>
                           <label className="block font-medium mb-1 text-sm">Total Cost</label>
                           <div className="p-2 bg-blue-100 rounded text-sm font-medium">
-                            ${((modalContent.inventoryItem.maxStock - modalContent.inventoryItem.currentStock) * modalContent.inventoryItem.cost).toFixed(2)}
+                            ${(reorderQuantity * modalContent.inventoryItem.cost).toFixed(2)}
                           </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block font-medium mb-1 text-sm">New Stock Level Preview</label>
+                        <div className="p-2 bg-green-100 rounded text-sm font-medium">
+                          {modalContent.inventoryItem.currentStock + reorderQuantity} units
+                          <span className="text-green-600 text-xs ml-2">
+                            (+{reorderQuantity} units)
+                          </span>
                         </div>
                       </div>
                       
