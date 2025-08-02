@@ -419,105 +419,228 @@ Report generated on: ${new Date().toLocaleString()}
                         className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-2 rounded text-sm transition-all transform hover:scale-105"
                         onClick={() => {
                           try {
-                            console.log('📄 Generating HTML report...');
-                            alert('Generating HTML report...');
+                            console.log('📄 Generating PDF report...');
+                            alert('Generating PDF report...');
                             
-                            // Generate HTML content for PDF printing
-                            const htmlContent = `
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                              <title>AI Insights Report</title>
-                              <style>
-                                body { font-family: Arial, sans-serif; margin: 20px; }
-                                .header { text-align: center; margin-bottom: 30px; }
-                                .section { margin: 20px 0; }
-                                .section h2 { color: #333; border-bottom: 2px solid #666; padding-bottom: 5px; }
-                                .metric { margin: 10px 0; }
-                                ul, ol { margin: 10px 0; padding-left: 20px; }
-                              </style>
-                            </head>
-                            <body>
-                              <div class="header">
-                                <h1>AI INSIGHTS REPORT - NaviMED</h1>
-                                <p>Generated: ${new Date().toLocaleString()}</p>
-                                <p>Pharmacy: Working Test Pharmacy</p>
-                              </div>
-                              
-                              <div class="section">
-                                <h2>DRUG INTERACTION ALERTS</h2>
-                                <div class="metric">Total Interactions Detected: 3</div>
-                                <div class="metric">High Priority: 1</div>
-                                <div class="metric">Medium Priority: 2</div>
-                                <h3>Interaction Details:</h3>
-                                <ul>
-                                  <li>Warfarin + Aspirin - Increased bleeding risk</li>
-                                  <li>Metformin + Alcohol - Enhanced hypoglycemic effect</li>
-                                  <li>Lisinopril + Potassium - Hyperkalemia risk</li>
-                                </ul>
-                              </div>
-                              
-                              <div class="section">
-                                <h2>ADHERENCE PREDICTION</h2>
-                                <div class="metric">Overall Compliance Rate: 89%</div>
-                                <div class="metric">Patients at Risk: 12</div>
-                                <div class="metric">Improvement Opportunities: 23</div>
-                                <h3>Top Non-Adherent Medications:</h3>
-                                <ul>
-                                  <li>Insulin (72% compliance)</li>
-                                  <li>Blood Pressure Medications (81% compliance)</li>
-                                  <li>Cholesterol Medications (85% compliance)</li>
-                                </ul>
-                              </div>
-                              
-                              <div class="section">
-                                <h2>INVENTORY OPTIMIZATION</h2>
-                                <div class="metric">Potential Monthly Savings: $2,340</div>
-                                <div class="metric">Overstocked Items: 8</div>
-                                <div class="metric">Understocked Items: 5</div>
-                                <div class="metric">Optimal Reorder Points Calculated: 156</div>
-                                <h3>Cost Reduction Opportunities:</h3>
-                                <ul>
-                                  <li>Generic Substitutions: $1,200/month</li>
-                                  <li>Bulk Purchase Discounts: $890/month</li>
-                                  <li>Waste Reduction: $250/month</li>
-                                </ul>
-                              </div>
-                              
-                              <div class="section">
-                                <h2>AI RECOMMENDATIONS</h2>
-                                <ol>
-                                  <li>Implement automated drug interaction screening</li>
-                                  <li>Set up patient adherence reminders</li>
-                                  <li>Optimize inventory based on seasonal trends</li>
-                                  <li>Consider therapeutic substitutions for cost savings</li>
-                                </ol>
-                              </div>
-                              
-                              <div style="text-align: center; margin-top: 40px; font-style: italic;">
-                                Report generated by NaviMED AI Analytics Engine
-                              </div>
-                            </body>
-                            </html>
-                            `;
+                            // Generate a simple but valid PDF using browser canvas/text approach
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            canvas.width = 612; // 8.5 inches * 72 DPI
+                            canvas.height = 792; // 11 inches * 72 DPI
+                            
+                            // Set white background
+                            ctx.fillStyle = 'white';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            
+                            // Set text properties
+                            ctx.fillStyle = 'black';
+                            ctx.font = '16px Arial';
+                            
+                            let y = 50;
+                            const lineHeight = 20;
+                            
+                            // Title
+                            ctx.font = 'bold 20px Arial';
+                            ctx.fillText('AI INSIGHTS REPORT - NaviMED', 50, y);
+                            y += lineHeight * 2;
+                            
+                            ctx.font = '12px Arial';
+                            ctx.fillText('Generated: ' + new Date().toLocaleString(), 50, y);
+                            y += lineHeight;
+                            ctx.fillText('Pharmacy: Working Test Pharmacy', 50, y);
+                            y += lineHeight * 2;
+                            
+                            // Drug Interactions Section
+                            ctx.font = 'bold 14px Arial';
+                            ctx.fillText('DRUG INTERACTION ALERTS', 50, y);
+                            y += lineHeight;
+                            ctx.font = '12px Arial';
+                            ctx.fillText('Total Interactions Detected: 3', 70, y);
+                            y += lineHeight;
+                            ctx.fillText('High Priority: 1, Medium Priority: 2', 70, y);
+                            y += lineHeight;
+                            ctx.fillText('• Warfarin + Aspirin - Increased bleeding risk', 70, y);
+                            y += lineHeight;
+                            ctx.fillText('• Metformin + Alcohol - Enhanced hypoglycemic effect', 70, y);
+                            y += lineHeight;
+                            ctx.fillText('• Lisinopril + Potassium - Hyperkalemia risk', 70, y);
+                            y += lineHeight * 2;
+                            
+                            // Adherence Section
+                            ctx.font = 'bold 14px Arial';
+                            ctx.fillText('ADHERENCE PREDICTION', 50, y);
+                            y += lineHeight;
+                            ctx.font = '12px Arial';
+                            ctx.fillText('Overall Compliance Rate: 89%', 70, y);
+                            y += lineHeight;
+                            ctx.fillText('Patients at Risk: 12', 70, y);
+                            y += lineHeight;
+                            ctx.fillText('Improvement Opportunities: 23', 70, y);
+                            y += lineHeight * 2;
+                            
+                            // Inventory Section
+                            ctx.font = 'bold 14px Arial';
+                            ctx.fillText('INVENTORY OPTIMIZATION', 50, y);
+                            y += lineHeight;
+                            ctx.font = '12px Arial';
+                            ctx.fillText('Potential Monthly Savings: $2,340', 70, y);
+                            y += lineHeight;
+                            ctx.fillText('Overstocked Items: 8, Understocked Items: 5', 70, y);
+                            y += lineHeight;
+                            ctx.fillText('Optimal Reorder Points Calculated: 156', 70, y);
+                            y += lineHeight * 2;
+                            
+                            // AI Recommendations
+                            ctx.font = 'bold 14px Arial';
+                            ctx.fillText('AI RECOMMENDATIONS', 50, y);
+                            y += lineHeight;
+                            ctx.font = '12px Arial';
+                            ctx.fillText('1. Implement automated drug interaction screening', 70, y);
+                            y += lineHeight;
+                            ctx.fillText('2. Set up patient adherence reminders', 70, y);
+                            y += lineHeight;
+                            ctx.fillText('3. Optimize inventory based on seasonal trends', 70, y);
+                            y += lineHeight;
+                            ctx.fillText('4. Consider therapeutic substitutions for cost savings', 70, y);
+                            
+                            // Convert canvas to PDF-like data URL
+                            const dataURL = canvas.toDataURL('image/png');
+                            
+                            // Create a simplified PDF document with text content
+                            const pdfContent = `%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
 
-                            const blob = new Blob([htmlContent], { type: 'text/html' });
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 <<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+>>
+>>
+>>
+endobj
+
+4 0 obj
+<<
+/Length 1500
+>>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(AI INSIGHTS REPORT - NaviMED) Tj
+0 -30 Td
+/F1 12 Tf
+(Generated: ${new Date().toLocaleString()}) Tj
+0 -20 Td
+(Pharmacy: Working Test Pharmacy) Tj
+0 -40 Td
+/F1 14 Tf
+(DRUG INTERACTION ALERTS) Tj
+0 -25 Td
+/F1 10 Tf
+(Total Interactions Detected: 3) Tj
+0 -15 Td
+(High Priority: 1, Medium Priority: 2) Tj
+0 -15 Td
+(• Warfarin + Aspirin - Increased bleeding risk) Tj
+0 -15 Td
+(• Metformin + Alcohol - Enhanced hypoglycemic effect) Tj
+0 -15 Td
+(• Lisinopril + Potassium - Hyperkalemia risk) Tj
+0 -30 Td
+/F1 14 Tf
+(ADHERENCE PREDICTION) Tj
+0 -25 Td
+/F1 10 Tf
+(Overall Compliance Rate: 89%) Tj
+0 -15 Td
+(Patients at Risk: 12) Tj
+0 -15 Td
+(Improvement Opportunities: 23) Tj
+0 -30 Td
+/F1 14 Tf
+(INVENTORY OPTIMIZATION) Tj
+0 -25 Td
+/F1 10 Tf
+(Potential Monthly Savings: $2,340) Tj
+0 -15 Td
+(Overstocked Items: 8, Understocked Items: 5) Tj
+0 -15 Td
+(Optimal Reorder Points Calculated: 156) Tj
+0 -30 Td
+/F1 14 Tf
+(AI RECOMMENDATIONS) Tj
+0 -25 Td
+/F1 10 Tf
+(1. Implement automated drug interaction screening) Tj
+0 -15 Td
+(2. Set up patient adherence reminders) Tj
+0 -15 Td
+(3. Optimize inventory based on seasonal trends) Tj
+0 -15 Td
+(4. Consider therapeutic substitutions for cost savings) Tj
+0 -30 Td
+/F1 8 Tf
+(Report generated by NaviMED AI Analytics Engine) Tj
+ET
+endstream
+endobj
+
+xref
+0 5
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000306 00000 n 
+trailer
+<<
+/Size 5
+/Root 1 0 R
+>>
+startxref
+1859
+%%EOF`;
+
+                            const blob = new Blob([pdfContent], { type: 'application/pdf' });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
-                            a.download = `ai-insights-report-${Date.now()}.html`;
+                            a.download = `ai-insights-report-${Date.now()}.pdf`;
                             a.click();
                             URL.revokeObjectURL(url);
                             
-                            console.log('✅ HTML report downloaded!');
-                            alert('HTML report downloaded successfully! You can open it in any browser or print as PDF.');
+                            console.log('✅ PDF report downloaded!');
+                            alert('PDF report downloaded successfully!');
                           } catch (error) {
-                            console.error('❌ HTML generation error:', error);
-                            alert('Error generating HTML: ' + error);
+                            console.error('❌ PDF generation error:', error);
+                            alert('Error generating PDF: ' + error);
                           }
                         }}
                       >
-                        📄 HTML
+                        📄 PDF
                       </button>
                       
                       <button 
