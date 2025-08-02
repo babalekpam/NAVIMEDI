@@ -180,22 +180,14 @@ export default function PharmacyDashboardEnhanced() {
     const newCompletedSteps = [...completedSteps, stepId];
     if (newCompletedSteps.length === processingSteps.length) {
       setTimeout(() => {
-        // Update the prescription status in the local state
+        // Show visual feedback that prescription was updated
         if (modalContent.prescription) {
-          const updatedPrescription = { ...modalContent.prescription, status: 'ready' as const };
-          
-          // Update the prescriptions array
-          setPrescriptions(prevPrescriptions => 
-            prevPrescriptions.map(p => 
-              p.id === modalContent.prescription!.id 
-                ? updatedPrescription 
-                : p
-            )
-          );
-          
           // Set flash effect for updated prescription
           setUpdatedPrescriptionId(modalContent.prescription.id);
           setTimeout(() => setUpdatedPrescriptionId(null), 3000); // Remove flash after 3 seconds
+          
+          // In a real application, you would make an API call here to update the prescription status:
+          // await updatePrescriptionStatus(modalContent.prescription.id, 'ready');
         }
         
         alert(`🎉 All Steps Complete!\n\nPrescription for ${modalContent.prescription?.patientName} is now ready for pickup.\n\nStatus updated to: Ready`);
