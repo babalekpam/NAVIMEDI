@@ -73,6 +73,12 @@ export default function PharmacyDashboardEnhanced() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
+  // Debug tab changes
+  const handleTabChange = (value: string) => {
+    console.log('Tab changed to:', value);
+    setActiveView(value);
+  };
+
   // Fetch pharmacy statistics
   const { data: stats } = useQuery<PharmacyStats>({
     queryKey: ['/api/pharmacy/stats'],
@@ -213,7 +219,7 @@ export default function PharmacyDashboardEnhanced() {
         <div>
           <h1 className="text-3xl font-bold">Pharmacy Dashboard</h1>
           <p className="text-gray-600">
-            Welcome back, {user?.firstName}! Manage your pharmacy operations efficiently.
+            Welcome back, {user?.firstName}! Current view: <span className="font-semibold capitalize">{activeView}</span>
           </p>
         </div>
         <div className="flex gap-2">
@@ -307,12 +313,32 @@ export default function PharmacyDashboardEnhanced() {
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs value={activeView} onValueChange={setActiveView} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+      <Tabs value={activeView} onValueChange={handleTabChange} defaultValue="overview" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4 bg-gray-100 rounded-lg p-1">
+          <TabsTrigger 
+            value="overview" 
+            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md px-4 py-2 font-medium transition-all"
+          >
+            Overview
+          </TabsTrigger>
+          <TabsTrigger 
+            value="prescriptions" 
+            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md px-4 py-2 font-medium transition-all"
+          >
+            Prescriptions
+          </TabsTrigger>
+          <TabsTrigger 
+            value="inventory" 
+            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md px-4 py-2 font-medium transition-all"
+          >
+            Inventory
+          </TabsTrigger>
+          <TabsTrigger 
+            value="analytics" 
+            className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md px-4 py-2 font-medium transition-all"
+          >
+            Analytics
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
