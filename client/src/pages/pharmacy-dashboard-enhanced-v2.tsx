@@ -476,9 +476,40 @@ Report generated on: ${new Date().toLocaleString()}
                   <option value="month">This Month</option>
                 </select>
                 <Button 
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     console.log('🔥 BUTTON CLICKED!');
-                    generateComprehensiveReport();
+                    alert('Button was clicked!');
+                    
+                    // Direct download function
+                    const content = `Pharmacy Report
+Generated: ${new Date().toLocaleString()}
+Period: ${selectedTimeframe}
+
+Prescriptions Today: ${metrics.prescriptionsToday}
+Revenue Today: $${metrics.revenueToday}
+Patients Today: ${metrics.patientsToday}
+Wait Time: ${metrics.averageWaitTime}min
+Alerts: ${metrics.inventoryAlerts}
+Claims: ${metrics.insuranceClaims}
+
+Current Prescriptions:
+${prescriptions.map(p => `- ${p.patientName}: ${p.medication} (${p.status})`).join('\n')}
+
+Inventory Alerts:
+${inventoryAlerts.map(a => `- ${a.medication}: ${a.currentStock} units`).join('\n')}
+`;
+                    
+                    const element = document.createElement('a');
+                    const file = new Blob([content], {type: 'text/plain'});
+                    element.href = URL.createObjectURL(file);
+                    element.download = 'pharmacy-report.txt';
+                    document.body.appendChild(element);
+                    element.click();
+                    document.body.removeChild(element);
+                    
+                    alert('Report downloaded!');
                   }} 
                   className="bg-green-600 hover:bg-green-700"
                 >
