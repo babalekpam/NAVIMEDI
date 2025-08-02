@@ -268,6 +268,31 @@ export default function PharmacyDashboardEnhanced() {
     e.stopPropagation();
     if (modalContent.prescription) {
       console.log('Completing dispensing for prescription:', modalContent.prescription.id);
+      
+      // Update prescription status to dispensed
+      const updatedPrescription = { ...modalContent.prescription, status: 'dispensed' as const };
+      
+      // Update the local prescriptions array
+      setLocalPrescriptions(prevPrescriptions => {
+        console.log('Dispensing - Previous prescriptions:', prevPrescriptions.map(p => ({ id: p.id, status: p.status })));
+        const updated = prevPrescriptions.map(p => 
+          p.id === modalContent.prescription!.id 
+            ? updatedPrescription 
+            : p
+        );
+        console.log('Dispensing - Updated prescriptions:', updated.map(p => ({ id: p.id, status: p.status })));
+        return updated;
+      });
+      
+      // Set flash effect for updated prescription
+      setUpdatedPrescriptionId(modalContent.prescription.id);
+      setTimeout(() => setUpdatedPrescriptionId(null), 3000);
+      
+      // Also force a re-render by updating the filter to show all prescriptions
+      if (filterStatus !== 'all') {
+        setFilterStatus('all');
+      }
+      
       alert(`Prescription dispensed successfully!\n\nPatient: ${modalContent.prescription.patientName}\nMedication: ${modalContent.prescription.medicationName}\nStatus: Dispensed\n\nReceipt generated and patient notified.`);
       closeModal();
     }
