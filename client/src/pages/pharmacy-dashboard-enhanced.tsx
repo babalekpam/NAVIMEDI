@@ -83,6 +83,7 @@ export default function PharmacyDashboardEnhanced() {
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [updatedPrescriptionId, setUpdatedPrescriptionId] = useState<string | null>(null);
+  const [forceRerender, setForceRerender] = useState(0);
   
   // Local state for prescriptions to allow updates
   const [localPrescriptions, setLocalPrescriptions] = useState<Prescription[]>([
@@ -232,6 +233,9 @@ export default function PharmacyDashboardEnhanced() {
             return updated;
           });
           
+          // Force re-render
+          setForceRerender(prev => prev + 1);
+          
           // Also force a re-render by updating the filter to show all prescriptions
           if (filterStatus !== 'all') {
             setFilterStatus('all');
@@ -283,6 +287,9 @@ export default function PharmacyDashboardEnhanced() {
         console.log('Dispensing - Updated prescriptions:', updated.map(p => ({ id: p.id, status: p.status })));
         return updated;
       });
+      
+      // Force re-render
+      setForceRerender(prev => prev + 1);
       
       // Set flash effect for updated prescription
       setUpdatedPrescriptionId(modalContent.prescription.id);
@@ -718,10 +725,10 @@ export default function PharmacyDashboardEnhanced() {
               <h3 className="text-lg font-medium text-gray-900">Prescription Management</h3>
             </div>
             <div className="p-6">
-              <div className="space-y-4">
+              <div className="space-y-4" key={forceRerender}>
                 {filteredPrescriptions.map((prescription) => (
                   <div 
-                    key={prescription.id} 
+                    key={`${prescription.id}-${prescription.status}-${forceRerender}`} 
                     className={`border border-gray-200 rounded-lg p-4 transition-all duration-1000 ${
                       updatedPrescriptionId === prescription.id 
                         ? 'bg-green-100 border-green-300 shadow-lg' 
