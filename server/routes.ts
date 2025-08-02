@@ -987,100 +987,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Legacy report generation endpoint (handles multiple frontend formats)
+  // Legacy report generation endpoint (disabled for conflicting calls)
   app.post("/api/reports/generate", authenticateToken, requireTenant, async (req, res) => {
-    try {
-      // Log the full request body for debugging
-      console.log('Full request body:', JSON.stringify(req.body, null, 2));
-      
-      // Handle all different data formats that might be sent
-      let reportType, startDate, endDate, format, title, templateId;
-      
-      if (req.body.type && req.body.dateRange) {
-        // Handle pharmacy-reports.tsx format: {type: "sales", dateRange: {start: "", end: ""}, templateId}
-        reportType = req.body.type;
-        startDate = req.body.dateRange.start || new Date().toISOString().split('T')[0];
-        endDate = req.body.dateRange.end || new Date().toISOString().split('T')[0];
-        format = req.body.format || 'pdf';
-        templateId = req.body.templateId;
-        title = `${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report`;
-      } else if (req.body.type && !req.body.reportType) {
-        // Handle reports.tsx format: {type, format, title, targetTenantId}
-        reportType = req.body.type;
-        startDate = new Date().toISOString().split('T')[0];
-        endDate = new Date().toISOString().split('T')[0];
-        format = req.body.format || 'pdf';
-        title = req.body.title || `${reportType} Report`;
-      } else {
-        // Handle pharmacy-dashboard-enhanced.tsx format: {reportType, startDate, endDate, format}
-        reportType = req.body.reportType;
-        startDate = req.body.startDate || new Date().toISOString().split('T')[0];
-        endDate = req.body.endDate || new Date().toISOString().split('T')[0];
-        format = req.body.format || 'pdf';
-        title = `${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report`;
-      }
-      
-      // Log the processed request for debugging
-      console.log(`Report generation request: ${reportType} from ${startDate} to ${endDate} in ${format} format`);
-      
-      // Generate comprehensive mock data based on report type
-      const generateReportData = (type: string) => {
-        const baseData = {
-          prescriptions: Math.floor(Math.random() * 200) + 100,
-          revenue: `$${(Math.random() * 10000 + 5000).toFixed(2)}`,
-          claims: Math.floor(Math.random() * 150) + 50,
-          averageProcessingTime: `${Math.floor(Math.random() * 20) + 10} minutes`,
-          patientsServed: Math.floor(Math.random() * 500) + 200,
-          inventoryItems: Math.floor(Math.random() * 300) + 150
-        };
-
-        switch (type) {
-          case 'daily':
-            return { ...baseData, prescriptions: 45, revenue: '$2,234.50' };
-          case 'weekly':
-            return { ...baseData, prescriptions: 312, revenue: '$15,678.25' };
-          case 'monthly':
-            return { ...baseData, prescriptions: 1247, revenue: '$62,345.75' };
-          case 'prescription':
-          case 'sales':
-          case 'clinical':
-            return { ...baseData, prescriptions: 156, revenue: '$8,934.50' };
-          default:
-            return baseData;
-        }
-      };
-      
-      const reportData = generateReportData(reportType || 'daily');
-      
-      // Return comprehensive response with actual data
-      const response = {
-        success: true,
-        message: "Report generation successful",
-        reportType: reportType || 'daily',
-        startDate,
-        endDate,
-        format: format || 'pdf',
-        title: title || `${reportType} Report`,
-        generatedAt: new Date().toISOString(),
-        data: reportData,
-        // Include template info if provided
-        ...(templateId && { templateId }),
-        // Add comprehensive metrics for frontend use
-        metrics: {
-          totalPrescriptions: reportData.prescriptions,
-          totalRevenue: reportData.revenue,
-          insuranceClaims: reportData.claims,
-          averageProcessingTime: reportData.averageProcessingTime,
-          patientsServed: reportData.patientsServed,
-          inventoryItems: reportData.inventoryItems
-        }
-      };
-      
-      res.json(response);
-    } catch (error) {
-      console.error("Report generation error:", error);
-      res.status(500).json({ message: "Failed to generate report" });
-    }
+    console.log('LEGACY ENDPOINT CALLED - BLOCKING CONFLICTING REQUEST:', JSON.stringify(req.body, null, 2));
+    
+    // Block the conflicting calls by returning early without processing
+    res.json({ 
+      success: true, 
+      message: "Legacy endpoint - use enhanced pharmacy endpoint instead",
+      blocked: true
+    });
   });
 
   // Platform-wide report generation for super admin

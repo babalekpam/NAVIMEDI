@@ -1939,7 +1939,9 @@ export default function PharmacyDashboardEnhanced() {
                             reportType,
                             startDate,
                             endDate,
-                            format
+                            format,
+                            source: 'enhanced-pharmacy-dashboard',
+                            timestamp: Date.now()
                           };
                           
                           console.log('ENHANCED PHARMACY: Current reportFormData:', reportFormData);
