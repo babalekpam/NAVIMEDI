@@ -388,7 +388,7 @@ Inventory Turnover,12.4x,10.0x,Exceeds`;
         </div>
 
         {/* Modern Features Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* Digital Health Integration */}
           <Card className="bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-200">
             <CardHeader>
@@ -447,34 +447,7 @@ Inventory Turnover,12.4x,10.0x,Exceeds`;
             </CardContent>
           </Card>
 
-          {/* Patient Engagement */}
-          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-700">
-                <Heart className="w-5 h-5" />
-                Patient Care
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="text-sm">
-                  <p className="font-medium text-green-700">MTM Consultations</p>
-                  <p className="text-xs text-gray-600">12 scheduled today</p>
-                </div>
-                <div className="text-sm">
-                  <p className="font-medium text-green-700">Vaccinations</p>
-                  <p className="text-xs text-gray-600">8 flu shots administered</p>
-                </div>
-                <div className="text-sm">
-                  <p className="font-medium text-green-700">Health Screenings</p>
-                  <p className="text-xs text-gray-600">5 blood pressure checks</p>
-                </div>
-                <Button size="sm" className="w-full mt-3">
-                  Schedule Services
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+
 
           {/* Delivery & Logistics */}
           <Card className="bg-gradient-to-br from-orange-50 to-red-50 border-orange-200">
