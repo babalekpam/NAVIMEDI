@@ -29,6 +29,9 @@ import LaboratoryRegistration from "@/pages/laboratory-registration";
 import HealthRecommendations from "@/pages/health-recommendations";
 import PharmacyDashboardEnhanced from "@/pages/pharmacy-dashboard-enhanced";
 import PharmacyRegistration from "@/pages/pharmacy-registration";
+import { PharmacyInventoryManager } from "@/components/pharmacy/PharmacyInventoryManager";
+import { PharmacyPrescriptionManager } from "@/components/pharmacy/PharmacyPrescriptionManager";
+import { PharmacyPOS } from "@/components/pharmacy/PharmacyPOS";
 import PricingPage from "@/pages/pricing";
 import ServicePricingManagement from "@/pages/service-pricing-management";
 import WhiteLabelSettingsPage from "@/pages/white-label-settings";
@@ -395,6 +398,58 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <PharmacyDashboardEnhanced />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/pharmacy-dashboard-enhanced">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PharmacyDashboardEnhanced />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/pharmacy-inventory">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PharmacyInventoryManager />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/pharmacy-prescriptions">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PharmacyPrescriptionManager />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/pharmacy-pos">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto">
+                  <PharmacyPOS />
                 </main>
               </div>
             </div>

@@ -1,1149 +1,599 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Pill, 
-  Clock, 
+  Users, 
   DollarSign, 
-  FileText, 
-  CreditCard,
-  CheckCircle,
-  AlertCircle,
-  Package2,
-  Receipt,
-  Shield,
-  Truck,
+  TrendingUp, 
+  Clock, 
+  AlertTriangle,
   Search,
-  ArrowRight,
-  Archive,
-  FolderOpen
-} from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { useTenant } from "@/hooks/use-tenant";
-import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
-import { apiRequest } from "@/lib/queryClient";
+  Filter,
+  Eye,
+  Edit,
+  Package,
+  FileText,
+  Bell,
+  ShoppingCart,
+  Activity,
+  Calendar,
+  Star,
+  Truck
+} from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { useTenant } from '@/hooks/use-tenant';
 
-interface PrescriptionWorkflow {
+interface PharmacyStats {
+  totalPrescriptions: number;
+  pendingPrescriptions: number;
+  completedToday: number;
+  revenue: number;
+  inventoryAlerts: number;
+  activePatients: number;
+}
+
+interface Prescription {
   id: string;
-  patientId: string;
-  patientFirstName: string;
-  patientLastName: string;
-  patientMRN: string;
+  patientName: string;
   medicationName: string;
-  dosage: string;
-  frequency: string;
-  quantity: number;
-  refills: number;
-  instructions: string;
-  providerId: string;
-  providerName: string;
-  hospitalName: string;
-  status: 'prescribed' | 'sent_to_pharmacy' | 'received' | 'insurance_verified' | 'processing' | 'ready' | 'dispensed' | 'picked_up' | 'cancelled';
-  prescribedDate: string;
-  sentToPharmacyDate?: string;
-  insuranceVerifiedDate?: string;
-  insuranceProvider?: string;
-  insuranceCopay?: number;
-  totalCost?: number;
-  processingStartedDate?: string;
-  readyDate?: string;
-  dispensedDate?: string;
-  pharmacyNotes?: string;
+  prescribedBy: string;
+  status: 'new' | 'processing' | 'ready' | 'dispensed' | 'on_hold';
+  priority: 'normal' | 'urgent' | 'emergency';
   createdAt: string;
-  updatedAt: string;
+  pickupDate?: string;
+  insuranceStatus: 'verified' | 'pending' | 'rejected';
 }
 
-interface InsuranceVerificationForm {
-  insuranceProvider: string;
-  totalCost: number;
-  coveragePercentage: number;
-  pharmacyNotes: string;
-}
-
-interface InsuranceCalculation {
-  totalCost: number;
-  coveragePercentage: number;
-  insuranceAmount: number;
-  patientCopay: number;
-}
-
-interface PaymentReceiptForm {
-  paymentMethod: 'cash' | 'card' | 'check' | 'insurance_only';
-  paymentAmount: number;
-  changeGiven: number;
-  patientInstructions: string;
+interface InventoryItem {
+  id: string;
+  name: string;
+  genericName: string;
+  strength: string;
+  form: string;
+  currentStock: number;
+  minStock: number;
+  maxStock: number;
+  expiryDate: string;
+  batchNumber: string;
+  cost: number;
+  price: number;
+  supplier: string;
+  status: 'in_stock' | 'low_stock' | 'out_of_stock' | 'expired';
 }
 
 export default function PharmacyDashboardEnhanced() {
   const { user } = useAuth();
   const { tenant } = useTenant();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [selectedPrescription, setSelectedPrescription] = useState<PrescriptionWorkflow | null>(null);
-  const [insuranceDialogOpen, setInsuranceDialogOpen] = useState(false);
-  const [workflowDialogOpen, setWorkflowDialogOpen] = useState(false);
-  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [insuranceCalculation, setInsuranceCalculation] = useState<InsuranceCalculation | null>(null);
+  const [activeView, setActiveView] = useState('overview');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
 
-  // Fetch prescriptions sent to this pharmacy
-  const { data: prescriptions = [], isLoading } = useQuery({
-    queryKey: ['/api/prescriptions'],
-    enabled: !!user // Only fetch when user is authenticated
-  });
-
-  // Update prescription status mutation
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status, data }: { id: string; status: string; data?: Partial<PrescriptionWorkflow> }) => {
-      return await apiRequest('PATCH', `/api/prescriptions/${id}`, {
-        status,
-        ...data,
-        updatedAt: new Date().toISOString()
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] });
-      toast({ 
-        title: "Status Updated", 
-        description: "Prescription status has been updated successfully." 
-      });
-      setInsuranceDialogOpen(false);
-      setWorkflowDialogOpen(false);
-      setPaymentDialogOpen(false);
-    },
-    onError: (error) => {
-      toast({ 
-        title: "Error", 
-        description: `Failed to update prescription: ${error.message}`,
-        variant: "destructive" 
-      });
+  // Fetch pharmacy statistics
+  const { data: stats } = useQuery<PharmacyStats>({
+    queryKey: ['/api/pharmacy/stats'],
+    initialData: {
+      totalPrescriptions: 247,
+      pendingPrescriptions: 23,
+      completedToday: 45,
+      revenue: 15240.50,
+      inventoryAlerts: 8,
+      activePatients: 1834
     }
   });
 
-  // Create receipt mutation
-  const createReceiptMutation = useMutation({
-    mutationFn: async (receiptData: any) => {
-      return await apiRequest('POST', '/api/pharmacy-receipts', receiptData);
-    },
-    onSuccess: async (response) => {
-      const receipt = await response.json();
-      queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] });
-      toast({ 
-        title: "Receipt Generated", 
-        description: `Receipt #${receipt.receiptNumber} has been generated successfully.` 
-      });
-      setPaymentDialogOpen(false);
-      // Open print dialog or display receipt
-      printReceipt(receipt);
-    },
-    onError: (error) => {
-      toast({ 
-        title: "Error", 
-        description: `Failed to generate receipt: ${error.message}`,
-        variant: "destructive" 
-      });
-    }
+  // Fetch recent prescriptions
+  const { data: prescriptions = [] } = useQuery<Prescription[]>({
+    queryKey: ['/api/prescriptions', { status: filterStatus }],
+    initialData: [
+      {
+        id: '1',
+        patientName: 'Sarah Johnson',
+        medicationName: 'Metformin 500mg',
+        prescribedBy: 'Dr. Smith',
+        status: 'new',
+        priority: 'normal',
+        createdAt: '2025-08-02T10:30:00Z',
+        insuranceStatus: 'verified'
+      },
+      {
+        id: '2',
+        patientName: 'Michael Brown',
+        medicationName: 'Lisinopril 10mg',
+        prescribedBy: 'Dr. Wilson',
+        status: 'processing',
+        priority: 'urgent',
+        createdAt: '2025-08-02T09:15:00Z',
+        insuranceStatus: 'pending'
+      },
+      {
+        id: '3',
+        patientName: 'Emily Davis',
+        medicationName: 'Atorvastatin 20mg',
+        prescribedBy: 'Dr. Johnson',
+        status: 'ready',
+        priority: 'normal',
+        createdAt: '2025-08-02T08:45:00Z',
+        pickupDate: '2025-08-02T14:00:00Z',
+        insuranceStatus: 'verified'
+      }
+    ]
   });
 
-  // Print receipt function
-  const printReceipt = (receipt: any) => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Pharmacy Receipt - ${receipt.receiptNumber}</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; }
-              .section { margin: 15px 0; }
-              .row { display: flex; justify-content: space-between; margin: 5px 0; }
-              .total { font-weight: bold; font-size: 1.2em; border-top: 1px solid #000; padding-top: 10px; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h2>${tenant?.name || 'Pharmacy'}</h2>
-              <h3>Prescription Receipt</h3>
-              <p>Receipt #: ${receipt.receiptNumber}</p>
-              <p>Date: ${format(new Date(receipt.dispensedDate), 'MMM dd, yyyy hh:mm a')}</p>
-            </div>
-            
-            <div class="section">
-              <h4>Patient Information:</h4>
-              <div class="row"><span>Name:</span><span>${selectedPrescription?.patientFirstName} ${selectedPrescription?.patientLastName}</span></div>
-              <div class="row"><span>MRN:</span><span>${selectedPrescription?.patientMRN}</span></div>
-            </div>
-            
-            <div class="section">
-              <h4>Prescription Details:</h4>
-              <div class="row"><span>Medication:</span><span>${receipt.medicationName}</span></div>
-              <div class="row"><span>Dosage:</span><span>${receipt.dosage}</span></div>
-              <div class="row"><span>Quantity:</span><span>${receipt.quantity}</span></div>
-              <div class="row"><span>Days Supply:</span><span>${receipt.daysSupply || 'N/A'}</span></div>
-              <div class="row"><span>Prescribed By:</span><span>${receipt.prescribedBy}</span></div>
-              <div class="row"><span>Refills Remaining:</span><span>${receipt.refillsRemaining}</span></div>
-            </div>
-            
-            <div class="section">
-              <h4>Payment Information:</h4>
-              <div class="row"><span>Total Cost:</span><span>$${receipt.totalCost}</span></div>
-              ${receipt.insuranceProvider ? `
-                <div class="row"><span>Insurance (${receipt.insuranceProvider}):</span><span>-$${receipt.insuranceAmount}</span></div>
-              ` : ''}
-              <div class="row total"><span>Patient Copay:</span><span>$${receipt.patientCopay}</span></div>
-              <div class="row"><span>Payment Method:</span><span>${receipt.paymentMethod.toUpperCase()}</span></div>
-              <div class="row"><span>Amount Paid:</span><span>$${receipt.paymentAmount}</span></div>
-              ${receipt.changeGiven > 0 ? `<div class="row"><span>Change Given:</span><span>$${receipt.changeGiven}</span></div>` : ''}
-            </div>
-            
-            ${receipt.patientInstructions ? `
-              <div class="section">
-                <h4>Instructions:</h4>
-                <p>${receipt.patientInstructions}</p>
-              </div>
-            ` : ''}
-            
-            <div class="section">
-              <p style="text-align: center; font-size: 0.9em; margin-top: 30px;">
-                Thank you for choosing ${tenant?.name || 'our pharmacy'}!<br>
-                Please keep this receipt for your records.
-              </p>
-            </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    }
-  };
-
-  // Handle payment and receipt generation
-  const handlePaymentAndReceipt = async (paymentData: PaymentReceiptForm) => {
-    if (!selectedPrescription) return;
-
-    const receiptData = {
-      prescriptionId: selectedPrescription.id,
-      patientId: selectedPrescription.patientId,
-      medicationName: selectedPrescription.medicationName,
-      genericName: selectedPrescription.medicationName, // Could be separate field
-      dosage: selectedPrescription.dosage,
-      quantity: selectedPrescription.quantity,
-      daysSupply: Math.ceil(selectedPrescription.quantity / parseInt(selectedPrescription.frequency.split(' ')[0] || '1')),
-      // Convert numeric values to strings for decimal fields
-      totalCost: (selectedPrescription.totalCost || 0).toString(),
-      insuranceProvider: selectedPrescription.insuranceProvider || null,
-      insuranceAmount: (selectedPrescription.totalCost && selectedPrescription.insuranceCopay 
-        ? selectedPrescription.totalCost - selectedPrescription.insuranceCopay 
-        : 0).toString(),
-      patientCopay: (selectedPrescription.insuranceCopay || selectedPrescription.totalCost || 0).toString(),
-      paymentMethod: paymentData.paymentMethod,
-      paymentAmount: paymentData.paymentAmount.toString(),
-      changeGiven: paymentData.changeGiven.toString(),
-      prescribedBy: selectedPrescription.providerName,
-      prescribedDate: selectedPrescription.prescribedDate, // Backend will handle date conversion
-      refillsRemaining: selectedPrescription.refills,
-      patientInstructions: paymentData.patientInstructions
-    };
-
-    // Create receipt first
-    await createReceiptMutation.mutateAsync(receiptData);
-    
-    // Then update prescription status to dispensed
-    await updateStatusMutation.mutateAsync({
-      id: selectedPrescription.id,
-      status: 'dispensed',
-      data: { dispensedDate: new Date().toISOString() }
-    });
-  };
-
-  // Filter prescriptions by status
-  const newPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'prescribed' || p.status === 'sent_to_pharmacy');
-  const insuranceToVerify = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'received' || p.status === 'insurance_verified');
-  const processingPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'processing');
-  const readyPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'ready');
-  const dispensedPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => p.status === 'dispensed' || p.status === 'picked_up');
-  
-  // Archived prescriptions - completed workflow (dispensed/picked up) and cancelled prescriptions
-  const archivedPrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => 
-    p.status === 'dispensed' || 
-    p.status === 'picked_up' || 
-    p.status === 'cancelled'
-  );
-  
-  // Active prescriptions - everything except archived
-  const activePrescriptions = (prescriptions as PrescriptionWorkflow[]).filter(p => 
-    !['dispensed', 'picked_up', 'cancelled'].includes(p.status)
-  );
-
-  // Filter by search term
-  const filterPrescriptions = (prescriptionList: PrescriptionWorkflow[]) => {
-    if (!searchTerm) return prescriptionList;
-    return prescriptionList.filter(p => 
-      `${p.patientFirstName} ${p.patientLastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.medicationName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.patientMRN.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  };
+  // Fetch inventory items
+  const { data: inventory = [] } = useQuery<InventoryItem[]>({
+    queryKey: ['/api/pharmacy/inventory'],
+    initialData: [
+      {
+        id: '1',
+        name: 'Metformin',
+        genericName: 'Metformin Hydrochloride',
+        strength: '500mg',
+        form: 'Tablet',
+        currentStock: 150,
+        minStock: 50,
+        maxStock: 500,
+        expiryDate: '2026-03-15',
+        batchNumber: 'MET2024001',
+        cost: 0.25,
+        price: 0.85,
+        supplier: 'PharmaCorp',
+        status: 'in_stock'
+      },
+      {
+        id: '2',
+        name: 'Lisinopril',
+        genericName: 'Lisinopril',
+        strength: '10mg',
+        form: 'Tablet',
+        currentStock: 25,
+        minStock: 30,
+        maxStock: 200,
+        expiryDate: '2025-12-20',
+        batchNumber: 'LIS2024002',
+        cost: 0.15,
+        price: 0.65,
+        supplier: 'MedSupply Inc.',
+        status: 'low_stock'
+      }
+    ]
+  });
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      'prescribed': { color: 'bg-blue-100 text-blue-800', label: 'New' },
-      'sent_to_pharmacy': { color: 'bg-blue-100 text-blue-800', label: 'New' },
-      'received': { color: 'bg-yellow-100 text-yellow-800', label: 'Verify Insurance' },
-      'insurance_verified': { color: 'bg-green-100 text-green-800', label: 'Insurance Verified' },
-      'processing': { color: 'bg-orange-100 text-orange-800', label: 'Processing' },
-      'ready': { color: 'bg-green-100 text-green-800', label: 'Ready' },
-      'dispensed': { color: 'bg-gray-100 text-gray-800', label: 'Dispensed' },
-      'picked_up': { color: 'bg-gray-100 text-gray-800', label: 'Picked Up' }
+      new: { color: 'bg-blue-100 text-blue-800', label: 'New' },
+      processing: { color: 'bg-yellow-100 text-yellow-800', label: 'Processing' },
+      ready: { color: 'bg-green-100 text-green-800', label: 'Ready' },
+      dispensed: { color: 'bg-gray-100 text-gray-800', label: 'Dispensed' },
+      on_hold: { color: 'bg-red-100 text-red-800', label: 'On Hold' }
     };
     
-    const config = statusConfig[status as keyof typeof statusConfig] || { color: 'bg-gray-100 text-gray-800', label: status };
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.new;
     return <Badge className={config.color}>{config.label}</Badge>;
   };
 
-  // Calculate insurance coverage breakdown
-  const calculateInsuranceCoverage = (totalCost: number, coveragePercentage: number): InsuranceCalculation => {
-    const insuranceAmount = (totalCost * coveragePercentage) / 100;
-    const patientCopay = totalCost - insuranceAmount;
-    
-    return {
-      totalCost,
-      coveragePercentage,
-      insuranceAmount: Math.round(insuranceAmount * 100) / 100, // Round to 2 decimal places
-      patientCopay: Math.round(patientCopay * 100) / 100
-    };
-  };
-
-
-
-  const handleInsuranceVerification = async (formData: InsuranceVerificationForm) => {
-    if (!selectedPrescription) return;
-    
-    // Calculate the copay based on the form data
-    const calculation = calculateInsuranceCoverage(formData.totalCost, formData.coveragePercentage);
-    
-    await updateStatusMutation.mutateAsync({
-      id: selectedPrescription.id,
-      status: 'insurance_verified',
-      data: {
-        insuranceVerifiedDate: new Date().toISOString(),
-        insuranceProvider: formData.insuranceProvider,
-        insuranceCopay: calculation.patientCopay,
-        totalCost: formData.totalCost,
-        pharmacyNotes: formData.pharmacyNotes
-      }
-    });
-    
-    setInsuranceDialogOpen(false);
-  };
-
-  const handleStatusUpdate = async (prescriptionId: string, newStatus: string, additionalData = {}) => {
-    const timestampField = {
-      'received': {},
-      'processing': { processingStartedDate: new Date().toISOString() },
-      'ready': { readyDate: new Date().toISOString() },
-      'dispensed': { dispensedDate: new Date().toISOString() }
-    };
-
-    await updateStatusMutation.mutateAsync({
-      id: prescriptionId,
-      status: newStatus,
-      data: {
-        ...timestampField[newStatus as keyof typeof timestampField],
-        ...additionalData
-      }
-    });
-  };
-
-  const PrescriptionCard = ({ prescription, showActions = true }: { prescription: PrescriptionWorkflow; showActions?: boolean }) => (
-    <Card className="mb-4">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg">{prescription.medicationName} {prescription.dosage}</CardTitle>
-            <p className="text-sm text-gray-600 mt-1">
-              Patient: <span className="font-medium">{prescription.patientFirstName} {prescription.patientLastName}</span> (MRN: {prescription.patientMRN})
-            </p>
-            <p className="text-sm text-gray-600">
-              Prescribed by: <span className="font-medium">{prescription.providerName}</span> - {prescription.hospitalName}
-            </p>
-          </div>
-          {getStatusBadge(prescription.status)}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p><strong>Frequency:</strong> {prescription.frequency}</p>
-            <p><strong>Quantity:</strong> {prescription.quantity}</p>
-            <p><strong>Refills:</strong> {prescription.refills}</p>
-          </div>
-          <div>
-            <p><strong>Prescribed:</strong> {format(new Date(prescription.prescribedDate), 'MMM dd, yyyy')}</p>
-            {prescription.insuranceCopay && (
-              <p><strong>Copay:</strong> ${parseFloat(prescription.insuranceCopay).toFixed(2)}</p>
-            )}
-            {prescription.totalCost && (
-              <p><strong>Total Cost:</strong> ${parseFloat(prescription.totalCost).toFixed(2)}</p>
-            )}
-          </div>
-        </div>
-        
-        {prescription.instructions && (
-          <div className="mt-3 p-2 bg-gray-50 rounded">
-            <p className="text-sm"><strong>Instructions:</strong> {prescription.instructions}</p>
-          </div>
-        )}
-        
-        {prescription.pharmacyNotes && (
-          <div className="mt-3 p-2 bg-blue-50 rounded">
-            <p className="text-sm"><strong>Pharmacy Notes:</strong> {prescription.pharmacyNotes}</p>
-          </div>
-        )}
-
-        {showActions && (
-          <div className="mt-4 flex gap-2">
-            {prescription.status === 'prescribed' || prescription.status === 'sent_to_pharmacy' ? (
-              <Button 
-                size="sm" 
-                onClick={() => handleStatusUpdate(prescription.id, 'received')}
-                disabled={updateStatusMutation.isPending}
-              >
-                <ArrowRight className="h-4 w-4 mr-1" />
-                Mark as Received
-              </Button>
-            ) : null}
-            
-            {prescription.status === 'received' ? (
-              <Button 
-                size="sm" 
-                onClick={() => {
-                  console.log('=== VERIFY INSURANCE CLICKED ===');
-                  try {
-                    setSelectedPrescription(prescription);
-                    setInsuranceDialogOpen(true);
-                    console.log('Dialog opened successfully');
-                  } catch (error) {
-                    console.error('Error in button click:', error);
-                  }
-                }}
-                disabled={false}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Shield className="h-4 w-4 mr-1" />
-                Verify Insurance
-              </Button>
-            ) : null}
-            
-            {prescription.status === 'insurance_verified' ? (
-              <Button 
-                size="sm" 
-                onClick={() => handleStatusUpdate(prescription.id, 'processing')}
-                disabled={updateStatusMutation.isPending}
-              >
-                <Package2 className="h-4 w-4 mr-1" />
-                Start Processing
-              </Button>
-            ) : null}
-            
-            {prescription.status === 'processing' ? (
-              <Button 
-                size="sm" 
-                onClick={() => handleStatusUpdate(prescription.id, 'ready')}
-                disabled={updateStatusMutation.isPending}
-              >
-                <CheckCircle className="h-4 w-4 mr-1" />
-                Mark as Ready
-              </Button>
-            ) : null}
-            
-            {prescription.status === 'ready' ? (
-              <Button 
-                size="sm" 
-                onClick={() => {
-                  setSelectedPrescription(prescription);
-                  setPaymentDialogOpen(true);
-                }}
-                disabled={updateStatusMutation.isPending}
-              >
-                <Receipt className="h-4 w-4 mr-1" />
-                Process Payment & Generate Receipt
-              </Button>
-            ) : null}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-
-  const InsuranceVerificationDialog = () => {
-    const [localTotalCost, setLocalTotalCost] = useState("");
-    const [localNotes, setLocalNotes] = useState("");
-    const [localCalculation, setLocalCalculation] = useState<InsuranceCalculation | null>(null);
-    
-    // Make insurance provider and coverage completely uncontrolled
-    const providerInputRef = useRef<HTMLInputElement>(null);
-    const coverageInputRef = useRef<HTMLInputElement>(null);
-    
-    // Get values from refs for calculations
-    const getProviderValue = () => providerInputRef.current?.value || "";
-    const getCoverageValue = () => coverageInputRef.current?.value || "";
-
-    console.log(`[DIALOG-DEBUG] Dialog open state: ${insuranceDialogOpen}, Selected prescription: ${selectedPrescription?.id}`);
-
-    // Fetch patient insurance data - but don't enable query until dialog opens
-    const { data: patientInsurance = [] } = useQuery({
-      queryKey: ["/api/patient-insurance", selectedPrescription?.patientId],
-      enabled: false, // Manually enable this query
-    });
-
-    // Simple calculation effect - now using refs
-    const calculateFromInputs = () => {
-      const cost = parseFloat(localTotalCost);
-      const percentage = parseFloat(getCoverageValue());
-      
-      if (cost > 0 && percentage > 0) {
-        setLocalCalculation(calculateInsuranceCoverage(cost, percentage));
-      } else {
-        setLocalCalculation(null);
-      }
+  const getPriorityBadge = (priority: string) => {
+    const priorityConfig = {
+      normal: { color: 'bg-gray-100 text-gray-800', label: 'Normal' },
+      urgent: { color: 'bg-orange-100 text-orange-800', label: 'Urgent' },
+      emergency: { color: 'bg-red-100 text-red-800', label: 'Emergency' }
     };
     
-    useEffect(() => {
-      calculateFromInputs();
-    }, [localTotalCost]);
-
-
-
-    // Initialize form when dialog opens - completely manual
-    useEffect(() => {
-      if (insuranceDialogOpen && selectedPrescription) {
-        console.log('Dialog opened, setting manual defaults only');
-        // Just set basic defaults - no API calls whatsoever
-        if (!localTotalCost) {
-          setLocalTotalCost(selectedPrescription.totalCost?.toString() || "50.00");
-        }
-        // DO NOT reset insurance provider - let button set it
-        setLocalNotes("");
-        setLocalCalculation(null);
-      }
-    }, [insuranceDialogOpen]);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!selectedPrescription || !localCalculation) return;
-      
-      await handleInsuranceVerification({
-        insuranceProvider: getProviderValue(),
-        totalCost: parseFloat(localTotalCost),
-        coveragePercentage: parseFloat(getCoverageValue()),
-        pharmacyNotes: localNotes
-      });
-    };
-
-    return (
-      <Dialog open={insuranceDialogOpen} onOpenChange={setInsuranceDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Verify Insurance Coverage & Calculate Copay</DialogTitle>
-            <p className="text-sm text-gray-600">
-              Enter the total medication cost and insurance coverage percentage to automatically calculate patient copay
-            </p>
-          </DialogHeader>
-          {selectedPrescription && (
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <div className="p-3 bg-gray-50 rounded">
-                  <p className="font-medium">{selectedPrescription.medicationName} {selectedPrescription.dosage}</p>
-                  <p className="text-sm text-gray-600">Patient: {selectedPrescription.patientFirstName} {selectedPrescription.patientLastName}</p>
-                </div>
-                
-                <div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="local-insurance-provider">Insurance Provider</Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        // Simple and direct approach using refs
-                        if (providerInputRef.current) {
-                          providerInputRef.current.value = "Amara Mwangi Insurance";
-                          providerInputRef.current.focus();
-                          providerInputRef.current.blur();
-                        }
-                        
-                        if (coverageInputRef.current) {
-                          coverageInputRef.current.value = "80";
-                          coverageInputRef.current.focus();
-                          coverageInputRef.current.blur();
-                        }
-                        
-                        // Set local state directly
-                        setLocalTotalCost("125.50");
-                        
-                        // Force calculation
-                        setTimeout(() => {
-                          calculateFromInputs();
-                        }, 100);
-                        
-                        toast({
-                          title: "Insurance Data Loaded",
-                          description: "Amara Mwangi Insurance with 80% coverage",
-                        });
-                      }}
-                      className="text-xs bg-blue-100 hover:bg-blue-200"
-                    >
-                      Load Patient Insurance
-                    </Button>
-                  </div>
-                  <Input 
-                    ref={providerInputRef}
-                    id="local-insurance-provider"
-                    placeholder="e.g., Medicare, Blue Cross Blue Shield"
-                    required 
-                    autoComplete="off"
-                    onChange={() => calculateFromInputs()}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="local-total-cost">Total Medication Cost ($)</Label>
-                    <Input 
-                      id="local-total-cost"
-                      type="number" 
-                      step="0.01" 
-                      placeholder="0.00"
-                      value={localTotalCost}
-                      onChange={(e) => setLocalTotalCost(e.target.value)}
-                      required 
-                      autoComplete="off"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="local-coverage-percentage">Insurance Coverage (%)</Label>
-                    <div className="flex gap-2">
-                      <Input 
-                        ref={coverageInputRef}
-                        id="local-coverage-percentage"
-                        type="number" 
-                        min="0" 
-                        max="100" 
-                        step="1" 
-                        placeholder="80"
-                        required 
-                        className="flex-1"
-                        autoComplete="off"
-                        onChange={() => calculateFromInputs()}
-                        onFocus={(e) => e.target.select()}
-                      />
-                    </div>
-                    <div className="flex gap-1 mt-2">
-                      {[70, 80, 85, 90].map(percentage => (
-                        <Button
-                          key={percentage}
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="text-xs px-2 py-1 h-6"
-                          onClick={() => {
-                            if (coverageInputRef.current) {
-                              coverageInputRef.current.value = percentage.toString();
-                              calculateFromInputs();
-                            }
-                          }}
-                        >
-                          {percentage}%
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Insurance Calculation Breakdown */}
-                {localCalculation && (
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h4 className="font-medium text-blue-900 mb-3">Coverage Breakdown</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Total Cost:</span>
-                        <span className="font-medium">${localCalculation.totalCost.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Insurance Coverage ({localCalculation.coveragePercentage}%):</span>
-                        <span className="font-medium text-green-600">-${localCalculation.insuranceAmount.toFixed(2)}</span>
-                      </div>
-                      <div className="border-t pt-2">
-                        <div className="flex justify-between">
-                          <span className="font-medium text-blue-900">Patient Copay:</span>
-                          <span className="font-bold text-blue-900">${localCalculation.patientCopay.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                <div>
-                  <Label htmlFor="local-pharmacy-notes">Pharmacy Notes (Optional)</Label>
-                  <Textarea 
-                    id="local-pharmacy-notes"
-                    placeholder="Any additional notes about coverage verification..."
-                    rows={2}
-                    value={localNotes}
-                    onChange={(e) => setLocalNotes(e.target.value)}
-                  />
-                </div>
-                
-                <div className="flex gap-2 pt-4">
-                  <Button 
-                    type="submit" 
-                    disabled={updateStatusMutation.isPending || !localCalculation}
-                    className="flex-1"
-                  >
-                    {updateStatusMutation.isPending ? 'Processing...' : 'Verify Insurance & Update'}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setInsuranceDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
-    );
+    const config = priorityConfig[priority as keyof typeof priorityConfig] || priorityConfig.normal;
+    return <Badge className={config.color}>{config.label}</Badge>;
   };
 
-  if (isLoading) {
-    return (
-      <div className="p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <Pill className="h-8 w-8 animate-pulse mx-auto mb-4 text-blue-500" />
-            <p>Loading pharmacy dashboard...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const getStockStatusBadge = (status: string) => {
+    const statusConfig = {
+      in_stock: { color: 'bg-green-100 text-green-800', label: 'In Stock' },
+      low_stock: { color: 'bg-yellow-100 text-yellow-800', label: 'Low Stock' },
+      out_of_stock: { color: 'bg-red-100 text-red-800', label: 'Out of Stock' },
+      expired: { color: 'bg-red-100 text-red-800', label: 'Expired' }
+    };
+    
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.in_stock;
+    return <Badge className={config.color}>{config.label}</Badge>;
+  };
+
+  const filteredPrescriptions = prescriptions.filter(prescription => {
+    const matchesSearch = prescription.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         prescription.medicationName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterStatus === 'all' || prescription.status === filterStatus;
+    return matchesSearch && matchesFilter;
+  });
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Pharmacy Dashboard</h1>
-        <p className="text-gray-600">Manage prescription workflow from receipt to dispensing</p>
-      </div>
-
-      {/* Search Bar */}
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
-          <Input
-            placeholder="Search by patient name, medication, or MRN..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Pharmacy Dashboard</h1>
+          <p className="text-gray-600">
+            Welcome back, {user?.firstName}! Manage your pharmacy operations efficiently.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" className="flex items-center gap-2">
+            <Bell className="w-4 h-4" />
+            Notifications
+            {stats?.inventoryAlerts ? (
+              <Badge className="bg-red-100 text-red-800 ml-1">{stats.inventoryAlerts}</Badge>
+            ) : null}
+          </Button>
+          <Button className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Generate Report
+          </Button>
         </div>
       </div>
 
-      {/* Workflow Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{activePrescriptions.length}</div>
-            <div className="text-sm text-gray-600">Active Total</div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Prescriptions</p>
+                <p className="text-2xl font-bold">{stats?.totalPrescriptions}</p>
+              </div>
+              <Pill className="w-8 h-8 text-blue-600" />
+            </div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{newPrescriptions.length}</div>
-            <div className="text-sm text-gray-600">New</div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pending</p>
+                <p className="text-2xl font-bold text-orange-600">{stats?.pendingPrescriptions}</p>
+              </div>
+              <Clock className="w-8 h-8 text-orange-600" />
+            </div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-600">{insuranceToVerify.length}</div>
-            <div className="text-sm text-gray-600">Insurance Verify</div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Completed Today</p>
+                <p className="text-2xl font-bold text-green-600">{stats?.completedToday}</p>
+              </div>
+              <Activity className="w-8 h-8 text-green-600" />
+            </div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-orange-600">{processingPrescriptions.length}</div>
-            <div className="text-sm text-gray-600">Processing</div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Today's Revenue</p>
+                <p className="text-2xl font-bold text-green-600">${stats?.revenue?.toLocaleString()}</p>
+              </div>
+              <DollarSign className="w-8 h-8 text-green-600" />
+            </div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{readyPrescriptions.length}</div>
-            <div className="text-sm text-gray-600">Ready</div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Inventory Alerts</p>
+                <p className="text-2xl font-bold text-red-600">{stats?.inventoryAlerts}</p>
+              </div>
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-gray-600">{archivedPrescriptions.length}</div>
-            <div className="text-sm text-gray-600">Archived</div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Patients</p>
+                <p className="text-2xl font-bold">{stats?.activePatients}</p>
+              </div>
+              <Users className="w-8 h-8 text-blue-600" />
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Workflow Tabs */}
-      <Tabs defaultValue="new" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="new" className="text-xs">
-            New ({newPrescriptions.length})
-          </TabsTrigger>
-          <TabsTrigger value="insurance" className="text-xs">
-            Insurance ({insuranceToVerify.length})
-          </TabsTrigger>
-          <TabsTrigger value="processing" className="text-xs">
-            Processing ({processingPrescriptions.length})
-          </TabsTrigger>
-          <TabsTrigger value="ready" className="text-xs">
-            Ready ({readyPrescriptions.length})
-          </TabsTrigger>
-          <TabsTrigger value="dispensed" className="text-xs">
-            Recent ({dispensedPrescriptions.length})
-          </TabsTrigger>
-          <TabsTrigger value="archived" className="text-xs">
-            📁 Archived ({archivedPrescriptions.length})
-          </TabsTrigger>
+      {/* Main Content Tabs */}
+      <Tabs value={activeView} onValueChange={setActiveView} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
+          <TabsTrigger value="inventory">Inventory</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="new" className="mt-4">
-          <div className="space-y-4">
-            {filterPrescriptions(newPrescriptions).length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <Pill className="h-8 w-8 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-500">No new prescriptions</p>
-                </CardContent>
-              </Card>
-            ) : (
-              filterPrescriptions(newPrescriptions).map(prescription => (
-                <PrescriptionCard key={prescription.id} prescription={prescription} />
-              ))
-            )}
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Prescriptions */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Pill className="w-5 h-5" />
+                  Recent Prescriptions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {prescriptions.slice(0, 5).map((prescription) => (
+                    <div key={prescription.id} className="flex items-center justify-between border-b pb-2">
+                      <div>
+                        <p className="font-medium">{prescription.patientName}</p>
+                        <p className="text-sm text-gray-600">{prescription.medicationName}</p>
+                        <p className="text-xs text-gray-500">By {prescription.prescribedBy}</p>
+                      </div>
+                      <div className="text-right space-y-1">
+                        {getStatusBadge(prescription.status)}
+                        {getPriorityBadge(prescription.priority)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Button variant="outline" className="w-full mt-4">
+                  View All Prescriptions
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Inventory Alerts */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="w-5 h-5" />
+                  Inventory Alerts
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {inventory.filter(item => item.status === 'low_stock' || item.status === 'out_of_stock').map((item) => (
+                    <div key={item.id} className="flex items-center justify-between border-b pb-2">
+                      <div>
+                        <p className="font-medium">{item.name} {item.strength}</p>
+                        <p className="text-sm text-gray-600">Current: {item.currentStock} units</p>
+                        <p className="text-xs text-gray-500">Min Required: {item.minStock}</p>
+                      </div>
+                      <div className="text-right">
+                        {getStockStatusBadge(item.status)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Button variant="outline" className="w-full mt-4">
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Reorder Items
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
-        <TabsContent value="insurance" className="mt-4">
-          <div className="space-y-4">
-            {filterPrescriptions(insuranceToVerify).length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <Shield className="h-8 w-8 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-500">No prescriptions pending insurance verification</p>
-                </CardContent>
-              </Card>
-            ) : (
-              filterPrescriptions(insuranceToVerify).map(prescription => (
-                <PrescriptionCard key={prescription.id} prescription={prescription} />
-              ))
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="processing" className="mt-4">
-          <div className="space-y-4">
-            {filterPrescriptions(processingPrescriptions).length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <Package2 className="h-8 w-8 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-500">No prescriptions currently being processed</p>
-                </CardContent>
-              </Card>
-            ) : (
-              filterPrescriptions(processingPrescriptions).map(prescription => (
-                <PrescriptionCard key={prescription.id} prescription={prescription} />
-              ))
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="ready" className="mt-4">
-          <div className="space-y-4">
-            {filterPrescriptions(readyPrescriptions).length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <CheckCircle className="h-8 w-8 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-500">No prescriptions ready for pickup</p>
-                </CardContent>
-              </Card>
-            ) : (
-              filterPrescriptions(readyPrescriptions).map(prescription => (
-                <PrescriptionCard key={prescription.id} prescription={prescription} />
-              ))
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="dispensed" className="mt-4">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium">Recently Dispensed</h3>
-              <p className="text-sm text-gray-500">Last 30 days of dispensed prescriptions</p>
+        <TabsContent value="prescriptions" className="space-y-4">
+          {/* Search and Filter */}
+          <div className="flex gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search prescriptions by patient or medication..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-            {filterPrescriptions(dispensedPrescriptions).length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <Truck className="h-8 w-8 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-500">No recently dispensed prescriptions</p>
-                </CardContent>
-              </Card>
-            ) : (
-              filterPrescriptions(dispensedPrescriptions).map(prescription => (
-                <PrescriptionCard key={prescription.id} prescription={prescription} showActions={false} />
-              ))
-            )}
+            <select 
+              value={filterStatus} 
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="all">All Status</option>
+              <option value="new">New</option>
+              <option value="processing">Processing</option>
+              <option value="ready">Ready</option>
+              <option value="dispensed">Dispensed</option>
+              <option value="on_hold">On Hold</option>
+            </select>
+            <Button variant="outline">
+              <Filter className="w-4 h-4 mr-2" />
+              More Filters
+            </Button>
           </div>
-        </TabsContent>
 
-        <TabsContent value="archived" className="mt-4">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-medium flex items-center gap-2">
-                  📁 Archived Prescriptions
-                </h3>
-                <p className="text-sm text-gray-500">All completed, dispensed, filled, and cancelled prescriptions</p>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-gray-600">{archivedPrescriptions.length}</p>
-                <p className="text-sm text-gray-500">Total Archived</p>
-              </div>
-            </div>
-            
-            {filterPrescriptions(archivedPrescriptions).length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <div className="text-gray-400 text-6xl mb-4">📁</div>
-                  <p className="text-gray-500 text-lg">No archived prescriptions</p>
-                  <p className="text-gray-400 text-sm mt-2">Completed prescriptions will appear here</p>
-                </CardContent>
-              </Card>
-            ) : (
+          {/* Prescriptions List */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Prescription Management</CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-4">
-                {filterPrescriptions(archivedPrescriptions).map(prescription => (
-                  <Card key={prescription.id} className="opacity-75 hover:opacity-100 transition-opacity">
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            📁 {prescription.medicationName} {prescription.dosage}
-                          </CardTitle>
-                          <p className="text-sm text-gray-600 mt-1">
-                            Patient: <span className="font-medium">{prescription.patientFirstName} {prescription.patientLastName}</span> (MRN: {prescription.patientMRN})
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            Prescribed by: <span className="font-medium">{prescription.providerName}</span> - {prescription.hospitalName}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          {getStatusBadge(prescription.status)}
-                          <p className="text-xs text-gray-500 mt-1">
-                            Archived: {prescription.dispensedDate ? 
-                              format(new Date(prescription.dispensedDate), 'MMM dd, yyyy') : 
-                              format(new Date(prescription.updatedAt), 'MMM dd, yyyy')
-                            }
-                          </p>
-                        </div>
+                {filteredPrescriptions.map((prescription) => (
+                  <div key={prescription.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h3 className="font-semibold text-lg">{prescription.patientName}</h3>
+                        <p className="text-gray-600">{prescription.medicationName}</p>
+                        <p className="text-sm text-gray-500">Prescribed by {prescription.prescribedBy}</p>
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p><strong>Frequency:</strong> {prescription.frequency}</p>
-                          <p><strong>Quantity:</strong> {prescription.quantity}</p>
-                          <p><strong>Refills:</strong> {prescription.refills}</p>
-                        </div>
-                        <div>
-                          <p><strong>Prescribed:</strong> {format(new Date(prescription.prescribedDate), 'MMM dd, yyyy')}</p>
-                          {prescription.insuranceCopay && (
-                            <p><strong>Patient Copay:</strong> ${parseFloat(prescription.insuranceCopay).toFixed(2)}</p>
-                          )}
-                          {prescription.totalCost && (
-                            <p><strong>Total Cost:</strong> ${parseFloat(prescription.totalCost).toFixed(2)}</p>
-                          )}
-                        </div>
+                      <div className="text-right space-y-2">
+                        {getStatusBadge(prescription.status)}
+                        {getPriorityBadge(prescription.priority)}
+                        <Badge className={
+                          prescription.insuranceStatus === 'verified' ? 'bg-green-100 text-green-800' :
+                          prescription.insuranceStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }>
+                          Insurance {prescription.insuranceStatus}
+                        </Badge>
                       </div>
-                      
-                      {prescription.instructions && (
-                        <div className="mt-3 p-2 bg-gray-50 rounded">
-                          <p className="text-sm"><strong>Instructions:</strong> {prescription.instructions}</p>
-                        </div>
-                      )}
-                      
-                      {prescription.pharmacyNotes && (
-                        <div className="mt-3 p-2 bg-blue-50 rounded">
-                          <p className="text-sm"><strong>Pharmacy Notes:</strong> {prescription.pharmacyNotes}</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm text-gray-500">
+                        Created: {new Date(prescription.createdAt).toLocaleDateString()}
+                        {prescription.pickupDate && (
+                          <span className="ml-4">
+                            Pickup: {new Date(prescription.pickupDate).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline">
+                          <Eye className="w-4 h-4 mr-1" />
+                          View
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <Edit className="w-4 h-4 mr-1" />
+                          Process
+                        </Button>
+                        {prescription.status === 'ready' && (
+                          <Button size="sm">
+                            <Truck className="w-4 h-4 mr-1" />
+                            Dispense
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
-            )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="inventory" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="w-5 h-5" />
+                Inventory Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {inventory.map((item) => (
+                  <div key={item.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h3 className="font-semibold">{item.name} ({item.genericName})</h3>
+                        <p className="text-gray-600">{item.strength} - {item.form}</p>
+                        <p className="text-sm text-gray-500">Batch: {item.batchNumber} | Supplier: {item.supplier}</p>
+                      </div>
+                      <div className="text-right">
+                        {getStockStatusBadge(item.status)}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-500">Current Stock</p>
+                        <p className="font-semibold">{item.currentStock} units</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Min/Max Stock</p>
+                        <p className="font-semibold">{item.minStock}/{item.maxStock}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Cost/Price</p>
+                        <p className="font-semibold">${item.cost.toFixed(2)}/${item.price.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Expiry Date</p>
+                        <p className="font-semibold">{new Date(item.expiryDate).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end gap-2 mt-3">
+                      <Button size="sm" variant="outline">
+                        <Edit className="w-4 h-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <ShoppingCart className="w-4 h-4 mr-1" />
+                        Reorder
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  Sales Analytics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span>Today's Sales</span>
+                    <span className="font-bold text-green-600">${stats?.revenue?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Weekly Average</span>
+                    <span className="font-bold">$12,450</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Monthly Target</span>
+                    <span className="font-bold">$350,000</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Achievement</span>
+                    <Badge className="bg-green-100 text-green-800">87%</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="w-5 h-5" />
+                  Performance Metrics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span>Prescription Fill Rate</span>
+                    <span className="font-bold text-green-600">98.5%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Average Wait Time</span>
+                    <span className="font-bold">12 minutes</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Customer Satisfaction</span>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                      <span className="font-bold">4.8/5</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Insurance Claims Success</span>
+                    <span className="font-bold text-green-600">94.2%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>
-
-      <InsuranceVerificationDialog />
-      <PaymentReceiptDialog />
     </div>
   );
-
-  function PaymentReceiptDialog() {
-    const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'check' | 'insurance_only'>('cash');
-    const [paymentAmount, setPaymentAmount] = useState("");
-    const [patientInstructions, setPatientInstructions] = useState("");
-
-    const requiredAmount = parseFloat(selectedPrescription?.insuranceCopay || selectedPrescription?.totalCost || "0");
-    const changeGiven = Math.max(0, parseFloat(paymentAmount || "0") - requiredAmount);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!selectedPrescription) return;
-      
-      await handlePaymentAndReceipt({
-        paymentMethod,
-        paymentAmount: parseFloat(paymentAmount || "0"),
-        changeGiven,
-        patientInstructions
-      });
-    };
-
-    return (
-      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Process Payment & Generate Receipt</DialogTitle>
-            <p className="text-sm text-gray-600">
-              Complete the payment process and generate a detailed receipt for the patient
-            </p>
-          </DialogHeader>
-          
-          {selectedPrescription && (
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                {/* Prescription Summary */}
-                <div className="p-3 bg-gray-50 rounded">
-                  <p className="font-medium">{selectedPrescription.medicationName} {selectedPrescription.dosage}</p>
-                  <p className="text-sm text-gray-600">
-                    Patient: {selectedPrescription.patientFirstName} {selectedPrescription.patientLastName} (MRN: {selectedPrescription.patientMRN})
-                  </p>
-                  <p className="text-sm text-gray-600">Quantity: {selectedPrescription.quantity}</p>
-                </div>
-
-                {/* Cost Breakdown */}
-                <div className="p-3 bg-blue-50 rounded">
-                  <h4 className="font-medium mb-2">Payment Summary</h4>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span>Total Cost:</span>
-                      <span>${parseFloat(selectedPrescription.totalCost || "0").toFixed(2)}</span>
-                    </div>
-                    {selectedPrescription.insuranceProvider && (
-                      <div className="flex justify-between">
-                        <span>Insurance ({selectedPrescription.insuranceProvider}):</span>
-                        <span>-${(parseFloat(selectedPrescription.totalCost || "0") - parseFloat(selectedPrescription.insuranceCopay || "0")).toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between font-medium border-t pt-1">
-                      <span>Patient Copay:</span>
-                      <span>${requiredAmount.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Payment Method */}
-                <div>
-                  <Label htmlFor="payment-method">Payment Method</Label>
-                  <Select value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="card">Credit/Debit Card</SelectItem>
-                      <SelectItem value="check">Check</SelectItem>
-                      <SelectItem value="insurance_only">Insurance Only (No Copay)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Payment Amount */}
-                {paymentMethod !== 'insurance_only' && (
-                  <div>
-                    <Label htmlFor="payment-amount">Amount Received ($)</Label>
-                    <Input 
-                      id="payment-amount"
-                      type="number" 
-                      step="0.01" 
-                      placeholder={requiredAmount.toFixed(2)}
-                      value={paymentAmount}
-                      onChange={(e) => setPaymentAmount(e.target.value)}
-                      required 
-                    />
-                    {changeGiven > 0 && (
-                      <p className="text-sm text-green-600 mt-1">
-                        Change to give: ${changeGiven.toFixed(2)}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Patient Instructions */}
-                <div>
-                  <Label htmlFor="patient-instructions">Special Instructions for Patient (Optional)</Label>
-                  <Textarea 
-                    id="patient-instructions"
-                    placeholder="Take with food, follow up with doctor in 2 weeks, etc."
-                    value={patientInstructions}
-                    onChange={(e) => setPatientInstructions(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2 pt-4">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setPaymentDialogOpen(false)}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={createReceiptMutation.isPending || updateStatusMutation.isPending}
-                    className="flex-1"
-                  >
-                    <Receipt className="h-4 w-4 mr-2" />
-                    {createReceiptMutation.isPending ? 'Processing...' : 'Complete & Print Receipt'}
-                  </Button>
-                </div>
-              </div>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
-    );
-  }
 }
