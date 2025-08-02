@@ -476,14 +476,14 @@ export default function PharmacyDashboardEnhanced() {
           </div>
 
           {/* Prescriptions List */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Prescription Management</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="border border-gray-200 rounded-lg bg-white shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900">Prescription Management</h3>
+            </div>
+            <div className="p-6">
               <div className="space-y-4">
                 {filteredPrescriptions.map((prescription) => (
-                  <div key={prescription.id} className="border rounded-lg p-4">
+                  <div key={prescription.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h3 className="font-semibold text-lg">{prescription.patientName}</h3>
@@ -493,13 +493,13 @@ export default function PharmacyDashboardEnhanced() {
                       <div className="text-right space-y-2">
                         {getStatusBadge(prescription.status)}
                         {getPriorityBadge(prescription.priority)}
-                        <Badge className={
+                        <span className={`inline-block px-2 py-1 text-xs rounded-full ${
                           prescription.insuranceStatus === 'verified' ? 'bg-green-100 text-green-800' :
                           prescription.insuranceStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                           'bg-red-100 text-red-800'
-                        }>
+                        }`}>
                           Insurance {prescription.insuranceStatus}
-                        </Badge>
+                        </span>
                       </div>
                     </div>
                     
@@ -513,13 +513,13 @@ export default function PharmacyDashboardEnhanced() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <div
+                        <span
                           className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 cursor-pointer select-none"
-                          onMouseDown={(e) => {
+                          onPointerDown={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                           }}
-                          onClick={(e) => {
+                          onPointerUp={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             console.log('View prescription clicked for:', prescription.id);
@@ -528,14 +528,14 @@ export default function PharmacyDashboardEnhanced() {
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           View
-                        </div>
-                        <div
+                        </span>
+                        <span
                           className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 cursor-pointer select-none"
-                          onMouseDown={(e) => {
+                          onPointerDown={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                           }}
-                          onClick={(e) => {
+                          onPointerUp={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             console.log('Process prescription clicked for:', prescription.id);
@@ -544,15 +544,15 @@ export default function PharmacyDashboardEnhanced() {
                         >
                           <Edit className="w-4 h-4 mr-1" />
                           Process
-                        </div>
+                        </span>
                         {prescription.status === 'ready' && (
-                          <div
+                          <span
                             className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer select-none"
-                            onMouseDown={(e) => {
+                            onPointerDown={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                             }}
-                            onClick={(e) => {
+                            onPointerUp={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               console.log('Dispense prescription clicked for:', prescription.id);
@@ -561,15 +561,15 @@ export default function PharmacyDashboardEnhanced() {
                           >
                             <Truck className="w-4 h-4 mr-1" />
                             Dispense
-                          </div>
+                          </span>
                         )}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
           </div>
         )}
 
