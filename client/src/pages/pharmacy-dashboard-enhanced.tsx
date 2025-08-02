@@ -1930,11 +1930,22 @@ export default function PharmacyDashboardEnhanced() {
                     <button 
                       type="button"
                       onClick={async () => {
+                        // Force immediate execution with alert
+                        alert('🚀 REPORT GENERATION STARTING - Check console for details');
+                        
                         // Use controlled form data
                         const { reportType, startDate, endDate, format } = reportFormData;
                         
                         // Direct report generation with real data (no backend dependency)
-                        console.log('GENERATING ENHANCED PHARMACY REPORT:', { reportType, startDate, endDate, format });
+                        console.log('🔥 ENHANCED PHARMACY REPORT GENERATION STARTED:', { reportType, startDate, endDate, format });
+                        console.log('🔥 FORM DATA STATE:', reportFormData);
+                        
+                        // Force page refresh after showing alert
+                        if (!reportType) {
+                          alert('❌ ERROR: No report type selected. Please select a report type first.');
+                          window.location.reload();
+                          return;
+                        }
                         
                         // Generate dynamic content based on report type
                         const getReportData = (type: string) => {
