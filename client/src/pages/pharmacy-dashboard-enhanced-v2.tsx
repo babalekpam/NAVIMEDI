@@ -74,7 +74,11 @@ export default function PharmacyDashboardEnhancedV2() {
   ];
 
   const generateComprehensiveReport = async () => {
-    const csvContent = `Comprehensive Pharmacy Analytics Report
+    try {
+      console.log('🚀 Starting report generation...');
+      alert('Starting report generation...');
+      
+      const csvContent = `Comprehensive Pharmacy Analytics Report
 Generated: ${new Date().toLocaleString()}
 Period: ${selectedTimeframe === 'today' ? 'Today' : selectedTimeframe === 'week' ? 'This Week' : 'This Month'}
 
@@ -156,16 +160,25 @@ Wait Time Compliance,85.6%,90.0%,Below Target
 Insurance Processing,92.8%,95.0%,Below Target
 Inventory Turnover,12.4x,10.0x,Exceeds`;
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `comprehensive_pharmacy_report_${selectedTimeframe}_${Date.now()}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `comprehensive_pharmacy_report_${selectedTimeframe}_${Date.now()}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      
+      console.log('📄 CSV file created, triggering download...');
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      alert('✅ Report downloaded successfully!');
+      console.log('✅ Report generation completed successfully');
+    } catch (error) {
+      console.error('❌ Report generation failed:', error);
+      alert('❌ Report generation failed: ' + (error instanceof Error ? error.message : String(error)));
+    }
   };
 
   const getPriorityColor = (priority: string) => {
