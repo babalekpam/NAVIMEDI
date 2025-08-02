@@ -806,13 +806,25 @@ export default function PharmacyDashboardEnhanced() {
                           <Eye className="w-4 h-4 mr-1" />
                           View
                         </span>
-                        <span
-                          className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 cursor-pointer select-none"
-                          onClick={() => openProcessModal(prescription)}
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Process
-                        </span>
+                        
+                        {prescription.status === 'dispensed' ? (
+                          <span
+                            className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-gray-100 text-gray-400 cursor-not-allowed select-none"
+                            title="Cannot edit dispensed prescriptions"
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Process (Completed)
+                          </span>
+                        ) : (
+                          <span
+                            className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 cursor-pointer select-none"
+                            onClick={() => openProcessModal(prescription)}
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Process
+                          </span>
+                        )}
+                        
                         {prescription.status === 'ready' && (
                           <span
                             className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer select-none"
@@ -820,6 +832,16 @@ export default function PharmacyDashboardEnhanced() {
                           >
                             <Truck className="w-4 h-4 mr-1" />
                             Dispense
+                          </span>
+                        )}
+                        
+                        {prescription.status === 'dispensed' && (
+                          <span
+                            className="inline-flex items-center px-3 py-1.5 text-sm bg-gray-100 text-gray-600 rounded-md border border-gray-300"
+                            title="Prescription has been dispensed"
+                          >
+                            <Truck className="w-4 h-4 mr-1" />
+                            Dispensed ✓
                           </span>
                         )}
                       </div>
