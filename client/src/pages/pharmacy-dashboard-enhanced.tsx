@@ -79,7 +79,7 @@ export default function PharmacyDashboardEnhanced() {
   
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalContent, setModalContent] = useState({ title: '', content: '', prescription: null as Prescription | null });
+  const [modalContent, setModalContent] = useState({ title: '', content: '', prescription: null as Prescription | null, inventoryItem: null as InventoryItem | null });
 
   // Debug tab changes
   const handleTabChange = (value: string) => {
@@ -124,7 +124,28 @@ export default function PharmacyDashboardEnhanced() {
 
   const closeModal = () => {
     setModalOpen(false);
-    setModalContent({ title: '', content: '', prescription: null });
+    setModalContent({ title: '', content: '', prescription: null, inventoryItem: null });
+  };
+
+  // Inventory modal functions
+  const openEditInventoryModal = (item: InventoryItem) => {
+    setModalContent({
+      title: 'Edit Inventory Item',
+      content: 'edit-inventory',
+      prescription: null,
+      inventoryItem: item
+    });
+    setModalOpen(true);
+  };
+
+  const openReorderModal = (item: InventoryItem) => {
+    setModalContent({
+      title: 'Reorder Item',
+      content: 'reorder',
+      prescription: null,
+      inventoryItem: item
+    });
+    setModalOpen(true);
   };
 
   // Fetch pharmacy statistics
@@ -627,38 +648,20 @@ export default function PharmacyDashboardEnhanced() {
                     </div>
                     
                     <div className="flex justify-end gap-2 mt-3">
-                      <div
+                      <span
                         className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 cursor-pointer select-none"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          console.log('Edit inventory item clicked for:', item.id);
-                          alert(`Editing inventory item: ${item.name}\n\nCurrent Details:\n• Stock: ${item.currentStock} units\n• Min/Max: ${item.minStock}/${item.maxStock}\n• Cost: $${item.cost.toFixed(2)}\n• Price: $${item.price.toFixed(2)}\n• Expiry: ${new Date(item.expiryDate).toLocaleDateString()}`);
-                        }}
+                        onClick={() => openEditInventoryModal(item)}
                       >
                         <Edit className="w-4 h-4 mr-1" />
                         Edit
-                      </div>
-                      <div
+                      </span>
+                      <span
                         className="inline-flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 cursor-pointer select-none"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          console.log('Reorder item clicked for:', item.id);
-                          alert(`Reordering: ${item.name}\n\nReorder Details:\n• Current Stock: ${item.currentStock} units\n• Minimum Level: ${item.minStock} units\n• Suggested Quantity: ${item.maxStock - item.currentStock} units\n• Supplier: ${item.supplier}\n• Cost per Unit: $${item.cost.toFixed(2)}`);
-                        }}
+                        onClick={() => openReorderModal(item)}
                       >
                         <ShoppingCart className="w-4 h-4 mr-1" />
                         Reorder
-                      </div>
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -851,6 +854,159 @@ export default function PharmacyDashboardEnhanced() {
                     <div className="flex gap-2 mt-4">
                       <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm">
                         Complete Dispensing
+                      </button>
+                      <button 
+                        onClick={closeModal}
+                        className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {modalContent.content === 'edit-inventory' && modalContent.inventoryItem && (
+                <div>
+                  <h3 className="font-semibold mb-3">Edit Inventory Item</h3>
+                  <div className="space-y-4">
+                    <div className="p-3 bg-blue-50 rounded">
+                      <h4 className="font-medium">{modalContent.inventoryItem.name}</h4>
+                      <p className="text-sm text-gray-600">{modalContent.inventoryItem.genericName} - {modalContent.inventoryItem.strength}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <label className="block font-medium mb-1">Current Stock</label>
+                        <input 
+                          type="number" 
+                          defaultValue={modalContent.inventoryItem.currentStock}
+                          className="w-full p-2 border border-gray-300 rounded"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-medium mb-1">Minimum Stock</label>
+                        <input 
+                          type="number" 
+                          defaultValue={modalContent.inventoryItem.minStock}
+                          className="w-full p-2 border border-gray-300 rounded"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-medium mb-1">Maximum Stock</label>
+                        <input 
+                          type="number" 
+                          defaultValue={modalContent.inventoryItem.maxStock}
+                          className="w-full p-2 border border-gray-300 rounded"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-medium mb-1">Cost per Unit</label>
+                        <input 
+                          type="number" 
+                          step="0.01"
+                          defaultValue={modalContent.inventoryItem.cost}
+                          className="w-full p-2 border border-gray-300 rounded"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-medium mb-1">Selling Price</label>
+                        <input 
+                          type="number" 
+                          step="0.01"
+                          defaultValue={modalContent.inventoryItem.price}
+                          className="w-full p-2 border border-gray-300 rounded"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-medium mb-1">Expiry Date</label>
+                        <input 
+                          type="date" 
+                          defaultValue={modalContent.inventoryItem.expiryDate}
+                          className="w-full p-2 border border-gray-300 rounded"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block font-medium mb-1">Supplier</label>
+                      <input 
+                        type="text" 
+                        defaultValue={modalContent.inventoryItem.supplier}
+                        className="w-full p-2 border border-gray-300 rounded"
+                      />
+                    </div>
+                    
+                    <div className="flex gap-2 mt-4">
+                      <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+                        Save Changes
+                      </button>
+                      <button 
+                        onClick={closeModal}
+                        className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {modalContent.content === 'reorder' && modalContent.inventoryItem && (
+                <div>
+                  <h3 className="font-semibold mb-3">Reorder Item</h3>
+                  <div className="space-y-4">
+                    <div className="p-3 bg-orange-50 rounded">
+                      <h4 className="font-medium">{modalContent.inventoryItem.name}</h4>
+                      <p className="text-sm text-gray-600">{modalContent.inventoryItem.genericName}</p>
+                      <p className="text-xs text-orange-600 mt-1">
+                        Stock Level: {modalContent.inventoryItem.currentStock} units (Min: {modalContent.inventoryItem.minStock})
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block font-medium mb-1 text-sm">Current Stock</label>
+                          <div className="p-2 bg-gray-100 rounded text-sm">{modalContent.inventoryItem.currentStock} units</div>
+                        </div>
+                        <div>
+                          <label className="block font-medium mb-1 text-sm">Minimum Level</label>
+                          <div className="p-2 bg-gray-100 rounded text-sm">{modalContent.inventoryItem.minStock} units</div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block font-medium mb-1 text-sm">Suggested Quantity</label>
+                        <input 
+                          type="number" 
+                          defaultValue={modalContent.inventoryItem.maxStock - modalContent.inventoryItem.currentStock}
+                          className="w-full p-2 border border-gray-300 rounded"
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block font-medium mb-1 text-sm">Cost per Unit</label>
+                          <div className="p-2 bg-gray-100 rounded text-sm">${modalContent.inventoryItem.cost.toFixed(2)}</div>
+                        </div>
+                        <div>
+                          <label className="block font-medium mb-1 text-sm">Total Cost</label>
+                          <div className="p-2 bg-blue-100 rounded text-sm font-medium">
+                            ${((modalContent.inventoryItem.maxStock - modalContent.inventoryItem.currentStock) * modalContent.inventoryItem.cost).toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block font-medium mb-1 text-sm">Supplier</label>
+                        <div className="p-2 bg-gray-100 rounded text-sm">{modalContent.inventoryItem.supplier}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 mt-4">
+                      <button className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm">
+                        Place Order
                       </button>
                       <button 
                         onClick={closeModal}
