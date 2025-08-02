@@ -392,7 +392,17 @@ function AppContent() {
           </ProtectedRoute>
         </Route>
         <Route path="/pharmacy-dashboard">
-          <PharmacyDashboardSimple />
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto">
+                  <PharmacyDashboardSimple />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
         </Route>
         <Route path="/pharmacy-test">
           <PharmacyDashboardSimple />
