@@ -153,19 +153,33 @@ export default function PharmacyDashboardEnhanced() {
     setModalOpen(true);
   };
 
-  // Handle prescription processing
+  // Handle prescription processing - completely prevent any navigation
   const handleStartProcessing = (e: React.MouseEvent) => {
     console.log('handleStartProcessing called!');
     e.preventDefault();
     e.stopPropagation();
+    e.nativeEvent.preventDefault();
+    e.nativeEvent.stopImmediatePropagation();
+    
+    // Prevent any default link behavior
+    if (e.target instanceof HTMLElement) {
+      e.target.blur();
+    }
+    
     if (modalContent.prescription) {
       // Here you would typically make an API call to update the prescription status
       console.log('Starting processing for prescription:', modalContent.prescription.id);
-      alert(`Started processing prescription for ${modalContent.prescription.patientName}\n\nStatus updated to: In Progress\nMedication: ${modalContent.prescription.medicationName}`);
-      closeModal();
+      
+      // Use a more obvious alert to test
+      setTimeout(() => {
+        alert(`✅ SUCCESS! Processing started for ${modalContent.prescription!.patientName}\n\nMedication: ${modalContent.prescription!.medicationName}\nStatus: In Progress\n\nThis message shows the button worked correctly!`);
+        closeModal();
+      }, 100);
     } else {
       console.log('No prescription in modalContent');
     }
+    
+    return false;
   };
 
   const handleCompleteDispensing = (e: React.MouseEvent) => {
@@ -790,8 +804,18 @@ export default function PharmacyDashboardEnhanced() {
       
       {/* Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              closeModal();
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">{modalContent.title}</h2>
               <button
@@ -853,20 +877,34 @@ export default function PharmacyDashboardEnhanced() {
                     </div>
                     
                     <div className="flex gap-2 mt-4">
-                      <button 
-                        type="button"
+                      <div 
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleStartProcessing(e as any);
+                          }
+                        }}
                         onClick={handleStartProcessing}
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm cursor-pointer select-none text-center"
                       >
                         Start Processing
-                      </button>
-                      <button 
-                        type="button"
+                      </div>
+                      <div 
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            closeModal();
+                          }
+                        }}
                         onClick={closeModal}
-                        className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm"
+                        className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm cursor-pointer select-none text-center"
                       >
                         Cancel
-                      </button>
+                      </div>
                     </div>
                   </div>
                 </div>
