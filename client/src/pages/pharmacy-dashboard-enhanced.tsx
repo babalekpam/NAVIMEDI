@@ -85,11 +85,23 @@ export default function PharmacyDashboardEnhanced() {
   const [updatedPrescriptionId, setUpdatedPrescriptionId] = useState<string | null>(null);
   const [forceRerender, setForceRerender] = useState(0);
   
-  // Local state for prescriptions with status tracking
-  const [prescriptionStatuses, setPrescriptionStatuses] = useState<Record<string, string>>({
-    '1': 'new',
-    '2': 'processing', 
-    '3': 'ready'
+  // Local state for prescriptions with status tracking - persisted statuses
+  const [prescriptionStatuses, setPrescriptionStatuses] = useState<Record<string, string>>(() => {
+    // Try to load from localStorage first to persist dispensed status
+    const saved = localStorage.getItem('pharmacy-prescription-statuses');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse saved prescription statuses:', e);
+      }
+    }
+    // Default initial statuses
+    return {
+      '1': 'new',
+      '2': 'processing', 
+      '3': 'ready'
+    };
   });
 
   // Base prescription data
@@ -239,6 +251,8 @@ export default function PharmacyDashboardEnhanced() {
           setPrescriptionStatuses(prev => {
             const updated = { ...prev, [modalContent.prescription!.id]: 'ready' };
             console.log('Updated prescription statuses:', updated);
+            // Save to localStorage to persist status
+            localStorage.setItem('pharmacy-prescription-statuses', JSON.stringify(updated));
             return updated;
           });
           
@@ -299,11 +313,13 @@ export default function PharmacyDashboardEnhanced() {
     
     console.log('DISPENSING - Created updated prescription:', updatedPrescription);
     
-    // Update prescription status directly
+    // Update prescription status directly and persist it
     console.log('DISPENSING - Updating prescription status from', modalContent.prescription.status, 'to dispensed');
     setPrescriptionStatuses(prev => {
       const updated = { ...prev, [prescriptionId]: 'dispensed' };
       console.log('DISPENSING - Updated prescription statuses:', updated);
+      // Save to localStorage to persist dispensed status permanently
+      localStorage.setItem('pharmacy-prescription-statuses', JSON.stringify(updated));
       return updated;
     });
     
