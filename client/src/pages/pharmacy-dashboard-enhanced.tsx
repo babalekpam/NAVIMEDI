@@ -80,6 +80,7 @@ export default function PharmacyDashboardEnhanced() {
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '', prescription: null as Prescription | null, inventoryItem: null as InventoryItem | null });
+  const [notificationsRead, setNotificationsRead] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [updatedPrescriptionId, setUpdatedPrescriptionId] = useState<string | null>(null);
@@ -659,7 +660,7 @@ export default function PharmacyDashboardEnhanced() {
           >
             <Bell className="w-4 h-4" />
             Notifications
-            {stats?.inventoryAlerts ? (
+            {stats?.inventoryAlerts && !notificationsRead ? (
               <Badge className="bg-red-100 text-red-800 ml-1">{stats.inventoryAlerts}</Badge>
             ) : null}
           </Button>
@@ -1529,56 +1530,72 @@ export default function PharmacyDashboardEnhanced() {
               {modalContent.content === 'notifications' && (
                 <div>
                   <h3 className="font-semibold mb-3">Pharmacy Notifications</h3>
-                  <div className="space-y-3">
-                    <div className="p-3 bg-red-50 border-l-4 border-red-500 rounded">
-                      <div className="flex items-start">
-                        <Bell className="w-4 h-4 text-red-500 mt-0.5 mr-2" />
-                        <div>
-                          <h4 className="font-medium text-red-800">Low Stock Alert</h4>
-                          <p className="text-sm text-red-700">Lisinopril 10mg is below minimum stock level (25/30 units)</p>
-                          <p className="text-xs text-red-600 mt-1">2 hours ago</p>
+                  {!notificationsRead ? (
+                    <div className="space-y-3">
+                      <div className="p-3 bg-red-50 border-l-4 border-red-500 rounded">
+                        <div className="flex items-start">
+                          <Bell className="w-4 h-4 text-red-500 mt-0.5 mr-2" />
+                          <div>
+                            <h4 className="font-medium text-red-800">Low Stock Alert</h4>
+                            <p className="text-sm text-red-700">Lisinopril 10mg is below minimum stock level (25/30 units)</p>
+                            <p className="text-xs text-red-600 mt-1">2 hours ago</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="p-3 bg-yellow-50 border-l-4 border-yellow-500 rounded">
+                        <div className="flex items-start">
+                          <Bell className="w-4 h-4 text-yellow-500 mt-0.5 mr-2" />
+                          <div>
+                            <h4 className="font-medium text-yellow-800">Prescription Ready</h4>
+                            <p className="text-sm text-yellow-700">Emily Davis - Atorvastatin 20mg ready for pickup</p>
+                            <p className="text-xs text-yellow-600 mt-1">4 hours ago</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+                        <div className="flex items-start">
+                          <Bell className="w-4 h-4 text-blue-500 mt-0.5 mr-2" />
+                          <div>
+                            <h4 className="font-medium text-blue-800">New Prescription</h4>
+                            <p className="text-sm text-blue-700">Michael Brown - Lisinopril 10mg received from Dr. Wilson</p>
+                            <p className="text-xs text-blue-600 mt-1">6 hours ago</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="p-3 bg-green-50 border-l-4 border-green-500 rounded">
+                        <div className="flex items-start">
+                          <Bell className="w-4 h-4 text-green-500 mt-0.5 mr-2" />
+                          <div>
+                            <h4 className="font-medium text-green-800">Insurance Verified</h4>
+                            <p className="text-sm text-green-700">Sarah Johnson insurance coverage confirmed for Metformin 500mg</p>
+                            <p className="text-xs text-green-600 mt-1">8 hours ago</p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="p-3 bg-yellow-50 border-l-4 border-yellow-500 rounded">
-                      <div className="flex items-start">
-                        <Bell className="w-4 h-4 text-yellow-500 mt-0.5 mr-2" />
-                        <div>
-                          <h4 className="font-medium text-yellow-800">Prescription Ready</h4>
-                          <p className="text-sm text-yellow-700">Emily Davis - Atorvastatin 20mg ready for pickup</p>
-                          <p className="text-xs text-yellow-600 mt-1">4 hours ago</p>
-                        </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
+                        <Bell className="w-8 h-8 text-green-600" />
                       </div>
+                      <h4 className="font-medium text-gray-800 mb-2">All caught up!</h4>
+                      <p className="text-sm text-gray-600">No new notifications at this time.</p>
                     </div>
-                    
-                    <div className="p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
-                      <div className="flex items-start">
-                        <Bell className="w-4 h-4 text-blue-500 mt-0.5 mr-2" />
-                        <div>
-                          <h4 className="font-medium text-blue-800">New Prescription</h4>
-                          <p className="text-sm text-blue-700">Michael Brown - Lisinopril 10mg received from Dr. Wilson</p>
-                          <p className="text-xs text-blue-600 mt-1">6 hours ago</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="p-3 bg-green-50 border-l-4 border-green-500 rounded">
-                      <div className="flex items-start">
-                        <Bell className="w-4 h-4 text-green-500 mt-0.5 mr-2" />
-                        <div>
-                          <h4 className="font-medium text-green-800">Insurance Verified</h4>
-                          <p className="text-sm text-green-700">Sarah Johnson insurance coverage confirmed for Metformin 500mg</p>
-                          <p className="text-xs text-green-600 mt-1">8 hours ago</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                   
                   <div className="flex gap-2 mt-4">
                     <button 
                       type="button"
-                      onClick={() => alert('All notifications marked as read!')}
+                      onClick={() => {
+                        // Clear notifications and close modal
+                        setStats(prev => prev ? { ...prev, inventoryAlerts: 0 } : null);
+                        setNotificationsRead(true);
+                        alert('All notifications marked as read!');
+                        closeModal();
+                      }}
                       className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
                     >
                       Mark All Read
