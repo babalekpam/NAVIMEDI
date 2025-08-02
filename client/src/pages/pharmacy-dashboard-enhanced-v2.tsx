@@ -414,7 +414,11 @@ Inventory Turnover,12.4x,10.0x,Exceeds`;
                   <Calendar className="w-4 h-4 text-indigo-600" />
                   <span>Medication Reminders</span>
                 </div>
-                <Button size="sm" className="w-full mt-3">
+                <Button 
+                  size="sm" 
+                  className="w-full mt-3"
+                  onClick={() => window.location.href = '/pharmacy-patient-management'}
+                >
                   Manage Services
                 </Button>
               </div>
@@ -443,7 +447,12 @@ Inventory Turnover,12.4x,10.0x,Exceeds`;
                   <p className="font-medium text-purple-700">Inventory Optimization</p>
                   <p className="text-xs text-gray-600">Save $2,340 this month</p>
                 </div>
-                <Button size="sm" className="w-full mt-3" variant="outline">
+                <Button 
+                  size="sm" 
+                  className="w-full mt-3" 
+                  variant="outline"
+                  onClick={() => window.location.href = '/reports'}
+                >
                   View Details
                 </Button>
               </div>
@@ -474,7 +483,11 @@ Inventory Turnover,12.4x,10.0x,Exceeds`;
                   <p className="font-medium text-orange-700">Drone Delivery</p>
                   <p className="text-xs text-gray-600">2 prescriptions via drone</p>
                 </div>
-                <Button size="sm" className="w-full mt-3">
+                <Button 
+                  size="sm" 
+                  className="w-full mt-3"
+                  onClick={() => window.location.href = '/pharmacy-patient-management'}
+                >
                   Track Deliveries
                 </Button>
               </div>
@@ -540,7 +553,11 @@ Inventory Turnover,12.4x,10.0x,Exceeds`;
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-              <Button variant="outline" className="flex flex-col items-center gap-2 h-20">
+              <Button 
+                variant="outline" 
+                className="flex flex-col items-center gap-2 h-20"
+                onClick={() => window.location.href = '/patients'}
+              >
                 <Search className="w-5 h-5" />
                 <span className="text-xs">Search Patient</span>
               </Button>
@@ -552,19 +569,35 @@ Inventory Turnover,12.4x,10.0x,Exceeds`;
                 <Plus className="w-5 h-5" />
                 <span className="text-xs">New Rx</span>
               </Button>
-              <Button variant="outline" className="flex flex-col items-center gap-2 h-20">
+              <Button 
+                variant="outline" 
+                className="flex flex-col items-center gap-2 h-20"
+                onClick={() => window.location.href = '/pharmacy-inventory'}
+              >
                 <Package className="w-5 h-5" />
                 <span className="text-xs">Inventory</span>
               </Button>
-              <Button variant="outline" className="flex flex-col items-center gap-2 h-20">
+              <Button 
+                variant="outline" 
+                className="flex flex-col items-center gap-2 h-20"
+                onClick={() => window.location.href = '/pharmacy-patient-management'}
+              >
                 <Phone className="w-5 h-5" />
                 <span className="text-xs">Call Patient</span>
               </Button>
-              <Button variant="outline" className="flex flex-col items-center gap-2 h-20">
+              <Button 
+                variant="outline" 
+                className="flex flex-col items-center gap-2 h-20"
+                onClick={() => window.location.href = '/prescriptions'}
+              >
                 <FileText className="w-5 h-5" />
                 <span className="text-xs">Print Label</span>
               </Button>
-              <Button variant="outline" className="flex flex-col items-center gap-2 h-20">
+              <Button 
+                variant="outline" 
+                className="flex flex-col items-center gap-2 h-20"
+                onClick={() => window.location.href = '/pharmacy-patient-management'}
+              >
                 <MapPin className="w-5 h-5" />
                 <span className="text-xs">Track Delivery</span>
               </Button>
