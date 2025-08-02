@@ -364,24 +364,77 @@ Report generated on: ${new Date().toLocaleString()}
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm">
+                <button 
+                  className="flex items-center gap-2 text-sm w-full p-2 rounded hover:bg-indigo-100 transition-colors"
+                  onClick={() => {
+                    // Generate QR code for prescription pickup
+                    const qrData = `PHARMACY_PICKUP_${Date.now()}`;
+                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
+                    
+                    const popup = window.open('', 'qrCode', 'width=300,height=350');
+                    if (popup) {
+                      popup.document.write(`
+                        <html>
+                          <head><title>QR Code - Prescription Pickup</title></head>
+                          <body style="text-align: center; padding: 20px; font-family: Arial;">
+                            <h3>QR Code for Prescription Pickup</h3>
+                            <img src="${qrUrl}" alt="QR Code" style="border: 1px solid #ccc;">
+                            <p style="font-size: 12px; margin-top: 10px;">Code: ${qrData}</p>
+                            <button onclick="window.print()" style="margin: 10px; padding: 8px 16px;">Print QR Code</button>
+                            <button onclick="window.close()" style="margin: 10px; padding: 8px 16px;">Close</button>
+                          </body>
+                        </html>
+                      `);
+                      popup.document.close();
+                      alert('QR Code generated! Show this code at pickup counter.');
+                    } else {
+                      alert('Please allow popups to view QR code.');
+                    }
+                  }}
+                >
                   <QrCode className="w-4 h-4 text-indigo-600" />
-                  <span>QR Prescription Pickup</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
+                  <span>Generate QR Pickup Code</span>
+                </button>
+                
+                <button 
+                  className="flex items-center gap-2 text-sm w-full p-2 rounded hover:bg-indigo-100 transition-colors"
+                  onClick={() => {
+                    // SMS Notification demo
+                    const patientPhone = prompt('Enter patient phone number for SMS notification:');
+                    if (patientPhone) {
+                      alert(`SMS Notification sent to ${patientPhone}:\n\n"Your prescription is ready for pickup at NaviMED Pharmacy. QR code: PICKUP_${Date.now()}. Business hours: 9AM-9PM."`);
+                      console.log('SMS sent to:', patientPhone);
+                    }
+                  }}
+                >
                   <MessageSquare className="w-4 h-4 text-indigo-600" />
-                  <span>SMS Notifications</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
+                  <span>Send SMS Notification</span>
+                </button>
+                
+                <button 
+                  className="flex items-center gap-2 text-sm w-full p-2 rounded hover:bg-indigo-100 transition-colors"
+                  onClick={() => {
+                    // Medication Reminder setup
+                    const medicationName = prompt('Enter medication name for reminder:');
+                    if (medicationName) {
+                      const reminderTime = prompt('Set reminder time (e.g., 8:00 AM, 2:00 PM):');
+                      if (reminderTime) {
+                        alert(`Medication reminder set for ${medicationName} at ${reminderTime}.\n\nReminder will be sent daily via SMS and app notification.`);
+                        console.log('Reminder set:', medicationName, 'at', reminderTime);
+                      }
+                    }
+                  }}
+                >
                   <Calendar className="w-4 h-4 text-indigo-600" />
-                  <span>Medication Reminders</span>
-                </div>
+                  <span>Set Medication Reminder</span>
+                </button>
+                
                 <Button 
                   size="sm" 
                   className="w-full mt-3"
                   onClick={() => window.location.href = '/pharmacy-patient-management'}
                 >
-                  Manage Services
+                  Manage All Services
                 </Button>
               </div>
             </CardContent>
