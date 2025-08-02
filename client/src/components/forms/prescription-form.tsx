@@ -76,8 +76,12 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescr
   }, [selectedPatientId, patients, form, isEditing]);
 
   const handleSubmit = (data: any) => {
+    console.log("[DEBUG] Form handleSubmit called");
     console.log("[DEBUG] Form data being submitted:", data);
     console.log("[DEBUG] Form validation errors:", form.formState.errors);
+    console.log("[DEBUG] Form isValid:", form.formState.isValid);
+    console.log("[DEBUG] Form isSubmitting:", form.formState.isSubmitting);
+    
     const expiryDate = new Date();
     expiryDate.setFullYear(expiryDate.getFullYear() + 1); // Default 1 year expiry
     

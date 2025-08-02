@@ -477,6 +477,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/prescriptions", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
+      console.log("[DEBUG] POST /api/prescriptions called with body:", req.body);
+      console.log("[DEBUG] Tenant:", req.tenant?.id);
+      console.log("[DEBUG] User:", req.user?.id);
+      
       // Convert string dates to Date objects
       const requestData = { ...req.body };
       if (requestData.expiryDate && typeof requestData.expiryDate === 'string') {
@@ -494,9 +498,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         expiryDate: requestData.expiryDate ? new Date(requestData.expiryDate) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // Default 1 year
       };
       
+      console.log("[DEBUG] Prescription data prepared:", prescriptionData);
+      
       const validatedData = insertPrescriptionSchema.parse(prescriptionData);
+      console.log("[DEBUG] Data validated successfully:", validatedData);
 
       const prescription = await storage.createPrescription(validatedData);
+      console.log("[DEBUG] Prescription created:", prescription);
 
       // Create audit log
       await storage.createAuditLog({
@@ -514,6 +522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Create prescription error:", error);
       if (error instanceof z.ZodError) {
+        console.error("Validation errors:", error.errors);
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
       res.status(500).json({ message: "Internal server error" });

@@ -62,13 +62,19 @@ export default function Prescriptions() {
 
   const createPrescriptionMutation = useMutation({
     mutationFn: async (prescriptionData: any) => {
+      console.log("[DEBUG] Mutation called with data:", prescriptionData);
       const { apiRequest } = await import("@/lib/queryClient");
       const response = await apiRequest("POST", "/api/prescriptions", prescriptionData);
+      console.log("[DEBUG] API response:", response);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("[DEBUG] Mutation successful:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
       setIsFormOpen(false);
+    },
+    onError: (error) => {
+      console.error("[DEBUG] Mutation error:", error);
     }
   });
 
