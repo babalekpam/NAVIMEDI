@@ -186,10 +186,15 @@ export default function PharmacyDashboardEnhanced() {
   };
 
   const handleStartProcessing = (e: React.MouseEvent) => {
+    console.log('handleStartProcessing clicked!');
     e.preventDefault();
     e.stopPropagation();
-    setCurrentStep(0);
+    console.log('Before state update - completedSteps:', completedSteps, 'currentStep:', currentStep);
+    
+    // Force the UI to show the step-by-step view by setting currentStep to 1
+    setCurrentStep(1);
     setCompletedSteps([]);
+    console.log('Updated currentStep to 1 and reset completedSteps');
   };
 
   const handleCompleteDispensing = (e: React.MouseEvent) => {
@@ -864,7 +869,7 @@ export default function PharmacyDashboardEnhanced() {
                       <p className="text-sm text-gray-600">{modalContent.prescription.medicationName}</p>
                     </div>
                     
-                    {completedSteps.length === 0 ? (
+                    {completedSteps.length === 0 && currentStep === 0 ? (
                       // Initial view - show overview and start button
                       <div className="space-y-3">
                         <h4 className="font-medium">Processing Steps Overview:</h4>
