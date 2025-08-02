@@ -1663,49 +1663,190 @@ export default function PharmacyDashboardEnhanced() {
                     <button 
                       type="button"
                       onClick={() => {
-                        // Get form data
-                        const reportType = document.querySelector('select')?.value || 'daily';
-                        const startDate = document.querySelectorAll('input[type="date"]')[0]?.value || new Date().toISOString().split('T')[0];
-                        const endDate = document.querySelectorAll('input[type="date"]')[1]?.value || new Date().toISOString().split('T')[0];
-                        const format = document.querySelector('input[name="format"]:checked')?.value || 'pdf';
+                        // Get form data with proper casting
+                        const reportType = (document.querySelector('select') as HTMLSelectElement)?.value || 'daily';
+                        const startDate = (document.querySelectorAll('input[type="date"]')[0] as HTMLInputElement)?.value || new Date().toISOString().split('T')[0];
+                        const endDate = (document.querySelectorAll('input[type="date"]')[1] as HTMLInputElement)?.value || new Date().toISOString().split('T')[0];
+                        const format = (document.querySelector('input[name="format"]:checked') as HTMLInputElement)?.value || 'pdf';
+                        
+                        // Generate dynamic content based on report type
+                        const getReportData = (type: string) => {
+                          switch(type) {
+                            case 'daily':
+                              return {
+                                title: 'Daily Sales Report',
+                                metrics: {
+                                  prescriptions: 89,
+                                  revenue: '$3,247.50',
+                                  claims: 67,
+                                  avgTime: '8 min'
+                                },
+                                breakdown: [
+                                  { label: 'Morning Shift (6AM-2PM)', value: '45 prescriptions' },
+                                  { label: 'Evening Shift (2PM-10PM)', value: '44 prescriptions' },
+                                  { label: 'Rush Hour Peak (4-6PM)', value: '28 prescriptions' }
+                                ],
+                                topMeds: [
+                                  'Metformin 500mg - 12 prescriptions',
+                                  'Lisinopril 10mg - 9 prescriptions',
+                                  'Atorvastatin 20mg - 8 prescriptions'
+                                ]
+                              };
+                            case 'weekly':
+                              return {
+                                title: 'Weekly Performance Report',
+                                metrics: {
+                                  prescriptions: 612,
+                                  revenue: '$21,834.75',
+                                  claims: 445,
+                                  avgTime: '11 min'
+                                },
+                                breakdown: [
+                                  { label: 'Monday-Wednesday', value: '267 prescriptions' },
+                                  { label: 'Thursday-Friday', value: '198 prescriptions' },
+                                  { label: 'Weekend', value: '147 prescriptions' }
+                                ],
+                                topMeds: [
+                                  'Metformin 500mg - 78 prescriptions',
+                                  'Lisinopril 10mg - 65 prescriptions',
+                                  'Omeprazole 20mg - 52 prescriptions'
+                                ]
+                              };
+                            case 'monthly':
+                              return {
+                                title: 'Monthly Financial Report',
+                                metrics: {
+                                  prescriptions: 2847,
+                                  revenue: '$98,547.50',
+                                  claims: 2156,
+                                  avgTime: '12 min'
+                                },
+                                breakdown: [
+                                  { label: 'Week 1 Revenue', value: '$24,125.00' },
+                                  { label: 'Week 2 Revenue', value: '$26,890.50' },
+                                  { label: 'Week 3 Revenue', value: '$23,456.75' },
+                                  { label: 'Week 4 Revenue', value: '$24,075.25' }
+                                ],
+                                topMeds: [
+                                  'Metformin 500mg - 342 prescriptions',
+                                  'Lisinopril 10mg - 298 prescriptions',
+                                  'Atorvastatin 20mg - 267 prescriptions'
+                                ]
+                              };
+                            case 'inventory':
+                              return {
+                                title: 'Inventory Status Report',
+                                metrics: {
+                                  prescriptions: 125,
+                                  revenue: '$45,890.00',
+                                  claims: 3,
+                                  avgTime: '5 days'
+                                },
+                                breakdown: [
+                                  { label: 'In Stock Items', value: '98 medications' },
+                                  { label: 'Low Stock Alerts', value: '15 medications' },
+                                  { label: 'Out of Stock', value: '7 medications' },
+                                  { label: 'Expiring Soon', value: '12 medications' }
+                                ],
+                                topMeds: [
+                                  'Lisinopril 10mg - 25/30 units (Low)',
+                                  'Metformin 500mg - 45/50 units (OK)',
+                                  'Aspirin 81mg - 0/25 units (Out)'
+                                ]
+                              };
+                            case 'prescriptions':
+                              return {
+                                title: 'Prescription Analytics Report',
+                                metrics: {
+                                  prescriptions: 247,
+                                  revenue: '$8,547.50',
+                                  claims: 156,
+                                  avgTime: '12 min'
+                                },
+                                breakdown: [
+                                  { label: 'New Prescriptions', value: '89 received' },
+                                  { label: 'Refills Processed', value: '158 completed' },
+                                  { label: 'Insurance Verified', value: '201 claims' },
+                                  { label: 'Ready for Pickup', value: '34 waiting' }
+                                ],
+                                topMeds: [
+                                  'Metformin 500mg - 45 prescriptions',
+                                  'Lisinopril 10mg - 38 prescriptions',
+                                  'Atorvastatin 20mg - 32 prescriptions'
+                                ]
+                              };
+                            case 'insurance':
+                              return {
+                                title: 'Insurance Claims Report',
+                                metrics: {
+                                  prescriptions: 178,
+                                  revenue: '$12,456.78',
+                                  claims: 156,
+                                  avgTime: '2.5 hrs'
+                                },
+                                breakdown: [
+                                  { label: 'Approved Claims', value: '145 processed' },
+                                  { label: 'Pending Review', value: '18 waiting' },
+                                  { label: 'Rejected Claims', value: '11 denied' },
+                                  { label: 'Resubmissions', value: '4 retry' }
+                                ],
+                                topMeds: [
+                                  'BlueCross Coverage - 89 claims',
+                                  'Aetna Insurance - 45 claims',
+                                  'Medicare Part D - 22 claims'
+                                ]
+                              };
+                            default:
+                              return {
+                                title: 'Daily Sales Report',
+                                metrics: {
+                                  prescriptions: 89,
+                                  revenue: '$3,247.50',
+                                  claims: 67,
+                                  avgTime: '8 min'
+                                },
+                                breakdown: [],
+                                topMeds: []
+                              };
+                          }
+                        };
+                        
+                        const reportData = getReportData(reportType);
                         
                         // Generate report content based on type
                         let reportContent = '';
                         const currentDate = new Date().toLocaleDateString();
                         
                         if (format === 'csv') {
-                          reportContent = `NaviMed Pharmacy - ${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report
+                          reportContent = `NaviMed Pharmacy - ${reportData.title}
 Generated: ${currentDate}
 Period: ${startDate} to ${endDate}
 
 Metric,Value
-Total Prescriptions,247
-Revenue Generated,$8547.50
-Insurance Claims,156
-Average Processing Time,12 minutes
-Patient Satisfaction,96.5%
-Inventory Items,125
-Low Stock Alerts,3
-Completed Prescriptions,198
-Pending Prescriptions,24
-Ready for Pickup,25`;
+Total Prescriptions,${reportData.metrics.prescriptions}
+Revenue Generated,${reportData.metrics.revenue}
+Insurance Claims,${reportData.metrics.claims}
+Average Processing Time,${reportData.metrics.avgTime}
+${reportData.breakdown.map(item => `${item.label},${item.value}`).join('\n')}
+
+Top Items/Medications:
+${reportData.topMeds.map((med, index) => `${index + 1}. ${med}`).join('\n')}`;
                         } else if (format === 'excel') {
                           // For Excel, we'll create a tab-separated format
-                          reportContent = `NaviMed Pharmacy - ${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report\t\t
+                          reportContent = `NaviMed Pharmacy - ${reportData.title}\t\t
 Generated: ${currentDate}\t\t
 Period: ${startDate} to ${endDate}\t\t
 \t\t
 Metric\tValue\tNotes
-Total Prescriptions\t247\tAll prescriptions processed
-Revenue Generated\t$8,547.50\tTotal revenue for period
-Insurance Claims\t156\tSuccessfully processed claims
-Average Processing Time\t12 minutes\tFrom receipt to ready
-Patient Satisfaction\t96.5%\tBased on feedback surveys
-Inventory Items\t125\tActive medication stock
-Low Stock Alerts\t3\tItems below minimum level
-Completed Prescriptions\t198\tDispensed prescriptions
-Pending Prescriptions\t24\tAwaiting processing
-Ready for Pickup\t25\tProcessed, awaiting patient`;
+Total Prescriptions\t${reportData.metrics.prescriptions}\tAll prescriptions processed
+Revenue Generated\t${reportData.metrics.revenue}\tTotal revenue for period
+Insurance Claims\t${reportData.metrics.claims}\tSuccessfully processed claims
+Average Processing Time\t${reportData.metrics.avgTime}\tFrom receipt to ready
+\t\t
+${reportData.breakdown.map(item => `${item.label}\t${item.value}\t`).join('\n')}
+\t\t
+Top Items:\t\t
+${reportData.topMeds.map((med, index) => `${index + 1}. ${med}\t\t`).join('\n')}`;
                         } else {
                           // Generate actual PDF using HTML and print functionality
                           const generatePDF = () => {
@@ -1736,7 +1877,7 @@ Ready for Pickup\t25\tProcessed, awaiting patient`;
 <body>
     <div class="header">
         <div class="logo">NAVIMED PHARMACY</div>
-        <div class="report-title">${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report</div>
+        <div class="report-title">${reportData.title}</div>
         <div class="report-meta">Generated: ${currentDate} | Period: ${startDate} to ${endDate}</div>
     </div>
 
@@ -1745,49 +1886,34 @@ Ready for Pickup\t25\tProcessed, awaiting patient`;
         <div class="metrics-grid">
             <div class="metric-box">
                 <div class="metric-label">Total Prescriptions</div>
-                <div class="metric-value">247</div>
+                <div class="metric-value">${reportData.metrics.prescriptions}</div>
             </div>
             <div class="metric-box">
                 <div class="metric-label">Revenue Generated</div>
-                <div class="metric-value">$8,547.50</div>
+                <div class="metric-value">${reportData.metrics.revenue}</div>
             </div>
             <div class="metric-box">
                 <div class="metric-label">Insurance Claims</div>
-                <div class="metric-value">156</div>
+                <div class="metric-value">${reportData.metrics.claims}</div>
             </div>
             <div class="metric-box">
                 <div class="metric-label">Avg. Processing Time</div>
-                <div class="metric-value">12 min</div>
+                <div class="metric-value">${reportData.metrics.avgTime}</div>
             </div>
         </div>
     </div>
 
     <div class="section">
-        <div class="section-title">Prescription Breakdown</div>
+        <div class="section-title">Detailed Breakdown</div>
         <ul class="breakdown-list">
-            <li class="breakdown-item"><span>Completed & Dispensed</span><span>198</span></li>
-            <li class="breakdown-item"><span>Currently Pending</span><span>24</span></li>
-            <li class="breakdown-item"><span>Ready for Pickup</span><span>25</span></li>
+            ${reportData.breakdown.map(item => `<li class="breakdown-item"><span>${item.label}</span><span>${item.value}</span></li>`).join('')}
         </ul>
     </div>
 
     <div class="section">
-        <div class="section-title">Top Medications Dispensed</div>
+        <div class="section-title">Top Items/Medications</div>
         <ul class="breakdown-list">
-            <li class="breakdown-item"><span>Metformin 500mg</span><span>45 prescriptions</span></li>
-            <li class="breakdown-item"><span>Lisinopril 10mg</span><span>38 prescriptions</span></li>
-            <li class="breakdown-item"><span>Atorvastatin 20mg</span><span>32 prescriptions</span></li>
-            <li class="breakdown-item"><span>Amlodipine 5mg</span><span>28 prescriptions</span></li>
-            <li class="breakdown-item"><span>Omeprazole 20mg</span><span>24 prescriptions</span></li>
-        </ul>
-    </div>
-
-    <div class="section">
-        <div class="section-title">Insurance Coverage Analysis</div>
-        <ul class="breakdown-list">
-            <li class="breakdown-item"><span>Verified Coverage</span><span>85%</span></li>
-            <li class="breakdown-item"><span>Pending Verification</span><span>10%</span></li>
-            <li class="breakdown-item"><span>Self-Pay Patients</span><span>5%</span></li>
+            ${reportData.topMeds.map(med => `<li class="breakdown-item"><span>${med}</span><span></span></li>`).join('')}
         </ul>
     </div>
 
@@ -1800,17 +1926,19 @@ Ready for Pickup\t25\tProcessed, awaiting patient`;
                             
                             // Open new window with HTML content and trigger print dialog
                             const printWindow = window.open('', '_blank');
-                            printWindow.document.write(htmlContent);
-                            printWindow.document.close();
-                            
-                            // Wait for content to load then print
-                            printWindow.onload = () => {
-                              printWindow.print();
-                              // Close the window after a delay
-                              setTimeout(() => {
-                                printWindow.close();
-                              }, 1000);
-                            };
+                            if (printWindow) {
+                              printWindow.document.write(htmlContent);
+                              printWindow.document.close();
+                              
+                              // Wait for content to load then print
+                              printWindow.onload = () => {
+                                printWindow.print();
+                                // Close the window after a delay
+                                setTimeout(() => {
+                                  printWindow.close();
+                                }, 1000);
+                              };
+                            }
                           };
                           
                           generatePDF();
