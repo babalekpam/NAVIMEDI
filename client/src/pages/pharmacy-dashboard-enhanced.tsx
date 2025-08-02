@@ -82,6 +82,7 @@ export default function PharmacyDashboardEnhanced() {
   const [modalContent, setModalContent] = useState({ title: '', content: '', prescription: null as Prescription | null, inventoryItem: null as InventoryItem | null });
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [updatedPrescriptionId, setUpdatedPrescriptionId] = useState<string | null>(null);
 
   // Debug tab changes
   const handleTabChange = (value: string) => {
@@ -179,6 +180,24 @@ export default function PharmacyDashboardEnhanced() {
     const newCompletedSteps = [...completedSteps, stepId];
     if (newCompletedSteps.length === processingSteps.length) {
       setTimeout(() => {
+        // Update the prescription status in the local state
+        if (modalContent.prescription) {
+          const updatedPrescription = { ...modalContent.prescription, status: 'ready' as const };
+          
+          // Update the prescriptions array
+          setPrescriptions(prevPrescriptions => 
+            prevPrescriptions.map(p => 
+              p.id === modalContent.prescription!.id 
+                ? updatedPrescription 
+                : p
+            )
+          );
+          
+          // Set flash effect for updated prescription
+          setUpdatedPrescriptionId(modalContent.prescription.id);
+          setTimeout(() => setUpdatedPrescriptionId(null), 3000); // Remove flash after 3 seconds
+        }
+        
         alert(`🎉 All Steps Complete!\n\nPrescription for ${modalContent.prescription?.patientName} is now ready for pickup.\n\nStatus updated to: Ready`);
         closeModal();
       }, 500);
@@ -623,7 +642,14 @@ export default function PharmacyDashboardEnhanced() {
             <div className="p-6">
               <div className="space-y-4">
                 {filteredPrescriptions.map((prescription) => (
-                  <div key={prescription.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div 
+                    key={prescription.id} 
+                    className={`border border-gray-200 rounded-lg p-4 transition-all duration-1000 ${
+                      updatedPrescriptionId === prescription.id 
+                        ? 'bg-green-100 border-green-300 shadow-lg' 
+                        : 'bg-gray-50'
+                    }`}
+                  >
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h3 className="font-semibold text-lg">{prescription.patientName}</h3>
