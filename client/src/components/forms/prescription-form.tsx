@@ -31,8 +31,8 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescr
     medicationName: z.string().min(1, "Medication name is required"),
     dosage: z.string().min(1, "Dosage is required"),
     frequency: z.string().min(1, "Frequency is required"),
-    quantity: z.number().min(1, "Quantity must be at least 1"),
-    refills: z.number().min(0, "Refills cannot be negative"),
+    quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
+    refills: z.coerce.number().min(0, "Refills cannot be negative"),
     instructions: z.string().optional(),
     status: z.enum(["prescribed", "sent_to_pharmacy", "filled", "picked_up", "cancelled"]).default("prescribed"),
     pharmacyTenantId: z.string().optional(),
@@ -293,6 +293,12 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescr
             type="submit" 
             disabled={isLoading}
             className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => {
+              console.log("[DEBUG] Submit button clicked");
+              console.log("[DEBUG] Form errors:", form.formState.errors);
+              console.log("[DEBUG] Form values:", form.getValues());
+              console.log("[DEBUG] Form isValid:", form.formState.isValid);
+            }}
           >
             {isLoading 
               ? (isEditing ? "Updating..." : "Creating...") 
