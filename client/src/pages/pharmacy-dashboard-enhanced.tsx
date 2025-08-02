@@ -152,7 +152,9 @@ export default function PharmacyDashboardEnhanced() {
   };
 
   // Handle prescription processing
-  const handleStartProcessing = () => {
+  const handleStartProcessing = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (modalContent.prescription) {
       // Here you would typically make an API call to update the prescription status
       console.log('Starting processing for prescription:', modalContent.prescription.id);
@@ -161,7 +163,9 @@ export default function PharmacyDashboardEnhanced() {
     }
   };
 
-  const handleCompleteDispensing = () => {
+  const handleCompleteDispensing = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (modalContent.prescription) {
       console.log('Completing dispensing for prescription:', modalContent.prescription.id);
       alert(`Prescription dispensed successfully!\n\nPatient: ${modalContent.prescription.patientName}\nMedication: ${modalContent.prescription.medicationName}\nStatus: Dispensed\n\nReceipt generated and patient notified.`);
@@ -169,7 +173,9 @@ export default function PharmacyDashboardEnhanced() {
     }
   };
 
-  const handleSaveInventoryChanges = () => {
+  const handleSaveInventoryChanges = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (modalContent.inventoryItem) {
       console.log('Saving inventory changes for:', modalContent.inventoryItem.id);
       alert(`Inventory item updated successfully!\n\nItem: ${modalContent.inventoryItem.name}\nChanges saved to database.\n\nStock levels and pricing updated.`);
@@ -177,7 +183,9 @@ export default function PharmacyDashboardEnhanced() {
     }
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (modalContent.inventoryItem) {
       console.log('Placing order for:', modalContent.inventoryItem.id);
       const quantity = modalContent.inventoryItem.maxStock - modalContent.inventoryItem.currentStock;
@@ -841,12 +849,14 @@ export default function PharmacyDashboardEnhanced() {
                     
                     <div className="flex gap-2 mt-4">
                       <button 
+                        type="button"
                         onClick={handleStartProcessing}
                         className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
                       >
                         Start Processing
                       </button>
                       <button 
+                        type="button"
                         onClick={closeModal}
                         className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm"
                       >
@@ -895,12 +905,14 @@ export default function PharmacyDashboardEnhanced() {
                     
                     <div className="flex gap-2 mt-4">
                       <button 
+                        type="button"
                         onClick={handleCompleteDispensing}
                         className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
                       >
                         Complete Dispensing
                       </button>
                       <button 
+                        type="button"
                         onClick={closeModal}
                         className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm"
                       >
@@ -984,12 +996,14 @@ export default function PharmacyDashboardEnhanced() {
                     
                     <div className="flex gap-2 mt-4">
                       <button 
+                        type="button"
                         onClick={handleSaveInventoryChanges}
                         className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
                       >
                         Save Changes
                       </button>
                       <button 
+                        type="button"
                         onClick={closeModal}
                         className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm"
                       >
@@ -1054,12 +1068,14 @@ export default function PharmacyDashboardEnhanced() {
                     
                     <div className="flex gap-2 mt-4">
                       <button 
+                        type="button"
                         onClick={handlePlaceOrder}
                         className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm"
                       >
                         Place Order
                       </button>
                       <button 
+                        type="button"
                         onClick={closeModal}
                         className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm"
                       >
