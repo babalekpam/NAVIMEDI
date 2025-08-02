@@ -82,7 +82,7 @@ export const SimpleReportGenerator = () => {
       
     } catch (error) {
       console.error('Report generation error:', error);
-      alert('❌ Report generation failed: ' + error.message);
+      alert('❌ Report generation failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setIsGenerating(false);
     }
