@@ -231,7 +231,10 @@ Inventory Turnover,12.4x,10.0x,Exceeds`;
             </div>
             
             {/* Quick Actions */}
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => window.location.href = '/prescriptions?action=new'}
+            >
               <Plus className="w-4 h-4 mr-2" />
               New Prescription
             </Button>
@@ -541,7 +544,11 @@ Inventory Turnover,12.4x,10.0x,Exceeds`;
                 <Search className="w-5 h-5" />
                 <span className="text-xs">Search Patient</span>
               </Button>
-              <Button variant="outline" className="flex flex-col items-center gap-2 h-20">
+              <Button 
+                variant="outline" 
+                className="flex flex-col items-center gap-2 h-20"
+                onClick={() => window.location.href = '/prescriptions?action=new'}
+              >
                 <Plus className="w-5 h-5" />
                 <span className="text-xs">New Rx</span>
               </Button>
