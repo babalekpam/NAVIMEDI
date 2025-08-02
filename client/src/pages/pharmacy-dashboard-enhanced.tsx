@@ -513,16 +513,36 @@ export default function PharmacyDashboardEnhanced() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            console.log('View prescription clicked for:', prescription.id);
+                            alert(`Viewing prescription details for ${prescription.patientName}\n\nMedication: ${prescription.medicationName}\nPrescribed by: ${prescription.prescribedBy}\nStatus: ${prescription.status}\nInsurance: ${prescription.insuranceStatus}`);
+                          }}
+                        >
                           <Eye className="w-4 h-4 mr-1" />
                           View
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            console.log('Process prescription clicked for:', prescription.id);
+                            alert(`Processing prescription for ${prescription.patientName}\n\nNext steps:\n• Verify insurance coverage\n• Check drug interactions\n• Prepare medication\n• Update status to Ready`);
+                          }}
+                        >
                           <Edit className="w-4 h-4 mr-1" />
                           Process
                         </Button>
                         {prescription.status === 'ready' && (
-                          <Button size="sm">
+                          <Button 
+                            size="sm"
+                            onClick={() => {
+                              console.log('Dispense prescription clicked for:', prescription.id);
+                              alert(`Dispensing prescription for ${prescription.patientName}\n\nMedication: ${prescription.medicationName}\n• Print labels\n• Package medication\n• Update status to Dispensed\n• Generate receipt`);
+                            }}
+                          >
                             <Truck className="w-4 h-4 mr-1" />
                             Dispense
                           </Button>
@@ -580,11 +600,25 @@ export default function PharmacyDashboardEnhanced() {
                     </div>
                     
                     <div className="flex justify-end gap-2 mt-3">
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          console.log('Edit inventory item clicked for:', item.id);
+                          alert(`Editing inventory item: ${item.name}\n\nCurrent Details:\n• Stock: ${item.currentStock} units\n• Min/Max: ${item.minStock}/${item.maxStock}\n• Cost: $${item.cost.toFixed(2)}\n• Price: $${item.price.toFixed(2)}\n• Expiry: ${new Date(item.expiryDate).toLocaleDateString()}`);
+                        }}
+                      >
                         <Edit className="w-4 h-4 mr-1" />
                         Edit
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          console.log('Reorder item clicked for:', item.id);
+                          alert(`Reordering: ${item.name}\n\nReorder Details:\n• Current Stock: ${item.currentStock} units\n• Minimum Level: ${item.minStock} units\n• Suggested Quantity: ${item.maxStock - item.currentStock} units\n• Supplier: ${item.supplier}\n• Cost per Unit: $${item.cost.toFixed(2)}`);
+                        }}
+                      >
                         <ShoppingCart className="w-4 h-4 mr-1" />
                         Reorder
                       </Button>
