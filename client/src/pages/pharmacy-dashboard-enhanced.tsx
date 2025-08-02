@@ -516,7 +516,10 @@ export default function PharmacyDashboardEnhanced() {
                         <Button 
                           size="sm" 
                           variant="outline"
-                          onClick={() => {
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             console.log('View prescription clicked for:', prescription.id);
                             alert(`Viewing prescription details for ${prescription.patientName}\n\nMedication: ${prescription.medicationName}\nPrescribed by: ${prescription.prescribedBy}\nStatus: ${prescription.status}\nInsurance: ${prescription.insuranceStatus}`);
                           }}
@@ -527,7 +530,10 @@ export default function PharmacyDashboardEnhanced() {
                         <Button 
                           size="sm" 
                           variant="outline"
-                          onClick={() => {
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             console.log('Process prescription clicked for:', prescription.id);
                             alert(`Processing prescription for ${prescription.patientName}\n\nNext steps:\n• Verify insurance coverage\n• Check drug interactions\n• Prepare medication\n• Update status to Ready`);
                           }}
@@ -538,7 +544,10 @@ export default function PharmacyDashboardEnhanced() {
                         {prescription.status === 'ready' && (
                           <Button 
                             size="sm"
-                            onClick={() => {
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               console.log('Dispense prescription clicked for:', prescription.id);
                               alert(`Dispensing prescription for ${prescription.patientName}\n\nMedication: ${prescription.medicationName}\n• Print labels\n• Package medication\n• Update status to Dispensed\n• Generate receipt`);
                             }}
@@ -603,7 +612,10 @@ export default function PharmacyDashboardEnhanced() {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => {
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           console.log('Edit inventory item clicked for:', item.id);
                           alert(`Editing inventory item: ${item.name}\n\nCurrent Details:\n• Stock: ${item.currentStock} units\n• Min/Max: ${item.minStock}/${item.maxStock}\n• Cost: $${item.cost.toFixed(2)}\n• Price: $${item.price.toFixed(2)}\n• Expiry: ${new Date(item.expiryDate).toLocaleDateString()}`);
                         }}
@@ -614,7 +626,10 @@ export default function PharmacyDashboardEnhanced() {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => {
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           console.log('Reorder item clicked for:', item.id);
                           alert(`Reordering: ${item.name}\n\nReorder Details:\n• Current Stock: ${item.currentStock} units\n• Minimum Level: ${item.minStock} units\n• Suggested Quantity: ${item.maxStock - item.currentStock} units\n• Supplier: ${item.supplier}\n• Cost per Unit: $${item.cost.toFixed(2)}`);
                         }}
