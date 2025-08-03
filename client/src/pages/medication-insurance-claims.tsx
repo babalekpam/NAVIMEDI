@@ -338,6 +338,7 @@ export default function MedicationInsuranceClaims() {
           </Select>
         </div>
 
+        {/* Test Enhanced Form - Always Visible */}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -345,13 +346,109 @@ export default function MedicationInsuranceClaims() {
               Submit New Claim (Enhanced v2.0)
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Submit Medication Insurance Claim - Enhanced Form</DialogTitle>
+              <DialogTitle>Enhanced Medication Insurance Claim Form - All Fields Visible</DialogTitle>
             </DialogHeader>
+            
+            {/* Simple Test Form - All Fields Always Visible */}
+            <div className="space-y-6 p-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-blue-900 mb-3">🚀 ENHANCED FORM TEST - ALL NEW FIELDS</h3>
+                
+                {/* Auto-generated Claim Number */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">Claim Number (Auto-generated)</label>
+                  <input 
+                    type="text" 
+                    defaultValue="CLM-789123-456" 
+                    readOnly 
+                    className="w-full p-2 bg-gray-50 border rounded font-mono" 
+                  />
+                </div>
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Medication Code (NDC)</label>
+                    <input 
+                      type="text" 
+                      placeholder="NDC-1234-56" 
+                      className="w-full p-2 border rounded font-mono" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Diagnostic Code (ICD-10)</label>
+                    <input 
+                      type="text" 
+                      placeholder="Z79.01" 
+                      className="w-full p-2 border rounded font-mono" 
+                    />
+                  </div>
+                </div>
+
+                {/* Cost Calculation Section */}
+                <div className="border rounded-lg p-4 bg-green-50 mb-4">
+                  <h4 className="font-semibold text-green-900 mb-3">💰 Cost & Insurance Coverage (NEW)</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Medication Cost ($)</label>
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        placeholder="125.00" 
+                        className="w-full p-2 border rounded" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Insurance Coverage Rate (%)</label>
+                      <input 
+                        type="number" 
+                        min="0" 
+                        max="100" 
+                        placeholder="80" 
+                        className="w-full p-2 border rounded" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Insurance Claim Amount ($)</label>
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        placeholder="100.00" 
+                        readOnly 
+                        className="w-full p-2 bg-green-100 border rounded font-semibold text-green-700" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Patient Share ($)</label>
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        placeholder="25.00" 
+                        readOnly 
+                        className="w-full p-2 bg-orange-100 border rounded font-semibold text-orange-700" 
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Medication Note */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Medication Note (NEW)</label>
+                  <textarea 
+                    className="w-full p-2 border rounded" 
+                    rows={3}
+                    placeholder="Special instructions, contraindications, or additional notes about the medication"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Original Form (Hidden for Testing) */}
+            <details className="mt-4">
+              <summary className="cursor-pointer text-sm text-gray-600">Show Original Form (For Reference)</summary>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
                 {/* Patient Selection */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">1. Select Patient</h3>
@@ -727,6 +824,7 @@ export default function MedicationInsuranceClaims() {
                 </div>
               </form>
             </Form>
+            </details>
           </DialogContent>
         </Dialog>
       </div>
