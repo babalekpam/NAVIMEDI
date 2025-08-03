@@ -479,11 +479,59 @@ export default function UserRoles() {
   };
 
   // Handle role assignment directly through updateUserMutation
-  const handleRoleChange = (userId: string, newRole: string) => {
-    updateUserMutation.mutate({
-      id: userId,
-      data: { role: newRole }
-    });
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    console.log("=== ROLE CHANGE ATTEMPT ===");
+    console.log("User ID:", userId);
+    console.log("New Role:", newRole);
+    console.log("Auth Token:", localStorage.getItem("auth_token")?.substring(0, 20) + "...");
+    
+    try {
+      // Use direct fetch for better error debugging
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+        },
+        body: JSON.stringify({ role: newRole })
+      });
+      
+      console.log("Response status:", response.status);
+      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+      
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type");
+        console.log("Error response content type:", contentType);
+        
+        if (contentType && contentType.includes("application/json")) {
+          const error = await response.json();
+          console.log("JSON Error:", error);
+          throw new Error(error.message || "Failed to update role");
+        } else {
+          const errorText = await response.text();
+          console.log("HTML/Text Error Response:", errorText);
+          throw new Error("Authentication failed. Please refresh and try again.");
+        }
+      }
+      
+      const result = await response.json();
+      console.log("Success result:", result);
+      
+      // Invalidate cache and show success
+      queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
+      toast({
+        title: "Success",
+        description: `Role changed to ${newRole.replace('_', ' ')}`,
+      });
+      
+    } catch (error) {
+      console.error("Role change error:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to change role",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatPermissionName = (permission: string) => {
@@ -765,6 +813,28 @@ export default function UserRoles() {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
+                        
+                        {/* Quick Role Change Dropdown - TEST */}
+                        <Select 
+                          value={userItem.role} 
+                          onValueChange={(newRole) => {
+                            console.log("Quick role change:", userItem.id, "from", userItem.role, "to", newRole);
+                            handleRoleChange(userItem.id, newRole);
+                          }}
+                        >
+                          <SelectTrigger className="w-32 h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableRoles.map((role) => (
+                              <SelectItem key={role} value={role}>
+                                {role.replace('_', ' ').split(' ').map(word => 
+                                  word.charAt(0).toUpperCase() + word.slice(1)
+                                ).join(' ')}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         {userItem.role !== 'super_admin' && (
                           <Button
                             variant={userItem.isActive ? "destructive" : "default"}
