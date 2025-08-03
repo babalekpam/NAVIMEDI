@@ -813,26 +813,22 @@ export default function UserRoles() {
                           <Edit className="h-4 w-4" />
                         </Button>
                         
-                        {/* Role Change Dropdown - WORKING VERSION */}
-                        <Select 
-                          value={userItem.role} 
-                          onValueChange={(newRole) => {
-                            updateUserRoleDirectly(userItem.id, newRole, userItem.firstName);
+                        {/* Simple Test Button - DIRECT APPROACH */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            console.log("🔥 BUTTON CLICK - Starting role update for", userItem.firstName);
+                            try {
+                              await updateUserRoleDirectly(userItem.id, "nurse", userItem.firstName);
+                            } catch (error) {
+                              console.error("🔥 BUTTON ERROR:", error);
+                            }
                           }}
+                          className="text-xs px-2"
                         >
-                          <SelectTrigger className="w-32 h-8 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableRoles.map((role) => (
-                              <SelectItem key={role} value={role}>
-                                {role.replace('_', ' ').split(' ').map(word => 
-                                  word.charAt(0).toUpperCase() + word.slice(1)
-                                ).join(' ')}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          → Nurse
+                        </Button>
                         {userItem.role !== 'super_admin' && (
                           <Button
                             variant={userItem.isActive ? "destructive" : "default"}

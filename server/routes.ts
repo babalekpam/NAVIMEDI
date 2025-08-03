@@ -1586,6 +1586,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Update user (for user management)
   app.patch("/api/users/:id", authenticateToken, requireTenant, async (req, res) => {
+    console.log("🔥 USER UPDATE REQUEST:", {
+      userId: req.params.id,
+      updateData: req.body,
+      userRole: req.user?.role,
+      userTenant: req.user?.tenantId,
+      requestHeaders: req.headers.authorization?.substring(0, 30)
+    });
+    
     try {
       const { id } = req.params;
       const updateData = req.body;

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Role Update Test</title>
+</head>
+<body>
+    <h1>Direct Role Update Test</h1>
+    <button onclick="testRoleUpdate()">Test Role Update</button>
+    <div id="result"></div>
+
+    <script>
+    async function testRoleUpdate() {
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = 'Testing...';
+        
+        try {
+            // Get token from localStorage (assuming you're logged in)
+            const token = localStorage.getItem('auth_token');
+            console.log('Token:', token?.substring(0, 20));
+            
+            if (!token) {
+                resultDiv.innerHTML = 'ERROR: No auth token found. Please login first.';
+                return;
+            }
+            
+            // Test with a real user ID from your system
+            const userId = '0c6e1c5e-4e2a-4f1a-8b2a-1d2c3e4f5a6b'; // Replace with actual user ID
+            
+            const response = await fetch(`/api/users/${userId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ role: 'nurse' })
+            });
+            
+            console.log('Response status:', response.status);
+            console.log('Response headers:', [...response.headers.entries()]);
+            
+            const responseText = await response.text();
+            console.log('Raw response:', responseText);
+            
+            if (responseText.includes('<!DOCTYPE') || responseText.includes('<html')) {
+                resultDiv.innerHTML = 'ERROR: Got HTML response (authentication issue)';
+                return;
+            }
+            
+            const result = JSON.parse(responseText);
+            resultDiv.innerHTML = `SUCCESS: ${JSON.stringify(result, null, 2)}`;
+            
+        } catch (error) {
+            console.error('Error:', error);
+            resultDiv.innerHTML = `ERROR: ${error.message}`;
+        }
+    }
+    </script>
+</body>
+</html>
