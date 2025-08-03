@@ -4713,32 +4713,8 @@ export class DatabaseStorage implements IStorage {
 
   // Department Management
   async getDepartments(tenantId: string): Promise<Department[]> {
-    return db.select({
-      id: departments.id,
-      tenantId: departments.tenantId,
-      name: departments.name,
-      description: departments.description,
-      icon: departments.icon,
-      color: departments.color,
-      staffCount: departments.staffCount,
-      operatingHours: departments.operatingHours,
-      location: departments.location,
-      phone: departments.phone,
-      email: departments.email,
-      budget: departments.budget,
-      specializations: departments.specializations,
-      equipment: departments.equipment,
-      certifications: departments.certifications,
-      isActive: departments.isActive,
-      settings: departments.settings,
-      metrics: departments.metrics,
-      createdAt: departments.createdAt,
-      updatedAt: departments.updatedAt,
-      headOfDepartment: departments.headOfDepartment,
-      headOfDepartmentName: users.fullName
-    })
+    return db.select()
     .from(departments)
-    .leftJoin(users, eq(departments.headOfDepartment, users.id))
     .where(eq(departments.tenantId, tenantId))
     .orderBy(departments.name);
   }

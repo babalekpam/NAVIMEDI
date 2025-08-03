@@ -103,7 +103,7 @@ export function DepartmentManagement() {
       specializations: [],
       equipment: [],
       certifications: [],
-      headOfDepartment: "",
+      headOfDepartment: "none",
       isActive: true,
     },
   });
@@ -175,10 +175,16 @@ export function DepartmentManagement() {
   });
 
   const handleSubmit = (data: DepartmentFormData) => {
+    // Convert "none" back to null for headOfDepartment
+    const processedData = {
+      ...data,
+      headOfDepartment: data.headOfDepartment === "none" ? undefined : data.headOfDepartment,
+    };
+    
     if (editingDepartment) {
-      updateMutation.mutate({ id: editingDepartment.id, data });
+      updateMutation.mutate({ id: editingDepartment.id, data: processedData });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(processedData);
     }
   };
 
@@ -198,7 +204,7 @@ export function DepartmentManagement() {
       specializations: department.specializations || [],
       equipment: department.equipment || [],
       certifications: department.certifications || [],
-      headOfDepartment: department.headOfDepartment || "",
+      headOfDepartment: department.headOfDepartment || "none",
       isActive: department.isActive,
     });
     setIsDialogOpen(true);
@@ -470,7 +476,7 @@ export function DepartmentManagement() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">No head assigned</SelectItem>
+                            <SelectItem value="none">No head assigned</SelectItem>
                             {users.filter((user: any) => user.role === 'physician' || user.role === 'director' || user.role === 'tenant_admin').map((user: any) => (
                               <SelectItem key={user.id} value={user.id}>
                                 {user.fullName || `${user.firstName} ${user.lastName}`} ({user.role})
