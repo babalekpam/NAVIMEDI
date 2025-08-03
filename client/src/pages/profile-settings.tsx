@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/contexts/translation-context";
 import { useAuth } from "@/contexts/auth-context";
-import { useTenant } from "@/contexts/tenant-context";
+import { useTenant } from "@/contexts/tenant-context-fixed";
 import { 
   User, 
   Mail, 

@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useTenant } from "@/contexts/tenant-context";
+import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useAuth } from "@/contexts/auth-context";
 
 export const TenantSwitcher = () => {

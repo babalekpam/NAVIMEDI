@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { format, addDays, startOfToday, isSameDay, isAfter, isBefore } from "date-fns";
 import { useAuth } from "@/contexts/auth-context";
-import { useTenant } from "@/contexts/tenant-context";
+import { useTenant } from "@/contexts/tenant-context-fixed";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 
 interface Provider {

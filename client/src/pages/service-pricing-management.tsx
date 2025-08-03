@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { ServicePrice, InsuranceProvider, InsurancePlanCoverage } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
-import { useTenant } from "@/contexts/tenant-context";
+import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useTranslation } from "@/contexts/translation-context";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
