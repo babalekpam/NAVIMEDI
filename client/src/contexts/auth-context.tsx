@@ -105,6 +105,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } else if (data.user.role === 'tenant_admin' || data.user.role === 'director') {
       // Redirect tenant admins to unified admin dashboard
       window.location.href = '/admin-dashboard';
+    } else if (data.user.role === 'lab_technician') {
+      window.location.href = '/laboratory-dashboard';
+    } else if (data.user.role === 'pharmacist') {
+      window.location.href = '/pharmacy-dashboard';
+    } else if (data.user.role === 'receptionist') {
+      window.location.href = '/receptionist-dashboard';
     } else {
       window.location.href = '/dashboard';
     }

@@ -39,6 +39,7 @@ The platform is built on a modern stack for scalability, security, and maintaina
     -   Unified Billing Systems with analytics for hospital, pharmacy, and laboratory.
     -   Multi-Doctor Patient Data Separation via access request system.
     -   Hospital-Pharmacy Relationship Architecture: Supports hospital-owned and independent pharmacies, with patient preference for prescription routing.
+    -   Independent Laboratory Architecture: Laboratories can be hospital departments or independent organizations with full admin dashboards and specialized staff roles.
 
 ## External Dependencies
 The platform integrates with the following key external components and services:
