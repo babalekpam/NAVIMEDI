@@ -186,40 +186,6 @@ export default function UserRoles() {
   // Permission editing state
   const [selectedRoleForEdit, setSelectedRoleForEdit] = useState<string>("");
   const [editingPermissions, setEditingPermissions] = useState<Record<string, boolean>>({});
-  
-  // Convert database permissions to the format expected by the UI
-  const getActualRolePermissions = () => {
-    if (!rolePermissionsFromDB || !Array.isArray(rolePermissionsFromDB)) {
-      return rolePermissions; // Fallback to hardcoded permissions if no data
-    }
-
-    const actualPermissions: typeof rolePermissions = {};
-    
-    rolePermissionsFromDB.forEach((perm: any) => {
-      if (!actualPermissions[perm.role]) {
-        actualPermissions[perm.role] = {};
-      }
-      actualPermissions[perm.role][perm.module] = perm.permissions;
-    });
-
-    // Merge with default permissions to ensure all modules are present
-    Object.keys(rolePermissions).forEach(role => {
-      if (!actualPermissions[role]) {
-        actualPermissions[role] = rolePermissions[role];
-      } else {
-        // Fill in missing modules with default permissions
-        Object.keys(rolePermissions[role]).forEach(module => {
-          if (!actualPermissions[role][module]) {
-            actualPermissions[role][module] = rolePermissions[role][module];
-          }
-        });
-      }
-    });
-
-    return actualPermissions;
-  };
-
-  const actualRolePermissions = getActualRolePermissions();
 
   const form = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
@@ -266,6 +232,40 @@ export default function UserRoles() {
       return response.json();
     }
   });
+
+  // Convert database permissions to the format expected by the UI
+  const getActualRolePermissions = () => {
+    if (!rolePermissionsFromDB || !Array.isArray(rolePermissionsFromDB)) {
+      return rolePermissions; // Fallback to hardcoded permissions if no data
+    }
+
+    const actualPermissions: typeof rolePermissions = {};
+    
+    rolePermissionsFromDB.forEach((perm: any) => {
+      if (!actualPermissions[perm.role]) {
+        actualPermissions[perm.role] = {};
+      }
+      actualPermissions[perm.role][perm.module] = perm.permissions;
+    });
+
+    // Merge with default permissions to ensure all modules are present
+    Object.keys(rolePermissions).forEach(role => {
+      if (!actualPermissions[role]) {
+        actualPermissions[role] = rolePermissions[role];
+      } else {
+        // Fill in missing modules with default permissions
+        Object.keys(rolePermissions[role]).forEach(module => {
+          if (!actualPermissions[role][module]) {
+            actualPermissions[role][module] = rolePermissions[role][module];
+          }
+        });
+      }
+    });
+
+    return actualPermissions;
+  };
+
+  const actualRolePermissions = getActualRolePermissions();
 
   const createUserMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
