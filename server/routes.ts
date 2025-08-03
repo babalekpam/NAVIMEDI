@@ -1692,6 +1692,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Super Admin: White Label Settings Management for Any Client
+  app.patch("/api/tenants/:tenantId/white-label", authenticateToken, async (req, res) => {
+    try {
+      const { tenantId } = req.params;
+      const { brandName, logoUrl, primaryColor, secondaryColor, customDomain, customCss } = req.body;
+      
+      // Only super admin can manage white label settings for any tenant
+      if (req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Only super admin can manage white label settings for clients" });
+      }
+      
+      console.log(`[SUPER ADMIN] White label settings update for tenant: ${tenantId}`);
+      
+      // Update tenant white label settings
+      const updatedTenant = await storage.updateTenant(tenantId, {
+        brandName,
+        logoUrl,
+        primaryColor,
+        secondaryColor,
+        customDomain,
+        customCss,
+        updatedAt: new Date()
+      });
+      
+      if (!updatedTenant) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+      
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId, // Platform tenant
+        userId: req.user.id,
+        entityType: "white_label_settings",
+        entityId: tenantId,
+        action: "update",
+        newData: { brandName, logoUrl, primaryColor, secondaryColor, customDomain },
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+      
+      res.json({
+        message: "White label settings updated successfully",
+        tenant: updatedTenant
+      });
+    } catch (error) {
+      console.error("White label settings update error:", error);
+      res.status(500).json({ message: "Failed to update white label settings" });
+    }
+  });
+
+  // Super Admin: Subscription Management for Any Client
+  app.patch("/api/tenants/:tenantId/subscription", authenticateToken, async (req, res) => {
+    try {
+      const { tenantId } = req.params;
+      const { subscriptionStatus, trialEndDate, planType, features } = req.body;
+      
+      // Only super admin can manage subscriptions for any tenant
+      if (req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Only super admin can manage client subscriptions" });
+      }
+      
+      console.log(`[SUPER ADMIN] Subscription update for tenant: ${tenantId}`);
+      
+      // Update tenant subscription
+      const updatedTenant = await storage.updateTenant(tenantId, {
+        subscriptionStatus,
+        trialEndDate: trialEndDate ? new Date(trialEndDate) : undefined,
+        planType,
+        settings: {
+          ...await storage.getTenant(tenantId).then(t => t?.settings || {}),
+          features: features || ['unlimited', 'white_label', 'premium_support'],
+          planType: planType || 'unlimited'
+        },
+        updatedAt: new Date()
+      });
+      
+      if (!updatedTenant) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+      
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user.tenantId, // Platform tenant
+        userId: req.user.id,
+        entityType: "subscription",
+        entityId: tenantId,
+        action: "update",
+        newData: { subscriptionStatus, planType, features },
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+      
+      res.json({
+        message: "Subscription updated successfully",
+        tenant: updatedTenant
+      });
+    } catch (error) {
+      console.error("Subscription update error:", error);
+      res.status(500).json({ message: "Failed to update subscription" });
+    }
+  });
+
+  // Super Admin: Client Management Dashboard Data
+  app.get("/api/admin/clients", authenticateToken, async (req, res) => {
+    try {
+      // Only super admin can access client management
+      if (req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Only super admin can access client management" });
+      }
+      
+      const tenants = await storage.getAllTenants();
+      
+      // Get enhanced client data with user counts and activity
+      const clientsData = await Promise.all(tenants.map(async (tenant) => {
+        const users = await storage.getUsersByTenant(tenant.id);
+        const activeUsers = users.filter(u => u.isActive).length;
+        
+        return {
+          ...tenant,
+          userCount: users.length,
+          activeUsers,
+          hasWhiteLabel: !!(tenant.brandName || tenant.logoUrl || tenant.customDomain),
+          isUnlimited: tenant.settings?.planType === 'unlimited' || 
+                      tenant.settings?.features?.includes('unlimited')
+        };
+      }));
+      
+      res.json(clientsData);
+    } catch (error) {
+      console.error("Client management error:", error);
+      res.status(500).json({ message: "Failed to fetch client data" });
+    }
+  });
+
   // Create new user (for tenant admin user management)
   app.post("/api/users", authenticateToken, requireTenant, async (req, res) => {
     try {

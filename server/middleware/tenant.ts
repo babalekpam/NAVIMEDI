@@ -49,7 +49,7 @@ export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response,
 
       // SECURITY: Super admin strict isolation - platform management only
       if (req.user?.role === 'super_admin') {
-        // Define strictly allowed platform management endpoints
+        // Define strictly allowed platform management endpoints for super admin
         const platformEndpoints = [
           '/api/tenants',
           '/api/admin',
@@ -57,7 +57,12 @@ export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response,
           '/api/users/all',
           '/api/audit-logs',
           '/api/analytics/platform',
-          '/api/role-permissions'
+          '/api/role-permissions',
+          '/api/subscriptions',
+          '/api/white-label',
+          '/api/billing-plans',
+          '/api/tenant-settings',
+          '/api/client-management'
         ];
         
         // Define operational endpoints that super admin must NOT access
