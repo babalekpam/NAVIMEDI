@@ -7,6 +7,7 @@ NaviMED is a multi-tenant healthcare platform connecting independent pharmacies 
 - Simple, everyday language for communication (user is non-technical)
 - Focus on functionality testing rather than code details
 - Prioritize working features over perfect TypeScript compliance
+- Super admin account: abel@argilette.com with unlimited privileges and white label access
 
 ## System Architecture
 The platform is built on a modern stack for scalability, security, and maintainability, featuring a strong multi-tenant architecture with strict data isolation per organization (hospital, pharmacy, laboratory).
@@ -36,6 +37,7 @@ The platform is built on a modern stack for scalability, security, and maintaina
     -   Dynamic Role Permissions for tenant administrators.
     -   Automated Currency Detection and Multi-language Support.
     -   Enterprise Features: White-label branding, tiered pricing, offline synchronization.
+    -   Super Admin Capabilities: Unlimited client management, white label settings for all tenants, subscription management, comprehensive platform oversight.
     -   Gamified Achievement System for laboratory performance tracking.
     -   Unified Billing Systems with analytics for hospital, pharmacy, and laboratory.
     -   Multi-Doctor Patient Data Separation via access request system.

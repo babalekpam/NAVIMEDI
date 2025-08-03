@@ -97,8 +97,8 @@ export default function WhiteLabelSettingsPage() {
     }
   };
 
-  // ARGILETTE platform owner has unlimited white label access
-  const isPlatformOwner = currentTenant?.name === 'ARGILETTE' || currentTenant?.type === 'platform';
+  // ARGILETTE platform owner and super admin have unlimited white label access
+  const isPlatformOwner = currentTenant?.name?.includes('ARGILETTE') || currentTenant?.type === 'platform' || currentTenant?.subdomain === 'argilette';
   const isWhiteLabelEnabled = isPlatformOwner || (subscription as any)?.whitelabelEnabled || (subscription as any)?.plan === 'white_label';
 
   if (!isWhiteLabelEnabled) {

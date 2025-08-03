@@ -1692,15 +1692,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Super Admin: White Label Settings Management for Any Client
+  // White Label Settings Management - Enhanced for super admin and tenant admin
   app.patch("/api/tenants/:tenantId/white-label", authenticateToken, async (req, res) => {
     try {
       const { tenantId } = req.params;
       const { brandName, logoUrl, primaryColor, secondaryColor, customDomain, customCss } = req.body;
       
-      // Only super admin can manage white label settings for any tenant
-      if (req.user?.role !== 'super_admin') {
-        return res.status(403).json({ message: "Only super admin can manage white label settings for clients" });
+      // Super admin can manage any tenant, tenant admin can manage their own tenant
+      const canManage = req.user?.role === 'super_admin' || 
+                       (req.user?.role === 'tenant_admin' && req.user?.tenantId === tenantId) ||
+                       (req.user?.role === 'director' && req.user?.tenantId === tenantId);
+      
+      if (!canManage) {
+        return res.status(403).json({ message: "Access denied. Cannot manage white label settings for this tenant." });
       }
       
       console.log(`[SUPER ADMIN] White label settings update for tenant: ${tenantId}`);
