@@ -6,6 +6,7 @@ import { Calendar, Users, Pill, TestTube, DollarSign, AlertTriangle, CheckCircle
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
+import PharmacyDashboardEnhancedV2 from "@/pages/pharmacy-dashboard-enhanced-v2";
 
 interface DashboardMetrics {
   todayAppointments: number;
@@ -716,7 +717,13 @@ export default function Dashboard() {
   );
 
   // Pharmacist Dashboard
-  const renderPharmacistDashboard = () => (
+  const renderPharmacistDashboard = () => {
+    // Redirect pharmacy users to the enhanced pharmacy dashboard
+    if (tenant?.type === 'pharmacy') {
+      return <PharmacyDashboardEnhancedV2 />;
+    }
+    
+    return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -1430,6 +1437,58 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+    </div>
+    );
+  };
+
+  // Lab Technician Dashboard
+  const renderLabTechnicianDashboard = () => (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold text-gray-900">Lab Technician Dashboard</h1>
+      <p className="text-gray-600">Welcome back, {user.firstName}. Your laboratory operations overview for today.</p>
+    </div>
+  );
+
+  // Simplified dashboards for other roles
+  const renderReceptionistDashboard = () => (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold text-gray-900">Reception Dashboard</h1>
+      <p className="text-gray-600">Welcome back, {user.firstName}. Patient registration and appointment management.</p>
+    </div>
+  );
+
+  const renderBillingStaffDashboard = () => (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold text-gray-900">Billing Dashboard</h1>
+      <p className="text-gray-600">Welcome back, {user.firstName}. Financial operations and insurance claims.</p>
+    </div>
+  );
+
+  const renderInsuranceManagerDashboard = () => (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold text-gray-900">Insurance Management Dashboard</h1>
+      <p className="text-gray-600">Welcome back, {user.firstName}. Claims processing and coverage management.</p>
+    </div>
+  );
+
+  const renderPatientDashboard = () => (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold text-gray-900">Patient Portal</h1>
+      <p className="text-gray-600">Welcome back, {user.firstName}. Your health information and appointments.</p>
+    </div>
+  );
+
+  const renderTenantAdminDashboard = () => (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+      <p className="text-gray-600">Welcome back, {user.firstName}. Organization management and oversight.</p>
+    </div>
+  );
+
+  const renderDefaultDashboard = () => (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+      <p className="text-gray-600">Welcome back, {user.firstName}.</p>
     </div>
   );
 
