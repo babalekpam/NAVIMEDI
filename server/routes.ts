@@ -3149,9 +3149,16 @@ Report ID: ${report.id}
           },
           req.tenantId!
         );
+        console.log("🔧 [SERVER] Update result:", result);
       } else {
         // Create new permission
-        console.log("🔧 [SERVER] Creating new permission");
+        console.log("🔧 [SERVER] Creating new permission for user:", req.userId);
+        
+        if (!req.userId) {
+          console.log("🔧 [SERVER] ERROR: No user ID available for creating permission");
+          return res.status(400).json({ message: "User ID required for creating permissions" });
+        }
+        
         result = await storage.createRolePermission({
           tenantId: req.tenantId!,
           role: role as any,
@@ -3160,6 +3167,7 @@ Report ID: ${report.id}
           createdBy: req.userId!,
           isActive: true
         });
+        console.log("🔧 [SERVER] Create result:", result);
       }
 
       // Create audit log

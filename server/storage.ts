@@ -3159,11 +3159,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRolePermission(permission: InsertRolePermission): Promise<RolePermission> {
+    console.log("🔧 [STORAGE] Creating role permission with data:", permission);
+    
+    if (!permission.createdBy) {
+      throw new Error("createdBy field is required for creating role permissions");
+    }
+    
     const [created] = await db.insert(rolePermissions).values(permission).returning();
+    console.log("🔧 [STORAGE] Create result:", created);
     return created;
   }
 
   async updateRolePermission(id: string, updates: Partial<RolePermission>, tenantId: string): Promise<RolePermission | undefined> {
+    console.log("🔧 [STORAGE] Updating role permission:", { id, updates, tenantId });
+    
     const [updated] = await db.update(rolePermissions)
       .set({
         ...updates,
@@ -3171,6 +3180,8 @@ export class DatabaseStorage implements IStorage {
       })
       .where(and(eq(rolePermissions.id, id), eq(rolePermissions.tenantId, tenantId)))
       .returning();
+    
+    console.log("🔧 [STORAGE] Update result:", updated);
     return updated || undefined;
   }
 
