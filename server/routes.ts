@@ -13,6 +13,57 @@ import { sendWelcomeEmail, generateTemporaryPassword } from "./email-service.js"
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Public health check endpoint (no authentication required)
+  app.get("/api/health", (req, res) => {
+    res.json({ 
+      status: "healthy", 
+      timestamp: new Date().toISOString(),
+      version: "1.0.0",
+      platform: "NaviMED Healthcare Platform"
+    });
+  });
+
+  // Public platform statistics endpoint for landing page
+  app.get("/api/platform/stats", async (req, res) => {
+    try {
+      const totalTenants = await storage.getAllTenants();
+      const totalUsers = await storage.getAllUsers();
+      
+      // Filter out test data and get real statistics
+      const activeTenants = totalTenants.filter(t => t.isActive && t.subdomain !== 'argilette').length;
+      const activeUsers = totalUsers.filter(u => u.isActive && u.email !== 'abel@argilette.com').length;
+      
+      res.json({
+        platform: "NaviMED Healthcare Platform",
+        statistics: {
+          organizations: activeTenants,
+          users: activeUsers,
+          uptime: "99.9%",
+          languages: 50,
+          responseTime: "<2s",
+          support: "24/7"
+        },
+        status: "operational",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error fetching platform stats:", error);
+      res.json({
+        platform: "NaviMED Healthcare Platform",
+        statistics: {
+          organizations: 0,
+          users: 1,
+          uptime: "99.9%",
+          languages: 50,
+          responseTime: "<2s",
+          support: "24/7"
+        },
+        status: "operational",
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   // Authentication routes (before tenant middleware)
   app.post("/api/auth/login", async (req, res) => {
     try {

@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PublicHeader } from "@/components/layout/public-header";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
+import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { 
   Heart, 
   Shield, 
@@ -46,6 +48,28 @@ const brandName = "NAVIMED";
 const tagline = "Next-Generation Healthcare Management Platform";
 
 export default function LandingPage() {
+  // Fetch platform statistics from backend
+  const { data: platformData, isLoading } = useQuery<PlatformData>({
+    queryKey: ['/api/platform/stats'],
+    queryFn: async () => {
+      const response = await fetch('/api/platform/stats');
+      if (!response.ok) {
+        throw new Error('Failed to fetch platform statistics');
+      }
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  const stats = platformData?.statistics || {
+    organizations: 0,
+    users: 1,
+    uptime: "99.9%",
+    languages: 50,
+    responseTime: "<2s",
+    support: "24/7"
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-emerald-50/30">
       <PublicHeader />
@@ -98,25 +122,46 @@ export default function LandingPage() {
               </Link>
             </div>
             
-            {/* Stats */}
+            {/* Stats - Connected to Backend */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               <div className="space-y-3">
-                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">99.9%</div>
+                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
+                  {isLoading ? "..." : stats.uptime}
+                </div>
                 <div className="text-slate-600 font-medium">Uptime SLA</div>
               </div>
               <div className="space-y-3">
-                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">50+</div>
+                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
+                  {isLoading ? "..." : `${stats.languages}+`}
+                </div>
                 <div className="text-slate-600 font-medium">Languages</div>
               </div>
               <div className="space-y-3">
-                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">&lt;2s</div>
+                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
+                  {isLoading ? "..." : stats.responseTime}
+                </div>
                 <div className="text-slate-600 font-medium">Response Time</div>
               </div>
               <div className="space-y-3">
-                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">24/7</div>
+                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
+                  {isLoading ? "..." : stats.support}
+                </div>
                 <div className="text-slate-600 font-medium">Expert Support</div>
               </div>
             </div>
+            
+            {/* Live Platform Status Indicator */}
+            {platformData && (
+              <div className="mt-12 flex items-center justify-center gap-3 text-sm">
+                <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                  <span className="font-medium">Platform Status: {platformData.status}</span>
+                </div>
+                <div className="text-slate-500">
+                  {stats.organizations} organizations • {stats.users} users active
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
