@@ -992,6 +992,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("[PHARMACY API] ✅ Found prescriptions:", prescriptions.length);
       console.log("[PHARMACY API] ✅ Prescriptions data:", prescriptions);
       
+      // Transform prescriptions to match frontend interface
+      const transformedPrescriptions = prescriptions.map(p => ({
+        id: p.id,
+        patientName: `Patient ${p.id.slice(0, 8)}`, // We'll get patient names separately
+        medication: p.medicationName || p.medication_name || 'Unknown',
+        status: p.status,
+        waitTime: 0,
+        priority: 'normal' as const,
+        insuranceStatus: p.insuranceCopay ? 'approved' as const : 'pending' as const
+      }));
+      
       // Transform to show hospital connection for independent pharmacy
       const formattedPrescriptions = prescriptions.map(p => ({
         id: p.id,

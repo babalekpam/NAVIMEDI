@@ -718,17 +718,15 @@ export default function Dashboard() {
     </div>
   );
 
-  // Pharmacist Dashboard
+  // Pharmacist Dashboard - Always render enhanced dashboard for pharmacists
   const renderPharmacistDashboard = () => {
-    // Redirect pharmacy users to the enhanced pharmacy dashboard
     console.log('[DASHBOARD] ✅ Pharmacy user detected, loading enhanced dashboard');
     console.log('[DASHBOARD] ✅ Tenant type:', tenant?.type);
     console.log('[DASHBOARD] ✅ User role:', user?.role);
+    console.log('[DASHBOARD] ✅ Rendering PharmacyDashboardEnhancedV2');
     
-    if (tenant?.type === 'pharmacy') {
-      console.log('[DASHBOARD] ✅ Rendering PharmacyDashboardEnhancedV2');
-      return <PharmacyDashboardEnhancedV2 />;
-    }
+    // Always render enhanced pharmacy dashboard for pharmacist users
+    return <PharmacyDashboardEnhancedV2 />;
     
     return (
     <div className="space-y-6">
