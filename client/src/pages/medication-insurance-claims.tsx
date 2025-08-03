@@ -636,7 +636,7 @@ export default function MedicationInsuranceClaims() {
                   </div>
                   <div>
                     <span className="font-medium text-gray-700">Claim Amount:</span>
-                    <p className="font-semibold text-green-600">${claim.claimAmount.toFixed(2)}</p>
+                    <p className="font-semibold text-green-600">${claim.claimAmount ? claim.claimAmount.toFixed(2) : '0.00'}</p>
                   </div>
                   <div>
                     <span className="font-medium text-gray-700">Submitted:</span>
