@@ -112,7 +112,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Dashboard />
+                  <PharmacyDashboardEnhancedV2 />
                 </main>
               </div>
             </div>
@@ -164,7 +164,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Prescriptions />
+                  <PharmacyDashboardEnhancedV2 />
                 </main>
               </div>
             </div>
