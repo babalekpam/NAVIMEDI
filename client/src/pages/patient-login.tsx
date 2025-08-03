@@ -13,11 +13,10 @@ import {
   ArrowLeft,
   Building2
 } from "lucide-react";
-import { useAuth } from "@/contexts/auth-context";
+// Redirects to Replit Auth - no auth context needed
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 
 export default function PatientLogin() {
-  const { login } = useAuth();
   const [formData, setFormData] = useState({
     username: "",
     password: ""
@@ -27,18 +26,8 @@ export default function PatientLogin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
-
-    try {
-      // For patients, we don't need to specify tenant ID - it will be found automatically
-      await login(formData.username, formData.password, "");
-      // Redirect will be handled by auth context
-    } catch (err: any) {
-      setError(err.message || "Invalid username or password");
-    } finally {
-      setIsLoading(false);
-    }
+    // Redirect to Replit Auth
+    window.location.href = '/api/login';
   };
 
   const handleQuickLogin = (username: string, password: string) => {
