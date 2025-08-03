@@ -38,21 +38,50 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
       }
 
       try {
-        // Use apiRequest pattern for consistency
-        const response = await fetch('/api/tenant/current', {
+        // Use full URL to bypass any Vite proxy issues
+        const baseUrl = window.location.origin;
+        const response = await fetch(`${baseUrl}/api/tenant/current?t=${Date.now()}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
+          cache: 'no-cache',  // Prevent any caching issues
         });
 
+        console.log('TenantFixed: Response status:', response.status, response.ok);
+        console.log('TenantFixed: Response headers:', Object.fromEntries(response.headers));
+        
         if (response.ok) {
-          const tenantData = await response.json();
-          setTenant(tenantData);
-          setAvailableTenants([tenantData]);
+          const contentType = response.headers.get('content-type');
+          console.log('TenantFixed: Content-Type:', contentType);
+          
+          if (contentType && contentType.includes('application/json')) {
+            const tenantData = await response.json();
+            console.log('TenantFixed: Successfully received tenant data:', tenantData?.name || 'No name');
+            console.log('TenantFixed: Full tenant data structure:', tenantData);
+            
+            if (tenantData && tenantData.id) {
+              setTenant(tenantData);
+              setAvailableTenants([tenantData]);
+              console.log('TenantFixed: Tenant state updated successfully!');
+            } else {
+              console.error('TenantFixed: Invalid tenant data structure:', tenantData);
+              setTenant(null);
+              setAvailableTenants([]);
+            }
+          } else {
+            const textResponse = await response.text();
+            console.error('TenantFixed: Non-JSON response received:', textResponse.substring(0, 200));
+            setTenant(null);
+            setAvailableTenants([]);
+          }
         } else {
-          console.error('Failed to fetch tenant:', response.status);
+          console.error('TenantFixed: Failed to fetch tenant:', response.status);
+          const errorText = await response.text();
+          console.error('TenantFixed: Error response:', errorText.substring(0, 200));
+          
           // Clear invalid session
           if (response.status === 401) {
             localStorage.removeItem('auth_token');
