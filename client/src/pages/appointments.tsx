@@ -102,7 +102,17 @@ export default function Appointments() {
         },
         body: JSON.stringify(appointmentData)
       });
-      if (!response.ok) throw new Error("Failed to create appointment");
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Handle role restriction errors with user-friendly messages
+        if (errorData.error === "ROLE_RESTRICTION_SCHEDULING") {
+          throw new Error("You don't have permission to schedule appointments. Please contact reception staff or request scheduling permissions from your administrator.");
+        }
+        
+        throw new Error(errorData.message || "Failed to create appointment");
+      }
       return response.json();
     },
     onSuccess: (newAppointment) => {
@@ -111,6 +121,17 @@ export default function Appointments() {
       const appointmentDate = new Date(newAppointment.appointmentDate);
       setSelectedDate(appointmentDate.toISOString().split('T')[0]);
       setIsFormOpen(false);
+      toast({
+        title: "Appointment Created",
+        description: "The appointment has been successfully scheduled.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   });
 
@@ -120,6 +141,18 @@ export default function Appointments() {
         status,
         notes: notes || undefined
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Handle role restriction errors for appointment confirmation
+        if (errorData.error === "ROLE_RESTRICTION_CONFIRMATION") {
+          throw new Error("You don't have permission to confirm appointments. Please contact reception staff or request confirmation permissions from your administrator.");
+        }
+        
+        throw new Error(errorData.message || "Failed to update appointment");
+      }
+      
       return response.json();
     },
     onSuccess: () => {

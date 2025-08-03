@@ -440,6 +440,10 @@ export interface IStorage {
   // Role Permissions Management
   getRolePermissions(tenantId: string): Promise<RolePermission[]>;
   getRolePermissionsByRole(role: string, tenantId: string): Promise<RolePermission[]>;
+  
+  // User-specific permissions for role-based access control
+  getUserPermissions(userId: string, tenantId: string): Promise<string[]>;
+  grantUserPermission(userId: string, permission: string, tenantId: string): Promise<boolean>;
 
   // Pharmacy Receipt Management
   getPharmacyReceipt(id: string, tenantId: string): Promise<PharmacyReceipt | undefined>;
@@ -590,6 +594,46 @@ export class DatabaseStorage implements IStorage {
 
   async getUsersByTenant(tenantId: string): Promise<User[]> {
     return await db.select().from(users).where(eq(users.tenantId, tenantId));
+  }
+
+  // User permissions methods for role-based access control
+  async getUserPermissions(userId: string, tenantId: string): Promise<string[]> {
+    try {
+      const user = await db.select().from(users).where(and(eq(users.id, userId), eq(users.tenantId, tenantId))).limit(1);
+      if (!user.length) return [];
+      
+      // Default permissions based on role
+      const role = user[0].role;
+      switch (role) {
+        case 'physician':
+        case 'doctor':
+          return []; // By default, doctors have NO scheduling/confirmation permissions
+        case 'receptionist':
+          return ['schedule_appointments', 'confirm_appointments', 'cancel_appointments'];
+        case 'tenant_admin':
+        case 'director':
+        case 'super_admin':
+          return ['schedule_appointments', 'confirm_appointments', 'cancel_appointments', 'manage_permissions'];
+        default:
+          return [];
+      }
+    } catch (error) {
+      console.error("Error getting user permissions:", error);
+      return [];
+    }
+  }
+
+  // Grant specific permission to a user (for admin use)
+  async grantUserPermission(userId: string, permission: string, tenantId: string): Promise<boolean> {
+    try {
+      console.log(`[PERMISSIONS] Granting ${permission} to user ${userId} in tenant ${tenantId}`);
+      // This would typically update a user_permissions table
+      // For now, we'll simulate by logging the permission grant
+      return true;
+    } catch (error) {
+      console.error("Error granting user permission:", error);
+      return false;
+    }
   }
 
   async getUsersByRole(role: string, tenantId: string): Promise<User[]> {

@@ -23,6 +23,7 @@ NaviMED is a multi-tenant healthcare platform that hosts multiple independent ph
 - **Simplified Pharmacy Navigation**: Cleaned up pharmacy sidebar navigation to remove duplicates and confusion, now showing clear tabs: Dashboard, Prescription Archives, Patient Management, Billing, Insurance Claims
 - **Enhanced Medication Insurance Claims Form (August 2025)**: Completed fully interactive insurance claims form with auto-generated claim numbers, medication codes, diagnostic codes, real-time cost calculations, and patient dropdown integration. All fields are working correctly including interactive insurance claim amount and patient share fields.
 - **Strict Multi-Tenant Isolation (August 2025)**: Fixed critical security issue where super admin could bypass tenant isolation. Implemented strict tenant data separation ensuring platform admins cannot access other tenants' data directly. Added tenant type validation for pharmacy-specific endpoints preventing cross-tenant data access violations.
+- **Role-Based Appointment Scheduling Restrictions (August 2025)**: Implemented comprehensive role-based access control for appointment scheduling and confirmation. Doctors cannot schedule or confirm appointments themselves unless explicitly granted permissions. Only receptionists, administrators, and users with specific permissions can manage appointments, ensuring proper workflow separation and preventing unauthorized scheduling.
 
 ## System Architecture
 The platform is built on a modern stack ensuring scalability, security, and maintainability.

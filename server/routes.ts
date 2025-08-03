@@ -429,14 +429,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("[DEBUG] Creating appointment - User:", req.user?.role, "User ID:", req.user?.userId, "Tenant:", req.tenant?.id);
       console.log("[DEBUG] Request body:", req.body);
       
-      // Check if user has permission to create appointments
-      const allowedRoles = ["physician", "nurse", "receptionist", "tenant_admin", "director", "super_admin", "billing_staff", "pharmacist"];
-      if (!allowedRoles.includes(req.user!.role)) {
-        console.log("[DEBUG] Permission denied for role:", req.user!.role);
-        return res.status(403).json({ 
+      // ROLE-BASED APPOINTMENT SCHEDULING RESTRICTIONS
+      // Doctors should NOT schedule appointments themselves - only receptionists unless explicitly allowed
+      const userRole = req.user!.role;
+      const userId = req.user!.id;
+      const tenantId = req.tenant!.id;
+      
+      console.log(`[APPOINTMENT] User ${userId} (${userRole}) attempting to create appointment`);
+      
+      // Check role permissions for appointment creation
+      const allowedRoles = ["receptionist", "tenant_admin", "director", "super_admin"];
+      
+      // Doctors and physicians need explicit permission to schedule appointments
+      if (userRole === "physician" || userRole === "doctor") {
+        // Check if this user has been given explicit permission to schedule appointments
+        const userPermissions = await storage.getUserPermissions(userId, tenantId);
+        const canScheduleAppointments = userPermissions?.includes("schedule_appointments");
+        
+        if (!canScheduleAppointments) {
+          console.log(`[APPOINTMENT] ❌ Doctor/Physician ${userId} denied - no schedule permission`);
+          return res.status(403).json({
+            message: "Doctors cannot schedule appointments directly. Please contact reception staff or request scheduling permissions from your administrator.",
+            error: "ROLE_RESTRICTION_SCHEDULING",
+            requiredPermission: "schedule_appointments"
+          });
+        }
+        
+        console.log(`[APPOINTMENT] ✅ Doctor/Physician ${userId} allowed - has explicit permission`);
+      } else if (!allowedRoles.includes(userRole)) {
+        console.log(`[APPOINTMENT] ❌ User ${userId} (${userRole}) denied - insufficient role`);
+        return res.status(403).json({
           message: "Insufficient permissions to create appointments",
-          required: allowedRoles,
-          current: req.user!.role
+          error: "FORBIDDEN",
+          allowedRoles: allowedRoles,
+          currentRole: userRole
         });
       }
       
@@ -476,10 +502,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update appointment (PATCH)
-  app.patch("/api/appointments/:id", authenticateToken, requireRole(["physician", "nurse", "receptionist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+  app.patch("/api/appointments/:id", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { id } = req.params;
       const updateData = { ...req.body };
+      const userRole = req.user!.role;
+      const userId = req.user!.id;
+      const tenantId = req.tenant!.id;
+      
+      console.log(`[APPOINTMENT] User ${userId} (${userRole}) attempting to update appointment ${id}`);
+      
+      // ROLE-BASED APPOINTMENT CONFIRMATION RESTRICTIONS
+      // Doctors should NOT confirm appointments themselves - only receptionists unless explicitly allowed
+      const allowedRoles = ["receptionist", "tenant_admin", "director", "super_admin"];
+      
+      // Special check for status updates (confirmation/cancellation)
+      if (updateData.status && (userRole === "physician" || userRole === "doctor")) {
+        const userPermissions = await storage.getUserPermissions(userId, tenantId);
+        const canConfirmAppointments = userPermissions?.includes("confirm_appointments");
+        
+        if (!canConfirmAppointments) {
+          console.log(`[APPOINTMENT] ❌ Doctor/Physician ${userId} denied appointment confirmation`);
+          return res.status(403).json({
+            message: "Doctors cannot confirm or modify appointment status. Please contact reception staff or request confirmation permissions from your administrator.",
+            error: "ROLE_RESTRICTION_CONFIRMATION",
+            requiredPermission: "confirm_appointments"
+          });
+        }
+        
+        console.log(`[APPOINTMENT] ✅ Doctor/Physician ${userId} allowed to confirm - has explicit permission`);
+      } else if (!allowedRoles.includes(userRole) && (userRole !== "physician" && userRole !== "doctor")) {
+        console.log(`[APPOINTMENT] ❌ User ${userId} (${userRole}) denied - insufficient role`);
+        return res.status(403).json({
+          message: "Insufficient permissions to update appointments",
+          error: "FORBIDDEN",
+          allowedRoles: allowedRoles,
+          currentRole: userRole
+        });
+      }
 
       // Handle date fields properly if they exist
       if (updateData.appointmentDate && typeof updateData.appointmentDate === 'string') {
