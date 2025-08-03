@@ -47,7 +47,7 @@ interface SidebarItem {
 
 const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   // Clinical Section (only for tenant users)
-  { id: "dashboard", label: t("dashboard"), icon: BarChart3, path: "/dashboard", roles: ["physician", "nurse", "pharmacist", "lab_technician", "receptionist", "billing_staff", "tenant_admin", "director", "super_admin"] },
+  { id: "dashboard", label: t("dashboard"), icon: BarChart3, path: "/dashboard", roles: ["physician", "nurse", "lab_technician", "receptionist", "billing_staff", "tenant_admin", "director", "super_admin"] },
   { id: "telemedicine-booking", label: "Telemedicine Booking", icon: Video, path: "/telemedicine-booking", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "register-patient", label: t("register-patient"), icon: UserPlus, path: "/patients?action=register", roles: ["receptionist", "tenant_admin", "director"] },
   { id: "book-appointment", label: t("book-appointment"), icon: CalendarPlus, path: "/appointments?action=book", roles: ["receptionist", "tenant_admin", "director"] },
@@ -63,12 +63,10 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "post-lab-results", label: "Post Lab Results", icon: Plus, path: "/post-lab-results", roles: ["lab_technician", "tenant_admin", "director"] },
   { id: "achievements", label: "Laboratory Achievements", icon: Trophy, path: "/achievements", roles: ["lab_technician", "tenant_admin", "director"] },
   
-  // Pharmacy Section - Enhanced Dashboard with all features integrated
-  { id: "pharmacy-dashboard", label: "Pharmacy Dashboard", icon: Building2, path: "/dashboard", roles: ["pharmacist"] },
-  { id: "pharmacy-prescriptions", label: "Prescriptions", icon: Pill, path: "/dashboard", roles: ["pharmacist"] },
+  // Pharmacy Section - Simplified Navigation
+  { id: "pharmacy-dashboard", label: "Dashboard", icon: BarChart3, path: "/dashboard", roles: ["pharmacist"] },
   { id: "prescription-archives", label: "Prescription Archives", icon: Archive, path: "/prescription-archives", roles: ["pharmacist", "tenant_admin", "director"] },
-  { id: "pharmacy-inventory", label: "Inventory Management", icon: Package, path: "/pharmacy-inventory", roles: ["pharmacist", "tenant_admin", "director"] },
-  { id: "pharmacy-patient-management", label: "Pharmacy Patient Management", icon: Users, path: "/pharmacy-patient-management", roles: ["pharmacist", "billing_staff", "tenant_admin", "director"] },
+  { id: "pharmacy-patient-management", label: "Patient Management", icon: Users, path: "/pharmacy-patient-management", roles: ["pharmacist", "billing_staff", "tenant_admin", "director"] },
 
   { id: "health-recommendations", label: t("health-recommendations"), icon: Brain, path: "/health-recommendations", roles: ["physician", "nurse", "tenant_admin", "director"] },
   { id: "medical-communications", label: t("medical-communications"), icon: Languages, path: "/medical-communications", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
@@ -77,11 +75,11 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   // Operations Section (only for tenant users)
   { id: "billing", label: t("billing"), icon: DollarSign, path: "/billing", roles: ["billing_staff", "receptionist", "physician", "tenant_admin", "director"] },
   { id: "hospital-billing", label: "Hospital Billing", icon: DollarSign, path: "/hospital-billing", roles: ["billing_staff", "receptionist", "physician", "tenant_admin", "director"] },
-  { id: "pharmacy-billing", label: "Pharmacy Billing", icon: DollarSign, path: "/pharmacy-billing", roles: ["pharmacist", "pharmacy_admin", "tenant_admin", "director"] },
+  { id: "pharmacy-billing", label: "Billing", icon: DollarSign, path: "/pharmacy-billing", roles: ["pharmacist", "pharmacy_admin", "tenant_admin", "director"] },
   { id: "laboratory-billing", label: "Laboratory Billing", icon: DollarSign, path: "/laboratory-billing", roles: ["lab_technician", "tenant_admin", "director"] },
-  { id: "medication-insurance-claims", label: "Medication Claims", icon: Receipt, path: "/medication-insurance-claims", roles: ["tenant_admin", "billing_staff", "pharmacist", "pharmacy_admin", "physician"] },
+  { id: "medication-insurance-claims", label: "Insurance Claims", icon: Receipt, path: "/medication-insurance-claims", roles: ["tenant_admin", "billing_staff", "pharmacist", "pharmacy_admin", "physician"] },
   { id: "service-prices", label: t("service-prices"), icon: ClipboardList, path: "/service-pricing-management", roles: ["receptionist", "billing_staff", "tenant_admin", "director"] },
-  { id: "reports", label: t("reports"), icon: BarChart3, path: "/reports", roles: ["physician", "nurse", "pharmacist", "lab_technician", "billing_staff", "tenant_admin", "director", "super_admin"] },
+  { id: "reports", label: t("reports"), icon: BarChart3, path: "/reports", roles: ["physician", "nurse", "lab_technician", "billing_staff", "tenant_admin", "director", "super_admin"] },
   
   // Advanced Features (White Label & Enterprise)
   { id: "white-label-settings", label: t("white-label-settings"), icon: Settings, path: "/white-label-settings", roles: ["tenant_admin", "director", "super_admin"] },
