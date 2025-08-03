@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { SimpleRoleChanger } from "@/components/SimpleRoleChanger";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -234,7 +234,7 @@ export default function UserRoles() {
   });
 
   // Convert database permissions to the format expected by the UI
-  const getActualRolePermissions = () => {
+  const actualRolePermissions = useMemo(() => {
     if (!rolePermissionsFromDB || !Array.isArray(rolePermissionsFromDB)) {
       return rolePermissions; // Fallback to hardcoded permissions if no data
     }
@@ -266,9 +266,7 @@ export default function UserRoles() {
     });
 
     return actualPermissions;
-  };
-
-  const actualRolePermissions = getActualRolePermissions();
+  }, [rolePermissionsFromDB]);
 
   // Initialize editing permissions when role is selected
   const initializeEditingPermissions = (role: string) => {
