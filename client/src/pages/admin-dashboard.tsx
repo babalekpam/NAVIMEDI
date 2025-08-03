@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Users, Stethoscope, Heart, FlaskConical, UserCheck, DollarSign, ShieldCheck, Building2, Activity, Pill, TestTube } from "lucide-react";
+import { UserPlus, Users, Stethoscope, Heart, FlaskConical, UserCheck, DollarSign, ShieldCheck, Building2, Activity, Pill, TestTube, Plus, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useTranslation } from "@/contexts/translation-context";
@@ -19,6 +19,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
   const { tenant } = useTenant();
   const { t } = useTranslation();
   const [currentTab, setCurrentTab] = useState(activeTab);
+  const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
 
   if (!user || user.role !== 'tenant_admin') {
     return (
@@ -378,19 +379,26 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Hospital Departments</CardTitle>
+                  <CardTitle>{organizationType === 'hospital' ? 'Hospital Departments' : 'Laboratory Departments'}</CardTitle>
                   <CardDescription>
                     Organize your staff by departments and specialties
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4 md:grid-cols-2">
-                    {[
+                    {(organizationType === 'hospital' ? [
                       { name: "Emergency Department", staff: "12 Staff Members", icon: Activity },
                       { name: "Internal Medicine", staff: "8 Staff Members", icon: Stethoscope },
+                      { name: "Surgery", staff: "10 Staff Members", icon: Stethoscope },
+                      { name: "Pediatrics", staff: "7 Staff Members", icon: Heart },
                       { name: "Laboratory", staff: "6 Staff Members", icon: FlaskConical },
                       { name: "Administration", staff: "4 Staff Members", icon: Building2 }
-                    ].map((dept) => {
+                    ] : [
+                      { name: "Clinical Laboratory", staff: "8 Staff Members", icon: FlaskConical },
+                      { name: "Pathology", staff: "5 Staff Members", icon: TestTube },
+                      { name: "Microbiology", staff: "4 Staff Members", icon: FlaskConical },
+                      { name: "Administration", staff: "3 Staff Members", icon: Building2 }
+                    ]).map((dept) => {
                       const Icon = dept.icon;
                       return (
                         <Card key={dept.name}>
@@ -404,9 +412,23 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
                             </div>
                           </CardHeader>
                           <CardContent>
-                            <Button variant="outline" className="w-full">
-                              Manage Department
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                className="flex-1"
+                                onClick={() => setSelectedDepartment(dept.name)}
+                              >
+                                <Settings className="h-4 w-4 mr-2" />
+                                Manage
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => alert(`Adding staff to ${dept.name} - Feature coming soon!`)}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </CardContent>
                         </Card>
                       );
@@ -414,6 +436,80 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Department Detail Modal */}
+              {selectedDepartment && (
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-blue-900">{selectedDepartment} Management</CardTitle>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setSelectedDepartment(null)}
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                    <CardDescription className="text-blue-700">
+                      Manage staff assignments, schedules, and department settings
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold text-blue-600">
+                            {selectedDepartment.includes('Emergency') ? '12' : 
+                             selectedDepartment.includes('Surgery') ? '10' : 
+                             selectedDepartment.includes('Internal') ? '8' : 
+                             selectedDepartment.includes('Pediatrics') ? '7' : 
+                             selectedDepartment.includes('Laboratory') ? '6' : '4'}
+                          </div>
+                          <div className="text-sm text-gray-600">Total Staff</div>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold text-green-600">
+                            {selectedDepartment.includes('Emergency') ? '24/7' : 
+                             selectedDepartment.includes('Surgery') ? '16h' : '12h'}
+                          </div>
+                          <div className="text-sm text-gray-600">Operating Hours</div>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold text-orange-600">
+                            {selectedDepartment.includes('Emergency') ? '95%' : 
+                             selectedDepartment.includes('Surgery') ? '88%' : '92%'}
+                          </div>
+                          <div className="text-sm text-gray-600">Efficiency</div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <Button className="w-full" variant="outline">
+                        <Users className="h-4 w-4 mr-2" />
+                        View Staff List
+                      </Button>
+                      <Button className="w-full" variant="outline">
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Add New Staff
+                      </Button>
+                      <Button className="w-full" variant="outline">
+                        <Activity className="h-4 w-4 mr-2" />
+                        Department Reports
+                      </Button>
+                      <Button className="w-full" variant="outline">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Department Settings
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </TabsContent>
         )}

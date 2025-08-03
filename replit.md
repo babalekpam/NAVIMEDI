@@ -1,81 +1,51 @@
 # Healthcare Management Platform
 
 ## Overview
-NaviMED is a multi-tenant healthcare platform that hosts multiple independent pharmacies connected to hospitals. When patients choose a preferred pharmacy, that pharmacy receives prescriptions from the connected hospitals. Each pharmacy operates independently within the NaviMED platform while maintaining secure connections to hospital networks for prescription routing. The platform streamlines prescription management, facilitates insurance claims processing, manages patient records, and enhances communication between healthcare providers and patients. NaviMED aims to be the leading solution for pharmacy-hospital connectivity, improving prescription fulfillment efficiency, patient care, and data management in a secure and compliant manner.
+NaviMED is a multi-tenant healthcare platform connecting independent pharmacies with hospitals to streamline prescription management, facilitate insurance claims, manage patient records, and enhance communication. It aims to be the leading solution for pharmacy-hospital connectivity, improving efficiency, patient care, and data management securely and compliantly.
 
 ## User Preferences
 - Simple, everyday language for communication (user is non-technical)
 - Focus on functionality testing rather than code details
 - Prioritize working features over perfect TypeScript compliance
 
-## Recent Changes (January 2025)
-- **Multi-Tenant Platform Integration**: Successfully synchronized pharmacy dashboard with tenant-specific data isolation
-- **Professional Delivery Services**: Implemented fully working delivery tabs (Active, Scheduled, Done) with live tracking and receipt downloads
-- **Enhanced Multi-Tenant Security**: Added tenant information header showing data isolation and secure access badges
-- **Tenant-Specific API Endpoints**: Created `/api/pharmacy/metrics`, `/api/pharmacy/prescriptions`, and `/api/pharmacy/inventory-alerts` with proper tenant data filtering
-- **Real-Time Data Integration**: Connected frontend to tenant-specific backend data while maintaining fallback for demo purposes
-- **Comprehensive Receipt System**: Delivery receipts now include tenant information, HIPAA compliance notes, and user authorization tracking
-- **Professional Modal System**: All Digital Health Hub features use responsive modals instead of basic prompts
-- **Working Report Downloads**: AI Insights reports generate in multiple formats (Text, Excel, CSV) with tenant-specific data
-- **Complete 5-Step Prescription Workflow**: Implemented comprehensive workflow interface (Received → Insurance Verification → Insurance Filing → Patient Payment → Final Receipt) with checkboxes and information fields on single page
-- **Pharmacy Dashboard Consolidation**: Removed duplicate pharmacy dashboards, unified all pharmacy functionality under single `/dashboard` route with working prescription status updates
-- **Prescription Archives System**: Implemented comprehensive prescription archiving with automatic dispensed prescription migration, full bookkeeping retrieval, receipt printing, and CSV export capabilities
-- **Simplified Pharmacy Navigation**: Cleaned up pharmacy sidebar navigation to remove duplicates and confusion, now showing clear tabs: Dashboard, Prescription Archives, Patient Management, Billing, Insurance Claims
-- **Enhanced Medication Insurance Claims Form (August 2025)**: Completed fully interactive insurance claims form with auto-generated claim numbers, medication codes, diagnostic codes, real-time cost calculations, and patient dropdown integration. All fields are working correctly including interactive insurance claim amount and patient share fields.
-- **Strict Multi-Tenant Isolation (August 2025)**: Fixed critical security issue where super admin could bypass tenant isolation. Implemented strict tenant data separation ensuring platform admins cannot access other tenants' data directly. Added tenant type validation for pharmacy-specific endpoints preventing cross-tenant data access violations.
-- **Role-Based Appointment Scheduling Restrictions (August 2025)**: Implemented comprehensive role-based access control for appointment scheduling and confirmation. Doctors cannot schedule or confirm appointments themselves unless explicitly granted permissions. Only receptionists, administrators, and users with specific permissions can manage appointments, ensuring proper workflow separation and preventing unauthorized scheduling.
-- **Tenant Context Stability Fix (August 2025)**: Completely resolved "Tenant Required" error that was preventing system access. Fixed all tenant context imports across 20+ components, implemented robust fallback tenant creation system using user data when API calls fail due to Vite routing conflicts. System now maintains stable tenant context throughout all application flows with Metro General Hospital tenant data properly loaded.
-- **Independent Pharmacy Entity Creation (August 2025)**: Established "Independent Community Pharmacy" as a completely autonomous entity separate from Metro General Hospital. The pharmacy now operates with its own tenant data (ID: 9ed7c3a3-cc12-414d-bc7e-7d0c1a3cf6e9), independent staff, patient base, and prescription management system. Login credentials: pharmacy_admin/[existing password] for full pharmacy administration access.
-- **Comprehensive Pharmacy Employee Management System (August 2025)**: Implemented full employee management capabilities for pharmacy administrators, including CRUD operations for staff (pharmacist, billing staff, receptionist, tenant_admin roles), role-based access control, employee directory, and staff statistics dashboard. Pharmacy admins can now fully manage their workforce independently.
-- **Unified Admin Dashboard Integration (August 2025)**: Fixed pharmacy admin routing issue where pharmacy tenant admins were being directed to pharmacy-specific dashboard instead of the unified admin dashboard. Pharmacy administrators now access the same comprehensive admin interface as hospital and laboratory administrators, with organization-specific adaptations for staff roles and management options. Login system automatically redirects tenant_admin and director roles to /admin-dashboard for unified management experience.
-- **Complete Admin Dashboard Routing Fix (August 2025)**: Resolved critical routing bug where /admin-dashboard route was incorrectly rendering SuperAdminDashboard instead of AdminDashboard component. Fixed JavaScript initialization error with organization-specific staff card generation. Successfully implemented proper password hashing for user account creation through admin interface. All pharmacy admin functionality now works perfectly with unified admin dashboard experience.
-- **Critical Multi-Tenant Isolation Fix (August 2025)**: Eliminated dangerous tenant isolation breach where pharmacy tenants were falling back to Metro General Hospital data when API calls failed. Completely removed default hospital fallback system and implemented proper tenant-specific mapping. Each pharmacy now operates with completely isolated tenant data, settings, and configuration. LOVE pharmacy (ID: 27b0df66-5687-458b-aedd-6f03626e302b) now has proper pharmacy configuration with no Metro General Hospital dependencies.
-- **Hospital-Pharmacy Relationship Architecture (August 2025)**: Implemented proper multi-tenant pharmacy architecture supporting two pharmacy types: 1) Hospital-owned pharmacies (dependent on parent hospital with `parent_tenant_id`) and 2) Independent pharmacies (completely isolated organizations). Added patient pharmacy preference system where patients choose which pharmacy receives their prescriptions from hospitals. Only communication between hospitals and independent pharmacies is prescription routing based on patient choice, maintaining strict tenant isolation while enabling patient-controlled prescription delivery.
-- **Pharmacy Dashboard Optimization (August 2025)**: Removed departments section from pharmacy admin dashboard as it's not needed for pharmacy operations. Pharmacy administrators now see a streamlined 3-tab interface: Overview, Add Staff, and Manage Users. Departments remain available for hospitals and laboratories where organizational structure management is relevant.
-
 ## System Architecture
-The platform is built on a modern stack ensuring scalability, security, and maintainability.
+The platform is built on a modern stack for scalability, security, and maintainability, featuring a strong multi-tenant architecture with strict data isolation per organization (hospital, pharmacy, laboratory).
 
--   **Frontend**: Developed with React and TypeScript, leveraging Tailwind CSS for a utility-first styling approach, ensuring a clean and responsive user interface.
--   **Backend**: Powered by Node.js and Express.js, written in TypeScript, providing a robust and efficient API layer.
--   **Database**: Utilizes PostgreSQL as the primary data store, managed through Drizzle ORM for type-safe and efficient database interactions.
--   **Authentication**: Implements JWT (JSON Web Token) for secure user authentication, coupled with a granular role-based access control (RBAC) system to manage user permissions across different modules and tenants.
--   **Multi-tenancy**: Designed with a strong multi-tenant architecture where data is strictly isolated per organization (hospital, pharmacy, laboratory), while allowing for controlled cross-tenant interactions where necessary (e.g., prescription routing, lab order routing). Super admin capabilities oversee the entire system.
--   **Role Separation**: Enforces strict role separation, ensuring users have access only to functionalities relevant to their role and tenant type.
--   **UI/UX Decisions**:
-    -   Intuitive navigation with distinct dashboards for different user roles (admin, doctor, nurse, receptionist, pharmacy staff, lab staff).
-    -   Color-coded alerts and visual indicators for statuses.
-    -   Streamlined workflows for common tasks like patient registration, appointment booking, prescription dispensing, and lab order processing.
-    -   Comprehensive patient portal with features like health tracking, medical records access, and secure messaging.
-    -   Dynamic permission management UI for tenant administrators.
+**Core Technologies:**
+-   **Frontend**: React, TypeScript, Tailwind CSS
+-   **Backend**: Node.js, Express.js, TypeScript
+-   **Database**: PostgreSQL via Drizzle ORM
+-   **Authentication**: JWT for secure user authentication and granular Role-Based Access Control (RBAC).
+
+**Key Architectural Decisions & Features:**
+-   **Multi-tenancy**: Strict data isolation per organization (hospital, pharmacy, laboratory) with controlled cross-tenant interactions for prescription routing and lab orders. Super admin capabilities oversee the system.
+-   **Role Separation**: Strict access control based on user roles and tenant types.
+-   **UI/UX Decisions**: Intuitive navigation with distinct dashboards per role, color-coded alerts, streamlined workflows, comprehensive patient portal, and dynamic permission management UI.
 -   **Technical Implementations**:
-    -   **Automated Insurance Verification & Copay Calculation**: System automatically fetches patient insurance details, identifies primary policies, and calculates copays based on coverage rules.
-    -   **Cross-Tenant Patient & Data Synchronization**: Enables secure and compliant sharing of patient and insurance data across relevant tenants.
-    -   **Complete Pharmacy Workflow Management**: Features a comprehensive workflow (New → Insurance Verification → Processing → Ready → Dispensed) with real-time status updates, visual feedback, and professional receipt generation including payment breakdowns.
-    -   **Professional Receipt System**: Automated receipt generation with pharmacy branding, complete payment breakdown (medication cost, insurance payment, patient payment, savings), and browser print functionality.
-    -   **Interactive Prescription Processing**: Modal-based workflow with 4-step processing, status badge updates, button state management, and inactive edit functionality for dispensed prescriptions.
-    -   **Advanced Inventory Management**: Full CRUD operations for pharmacy inventory with controlled form inputs, real-time stock updates, automatic status calculations, and persistent state management across sessions.
-    -   **Complete Reorder System**: Professional reordering functionality with quantity control, dynamic cost calculation, stock level previews, automatic inventory updates, and status adjustments upon order completion.
-    -   **Enhanced Notification System**: Real-time notifications with proper state management, "Mark All Read" functionality, badge control, modal closing, and empty state display.
-    -   **Professional Reporting System**: Comprehensive report generation with multiple formats (PDF, CSV, Excel), dynamic content based on report type, and real file downloads with browser integration.
-    -   **Bidirectional Medical Communications**: A unified messaging system allows secure and compliant communication between patients and doctors.
-    -   **Lab Order & Results Management**: Supports creation and routing of lab orders and comprehensive management/viewing of lab results.
-    -   **Patient Portal & Telemedicine**: Provides a secure patient portal with features like appointment booking, health tracking, and integrated telemedicine consultation setup.
-    -   **Dynamic Role Permissions**: Allows tenant administrators to granularly define and manage permissions for each user role.
-    -   **Automated Currency Detection**: Assigns currency based on the hospital's geographic location.
-    -   **Multi-language Support**: Features a fully functional translation system for the user interface.
-    -   **Enterprise Features**: Includes white-label branding capabilities, tiered pricing plans, and offline synchronization.
-    -   **Gamified Achievement System**: For laboratory performance tracking with automatic tracking, real-time progress updates, and leaderboards.
-    -   **Unified Billing Systems**: Comprehensive billing for hospital, pharmacy, and laboratory with analytics and reporting.
-    -   **Multi-Doctor Patient Data Separation**: Strict data separation between doctors in the same hospital via patient access request system with approval workflow and audit logging.
+    -   Automated Insurance Verification & Copay Calculation.
+    -   Secure cross-tenant patient and data synchronization.
+    -   Comprehensive Pharmacy Workflow Management (New → Insurance Verification → Processing → Ready → Dispensed) with real-time updates and professional receipt generation.
+    -   Advanced Inventory Management with CRUD operations, real-time stock updates, and persistent state.
+    -   Professional Reorder System with dynamic cost calculation and automatic inventory updates.
+    -   Enhanced real-time Notification System.
+    -   Professional Reporting System with multiple formats and file downloads.
+    -   Bidirectional Medical Communications for secure patient-doctor messaging.
+    -   Lab Order & Results Management.
+    -   Patient Portal with appointment booking and telemedicine integration.
+    -   Dynamic Role Permissions for tenant administrators.
+    -   Automated Currency Detection and Multi-language Support.
+    -   Enterprise Features: White-label branding, tiered pricing, offline synchronization.
+    -   Gamified Achievement System for laboratory performance tracking.
+    -   Unified Billing Systems with analytics for hospital, pharmacy, and laboratory.
+    -   Multi-Doctor Patient Data Separation via access request system.
+    -   Hospital-Pharmacy Relationship Architecture: Supports hospital-owned and independent pharmacies, with patient preference for prescription routing.
 
 ## External Dependencies
-The platform integrates with several external components and services to deliver its full functionality:
+The platform integrates with the following key external components and services:
 
--   **PostgreSQL**: The primary relational database.
--   **JWT (JSON Web Tokens)**: Used for secure authentication and authorization.
--   **Drizzle ORM**: An object-relational mapper for interacting with PostgreSQL.
--   **YouTube, Vimeo Business, AWS Enterprise**: Options for video tutorial hosting and integration.
--   **Custom API Endpoints**: For fetching patient insurance details cross-tenant, cross-tenant patient synchronization for billing, unified patient-doctor messaging, hospital directory synchronization, and medical history updates.
--   **Payment Gateways**: Implicitly required for payment processing and receipt generation.
--   **Email Service**: For sending user credentials, welcome messages, and other notifications.
+-   **PostgreSQL**: Primary relational database.
+-   **JWT (JSON Web Tokens)**: For authentication and authorization.
+-   **Drizzle ORM**: For database interactions.
+-   **Custom API Endpoints**: For cross-tenant data synchronization (patient insurance, billing, messaging, directory, medical history).
+-   **Payment Gateways**: For payment processing.
+-   **Email Service**: For user notifications and credentials.
