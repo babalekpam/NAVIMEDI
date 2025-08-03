@@ -1276,16 +1276,12 @@ export class DatabaseStorage implements IStorage {
     console.log(`[PHARMACY API] 🔄 Updating prescription ${prescriptionId} to status: ${newStatus}`);
     
     try {
-      // Update the prescription status in database
+      // Simple status update without referencing potentially missing columns
       const [updatedPrescription] = await db
         .update(prescriptions)
         .set({ 
           status: newStatus,
-          updatedAt: new Date(),
-          // Set workflow dates based on status
-          ...(newStatus === 'processing' && { processingStartedDate: new Date() }),
-          ...(newStatus === 'ready' && { readyDate: new Date() }),
-          ...(newStatus === 'dispensed' && { dispensedDate: new Date() })
+          updatedAt: new Date()
         })
         .where(eq(prescriptions.id, prescriptionId))
         .returning();

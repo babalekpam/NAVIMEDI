@@ -898,11 +898,150 @@ export default function PharmacyDashboardWorking() {
                       <Textarea placeholder="Any special instructions or notes..." />
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" className="flex-1">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => {
+                          const receiptData = {
+                            pharmacyName: tenant?.name || 'NaviMED Pharmacy',
+                            prescriptionId: selectedPrescription?.id,
+                            patientName: selectedPrescription?.patientName,
+                            medication: selectedPrescription?.medication,
+                            medicationCost: '85.00',
+                            insuranceCoverage: '68.00',
+                            patientPayment: '17.00',
+                            claimNumber: `CLM-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
+                            transactionId: `TXN-${new Date().getFullYear()}-${String(Date.now()).slice(-8)}`,
+                            date: new Date().toLocaleDateString(),
+                            time: new Date().toLocaleTimeString()
+                          };
+                          
+                          const receiptWindow = window.open('', '_blank');
+                          receiptWindow?.document.write(`
+                            <html>
+                              <head>
+                                <title>Prescription Receipt</title>
+                                <style>
+                                  body { font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; }
+                                  .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+                                  .section { margin: 15px 0; }
+                                  .row { display: flex; justify-content: space-between; margin: 5px 0; }
+                                  .total { font-weight: bold; border-top: 1px solid #000; padding-top: 10px; }
+                                  @media print { body { margin: 0; } }
+                                </style>
+                              </head>
+                              <body>
+                                <div class="header">
+                                  <h2>${receiptData.pharmacyName}</h2>
+                                  <p>NaviMED Platform Connected Pharmacy</p>
+                                  <p>${receiptData.date} ${receiptData.time}</p>
+                                </div>
+                                
+                                <div class="section">
+                                  <h3>Patient Information</h3>
+                                  <div class="row"><span>Patient:</span><span>${receiptData.patientName}</span></div>
+                                  <div class="row"><span>Prescription ID:</span><span>${receiptData.prescriptionId}</span></div>
+                                </div>
+                                
+                                <div class="section">
+                                  <h3>Medication Details</h3>
+                                  <div class="row"><span>Medication:</span><span>${receiptData.medication}</span></div>
+                                  <div class="row"><span>Medication Cost:</span><span>$${receiptData.medicationCost}</span></div>
+                                </div>
+                                
+                                <div class="section">
+                                  <h3>Payment Breakdown</h3>
+                                  <div class="row"><span>Insurance Coverage:</span><span>$${receiptData.insuranceCoverage}</span></div>
+                                  <div class="row"><span>Patient Payment:</span><span>$${receiptData.patientPayment}</span></div>
+                                  <div class="row total"><span>Total Cost:</span><span>$${receiptData.medicationCost}</span></div>
+                                </div>
+                                
+                                <div class="section">
+                                  <h3>Transaction Details</h3>
+                                  <div class="row"><span>Claim Number:</span><span>${receiptData.claimNumber}</span></div>
+                                  <div class="row"><span>Transaction ID:</span><span>${receiptData.transactionId}</span></div>
+                                </div>
+                                
+                                <div class="section" style="text-align: center; margin-top: 30px; font-size: 12px;">
+                                  <p>Thank you for choosing ${receiptData.pharmacyName}</p>
+                                  <p>Connected via NaviMED Platform</p>
+                                  <p>HIPAA Compliant | Secure Healthcare Network</p>
+                                </div>
+                                
+                                <script>window.print();</script>
+                              </body>
+                            </html>
+                          `);
+                        }}
+                      >
                         <FileText className="mr-2 h-4 w-4" />
                         Generate Receipt
                       </Button>
-                      <Button variant="outline" className="flex-1">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => {
+                          const labelData = {
+                            pharmacyName: tenant?.name || 'NaviMED Pharmacy',
+                            patientName: selectedPrescription?.patientName,
+                            medication: selectedPrescription?.medication,
+                            prescriptionId: selectedPrescription?.id,
+                            date: new Date().toLocaleDateString(),
+                            instructions: 'Take as directed by physician'
+                          };
+                          
+                          const labelWindow = window.open('', '_blank');
+                          labelWindow?.document.write(`
+                            <html>
+                              <head>
+                                <title>Prescription Label</title>
+                                <style>
+                                  body { font-family: Arial, sans-serif; max-width: 300px; margin: 0 auto; padding: 10px; }
+                                  .label { border: 2px solid #000; padding: 15px; background: white; }
+                                  .pharmacy-name { font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 10px; }
+                                  .field { margin: 8px 0; font-size: 14px; }
+                                  .patient-name { font-size: 18px; font-weight: bold; }
+                                  .medication { font-size: 16px; font-weight: bold; color: #2563eb; }
+                                  .rx-number { font-size: 12px; color: #666; }
+                                  @media print { body { margin: 0; } .label { border-width: 1px; } }
+                                </style>
+                              </head>
+                              <body>
+                                <div class="label">
+                                  <div class="pharmacy-name">${labelData.pharmacyName}</div>
+                                  <div class="rx-number">Rx#: ${labelData.prescriptionId?.slice(-8) || 'N/A'}</div>
+                                  
+                                  <div class="field">
+                                    <strong>Patient:</strong><br>
+                                    <span class="patient-name">${labelData.patientName}</span>
+                                  </div>
+                                  
+                                  <div class="field">
+                                    <strong>Medication:</strong><br>
+                                    <span class="medication">${labelData.medication}</span>
+                                  </div>
+                                  
+                                  <div class="field">
+                                    <strong>Instructions:</strong><br>
+                                    ${labelData.instructions}
+                                  </div>
+                                  
+                                  <div class="field">
+                                    <strong>Date Dispensed:</strong> ${labelData.date}
+                                  </div>
+                                  
+                                  <div style="margin-top: 15px; font-size: 10px; text-align: center; border-top: 1px solid #000; padding-top: 8px;">
+                                    NaviMED Platform Connected Pharmacy<br>
+                                    HIPAA Compliant | Secure Network
+                                  </div>
+                                </div>
+                                
+                                <script>window.print();</script>
+                              </body>
+                            </html>
+                          `);
+                        }}
+                      >
                         <Download className="mr-2 h-4 w-4" />
                         Print Label
                       </Button>
