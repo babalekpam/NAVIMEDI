@@ -146,11 +146,13 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
       </div>
 
       <Tabs value={currentTab} onValueChange={setCurrentTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className={`grid w-full ${organizationType === 'pharmacy' ? 'grid-cols-3' : 'grid-cols-4'}`}>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="add-staff">Add Staff</TabsTrigger>
           <TabsTrigger value="manage-users">Manage Users</TabsTrigger>
-          <TabsTrigger value="departments">Departments</TabsTrigger>
+          {organizationType !== 'pharmacy' && (
+            <TabsTrigger value="departments">Departments</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="overview">
@@ -371,48 +373,50 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
           )}
         </TabsContent>
 
-        <TabsContent value="departments">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Hospital Departments</CardTitle>
-                <CardDescription>
-                  Organize your staff by departments and specialties
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {[
-                    { name: "Emergency Department", staff: "12 Staff Members", icon: Activity },
-                    { name: "Internal Medicine", staff: "8 Staff Members", icon: Stethoscope },
-                    { name: "Laboratory", staff: "6 Staff Members", icon: FlaskConical },
-                    { name: "Administration", staff: "4 Staff Members", icon: Building2 }
-                  ].map((dept) => {
-                    const Icon = dept.icon;
-                    return (
-                      <Card key={dept.name}>
-                        <CardHeader>
-                          <div className="flex items-center">
-                            <Icon className="h-6 w-6 mr-3 text-blue-600" />
-                            <div>
-                              <CardTitle className="text-lg">{dept.name}</CardTitle>
-                              <CardDescription>{dept.staff}</CardDescription>
+        {organizationType !== 'pharmacy' && (
+          <TabsContent value="departments">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Hospital Departments</CardTitle>
+                  <CardDescription>
+                    Organize your staff by departments and specialties
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {[
+                      { name: "Emergency Department", staff: "12 Staff Members", icon: Activity },
+                      { name: "Internal Medicine", staff: "8 Staff Members", icon: Stethoscope },
+                      { name: "Laboratory", staff: "6 Staff Members", icon: FlaskConical },
+                      { name: "Administration", staff: "4 Staff Members", icon: Building2 }
+                    ].map((dept) => {
+                      const Icon = dept.icon;
+                      return (
+                        <Card key={dept.name}>
+                          <CardHeader>
+                            <div className="flex items-center">
+                              <Icon className="h-6 w-6 mr-3 text-blue-600" />
+                              <div>
+                                <CardTitle className="text-lg">{dept.name}</CardTitle>
+                                <CardDescription>{dept.staff}</CardDescription>
+                              </div>
                             </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <Button variant="outline" className="w-full">
-                            Manage Department
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+                          </CardHeader>
+                          <CardContent>
+                            <Button variant="outline" className="w-full">
+                              Manage Department
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
