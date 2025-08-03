@@ -34,6 +34,8 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
 
   // Determine the organization type and customize the interface accordingly
   const organizationType = tenant?.type || 'hospital';
+  console.log('[ADMIN DASHBOARD] Organization type:', organizationType, 'Tenant:', tenant?.name);
+  
   const organizationTitle = organizationType === 'pharmacy' ? 'Pharmacy Administration' : 
                            organizationType === 'laboratory' ? 'Laboratory Administration' : 
                            'Hospital Administration';
