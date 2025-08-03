@@ -64,18 +64,41 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
         if (user && user.tenantId) {
           console.log('TenantFixed: Creating fallback tenant from user data');
           
-          // Determine tenant details based on user's tenant ID
-          let tenantName = 'Metro General Hospital';
+          // NO DEFAULT HOSPITAL FALLBACK - Each tenant must be independent
+          // Use the actual tenant ID from the authenticated user to maintain isolation
+          let tenantName = 'Unknown Organization';
           let tenantType: 'hospital' | 'pharmacy' | 'laboratory' = 'hospital';
-          let subdomain = 'metro-general';
-          let features = ['ehr', 'lab', 'billing'];
+          let subdomain = 'unknown';
+          let features = ['basic'];
           
-          // Check if this is the Independent Community Pharmacy
-          if (user.tenantId === '9ed7c3a3-cc12-414d-bc7e-7d0c1a3cf6e9') {
-            tenantName = 'Independent Community Pharmacy';
-            tenantType = 'pharmacy';
-            subdomain = 'working-test';
-            features = ['pharmacy', 'billing', 'inventory'];
+          // Map known tenant IDs to their proper configurations
+          const tenantMappings = {
+            '9ed7c3a3-cc12-414d-bc7e-7d0c1a3cf6e9': {
+              name: 'Independent Community Pharmacy',
+              type: 'pharmacy' as const,
+              subdomain: 'working-test',
+              features: ['pharmacy', 'billing', 'inventory']
+            },
+            '27b0df66-5687-458b-aedd-6f03626e302b': {
+              name: 'LOVE',
+              type: 'pharmacy' as const,
+              subdomain: 'love',
+              features: ['pharmacy', 'billing', 'inventory']
+            },
+            '37a1f504-6f59-4d2f-9eec-d108cd2b83d7': {
+              name: 'Metro General Hospital',
+              type: 'hospital' as const,
+              subdomain: 'metro-general',
+              features: ['ehr', 'lab', 'billing']
+            }
+          };
+          
+          const tenantConfig = tenantMappings[user.tenantId as keyof typeof tenantMappings];
+          if (tenantConfig) {
+            tenantName = tenantConfig.name;
+            tenantType = tenantConfig.type;
+            subdomain = tenantConfig.subdomain;
+            features = tenantConfig.features;
           }
           
           const fallbackTenant = {
