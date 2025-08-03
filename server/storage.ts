@@ -1225,6 +1225,36 @@ export class DatabaseStorage implements IStorage {
     return simplifiedPrescriptions;
   }
 
+  async updatePrescriptionStatus(prescriptionId: string, newStatus: string): Promise<any> {
+    console.log(`[PHARMACY API] 🔄 Updating prescription ${prescriptionId} to status: ${newStatus}`);
+    
+    try {
+      // Update the prescription status in database
+      const [updatedPrescription] = await db
+        .update(prescriptions)
+        .set({ 
+          status: newStatus,
+          updatedAt: new Date(),
+          // Set workflow dates based on status
+          ...(newStatus === 'processing' && { processingStartedDate: new Date() }),
+          ...(newStatus === 'ready' && { readyDate: new Date() }),
+          ...(newStatus === 'dispensed' && { dispensedDate: new Date() })
+        })
+        .where(eq(prescriptions.id, prescriptionId))
+        .returning();
+
+      if (!updatedPrescription) {
+        throw new Error('Prescription not found');
+      }
+
+      console.log(`[PHARMACY API] ✅ Successfully updated prescription status to: ${newStatus}`);
+      return updatedPrescription;
+    } catch (error) {
+      console.error(`[PHARMACY API] ❌ Error updating prescription status:`, error);
+      throw error;
+    }
+  }
+
   async updatePrescription(id: string, updates: Partial<Prescription>, tenantId: string): Promise<Prescription | undefined> {
     // For pharmacy updates, we need to check both tenantId (hospital) and pharmacyTenantId (pharmacy)
     const [prescription] = await db.update(prescriptions)

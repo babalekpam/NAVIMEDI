@@ -546,6 +546,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update prescription status (for pharmacy workflow)
+  app.patch("/api/pharmacy/prescriptions/:prescriptionId/process", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      console.log("[PHARMACY API] 🔄 PATCH /api/pharmacy/prescriptions/process called");
+      const { prescriptionId } = req.params;
+      const { status } = req.body;
+      
+      console.log("[PHARMACY API] 📋 Prescription ID:", prescriptionId);
+      console.log("[PHARMACY API] 🔄 New Status:", status);
+      
+      // Validate status
+      const validStatuses = ['new', 'processing', 'ready', 'dispensed'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      
+      // Update prescription status
+      const updatedPrescription = await storage.updatePrescriptionStatus(prescriptionId, status);
+      
+      console.log("[PHARMACY API] ✅ Prescription status updated successfully");
+      
+      res.json(updatedPrescription);
+    } catch (error) {
+      console.error("[PHARMACY API] ❌ Error updating prescription status:", error);
+      res.status(500).json({ message: "Failed to update prescription status" });
+    }
+  });
+
   // Lab order management routes
   app.get("/api/lab-orders", authenticateToken, requireTenant, async (req, res) => {
     try {
