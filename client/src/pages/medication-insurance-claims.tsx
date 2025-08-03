@@ -388,7 +388,7 @@ export default function MedicationInsuranceClaims() {
 
                 {/* Cost Calculation Section */}
                 <div className="border rounded-lg p-4 bg-green-50 mb-4">
-                  <h4 className="font-semibold text-green-900 mb-3">💰 Cost & Insurance Coverage (NEW)</h4>
+                  <h4 className="font-semibold text-green-900 mb-3">💰 Cost & Insurance Coverage (INTERACTIVE)</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">Medication Cost ($)</label>
@@ -396,7 +396,20 @@ export default function MedicationInsuranceClaims() {
                         type="number" 
                         step="0.01" 
                         placeholder="125.00" 
-                        className="w-full p-2 border rounded" 
+                        className="w-full p-2 border-2 border-blue-300 rounded focus:border-blue-500 focus:outline-none" 
+                        onChange={(e) => {
+                          const cost = parseFloat(e.target.value) || 0;
+                          const coverageInput = e.target.parentElement.parentElement.children[1].querySelector('input');
+                          const coverage = parseFloat(coverageInput.value) || 0;
+                          const claimAmount = (cost * coverage / 100);
+                          const patientShare = cost - claimAmount;
+                          
+                          const claimField = e.target.parentElement.parentElement.children[2].querySelector('input');
+                          const shareField = e.target.parentElement.parentElement.children[3].querySelector('input');
+                          
+                          claimField.value = claimAmount.toFixed(2);
+                          shareField.value = patientShare.toFixed(2);
+                        }}
                       />
                     </div>
                     <div>
@@ -406,7 +419,20 @@ export default function MedicationInsuranceClaims() {
                         min="0" 
                         max="100" 
                         placeholder="80" 
-                        className="w-full p-2 border rounded" 
+                        className="w-full p-2 border-2 border-blue-300 rounded focus:border-blue-500 focus:outline-none" 
+                        onChange={(e) => {
+                          const coverage = parseFloat(e.target.value) || 0;
+                          const costInput = e.target.parentElement.parentElement.children[0].querySelector('input');
+                          const cost = parseFloat(costInput.value) || 0;
+                          const claimAmount = (cost * coverage / 100);
+                          const patientShare = cost - claimAmount;
+                          
+                          const claimField = e.target.parentElement.parentElement.children[2].querySelector('input');
+                          const shareField = e.target.parentElement.parentElement.children[3].querySelector('input');
+                          
+                          claimField.value = claimAmount.toFixed(2);
+                          shareField.value = patientShare.toFixed(2);
+                        }}
                       />
                     </div>
                     <div>
@@ -415,8 +441,7 @@ export default function MedicationInsuranceClaims() {
                         type="number" 
                         step="0.01" 
                         placeholder="100.00" 
-                        readOnly 
-                        className="w-full p-2 bg-green-100 border rounded font-semibold text-green-700" 
+                        className="w-full p-2 bg-green-50 border-2 border-green-300 rounded font-semibold text-green-700 focus:border-green-500 focus:outline-none" 
                       />
                     </div>
                     <div>
@@ -425,8 +450,7 @@ export default function MedicationInsuranceClaims() {
                         type="number" 
                         step="0.01" 
                         placeholder="25.00" 
-                        readOnly 
-                        className="w-full p-2 bg-orange-100 border rounded font-semibold text-orange-700" 
+                        className="w-full p-2 bg-orange-50 border-2 border-orange-300 rounded font-semibold text-orange-700 focus:border-orange-500 focus:outline-none" 
                       />
                     </div>
                   </div>
