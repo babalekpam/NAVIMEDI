@@ -91,8 +91,8 @@ app.use((req, res, next) => {
     
     log("✓ Platform initialization complete");
     
-    // Initialize test hospital
-    await createTestHospital();
+    // TEMPORARY: Disable test hospital creation during platform reset
+    // await createTestHospital();
   } catch (error) {
     log("❌ Platform initialization failed: " + error);
   }

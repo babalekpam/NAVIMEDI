@@ -5,7 +5,9 @@ import {
   patients, prescriptions, appointments, labOrders, labResults, 
   vitalSigns, insuranceClaims, patientInsurance, visitSummaries,
   medicalCommunications, patientCheckIns, auditLogs, patientAssignments,
-  healthAnalyses, labBills, pharmacyReceipts, reports
+  healthAnalyses, labBills, pharmacyReceipts, reports, financialTransactions,
+  archivedRecords, departments, pharmacyPatientInsurance, hospitalPatientInsurance,
+  laboratoryPatientInsurance, achievements, userAchievements, hospitalBills, pharmacyBills
 } from '../shared/schema.js';
 
 const pool = new Pool({
@@ -19,6 +21,36 @@ async function resetCounters() {
     console.log('🔄 Starting counter reset process...');
     
     // Delete all data tables while preserving tenants, users, and admin accounts
+    await db.delete(userAchievements);
+    console.log('✅ Cleared user achievements');
+    
+    await db.delete(achievements);
+    console.log('✅ Cleared achievements');
+    
+    await db.delete(departments);
+    console.log('✅ Cleared departments');
+    
+    await db.delete(pharmacyPatientInsurance);
+    console.log('✅ Cleared pharmacy patient insurance');
+    
+    await db.delete(hospitalPatientInsurance);
+    console.log('✅ Cleared hospital patient insurance');
+    
+    await db.delete(laboratoryPatientInsurance);
+    console.log('✅ Cleared laboratory patient insurance');
+    
+    await db.delete(hospitalBills);
+    console.log('✅ Cleared hospital bills');
+    
+    await db.delete(pharmacyBills);
+    console.log('✅ Cleared pharmacy bills');
+    
+    await db.delete(archivedRecords);
+    console.log('✅ Cleared archived records');
+    
+    await db.delete(financialTransactions);
+    console.log('✅ Cleared financial transactions');
+    
     await db.delete(healthAnalyses);
     console.log('✅ Cleared health analyses');
     
