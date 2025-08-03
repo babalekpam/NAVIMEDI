@@ -186,6 +186,40 @@ export default function UserRoles() {
   // Permission editing state
   const [selectedRoleForEdit, setSelectedRoleForEdit] = useState<string>("");
   const [editingPermissions, setEditingPermissions] = useState<Record<string, boolean>>({});
+  
+  // Convert database permissions to the format expected by the UI
+  const getActualRolePermissions = () => {
+    if (!rolePermissionsFromDB || !Array.isArray(rolePermissionsFromDB)) {
+      return rolePermissions; // Fallback to hardcoded permissions if no data
+    }
+
+    const actualPermissions: typeof rolePermissions = {};
+    
+    rolePermissionsFromDB.forEach((perm: any) => {
+      if (!actualPermissions[perm.role]) {
+        actualPermissions[perm.role] = {};
+      }
+      actualPermissions[perm.role][perm.module] = perm.permissions;
+    });
+
+    // Merge with default permissions to ensure all modules are present
+    Object.keys(rolePermissions).forEach(role => {
+      if (!actualPermissions[role]) {
+        actualPermissions[role] = rolePermissions[role];
+      } else {
+        // Fill in missing modules with default permissions
+        Object.keys(rolePermissions[role]).forEach(module => {
+          if (!actualPermissions[role][module]) {
+            actualPermissions[role][module] = rolePermissions[role][module];
+          }
+        });
+      }
+    });
+
+    return actualPermissions;
+  };
+
+  const actualRolePermissions = getActualRolePermissions();
 
   const form = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
@@ -213,6 +247,23 @@ export default function UserRoles() {
       }
       const data = await response.json();
       return Array.isArray(data) ? data : [];
+    }
+  });
+
+  // Fetch actual role permissions from database
+  const { data: rolePermissionsFromDB, isLoading: isLoadingPermissions } = useQuery({
+    queryKey: ["/api/role-permissions", tenant?.id],
+    enabled: !!user && !!tenant,
+    queryFn: async () => {
+      const response = await fetch(`/api/role-permissions`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch role permissions');
+      }
+      return response.json();
     }
   });
 
@@ -416,6 +467,8 @@ export default function UserRoles() {
         title: "Success",
         description: "Role permissions updated successfully",
       });
+      // Invalidate and refetch role permissions
+      queryClient.invalidateQueries({ queryKey: ["/api/role-permissions"] });
     },
     onError: (error: Error) => {
       console.error("🚨 PERMISSIONS SAVE FAILED:", error);
@@ -877,7 +930,7 @@ export default function UserRoles() {
             <CardContent className="p-4 text-center">
               <Shield className="h-8 w-8 text-purple-600 mx-auto mb-2" />
               <div className="text-2xl font-bold text-gray-900">
-                {Object.keys(rolePermissions).length}
+                {Object.keys(actualRolePermissions).length}
               </div>
               <div className="text-sm text-gray-600">Role Types</div>
             </CardContent>
@@ -886,7 +939,7 @@ export default function UserRoles() {
             <CardContent className="p-4 text-center">
               <Key className="h-8 w-8 text-orange-600 mx-auto mb-2" />
               <div className="text-2xl font-bold text-gray-900">
-                {Object.values(rolePermissions).reduce((total, perms) => 
+                {Object.values(actualRolePermissions).reduce((total, perms) => 
                   total + Object.values(perms).flat().length, 0)}
               </div>
               <div className="text-sm text-gray-600">Total Permissions</div>
@@ -915,7 +968,7 @@ export default function UserRoles() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Object.entries(rolePermissions).map(([role, permissions]) => (
+              {Object.entries(actualRolePermissions).map(([role, permissions]) => (
                 <div key={role} className="space-y-3">
                   <div className="flex items-center space-x-2">
                     <Badge className={roleColors[role as keyof typeof roleColors]}>
@@ -1051,7 +1104,7 @@ export default function UserRoles() {
 
                     {/* Permission Modules Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {Object.entries(rolePermissions[selectedRoleForEdit as keyof typeof rolePermissions] || {}).map(([module, permissions]) => (
+                      {Object.entries(actualRolePermissions[selectedRoleForEdit as keyof typeof actualRolePermissions] || {}).map(([module, permissions]) => (
                         <Card key={module} className="border-gray-200">
                           <CardHeader className="pb-2">
                             <CardTitle className="text-sm capitalize">

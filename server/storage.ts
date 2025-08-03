@@ -3173,9 +3173,12 @@ export class DatabaseStorage implements IStorage {
   async updateRolePermission(id: string, updates: Partial<RolePermission>, tenantId: string): Promise<RolePermission | undefined> {
     console.log("🔧 [STORAGE] Updating role permission:", { id, updates, tenantId });
     
+    // Don't pass createdBy in updates as it should not change
+    const { createdBy, createdAt, ...updateData } = updates;
+    
     const [updated] = await db.update(rolePermissions)
       .set({
-        ...updates,
+        ...updateData,
         updatedAt: new Date()
       })
       .where(and(eq(rolePermissions.id, id), eq(rolePermissions.tenantId, tenantId)))
