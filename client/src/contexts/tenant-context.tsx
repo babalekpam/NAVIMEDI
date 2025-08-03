@@ -51,6 +51,8 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
           setAvailableTenants([tenantData]);
         } else {
           console.error('Failed to fetch tenant:', response.status, response.statusText);
+          const errorData = await response.text();
+          console.error('Response body:', errorData);
         }
       } catch (error) {
         console.error('Failed to fetch tenant:', error);

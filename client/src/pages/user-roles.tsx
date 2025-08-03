@@ -291,7 +291,7 @@ export default function UserRoles() {
     if (selectedRoleForEdit) {
       initializeEditingPermissions(selectedRoleForEdit);
     }
-  }, [selectedRoleForEdit, actualRolePermissions]);
+  }, [selectedRoleForEdit, actualRolePermissions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const createUserMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
