@@ -1290,31 +1290,51 @@ export class DatabaseStorage implements IStorage {
           throw new Error('Prescription not found');
         }
 
-        // Insert into archives (import prescriptionArchives from schema)
-        const { prescriptionArchives } = await import('../shared/schema.js');
-        await db.insert(prescriptionArchives).values({
-          originalPrescriptionId: currentPrescription.id,
-          tenantId: currentPrescription.pharmacyTenantId || currentPrescription.tenantId,
-          patientId: currentPrescription.patientId,
-          providerId: currentPrescription.providerId,
-          pharmacyTenantId: currentPrescription.pharmacyTenantId,
-          medicationName: currentPrescription.medicationName,
-          dosage: currentPrescription.dosage,
-          frequency: currentPrescription.frequency,
-          quantity: currentPrescription.quantity,
-          refills: currentPrescription.refills,
-          instructions: currentPrescription.instructions,
-          status: 'dispensed',
-          prescribedDate: currentPrescription.prescribedDate,
-          dispensedDate: new Date(),
-          insuranceProvider: currentPrescription.insuranceProvider,
-          insuranceCopay: currentPrescription.insuranceCopay,
-          insuranceCoveragePercentage: currentPrescription.insuranceCoveragePercentage,
-          totalCost: currentPrescription.totalCost,
-          pharmacyNotes: currentPrescription.pharmacyNotes,
-          claimNumber: `CLM-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
-          transactionId: `TXN-${new Date().getFullYear()}-${String(Date.now()).slice(-8)}`
-        });
+        // Insert into archives using the actual database structure (JSONB columns)
+        await db.execute(sql`
+          INSERT INTO prescription_archives (
+            tenant_id, 
+            shift_id,
+            original_prescription_id,
+            patient_data,
+            prescription_data,
+            receipt_data,
+            archived_by
+          ) VALUES (
+            ${currentPrescription.pharmacyTenantId || currentPrescription.tenantId},
+            NULL,
+            ${currentPrescription.id},
+            ${JSON.stringify({
+              id: currentPrescription.patientId,
+              name: 'Patient', // We'll get this from a join if needed
+              medication: currentPrescription.medicationName
+            })},
+            ${JSON.stringify({
+              id: currentPrescription.id,
+              medicationName: currentPrescription.medicationName,
+              dosage: currentPrescription.dosage,
+              frequency: currentPrescription.frequency,
+              quantity: currentPrescription.quantity,
+              refills: currentPrescription.refills,
+              instructions: currentPrescription.instructions,
+              status: 'dispensed',
+              prescribedDate: currentPrescription.prescribedDate,
+              dispensedDate: new Date(),
+              insuranceProvider: currentPrescription.insuranceProvider,
+              insuranceCopay: currentPrescription.insuranceCopay,
+              insuranceCoveragePercentage: currentPrescription.insuranceCoveragePercentage,
+              totalCost: currentPrescription.totalCost,
+              pharmacyNotes: currentPrescription.pharmacyNotes
+            })},
+            ${JSON.stringify({
+              claimNumber: `CLM-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
+              transactionId: `TXN-${new Date().getFullYear()}-${String(Date.now()).slice(-8)}`,
+              dispensedAt: new Date(),
+              dispensedBy: 'system'
+            })},
+            NULL
+          )
+        `);
 
         // Delete from active prescriptions
         await db.delete(prescriptions).where(eq(prescriptions.id, prescriptionId));
