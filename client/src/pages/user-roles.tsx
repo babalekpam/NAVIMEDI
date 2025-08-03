@@ -467,8 +467,13 @@ export default function UserRoles() {
         title: "Success",
         description: "Role permissions updated successfully",
       });
-      // Invalidate and refetch role permissions
-      queryClient.invalidateQueries({ queryKey: ["/api/role-permissions"] });
+      // Invalidate and refetch role permissions with specific tenant ID
+      queryClient.invalidateQueries({ queryKey: ["/api/role-permissions", tenant?.id] });
+      // Force a refetch to ensure immediate UI update
+      queryClient.refetchQueries({ queryKey: ["/api/role-permissions", tenant?.id] });
+      
+      // Clear editing state to reflect saved changes
+      setEditingPermissions({});
     },
     onError: (error: Error) => {
       console.error("🚨 PERMISSIONS SAVE FAILED:", error);
@@ -481,6 +486,8 @@ export default function UserRoles() {
   });
 
   const handleSavePermissions = (role: string) => {
+    console.log("🔧 Starting save for role:", role);
+    console.log("🔧 Current editingPermissions state:", editingPermissions);
     savePermissionsMutation.mutate(role);
   };
 
