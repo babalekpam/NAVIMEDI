@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Activity, Users, DollarSign, Package, Clock, AlertTriangle, CheckCircle, XCircle, Search, FileText, Download } from 'lucide-react';
+import UserRolesManagement from '@/components/pharmacy/UserRolesManagement';
 
 interface PharmacyPrescription {
   id: string;
@@ -487,49 +488,7 @@ export default function PharmacyDashboardWorking() {
         </TabsContent>
 
         <TabsContent value="user-roles" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Employee Management</CardTitle>
-              <CardDescription>Manage pharmacy staff and their roles</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <Button 
-                  className="w-full justify-start" 
-                  variant="outline"
-                  onClick={() => window.location.href = '/pharmacy-employee-management'}
-                >
-                  <Users className="mr-2 h-4 w-4" />
-                  Manage Pharmacy Employees
-                </Button>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base">Active Staff</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-green-600">2</div>
-                      <p className="text-xs text-muted-foreground">Currently employed</p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base">Available Roles</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-1">
-                        <p className="text-sm">• Pharmacist</p>
-                        <p className="text-sm">• Billing Staff</p>
-                        <p className="text-sm">• Receptionist</p>
-                        <p className="text-sm">• Tenant Admin</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <UserRolesManagement />
         </TabsContent>
 
         <TabsContent value="inventory" className="space-y-4">
