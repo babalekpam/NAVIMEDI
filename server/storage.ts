@@ -1365,6 +1365,34 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getPrescriptionArchives(tenantId: string): Promise<any[]> {
+    try {
+      console.log(`[PHARMACY API] 🔍 Getting prescription archives for tenant: ${tenantId}`);
+      
+      const archiveResults = await db.execute(sql`
+        SELECT * FROM prescription_archives 
+        WHERE tenant_id = ${tenantId}
+        ORDER BY archived_at DESC
+      `);
+      
+      console.log(`[PHARMACY API] ✅ Found ${archiveResults.length} archived prescriptions`);
+      
+      return archiveResults.map((row: any) => ({
+        id: row.id,
+        originalPrescriptionId: row.original_prescription_id,
+        tenantId: row.tenant_id,
+        patientData: row.patient_data,
+        prescriptionData: row.prescription_data,
+        receiptData: row.receipt_data,
+        archivedAt: row.archived_at,
+        archivedBy: row.archived_by
+      }));
+    } catch (error) {
+      console.error(`[PHARMACY API] ❌ Error getting prescription archives:`, error);
+      throw error;
+    }
+  }
+
   async updatePrescription(id: string, updates: Partial<Prescription>, tenantId: string): Promise<Prescription | undefined> {
     // For pharmacy updates, we need to check both tenantId (hospital) and pharmacyTenantId (pharmacy)
     const [prescription] = await db.update(prescriptions)

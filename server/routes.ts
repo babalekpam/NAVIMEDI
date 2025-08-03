@@ -574,6 +574,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pharmacy prescription archives endpoint
+  app.get("/api/pharmacy/prescription-archives", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      console.log(`[PHARMACY API] 📦 GET /api/pharmacy/prescription-archives called`);
+      const tenantId = req.tenant!.id;
+      
+      const archives = await storage.getPrescriptionArchives(tenantId);
+      console.log(`[PHARMACY API] ✅ Retrieved ${archives.length} archived prescriptions`);
+      
+      res.json(archives);
+    } catch (error) {
+      console.error(`[PHARMACY API] ❌ Error fetching prescription archives:`, error);
+      res.status(500).json({ message: "Failed to fetch prescription archives" });
+    }
+  });
+
   // General prescription management routes
   app.get("/api/prescriptions", authenticateToken, requireTenant, async (req, res) => {
     try {

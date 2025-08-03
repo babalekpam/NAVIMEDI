@@ -66,6 +66,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   // Pharmacy Section - Enhanced Dashboard with all features integrated
   { id: "pharmacy-dashboard", label: "Pharmacy Dashboard", icon: Building2, path: "/dashboard", roles: ["pharmacist"] },
   { id: "pharmacy-prescriptions", label: "Prescriptions", icon: Pill, path: "/dashboard", roles: ["pharmacist"] },
+  { id: "prescription-archives", label: "Prescription Archives", icon: Archive, path: "/prescription-archives", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "pharmacy-inventory", label: "Inventory Management", icon: Package, path: "/pharmacy-inventory", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "pharmacy-patient-management", label: "Pharmacy Patient Management", icon: Users, path: "/pharmacy-patient-management", roles: ["pharmacist", "billing_staff", "tenant_admin", "director"] },
 
