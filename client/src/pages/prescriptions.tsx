@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InsuranceCoverageCalculator } from "@/components/forms/insurance-coverage-calculator";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
@@ -33,6 +34,7 @@ interface Prescription {
   providerName: string;
   insuranceProvider?: string;
   insuranceCopay?: number;
+  insuranceCoveragePercentage?: number;
   totalCost?: number;
   pharmacyNotes?: string;
 }
@@ -349,8 +351,40 @@ export default function PrescriptionsPage() {
                   {selectedPrescription.instructions && (
                     <p><strong>Instructions:</strong> {selectedPrescription.instructions}</p>
                   )}
+                  {selectedPrescription.insuranceProvider && (
+                    <p><strong>Insurance:</strong> {selectedPrescription.insuranceProvider}</p>
+                  )}
+                  {selectedPrescription.insuranceCopay && (
+                    <p><strong>Copay:</strong> ${selectedPrescription.insuranceCopay}</p>
+                  )}
                 </div>
               </div>
+              
+              {/* Insurance & Coverage Information */}
+              {(selectedPrescription.status === 'received' || selectedPrescription.status === 'processing') && (
+                <div className="space-y-4 border-t pt-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <Label htmlFor="insurance-provider">Insurance Provider</Label>
+                      <Input
+                        id="insurance-provider"
+                        placeholder="e.g., Blue Cross Blue Shield"
+                        defaultValue={selectedPrescription.insuranceProvider || ''}
+                      />
+                    </div>
+                    <InsuranceCoverageCalculator
+                      initialValues={{
+                        totalCost: selectedPrescription.totalCost || 85,
+                        coveragePercentage: selectedPrescription.insuranceCoveragePercentage || 80
+                      }}
+                      onCoverageChange={(coverage) => {
+                        console.log('Coverage updated:', coverage);
+                        // This would be used to update the prescription data
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
               
               <div>
                 <Label className="font-medium">Update Status:</Label>

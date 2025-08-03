@@ -651,7 +651,14 @@ export default function PharmacyDashboardWorking() {
                         </Select>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label>Coverage Percentage</Label>
+                        <div className="relative">
+                          <Input placeholder="80" />
+                          <span className="absolute right-3 top-2.5 text-gray-500">%</span>
+                        </div>
+                      </div>
                       <div>
                         <Label>Copay Amount</Label>
                         <Input placeholder="$15.00" />
@@ -676,18 +683,25 @@ export default function PharmacyDashboardWorking() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-4 gap-4">
                       <div>
                         <Label>Medication Cost</Label>
                         <Input placeholder="$85.00" />
                       </div>
                       <div>
+                        <Label>Coverage %</Label>
+                        <div className="relative">
+                          <Input placeholder="80" />
+                          <span className="absolute right-3 top-2.5 text-gray-500">%</span>
+                        </div>
+                      </div>
+                      <div>
                         <Label>Insurance Coverage</Label>
-                        <Input placeholder="$70.00" />
+                        <Input placeholder="$68.00" disabled className="bg-gray-50" />
                       </div>
                       <div>
                         <Label>Patient Responsibility</Label>
-                        <Input placeholder="$15.00" />
+                        <Input placeholder="$17.00" disabled className="bg-gray-50" />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">

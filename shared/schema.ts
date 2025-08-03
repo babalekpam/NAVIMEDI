@@ -382,6 +382,7 @@ export const prescriptions = pgTable("prescriptions", {
   insuranceVerifiedDate: timestamp("insurance_verified_date"),
   insuranceProvider: text("insurance_provider"),
   insuranceCopay: decimal("insurance_copay", { precision: 10, scale: 2 }),
+  insuranceCoveragePercentage: decimal("insurance_coverage_percentage", { precision: 5, scale: 2 }), // 0-100%
   totalCost: decimal("total_cost", { precision: 10, scale: 2 }),
   processingStartedDate: timestamp("processing_started_date"),
   readyDate: timestamp("ready_date"),

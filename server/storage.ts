@@ -1246,6 +1246,7 @@ export class DatabaseStorage implements IStorage {
           expiryDate: prescriptions.expiryDate,
           insuranceProvider: prescriptions.insuranceProvider,
           insuranceCopay: prescriptions.insuranceCopay,
+          insuranceCoveragePercentage: prescriptions.insuranceCoveragePercentage,
           totalCost: prescriptions.totalCost,
           pharmacyNotes: prescriptions.pharmacyNotes,
           // Get patient and provider names
