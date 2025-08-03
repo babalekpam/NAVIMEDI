@@ -940,11 +940,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // NaviMED Platform - Independent Pharmacy Dashboard API Endpoints
   app.get("/api/pharmacy/metrics", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const tenantId = req.tenant!.id;
+      const pharmacyTenantId = req.tenant!.id;
       const tenantName = req.tenant!.name;
       
       // Get prescriptions routed to this pharmacy from connected hospitals
-      const prescriptions = await storage.getPrescriptionsByTenant(tenantId);
+      const prescriptions = await storage.getPrescriptionsByPharmacyTenant(pharmacyTenantId);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
@@ -982,23 +982,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/pharmacy/prescriptions", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const tenantId = req.tenant!.id;
-      const prescriptions = await storage.getPrescriptionsByTenant(tenantId);
+      const pharmacyTenantId = req.tenant!.id;
+      console.log("[PHARMACY API] Fetching prescriptions for pharmacy:", pharmacyTenantId);
+      
+      // Get prescriptions sent TO this pharmacy (pharmacyTenantId = this pharmacy's tenant)
+      const prescriptions = await storage.getPrescriptionsByPharmacyTenant(pharmacyTenantId);
+      console.log("[PHARMACY API] Found prescriptions:", prescriptions.length);
       
       // Transform to show hospital connection for independent pharmacy
       const formattedPrescriptions = prescriptions.map(p => ({
         id: p.id,
         patientName: p.patientName || 'Patient Name',
-        medication: p.medication,
+        medication: p.medicationName,
+        dosage: p.dosage,
+        frequency: p.frequency,
+        quantity: p.quantity,
         status: p.status || 'new',
         waitTime: Math.floor(Math.random() * 30),
         priority: p.priority || 'normal',
         insuranceStatus: p.insuranceStatus || 'pending',
         sourceHospital: 'Metro General Hospital', // Hospital that routed this prescription
         routedVia: 'NaviMED Platform',
-        pharmacyId: tenantId
+        pharmacyId: pharmacyTenantId,
+        prescribedDate: p.prescribedDate,
+        instructions: p.instructions
       }));
       
+      console.log("[PHARMACY API] Returning formatted prescriptions:", formattedPrescriptions.length);
       res.json(formattedPrescriptions);
     } catch (error) {
       console.error("Get pharmacy prescriptions error:", error);

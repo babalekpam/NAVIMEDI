@@ -293,12 +293,6 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescr
             type="submit" 
             disabled={isLoading}
             className="bg-blue-600 hover:bg-blue-700"
-            onClick={() => {
-              console.log("[DEBUG] Submit button clicked");
-              console.log("[DEBUG] Form errors:", form.formState.errors);
-              console.log("[DEBUG] Form values:", form.getValues());
-              console.log("[DEBUG] Form isValid:", form.formState.isValid);
-            }}
           >
             {isLoading 
               ? (isEditing ? "Updating..." : "Creating...") 

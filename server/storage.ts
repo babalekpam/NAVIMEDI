@@ -1187,6 +1187,11 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(prescriptions.prescribedDate));
   }
 
+  async getPrescriptionsByPharmacyTenant(pharmacyTenantId: string): Promise<Prescription[]> {
+    return await db.select().from(prescriptions).where(eq(prescriptions.pharmacyTenantId, pharmacyTenantId))
+      .orderBy(desc(prescriptions.prescribedDate));
+  }
+
   async getPrescriptionsByPharmacy(pharmacyTenantId: string): Promise<any[]> {
     console.log(`[DEBUG] Getting prescriptions for pharmacy: ${pharmacyTenantId}`);
     

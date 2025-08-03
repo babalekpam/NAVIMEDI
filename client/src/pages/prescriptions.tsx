@@ -62,35 +62,16 @@ export default function Prescriptions() {
 
   const createPrescriptionMutation = useMutation({
     mutationFn: async (prescriptionData: any) => {
-      console.log("[DEBUG] Mutation called with data:", prescriptionData);
-      try {
-        const { legacyApiRequest } = await import("@/lib/queryClient");
-        console.log("[DEBUG] About to call API");
-        const response = await legacyApiRequest("POST", "/api/prescriptions", prescriptionData);
-        console.log("[DEBUG] API response status:", response.status);
-        console.log("[DEBUG] API response:", response);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("[DEBUG] API error response:", errorText);
-          throw new Error(`API Error: ${response.status} - ${errorText}`);
-        }
-        
-        const result = await response.json();
-        console.log("[DEBUG] API result:", result);
-        return result;
-      } catch (error) {
-        console.error("[DEBUG] Mutation function error:", error);
-        throw error;
-      }
+      const { legacyApiRequest } = await import("@/lib/queryClient");
+      const response = await legacyApiRequest("POST", "/api/prescriptions", prescriptionData);
+      return response.json();
     },
     onSuccess: (data) => {
-      console.log("[DEBUG] Mutation successful:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
       setIsFormOpen(false);
     },
     onError: (error) => {
-      console.error("[DEBUG] Mutation error:", error);
+      console.error("Failed to create prescription:", error);
     }
   });
 
