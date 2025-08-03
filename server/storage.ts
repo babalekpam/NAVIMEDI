@@ -4720,13 +4720,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createDepartment(data: InsertDepartment): Promise<Department> {
-    // Handle array fields properly for PostgreSQL
+    // Handle array fields properly for PostgreSQL and ensure no id field is passed
+    const { id, createdAt, updatedAt, ...cleanData } = data as any;
     const processedData = {
-      ...data,
-      specializations: data.specializations && data.specializations.length > 0 ? data.specializations : null,
-      certifications: data.certifications && data.certifications.length > 0 ? data.certifications : null,
-      equipment: data.equipment && Array.isArray(data.equipment) && data.equipment.length > 0 ? data.equipment : null,
+      ...cleanData,
+      specializations: cleanData.specializations && cleanData.specializations.length > 0 ? cleanData.specializations : null,
+      certifications: cleanData.certifications && cleanData.certifications.length > 0 ? cleanData.certifications : null,
+      equipment: cleanData.equipment && Array.isArray(cleanData.equipment) && cleanData.equipment.length > 0 ? cleanData.equipment : null,
     };
+    
+    console.log('Final processed data for insert:', JSON.stringify(processedData, null, 2));
     
     const [department] = await db.insert(departments)
       .values(processedData)
