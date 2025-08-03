@@ -13,6 +13,7 @@ import { PrescriptionForm } from "@/components/forms/prescription-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import PharmacyDashboardEnhancedV2 from "@/pages/pharmacy-dashboard-enhanced-v2";
 
 const statusColors = {
   prescribed: "bg-blue-100 text-blue-800",
@@ -23,6 +24,16 @@ const statusColors = {
 };
 
 export default function Prescriptions() {
+  const { user } = useAuth();
+  const { tenant } = useTenant();
+  const { t } = useTranslation();
+  
+  // Redirect pharmacy users to enhanced dashboard
+  if (user?.role === 'pharmacist' && tenant?.type === 'pharmacy') {
+    console.log('[PRESCRIPTIONS] ✅ Redirecting pharmacist to enhanced dashboard');
+    return <PharmacyDashboardEnhancedV2 />;
+  }
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -30,9 +41,6 @@ export default function Prescriptions() {
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
   const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const { user } = useAuth();
-  const { tenant } = useTenant();
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   // Check if patient was selected from Quick Actions in medical records

@@ -53,6 +53,11 @@ export default function PharmacyDashboardEnhancedV2() {
   const { tenant } = useTenant();
   const [selectedTimeframe, setSelectedTimeframe] = useState<'today' | 'week' | 'month'>('today');
   const [onlineStatus, setOnlineStatus] = useState(true);
+  
+  // Debug logging
+  console.log('[PHARMACY DASHBOARD] ✅ Enhanced dashboard loaded!');
+  console.log('[PHARMACY DASHBOARD] ✅ User:', user?.role);
+  console.log('[PHARMACY DASHBOARD] ✅ Tenant:', tenant?.name, 'Type:', tenant?.type);
   const [notifications, setNotifications] = useState<number>(12);
   const [smsModalOpen, setSmsModalOpen] = useState(false);
   const [reminderModalOpen, setReminderModalOpen] = useState(false);
