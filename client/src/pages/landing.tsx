@@ -47,6 +47,135 @@ import {
 const brandName = "NAVIMED";
 const tagline = "Next-Generation Healthcare Management Platform";
 
+// Interfaces
+interface PlatformStats {
+  organizations: number;
+  users: number;
+  uptime: string;
+  languages: number;
+  responseTime: string;
+  support: string;
+}
+
+interface PlatformData {
+  platform: string;
+  statistics: PlatformStats;
+  status: string;
+  timestamp: string;
+}
+
+// Professional Healthcare Image Carousel Component
+function ImageCarousel() {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  // Professional healthcare images (using SVG placeholders for now)
+  const healthcareImages = [
+    {
+      url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDgwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjZjFmNWY5Ii8+CjxyZWN0IHg9IjIwMCIgeT0iMTAwIiB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgcng9IjEyIiBmaWxsPSIjMTBiOTgxIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8Y2lyY2xlIGN4PSI0MDAiIGN5PSIyMDAiIHI9IjQwIiBmaWxsPSIjMTBiOTgxIi8+CjxwYXRoIGQ9Im0zODAgMjIwaDQwdjYwaC00MHoiIGZpbGw9IiMxMGI5ODEiLz4KPHBhdGggZD0ibTM3MCAyNDBoNjB2NmgtNjB6IiBmaWxsPSIjMTBiOTgxIi8+Cjx0ZXh0IHg9IjQwMCIgeT0iMzIwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMzc0MTUxIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiPkRvY3RvciBDb25zdWx0YXRpb248L3RleHQ+Cjx0ZXh0IHg9IjQwMCIgeT0iMzUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjM3MjgxIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiI+UHJvZmVzc2lvbmFsIGhlYWx0aGNhcmUgY29uc3VsdGF0aW9uPC90ZXh0Pgo8L3N2Zz4=",
+      alt: "Doctor Consultation",
+      title: "Professional Healthcare Consultation",
+      description: "Real-time patient-doctor interactions with AI-powered insights"
+    },
+    {
+      url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDgwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjZjFmNWY5Ii8+CjxyZWN0IHg9IjE1MCIgeT0iODAiIHdpZHRoPSI1MDAiIGhlaWdodD0iMzQwIiByeD0iMTYiIGZpbGw9IiMzYjgyZjYiIGZpbGwtb3BhY2l0eT0iMC4xIi8+CjxyZWN0IHg9IjIwMCIgeT0iMTMwIiB3aWR0aD0iNDAiIGhlaWdodD0iMjQwIiByeD0iNCIgZmlsbD0iIzNiODJmNiIvPgo8cmVjdCB4PSIyNzAiIHk9IjE2MCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjIxMCIgcng9IjQiIGZpbGw9IiMzYjgyZjYiLz4KPHJlY3QgeD0iMzQwIiB5PSIxODAiIHdpZHRoPSI0MCIgaGVpZ2h0PSIxOTAiIHJ4PSI0IiBmaWxsPSIjM2I4MmY2Ii8+CjxyZWN0IHg9IjQxMCIgeT0iMTQwIiB3aWR0aD0iNDAiIGhlaWdodD0iMjMwIiByeD0iNCIgZmlsbD0iIzNiODJmNiIvPgo8cmVjdCB4PSI0ODAiIHk9IjEyMCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjI1MCIgcng9IjQiIGZpbGw9IiMzYjgyZjYiLz4KPHJlY3QgeD0iNTUwIiB5PSIxNzAiIHdpZHRoPSI0MCIgaGVpZ2h0PSIyMDAiIHJ4PSI0IiBmaWxsPSIjM2I4MmY2Ii8+Cjx0ZXh0IHg9IjQwMCIgeT0iNDQwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMzc0MTUxIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiPkFuYWx5dGljcyBEYXNoYm9hcmQ8L3RleHQ+Cjx0ZXh0IHg9IjQwMCIgeT0iNDcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjM3MjgxIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiI+UmVhbC10aW1lIGhlYWx0aGNhcmUgYW5hbHl0aWNzPC90ZXh0Pgo8L3N2Zz4=",
+      alt: "Analytics Dashboard",
+      title: "Advanced Healthcare Analytics",
+      description: "Data-driven insights for better patient outcomes"
+    },
+    {
+      url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDgwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjZjFmNWY5Ii8+CjxyZWN0IHg9IjE4MCIgeT0iMTAwIiB3aWR0aD0iNDQwIiBoZWlnaHQ9IjMwMCIgcng9IjEyIiBmaWxsPSIjZWY0NDQ0IiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8Y2lyY2xlIGN4PSI0MDAiIGN5PSIyMDAiIHI9IjUwIiBmaWxsPSIjZWY0NDQ0IiBmaWxsLW9wYWNpdHk9IjAuMiIvPgo8Y2lyY2xlIGN4PSI0MDAiIGN5PSIyMDAiIHI9IjMwIiBmaWxsPSIjZWY0NDQ0Ii8+CjxwYXRoIGQ9Im0zODUgMTg1aDMwdjMwaC0zMHoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Im0zOTUgMTkwaDEwdjIwaC0xMHoiIGZpbGw9IndoaXRlIi8+Cjx0ZXh0IHg9IjQwMCIgeT0iMzIwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMzc0MTUxIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiPkVtZXJnZW5jeSBDYXJlPC90ZXh0Pgo8dGV4dCB4PSI0MDAiIHk9IjM1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzYzNzI4MSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiPjI0LzcgZW1lcmdlbmN5IGhlYWx0aGNhcmUgc2VydmljZXM8L3RleHQ+Cjwvc3ZnPg==",
+      alt: "Emergency Care",
+      title: "24/7 Emergency Healthcare",
+      description: "Round-the-clock emergency medical services and support"
+    },
+    {
+      url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDgwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjZjFmNWY5Ii8+CjxyZWN0IHg9IjE1MCIgeT0iMTAwIiB3aWR0aD0iNTAwIiBoZWlnaHQ9IjMwMCIgcng9IjE2IiBmaWxsPSIjOGI1Y2Y2IiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8cmVjdCB4PSIyMDAiIHk9IjE1MCIgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyMDAiIHJ4PSI4IiBmaWxsPSIjOGI1Y2Y2IiBmaWxsLW9wYWNpdHk9IjAuMiIvPgo8Y2lyY2xlIGN4PSIzMDAiIGN5PSIyMjAiIHI9IjMwIiBmaWxsPSIjOGI1Y2Y2Ii8+CjxjaXJjbGUgY3g9IjQwMCIgY3k9IjIyMCIgcj0iMzAiIGZpbGw9IiM4YjVjZjYiLz4KPGNpcmNsZSBjeD0iNTAwIiBjeT0iMjIwIiByPSIzMCIgZmlsbD0iIzhiNWNmNiIvPgo8cGF0aCBkPSJtMjg1IDIwNWgzMHYzMGgtMzB6IiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJtMzg1IDIwNWgzMHYzMGgtMzB6IiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJtNDg1IDIwNWgzMHYzMGgtMzB6IiBmaWxsPSJ3aGl0ZSIvPgo8dGV4dCB4PSI0MDAiIHk9IjM4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzM3NDE1MSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSJib2xkIj5UZWFtIENvbGxhYm9yYXRpb248L3RleHQ+Cjx0ZXh0IHg9IjQwMCIgeT0iNDEwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjM3MjgxIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiI+U2VhbWxlc3MgdGVhbSBjb21tdW5pY2F0aW9uIGFuZCBjb2xsYWJvcmF0aW9uPC90ZXh0Pgo8L3N2Zz4=",
+      alt: "Team Collaboration",
+      title: "Healthcare Team Collaboration",
+      description: "Seamless communication between healthcare professionals"
+    }
+  ];
+
+  // Auto-rotate images every 4 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => 
+        (prevIndex + 1) % healthcareImages.length
+      );
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [healthcareImages.length]);
+
+  return (
+    <div className="relative max-w-6xl mx-auto">
+      {/* Main Image Display */}
+      <div className="relative h-96 rounded-2xl overflow-hidden shadow-2xl">
+        {healthcareImages.map((image, index) => (
+          <div
+            key={index}
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            <img
+              src={image.url}
+              alt={image.alt}
+              className="w-full h-full object-cover"
+            />
+            {/* Overlay with gradient and text */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end">
+              <div className="p-8 text-white">
+                <h3 className="text-2xl font-bold mb-2">{image.title}</h3>
+                <p className="text-lg text-white/90">{image.description}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Image Indicators */}
+      <div className="flex justify-center mt-6 gap-2">
+        {healthcareImages.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentImageIndex(index)}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              index === currentImageIndex
+                ? 'bg-emerald-600 w-8'
+                : 'bg-slate-300 hover:bg-slate-400'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Thumbnail Navigation */}
+      <div className="grid grid-cols-4 gap-4 mt-8">
+        {healthcareImages.map((image, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentImageIndex(index)}
+            className={`relative h-20 rounded-lg overflow-hidden transition-all duration-300 ${
+              index === currentImageIndex
+                ? 'ring-2 ring-emerald-600 ring-offset-2'
+                : 'hover:opacity-80'
+            }`}
+          >
+            <img
+              src={image.url}
+              alt={image.alt}
+              className="w-full h-full object-cover"
+            />
+            <div className={`absolute inset-0 transition-opacity ${
+              index === currentImageIndex ? 'bg-emerald-600/20' : 'bg-black/20'
+            }`} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function LandingPage() {
   // Fetch platform statistics from backend
   const { data: platformData, isLoading } = useQuery<PlatformData>({
@@ -163,6 +292,22 @@ export default function LandingPage() {
               </div>
             )}
           </div>
+        </div>
+      </section>
+
+      {/* Professional Image Carousel */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900">
+              Trusted by Healthcare <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Professionals Worldwide</span>
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              See how healthcare organizations are transforming patient care with our platform
+            </p>
+          </div>
+          
+          <ImageCarousel />
         </div>
       </section>
 
