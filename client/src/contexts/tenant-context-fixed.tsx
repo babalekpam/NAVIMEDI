@@ -61,7 +61,7 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
         console.error('Network error fetching tenant:', error);
         
         // Create fallback tenant data from user information when API fails
-        if (user && user.id) {
+        if (user && user.tenantId) {
           console.log('TenantFixed: Creating fallback tenant from user data');
           
           // NO DEFAULT HOSPITAL FALLBACK - Each tenant must be independent
@@ -101,8 +101,8 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
             features = tenantConfig.features;
           }
           
-          const fallbackTenant = {
-            id: user.tenantId || user.id || 'fallback-tenant',
+          const fallbackTenant: Tenant = {
+            id: user.tenantId || 'fallback-tenant',
             name: tenantName,
             type: tenantType,
             subdomain: subdomain,
@@ -125,7 +125,7 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
             syncFrequencyMinutes: 15,
             trialStartDate: new Date(),
             trialEndDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
-            subscriptionStatus: 'trial',
+            subscriptionStatus: 'trial' as const,
             lastSuspensionCheck: null,
             suspendedAt: null,
             suspensionReason: null,

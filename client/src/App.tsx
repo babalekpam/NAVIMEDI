@@ -733,27 +733,36 @@ function AppContent() {
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
-  return (
-    <Switch>
-      {isLoading || !isAuthenticated ? (
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-emerald-600"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Switch>
         <Route path="/" component={LandingPage} />
-      ) : (
-        <>
-          <Route path="/" component={Dashboard} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/patients" component={Patients} />
-          <Route path="/appointments" component={Appointments} />
-          <Route path="/prescriptions" component={Prescriptions} />
-          <Route path="/lab-orders" component={LabOrders} />
-          <Route path="/billing" component={Billing} />
-          <Route path="/tenant-management" component={TenantManagement} />
-          <Route path="/super-admin" component={SuperAdminDashboard} />
-          <Route path="/client-management" component={SuperAdminClientManagement} />
-        </>
-      )}
-      <Route component={NotFound} />
-    </Switch>
-  );
+        <Route path="/features" component={FeaturesPage} />
+        <Route path="/solutions" component={SolutionsPage} />
+        <Route path="/security" component={SecurityPage} />
+        <Route path="/contact" component={ContactPage} />
+        <Route path="/pricing" component={PricingPage} />
+        <Route path="/laboratory-registration" component={LaboratoryRegistration} />
+        <Route path="/pharmacy-registration" component={PharmacyRegistration} />
+        <Route path="/patient-portal-public" component={PatientPortalPublic} />
+        <Route path="/patient-login" component={PatientLogin} />
+        <Route component={LandingPage} />
+      </Switch>
+    );
+  }
+
+  return <AppContent />;
 }
 
 function App() {
