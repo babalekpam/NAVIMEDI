@@ -546,59 +546,298 @@ export default function PharmacyDashboardWorking() {
         </TabsContent>
       </Tabs>
 
-      {/* Processing Modal */}
+      {/* Enhanced Processing Modal */}
       <Dialog open={isProcessingModalOpen} onOpenChange={setIsProcessingModalOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Process Prescription</DialogTitle>
+            <DialogTitle>Complete Prescription Workflow</DialogTitle>
             <DialogDescription>
-              Update the status for {selectedPrescription?.medication}
+              Process {selectedPrescription?.medication} for {selectedPrescription?.patientName}
             </DialogDescription>
           </DialogHeader>
           
           {selectedPrescription && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="space-y-6">
+              {/* Patient & Prescription Info */}
+              <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
                 <div>
-                  <Label className="font-medium">Patient:</Label>
-                  <p>{selectedPrescription.patientName}</p>
+                  <Label className="font-medium text-sm">Patient:</Label>
+                  <p className="text-base">{selectedPrescription.patientName}</p>
                 </div>
                 <div>
-                  <Label className="font-medium">Current Status:</Label>
+                  <Label className="font-medium text-sm">Medication:</Label>
+                  <p className="text-base">{selectedPrescription.medication}</p>
+                </div>
+                <div>
+                  <Label className="font-medium text-sm">Current Status:</Label>
                   <Badge className={getStatusColor(selectedPrescription.status)}>
                     {selectedPrescription.status}
                   </Badge>
                 </div>
               </div>
-              
-              <div>
-                <Label className="font-medium">Update Status:</Label>
-                <div className="flex gap-2 mt-2">
-                  {selectedPrescription.status === 'new' && (
-                    <Button onClick={() => handleStatusUpdate('processing')} size="sm">
-                      Start Processing
-                    </Button>
-                  )}
-                  {selectedPrescription.status === 'processing' && (
-                    <Button onClick={() => handleStatusUpdate('ready')} size="sm">
-                      Mark Ready
-                    </Button>
-                  )}
-                  {selectedPrescription.status === 'ready' && (
-                    <Button onClick={() => handleStatusUpdate('dispensed')} size="sm">
-                      Mark Dispensed
-                    </Button>
-                  )}
-                </div>
+
+              {/* Workflow Steps */}
+              <div className="space-y-6">
+                {/* Step 1: Prescription Received */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                        <CheckCircle className="h-4 w-4" />
+                      </div>
+                      <CardTitle className="text-lg">1. Prescription Received</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Received Date</Label>
+                        <Input value={new Date().toLocaleDateString()} disabled />
+                      </div>
+                      <div>
+                        <Label>Prescribing Doctor</Label>
+                        <Input placeholder="Dr. Johnson" />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Prescription Notes</Label>
+                      <Textarea placeholder="Take twice daily with food" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Step 2: Insurance Verification */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+                        2
+                      </div>
+                      <CardTitle className="text-lg">2. Insurance Verification</CardTitle>
+                      <input type="checkbox" className="ml-auto h-5 w-5" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label>Insurance Provider</Label>
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select provider" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="aetna">Aetna</SelectItem>
+                            <SelectItem value="blue-cross">Blue Cross Blue Shield</SelectItem>
+                            <SelectItem value="medicare">Medicare</SelectItem>
+                            <SelectItem value="medicaid">Medicaid</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Policy Number</Label>
+                        <Input placeholder="Enter policy number" />
+                      </div>
+                      <div>
+                        <Label>Verification Status</Label>
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="verified">Verified</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="denied">Denied</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Copay Amount</Label>
+                        <Input placeholder="$15.00" />
+                      </div>
+                      <div>
+                        <Label>Deductible Remaining</Label>
+                        <Input placeholder="$500.00" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Step 3: Insurance Filing */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center">
+                        3
+                      </div>
+                      <CardTitle className="text-lg">3. Insurance Filing</CardTitle>
+                      <input type="checkbox" className="ml-auto h-5 w-5" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label>Medication Cost</Label>
+                        <Input placeholder="$85.00" />
+                      </div>
+                      <div>
+                        <Label>Insurance Coverage</Label>
+                        <Input placeholder="$70.00" />
+                      </div>
+                      <div>
+                        <Label>Patient Responsibility</Label>
+                        <Input placeholder="$15.00" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Claim Number</Label>
+                        <Input placeholder="Auto-generated" />
+                      </div>
+                      <div>
+                        <Label>Filing Date</Label>
+                        <Input value={new Date().toLocaleDateString()} disabled />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Prior Authorization Required?</Label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="no">No</SelectItem>
+                          <SelectItem value="yes">Yes - Obtained</SelectItem>
+                          <SelectItem value="pending">Yes - Pending</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Step 4: Patient Payment */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center">
+                        4
+                      </div>
+                      <CardTitle className="text-lg">4. Patient Payment</CardTitle>
+                      <input type="checkbox" className="ml-auto h-5 w-5" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label>Amount Due</Label>
+                        <Input placeholder="$15.00" />
+                      </div>
+                      <div>
+                        <Label>Payment Method</Label>
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select method" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="cash">Cash</SelectItem>
+                            <SelectItem value="card">Credit/Debit Card</SelectItem>
+                            <SelectItem value="check">Check</SelectItem>
+                            <SelectItem value="insurance">Insurance Only</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Payment Status</Label>
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="paid">Paid</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="partial">Partial Payment</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Transaction ID</Label>
+                        <Input placeholder="Auto-generated" />
+                      </div>
+                      <div>
+                        <Label>Payment Date</Label>
+                        <Input value={new Date().toLocaleDateString()} disabled />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Step 5: Final Receipt & Dispensing */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center">
+                        5
+                      </div>
+                      <CardTitle className="text-lg">5. Final Receipt & Dispensing</CardTitle>
+                      <input type="checkbox" className="ml-auto h-5 w-5" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Pharmacist Name</Label>
+                        <Input placeholder="Enter pharmacist name" />
+                      </div>
+                      <div>
+                        <Label>Dispensing Date</Label>
+                        <Input value={new Date().toLocaleDateString()} disabled />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Patient Counseling Completed</Label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="yes">Yes - Verbal counseling provided</SelectItem>
+                          <SelectItem value="declined">Patient declined counseling</SelectItem>
+                          <SelectItem value="written">Written information provided</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Additional Notes</Label>
+                      <Textarea placeholder="Any special instructions or notes..." />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="flex-1">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Generate Receipt
+                      </Button>
+                      <Button variant="outline" className="flex-1">
+                        <Download className="mr-2 h-4 w-4" />
+                        Print Label
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-              
-              <div>
-                <Label htmlFor="notes">Processing Notes:</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Add any notes about processing this prescription..."
-                  className="mt-1"
-                />
+
+              {/* Action Buttons */}
+              <div className="flex justify-between pt-4 border-t">
+                <Button variant="outline" onClick={() => setIsProcessingModalOpen(false)}>
+                  Save & Close
+                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline">Save Progress</Button>
+                  <Button onClick={() => handleStatusUpdate('dispensed')}>
+                    Complete & Mark Dispensed
+                  </Button>
+                </div>
               </div>
             </div>
           )}
