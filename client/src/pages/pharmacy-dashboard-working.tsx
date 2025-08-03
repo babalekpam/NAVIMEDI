@@ -50,11 +50,12 @@ export default function PharmacyDashboardWorking() {
   console.log('[PHARMACY WORKING] ❌ Error:', error);
 
   // Sample metrics for display
+  const prescriptionsArray = Array.isArray(prescriptions) ? prescriptions : [];
   const metrics = {
-    totalPrescriptions: prescriptions?.length || 0,
-    newPrescriptions: prescriptions?.filter((p: any) => p.status === 'new')?.length || 0,
-    processingPrescriptions: prescriptions?.filter((p: any) => p.status === 'processing')?.length || 0,
-    readyPrescriptions: prescriptions?.filter((p: any) => p.status === 'ready')?.length || 0
+    totalPrescriptions: prescriptionsArray.length || 0,
+    newPrescriptions: prescriptionsArray.filter((p: any) => p.status === 'new')?.length || 0,
+    processingPrescriptions: prescriptionsArray.filter((p: any) => p.status === 'processing')?.length || 0,
+    readyPrescriptions: prescriptionsArray.filter((p: any) => p.status === 'ready')?.length || 0
   };
 
   // Process prescription mutation
@@ -133,10 +134,10 @@ export default function PharmacyDashboardWorking() {
     toast({ title: "Report Generated", description: `${format.toUpperCase()} report generated successfully` });
   };
 
-  const filteredPrescriptions = prescriptions?.filter((p: PharmacyPrescription) =>
+  const filteredPrescriptions = prescriptionsArray.filter((p: PharmacyPrescription) =>
     p.medication.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.patientName.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  );
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -234,9 +235,9 @@ export default function PharmacyDashboardWorking() {
               <CardContent>
                 {isLoading ? (
                   <div className="text-center py-4">Loading prescriptions...</div>
-                ) : prescriptions && prescriptions.length > 0 ? (
+                ) : prescriptionsArray.length > 0 ? (
                   <div className="space-y-4">
-                    {prescriptions.slice(0, 5).map((prescription: PharmacyPrescription) => (
+                    {prescriptionsArray.slice(0, 5).map((prescription: PharmacyPrescription) => (
                       <div key={prescription.id} className="flex items-center justify-between border-b pb-2">
                         <div className="flex-1">
                           <p className="font-medium">{prescription.medication}</p>
@@ -764,7 +765,11 @@ export default function PharmacyDashboardWorking() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>Claim Number</Label>
-                        <Input placeholder="Auto-generated" />
+                        <Input 
+                          value={`CLM-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`}
+                          disabled 
+                          className="bg-gray-50 font-mono text-sm"
+                        />
                       </div>
                       <div>
                         <Label>Filing Date</Label>
