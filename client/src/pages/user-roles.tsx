@@ -484,14 +484,26 @@ export default function UserRoles() {
     console.log("User ID:", userId);
     console.log("New Role:", newRole);
     console.log("Auth Token:", localStorage.getItem("auth_token")?.substring(0, 20) + "...");
+    console.log("Current User:", user);
+    console.log("Current Tenant:", tenant);
+    
+    // Add a small delay to prevent race conditions
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     try {
+      // Get fresh token to ensure we have the latest
+      const currentToken = localStorage.getItem("auth_token");
+      if (!currentToken || currentToken === 'null' || currentToken === 'undefined') {
+        throw new Error("No valid authentication token found. Please login again.");
+      }
+      
       // Use direct fetch for better error debugging
       const response = await fetch(`/api/users/${userId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+          "Authorization": `Bearer ${currentToken}`,
+          "X-Requested-With": "XMLHttpRequest" // Prevent HTML error pages
         },
         body: JSON.stringify({ role: newRole })
       });
@@ -502,15 +514,57 @@ export default function UserRoles() {
       if (!response.ok) {
         const contentType = response.headers.get("content-type");
         console.log("Error response content type:", contentType);
+        console.log("Response URL:", response.url);
+        console.log("Response redirected:", response.redirected);
         
-        if (contentType && contentType.includes("application/json")) {
-          const error = await response.json();
-          console.log("JSON Error:", error);
-          throw new Error(error.message || "Failed to update role");
-        } else {
-          const errorText = await response.text();
-          console.log("HTML/Text Error Response:", errorText);
-          throw new Error("Authentication failed. Please refresh and try again.");
+        let errorText;
+        try {
+          errorText = await response.text();
+          console.log("Full Error Response:", errorText);
+        } catch (e) {
+          console.log("Failed to read error response:", e);
+          errorText = "Unknown error";
+        }
+        
+        // Check if it's an HTML error page (typical for authentication redirects)
+        if (errorText.includes("<!DOCTYPE") || errorText.includes("<html")) {
+          console.log("🔴 HTML ERROR PAGE DETECTED - Authentication issue");
+          console.log("Current token:", localStorage.getItem("auth_token")?.substring(0, 30));
+          
+          // Try to refresh the token by checking current session
+          try {
+            const refreshResponse = await fetch('/api/tenant/current', {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem("auth_token")}`
+              }
+            });
+            
+            if (!refreshResponse.ok) {
+              console.log("🔴 Session validation failed - redirecting to login");
+              localStorage.removeItem("auth_token");
+              localStorage.removeItem("auth_user");
+              window.location.href = '/login';
+              return;
+            } else {
+              console.log("✅ Session is still valid - retrying request");
+              // Retry the original request once
+              return handleRoleChange(userId, newRole);
+            }
+          } catch (refreshError) {
+            console.log("🔴 Session refresh failed:", refreshError);
+          }
+          
+          throw new Error("Session expired. Please refresh the page and login again.");
+        }
+        
+        // Try to parse as JSON
+        try {
+          const errorJson = JSON.parse(errorText);
+          console.log("Parsed JSON Error:", errorJson);
+          throw new Error(errorJson.message || "Failed to update role");
+        } catch (parseError) {
+          console.log("Failed to parse as JSON:", parseError);
+          throw new Error(`Server error (${response.status}): ${errorText.substring(0, 100)}`);
         }
       }
       
