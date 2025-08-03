@@ -51,19 +51,21 @@ export default function PrescriptionsPage() {
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
   const [isProcessingModalOpen, setIsProcessingModalOpen] = useState(false);
 
-  // Fetch prescriptions based on user role
+  // Fetch prescriptions using same endpoint as pharmacy dashboard
   const { data: prescriptions = [], isLoading } = useQuery<Prescription[]>({
-    queryKey: ['/api/prescriptions', user?.tenantId],
-    enabled: !!user?.tenantId,
+    queryKey: ['/api/pharmacy/prescriptions', tenant?.id],
+    enabled: !!tenant?.id && tenant?.type === 'pharmacy',
   });
 
-  // Status update mutation
+  // Status update mutation using pharmacy API
   const statusUpdateMutation = useMutation({
     mutationFn: async ({ prescriptionId, status }: { prescriptionId: string; status: string }) => {
-      const response = await fetch(`/api/prescriptions/${prescriptionId}/status`, {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/pharmacy/prescriptions/${prescriptionId}/process`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ status }),
       });
@@ -75,7 +77,7 @@ export default function PrescriptionsPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/pharmacy/prescriptions'] });
       toast({
         title: "Success",
         description: "Prescription status updated successfully",
@@ -91,8 +93,11 @@ export default function PrescriptionsPage() {
     },
   });
 
-  // Filter prescriptions
-  const filteredPrescriptions = prescriptions.filter((prescription) => {
+  // Filter out dispensed prescriptions for active processing (like pharmacy dashboard)
+  const activePrescriptions = prescriptions.filter((prescription) => prescription.status !== 'dispensed');
+  
+  // Apply search and status filters to active prescriptions
+  const filteredPrescriptions = activePrescriptions.filter((prescription) => {
     const matchesSearch = prescription.medication.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          prescription.patientName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || prescription.status === statusFilter;
@@ -102,19 +107,14 @@ export default function PrescriptionsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'prescribed':
+      case 'new':
         return 'bg-blue-100 text-blue-800';
-      case 'sent_to_pharmacy':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'received':
-        return 'bg-orange-100 text-orange-800';
       case 'processing':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-yellow-100 text-yellow-800';
       case 'ready':
         return 'bg-green-100 text-green-800';
       case 'dispensed':
-        return 'bg-green-200 text-green-900';
-      case 'filled':
-        return 'bg-green-200 text-green-900';
+        return 'bg-gray-100 text-gray-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
       default:
@@ -168,22 +168,43 @@ export default function PrescriptionsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Prescriptions</CardTitle>
-            <Pill className="h-4 w-4 text-muted-foreground" />
+            <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{prescriptions.length}</div>
+            <div className="text-2xl font-bold">{activePrescriptions.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Active prescriptions in system
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Prescriptions</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">New Prescriptions</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {prescriptions.filter((p) => ['prescribed', 'sent_to_pharmacy', 'received', 'processing', 'ready'].includes(p.status)).length}
+            <div className="text-2xl font-bold text-blue-600">
+              {activePrescriptions.filter((p) => ['prescribed', 'new'].includes(p.status)).length}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Awaiting processing
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Processing</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">
+              {activePrescriptions.filter((p) => p.status === 'processing').length}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Currently being filled
+            </p>
           </CardContent>
         </Card>
 
@@ -193,21 +214,12 @@ export default function PrescriptionsPage() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {prescriptions.filter((p) => p.status === 'ready').length}
+            <div className="text-2xl font-bold text-green-600">
+              {activePrescriptions.filter((p) => p.status === 'ready').length}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Dispensed Today</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {prescriptions.filter((p) => p.status === 'dispensed').length}
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Ready for dispensing
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -241,8 +253,7 @@ export default function PrescriptionsPage() {
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="prescribed">Prescribed</SelectItem>
-                  <SelectItem value="sent_to_pharmacy">Sent to Pharmacy</SelectItem>
-                  <SelectItem value="received">Received</SelectItem>
+                  <SelectItem value="new">New</SelectItem>
                   <SelectItem value="processing">Processing</SelectItem>
                   <SelectItem value="ready">Ready</SelectItem>
                   <SelectItem value="dispensed">Dispensed</SelectItem>
@@ -259,7 +270,7 @@ export default function PrescriptionsPage() {
         <CardHeader>
           <CardTitle>Prescription List</CardTitle>
           <CardDescription>
-            {filteredPrescriptions.length} prescription(s) found
+            {filteredPrescriptions.length} active prescription(s) found (archived prescriptions excluded)
           </CardDescription>
         </CardHeader>
         <CardContent>
