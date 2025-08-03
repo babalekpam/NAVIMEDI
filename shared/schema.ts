@@ -775,6 +775,31 @@ export const hospitalPatientInsurance = pgTable("hospital_patient_insurance", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Departments - Dynamic department management for hospitals and organizations
+export const departments = pgTable("departments", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  icon: text("icon").default('Building2'), // Lucide icon name
+  color: text("color").default('#3b82f6'), // Department color theme
+  headOfDepartment: uuid("head_of_department").references(() => users.id),
+  staffCount: integer("staff_count").default(0),
+  operatingHours: text("operating_hours").default('9:00 AM - 5:00 PM'),
+  location: text("location"),
+  phone: text("phone"),
+  email: text("email"),
+  budget: decimal("budget", { precision: 12, scale: 2 }),
+  specializations: text("specializations").array().default(sql`'{}'::text[]`),
+  equipment: jsonb("equipment").default('[]'),
+  certifications: text("certifications").array().default(sql`'{}'::text[]`),
+  isActive: boolean("is_active").default(true),
+  settings: jsonb("settings").default('{}'),
+  metrics: jsonb("metrics").default('{}'), // Performance metrics and KPIs
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Enhanced Patient Insurance Information specifically for laboratories
 export const laboratoryPatientInsurance = pgTable("laboratory_patient_insurance", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1760,6 +1785,18 @@ export const activityLogs = pgTable("activity_logs", {
   timestamp: timestamp("timestamp").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Department Relations
+export const departmentsRelations = relations(departments, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [departments.tenantId],
+    references: [tenants.id]
+  }),
+  headOfDepartment: one(users, {
+    fields: [departments.headOfDepartment],
+    references: [users.id]
+  })
+}));
+
 
 
 // Relations
@@ -1793,7 +1830,8 @@ export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   userAchievements: many(userAchievements),
   userStats: many(userStats),
   leaderboards: many(leaderboards),
-  activityLogs: many(activityLogs)
+  activityLogs: many(activityLogs),
+  departments: many(departments)
 }));
 
 export const insuranceProvidersRelations = relations(insuranceProviders, ({ one, many }) => ({
@@ -2922,3 +2960,13 @@ export const insertPharmacyReportTemplateSchema = createInsertSchema(pharmacyRep
 
 export type PharmacyReportTemplate = typeof pharmacyReportTemplates.$inferSelect;
 export type InsertPharmacyReportTemplate = z.infer<typeof insertPharmacyReportTemplateSchema>;
+
+// Department Schema and Types
+export const insertDepartmentSchema = createInsertSchema(departments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export type Department = typeof departments.$inferSelect;
+export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;

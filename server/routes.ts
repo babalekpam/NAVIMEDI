@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertRolePermissionSchema, RolePermission, InsertRolePermission } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertRolePermissionSchema, RolePermission, InsertRolePermission, insertDepartmentSchema, departments } from "@shared/schema";
 import { authenticateToken, requireRole } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -3225,6 +3225,69 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Error deleting role permission:", error);
       res.status(500).json({ message: "Failed to delete role permission" });
+    }
+  });
+
+  // ==== DEPARTMENT MANAGEMENT ====
+  // Get departments for a tenant
+  app.get('/api/departments', authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const departments = await storage.getDepartments(req.tenantId!);
+      res.json(departments);
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+      res.status(500).json({ error: 'Failed to fetch departments' });
+    }
+  });
+
+  // Create new department
+  app.post('/api/departments', authenticateToken, requireRole(['tenant_admin']), requireTenant, async (req, res) => {
+    try {
+      const validatedData = insertDepartmentSchema.parse({
+        ...req.body,
+        tenantId: req.tenantId!
+      });
+
+      const department = await storage.createDepartment(validatedData);
+      res.status(201).json(department);
+    } catch (error) {
+      console.error('Error creating department:', error);
+      res.status(500).json({ error: 'Failed to create department' });
+    }
+  });
+
+  // Update department
+  app.put('/api/departments/:id', authenticateToken, requireRole(['tenant_admin']), requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = insertDepartmentSchema.partial().parse(req.body);
+
+      const updatedDepartment = await storage.updateDepartment(id, validatedData, req.tenantId!);
+      if (!updatedDepartment) {
+        return res.status(404).json({ error: 'Department not found' });
+      }
+
+      res.json(updatedDepartment);
+    } catch (error) {
+      console.error('Error updating department:', error);
+      res.status(500).json({ error: 'Failed to update department' });
+    }
+  });
+
+  // Delete department
+  app.delete('/api/departments/:id', authenticateToken, requireRole(['tenant_admin']), requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const deleted = await storage.deleteDepartment(id, req.tenantId!);
+      if (!deleted) {
+        return res.status(404).json({ error: 'Department not found' });
+      }
+
+      res.json({ message: 'Department deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting department:', error);
+      res.status(500).json({ error: 'Failed to delete department' });
     }
   });
 

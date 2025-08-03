@@ -47,6 +47,7 @@ import {
   archivedRecords,
   pharmacyReportTemplates,
   hospitalBills,
+  departments,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -137,7 +138,9 @@ import {
   type PharmacyReportTemplate,
   type InsertPharmacyReportTemplate,
   type HospitalBill,
-  type InsertHospitalBill
+  type InsertHospitalBill,
+  type Department,
+  type InsertDepartment
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or, isNull, gt } from "drizzle-orm";
@@ -4706,6 +4709,77 @@ export class DatabaseStorage implements IStorage {
         ? ((paidBills[0]?.count || 0) / totalBills[0].count * 100).toFixed(1)
         : 0
     };
+  }
+
+  // Department Management
+  async getDepartments(tenantId: string): Promise<Department[]> {
+    return db.select({
+      id: departments.id,
+      tenantId: departments.tenantId,
+      name: departments.name,
+      description: departments.description,
+      icon: departments.icon,
+      color: departments.color,
+      staffCount: departments.staffCount,
+      operatingHours: departments.operatingHours,
+      location: departments.location,
+      phone: departments.phone,
+      email: departments.email,
+      budget: departments.budget,
+      specializations: departments.specializations,
+      equipment: departments.equipment,
+      certifications: departments.certifications,
+      isActive: departments.isActive,
+      settings: departments.settings,
+      metrics: departments.metrics,
+      createdAt: departments.createdAt,
+      updatedAt: departments.updatedAt,
+      headOfDepartment: departments.headOfDepartment,
+      headOfDepartmentName: users.fullName
+    })
+    .from(departments)
+    .leftJoin(users, eq(departments.headOfDepartment, users.id))
+    .where(eq(departments.tenantId, tenantId))
+    .orderBy(departments.name);
+  }
+
+  async createDepartment(data: InsertDepartment): Promise<Department> {
+    const [department] = await db.insert(departments)
+      .values(data)
+      .returning();
+    return department;
+  }
+
+  async updateDepartment(id: string, data: Partial<InsertDepartment>, tenantId: string): Promise<Department | null> {
+    const [updated] = await db.update(departments)
+      .set({ ...data, updatedAt: new Date() })
+      .where(and(
+        eq(departments.id, id),
+        eq(departments.tenantId, tenantId)
+      ))
+      .returning();
+    return updated || null;
+  }
+
+  async deleteDepartment(id: string, tenantId: string): Promise<boolean> {
+    const result = await db.delete(departments)
+      .where(and(
+        eq(departments.id, id),
+        eq(departments.tenantId, tenantId)
+      ));
+    return result.rowCount > 0;
+  }
+
+  async getDepartmentById(id: string, tenantId: string): Promise<Department | null> {
+    const [department] = await db.select()
+      .from(departments)
+      .where(and(
+        eq(departments.id, id),
+        eq(departments.tenantId, tenantId)
+      ))
+      .limit(1);
+    
+    return department || null;
   }
 }
 
