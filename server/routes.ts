@@ -24,14 +24,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let user;
       
-      // For super admin, allow login with email or username and find tenant automatically
+      // SECURITY: Super admin login with enhanced security logging
       if (username === 'abel@argilette.com' || username === 'abel_admin') {
+        console.log(`[SECURITY AUDIT] Super admin login attempt from IP: ${req.ip}`);
         // Get all users with this username/email across all tenants
         const allUsers = await storage.getAllUsers();
         user = allUsers.find(u => 
           (u.email === 'abel@argilette.com' || u.username === 'abel_admin') && 
           u.role === 'super_admin'
         );
+        if (user) {
+          console.log(`[SECURITY AUDIT] Super admin login successful: ${user.username}`);
+        }
       } else if (tenantId) {
         // Regular tenant user login - support both tenant UUID and tenant name
         let actualTenantId = tenantId;
@@ -40,12 +44,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
         
         if (!uuidPattern.test(tenantId)) {
+          // SECURITY: Log tenant lookup attempts for security monitoring
+          console.log(`[SECURITY AUDIT] Tenant lookup by name: ${tenantId} from IP: ${req.ip}`);
           // If not a UUID, try to find tenant by name
           const tenants = await storage.getAllTenants();
           const tenant = tenants.find(t => t.name.toLowerCase() === tenantId.toLowerCase());
           if (tenant) {
             actualTenantId = tenant.id;
+            console.log(`[SECURITY AUDIT] Tenant found: ${tenant.name} (${tenant.id})`);
           } else {
+            console.log(`[SECURITY WARNING] Unknown tenant lookup attempt: ${tenantId}`);
             return res.status(400).json({ message: "Organization not found" });
           }
         }

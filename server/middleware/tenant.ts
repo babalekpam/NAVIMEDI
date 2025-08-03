@@ -47,30 +47,57 @@ export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response,
       console.log("[TENANT DEBUG] Loaded tenant from DB:", tenant);
       req.tenant = tenant;
 
-      // Super admin access: Can manage platform and tenants but NOT access tenant operational data
+      // SECURITY: Super admin strict isolation - platform management only
       if (req.user?.role === 'super_admin') {
-        // Allow access to platform management endpoints
+        // Define strictly allowed platform management endpoints
         const platformEndpoints = [
           '/api/tenants',
           '/api/admin',
           '/api/platform',
           '/api/users/all',
           '/api/audit-logs',
-          '/api/analytics/platform'
+          '/api/analytics/platform',
+          '/api/role-permissions'
         ];
         
+        // Define operational endpoints that super admin must NOT access
+        const operationalEndpoints = [
+          '/api/patients',
+          '/api/prescriptions',
+          '/api/appointments',
+          '/api/lab-orders',
+          '/api/lab-results',
+          '/api/billing',
+          '/api/pharmacy',
+          '/api/hospital',
+          '/api/laboratory'
+        ];
+        
+        // Check if accessing operational data (FORBIDDEN for super admin)
+        const isOperationalEndpoint = operationalEndpoints.some(endpoint => 
+          req.path.startsWith(endpoint)
+        );
+        
+        if (isOperationalEndpoint) {
+          console.error(`[SECURITY VIOLATION] Super admin attempted to access operational endpoint: ${req.path}`);
+          return res.status(403).json({ 
+            message: "Super admin cannot access operational tenant data for security compliance",
+            error: "SUPER_ADMIN_OPERATIONAL_ACCESS_DENIED"
+          });
+        }
+        
+        // Allow platform management endpoints
         const isManagementEndpoint = platformEndpoints.some(endpoint => 
           req.path.startsWith(endpoint)
         );
         
         if (isManagementEndpoint) {
+          console.log(`[SECURITY AUDIT] Super admin platform management access: ${req.path}`);
           return next();
         }
         
-        // For operational endpoints, super admin must access through proper tenant context
-        // This prevents super admin from directly accessing pharmacy/hospital operational data
-        console.log("[TENANT DEBUG] Super admin accessing operational endpoint:", req.path);
-        console.log("[TENANT DEBUG] Must use proper tenant context for data access");
+        // Any other endpoint requires explanation and logging
+        console.log(`[SECURITY WARNING] Super admin accessing non-categorized endpoint: ${req.path}`);
       }
 
       // For other users, ensure they can only access their tenant's data
