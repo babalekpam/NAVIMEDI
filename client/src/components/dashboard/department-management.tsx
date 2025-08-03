@@ -175,10 +175,11 @@ export function DepartmentManagement() {
   });
 
   const handleSubmit = (data: DepartmentFormData) => {
-    // Convert "none" back to null for headOfDepartment
+    // Convert "none" back to null for headOfDepartment and budget to string
     const processedData = {
       ...data,
       headOfDepartment: data.headOfDepartment === "none" ? undefined : data.headOfDepartment,
+      budget: data.budget.toString(), // Convert number to string for decimal field
     };
     
     if (editingDepartment) {
@@ -200,7 +201,7 @@ export function DepartmentManagement() {
       location: department.location || "",
       phone: department.phone || "",
       email: department.email || "",
-      budget: department.budget || 0,
+      budget: department.budget ? parseFloat(department.budget) : 0,
       specializations: department.specializations || [],
       equipment: department.equipment || [],
       certifications: department.certifications || [],
