@@ -478,115 +478,60 @@ export default function UserRoles() {
     });
   };
 
-  // Handle role assignment directly through updateUserMutation
-  const handleRoleChange = async (userId: string, newRole: string) => {
-    console.log("=== ROLE CHANGE ATTEMPT ===");
-    console.log("User ID:", userId);
-    console.log("New Role:", newRole);
-    console.log("Auth Token:", localStorage.getItem("auth_token")?.substring(0, 20) + "...");
-    console.log("Current User:", user);
-    console.log("Current Tenant:", tenant);
-    
-    // Add a small delay to prevent race conditions
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+  // Direct simple role update function - SIMPLIFIED APPROACH
+  const updateUserRoleDirectly = async (userId: string, newRole: string, userName: string) => {
     try {
-      // Get fresh token to ensure we have the latest
-      const currentToken = localStorage.getItem("auth_token");
-      if (!currentToken || currentToken === 'null' || currentToken === 'undefined') {
-        throw new Error("No valid authentication token found. Please login again.");
-      }
+      console.log("🟡 DIRECT ROLE UPDATE:", userName, "→", newRole);
       
-      // Use direct fetch for better error debugging
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
       const response = await fetch(`/api/users/${userId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${currentToken}`,
-          "X-Requested-With": "XMLHttpRequest" // Prevent HTML error pages
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ role: newRole })
       });
-      
-      console.log("Response status:", response.status);
-      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-      
+
       if (!response.ok) {
-        const contentType = response.headers.get("content-type");
-        console.log("Error response content type:", contentType);
-        console.log("Response URL:", response.url);
-        console.log("Response redirected:", response.redirected);
+        const errorText = await response.text();
+        console.error("🔴 Role update failed:", errorText);
         
-        let errorText;
-        try {
-          errorText = await response.text();
-          console.log("Full Error Response:", errorText);
-        } catch (e) {
-          console.log("Failed to read error response:", e);
-          errorText = "Unknown error";
-        }
-        
-        // Check if it's an HTML error page (typical for authentication redirects)
         if (errorText.includes("<!DOCTYPE") || errorText.includes("<html")) {
-          console.log("🔴 HTML ERROR PAGE DETECTED - Authentication issue");
-          console.log("Current token:", localStorage.getItem("auth_token")?.substring(0, 30));
-          
-          // Try to refresh the token by checking current session
-          try {
-            const refreshResponse = await fetch('/api/tenant/current', {
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem("auth_token")}`
-              }
-            });
-            
-            if (!refreshResponse.ok) {
-              console.log("🔴 Session validation failed - redirecting to login");
-              localStorage.removeItem("auth_token");
-              localStorage.removeItem("auth_user");
-              window.location.href = '/login';
-              return;
-            } else {
-              console.log("✅ Session is still valid - retrying request");
-              // Retry the original request once
-              return handleRoleChange(userId, newRole);
-            }
-          } catch (refreshError) {
-            console.log("🔴 Session refresh failed:", refreshError);
-          }
-          
-          throw new Error("Session expired. Please refresh the page and login again.");
+          throw new Error("Authentication failed - please refresh page and try again");
         }
         
-        // Try to parse as JSON
-        try {
-          const errorJson = JSON.parse(errorText);
-          console.log("Parsed JSON Error:", errorJson);
-          throw new Error(errorJson.message || "Failed to update role");
-        } catch (parseError) {
-          console.log("Failed to parse as JSON:", parseError);
-          throw new Error(`Server error (${response.status}): ${errorText.substring(0, 100)}`);
-        }
+        throw new Error(`Failed to update role: ${response.status} - ${errorText}`);
       }
-      
+
       const result = await response.json();
-      console.log("Success result:", result);
+      console.log("🟢 Role update success:", result);
       
-      // Invalidate cache and show success
+      // Refresh the user list
       queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
+      
       toast({
         title: "Success",
-        description: `Role changed to ${newRole.replace('_', ' ')}`,
+        description: `${userName}'s role changed to ${newRole.replace('_', ' ')}`,
       });
-      
+
+      return result;
     } catch (error) {
-      console.error("Role change error:", error);
+      console.error("🔴 Role update error:", error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to change role",
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to update role",
         variant: "destructive",
       });
+      throw error;
     }
   };
+
+
 
   const formatPermissionName = (permission: string) => {
     return permission.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -868,64 +813,26 @@ export default function UserRoles() {
                           <Edit className="h-4 w-4" />
                         </Button>
                         
-                        {/* Direct Role Change Button - SIMPLIFIED TEST */}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={async () => {
-                            console.log("🔵 DIRECT ROLE TEST - Changing", userItem.firstName, "to pharmacist");
-                            
-                            try {
-                              const token = localStorage.getItem("auth_token");
-                              console.log("🔵 Token exists:", !!token);
-                              console.log("🔵 Token preview:", token?.substring(0, 20));
-                              
-                              const response = await fetch(`/api/users/${userItem.id}`, {
-                                method: "PATCH",
-                                headers: {
-                                  "Content-Type": "application/json",
-                                  "Authorization": `Bearer ${token}`
-                                },
-                                body: JSON.stringify({ role: "pharmacist" })
-                              });
-                              
-                              console.log("🔵 Response status:", response.status);
-                              console.log("🔵 Response headers:", [...response.headers.entries()]);
-                              
-                              const responseText = await response.text();
-                              console.log("🔵 Raw response:", responseText);
-                              
-                              if (responseText.includes("<!DOCTYPE") || responseText.includes("<html")) {
-                                console.log("🔴 HTML ERROR DETECTED!");
-                                toast({
-                                  title: "Authentication Error",
-                                  description: "Session expired - please refresh page and try again",
-                                  variant: "destructive",
-                                });
-                                return;
-                              }
-                              
-                              const result = JSON.parse(responseText);
-                              console.log("🟢 SUCCESS:", result);
-                              
-                              queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
-                              toast({
-                                title: "Success",
-                                description: "Role changed to pharmacist",
-                              });
-                              
-                            } catch (error) {
-                              console.log("🔴 CATCH ERROR:", error);
-                              toast({
-                                title: "Error",
-                                description: error instanceof Error ? error.message : "Unknown error",
-                                variant: "destructive",
-                              });
-                            }
+                        {/* Role Change Dropdown - WORKING VERSION */}
+                        <Select 
+                          value={userItem.role} 
+                          onValueChange={(newRole) => {
+                            updateUserRoleDirectly(userItem.id, newRole, userItem.firstName);
                           }}
                         >
-                          Test Role
-                        </Button>
+                          <SelectTrigger className="w-32 h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableRoles.map((role) => (
+                              <SelectItem key={role} value={role}>
+                                {role.replace('_', ' ').split(' ').map(word => 
+                                  word.charAt(0).toUpperCase() + word.slice(1)
+                                ).join(' ')}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         {userItem.role !== 'super_admin' && (
                           <Button
                             variant={userItem.isActive ? "destructive" : "default"}
