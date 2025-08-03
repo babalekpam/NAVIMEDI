@@ -44,7 +44,9 @@ export default function Dashboard() {
     userId: user?.id || user?.userId,
     isSuperAdmin,
     tenantType: tenant?.type,
+    tenantName: tenant?.name,
     isPhysician: user?.role === 'physician',
+    isPharmacist: user?.role === 'pharmacist',
     queryEnabled: !!user && !!tenant && user?.role === 'physician' && !!(user?.id || user?.userId)
   });
 
