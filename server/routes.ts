@@ -80,6 +80,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Organization registration endpoint (public, no auth required)
+  app.post("/api/tenant/register", async (req, res) => {
+    try {
+      const {
+        organizationName,
+        organizationType,
+        adminFirstName,
+        adminLastName,
+        adminEmail,
+        adminPassword,
+        phoneNumber,
+        address,
+        country,
+        description
+      } = req.body;
+
+      // Validate required fields
+      if (!organizationName || !organizationType || !adminFirstName || !adminLastName || !adminEmail || !adminPassword) {
+        return res.status(400).json({ 
+          message: "All required fields must be provided" 
+        });
+      }
+
+      // Check if organization already exists
+      const existingTenants = await storage.getAllTenants();
+      const existingTenant = existingTenants.find(t => 
+        t.name.toLowerCase() === organizationName.toLowerCase()
+      );
+      
+      if (existingTenant) {
+        return res.status(400).json({ 
+          message: "An organization with this name already exists" 
+        });
+      }
+
+      // Check if admin email already exists
+      const existingUsers = await storage.getAllUsers();
+      const existingUser = existingUsers.find(u => 
+        u.email?.toLowerCase() === adminEmail.toLowerCase()
+      );
+      
+      if (existingUser) {
+        return res.status(400).json({ 
+          message: "A user with this email already exists" 
+        });
+      }
+
+      // Generate subdomain from organization name
+      const subdomain = organizationName
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .substring(0, 50);
+
+      // Create tenant
+      const newTenant = await storage.createTenant({
+        name: organizationName,
+        type: organizationType as any,
+        subdomain: subdomain,
+        settings: {
+          features: [organizationType, 'basic'],
+          trialDays: 14
+        },
+        isActive: true,
+        parentTenantId: null,
+        organizationType: 'independent',
+        phoneNumber: phoneNumber || null,
+        address: address || null,
+        description: description || null
+      });
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+      // Create admin user
+      const adminUser = await storage.createUser({
+        tenantId: newTenant.id,
+        username: adminEmail,
+        email: adminEmail,
+        password: hashedPassword,
+        firstName: adminFirstName,
+        lastName: adminLastName,
+        role: 'tenant_admin',
+        isActive: true,
+        isTemporaryPassword: false,
+        mustChangePassword: false
+      });
+
+      // Send welcome email (optional)
+      try {
+        await sendWelcomeEmail(adminEmail, {
+          firstName: adminFirstName,
+          lastName: adminLastName,
+          organizationName: organizationName,
+          loginUrl: `${req.protocol}://${req.get('host')}/api/login`,
+          tempPassword: null
+        });
+      } catch (emailError) {
+        console.error('Failed to send welcome email:', emailError);
+        // Don't fail registration if email fails
+      }
+
+      res.status(201).json({
+        message: "Organization registered successfully",
+        tenant: {
+          id: newTenant.id,
+          name: newTenant.name,
+          type: newTenant.type,
+          subdomain: newTenant.subdomain
+        },
+        admin: {
+          id: adminUser.id,
+          email: adminUser.email,
+          firstName: adminUser.firstName,
+          lastName: adminUser.lastName
+        }
+      });
+
+    } catch (error) {
+      console.error("Error registering organization:", error);
+      res.status(500).json({ 
+        message: "Failed to register organization. Please try again." 
+      });
+    }
+  });
+
   // Authentication routes (before tenant middleware)
   app.post("/api/auth/login", async (req, res) => {
     try {

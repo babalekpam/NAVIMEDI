@@ -77,6 +77,58 @@ export default function RegisterOrganization() {
     setIsLoading(true);
     
     try {
+      const response = await fetch('/api/tenant/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          organizationName: formData.organizationName,
+          organizationType: formData.organizationType,
+          adminFirstName: formData.adminFirstName,
+          adminLastName: formData.adminLastName,
+          adminEmail: formData.adminEmail,
+          adminPassword: formData.adminPassword,
+          phoneNumber: formData.phoneNumber,
+          address: formData.address,
+          country: formData.country,
+          description: formData.description
+        }),
+      });
+
+      if (response.ok) {
+        setIsSuccess(true);
+        toast({
+          title: "Registration Successful!",
+          description: "Your organization has been registered. Please check your email for login instructions.",
+        });
+        
+        // Redirect to login after 3 seconds
+        setTimeout(() => {
+          window.location.href = '/api/login';
+        }, 3000);
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Registration Failed",
+          description: errorData.message || "There was an error registering your organization. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast({
+        title: "Network Error",
+        description: "Unable to connect to the server. Please check your connection and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+
+    setIsLoading(true);
+    
+    try {
       const response = await fetch("/api/register-organization", {
         method: "POST",
         headers: {

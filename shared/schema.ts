@@ -317,7 +317,7 @@ export const tenants = pgTable("tenants", {
 });
 
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: varchar("id").primaryKey(),
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   username: text("username"),
   email: text("email"),
