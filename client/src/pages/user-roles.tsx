@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SimpleRoleChanger } from "@/components/SimpleRoleChanger";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -239,7 +239,7 @@ export default function UserRoles() {
       return rolePermissions; // Fallback to hardcoded permissions if no data
     }
 
-    const actualPermissions: typeof rolePermissions = {};
+    const actualPermissions: Record<string, Record<string, string[]>> = {};
     
     rolePermissionsFromDB.forEach((perm: any) => {
       if (!actualPermissions[perm.role]) {
@@ -251,14 +251,17 @@ export default function UserRoles() {
     // Merge with default permissions to ensure all modules are present
     Object.keys(rolePermissions).forEach(role => {
       if (!actualPermissions[role]) {
-        actualPermissions[role] = rolePermissions[role];
+        actualPermissions[role] = rolePermissions[role as keyof typeof rolePermissions];
       } else {
         // Fill in missing modules with default permissions
-        Object.keys(rolePermissions[role]).forEach(module => {
-          if (!actualPermissions[role][module]) {
-            actualPermissions[role][module] = rolePermissions[role][module];
-          }
-        });
+        const roleKey = role as keyof typeof rolePermissions;
+        if (rolePermissions[roleKey]) {
+          Object.keys(rolePermissions[roleKey]).forEach(module => {
+            if (!actualPermissions[role][module]) {
+              actualPermissions[role][module] = (rolePermissions[roleKey] as Record<string, string[]>)[module];
+            }
+          });
+        }
       }
     });
 
@@ -266,6 +269,31 @@ export default function UserRoles() {
   };
 
   const actualRolePermissions = getActualRolePermissions();
+
+  // Initialize editing permissions when role is selected
+  const initializeEditingPermissions = (role: string) => {
+    const rolePermissions = actualRolePermissions[role as keyof typeof actualRolePermissions];
+    if (!role || !rolePermissions) return;
+    
+    const initialPermissions: Record<string, boolean> = {};
+    
+    // Get current permissions for this role
+    Object.entries(rolePermissions).forEach(([module, permissions]) => {
+      (permissions as string[]).forEach((permission) => {
+        const permissionKey = `${role}.${module}.${permission}`;
+        initialPermissions[permissionKey] = true;
+      });
+    });
+    
+    setEditingPermissions(initialPermissions);
+  };
+
+  // Effect to initialize permissions when role selection changes
+  useEffect(() => {
+    if (selectedRoleForEdit) {
+      initializeEditingPermissions(selectedRoleForEdit);
+    }
+  }, [selectedRoleForEdit, actualRolePermissions]);
 
   const createUserMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
@@ -851,7 +879,7 @@ export default function UserRoles() {
                         <SimpleRoleChanger
                           userId={userItem.id}
                           currentRole={userItem.role}
-                          userName={userItem.firstName}
+                          userName={userItem.firstName || userItem.username}
                           onSuccess={() => {
                             queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
                           }}
@@ -1111,7 +1139,9 @@ export default function UserRoles() {
 
                     {/* Permission Modules Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {Object.entries(actualRolePermissions[selectedRoleForEdit as keyof typeof actualRolePermissions] || {}).map(([module, permissions]) => (
+                      {Object.entries(actualRolePermissions[selectedRoleForEdit as keyof typeof actualRolePermissions] || {})
+                        .sort(([a], [b]) => a.localeCompare(b)) // Stable alphabetical sort to prevent moving sections
+                        .map(([module, permissions]) => (
                         <Card key={module} className="border-gray-200">
                           <CardHeader className="pb-2">
                             <CardTitle className="text-sm capitalize">
@@ -1131,7 +1161,7 @@ export default function UserRoles() {
                                     onCheckedChange={(checked) => 
                                       setEditingPermissions(prev => ({
                                         ...prev,
-                                        [permissionKey]: checked
+                                        [permissionKey]: checked === true
                                       }))
                                     }
                                   />
