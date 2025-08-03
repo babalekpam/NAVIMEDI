@@ -30,6 +30,7 @@ import HealthRecommendations from "@/pages/health-recommendations";
 // import PharmacyDashboardEnhanced from "@/pages/pharmacy-dashboard-enhanced";
 import PharmacyDashboardSimple from "@/pages/pharmacy-dashboard-simple";
 import PharmacyDashboardEnhancedV2 from "@/pages/pharmacy-dashboard-enhanced-v2";
+import PharmacyDashboardWorking from "@/pages/pharmacy-dashboard-working";
 import PharmacyRegistration from "@/pages/pharmacy-registration";
 import { PharmacyInventoryManager } from "@/components/pharmacy/PharmacyInventoryManager";
 import { PharmacyPrescriptionManager } from "@/components/pharmacy/PharmacyPrescriptionManager";
@@ -112,7 +113,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <PharmacyDashboardEnhancedV2 />
+                  <PharmacyDashboardWorking />
                 </main>
               </div>
             </div>

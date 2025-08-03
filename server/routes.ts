@@ -529,6 +529,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pharmacy-specific prescription routes
+  app.get("/api/pharmacy/prescriptions/:pharmacyTenantId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      console.log("[PHARMACY API] 🚀 GET /api/pharmacy/prescriptions called");
+      const { pharmacyTenantId } = req.params;
+      console.log("[PHARMACY API] 📋 Pharmacy Tenant ID:", pharmacyTenantId);
+      
+      const prescriptions = await storage.getPrescriptionsByPharmacy(pharmacyTenantId);
+      console.log("[PHARMACY API] ✅ Returning prescriptions:", prescriptions.length);
+      
+      res.json(prescriptions);
+    } catch (error) {
+      console.error("[PHARMACY API] ❌ Error getting pharmacy prescriptions:", error);
+      res.status(500).json({ message: "Failed to get pharmacy prescriptions" });
+    }
+  });
+
   // Lab order management routes
   app.get("/api/lab-orders", authenticateToken, requireTenant, async (req, res) => {
     try {
