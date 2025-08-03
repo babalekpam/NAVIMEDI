@@ -34,9 +34,9 @@ const pricingPlans = [
       maxPatients: 100,
       storageGb: 1,
       apiCalls: 1000,
-      multiLanguage: false,
+      multiLanguage: true,
       whiteLabel: false,
-      offline: false,
+      offline: true,
       advancedReports: false,
       prioritySupport: false,
       customIntegrations: false
@@ -131,8 +131,8 @@ const features = [
   {
     category: "Advanced Features", 
     items: [
-      { name: "Multi-Language Support", icon: Globe, requiresPro: true },
-      { name: "Offline Mode", icon: Wifi, requiresPro: true },
+      { name: "Multi-Language Support", icon: Globe, requiresStarter: true },
+      { name: "Offline Mode", icon: Wifi, requiresStarter: true },
       { name: "Advanced Analytics", icon: Database, requiresPro: true },
       { name: "White Label Branding", icon: Palette, requiresWhiteLabel: true },
       { name: "Custom Integrations", icon: Zap, requiresEnterprise: true },
@@ -322,7 +322,7 @@ export default function PricingPage() {
                           {feature.name}
                         </td>
                         <td className="text-center py-3 px-4">
-                          {!feature.requiresPro && !feature.requiresEnterprise && !feature.requiresWhiteLabel ? (
+                          {!feature.requiresEnterprise && !feature.requiresWhiteLabel && !feature.requiresPro ? (
                             <Check className="w-5 h-5 text-emerald-600 mx-auto" />
                           ) : (
                             <X className="w-5 h-5 text-slate-400 mx-auto" />
@@ -377,6 +377,11 @@ export default function PricingPage() {
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <h3 className="font-semibold mb-2">Is my data secure and HIPAA compliant?</h3>
               <p className="text-slate-600">Yes, all plans include enterprise-grade security, encryption, and full HIPAA compliance with business associate agreements.</p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="font-semibold mb-2">Are multi-language and offline features included in the Starter plan?</h3>
+              <p className="text-slate-600">Yes! Multi-language support and offline mode are now included in all plans, starting with the Starter plan. This ensures global accessibility and continuity of care.</p>
             </div>
           </div>
         </div>
