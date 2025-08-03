@@ -369,8 +369,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Apply tenant context middleware to all other API routes
-  app.use("/api", setTenantContext);
+  // Apply tenant context middleware to all API routes (except public endpoints)
+  app.use("/api", (req, res, next) => {
+    // Skip tenant middleware for public endpoints
+    const publicEndpoints = [
+      "/api/health",
+      "/api/platform/stats",
+      "/api/tenant/register",
+      "/api/auth/login",
+      "/api/auth/user",
+      "/api/login",
+      "/api/logout",
+      "/api/callback"
+    ];
+    
+    if (publicEndpoints.includes(req.path)) {
+      return next();
+    }
+    
+    // Apply tenant middleware for all other endpoints
+    setTenantContext(req, res, next);
+  });
 
   app.post("/api/auth/register", async (req, res) => {
     try {
