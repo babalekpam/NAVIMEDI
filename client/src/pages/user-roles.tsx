@@ -868,27 +868,64 @@ export default function UserRoles() {
                           <Edit className="h-4 w-4" />
                         </Button>
                         
-                        {/* Quick Role Change Dropdown - TEST */}
-                        <Select 
-                          value={userItem.role} 
-                          onValueChange={(newRole) => {
-                            console.log("Quick role change:", userItem.id, "from", userItem.role, "to", newRole);
-                            handleRoleChange(userItem.id, newRole);
+                        {/* Direct Role Change Button - SIMPLIFIED TEST */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            console.log("🔵 DIRECT ROLE TEST - Changing", userItem.firstName, "to pharmacist");
+                            
+                            try {
+                              const token = localStorage.getItem("auth_token");
+                              console.log("🔵 Token exists:", !!token);
+                              console.log("🔵 Token preview:", token?.substring(0, 20));
+                              
+                              const response = await fetch(`/api/users/${userItem.id}`, {
+                                method: "PATCH",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  "Authorization": `Bearer ${token}`
+                                },
+                                body: JSON.stringify({ role: "pharmacist" })
+                              });
+                              
+                              console.log("🔵 Response status:", response.status);
+                              console.log("🔵 Response headers:", [...response.headers.entries()]);
+                              
+                              const responseText = await response.text();
+                              console.log("🔵 Raw response:", responseText);
+                              
+                              if (responseText.includes("<!DOCTYPE") || responseText.includes("<html")) {
+                                console.log("🔴 HTML ERROR DETECTED!");
+                                toast({
+                                  title: "Authentication Error",
+                                  description: "Session expired - please refresh page and try again",
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
+                              
+                              const result = JSON.parse(responseText);
+                              console.log("🟢 SUCCESS:", result);
+                              
+                              queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
+                              toast({
+                                title: "Success",
+                                description: "Role changed to pharmacist",
+                              });
+                              
+                            } catch (error) {
+                              console.log("🔴 CATCH ERROR:", error);
+                              toast({
+                                title: "Error",
+                                description: error instanceof Error ? error.message : "Unknown error",
+                                variant: "destructive",
+                              });
+                            }
                           }}
                         >
-                          <SelectTrigger className="w-32 h-8 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableRoles.map((role) => (
-                              <SelectItem key={role} value={role}>
-                                {role.replace('_', ' ').split(' ').map(word => 
-                                  word.charAt(0).toUpperCase() + word.slice(1)
-                                ).join(' ')}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          Test Role
+                        </Button>
                         {userItem.role !== 'super_admin' && (
                           <Button
                             variant={userItem.isActive ? "destructive" : "default"}
