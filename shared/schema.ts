@@ -496,6 +496,35 @@ export const claimLineItems = pgTable("claim_line_items", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Prescription Archives - for completed/dispensed prescriptions
+export const prescriptionArchives = pgTable("prescription_archives", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(), // Pharmacy tenant
+  originalPrescriptionId: uuid("original_prescription_id").notNull(), // Reference to original prescription
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  providerId: uuid("provider_id").references(() => users.id).notNull(),
+  pharmacyTenantId: uuid("pharmacy_tenant_id").references(() => tenants.id),
+  medicationName: text("medication_name").notNull(),
+  dosage: text("dosage").notNull(),
+  frequency: text("frequency").notNull(),
+  quantity: integer("quantity").notNull(),
+  refills: integer("refills").default(0),
+  instructions: text("instructions"),
+  status: prescriptionStatusEnum("status").default('dispensed'),
+  prescribedDate: timestamp("prescribed_date"),
+  dispensedDate: timestamp("dispensed_date"),
+  archivedDate: timestamp("archived_date").default(sql`CURRENT_TIMESTAMP`),
+  insuranceProvider: text("insurance_provider"),
+  insuranceCopay: decimal("insurance_copay", { precision: 10, scale: 2 }),
+  insuranceCoveragePercentage: decimal("insurance_coverage_percentage", { precision: 5, scale: 2 }),
+  totalCost: decimal("total_cost", { precision: 10, scale: 2 }),
+  pharmacyNotes: text("pharmacy_notes"),
+  claimNumber: text("claim_number"),
+  transactionId: text("transaction_id"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Medication Copays defined by pharmacists for patients based on insurance
 export const medicationCopays = pgTable("medication_copays", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),

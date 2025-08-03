@@ -1276,22 +1276,69 @@ export class DatabaseStorage implements IStorage {
     console.log(`[PHARMACY API] 🔄 Updating prescription ${prescriptionId} to status: ${newStatus}`);
     
     try {
-      // Simple status update without referencing potentially missing columns
-      const [updatedPrescription] = await db
-        .update(prescriptions)
-        .set({ 
-          status: newStatus,
-          updatedAt: new Date()
-        })
-        .where(eq(prescriptions.id, prescriptionId))
-        .returning();
+      // If status is 'dispensed', archive the prescription and remove from active prescriptions
+      if (newStatus === 'dispensed') {
+        console.log(`[PHARMACY API] 📦 Archiving dispensed prescription: ${prescriptionId}`);
+        
+        // Get the current prescription data
+        const [currentPrescription] = await db
+          .select()
+          .from(prescriptions)
+          .where(eq(prescriptions.id, prescriptionId));
 
-      if (!updatedPrescription) {
-        throw new Error('Prescription not found');
+        if (!currentPrescription) {
+          throw new Error('Prescription not found');
+        }
+
+        // Insert into archives (import prescriptionArchives from schema)
+        const { prescriptionArchives } = await import('../shared/schema.js');
+        await db.insert(prescriptionArchives).values({
+          originalPrescriptionId: currentPrescription.id,
+          tenantId: currentPrescription.pharmacyTenantId || currentPrescription.tenantId,
+          patientId: currentPrescription.patientId,
+          providerId: currentPrescription.providerId,
+          pharmacyTenantId: currentPrescription.pharmacyTenantId,
+          medicationName: currentPrescription.medicationName,
+          dosage: currentPrescription.dosage,
+          frequency: currentPrescription.frequency,
+          quantity: currentPrescription.quantity,
+          refills: currentPrescription.refills,
+          instructions: currentPrescription.instructions,
+          status: 'dispensed',
+          prescribedDate: currentPrescription.prescribedDate,
+          dispensedDate: new Date(),
+          insuranceProvider: currentPrescription.insuranceProvider,
+          insuranceCopay: currentPrescription.insuranceCopay,
+          insuranceCoveragePercentage: currentPrescription.insuranceCoveragePercentage,
+          totalCost: currentPrescription.totalCost,
+          pharmacyNotes: currentPrescription.pharmacyNotes,
+          claimNumber: `CLM-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
+          transactionId: `TXN-${new Date().getFullYear()}-${String(Date.now()).slice(-8)}`
+        });
+
+        // Delete from active prescriptions
+        await db.delete(prescriptions).where(eq(prescriptions.id, prescriptionId));
+
+        console.log(`[PHARMACY API] ✅ Prescription ${prescriptionId} archived and removed from active queue`);
+        return { ...currentPrescription, status: 'dispensed', archived: true };
+      } else {
+        // Normal status update for non-dispensed statuses
+        const [updatedPrescription] = await db
+          .update(prescriptions)
+          .set({ 
+            status: newStatus,
+            updatedAt: new Date()
+          })
+          .where(eq(prescriptions.id, prescriptionId))
+          .returning();
+
+        if (!updatedPrescription) {
+          throw new Error('Prescription not found');
+        }
+
+        console.log(`[PHARMACY API] ✅ Successfully updated prescription status to: ${newStatus}`);
+        return updatedPrescription;
       }
-
-      console.log(`[PHARMACY API] ✅ Successfully updated prescription status to: ${newStatus}`);
-      return updatedPrescription;
     } catch (error) {
       console.error(`[PHARMACY API] ❌ Error updating prescription status:`, error);
       throw error;
