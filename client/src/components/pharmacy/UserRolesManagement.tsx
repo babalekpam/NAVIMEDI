@@ -94,13 +94,22 @@ const UserRolesManagement = () => {
   // Create user mutation
   const createUserMutation = useMutation({
     mutationFn: async (userData: UserFormData) => {
-      return apiRequest(`/api/users`, {
+      const response = await fetch('/api/users', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           ...userData,
           password: userData.password || 'TempPass123!' // Default temporary password
         }),
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create user');
+      }
+      
+      return await response.json();
     },
     onSuccess: (responseData, formData) => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
@@ -109,8 +118,8 @@ const UserRolesManagement = () => {
       
       // Store credentials and show popup
       setNewUserCredentials({
-        username: responseData.username || formData.username,
-        temporaryPassword: responseData.temporaryPassword || "TempPass123!",
+        username: responseData?.username || formData.username,
+        temporaryPassword: responseData?.temporaryPassword || "TempPass123!",
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
@@ -135,10 +144,19 @@ const UserRolesManagement = () => {
   // Update user mutation
   const updateUserMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Employee> }) => {
-      return apiRequest(`/api/users/${id}`, {
+      const response = await fetch(`/api/users/${id}`, {
         method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(data),
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update user');
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
@@ -210,7 +228,7 @@ const UserRolesManagement = () => {
             <CardTitle className="text-base">Total Staff</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{users?.length || 0}</div>
+            <div className="text-2xl font-bold text-blue-600">{Array.isArray(users) ? users.length : 0}</div>
             <p className="text-xs text-muted-foreground">Active employees</p>
           </CardContent>
         </Card>
@@ -276,7 +294,7 @@ const UserRolesManagement = () => {
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8">Loading employees...</div>
-          ) : users && users.length > 0 ? (
+          ) : Array.isArray(users) && users.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -288,7 +306,7 @@ const UserRolesManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((employee: Employee) => (
+                {(users as Employee[]).map((employee: Employee) => (
                   <TableRow key={employee.id}>
                     <TableCell>
                       <div>

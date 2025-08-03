@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useTranslation } from "@/contexts/translation-context";
 import UserRoles from "@/pages/user-roles";
+import UserRolesManagement from "@/components/pharmacy/UserRolesManagement";
 
 interface AdminDashboardProps {
   activeTab?: string;
@@ -370,17 +371,21 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
         </TabsContent>
 
         <TabsContent value="manage-users">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>
-                Create and manage all hospital staff accounts. New users receive temporary passwords via email.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <UserRoles />
-            </CardContent>
-          </Card>
+          {organizationType === 'pharmacy' ? (
+            <UserRolesManagement />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>
+                  Create and manage all {organizationType} staff accounts. New users receive temporary passwords via email.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <UserRoles />
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="departments">
