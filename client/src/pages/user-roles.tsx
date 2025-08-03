@@ -363,37 +363,62 @@ export default function UserRoles() {
       }, {} as Record<string, string[]>);
 
       // Create or update permissions for each module
+      console.log("🔧 Saving permissions for role:", role);
+      console.log("🔧 Permissions by module:", permissionsByModule);
+      
       const promises = Object.entries(permissionsByModule).map(async ([module, permissions]) => {
-        const response = await apiRequest("POST", "/api/role-permissions", {
-          role,
-          module,
-          permissions
-        });
+        console.log("🔧 Processing module:", module, "with permissions:", permissions);
         
-        if (!response.ok) {
-          const contentType = response.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
-            const error = await response.json();
-            throw new Error(error.message || "Failed to save permissions");
-          } else {
-            const errorText = await response.text();
-            console.error("HTML Error Response:", errorText);
-            throw new Error("Authentication failed. Please refresh and try again.");
+        try {
+          const response = await apiRequest("POST", "/api/role-permissions", {
+            role,
+            module,
+            permissions
+          });
+          
+          console.log("🔧 Response status:", response.status);
+          
+          if (!response.ok) {
+            const contentType = response.headers.get("content-type");
+            console.log("🔧 Error content type:", contentType);
+            
+            if (contentType && contentType.includes("application/json")) {
+              const error = await response.json();
+              console.error("🔧 JSON Error:", error);
+              throw new Error(error.message || "Failed to save permissions");
+            } else {
+              const errorText = await response.text();
+              console.error("🔧 HTML Error Response:", errorText.substring(0, 200));
+              
+              if (errorText.includes("<!DOCTYPE") || errorText.includes("<html")) {
+                throw new Error("Session expired - please refresh and try again");
+              }
+              
+              throw new Error("Failed to save permissions - server error");
+            }
           }
+          
+          const result = await response.json();
+          console.log("🔧 Success result for module", module, ":", result);
+          return result;
+          
+        } catch (error) {
+          console.error("🔧 Error processing module", module, ":", error);
+          throw error;
         }
-        
-        return response.json();
       });
 
       await Promise.all(promises);
     },
     onSuccess: () => {
+      console.log("🎉 ALL PERMISSIONS SAVED SUCCESSFULLY");
       toast({
         title: "Success",
         description: "Role permissions updated successfully",
       });
     },
     onError: (error: Error) => {
+      console.error("🚨 PERMISSIONS SAVE FAILED:", error);
       toast({
         title: "Error",
         description: error.message,
