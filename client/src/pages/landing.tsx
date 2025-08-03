@@ -237,12 +237,12 @@ export default function LandingPage() {
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
-              <Link href="/login">
+              <a href="/api/login">
                 <Button size="lg" variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50 px-8 py-4 text-lg">
                   <Monitor className="w-5 h-5 mr-2" />
                   Provider Login
                 </Button>
-              </Link>
+              </a>
               <Link href="/patient-login">
                 <Button size="lg" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50 px-8 py-4 text-lg">
                   <User className="w-5 h-5 mr-2" />
@@ -625,12 +625,12 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/login">
+            <a href="/api/login">
               <Button size="lg" className="bg-white text-emerald-600 hover:bg-emerald-50 px-8">
                 <Heart className="w-5 h-5 mr-2" />
                 Start Free Trial
               </Button>
-            </Link>
+            </a>
             <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
               <Users className="w-5 h-5 mr-2" />
               Schedule Demo

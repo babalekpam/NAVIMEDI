@@ -52,6 +52,7 @@ import {
   type InsertTenant,
   type User, 
   type InsertUser,
+  type UpsertUser,
   type Patient,
   type InsertPatient,
   type Appointment,
@@ -157,6 +158,9 @@ export interface IStorage {
   getUsersByTenant(tenantId: string): Promise<User[]>;
   getUsersByRole(role: string, tenantId: string): Promise<User[]>;
   getAllUsers(): Promise<User[]>; // SECURITY: Super admin only
+  
+  // Replit Auth specific methods
+  upsertUser(user: UpsertUser): Promise<User>;
 
   // Tenant management
   getTenant(id: string): Promise<Tenant | undefined>;
@@ -603,6 +607,21 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return user || undefined;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: sql`CURRENT_TIMESTAMP`,
+        },
+      })
+      .returning();
+    return user;
   }
 
   async getUsersByTenant(tenantId: string): Promise<User[]> {

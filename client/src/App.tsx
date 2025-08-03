@@ -3,9 +3,9 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/contexts/auth-context";
 import { TenantProvider } from "@/contexts/tenant-context-fixed";
 import { TranslationProvider } from "@/contexts/translation-context";
+import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { ProtectedRoute } from "@/components/layout/protected-route";
@@ -730,17 +730,41 @@ function AppContent() {
   );
 }
 
+function Router() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  return (
+    <Switch>
+      {isLoading || !isAuthenticated ? (
+        <Route path="/" component={LandingPage} />
+      ) : (
+        <>
+          <Route path="/" component={Dashboard} />
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/patients" component={Patients} />
+          <Route path="/appointments" component={Appointments} />
+          <Route path="/prescriptions" component={Prescriptions} />
+          <Route path="/lab-orders" component={LabOrders} />
+          <Route path="/billing" component={Billing} />
+          <Route path="/tenant-management" component={TenantManagement} />
+          <Route path="/super-admin" component={SuperAdminDashboard} />
+          <Route path="/client-management" component={SuperAdminClientManagement} />
+        </>
+      )}
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <TranslationProvider>
-          <AuthProvider>
-            <TenantProvider>
-              <Toaster />
-              <AppContent />
-            </TenantProvider>
-          </AuthProvider>
+          <TenantProvider>
+            <Toaster />
+            <Router />
+          </TenantProvider>
         </TranslationProvider>
       </TooltipProvider>
     </QueryClientProvider>

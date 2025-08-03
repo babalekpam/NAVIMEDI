@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Tenant } from "@shared/schema";
-import { useAuth } from "./auth-context";
+import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 
 interface TenantContextType {
@@ -28,12 +28,12 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [availableTenants, setAvailableTenants] = useState<Tenant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { user, token } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     const initializeTenant = async () => {
       // Wait for auth to be ready
-      if (!user || !token) {
+      if (!isAuthenticated || !user) {
         setIsLoading(false);
         return;
       }
@@ -61,7 +61,7 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
         console.error('Network error fetching tenant:', error);
         
         // Create fallback tenant data from user information when API fails
-        if (user && user.tenantId) {
+        if (user && user.id) {
           console.log('TenantFixed: Creating fallback tenant from user data');
           
           // NO DEFAULT HOSPITAL FALLBACK - Each tenant must be independent
@@ -93,7 +93,7 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
             }
           };
           
-          const tenantConfig = tenantMappings[user.tenantId as keyof typeof tenantMappings];
+          const tenantConfig = tenantMappings[user.tenantId as keyof typeof tenantMappings] || null;
           if (tenantConfig) {
             tenantName = tenantConfig.name;
             tenantType = tenantConfig.type;
@@ -102,12 +102,14 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
           }
           
           const fallbackTenant = {
-            id: user.tenantId,
+            id: user.tenantId || user.id || 'fallback-tenant',
             name: tenantName,
             type: tenantType,
             subdomain: subdomain,
             settings: { features: features },
             isActive: true,
+            parentTenantId: null,
+            organizationType: 'independent' as const,
             brandName: null,
             logoUrl: null,
             primaryColor: '#10b981',
@@ -147,7 +149,7 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
     };
 
     initializeTenant();
-  }, [user, token]);
+  }, [user, isAuthenticated]);
 
   const switchTenant = (tenantId: string) => {
     const selectedTenant = availableTenants.find(t => t.id === tenantId);
