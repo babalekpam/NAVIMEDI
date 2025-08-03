@@ -180,6 +180,9 @@ export function DepartmentManagement() {
       ...data,
       headOfDepartment: data.headOfDepartment === "none" ? undefined : data.headOfDepartment,
       budget: data.budget.toString(), // Convert number to string for decimal field
+      specializations: Array.isArray(data.specializations) ? data.specializations : [],
+      equipment: Array.isArray(data.equipment) ? data.equipment : [],
+      certifications: Array.isArray(data.certifications) ? data.certifications : [],
     };
     
     if (editingDepartment) {
