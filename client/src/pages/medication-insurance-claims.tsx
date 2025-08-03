@@ -33,13 +33,19 @@ import { apiRequest } from "@/lib/queryClient";
 const medicationClaimSchema = z.object({
   patientId: z.string().min(1, "Patient selection is required"),
   prescriptionId: z.string().min(1, "Prescription selection is required"),
-  claimAmount: z.number().min(0.01, "Claim amount must be greater than 0"),
+  claimNumber: z.string().min(1, "Claim number is required"),
   medicationName: z.string().min(1, "Medication name is required"),
+  medicationCode: z.string().min(1, "Medication code is required"),
   dosage: z.string().min(1, "Dosage is required"),
   quantity: z.number().min(1, "Quantity must be at least 1"),
   daysSupply: z.number().min(1, "Days supply must be at least 1"),
+  medicationCost: z.number().min(0.01, "Medication cost must be greater than 0"),
+  insuranceCoverageRate: z.number().min(0).max(100, "Coverage rate must be between 0-100%"),
+  patientShare: z.number().min(0, "Patient share must be non-negative"),
+  claimAmount: z.number().min(0.01, "Claim amount must be greater than 0"),
+  diagnosticCode: z.string().min(1, "Diagnostic code is required"),
   pharmacyNpi: z.string().optional(),
-  notes: z.string().optional(),
+  medicationNote: z.string().optional(),
 });
 
 type MedicationClaimForm = z.infer<typeof medicationClaimSchema>;
@@ -112,13 +118,19 @@ export default function MedicationInsuranceClaims() {
     defaultValues: {
       patientId: "",
       prescriptionId: "",
-      claimAmount: 0,
+      claimNumber: "",
       medicationName: "",
+      medicationCode: "",
       dosage: "",
       quantity: 0,
       daysSupply: 0,
+      medicationCost: 0,
+      insuranceCoverageRate: 80,
+      patientShare: 0,
+      claimAmount: 0,
+      diagnosticCode: "",
       pharmacyNpi: "",
-      notes: "",
+      medicationNote: "",
     },
   });
 
@@ -133,8 +145,8 @@ export default function MedicationInsuranceClaims() {
   });
 
   // Fetch patients for claim creation
-  const { data: patients = [] } = useQuery<Patient[]>({
-    queryKey: ["/api/patients"],
+  const { data: patients = [], isLoading: patientsLoading } = useQuery<Patient[]>({
+    queryKey: ["/api/billing/patients"],
     enabled: !!user && !!tenant && isCreateDialogOpen,
   });
 
@@ -190,15 +202,26 @@ export default function MedicationInsuranceClaims() {
     },
   });
 
+  // Generate claim number
+  const generateClaimNumber = () => {
+    const prefix = "CLM";
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `${prefix}-${timestamp}-${random}`;
+  };
+
   // Handle patient selection
   const handlePatientSelect = (patient: Patient) => {
     setSelectedPatient(patient);
     setSelectedPrescription(null);
     form.setValue("patientId", patient.id);
     form.setValue("prescriptionId", "");
+    form.setValue("claimNumber", generateClaimNumber());
     form.setValue("medicationName", "");
+    form.setValue("medicationCode", "");
     form.setValue("dosage", "");
     form.setValue("quantity", 0);
+    form.setValue("diagnosticCode", "");
   };
 
   // Handle prescription selection
@@ -206,26 +229,37 @@ export default function MedicationInsuranceClaims() {
     setSelectedPrescription(prescription);
     form.setValue("prescriptionId", prescription.id);
     form.setValue("medicationName", prescription.medicationName);
+    form.setValue("medicationCode", `NDC-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}-${Math.floor(Math.random() * 100).toString().padStart(2, '0')}`);
     form.setValue("dosage", prescription.dosage);
     form.setValue("quantity", prescription.quantity);
     form.setValue("daysSupply", Math.ceil(prescription.quantity / parseInt(prescription.frequency.split(' ')[0] || "1")));
+    
+    // Set default medication cost based on common drug pricing
+    const baseCost = prescription.quantity * 12.50; // $12.50 per unit average
+    form.setValue("medicationCost", Math.round(baseCost * 100) / 100);
+    
+    // Calculate patient share and claim amount
+    calculateCostSharing();
   };
 
-  // Auto-calculate claim amount based on medication and insurance
-  const calculateClaimAmount = () => {
-    if (selectedPrescription && patientInsurance) {
-      // Simple calculation - in real implementation, this would use complex pricing rules
-      const basePrice = selectedPrescription.quantity * 10; // $10 per unit as example
-      const coveragePercentage = patientInsurance[0]?.coveragePercentage || 0.8;
-      const claimAmount = basePrice * coveragePercentage;
-      form.setValue("claimAmount", Math.round(claimAmount * 100) / 100);
+  // Calculate cost sharing based on medication cost and coverage rate
+  const calculateCostSharing = () => {
+    const medicationCost = form.getValues("medicationCost");
+    const coverageRate = form.getValues("insuranceCoverageRate");
+    
+    if (medicationCost > 0 && coverageRate >= 0) {
+      const insuranceCovers = (medicationCost * coverageRate) / 100;
+      const patientPays = medicationCost - insuranceCovers;
+      
+      form.setValue("claimAmount", Math.round(insuranceCovers * 100) / 100);
+      form.setValue("patientShare", Math.round(patientPays * 100) / 100);
     }
   };
 
-  // Auto-calculate when prescription or insurance changes
+  // Auto-calculate when cost or coverage changes
   React.useEffect(() => {
-    calculateClaimAmount();
-  }, [selectedPrescription, patientInsurance]);
+    calculateCostSharing();
+  }, [form.watch("medicationCost"), form.watch("insuranceCoverageRate")]);
 
   const onSubmit = (data: MedicationClaimForm) => {
     createClaimMutation.mutate(data);
@@ -349,15 +383,21 @@ export default function MedicationInsuranceClaims() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {patients.map((patient) => (
-                              <SelectItem key={patient.id} value={patient.id}>
-                                <div className="flex items-center gap-2">
-                                  <User className="h-4 w-4" />
-                                  <span>{patient.firstName} {patient.lastName}</span>
-                                  <span className="text-sm text-gray-500">({patient.mrn})</span>
-                                </div>
-                              </SelectItem>
-                            ))}
+                            {patientsLoading ? (
+                              <SelectItem value="loading" disabled>Loading patients...</SelectItem>
+                            ) : patients.length === 0 ? (
+                              <SelectItem value="no-patients" disabled>No patients found</SelectItem>
+                            ) : (
+                              patients.map((patient) => (
+                                <SelectItem key={patient.id} value={patient.id}>
+                                  <div className="flex items-center gap-2">
+                                    <User className="h-4 w-4" />
+                                    <span>{patient.firstName} {patient.lastName}</span>
+                                    <span className="text-sm text-gray-500">({patient.mrn})</span>
+                                  </div>
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -449,11 +489,26 @@ export default function MedicationInsuranceClaims() {
                   </div>
                 )}
 
-                {/* Auto-populated Claim Details */}
+                {/* Claim Details */}
                 {selectedPrescription && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">3. Claim Details (Auto-populated)</h3>
+                    <h3 className="text-lg font-semibold">3. Claim Details</h3>
                     
+                    {/* Auto-generated Claim Number */}
+                    <FormField
+                      control={form.control}
+                      name="claimNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Claim Number (Auto-generated)</FormLabel>
+                          <FormControl>
+                            <Input {...field} readOnly className="bg-gray-50 font-mono" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -463,6 +518,20 @@ export default function MedicationInsuranceClaims() {
                             <FormLabel>Medication Name</FormLabel>
                             <FormControl>
                               <Input {...field} readOnly className="bg-gray-50" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="medicationCode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Medication Code (NDC)</FormLabel>
+                            <FormControl>
+                              <Input {...field} className="font-mono" placeholder="NDC-XXXX-XX" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -523,23 +592,111 @@ export default function MedicationInsuranceClaims() {
 
                       <FormField
                         control={form.control}
-                        name="claimAmount"
+                        name="diagnosticCode"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Claim Amount ($)</FormLabel>
+                            <FormLabel>Diagnostic Code (ICD-10)</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="number" 
-                                step="0.01"
-                                {...field} 
-                                onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                              />
+                              <Input {...field} className="font-mono" placeholder="ICD-10 Code (e.g., Z79.01)" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+                    </div>
 
+                    {/* Cost and Insurance Information */}
+                    <div className="border rounded-lg p-4 bg-blue-50">
+                      <h4 className="font-semibold text-blue-900 mb-3">Cost & Insurance Coverage</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="medicationCost"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Medication Cost ($)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  step="0.01"
+                                  {...field} 
+                                  onChange={(e) => {
+                                    field.onChange(parseFloat(e.target.value));
+                                    setTimeout(calculateCostSharing, 100);
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="insuranceCoverageRate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Insurance Coverage Rate (%)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  min="0"
+                                  max="100"
+                                  {...field} 
+                                  onChange={(e) => {
+                                    field.onChange(parseFloat(e.target.value));
+                                    setTimeout(calculateCostSharing, 100);
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="claimAmount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Insurance Claim Amount ($)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  step="0.01"
+                                  {...field} 
+                                  readOnly
+                                  className="bg-green-50 font-semibold text-green-700"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="patientShare"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Patient Share ($)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  step="0.01"
+                                  {...field} 
+                                  readOnly
+                                  className="bg-orange-50 font-semibold text-orange-700"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="pharmacyNpi"
@@ -547,7 +704,7 @@ export default function MedicationInsuranceClaims() {
                           <FormItem>
                             <FormLabel>Pharmacy NPI (Optional)</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="Enter pharmacy NPI" />
+                              <Input {...field} placeholder="Enter pharmacy NPI" className="font-mono" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -557,12 +714,12 @@ export default function MedicationInsuranceClaims() {
 
                     <FormField
                       control={form.control}
-                      name="notes"
+                      name="medicationNote"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Notes (Optional)</FormLabel>
+                          <FormLabel>Medication Note</FormLabel>
                           <FormControl>
-                            <Textarea {...field} placeholder="Additional notes for the claim" />
+                            <Textarea {...field} placeholder="Special instructions, contraindications, or additional notes about the medication" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
