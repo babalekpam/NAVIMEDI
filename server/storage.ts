@@ -4720,15 +4720,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createDepartment(data: InsertDepartment): Promise<Department> {
+    // Handle array fields properly for PostgreSQL
+    const processedData = {
+      ...data,
+      specializations: data.specializations && data.specializations.length > 0 ? data.specializations : null,
+      certifications: data.certifications && data.certifications.length > 0 ? data.certifications : null,
+      equipment: data.equipment && Array.isArray(data.equipment) && data.equipment.length > 0 ? data.equipment : null,
+    };
+    
     const [department] = await db.insert(departments)
-      .values(data)
+      .values(processedData)
       .returning();
     return department;
   }
 
   async updateDepartment(id: string, data: Partial<InsertDepartment>, tenantId: string): Promise<Department | null> {
+    // Handle array fields properly for PostgreSQL
+    const processedData = {
+      ...data,
+      specializations: data.specializations && data.specializations.length > 0 ? data.specializations : null,
+      certifications: data.certifications && data.certifications.length > 0 ? data.certifications : null,
+      equipment: data.equipment && Array.isArray(data.equipment) && data.equipment.length > 0 ? data.equipment : null,
+      updatedAt: new Date()
+    };
+    
     const [updated] = await db.update(departments)
-      .set({ ...data, updatedAt: new Date() })
+      .set(processedData)
       .where(and(
         eq(departments.id, id),
         eq(departments.tenantId, tenantId)
