@@ -89,6 +89,13 @@ interface InsuranceClaim {
 }
 
 export default function MedicationInsuranceClaims() {
+  // Set page title
+  React.useEffect(() => {
+    document.title = "Insurance Claims - NaviMED";
+    return () => {
+      document.title = "NaviMED";
+    };
+  }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
