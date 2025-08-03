@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SimpleRoleChanger } from "@/components/SimpleRoleChanger";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -478,58 +479,7 @@ export default function UserRoles() {
     });
   };
 
-  // Direct simple role update function - SIMPLIFIED APPROACH
-  const updateUserRoleDirectly = async (userId: string, newRole: string, userName: string) => {
-    try {
-      console.log("🟡 DIRECT ROLE UPDATE:", userName, "→", newRole);
-      
-      const token = localStorage.getItem("auth_token");
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
 
-      const response = await fetch(`/api/users/${userId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ role: newRole })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("🔴 Role update failed:", errorText);
-        
-        if (errorText.includes("<!DOCTYPE") || errorText.includes("<html")) {
-          throw new Error("Authentication failed - please refresh page and try again");
-        }
-        
-        throw new Error(`Failed to update role: ${response.status} - ${errorText}`);
-      }
-
-      const result = await response.json();
-      console.log("🟢 Role update success:", result);
-      
-      // Refresh the user list
-      queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
-      
-      toast({
-        title: "Success",
-        description: `${userName}'s role changed to ${newRole.replace('_', ' ')}`,
-      });
-
-      return result;
-    } catch (error) {
-      console.error("🔴 Role update error:", error);
-      toast({
-        title: "Error", 
-        description: error instanceof Error ? error.message : "Failed to update role",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
 
 
 
@@ -813,22 +763,14 @@ export default function UserRoles() {
                           <Edit className="h-4 w-4" />
                         </Button>
                         
-                        {/* Simple Test Button - DIRECT APPROACH */}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={async () => {
-                            console.log("🔥 BUTTON CLICK - Starting role update for", userItem.firstName);
-                            try {
-                              await updateUserRoleDirectly(userItem.id, "nurse", userItem.firstName);
-                            } catch (error) {
-                              console.error("🔥 BUTTON ERROR:", error);
-                            }
+                        <SimpleRoleChanger
+                          userId={userItem.id}
+                          currentRole={userItem.role}
+                          userName={userItem.firstName}
+                          onSuccess={() => {
+                            queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
                           }}
-                          className="text-xs px-2"
-                        >
-                          → Nurse
-                        </Button>
+                        />
                         {userItem.role !== 'super_admin' && (
                           <Button
                             variant={userItem.isActive ? "destructive" : "default"}
