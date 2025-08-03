@@ -286,8 +286,17 @@ export default function UserRoles() {
       });
       
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update user status");
+        // Check if response is JSON
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const error = await response.json();
+          throw new Error(error.message || "Failed to update user status");
+        } else {
+          // Handle HTML error responses (authentication issues)
+          const errorText = await response.text();
+          console.error("HTML Error Response:", errorText);
+          throw new Error("Authentication failed. Please check your login status and try again.");
+        }
       }
       
       return response.json();
@@ -426,6 +435,14 @@ export default function UserRoles() {
     toggleUserStatusMutation.mutate({
       id: userItem.id,
       isActive: !userItem.isActive,
+    });
+  };
+
+  // Handle role assignment directly through updateUserMutation
+  const handleRoleChange = (userId: string, newRole: string) => {
+    updateUserMutation.mutate({
+      id: userId,
+      data: { role: newRole }
     });
   };
 

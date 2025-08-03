@@ -1585,7 +1585,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user (for user management)
-  app.patch("/api/users/:id", authenticateToken, async (req, res) => {
+  app.patch("/api/users/:id", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { id } = req.params;
       const updateData = req.body;
@@ -1597,9 +1597,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if user has permission to update this user
-      const hasPermission = req.user.role === 'super_admin' || 
-                           ((req.user.role === 'tenant_admin' || req.user.role === 'director') && existingUser.tenantId === req.user.tenantId) ||
-                           (req.user.userId === id); // User updating themselves
+      const hasPermission = req.user!.role === 'super_admin' || 
+                           ((req.user!.role === 'tenant_admin' || req.user!.role === 'director') && existingUser.tenantId === req.user!.tenantId) ||
+                           (req.user!.id === id); // User updating themselves
 
       if (!hasPermission) {
         return res.status(403).json({ message: "Access denied. Cannot update this user." });
@@ -1611,7 +1611,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Prevent users from deactivating themselves
-      if (req.user.userId === id && updateData.isActive === false) {
+      if (req.user!.id === id && updateData.isActive === false) {
         return res.status(403).json({ message: "You cannot deactivate your own account." });
       }
 
@@ -1621,14 +1621,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: existingUser.tenantId,
-        userId: req.user.userId || null,
+        userId: req.user!.id,
         entityType: "user",
         entityId: id,
         action: "update",
         oldData: { isActive: existingUser.isActive, role: existingUser.role },
         newData: updateData,
-        ipAddress: req.ip || null,
-        userAgent: req.get("User-Agent") || null
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
       });
 
       res.json({
