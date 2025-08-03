@@ -111,21 +111,17 @@ export function DepartmentManagement() {
   // Fetch departments
   const { data: departments, isLoading } = useQuery({
     queryKey: ['/api/departments'],
-    queryFn: () => apiRequest('/api/departments'),
   });
 
   // Fetch users for head of department selection
   const { data: users } = useQuery({
     queryKey: ['/api/users'],
-    queryFn: () => apiRequest('/api/users'),
   });
 
   // Create department mutation
   const createMutation = useMutation({
-    mutationFn: (data: DepartmentFormData) => apiRequest('/api/departments', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
+    mutationFn: (data: DepartmentFormData) => 
+      apiRequest('POST', '/api/departments', data).then(res => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/departments'] });
       toast({ title: "Success", description: "Department created successfully" });
@@ -144,10 +140,7 @@ export function DepartmentManagement() {
   // Update department mutation
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<DepartmentFormData> }) => 
-      apiRequest(`/api/departments/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      }),
+      apiRequest('PUT', `/api/departments/${id}`, data).then(res => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/departments'] });
       toast({ title: "Success", description: "Department updated successfully" });
@@ -166,9 +159,8 @@ export function DepartmentManagement() {
 
   // Delete department mutation
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/departments/${id}`, {
-      method: 'DELETE',
-    }),
+    mutationFn: (id: string) => 
+      apiRequest('DELETE', `/api/departments/${id}`).then(res => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/departments'] });
       toast({ title: "Success", description: "Department deleted successfully" });
@@ -464,7 +456,7 @@ export function DepartmentManagement() {
                   />
                 </div>
 
-                {users && (
+                {users && Array.isArray(users) && (
                   <FormField
                     control={form.control}
                     name="headOfDepartment"
@@ -636,7 +628,7 @@ export function DepartmentManagement() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {departments?.map((department: Department) => {
+        {departments && Array.isArray(departments) && departments.map((department: Department) => {
           const IconComponent = getIcon(department.icon || 'Building');
           return (
             <Card key={department.id} className="relative">
