@@ -3123,6 +3123,8 @@ Report ID: ${report.id}
   app.post("/api/role-permissions", authenticateToken, requireRole(["tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
     try {
       console.log("🔧 [SERVER] Role permissions POST request:", req.body);
+      console.log("🔧 [SERVER] Request user info:", { userId: req.userId, tenantId: req.tenantId, userRole: req.user?.role });
+      
       const { role, module, permissions } = req.body;
       
       if (!role || !module || !Array.isArray(permissions)) {
@@ -3131,6 +3133,15 @@ Report ID: ${report.id}
           message: "Invalid request data - role, module, and permissions array required" 
         });
       }
+
+      // Ensure we have user ID - check both req.userId and req.user.id
+      const userId = req.userId || req.user?.id;
+      if (!userId) {
+        console.log("🔧 [SERVER] ERROR: No user ID available - req.userId:", req.userId, "req.user:", req.user);
+        return res.status(401).json({ message: "Authentication required - user ID not found" });
+      }
+
+      console.log("🔧 [SERVER] Using userId:", userId);
 
       // Check if permission already exists for this role and module
       const existingPermissions = await storage.getRolePermissionsByRole(role, req.tenantId!);
@@ -3144,7 +3155,7 @@ Report ID: ${report.id}
           existingPermission.id,
           {
             permissions,
-            updatedBy: req.userId!,
+            updatedBy: userId,
             updatedAt: new Date()
           },
           req.tenantId!
@@ -3152,19 +3163,14 @@ Report ID: ${report.id}
         console.log("🔧 [SERVER] Update result:", result);
       } else {
         // Create new permission
-        console.log("🔧 [SERVER] Creating new permission for user:", req.userId);
-        
-        if (!req.userId) {
-          console.log("🔧 [SERVER] ERROR: No user ID available for creating permission");
-          return res.status(400).json({ message: "User ID required for creating permissions" });
-        }
+        console.log("🔧 [SERVER] Creating new permission for user:", userId);
         
         result = await storage.createRolePermission({
           tenantId: req.tenantId!,
           role: role as any,
           module,
           permissions,
-          createdBy: req.userId!,
+          createdBy: userId,
           isActive: true
         });
         console.log("🔧 [SERVER] Create result:", result);
@@ -3173,7 +3179,7 @@ Report ID: ${report.id}
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenantId!,
-        userId: req.userId!,
+        userId: userId,
         entityType: "role_permission",
         entityId: result?.id || existingPermission?.id || "unknown",
         action: existingPermission ? "update" : "create",
