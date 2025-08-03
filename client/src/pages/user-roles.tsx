@@ -218,6 +218,19 @@ export default function UserRoles() {
   const createUserMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
       const response = await apiRequest("POST", "/api/users", data);
+      
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const error = await response.json();
+          throw new Error(error.message || "Failed to create user");
+        } else {
+          const errorText = await response.text();
+          console.error("HTML Error Response:", errorText);
+          throw new Error("Authentication failed. Please refresh and try again.");
+        }
+      }
+      
       return response.json();
     },
     onSuccess: (responseData, formData) => {
@@ -252,7 +265,21 @@ export default function UserRoles() {
 
   const updateUserMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<UserFormData> }) => {
+      console.log("Updating user:", id, "with data:", data);
       const response = await apiRequest("PATCH", `/api/users/${id}`, data);
+      
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const error = await response.json();
+          throw new Error(error.message || "Failed to update user");
+        } else {
+          const errorText = await response.text();
+          console.error("HTML Error Response:", errorText);
+          throw new Error("Authentication failed. Please refresh and try again.");
+        }
+      }
+      
       return response.json();
     },
     onSuccess: () => {
@@ -341,6 +368,19 @@ export default function UserRoles() {
           module,
           permissions
         });
+        
+        if (!response.ok) {
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const error = await response.json();
+            throw new Error(error.message || "Failed to save permissions");
+          } else {
+            const errorText = await response.text();
+            console.error("HTML Error Response:", errorText);
+            throw new Error("Authentication failed. Please refresh and try again.");
+          }
+        }
+        
         return response.json();
       });
 

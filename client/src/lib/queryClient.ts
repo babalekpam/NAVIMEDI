@@ -9,14 +9,10 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
+  method: string,
   url: string,
-  options: {
-    method?: string;
-    body?: string;
-  } = {}
-): Promise<any> {
-  const method = options.method || "GET";
-  const data = options.body ? JSON.parse(options.body) : undefined;
+  data?: unknown
+): Promise<Response> {
   const token = localStorage.getItem("auth_token");
   
   // Clear corrupted tokens
@@ -41,7 +37,7 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
-  return res.json();
+  return res;
 }
 
 // Legacy function for backward compatibility
