@@ -34,7 +34,6 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
 
   // Determine the organization type and customize the interface accordingly
   const organizationType = tenant?.type || 'hospital';
-  console.log('[ADMIN DASHBOARD] Organization type:', organizationType, 'Tenant:', tenant?.name);
   
   const organizationTitle = organizationType === 'pharmacy' ? 'Pharmacy Administration' : 
                            organizationType === 'laboratory' ? 'Laboratory Administration' : 
@@ -100,55 +99,37 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
         }
       ];
     } else {
-      return staffCards; // Default hospital staff cards
+      // Default hospital staff cards
+      return [
+        {
+          role: "physician",
+          title: "Add Doctors",
+          description: "Add physicians and medical specialists",
+          icon: Stethoscope,
+          color: "bg-blue-100 text-blue-800",
+          count: "Medical Staff"
+        },
+        {
+          role: "nurse",
+          title: "Add Nurses",
+          description: "Add registered nurses and nursing staff",
+          icon: Heart,
+          color: "bg-red-100 text-red-800",
+          count: "Nursing Staff"
+        },
+        {
+          role: "receptionist",
+          title: "Add Reception Staff",
+          description: "Add front desk and patient registration staff",
+          icon: UserCheck,
+          color: "bg-yellow-100 text-yellow-800",
+          count: "Front Desk Staff"
+        }
+      ];
     }
   };
 
   const organizationStaffCards = getStaffCardsForOrganization();
-
-  // Default hospital staff cards (used when organizationType is hospital)
-  const staffCards = [
-    {
-      role: "physician",
-      title: "Add Doctors",
-      description: "Add physicians and medical specialists to your hospital",
-      icon: Stethoscope,
-      color: "bg-blue-100 text-blue-800",
-      count: "Specialists & Primary Care"
-    },
-    {
-      role: "nurse",
-      title: "Add Nurses", 
-      description: "Add registered nurses and nursing staff",
-      icon: Heart,
-      color: "bg-green-100 text-green-800",
-      count: "RNs & LPNs"
-    },
-    {
-      role: "lab_technician",
-      title: "Add Lab Staff",
-      description: "Add laboratory technicians and pathologists",
-      icon: FlaskConical,
-      color: "bg-purple-100 text-purple-800",
-      count: "Lab Technicians"
-    },
-    {
-      role: "receptionist",
-      title: "Add Reception Staff",
-      description: "Add front desk and patient registration staff",
-      icon: UserCheck,
-      color: "bg-yellow-100 text-yellow-800",
-      count: "Front Desk Staff"
-    },
-    {
-      role: "billing_staff",
-      title: "Add Billing Staff",
-      description: "Add billing specialists and financial coordinators",
-      icon: DollarSign,
-      color: "bg-orange-100 text-orange-800",
-      count: "Billing Specialists"
-    }
-  ];
 
   return (
     <div className="space-y-6">
