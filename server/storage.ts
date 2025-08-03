@@ -4722,7 +4722,12 @@ export class DatabaseStorage implements IStorage {
   async createDepartment(data: InsertDepartment): Promise<Department> {
     // Handle array fields properly for PostgreSQL and ensure no id field is passed
     const { id, createdAt, updatedAt, ...cleanData } = data as any;
+    
+    // Generate UUID using crypto.randomUUID() 
+    const uuid = crypto.randomUUID();
+    
     const processedData = {
+      id: uuid,
       ...cleanData,
       specializations: cleanData.specializations && cleanData.specializations.length > 0 ? cleanData.specializations : null,
       certifications: cleanData.certifications && cleanData.certifications.length > 0 ? cleanData.certifications : null,
