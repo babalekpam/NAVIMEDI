@@ -145,15 +145,7 @@ export default function PharmacyDashboardWorking() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      {/* Debug Info */}
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <h3 className="text-sm font-semibold text-blue-800 mb-2">🔧 Debug Information</h3>
-        <div className="text-xs text-blue-600 space-y-1">
-          <div>User: {user?.role} | Tenant: {tenant?.name} ({tenant?.type})</div>
-          <div>Prescriptions loaded: {prescriptions?.length || 0} | Loading: {isLoading ? 'Yes' : 'No'}</div>
-          <div>Error: {error ? 'Yes - Check console' : 'None'}</div>
-        </div>
-      </div>
+
 
       {/* Header */}
       <div className="mb-8">
