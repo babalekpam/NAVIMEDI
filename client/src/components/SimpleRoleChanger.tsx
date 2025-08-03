@@ -29,13 +29,17 @@ export function SimpleRoleChanger({ userId, currentRole, userName, onSuccess }: 
     if (newRole === currentRole) return;
     
     setIsUpdating(true);
+    console.log("🚀 Starting role update:", { userId, currentRole, newRole, userName });
     
     try {
       const token = localStorage.getItem("auth_token");
+      console.log("🔑 Token check:", !!token, token?.substring(0, 20));
+      
       if (!token) {
-        throw new Error("No authentication token");
+        throw new Error("No authentication token found");
       }
 
+      console.log("📡 Making API request to:", `/api/users/${userId}`);
       const response = await fetch(`/api/users/${userId}`, {
         method: "PATCH",
         headers: {
@@ -45,20 +49,45 @@ export function SimpleRoleChanger({ userId, currentRole, userName, onSuccess }: 
         body: JSON.stringify({ role: newRole })
       });
 
+      console.log("📡 Response received:", {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Role update failed:", response.status, errorText);
+        console.error("❌ Role update failed:", {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText.substring(0, 200)
+        });
         
         if (errorText.includes("<!DOCTYPE") || errorText.includes("<html")) {
+          console.error("❌ HTML error page detected - authentication issue");
           throw new Error("Session expired - please refresh and login again");
         }
         
-        const errorData = JSON.parse(errorText);
-        throw new Error(errorData.message || `Update failed: ${response.status}`);
+        try {
+          const errorData = JSON.parse(errorText);
+          throw new Error(errorData.message || `Update failed: ${response.status}`);
+        } catch (parseError) {
+          throw new Error(`Server error: ${response.status} - ${errorText.substring(0, 100)}`);
+        }
       }
 
-      const result = await response.json();
-      console.log("Role update successful:", result);
+      const responseText = await response.text();
+      console.log("📄 Raw response text:", responseText);
+      
+      let result;
+      try {
+        result = JSON.parse(responseText);
+        console.log("✅ Role update successful:", result);
+      } catch (parseError) {
+        console.error("❌ Failed to parse success response:", parseError);
+        console.log("Raw response was:", responseText);
+        throw new Error("Server returned invalid response format");
+      }
       
       toast({
         title: "Role Updated",
@@ -68,10 +97,10 @@ export function SimpleRoleChanger({ userId, currentRole, userName, onSuccess }: 
       onSuccess();
       
     } catch (error) {
-      console.error("Role update error:", error);
+      console.error("❌ Complete error details:", error);
       toast({
         title: "Update Failed",
-        description: error instanceof Error ? error.message : "Unknown error",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
         variant: "destructive",
       });
     } finally {
