@@ -63,20 +63,25 @@ export default function PharmacyDashboardEnhancedV2() {
   const [deliveryTab, setDeliveryTab] = useState<'active' | 'scheduled' | 'completed'>('active');
   
   // Fetch real tenant-specific data
-  const { data: apiMetrics, isLoading: metricsLoading } = useQuery({
+  const { data: apiMetrics, isLoading: metricsLoading, error: metricsError } = useQuery({
     queryKey: ['/api/pharmacy/metrics', tenant?.id],
-    enabled: !!tenant?.id
+    enabled: !!tenant?.id && tenant?.type === 'pharmacy'
   });
 
-  const { data: apiPrescriptions, isLoading: prescriptionsLoading } = useQuery({
+  const { data: apiPrescriptions, isLoading: prescriptionsLoading, error: prescriptionsError } = useQuery({
     queryKey: ['/api/pharmacy/prescriptions', tenant?.id],
-    enabled: !!tenant?.id
+    enabled: !!tenant?.id && tenant?.type === 'pharmacy'
   });
 
-  const { data: apiInventoryAlerts, isLoading: inventoryLoading } = useQuery({
+  const { data: apiInventoryAlerts, isLoading: inventoryLoading, error: inventoryError } = useQuery({
     queryKey: ['/api/pharmacy/inventory-alerts', tenant?.id],
-    enabled: !!tenant?.id
+    enabled: !!tenant?.id && tenant?.type === 'pharmacy'
   });
+
+  // Debug logging
+  console.log('[PHARMACY DASHBOARD] Tenant:', tenant);
+  console.log('[PHARMACY DASHBOARD] API Data:', { apiMetrics, apiPrescriptions, apiInventoryAlerts });
+  console.log('[PHARMACY DASHBOARD] Errors:', { metricsError, prescriptionsError, inventoryError });
 
   // Mock data for demo (replace with tenant-specific data when API is ready)
   const metrics: PharmacyMetrics = apiMetrics || {
