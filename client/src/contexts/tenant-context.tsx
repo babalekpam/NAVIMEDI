@@ -30,15 +30,26 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
   const { user, token } = useAuth();
 
   useEffect(() => {
-    if (!token || !user) {
-      console.log('Tenant context: Missing token or user', { hasToken: !!token, hasUser: !!user });
-      setIsLoading(false);
+    // Wait for auth context to fully load
+    const storedToken = localStorage.getItem('auth_token');
+    const effectiveToken = token || storedToken;
+    
+    if (!effectiveToken || !user) {
+      console.log('Tenant context: Missing token or user', { 
+        hasToken: !!token, 
+        hasUser: !!user, 
+        hasStoredToken: !!storedToken 
+      });
+      // Don't set loading to false yet if we have a stored token but user isn't loaded
+      if (!storedToken) {
+        setIsLoading(false);
+      }
       return;
     }
 
     // Validate token format
-    if (token === 'undefined' || token === 'null' || token.length < 10) {
-      console.error('Tenant context: Invalid token format', { tokenPreview: token?.substring(0, 20) });
+    if (effectiveToken === 'undefined' || effectiveToken === 'null' || effectiveToken.length < 10) {
+      console.error('Tenant context: Invalid token format', { tokenPreview: effectiveToken?.substring(0, 20) });
       setIsLoading(false);
       return;
     }
@@ -46,20 +57,31 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
     // Fetch tenant information from API
     const fetchTenant = async () => {
       try {
-        console.log('Tenant context: Fetching tenant with token preview:', token.substring(0, 30) + '...');
+        console.log('Tenant context: Fetching tenant with token preview:', effectiveToken.substring(0, 30) + '...');
         
         const response = await fetch('/api/tenant/current', {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${effectiveToken}`,
             'Content-Type': 'application/json'
           }
         });
         
+        console.log('Tenant context: Response status:', response.status, response.ok);
+        
         if (response.ok) {
           const tenantData = await response.json();
-          console.log('Tenant context: Successfully fetched tenant:', tenantData.name);
-          setTenant(tenantData);
-          setAvailableTenants([tenantData]);
+          console.log('Tenant context: Raw response data:', tenantData);
+          console.log('Tenant context: Successfully fetched tenant:', tenantData?.name || 'No name');
+          
+          if (tenantData && tenantData.id) {
+            setTenant(tenantData);
+            setAvailableTenants([tenantData]);
+            console.log('Tenant context: State updated successfully');
+          } else {
+            console.error('Tenant context: Invalid tenant data structure:', tenantData);
+            setTenant(null);
+            setAvailableTenants([]);
+          }
         } else {
           console.error('Failed to fetch tenant:', response.status, response.statusText);
           const errorData = await response.text();
