@@ -79,9 +79,10 @@ export default function PharmacyDashboardEnhancedV2() {
   });
 
   // Debug logging
-  console.log('[PHARMACY DASHBOARD] Tenant:', tenant);
-  console.log('[PHARMACY DASHBOARD] API Data:', { apiMetrics, apiPrescriptions, apiInventoryAlerts });
-  console.log('[PHARMACY DASHBOARD] Errors:', { metricsError, prescriptionsError, inventoryError });
+  console.log('[PHARMACY DASHBOARD] ✅ Tenant:', tenant);
+  console.log('[PHARMACY DASHBOARD] ✅ API Data:', { apiMetrics, apiPrescriptions, apiInventoryAlerts });
+  console.log('[PHARMACY DASHBOARD] ✅ Errors:', { metricsError, prescriptionsError, inventoryError });
+  console.log('[PHARMACY DASHBOARD] ✅ Enhanced dashboard loaded!');
 
   // Mock data for demo (replace with tenant-specific data when API is ready)
   const metrics: PharmacyMetrics = apiMetrics || {
