@@ -62,7 +62,8 @@ export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response,
           '/api/white-label',
           '/api/billing-plans',
           '/api/tenant-settings',
-          '/api/client-management'
+          '/api/client-management',
+          '/api/admin/clients'
         ];
         
         // Define operational endpoints that super admin must NOT access
