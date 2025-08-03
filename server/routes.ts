@@ -983,13 +983,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/pharmacy/prescriptions", authenticateToken, requireTenant, async (req, res) => {
     try {
       const pharmacyTenantId = req.tenant!.id;
-      console.log("[PHARMACY API] Fetching prescriptions for pharmacy:", pharmacyTenantId);
-      console.log("[PHARMACY API] Request tenant type:", req.tenant!.type);
+      console.log("[PHARMACY API] ✅ Fetching prescriptions for pharmacy:", pharmacyTenantId);
+      console.log("[PHARMACY API] ✅ Request tenant type:", req.tenant!.type);
+      console.log("[PHARMACY API] ✅ User:", req.user?.id, "Role:", req.user?.role);
       
       // Get prescriptions sent TO this pharmacy (pharmacyTenantId = this pharmacy's tenant)
       const prescriptions = await storage.getPrescriptionsByPharmacyTenant(pharmacyTenantId);
-      console.log("[PHARMACY API] Found prescriptions:", prescriptions.length);
-      console.log("[PHARMACY API] Prescriptions data:", prescriptions);
+      console.log("[PHARMACY API] ✅ Found prescriptions:", prescriptions.length);
+      console.log("[PHARMACY API] ✅ Prescriptions data:", prescriptions);
       
       // Transform to show hospital connection for independent pharmacy
       const formattedPrescriptions = prescriptions.map(p => ({
