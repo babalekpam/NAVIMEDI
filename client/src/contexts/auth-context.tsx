@@ -102,6 +102,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       window.location.href = '/change-password';
     } else if (data.user.role === 'patient') {
       window.location.href = '/patient-portal';
+    } else if (data.user.role === 'tenant_admin' || data.user.role === 'director') {
+      // Redirect tenant admins to unified admin dashboard
+      window.location.href = '/admin-dashboard';
     } else {
       window.location.href = '/dashboard';
     }
