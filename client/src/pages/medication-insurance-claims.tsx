@@ -137,10 +137,6 @@ export default function MedicationInsuranceClaims() {
   // Fetch insurance claims
   const { data: claims = [], isLoading } = useQuery<InsuranceClaim[]>({
     queryKey: ["/api/insurance-claims"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/insurance-claims");
-      return response.json();
-    },
     enabled: !!user && !!tenant,
   });
 
@@ -153,20 +149,12 @@ export default function MedicationInsuranceClaims() {
   // Fetch prescriptions for selected patient
   const { data: prescriptions = [] } = useQuery<Prescription[]>({
     queryKey: ["/api/prescriptions/patient", selectedPatient?.id],
-    queryFn: async () => {
-      const response = await apiRequest("GET", `/api/prescriptions/patient/${selectedPatient?.id}`);
-      return response.json();
-    },
     enabled: !!selectedPatient?.id,
   });
 
   // Fetch patient insurance information
   const { data: patientInsurance } = useQuery({
     queryKey: ["/api/patient-insurance", selectedPatient?.id],
-    queryFn: async () => {
-      const response = await apiRequest("GET", `/api/patient-insurance/${selectedPatient?.id}`);
-      return response.json();
-    },
     enabled: !!selectedPatient?.id,
   });
 
@@ -174,11 +162,12 @@ export default function MedicationInsuranceClaims() {
   const createClaimMutation = useMutation({
     mutationFn: async (data: MedicationClaimForm) => {
       const response = await apiRequest("POST", "/api/insurance-claims", {
-        ...data,
-        claimType: "medication",
-        status: "submitted",
-        submittedAt: new Date().toISOString(),
-        claimNumber: `MED-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+        body: JSON.stringify({
+          ...data,
+          claimType: "medication",
+          status: "submitted",
+          submittedAt: new Date().toISOString(),
+        }),
       });
       return response.json();
     },
