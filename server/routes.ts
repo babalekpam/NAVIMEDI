@@ -534,7 +534,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("[PHARMACY API] 🚀 GET /api/pharmacy/prescriptions called");
       const { pharmacyTenantId } = req.params;
+      const userTenantId = req.tenant!.id;
+      
       console.log("[PHARMACY API] 📋 Pharmacy Tenant ID:", pharmacyTenantId);
+      console.log("[PHARMACY API] 🔒 User Tenant ID:", userTenantId);
+      
+      // STRICT TENANT ISOLATION: Users can only access their own tenant's data
+      if (pharmacyTenantId !== userTenantId) {
+        console.log("[PHARMACY API] ❌ TENANT ISOLATION VIOLATION: User from tenant", userTenantId, "trying to access tenant", pharmacyTenantId);
+        return res.status(403).json({ 
+          message: "Access denied: Cannot access data from different tenant",
+          error: "TENANT_ISOLATION_VIOLATION"
+        });
+      }
+      
+      // Ensure this is actually a pharmacy tenant
+      if (req.tenant!.type !== 'pharmacy') {
+        console.log("[PHARMACY API] ❌ INVALID TENANT TYPE: Tenant type is", req.tenant!.type, "but expected pharmacy");
+        return res.status(403).json({ 
+          message: "Access denied: This endpoint is only for pharmacy tenants",
+          error: "INVALID_TENANT_TYPE"
+        });
+      }
       
       const prescriptions = await storage.getPrescriptionsByPharmacy(pharmacyTenantId);
       console.log("[PHARMACY API] ✅ Returning prescriptions:", prescriptions.length);
@@ -1095,6 +1116,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("[PHARMACY API] ✅ Fetching prescriptions for pharmacy:", pharmacyTenantId);
       console.log("[PHARMACY API] ✅ Request tenant type:", req.tenant!.type);
       console.log("[PHARMACY API] ✅ User:", req.user?.id, "Role:", req.user?.role);
+      
+      // STRICT TENANT ISOLATION: Only pharmacy tenants can access pharmacy prescriptions
+      if (req.tenant!.type !== 'pharmacy') {
+        console.log("[PHARMACY API] ❌ INVALID TENANT TYPE: Tenant type is", req.tenant!.type, "but expected pharmacy");
+        return res.status(403).json({ 
+          message: "Access denied: This endpoint is only for pharmacy tenants",
+          error: "INVALID_TENANT_TYPE"
+        });
+      }
       
       // Get prescriptions sent TO this pharmacy (pharmacyTenantId = this pharmacy's tenant)
       const prescriptions = await storage.getPrescriptionsByPharmacyTenant(pharmacyTenantId);

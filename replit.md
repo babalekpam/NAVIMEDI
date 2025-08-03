@@ -22,6 +22,7 @@ NaviMED is a multi-tenant healthcare platform that hosts multiple independent ph
 - **Prescription Archives System**: Implemented comprehensive prescription archiving with automatic dispensed prescription migration, full bookkeeping retrieval, receipt printing, and CSV export capabilities
 - **Simplified Pharmacy Navigation**: Cleaned up pharmacy sidebar navigation to remove duplicates and confusion, now showing clear tabs: Dashboard, Prescription Archives, Patient Management, Billing, Insurance Claims
 - **Enhanced Medication Insurance Claims Form (August 2025)**: Completed fully interactive insurance claims form with auto-generated claim numbers, medication codes, diagnostic codes, real-time cost calculations, and patient dropdown integration. All fields are working correctly including interactive insurance claim amount and patient share fields.
+- **Strict Multi-Tenant Isolation (August 2025)**: Fixed critical security issue where super admin could bypass tenant isolation. Implemented strict tenant data separation ensuring platform admins cannot access other tenants' data directly. Added tenant type validation for pharmacy-specific endpoints preventing cross-tenant data access violations.
 
 ## System Architecture
 The platform is built on a modern stack ensuring scalability, security, and maintainability.

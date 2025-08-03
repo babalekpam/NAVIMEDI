@@ -47,10 +47,9 @@ export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response,
       console.log("[TENANT DEBUG] Loaded tenant from DB:", tenant);
       req.tenant = tenant;
 
-      // For super admin, allow access to all tenants
-      if (req.user?.role === 'super_admin') {
-        return next();
-      }
+      // Strict tenant isolation - even super admin must belong to the same tenant
+      // Super admin can only access data from their own tenant
+      // Platform admins manage tenants, not access other tenant's data directly
 
       // For other users, ensure they can only access their tenant's data
       if (!req.tenantId) {
