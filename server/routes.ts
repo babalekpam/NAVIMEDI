@@ -574,6 +574,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // General prescription management routes
+  app.get("/api/prescriptions", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      console.log("[PRESCRIPTION API] 🚀 GET /api/prescriptions called");
+      const tenantId = req.user?.tenantId;
+      
+      console.log("[PRESCRIPTION API] 📋 Tenant ID:", tenantId);
+      
+      // Get prescriptions based on tenant type
+      const allPrescriptions = await storage.getPrescriptionsByTenant(tenantId);
+      
+      console.log("[PRESCRIPTION API] ✅ Found", allPrescriptions.length, "prescriptions");
+      
+      res.json(allPrescriptions);
+    } catch (error) {
+      console.error("[PRESCRIPTION API] ❌ Error getting prescriptions:", error);
+      res.status(500).json({ message: "Failed to get prescriptions" });
+    }
+  });
+
+  // Update prescription status (general endpoint)
+  app.patch("/api/prescriptions/:prescriptionId/status", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      console.log("[PRESCRIPTION API] 🔄 PATCH /api/prescriptions/status called");
+      const { prescriptionId } = req.params;
+      const { status } = req.body;
+      
+      console.log("[PRESCRIPTION API] 📋 Prescription ID:", prescriptionId);
+      console.log("[PRESCRIPTION API] 🔄 New Status:", status);
+      
+      // Validate status
+      const validStatuses = ['prescribed', 'sent_to_pharmacy', 'received', 'processing', 'ready', 'dispensed', 'cancelled'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      
+      // Update prescription status
+      const updatedPrescription = await storage.updatePrescriptionStatus(prescriptionId, status);
+      
+      console.log("[PRESCRIPTION API] ✅ Prescription status updated successfully");
+      
+      res.json(updatedPrescription);
+    } catch (error) {
+      console.error("[PRESCRIPTION API] ❌ Error updating prescription status:", error);
+      res.status(500).json({ message: "Failed to update prescription status" });
+    }
+  });
+
   // Lab order management routes
   app.get("/api/lab-orders", authenticateToken, requireTenant, async (req, res) => {
     try {

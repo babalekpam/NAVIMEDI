@@ -1225,6 +1225,52 @@ export class DatabaseStorage implements IStorage {
     return simplifiedPrescriptions;
   }
 
+  async getPrescriptionsByTenant(tenantId: string): Promise<any[]> {
+    console.log(`[PRESCRIPTION API] 🔍 Getting prescriptions for tenant: ${tenantId}`);
+    
+    try {
+      // Get prescriptions for the tenant
+      const prescriptionRecords = await db
+        .select({
+          id: prescriptions.id,
+          patientId: prescriptions.patientId,
+          providerId: prescriptions.providerId,
+          medication: prescriptions.medicationName,
+          dosage: prescriptions.dosage,
+          frequency: prescriptions.frequency,
+          quantity: prescriptions.quantity,
+          refills: prescriptions.refills,
+          instructions: prescriptions.instructions,
+          status: prescriptions.status,
+          prescribedDate: prescriptions.prescribedDate,
+          expiryDate: prescriptions.expiryDate,
+          insuranceProvider: prescriptions.insuranceProvider,
+          insuranceCopay: prescriptions.insuranceCopay,
+          totalCost: prescriptions.totalCost,
+          pharmacyNotes: prescriptions.pharmacyNotes,
+          // Get patient and provider names
+          patientName: sql<string>`concat(${patients.firstName}, ' ', ${patients.lastName})`,
+          providerName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`,
+        })
+        .from(prescriptions)
+        .leftJoin(patients, eq(prescriptions.patientId, patients.id))
+        .leftJoin(users, eq(prescriptions.providerId, users.id))
+        .where(eq(prescriptions.tenantId, tenantId))
+        .orderBy(desc(prescriptions.prescribedDate));
+
+      console.log(`[PRESCRIPTION API] ✅ Found ${prescriptionRecords.length} prescriptions for tenant`);
+      
+      return prescriptionRecords.map(record => ({
+        ...record,
+        prescribedDate: record.prescribedDate?.toISOString() || new Date().toISOString(),
+        expiryDate: record.expiryDate?.toISOString() || new Date().toISOString(),
+      }));
+    } catch (error) {
+      console.error(`[PRESCRIPTION API] ❌ Error getting prescriptions for tenant:`, error);
+      throw error;
+    }
+  }
+
   async updatePrescriptionStatus(prescriptionId: string, newStatus: string): Promise<any> {
     console.log(`[PHARMACY API] 🔄 Updating prescription ${prescriptionId} to status: ${newStatus}`);
     

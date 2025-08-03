@@ -1,633 +1,402 @@
-import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pill, Plus, Search, Filter, MoreHorizontal, AlertTriangle, Edit, Trash2, Copy, FileText, Share, Download } from "lucide-react";
-import { Prescription, Patient } from "@shared/schema";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
-import { PrescriptionForm } from "@/components/forms/prescription-form";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import PharmacyDashboardEnhancedV2 from "@/pages/pharmacy-dashboard-enhanced-v2";
+import { useToast } from "@/hooks/use-toast";
+import { Activity, Users, DollarSign, Package, Clock, AlertTriangle, CheckCircle, XCircle, Search, FileText, Download, Pill, Plus } from 'lucide-react';
 
-const statusColors = {
-  prescribed: "bg-blue-100 text-blue-800",
-  sent_to_pharmacy: "bg-yellow-100 text-yellow-800",
-  filled: "bg-green-100 text-green-800",
-  picked_up: "bg-green-100 text-green-800",
-  cancelled: "bg-red-100 text-red-800",
-};
+interface Prescription {
+  id: string;
+  patientName: string;
+  patientId: string;
+  medication: string;
+  dosage: string;
+  frequency: string;
+  quantity: number;
+  refills: number;
+  instructions: string;
+  status: string;
+  prescribedDate: string;
+  expiryDate: string;
+  providerId: string;
+  providerName: string;
+  insuranceProvider?: string;
+  insuranceCopay?: number;
+  totalCost?: number;
+  pharmacyNotes?: string;
+}
 
-export default function Prescriptions() {
+export default function PrescriptionsPage() {
   const { user } = useAuth();
   const { tenant } = useTenant();
   const { t } = useTranslation();
-  
-  // Redirect pharmacy users to enhanced dashboard
-  if (user?.role === 'pharmacist' && tenant?.type === 'pharmacy') {
-    console.log('[PRESCRIPTIONS] ✅ Redirecting pharmacist to enhanced dashboard');
-    return <PharmacyDashboardEnhancedV2 />;
-  }
-  
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
-  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
-  const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Check if patient was selected from Quick Actions in medical records
-  useEffect(() => {
-    const selectedPatientInfo = localStorage.getItem('selectedPatientForPrescription');
-    if (selectedPatientInfo) {
-      setIsFormOpen(true);
-      // Clear the stored patient info after using it
-      localStorage.removeItem('selectedPatientForPrescription');
-    }
-  }, []);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
+  const [isProcessingModalOpen, setIsProcessingModalOpen] = useState(false);
 
-  const { data: prescriptions = [], isLoading, error } = useQuery<Prescription[]>({
-    queryKey: ["/api/prescriptions"],
-    enabled: !!user && !!tenant,
+  // Fetch prescriptions based on user role
+  const { data: prescriptions = [], isLoading } = useQuery<Prescription[]>({
+    queryKey: ['/api/prescriptions', user?.tenantId],
+    enabled: !!user?.tenantId,
   });
 
-  // Debug logging
-  if (error) {
-    console.error("Prescriptions query error:", error);
-  }
-
-  const { data: patients = [] } = useQuery<Patient[]>({
-    queryKey: ["/api/patients"],
-    enabled: !!user && !!tenant,
-  });
-
-  const createPrescriptionMutation = useMutation({
-    mutationFn: async (prescriptionData: any) => {
-      const { legacyApiRequest } = await import("@/lib/queryClient");
-      const response = await legacyApiRequest("POST", "/api/prescriptions", prescriptionData);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
-      setIsFormOpen(false);
-    },
-    onError: (error) => {
-      console.error("Failed to create prescription:", error);
-    }
-  });
-
-  const updatePrescriptionMutation = useMutation({
-    mutationFn: async ({ id, prescriptionData }: { id: string, prescriptionData: any }) => {
-      const { legacyApiRequest } = await import("@/lib/queryClient");
-      const response = await legacyApiRequest("PATCH", `/api/prescriptions/${id}`, prescriptionData);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
-      setIsEditFormOpen(false);
-      setEditingPrescription(null);
-    }
-  });
-
-  const fileClaimMutation = useMutation({
-    mutationFn: async (prescriptionData: any) => {
-      const { legacyApiRequest } = await import("@/lib/queryClient");
-      const response = await legacyApiRequest("POST", "/api/prescriptions/file-claim", prescriptionData);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/insurance-claims"] });
-    }
-  });
-
-  const handleFileInsuranceClaim = async (prescription: Prescription) => {
-    try {
-      const result = await fileClaimMutation.mutateAsync({
-        prescriptionId: prescription.id,
-        patientId: prescription.patientId,
-        medicationName: prescription.medicationName,
-        dosage: prescription.dosage,
-        quantity: prescription.quantity
+  // Status update mutation
+  const statusUpdateMutation = useMutation({
+    mutationFn: async ({ prescriptionId, status }: { prescriptionId: string; status: string }) => {
+      const response = await fetch(`/api/prescriptions/${prescriptionId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
       });
       
-      // Show success message
-      const { toast } = await import("@/hooks/use-toast");
+      if (!response.ok) {
+        throw new Error('Failed to update prescription status');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] });
       toast({
-        title: "Insurance Claim Filed",
-        description: `Successfully filed claim for ${prescription.medicationName}`,
-        variant: "default"
+        title: "Success",
+        description: "Prescription status updated successfully",
       });
-    } catch (error) {
-      console.error("Error filing insurance claim:", error);
-      const { toast } = await import("@/hooks/use-toast");
+      setIsProcessingModalOpen(false);
+    },
+    onError: () => {
       toast({
-        title: "Error Filing Claim",
-        description: "Failed to file insurance claim. Please try again.",
-        variant: "destructive"
+        title: "Error",
+        description: "Failed to update prescription status",
+        variant: "destructive",
       });
-    }
-  };
+    },
+  });
 
-  const filteredPrescriptions = prescriptions.filter(prescription => {
-    const patient = patients.find(p => p.id === prescription.patientId);
-    const patientName = patient ? `${patient.firstName} ${patient.lastName}` : "";
-    const matchesSearch = patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         prescription.medicationName.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filter prescriptions
+  const filteredPrescriptions = prescriptions.filter((prescription) => {
+    const matchesSearch = prescription.medication.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         prescription.patientName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || prescription.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const getPatientName = (patientId: string) => {
-    const patient = patients.find(p => p.id === patientId);
-    return patient ? `${patient.firstName} ${patient.lastName}` : `Patient ${patientId.slice(-4)}`;
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'prescribed':
+        return 'bg-blue-100 text-blue-800';
+      case 'sent_to_pharmacy':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'received':
+        return 'bg-orange-100 text-orange-800';
+      case 'processing':
+        return 'bg-purple-100 text-purple-800';
+      case 'ready':
+        return 'bg-green-100 text-green-800';
+      case 'dispensed':
+        return 'bg-green-200 text-green-900';
+      case 'filled':
+        return 'bg-green-200 text-green-900';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
 
-  const isExpiring = (prescription: Prescription) => {
-    if (!prescription.expiryDate) return false;
-    const expiryDate = new Date(prescription.expiryDate);
-    const now = new Date();
-    const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+  const handleStatusUpdate = (status: string) => {
+    if (selectedPrescription) {
+      statusUpdateMutation.mutate({
+        prescriptionId: selectedPrescription.id,
+        status,
+      });
+    }
   };
 
-  const isExpired = (prescription: Prescription) => {
-    if (!prescription.expiryDate) return false;
-    return new Date(prescription.expiryDate) < new Date();
+  const handleProcessPrescription = (prescription: Prescription) => {
+    setSelectedPrescription(prescription);
+    setIsProcessingModalOpen(true);
   };
 
-  if (!user || !tenant) {
-    return <div>{t('loading')}</div>;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <Clock className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p>Loading prescriptions...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('prescriptions')}</h1>
-          <p className="text-gray-600 mt-1">{t('manage-prescriptions-medications')}</p>
+          <h1 className="text-3xl font-bold text-gray-900">Prescription Management</h1>
+          <p className="text-gray-600 mt-1">
+            Manage and track prescriptions across the healthcare network
+          </p>
         </div>
-        {(user.role === "physician" || user.role === "nurse") && (
-          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
-                New Prescription
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Create New Prescription</DialogTitle>
-              </DialogHeader>
-              <PrescriptionForm
-                onSubmit={(data) => createPrescriptionMutation.mutate(data)}
-                isLoading={createPrescriptionMutation.isPending}
-                patients={patients}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
+        <Button>
+          <Plus className="mr-2 h-4 w-4" />
+          New Prescription
+        </Button>
       </div>
 
-      {/* Edit Prescription Dialog */}
-      <Dialog open={isEditFormOpen} onOpenChange={setIsEditFormOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Edit Prescription</DialogTitle>
-          </DialogHeader>
-          {editingPrescription && (
-            <PrescriptionForm
-              onSubmit={(data) => updatePrescriptionMutation.mutate({ 
-                id: editingPrescription.id, 
-                prescriptionData: data 
-              })}
-              isLoading={updatePrescriptionMutation.isPending}
-              patients={patients}
-              prescription={editingPrescription}
-              isEditing={true}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Metrics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Prescriptions</CardTitle>
+            <Pill className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{prescriptions.length}</div>
+          </CardContent>
+        </Card>
 
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 text-gray-400 transform -translate-y-1/2" />
-              <Input
-                placeholder="Search by patient or medication..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Prescriptions</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {prescriptions.filter((p) => ['prescribed', 'sent_to_pharmacy', 'received', 'processing', 'ready'].includes(p.status)).length}
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="prescribed">Prescribed</SelectItem>
-                <SelectItem value="sent_to_pharmacy">Sent to Pharmacy</SelectItem>
-                <SelectItem value="filled">Filled</SelectItem>
-                <SelectItem value="picked_up">Picked Up</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Ready for Pickup</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {prescriptions.filter((p) => p.status === 'ready').length}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Dispensed Today</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {prescriptions.filter((p) => p.status === 'dispensed').length}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Prescription Search & Filters</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <Label htmlFor="search">Search Prescriptions</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="search"
+                  placeholder="Search by medication or patient name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="w-48">
+              <Label htmlFor="status-filter">Filter by Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="prescribed">Prescribed</SelectItem>
+                  <SelectItem value="sent_to_pharmacy">Sent to Pharmacy</SelectItem>
+                  <SelectItem value="received">Received</SelectItem>
+                  <SelectItem value="processing">Processing</SelectItem>
+                  <SelectItem value="ready">Ready</SelectItem>
+                  <SelectItem value="dispensed">Dispensed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Prescriptions List */}
+      {/* Prescriptions Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Pill className="h-5 w-5 mr-2" />
-            Active Prescriptions
-          </CardTitle>
+          <CardTitle>Prescription List</CardTitle>
+          <CardDescription>
+            {filteredPrescriptions.length} prescription(s) found
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="flex items-center space-x-4 py-4">
-                    <div className="h-12 w-12 bg-gray-200 rounded-lg"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                      <div className="h-3 bg-gray-200 rounded w-1/4"></div>
-                    </div>
-                    <div className="h-8 w-20 bg-gray-200 rounded"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : filteredPrescriptions.length === 0 ? (
-            <div className="text-center py-12">
-              <Pill className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No prescriptions found</h3>
-              <p className="text-gray-600 mb-4">
-                {searchQuery ? "No prescriptions match your search criteria" : "No prescriptions have been created yet"}
-              </p>
-              {(user.role === "physician" || user.role === "nurse") && (
-                <Button
-                  onClick={() => setIsFormOpen(true)}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Prescription
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Patient</TableHead>
+                <TableHead>Medication</TableHead>
+                <TableHead>Dosage</TableHead>
+                <TableHead>Quantity</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Prescribed Date</TableHead>
+                <TableHead>Provider</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filteredPrescriptions.map((prescription) => (
-                <div 
-                  key={prescription.id}
-                  className="flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        isExpired(prescription) ? 'bg-red-50' : 
-                        isExpiring(prescription) ? 'bg-yellow-50' : 
-                        'bg-green-50'
-                      }`}>
-                        {isExpired(prescription) || isExpiring(prescription) ? (
-                          <AlertTriangle className={`h-5 w-5 ${
-                            isExpired(prescription) ? 'text-red-600' : 'text-yellow-600'
-                          }`} />
-                        ) : (
-                          <Pill className="h-5 w-5 text-green-600" />
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <p className="text-sm font-medium text-gray-900">
-                          {prescription.medicationName}
-                        </p>
-                        {isExpired(prescription) && (
-                          <Badge variant="destructive" className="text-xs">
-                            Expired
-                          </Badge>
-                        )}
-                        {isExpiring(prescription) && (
-                          <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800">
-                            Expiring Soon
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        Patient: {getPatientName(prescription.patientId)}
-                      </p>
-                      {/* Show doctor and hospital info for pharmacy users */}
-                      {tenant?.type === "pharmacy" && (
-                        <div className="text-xs text-blue-600 mt-1">
-                          <p>Dr. {(prescription as any).providerName || 'Unknown'} {(prescription as any).providerLastName || 'Doctor'}</p>
-                          <p className="text-gray-500">{(prescription as any).hospitalName || 'Unknown Hospital'}</p>
-                        </div>
-                      )}
-                      <p className="text-xs text-gray-400">
-                        {prescription.dosage} • {prescription.frequency}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Qty: {prescription.quantity} • Refills: {prescription.refills}
-                      </p>
-                      {prescription.instructions && (
-                        <p className="text-xs text-gray-600 mt-1 max-w-md truncate">
-                          Instructions: {prescription.instructions}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500">Prescribed</p>
-                      <p className="text-sm font-medium text-gray-900">
-                        {prescription.prescribedDate ? new Date(prescription.prescribedDate).toLocaleDateString() : 'Not set'}
-                      </p>
-                      {prescription.expiryDate && (
-                        <p className="text-xs text-gray-400">
-                          Expires: {new Date(prescription.expiryDate).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-                    
-                    <Badge 
-                      variant="secondary"
-                      className={statusColors[prescription.status || 'prescribed'] || statusColors.prescribed}
-                    >
-                      {(prescription.status || 'prescribed').replace('_', ' ')}
+                <TableRow key={prescription.id}>
+                  <TableCell className="font-medium">
+                    {prescription.patientName}
+                  </TableCell>
+                  <TableCell>{prescription.medication}</TableCell>
+                  <TableCell>{prescription.dosage}</TableCell>
+                  <TableCell>{prescription.quantity}</TableCell>
+                  <TableCell>
+                    <Badge className={getStatusColor(prescription.status)}>
+                      {prescription.status.replace('_', ' ').toUpperCase()}
                     </Badge>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-blue-600 hover:text-blue-700"
-                        onClick={() => {
-                          setSelectedPrescription(prescription);
-                          setIsDetailsOpen(true);
-                        }}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(prescription.prescribedDate).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>{prescription.providerName || 'N/A'}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleProcessPrescription(prescription)}
                       >
+                        Process
+                      </Button>
+                      <Button size="sm" variant="outline">
                         View Details
                       </Button>
-                      {(user.role === "pharmacist" || user.role === "tenant_admin") && prescription.status === "sent_to_pharmacy" && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-green-600 hover:text-green-700"
-                          onClick={() => handleFileInsuranceClaim(prescription)}
-                          disabled={fileClaimMutation.isPending}
-                        >
-                          {fileClaimMutation.isPending ? "Filing..." : "File Claim"}
-                        </Button>
-                      )}
-                      {(user.role === "pharmacist" || user.role === "tenant_admin") && prescription.status === "filled" && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-blue-600 hover:text-blue-700"
-                          onClick={() => {
-                            // Update prescription status to picked up
-                            const { apiRequest } = import("@/lib/queryClient");
-                            apiRequest("PATCH", `/api/prescriptions/${prescription.id}`, {
-                              status: "picked_up"
-                            }).then(() => {
-                              queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
-                            });
-                          }}
-                        >
-                          Mark Picked Up
-                        </Button>
-                      )}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => {
-                            setSelectedPrescription(prescription);
-                            setIsDetailsOpen(true);
-                          }}>
-                            <FileText className="h-4 w-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                          {(user.role === "physician" || user.role === "tenant_admin") && 
-                           (prescription.status === 'prescribed' || prescription.status === 'sent_to_pharmacy') && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => {
-                                setEditingPrescription(prescription);
-                                setIsEditFormOpen(true);
-                              }}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit Prescription
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
-                                // Copy prescription details to clipboard
-                                const prescriptionText = `Prescription: ${prescription.medicationName}\nPatient: ${getPatientName(prescription.patientId)}\nDosage: ${prescription.dosage}\nQuantity: ${prescription.quantity}\nStatus: ${prescription.status}`;
-                                navigator.clipboard.writeText(prescriptionText);
-                              }}>
-                                <Copy className="h-4 w-4 mr-2" />
-                                Copy Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
-                                // Share prescription info
-                                if (navigator.share) {
-                                  navigator.share({
-                                    title: `Prescription: ${prescription.medicationName}`,
-                                    text: `Patient: ${getPatientName(prescription.patientId)} - ${prescription.medicationName}`,
-                                  });
-                                }
-                              }}>
-                                <Share className="h-4 w-4 mr-2" />
-                                Share
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                          {(user.role === "physician" || user.role === "tenant_admin") && prescription.status === 'prescribed' && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => {
-                                  if (confirm('Are you sure you want to cancel this prescription?')) {
-                                    // TODO: Implement cancel prescription functionality
-                                    console.log('Cancel prescription:', prescription.id);
-                                  }
-                                }}
-                                className="text-red-600"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Cancel Prescription
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
-                  </div>
-                </div>
+                  </TableCell>
+                </TableRow>
               ))}
-            </div>
-          )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      {/* Prescription Details Dialog */}
-      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+      {/* Processing Modal */}
+      <Dialog open={isProcessingModalOpen} onOpenChange={setIsProcessingModalOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <Pill className="h-5 w-5 mr-2" />
-              Prescription Details
-            </DialogTitle>
+            <DialogTitle>Process Prescription</DialogTitle>
+            <DialogDescription>
+              Update the status for {selectedPrescription?.medication}
+            </DialogDescription>
           </DialogHeader>
+          
           {selectedPrescription && (
-            <div className="space-y-6">
-              {/* Patient Information */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-900 mb-2">Patient Information</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Patient Name</p>
-                    <p className="font-medium">{getPatientName(selectedPrescription.patientId)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Prescription Date</p>
-                    <p className="font-medium">{selectedPrescription.prescribedDate ? new Date(selectedPrescription.prescribedDate).toLocaleDateString() : 'Not set'}</p>
-                  </div>
-                  {/* Show doctor and hospital info for pharmacy users */}
-                  {tenant?.type === "pharmacy" && (
-                    <>
-                      <div>
-                        <p className="text-sm text-gray-600">Prescribing Doctor</p>
-                        <p className="font-medium text-blue-600">
-                          Dr. {(selectedPrescription as any).providerName || 'Unknown'} {(selectedPrescription as any).providerLastName || 'Doctor'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Hospital/Clinic</p>
-                        <p className="font-medium">{(selectedPrescription as any).hospitalName || 'Unknown Hospital'}</p>
-                        <p className="text-xs text-gray-500 capitalize">{(selectedPrescription as any).hospitalType || 'clinic'}</p>
-                      </div>
-                    </>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <Label className="font-medium">Patient:</Label>
+                  <p>{selectedPrescription.patientName}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Current Status:</Label>
+                  <Badge className={getStatusColor(selectedPrescription.status)}>
+                    {selectedPrescription.status.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                </div>
+              </div>
+              
+              <div>
+                <Label className="font-medium">Medication Details:</Label>
+                <div className="bg-gray-50 p-3 rounded mt-1">
+                  <p><strong>Medication:</strong> {selectedPrescription.medication}</p>
+                  <p><strong>Dosage:</strong> {selectedPrescription.dosage}</p>
+                  <p><strong>Frequency:</strong> {selectedPrescription.frequency}</p>
+                  <p><strong>Quantity:</strong> {selectedPrescription.quantity}</p>
+                  <p><strong>Refills:</strong> {selectedPrescription.refills}</p>
+                  {selectedPrescription.instructions && (
+                    <p><strong>Instructions:</strong> {selectedPrescription.instructions}</p>
                   )}
                 </div>
               </div>
-
-              {/* Medication Details */}
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-900 mb-2">Medication Details</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Medication Name</p>
-                    <p className="font-medium text-lg">{selectedPrescription.medicationName}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Dosage</p>
-                    <p className="font-medium">{selectedPrescription.dosage}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Frequency</p>
-                    <p className="font-medium">{selectedPrescription.frequency}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Route</p>
-                    <p className="font-medium">{selectedPrescription.route || 'Oral'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Quantity</p>
-                    <p className="font-medium">{selectedPrescription.quantity}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Refills</p>
-                    <p className="font-medium">{selectedPrescription.refills}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Instructions */}
-              {selectedPrescription.instructions && (
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-gray-900 mb-2">Instructions for Use</h3>
-                  <p className="text-gray-700">{selectedPrescription.instructions}</p>
-                </div>
-              )}
-
-              {/* Status and Dates */}
-              <div className="bg-yellow-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-900 mb-2">Prescription Status</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Current Status</p>
-                    <Badge 
-                      variant="secondary"
-                      className={`${statusColors[selectedPrescription.status || 'prescribed'] || statusColors.prescribed} font-medium`}
-                    >
-                      {(selectedPrescription.status || 'prescribed').replace('_', ' ').toUpperCase()}
-                    </Badge>
-                  </div>
-                  {selectedPrescription.expiryDate && (
-                    <div>
-                      <p className="text-sm text-gray-600">Expiry Date</p>
-                      <p className={`font-medium ${
-                        isExpired(selectedPrescription) ? 'text-red-600' : 
-                        isExpiring(selectedPrescription) ? 'text-yellow-600' : 'text-gray-900'
-                      }`}>
-                        {new Date(selectedPrescription.expiryDate).toLocaleDateString()}
-                        {isExpired(selectedPrescription) && ' (EXPIRED)'}
-                        {isExpiring(selectedPrescription) && ' (EXPIRING SOON)'}
-                      </p>
-                    </div>
+              
+              <div>
+                <Label className="font-medium">Update Status:</Label>
+                <div className="flex gap-2 mt-2">
+                  {selectedPrescription.status === 'prescribed' && (
+                    <Button onClick={() => handleStatusUpdate('sent_to_pharmacy')} size="sm">
+                      Send to Pharmacy
+                    </Button>
                   )}
+                  {selectedPrescription.status === 'sent_to_pharmacy' && (
+                    <Button onClick={() => handleStatusUpdate('received')} size="sm">
+                      Mark as Received
+                    </Button>
+                  )}
+                  {selectedPrescription.status === 'received' && (
+                    <Button onClick={() => handleStatusUpdate('processing')} size="sm">
+                      Start Processing
+                    </Button>
+                  )}
+                  {selectedPrescription.status === 'processing' && (
+                    <Button onClick={() => handleStatusUpdate('ready')} size="sm">
+                      Mark Ready
+                    </Button>
+                  )}
+                  {selectedPrescription.status === 'ready' && (
+                    <Button onClick={() => handleStatusUpdate('dispensed')} size="sm">
+                      Mark Dispensed
+                    </Button>
+                  )}
+                  <Button 
+                    onClick={() => handleStatusUpdate('cancelled')} 
+                    size="sm" 
+                    variant="destructive"
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </div>
-
-              {/* Prescribing Physician */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-900 mb-2">Prescribing Information</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Prescribing Physician</p>
-                    <p className="font-medium">{'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Prescription ID</p>
-                    <p className="font-mono text-sm text-gray-600">{selectedPrescription.id.slice(-8)}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-3 pt-4 border-t">
-                <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>
-                  Close
-                </Button>
-                {user.role === "pharmacist" && selectedPrescription.status === "prescribed" && (
-                  <Button className="bg-green-600 hover:bg-green-700">
-                    Fill Prescription
-                  </Button>
-                )}
-                {(user.role === "physician" || user.role === "nurse") && (
-                  <Button variant="outline">
-                    Edit Prescription
-                  </Button>
-                )}
+              
+              <div>
+                <Label htmlFor="notes">Processing Notes:</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Add any notes about processing this prescription..."
+                  className="mt-1"
+                />
               </div>
             </div>
           )}
