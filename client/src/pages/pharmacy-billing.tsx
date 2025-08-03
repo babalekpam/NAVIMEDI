@@ -62,6 +62,14 @@ interface PharmacyBill {
 }
 
 export default function PharmacyBilling() {
+  // Set page title
+  React.useEffect(() => {
+    document.title = "Billing - NaviMED";
+    return () => {
+      document.title = "NaviMED";
+    };
+  }, []);
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
