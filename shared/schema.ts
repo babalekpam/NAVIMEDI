@@ -270,6 +270,9 @@ export const tenants = pgTable("tenants", {
   subdomain: text("subdomain").unique().notNull(),
   settings: jsonb("settings").default('{}'),
   isActive: boolean("is_active").default(true),
+  // Multi-tenant relationships
+  parentTenantId: uuid("parent_tenant_id").references(() => tenants.id), // For hospital-owned pharmacies
+  organizationType: text("organization_type", { enum: ["independent", "hospital_owned"] }).default("independent"),
   // White-label branding
   brandName: text("brand_name"),
   logoUrl: text("logo_url"),
@@ -366,7 +369,7 @@ export const prescriptions = pgTable("prescriptions", {
   patientId: uuid("patient_id").references(() => patients.id).notNull(),
   providerId: uuid("provider_id").references(() => users.id).notNull(), // Doctor who prescribed
   appointmentId: uuid("appointment_id").references(() => appointments.id),
-  pharmacyTenantId: uuid("pharmacy_tenant_id").references(() => tenants.id), // Target pharmacy
+  pharmacyTenantId: uuid("pharmacy_tenant_id").references(() => tenants.id), // Target pharmacy chosen by patient
   medicationName: text("medication_name").notNull(),
   dosage: text("dosage").notNull(),
   frequency: text("frequency").notNull(),
@@ -388,6 +391,10 @@ export const prescriptions = pgTable("prescriptions", {
   readyDate: timestamp("ready_date"),
   dispensedDate: timestamp("dispensed_date"),
   pharmacyNotes: text("pharmacy_notes"),
+  // Prescription routing fields for hospital-pharmacy communication  
+  routedFromHospital: uuid("routed_from_hospital").references(() => tenants.id), // Original hospital
+  patientSelectedPharmacy: boolean("patient_selected_pharmacy").default(false),
+  routingNotes: text("routing_notes"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
@@ -869,6 +876,21 @@ export const pharmacyPatientInsurance = pgTable("pharmacy_patient_insurance", {
   specialPrograms: text("special_programs").array().default([]), // Medicare Part D, Medicaid, etc.
   copayCards: jsonb("copay_cards").default('[]'), // Manufacturer copay cards
   
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Patient Pharmacy Preferences - where patients choose their preferred pharmacy
+export const patientPharmacyPreferences = pgTable("patient_pharmacy_preferences", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  pharmacyId: uuid("pharmacy_id").references(() => tenants.id).notNull(), // Preferred pharmacy
+  hospitalId: uuid("hospital_id").references(() => tenants.id), // Hospital context (optional)
+  isPrimary: boolean("is_primary").default(false), // Primary pharmacy choice
+  isActive: boolean("is_active").default(true),
+  preferenceReason: text("preference_reason"), // Why patient chose this pharmacy
+  deliveryPreference: text("delivery_preference", { enum: ["pickup", "delivery", "both"] }).default("pickup"),
+  specialInstructions: text("special_instructions"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
