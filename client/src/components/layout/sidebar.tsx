@@ -74,7 +74,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "medical-communications", label: t("medical-communications"), icon: Languages, path: "/medical-communications", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "patient-access-management", label: "Patient Access Management", icon: Shield, path: "/patient-access-management", roles: ["physician", "tenant_admin", "director", "super_admin"] },
   
-  // Operations Section (only for tenant users)
+  // Operations Section (only for tenant users - excluding pharmacy users)
   { id: "billing", label: t("billing"), icon: DollarSign, path: "/billing", roles: ["billing_staff", "receptionist", "physician", "tenant_admin", "director"] },
   { id: "hospital-billing", label: "Hospital Billing", icon: DollarSign, path: "/hospital-billing", roles: ["billing_staff", "receptionist", "physician", "tenant_admin", "director"] },
   { id: "laboratory-billing", label: "Laboratory Billing", icon: DollarSign, path: "/laboratory-billing", roles: ["lab_technician", "tenant_admin", "director"] },
@@ -234,7 +234,7 @@ export const Sidebar = () => {
     console.log('[SIDEBAR] ✅ User role:', user.role, 'Tenant type:', currentTenant?.type);
     
     const pharmacyItems = filteredItems.filter(item => 
-      ["dashboard", "pharmacy-dashboard", "billing", "pharmacy-billing", "pharmacy-patient-management"].includes(item.id)
+      ["pharmacy-dashboard", "prescription-archives", "pharmacy-patient-management", "pharmacy-billing", "pharmacy-insurance-claims"].includes(item.id)
     );
     
     return (
