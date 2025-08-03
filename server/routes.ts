@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertRolePermissionSchema, RolePermission, InsertRolePermission } from "@shared/schema";
 import { authenticateToken, requireRole } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -3098,6 +3098,118 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Error fetching patient access logs:", error);
       res.status(500).json({ message: "Failed to fetch access logs" });
+    }
+  });
+
+  // Role Permissions Management Routes
+  app.get("/api/role-permissions", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { role } = req.query;
+      let permissions;
+      
+      if (role) {
+        permissions = await storage.getRolePermissionsByRole(role as string, req.tenantId!);
+      } else {
+        permissions = await storage.getRolePermissions(req.tenantId!);
+      }
+      
+      res.json(permissions);
+    } catch (error) {
+      console.error("Error fetching role permissions:", error);
+      res.status(500).json({ message: "Failed to fetch role permissions" });
+    }
+  });
+
+  app.post("/api/role-permissions", authenticateToken, requireRole(["tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
+    try {
+      console.log("🔧 [SERVER] Role permissions POST request:", req.body);
+      const { role, module, permissions } = req.body;
+      
+      if (!role || !module || !Array.isArray(permissions)) {
+        console.log("🔧 [SERVER] Invalid request data:", { role, module, permissions });
+        return res.status(400).json({ 
+          message: "Invalid request data - role, module, and permissions array required" 
+        });
+      }
+
+      // Check if permission already exists for this role and module
+      const existingPermissions = await storage.getRolePermissionsByRole(role, req.tenantId!);
+      const existingPermission = existingPermissions.find(p => p.module === module);
+
+      let result;
+      if (existingPermission) {
+        // Update existing permission
+        console.log("🔧 [SERVER] Updating existing permission:", existingPermission.id);
+        result = await storage.updateRolePermission(
+          existingPermission.id,
+          {
+            permissions,
+            updatedBy: req.userId!,
+            updatedAt: new Date()
+          },
+          req.tenantId!
+        );
+      } else {
+        // Create new permission
+        console.log("🔧 [SERVER] Creating new permission");
+        result = await storage.createRolePermission({
+          tenantId: req.tenantId!,
+          role: role as any,
+          module,
+          permissions,
+          createdBy: req.userId!,
+          isActive: true
+        });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenantId!,
+        userId: req.userId!,
+        entityType: "role_permission",
+        entityId: result?.id || existingPermission?.id || "unknown",
+        action: existingPermission ? "update" : "create",
+        newData: { role, module, permissions },
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      console.log("🔧 [SERVER] Permission saved successfully:", result);
+      res.status(200).json({
+        message: "Permission saved successfully",
+        permission: result
+      });
+
+    } catch (error) {
+      console.error("🔧 [SERVER] Error saving role permission:", error);
+      res.status(500).json({ message: "Failed to save role permission" });
+    }
+  });
+
+  app.delete("/api/role-permissions/:id", authenticateToken, requireRole(["tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteRolePermission(id, req.tenantId!);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Role permission not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenantId!,
+        userId: req.userId!,
+        entityType: "role_permission",
+        entityId: id,
+        action: "delete",
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      res.json({ message: "Role permission deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting role permission:", error);
+      res.status(500).json({ message: "Failed to delete role permission" });
     }
   });
 
