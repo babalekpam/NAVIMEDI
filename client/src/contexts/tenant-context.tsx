@@ -31,6 +31,14 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
 
   useEffect(() => {
     if (!token || !user) {
+      console.log('Tenant context: Missing token or user', { hasToken: !!token, hasUser: !!user });
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate token format
+    if (token === 'undefined' || token === 'null' || token.length < 10) {
+      console.error('Tenant context: Invalid token format', { tokenPreview: token?.substring(0, 20) });
       setIsLoading(false);
       return;
     }
@@ -38,6 +46,8 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
     // Fetch tenant information from API
     const fetchTenant = async () => {
       try {
+        console.log('Tenant context: Fetching tenant with token preview:', token.substring(0, 30) + '...');
+        
         const response = await fetch('/api/tenant/current', {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -47,12 +57,22 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
         
         if (response.ok) {
           const tenantData = await response.json();
+          console.log('Tenant context: Successfully fetched tenant:', tenantData.name);
           setTenant(tenantData);
           setAvailableTenants([tenantData]);
         } else {
           console.error('Failed to fetch tenant:', response.status, response.statusText);
           const errorData = await response.text();
           console.error('Response body:', errorData);
+          
+          // Clear invalid auth data if token is expired/invalid
+          if (response.status === 401) {
+            console.log('Tenant context: Clearing invalid auth data');
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            setTenant(null);
+            setAvailableTenants([]);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch tenant:', error);
