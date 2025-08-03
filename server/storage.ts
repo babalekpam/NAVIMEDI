@@ -4734,7 +4734,7 @@ export class DatabaseStorage implements IStorage {
       equipment: cleanData.equipment && Array.isArray(cleanData.equipment) && cleanData.equipment.length > 0 ? cleanData.equipment : null,
     };
     
-    console.log('Final processed data for insert:', JSON.stringify(processedData, null, 2));
+
     
     const [department] = await db.insert(departments)
       .values(processedData)

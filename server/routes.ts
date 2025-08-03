@@ -3243,14 +3243,10 @@ Report ID: ${report.id}
   // Create new department
   app.post('/api/departments', authenticateToken, requireRole(['tenant_admin']), requireTenant, async (req, res) => {
     try {
-      console.log('Department creation data:', JSON.stringify(req.body, null, 2));
-      
       const validatedData = insertDepartmentSchema.parse({
         ...req.body,
         tenantId: req.tenantId!
       });
-      
-      console.log('Validated data:', JSON.stringify(validatedData, null, 2));
 
       const department = await storage.createDepartment(validatedData);
       res.status(201).json(department);

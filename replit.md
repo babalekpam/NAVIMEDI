@@ -21,6 +21,7 @@ The platform is built on a modern stack for scalability, security, and maintaina
 -   **Multi-tenancy**: Strict data isolation per organization (hospital, pharmacy, laboratory) with controlled cross-tenant interactions for prescription routing and lab orders. Super admin capabilities oversee the system.
 -   **Role Separation**: Strict access control based on user roles and tenant types.
 -   **UI/UX Decisions**: Intuitive navigation with distinct dashboards per role, color-coded alerts, streamlined workflows, comprehensive patient portal, and dynamic permission management UI.
+-   **Dynamic Department Management**: Hospital administrators can dynamically create, edit, and delete departments with full CRUD operations, budget management, staff assignments, and head-of-department selection.
 -   **Technical Implementations**:
     -   Automated Insurance Verification & Copay Calculation.
     -   Secure cross-tenant patient and data synchronization.
