@@ -231,6 +231,8 @@ export const Sidebar = () => {
 
   // For pharmacy users - show only pharmacy-specific items
   if (user.role === "pharmacist" || (user.role === "tenant_admin" && isPharmacyTenant)) {
+    console.log('[SIDEBAR] ✅ Pharmacy user detected - directing to enhanced dashboard');
+    console.log('[SIDEBAR] ✅ User role:', user.role, 'Tenant type:', currentTenant?.type);
     
     const pharmacyItems = filteredItems.filter(item => 
       ["dashboard", "pharmacy-dashboard", "billing", "pharmacy-billing", "pharmacy-patient-management"].includes(item.id)
