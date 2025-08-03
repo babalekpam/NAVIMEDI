@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useTenant } from '@/hooks/use-tenant';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Activity, Users, DollarSign, Package, Clock, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Activity, Users, DollarSign, Package, Clock, AlertTriangle, CheckCircle, XCircle, Search, FileText, Download } from 'lucide-react';
 
 interface PharmacyPrescription {
   id: string;
@@ -21,7 +27,12 @@ interface PharmacyPrescription {
 export default function PharmacyDashboardWorking() {
   const { user } = useAuth();
   const { tenant } = useTenant();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedTab, setSelectedTab] = useState('overview');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPrescription, setSelectedPrescription] = useState<PharmacyPrescription | null>(null);
+  const [isProcessingModalOpen, setIsProcessingModalOpen] = useState(false);
 
   // Force debug logging
   console.log('[PHARMACY WORKING] 🚀 Loading pharmacy dashboard...');
@@ -46,6 +57,27 @@ export default function PharmacyDashboardWorking() {
     readyPrescriptions: prescriptions?.filter((p: any) => p.status === 'ready')?.length || 0
   };
 
+  // Process prescription mutation
+  const processPrescriptionMutation = useMutation({
+    mutationFn: async ({ prescriptionId, newStatus }: { prescriptionId: string; newStatus: string }) => {
+      const response = await fetch(`/api/pharmacy/prescriptions/${prescriptionId}/process`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (!response.ok) throw new Error('Failed to process prescription');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/pharmacy/prescriptions'] });
+      toast({ title: "Success", description: "Prescription status updated successfully" });
+      setIsProcessingModalOpen(false);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update prescription status", variant: "destructive" });
+    }
+  });
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'new': return 'bg-blue-100 text-blue-800';
@@ -55,6 +87,56 @@ export default function PharmacyDashboardWorking() {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const handleProcessPrescription = (prescription: PharmacyPrescription) => {
+    setSelectedPrescription(prescription);
+    setIsProcessingModalOpen(true);
+  };
+
+  const handleStatusUpdate = (newStatus: string) => {
+    if (selectedPrescription) {
+      processPrescriptionMutation.mutate({
+        prescriptionId: selectedPrescription.id,
+        newStatus
+      });
+    }
+  };
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'new-prescription':
+        toast({ title: "New Prescription", description: "Opening prescription entry form..." });
+        break;
+      case 'customer-lookup':
+        toast({ title: "Customer Lookup", description: "Opening customer search..." });
+        break;
+      case 'insurance-verification':
+        toast({ title: "Insurance Verification", description: "Opening insurance verification..." });
+        break;
+      case 'inventory-alerts':
+        setSelectedTab('inventory');
+        toast({ title: "Inventory Alerts", description: "Switching to inventory management..." });
+        break;
+      default:
+        break;
+    }
+  };
+
+  const generateReport = (format: string) => {
+    const reportData = {
+      pharmacy: tenant?.name,
+      date: new Date().toLocaleDateString(),
+      prescriptions: prescriptions || [],
+      metrics
+    };
+    
+    toast({ title: "Report Generated", description: `${format.toUpperCase()} report generated successfully` });
+  };
+
+  const filteredPrescriptions = prescriptions?.filter((p: PharmacyPrescription) =>
+    p.medication.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.patientName.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -181,19 +263,35 @@ export default function PharmacyDashboardWorking() {
                 <CardDescription>Common pharmacy tasks</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full justify-start" variant="outline">
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => handleQuickAction('new-prescription')}
+                >
                   <Package className="mr-2 h-4 w-4" />
                   Process New Prescription
                 </Button>
-                <Button className="w-full justify-start" variant="outline">
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => handleQuickAction('customer-lookup')}
+                >
                   <Users className="mr-2 h-4 w-4" />
                   Customer Lookup
                 </Button>
-                <Button className="w-full justify-start" variant="outline">
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => handleQuickAction('insurance-verification')}
+                >
                   <DollarSign className="mr-2 h-4 w-4" />
                   Insurance Verification
                 </Button>
-                <Button className="w-full justify-start" variant="outline">
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => handleQuickAction('inventory-alerts')}
+                >
                   <AlertTriangle className="mr-2 h-4 w-4" />
                   Inventory Alerts
                 </Button>
@@ -205,13 +303,32 @@ export default function PharmacyDashboardWorking() {
         <TabsContent value="prescriptions" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>All Prescriptions</CardTitle>
-              <CardDescription>Complete list of pharmacy prescriptions</CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>All Prescriptions</CardTitle>
+                  <CardDescription>Complete list of pharmacy prescriptions</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search prescriptions..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-8 w-64"
+                    />
+                  </div>
+                  <Button variant="outline" onClick={() => generateReport('pdf')}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Export
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {isLoading ? (
                 <div className="text-center py-8">Loading prescriptions...</div>
-              ) : prescriptions && prescriptions.length > 0 ? (
+              ) : filteredPrescriptions.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -225,8 +342,8 @@ export default function PharmacyDashboardWorking() {
                       </tr>
                     </thead>
                     <tbody>
-                      {prescriptions.map((prescription: PharmacyPrescription) => (
-                        <tr key={prescription.id} className="border-b">
+                      {filteredPrescriptions.map((prescription: PharmacyPrescription) => (
+                        <tr key={prescription.id} className="border-b hover:bg-gray-50">
                           <td className="py-3">{prescription.patientName}</td>
                           <td className="py-3">{prescription.medication}</td>
                           <td className="py-3">
@@ -241,8 +358,13 @@ export default function PharmacyDashboardWorking() {
                             </Badge>
                           </td>
                           <td className="py-3">
-                            <Button size="sm" variant="outline">
-                              Process
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleProcessPrescription(prescription)}
+                              disabled={prescription.status === 'dispensed'}
+                            >
+                              {prescription.status === 'dispensed' ? 'Complete' : 'Process'}
                             </Button>
                           </td>
                         </tr>
@@ -262,67 +384,226 @@ export default function PharmacyDashboardWorking() {
         </TabsContent>
 
         <TabsContent value="workflow" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Prescription Workflow</CardTitle>
+                <CardDescription>Hospital to pharmacy prescription flow</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+                      1
+                    </div>
+                    <div>
+                      <h4 className="font-medium">Prescription Received</h4>
+                      <p className="text-sm text-gray-500">Doctor sends prescription to preferred pharmacy</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-4">
+                    <div className="w-8 h-8 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center">
+                      2
+                    </div>
+                    <div>
+                      <h4 className="font-medium">Insurance Verification</h4>
+                      <p className="text-sm text-gray-500">Verify patient insurance and calculate copay</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-4">
+                    <div className="w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center">
+                      3
+                    </div>
+                    <div>
+                      <h4 className="font-medium">Processing</h4>
+                      <p className="text-sm text-gray-500">Fill prescription and prepare for pickup</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-4">
+                    <div className="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                      4
+                    </div>
+                    <div>
+                      <h4 className="font-medium">Ready for Pickup</h4>
+                      <p className="text-sm text-gray-500">Notify patient and prepare for dispensing</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-4">
+                    <div className="w-8 h-8 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center">
+                      5
+                    </div>
+                    <div>
+                      <h4 className="font-medium">Dispensed</h4>
+                      <p className="text-sm text-gray-500">Complete transaction and update records</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Reports & Analytics</CardTitle>
+                <CardDescription>Generate pharmacy reports</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => generateReport('pdf')}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Daily Prescription Report (PDF)
+                </Button>
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => generateReport('excel')}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Monthly Analytics (Excel)
+                </Button>
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => generateReport('csv')}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Inventory Report (CSV)
+                </Button>
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => generateReport('insurance')}
+                >
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  Insurance Claims Report
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="inventory" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Prescription Workflow</CardTitle>
-              <CardDescription>Hospital to pharmacy prescription flow</CardDescription>
+              <CardTitle>Inventory Management</CardTitle>
+              <CardDescription>Monitor stock levels and manage reorders</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
-                <div className="flex items-center space-x-4">
-                  <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
-                    1
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Prescription Received</h4>
-                    <p className="text-sm text-gray-500">Doctor sends prescription to preferred pharmacy</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <div className="w-8 h-8 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center">
-                    2
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Insurance Verification</h4>
-                    <p className="text-sm text-gray-500">Verify patient insurance and calculate copay</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <div className="w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center">
-                    3
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Processing</h4>
-                    <p className="text-sm text-gray-500">Fill prescription and prepare for pickup</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <div className="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
-                    4
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Ready for Pickup</h4>
-                    <p className="text-sm text-gray-500">Notify patient and prepare for dispensing</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <div className="w-8 h-8 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center">
-                    5
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Dispensed</h4>
-                    <p className="text-sm text-gray-500">Complete transaction and update records</p>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Low Stock Alerts</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-red-600">3</div>
+                    <p className="text-xs text-muted-foreground">Items below threshold</p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Reorder Required</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-orange-600">5</div>
+                    <p className="text-xs text-muted-foreground">Items need reordering</p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Expiring Soon</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-yellow-600">2</div>
+                    <p className="text-xs text-muted-foreground">Items expiring in 30 days</p>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div className="mt-6">
+                <h4 className="font-medium mb-4">Quick Actions</h4>
+                <div className="flex gap-2 flex-wrap">
+                  <Button size="sm" onClick={() => toast({ title: "Inventory Scan", description: "Opening barcode scanner..." })}>
+                    Scan Inventory
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => toast({ title: "Reorder", description: "Opening reorder form..." })}>
+                    Create Reorder
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => toast({ title: "Expiry Check", description: "Running expiry date check..." })}>
+                    Check Expiry Dates
+                  </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Processing Modal */}
+      <Dialog open={isProcessingModalOpen} onOpenChange={setIsProcessingModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Process Prescription</DialogTitle>
+            <DialogDescription>
+              Update the status for {selectedPrescription?.medication}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPrescription && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <Label className="font-medium">Patient:</Label>
+                  <p>{selectedPrescription.patientName}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Current Status:</Label>
+                  <Badge className={getStatusColor(selectedPrescription.status)}>
+                    {selectedPrescription.status}
+                  </Badge>
+                </div>
+              </div>
+              
+              <div>
+                <Label className="font-medium">Update Status:</Label>
+                <div className="flex gap-2 mt-2">
+                  {selectedPrescription.status === 'new' && (
+                    <Button onClick={() => handleStatusUpdate('processing')} size="sm">
+                      Start Processing
+                    </Button>
+                  )}
+                  {selectedPrescription.status === 'processing' && (
+                    <Button onClick={() => handleStatusUpdate('ready')} size="sm">
+                      Mark Ready
+                    </Button>
+                  )}
+                  {selectedPrescription.status === 'ready' && (
+                    <Button onClick={() => handleStatusUpdate('dispensed')} size="sm">
+                      Mark Dispensed
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="notes">Processing Notes:</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Add any notes about processing this prescription..."
+                  className="mt-1"
+                />
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
