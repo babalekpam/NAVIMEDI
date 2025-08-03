@@ -61,9 +61,13 @@ export default function PharmacyDashboardWorking() {
   // Process prescription mutation
   const processPrescriptionMutation = useMutation({
     mutationFn: async ({ prescriptionId, newStatus }: { prescriptionId: string; newStatus: string }) => {
+      const token = localStorage.getItem('auth_token');
       const response = await fetch(`/api/pharmacy/prescriptions/${prescriptionId}/process`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ status: newStatus })
       });
       if (!response.ok) throw new Error('Failed to process prescription');
@@ -840,7 +844,11 @@ export default function PharmacyDashboardWorking() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>Transaction ID</Label>
-                        <Input placeholder="Auto-generated" />
+                        <Input 
+                          value={`TXN-${new Date().getFullYear()}-${String(Date.now()).slice(-8)}`}
+                          disabled 
+                          className="bg-gray-50 font-mono text-sm"
+                        />
                       </div>
                       <div>
                         <Label>Payment Date</Label>
