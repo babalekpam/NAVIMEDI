@@ -686,22 +686,79 @@ export default function PharmacyDashboardWorking() {
                     <div className="grid grid-cols-4 gap-4">
                       <div>
                         <Label>Medication Cost</Label>
-                        <Input placeholder="$85.00" />
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                          <Input 
+                            placeholder="85.00" 
+                            className="pl-8"
+                            type="number"
+                            step="0.01"
+                            id="medication-cost-filing"
+                            onChange={(e) => {
+                              const cost = parseFloat(e.target.value) || 0;
+                              const coverage = parseFloat((document.getElementById('coverage-percentage-filing') as HTMLInputElement)?.value) || 80;
+                              const insuranceAmount = (cost * coverage) / 100;
+                              const patientAmount = cost - insuranceAmount;
+                              
+                              const insuranceField = document.getElementById('insurance-coverage-filing') as HTMLInputElement;
+                              const patientField = document.getElementById('patient-responsibility-filing') as HTMLInputElement;
+                              
+                              if (insuranceField) insuranceField.value = insuranceAmount.toFixed(2);
+                              if (patientField) patientField.value = patientAmount.toFixed(2);
+                            }}
+                          />
+                        </div>
                       </div>
                       <div>
                         <Label>Coverage %</Label>
                         <div className="relative">
-                          <Input placeholder="80" />
+                          <Input 
+                            placeholder="80" 
+                            type="number"
+                            min="0"
+                            max="100"
+                            id="coverage-percentage-filing"
+                            onChange={(e) => {
+                              const coverage = parseFloat(e.target.value) || 0;
+                              const cost = parseFloat((document.getElementById('medication-cost-filing') as HTMLInputElement)?.value) || 85;
+                              const insuranceAmount = (cost * coverage) / 100;
+                              const patientAmount = cost - insuranceAmount;
+                              
+                              const insuranceField = document.getElementById('insurance-coverage-filing') as HTMLInputElement;
+                              const patientField = document.getElementById('patient-responsibility-filing') as HTMLInputElement;
+                              
+                              if (insuranceField) insuranceField.value = insuranceAmount.toFixed(2);
+                              if (patientField) patientField.value = patientAmount.toFixed(2);
+                            }}
+                          />
                           <span className="absolute right-3 top-2.5 text-gray-500">%</span>
                         </div>
                       </div>
                       <div>
                         <Label>Insurance Coverage</Label>
-                        <Input placeholder="$68.00" disabled className="bg-gray-50" />
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                          <Input 
+                            placeholder="68.00" 
+                            className="pl-8 bg-green-50 text-green-700 font-medium"
+                            type="number"
+                            step="0.01"
+                            id="insurance-coverage-filing"
+                          />
+                        </div>
                       </div>
                       <div>
                         <Label>Patient Responsibility</Label>
-                        <Input placeholder="$17.00" disabled className="bg-gray-50" />
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                          <Input 
+                            placeholder="17.00" 
+                            className="pl-8 bg-blue-50 text-blue-700 font-medium"
+                            type="number"
+                            step="0.01"
+                            id="patient-responsibility-filing"
+                          />
+                        </div>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
