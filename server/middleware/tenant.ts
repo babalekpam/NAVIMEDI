@@ -47,9 +47,31 @@ export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response,
       console.log("[TENANT DEBUG] Loaded tenant from DB:", tenant);
       req.tenant = tenant;
 
-      // Strict tenant isolation - even super admin must belong to the same tenant
-      // Super admin can only access data from their own tenant
-      // Platform admins manage tenants, not access other tenant's data directly
+      // Super admin access: Can manage platform and tenants but NOT access tenant operational data
+      if (req.user?.role === 'super_admin') {
+        // Allow access to platform management endpoints
+        const platformEndpoints = [
+          '/api/tenants',
+          '/api/admin',
+          '/api/platform',
+          '/api/users/all',
+          '/api/audit-logs',
+          '/api/analytics/platform'
+        ];
+        
+        const isManagementEndpoint = platformEndpoints.some(endpoint => 
+          req.path.startsWith(endpoint)
+        );
+        
+        if (isManagementEndpoint) {
+          return next();
+        }
+        
+        // For operational endpoints, super admin must access through proper tenant context
+        // This prevents super admin from directly accessing pharmacy/hospital operational data
+        console.log("[TENANT DEBUG] Super admin accessing operational endpoint:", req.path);
+        console.log("[TENANT DEBUG] Must use proper tenant context for data access");
+      }
 
       // For other users, ensure they can only access their tenant's data
       if (!req.tenantId) {

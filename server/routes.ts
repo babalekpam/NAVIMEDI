@@ -107,6 +107,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Super Admin Platform Management Routes (before tenant middleware)
+  app.get("/api/admin/tenants", authenticateToken, async (req, res) => {
+    try {
+      if (req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+      
+      const tenants = await storage.getAllTenants();
+      const tenantsWithStats = await Promise.all(tenants.map(async (tenant) => {
+        const users = await storage.getUsersByTenant(tenant.id);
+        const patients = await storage.getPatientsByTenant(tenant.id);
+        
+        return {
+          ...tenant,
+          stats: {
+            userCount: users.length,
+            patientCount: patients.length,
+            isActive: tenant.isActive
+          }
+        };
+      }));
+      
+      res.json(tenantsWithStats);
+    } catch (error) {
+      console.error("Error fetching tenant overview:", error);
+      res.status(500).json({ message: "Failed to fetch tenant overview" });
+    }
+  });
+  
+  app.get("/api/admin/platform-stats", authenticateToken, async (req, res) => {
+    try {
+      if (req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+      
+      const tenants = await storage.getAllTenants();
+      const allUsers = await storage.getAllUsers();
+      
+      const stats = {
+        totalTenants: tenants.length,
+        totalUsers: allUsers.length,
+        tenantsByType: {
+          hospital: tenants.filter(t => t.type === 'hospital').length,
+          pharmacy: tenants.filter(t => t.type === 'pharmacy').length,
+          laboratory: tenants.filter(t => t.type === 'laboratory').length,
+          clinic: tenants.filter(t => t.type === 'clinic').length,
+          platform: tenants.filter(t => t.type === 'platform').length
+        },
+        activeTenants: tenants.filter(t => t.isActive).length,
+        inactiveTenants: tenants.filter(t => !t.isActive).length
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching platform stats:", error);
+      res.status(500).json({ message: "Failed to fetch platform statistics" });
+    }
+  });
+
   // Apply tenant context middleware to all other API routes
   app.use("/api", setTenantContext);
 
@@ -549,12 +608,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Ensure this is actually a pharmacy tenant
-      if (req.tenant!.type !== 'pharmacy') {
+      // Exception: Super admin can access for oversight purposes
+      if (req.tenant!.type !== 'pharmacy' && req.user?.role !== 'super_admin') {
         console.log("[PHARMACY API] ❌ INVALID TENANT TYPE: Tenant type is", req.tenant!.type, "but expected pharmacy");
         return res.status(403).json({ 
           message: "Access denied: This endpoint is only for pharmacy tenants",
           error: "INVALID_TENANT_TYPE"
         });
+      }
+      
+      // Super admin oversight access
+      if (req.user?.role === 'super_admin' && req.tenant!.type !== 'pharmacy') {
+        console.log("[PHARMACY API] 🔧 Super admin oversight access to pharmacy", pharmacyTenantId);
+        // Validate the pharmacy tenant exists
+        const targetTenant = await storage.getTenant(pharmacyTenantId);
+        if (!targetTenant || targetTenant.type !== 'pharmacy') {
+          return res.status(404).json({ message: "Pharmacy tenant not found" });
+        }
+        
+        // Return oversight information instead of operational data
+        const oversightInfo = {
+          pharmacy: {
+            id: targetTenant.id,
+            name: targetTenant.name,
+            type: targetTenant.type,
+            status: targetTenant.isActive ? 'Active' : 'Inactive'
+          },
+          message: "Super admin oversight mode - for operational access, login with pharmacy credentials",
+          managementActions: [
+            "View tenant settings",
+            "Manage users",
+            "View audit logs",
+            "Monitor compliance"
+          ]
+        };
+        return res.json(oversightInfo);
       }
       
       const prescriptions = await storage.getPrescriptionsByPharmacy(pharmacyTenantId);
@@ -1118,12 +1206,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("[PHARMACY API] ✅ User:", req.user?.id, "Role:", req.user?.role);
       
       // STRICT TENANT ISOLATION: Only pharmacy tenants can access pharmacy prescriptions
-      if (req.tenant!.type !== 'pharmacy') {
+      // Exception: Super admin can access for oversight purposes with special handling
+      if (req.tenant!.type !== 'pharmacy' && req.user?.role !== 'super_admin') {
         console.log("[PHARMACY API] ❌ INVALID TENANT TYPE: Tenant type is", req.tenant!.type, "but expected pharmacy");
         return res.status(403).json({ 
           message: "Access denied: This endpoint is only for pharmacy tenants",
           error: "INVALID_TENANT_TYPE"
         });
+      }
+      
+      // Super admin accessing pharmacy data for oversight
+      if (req.user?.role === 'super_admin' && req.tenant!.type !== 'pharmacy') {
+        console.log("[PHARMACY API] 🔧 Super admin oversight access - limited view only");
+        // Return minimal oversight data, not full operational access
+        const oversightData = {
+          tenantInfo: {
+            id: req.tenant!.id,
+            name: req.tenant!.name,
+            type: req.tenant!.type
+          },
+          message: "Super admin oversight mode - operational access requires pharmacy tenant login",
+          availableActions: ["View tenant info", "Manage users", "View audit logs"]
+        };
+        return res.json(oversightData);
       }
       
       // Get prescriptions sent TO this pharmacy (pharmacyTenantId = this pharmacy's tenant)

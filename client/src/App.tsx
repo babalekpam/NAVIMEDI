@@ -21,6 +21,7 @@ import Prescriptions from "@/pages/prescriptions";
 import LabOrders from "@/pages/lab-orders";
 import Billing from "@/pages/billing";
 import TenantManagement from "@/pages/tenant-management";
+import SuperAdminDashboard from "@/pages/super-admin-dashboard";
 import AuditLogs from "@/pages/audit-logs";
 import UserRoles from "@/pages/user-roles";
 import Reports from "@/pages/reports";
@@ -317,6 +318,19 @@ function AppContent() {
           </ProtectedRoute>
         </Route>
         <Route path="/admin-dashboard">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <SuperAdminDashboard />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/super-admin">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
               <Header />
