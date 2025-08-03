@@ -67,27 +67,39 @@ export default function PharmacyDashboardEnhancedV2() {
   const [reminderFrequency, setReminderFrequency] = useState('');
   const [deliveryTab, setDeliveryTab] = useState<'active' | 'scheduled' | 'completed'>('active');
   
-  // Fetch real tenant-specific data
+  // Fetch real tenant-specific data with comprehensive error handling
   const { data: apiMetrics, isLoading: metricsLoading, error: metricsError } = useQuery({
     queryKey: ['/api/pharmacy/metrics', tenant?.id],
-    enabled: !!tenant?.id && tenant?.type === 'pharmacy'
+    enabled: !!tenant?.id && tenant?.type === 'pharmacy',
+    retry: false
   });
 
   const { data: apiPrescriptions, isLoading: prescriptionsLoading, error: prescriptionsError } = useQuery({
     queryKey: ['/api/pharmacy/prescriptions', tenant?.id],
-    enabled: !!tenant?.id && tenant?.type === 'pharmacy'
+    enabled: !!tenant?.id && tenant?.type === 'pharmacy',
+    retry: false
   });
 
   const { data: apiInventoryAlerts, isLoading: inventoryLoading, error: inventoryError } = useQuery({
-    queryKey: ['/api/pharmacy/inventory-alerts', tenant?.id],
-    enabled: !!tenant?.id && tenant?.type === 'pharmacy'
+    queryKey: ['/api/pharmacy/inventory-alerts', tenant?.id], 
+    enabled: !!tenant?.id && tenant?.type === 'pharmacy',
+    retry: false
   });
 
-  // Debug logging
-  console.log('[PHARMACY DASHBOARD] ✅ Tenant:', tenant);
-  console.log('[PHARMACY DASHBOARD] ✅ API Data:', { apiMetrics, apiPrescriptions, apiInventoryAlerts });
-  console.log('[PHARMACY DASHBOARD] ✅ Errors:', { metricsError, prescriptionsError, inventoryError });
+  // Debug logging - comprehensive tracking
   console.log('[PHARMACY DASHBOARD] ✅ Enhanced dashboard loaded!');
+  console.log('[PHARMACY DASHBOARD] ✅ Tenant:', tenant?.name, 'Type:', tenant?.type);
+  console.log('[PHARMACY DASHBOARD] ✅ User:', user?.role);
+  console.log('[PHARMACY DASHBOARD] ✅ API Status:', { 
+    metrics: metricsLoading ? 'loading' : metricsError ? 'error' : 'success',
+    prescriptions: prescriptionsLoading ? 'loading' : prescriptionsError ? 'error' : 'success',
+    inventory: inventoryLoading ? 'loading' : inventoryError ? 'error' : 'success'
+  });
+  console.log('[PHARMACY DASHBOARD] ✅ Prescription Count:', apiPrescriptions?.length || 0);
+  
+  if (prescriptionsError) {
+    console.error('[PHARMACY DASHBOARD] ❌ Prescriptions API Error:', prescriptionsError);
+  }
 
   // Mock data for demo (replace with tenant-specific data when API is ready)
   const metrics: PharmacyMetrics = apiMetrics || {
@@ -101,11 +113,9 @@ export default function PharmacyDashboardEnhancedV2() {
     insuranceClaims: 456
   };
 
-  const prescriptions: PrescriptionStatus[] = apiPrescriptions || [
-    { id: 'P001', patientName: 'Sarah Johnson', medication: 'Metformin 500mg', status: 'ready', waitTime: 5, priority: 'normal', insuranceStatus: 'approved' },
-    { id: 'P002', patientName: 'Mike Chen', medication: 'Lisinopril 10mg', status: 'processing', waitTime: 15, priority: 'urgent', insuranceStatus: 'pending' },
-    { id: 'P003', patientName: 'Emma Davis', medication: 'Atorvastatin 20mg', status: 'new', waitTime: 0, priority: 'critical', insuranceStatus: 'approved' },
-    { id: 'P004', patientName: 'John Smith', medication: 'Amlodipine 5mg', status: 'ready', waitTime: 8, priority: 'normal', insuranceStatus: 'approved' },
+  // Use real API data when available, with comprehensive fallback
+  const prescriptions: PrescriptionStatus[] = apiPrescriptions?.length ? apiPrescriptions : [
+    { id: 'DEMO-P001', patientName: 'Loading Prescriptions...', medication: 'Checking database...', status: 'new', waitTime: 0, priority: 'normal', insuranceStatus: 'pending' }
   ];
 
   const inventoryAlerts: InventoryAlert[] = apiInventoryAlerts || [
