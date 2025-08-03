@@ -8,6 +8,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { aiHealthAnalyzer } from "./ai-health-analyzer";
+import { sendWelcomeEmail, generateTemporaryPassword } from "./email-service.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
@@ -184,13 +185,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(409).json({ message: "Email already exists" });
       }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(userData.password, 12);
+      // Generate temporary password for email
+      const temporaryPassword = generateTemporaryPassword();
+      
+      // Hash the temporary password for storage
+      const hashedPassword = await bcrypt.hash(temporaryPassword, 12);
       
       const user = await storage.createUser({
         ...userData,
-        password: hashedPassword
+        password: hashedPassword,
+        mustChangePassword: true,
+        isTemporaryPassword: true
       });
+
+      // Get tenant information for email
+      const tenant = await storage.getTenant(user.tenantId);
+      
+      // Send welcome email with credentials
+      if (tenant) {
+        const emailSent = await sendWelcomeEmail({
+          userEmail: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          username: user.username,
+          temporaryPassword: temporaryPassword,
+          organizationName: tenant.name,
+          loginUrl: `${req.protocol}://${req.get('host')}/login`
+        });
+        
+        if (!emailSent) {
+          console.warn(`Failed to send welcome email to ${user.email}`);
+        }
+      }
 
       // Create audit log
       await storage.createAuditLog({
@@ -205,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.status(201).json({
-        message: "User created successfully",
+        message: "User created successfully. Welcome email sent with temporary password.",
         user: {
           id: user.id,
           username: user.username,
@@ -3288,6 +3314,43 @@ Report ID: ${report.id}
     } catch (error) {
       console.error('Error deleting department:', error);
       res.status(500).json({ error: 'Failed to delete department' });
+    }
+  });
+
+  // Test email functionality (for administrators)
+  app.post('/api/test-email', authenticateToken, requireRole(['super_admin', 'tenant_admin']), async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: 'Email address is required' });
+      }
+
+      const tempPassword = generateTemporaryPassword();
+      const tenant = await storage.getTenant(req.tenantId!);
+      
+      const success = await sendWelcomeEmail({
+        userEmail: email,
+        firstName: 'Test',
+        lastName: 'User',
+        username: 'testuser',
+        temporaryPassword: tempPassword,
+        organizationName: tenant?.name || 'NaviMed Platform',
+        loginUrl: `${req.protocol}://${req.get('host')}/login`
+      });
+
+      res.json({ 
+        message: success ? 'Test email sent successfully' : 'Failed to send test email',
+        success,
+        sendgridConfigured: !!process.env.SENDGRID_API_KEY,
+        emailFrom: 'info@navimedi.com'
+      });
+    } catch (error) {
+      console.error('Test email error:', error);
+      res.status(500).json({ 
+        error: 'Failed to send test email', 
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
