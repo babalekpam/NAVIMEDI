@@ -21,6 +21,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { useTenant } from "@/hooks/use-tenant";
+import { useAuth } from "@/contexts/auth-context";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface WhiteLabelSettings {
@@ -35,6 +36,7 @@ interface WhiteLabelSettings {
 export default function WhiteLabelSettingsPage() {
   const { toast } = useToast();
   const { tenant: currentTenant } = useTenant();
+  const { user } = useAuth();
   const [previewMode, setPreviewMode] = useState(false);
 
   const [settings, setSettings] = useState<WhiteLabelSettings>({
@@ -97,9 +99,11 @@ export default function WhiteLabelSettingsPage() {
     }
   };
 
-  // ARGILETTE platform owner and super admin have unlimited white label access
+  // Super admin and ARGILETTE platform owner have unlimited white label access
+  const isSuperAdmin = user?.role === 'super_admin';
   const isPlatformOwner = currentTenant?.name?.includes('ARGILETTE') || currentTenant?.type === 'platform' || currentTenant?.subdomain === 'argilette';
-  const isWhiteLabelEnabled = isPlatformOwner || (subscription as any)?.whitelabelEnabled || (subscription as any)?.plan === 'white_label';
+  const hasUnlimitedPlan = currentTenant?.settings?.planType === 'unlimited' || currentTenant?.settings?.features?.includes('unlimited');
+  const isWhiteLabelEnabled = isSuperAdmin || isPlatformOwner || hasUnlimitedPlan || (subscription as any)?.whitelabelEnabled || (subscription as any)?.plan === 'white_label';
 
   if (!isWhiteLabelEnabled) {
     return (
@@ -127,15 +131,17 @@ export default function WhiteLabelSettingsPage() {
           <div>
             <h1 className="text-3xl font-bold">White Label Settings</h1>
             <p className="text-slate-600 mt-2">
-              {isPlatformOwner 
-                ? "Platform owner unlimited customization - no payment required" 
-                : "Customize your platform's branding and appearance"
+              {isSuperAdmin 
+                ? "Super Admin unlimited customization - full platform control" 
+                : isPlatformOwner 
+                  ? "Platform owner unlimited customization - no payment required" 
+                  : "Customize your platform's branding and appearance"
               }
             </p>
           </div>
-          <Badge className={isPlatformOwner ? "bg-purple-100 text-purple-800" : "bg-green-100 text-green-800"}>
+          <Badge className={isSuperAdmin || isPlatformOwner ? "bg-purple-100 text-purple-800" : "bg-green-100 text-green-800"}>
             <Crown className="w-3 h-3 mr-1" />
-            {isPlatformOwner ? "Platform Owner - Unlimited Access" : "White Label Enabled"}
+            {isSuperAdmin ? "Super Admin - Unlimited Access" : isPlatformOwner ? "Platform Owner - Unlimited Access" : "White Label Enabled"}
           </Badge>
         </div>
 
