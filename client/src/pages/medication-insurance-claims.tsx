@@ -342,12 +342,12 @@ export default function MedicationInsuranceClaims() {
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Submit New Claim
+              Submit New Claim (Enhanced v2.0)
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Submit Medication Insurance Claim</DialogTitle>
+              <DialogTitle>Submit Medication Insurance Claim - Enhanced Form</DialogTitle>
             </DialogHeader>
 
             <Form {...form}>
