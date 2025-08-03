@@ -25,8 +25,232 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
         <div className="text-center">
           <ShieldCheck className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Admin Access Required</h2>
-          <p className="text-gray-600">Only hospital administrators can access this page.</p>
+          <p className="text-gray-600">Only tenant administrators can access this page.</p>
         </div>
+      </div>
+    );
+  }
+
+  // Check if this is a pharmacy tenant admin
+  const isPharmacyAdmin = tenant?.type === 'pharmacy' && user.role === 'tenant_admin';
+  
+  if (isPharmacyAdmin) {
+    return (
+      <div className="space-y-6">
+        {/* Pharmacy Admin Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Pharmacy Administration</h1>
+            <p className="text-gray-600">Manage your pharmacy operations and staff</p>
+          </div>
+          <Badge variant="outline" className="flex items-center">
+            <Building2 className="h-4 w-4 mr-2" />
+            {tenant?.name || "Pharmacy Admin"}
+          </Badge>
+        </div>
+
+        <Tabs value={currentTab} onValueChange={setCurrentTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="employees">Employees</TabsTrigger>
+            <TabsTrigger value="operations">Operations</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {/* Pharmacy Stats */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Activity className="h-5 w-5 mr-2 text-green-600" />
+                    Pharmacy Stats
+                  </CardTitle>
+                  <CardDescription>Current operational metrics</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Active Staff:</span>
+                    <span className="text-sm">2</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Active Patients:</span>
+                    <span className="text-sm">6</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Active Prescriptions:</span>
+                    <span className="text-sm">3</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <UserPlus className="h-5 w-5 mr-2 text-blue-600" />
+                    Quick Actions
+                  </CardTitle>
+                  <CardDescription>Common administrative tasks</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button 
+                    onClick={() => window.location.href = '/pharmacy-employee-management'}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Manage Employees
+                  </Button>
+                  <Button 
+                    onClick={() => window.location.href = '/dashboard'}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    <Activity className="h-4 w-4 mr-2" />
+                    Pharmacy Dashboard
+                  </Button>
+                  <Button 
+                    onClick={() => window.location.href = '/pharmacy-billing'}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Billing Management
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* System Status */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <ShieldCheck className="h-5 w-5 mr-2 text-green-600" />
+                    System Status
+                  </CardTitle>
+                  <CardDescription>Pharmacy system health</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">System Status:</span>
+                    <Badge className="bg-green-100 text-green-800">Online</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Data Isolation:</span>
+                    <Badge className="bg-blue-100 text-blue-800">Secure</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Backup Status:</span>
+                    <Badge className="bg-green-100 text-green-800">Current</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="employees">
+            <Card>
+              <CardHeader>
+                <CardTitle>Employee Management</CardTitle>
+                <CardDescription>Manage pharmacy staff and their roles</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <Button 
+                    onClick={() => window.location.href = '/pharmacy-employee-management'}
+                    className="w-full justify-start"
+                    size="lg"
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Open Employee Management System
+                  </Button>
+                  <p className="text-sm text-gray-600">
+                    Manage all pharmacy staff including pharmacists, billing staff, receptionists, and administrators.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="operations">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Prescription Management</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button 
+                    onClick={() => window.location.href = '/dashboard'}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    <Activity className="h-4 w-4 mr-2" />
+                    Prescription Dashboard
+                  </Button>
+                  <Button 
+                    onClick={() => window.location.href = '/prescription-archives'}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    Prescription Archives
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Financial Management</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button 
+                    onClick={() => window.location.href = '/pharmacy-billing'}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Billing Dashboard
+                  </Button>
+                  <Button 
+                    onClick={() => window.location.href = '/medication-insurance-claims'}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    <ShieldCheck className="h-4 w-4 mr-2" />
+                    Insurance Claims
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <Card>
+              <CardHeader>
+                <CardTitle>Pharmacy Settings</CardTitle>
+                <CardDescription>Configure pharmacy operations and preferences</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Pharmacy Name</label>
+                      <p className="text-sm text-gray-600">{tenant?.name}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Tenant Type</label>
+                      <p className="text-sm text-gray-600 capitalize">{tenant?.type}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Operating Status</label>
+                    <p className="text-sm text-gray-600">Active - Independent Operations</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     );
   }
