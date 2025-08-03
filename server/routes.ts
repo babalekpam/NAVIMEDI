@@ -1676,10 +1676,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Tenant admin can only create users in their own organization
       const targetTenantId = req.user.role === 'super_admin' ? (req.body.tenantId || req.user.tenantId) : req.user.tenantId;
 
-      // Validate that tenant admin and director cannot create super admin or other admin users
+      // Validate that tenant admin and director cannot create super admin users
+      // But allow them to create other tenant admins for multi-admin pharmacy management
       if (req.user?.role === 'tenant_admin' || req.user?.role === 'director') {
-        if (role === 'super_admin' || role === 'tenant_admin' || role === 'director') {
-          return res.status(403).json({ message: "Tenant admins and directors cannot create admin-level users. Only clinical and operational staff roles are allowed." });
+        if (role === 'super_admin') {
+          return res.status(403).json({ message: "Only super admins can create other super admin users." });
         }
       }
 

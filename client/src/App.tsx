@@ -96,6 +96,7 @@ import PatientAccessManagement from "@/pages/patient-access-management";
 import PharmacyPatientManagement from "@/pages/pharmacy-patient-management";
 import PharmacyReports from "@/pages/pharmacy-reports";
 import PrescriptionArchives from "@/pages/prescription-archives";
+import PharmacyEmployeeManagement from "@/pages/pharmacy-employee-management";
 
 
 
@@ -391,6 +392,19 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <PharmacyReports />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/pharmacy-employee-management">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PharmacyEmployeeManagement />
                 </main>
               </div>
             </div>
