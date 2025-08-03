@@ -39,6 +39,16 @@ export default function Dashboard() {
 
   const isSuperAdmin = user?.role === 'super_admin';
   
+  // Redirect super admin to their dedicated dashboard
+  if (isSuperAdmin) {
+    window.location.href = '/super-admin-dashboard';
+    return (
+      <div className="p-6">
+        <div className="text-center">Redirecting to Super Admin Dashboard...</div>
+      </div>
+    );
+  }
+  
   console.log('Dashboard Debug:', {
     user: user?.role,
     userId: user?.id || user?.userId,
