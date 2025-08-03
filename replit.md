@@ -17,6 +17,8 @@ NaviMED is a multi-tenant healthcare platform that hosts multiple independent ph
 - **Comprehensive Receipt System**: Delivery receipts now include tenant information, HIPAA compliance notes, and user authorization tracking
 - **Professional Modal System**: All Digital Health Hub features use responsive modals instead of basic prompts
 - **Working Report Downloads**: AI Insights reports generate in multiple formats (Text, Excel, CSV) with tenant-specific data
+- **Complete 5-Step Prescription Workflow**: Implemented comprehensive workflow interface (Received → Insurance Verification → Insurance Filing → Patient Payment → Final Receipt) with checkboxes and information fields on single page
+- **Pharmacy Dashboard Consolidation**: Removed duplicate pharmacy dashboards, unified all pharmacy functionality under single `/dashboard` route with working prescription status updates
 
 ## System Architecture
 The platform is built on a modern stack ensuring scalability, security, and maintainability.
