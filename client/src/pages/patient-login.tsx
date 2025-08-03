@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { 
@@ -13,8 +14,8 @@ import {
   ArrowLeft,
   Building2
 } from "lucide-react";
-// Redirects to Replit Auth - no auth context needed
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function PatientLogin() {
   const [formData, setFormData] = useState({
@@ -23,11 +24,35 @@ export default function PatientLogin() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [, setLocation] = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Redirect to Replit Auth
-    window.location.href = '/api/login';
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await apiRequest("/api/auth/login", {
+        method: "POST",
+        body: {
+          username: formData.username,
+          password: formData.password,
+          tenantId: "" // For patients, auto-detect tenant
+        }
+      });
+
+      // Store auth token and user data
+      localStorage.setItem("auth_token", response.token);
+      localStorage.setItem("auth_user", JSON.stringify(response.user));
+      
+      // Redirect to patient portal
+      setLocation("/patient-portal");
+      
+    } catch (err: any) {
+      setError(err.message || "Invalid username or password");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleQuickLogin = (username: string, password: string) => {
@@ -62,16 +87,9 @@ export default function PatientLogin() {
             </CardTitle>
             <CardDescription>
               Access your health records and manage your care
-              {/* Display URL message if present */}
-              {window.location.search.includes('message=') && (
-                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                  <p className="text-sm text-blue-700">
-                    {decodeURIComponent(window.location.search.split('message=')[1]?.split('&')[0] || '')}
-                  </p>
-                </div>
-              )}
             </CardDescription>
           </CardHeader>
+          
           <CardContent>
             <form id="patient-login-form" onSubmit={handleSubmit} className="space-y-4">
               {error && (
@@ -79,10 +97,10 @@ export default function PatientLogin() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              
+
               <div className="space-y-2">
-                <Label htmlFor="username">
-                  <User className="w-4 h-4 inline mr-2" />
+                <Label htmlFor="username" className="flex items-center">
+                  <User className="h-4 w-4 mr-2" />
                   Username
                 </Label>
                 <Input
@@ -90,14 +108,14 @@ export default function PatientLogin() {
                   type="text"
                   placeholder="Enter your username"
                   value={formData.username}
-                  onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">
-                  <Lock className="w-4 h-4 inline mr-2" />
+                <Label htmlFor="password" className="flex items-center">
+                  <Lock className="h-4 w-4 mr-2" />
                   Password
                 </Label>
                 <Input
@@ -105,89 +123,48 @@ export default function PatientLogin() {
                   type="password"
                   placeholder="Enter your password"
                   value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
                 />
               </div>
 
               <Button 
                 type="submit" 
-                className="w-full" 
+                className="w-full bg-blue-600 hover:bg-blue-700" 
                 disabled={isLoading}
               >
-                {isLoading ? "Signing In..." : "Sign In"}
+                {isLoading ? "Signing In..." : "Sign In to Portal"}
               </Button>
             </form>
 
-            <Separator className="my-6" />
-
-            {/* Test Accounts */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-700 text-center">Test Patient Accounts</h3>
-              <div className="space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-sm"
-                  onClick={() => handleQuickLogin("patient.sarah", "password")}
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  Sarah Johnson (patient.sarah)
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-sm"
-                  onClick={() => handleQuickLogin("patient.michael", "password")}
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  Michael Davis (patient.michael)
+            <div className="mt-6 pt-6 border-t">
+              <p className="text-center text-sm text-gray-600 mb-4">
+                Need help accessing your account?
+              </p>
+              <div className="text-center space-y-2">
+                <Button variant="outline" size="sm" className="w-full">
+                  Contact Support
                 </Button>
               </div>
             </div>
 
-            <Separator className="my-6" />
-
-            {/* Additional Options */}
-            <div className="space-y-3">
-              <div className="text-center text-sm space-y-2">
-                <a href="#" className="text-blue-600 hover:underline block">
-                  Forgot your password?
-                </a>
-                <a href="#" className="text-blue-600 hover:underline block">
-                  Need help accessing your account?
-                </a>
-              </div>
-
-              <Button 
-                variant="ghost" 
-                className="w-full"
-                onClick={() => window.location.href = "/"}
+            <div className="mt-6 text-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/")}
+                className="text-gray-500 hover:text-gray-700"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Provider Login
+                Back to Main Site
               </Button>
-            </div>
-
-            {/* Security Notice */}
-            <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-start space-x-2">
-                <Shield className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-blue-700">
-                  <p className="font-medium">Your Privacy is Protected</p>
-                  <p className="mt-1">
-                    This portal uses bank-level encryption and is HIPAA-compliant to keep your health information secure.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Support Information */}
-            <div className="mt-4 text-center text-xs text-gray-500">
-              <p>Need technical support?</p>
-              <p>Call: (314) 472-3839 | Email: support@navimed.com</p>
-              <p>Available: Monday - Friday, 8 AM - 6 PM</p>
             </div>
           </CardContent>
         </Card>
+
+        <div className="mt-6 text-center text-xs text-gray-500">
+          <p>🔒 Your data is protected by HIPAA-compliant security</p>
+        </div>
       </div>
     </div>
   );

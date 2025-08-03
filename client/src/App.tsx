@@ -731,58 +731,45 @@ function AppContent() {
 }
 
 function Router() {
-  return (
-    <div className="min-h-screen">
-      <Switch>
-        {/* Public routes - always accessible */}
-        <Route path="/" component={LandingPage} />
-        <Route path="/register" component={RegisterOrganization} />
-        <Route path="/features" component={FeaturesPage} />
-        <Route path="/solutions" component={SolutionsPage} />
-        <Route path="/security" component={SecurityPage} />
-        <Route path="/contact" component={ContactPage} />
-        <Route path="/pricing" component={PricingPage} />
-        <Route path="/laboratory-registration" component={LaboratoryRegistration} />
-        <Route path="/pharmacy-registration" component={PharmacyRegistration} />
-        <Route path="/patient-portal-public" component={PatientPortalPublic} />
-        <Route path="/patient-login" component={PatientLogin} />
-        <Route path="/login" component={Login} />
-        
-        {/* Protected routes - require authentication */}
-        <Route path="/dashboard">
-          <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <Dashboard />
-                </main>
-              </div>
-            </div>
-          </ProtectedRoute>
-        </Route>
-        
-        {/* All other protected routes */}
-        <Route path="/patients" component={() => (
-          <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <Patients />
-                </main>
-              </div>
-            </div>
-          </ProtectedRoute>
-        )} />
-        
-        {/* Default to landing page */}
-        <Route component={LandingPage} />
-      </Switch>
-    </div>
-  );
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-emerald-600"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen">
+        <Switch>
+          {/* Public routes - always accessible */}
+          <Route path="/" component={LandingPage} />
+          <Route path="/register" component={RegisterOrganization} />
+          <Route path="/features" component={FeaturesPage} />
+          <Route path="/solutions" component={SolutionsPage} />
+          <Route path="/security" component={SecurityPage} />
+          <Route path="/contact" component={ContactPage} />
+          <Route path="/pricing" component={PricingPage} />
+          <Route path="/laboratory-registration" component={LaboratoryRegistration} />
+          <Route path="/pharmacy-registration" component={PharmacyRegistration} />
+          <Route path="/patient-portal-public" component={PatientPortalPublic} />
+          <Route path="/patient-login" component={PatientLogin} />
+          <Route path="/login" component={Login} />
+          
+          {/* Default to landing page for unauthenticated users */}
+          <Route component={LandingPage} />
+        </Switch>
+      </div>
+    );
+  }
+
+  return <AppContent />;
 }
 
 function App() {
