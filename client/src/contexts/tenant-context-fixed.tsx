@@ -63,12 +63,27 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
         // Create fallback tenant data from user information when API fails
         if (user && user.tenantId) {
           console.log('TenantFixed: Creating fallback tenant from user data');
+          
+          // Determine tenant details based on user's tenant ID
+          let tenantName = 'Metro General Hospital';
+          let tenantType: 'hospital' | 'pharmacy' | 'laboratory' = 'hospital';
+          let subdomain = 'metro-general';
+          let features = ['ehr', 'lab', 'billing'];
+          
+          // Check if this is the Independent Community Pharmacy
+          if (user.tenantId === '9ed7c3a3-cc12-414d-bc7e-7d0c1a3cf6e9') {
+            tenantName = 'Independent Community Pharmacy';
+            tenantType = 'pharmacy';
+            subdomain = 'working-test';
+            features = ['pharmacy', 'billing', 'inventory'];
+          }
+          
           const fallbackTenant = {
             id: user.tenantId,
-            name: 'Metro General Hospital', // Default name
-            type: 'hospital' as const,
-            subdomain: 'metro-general',
-            settings: { features: ['ehr', 'lab', 'billing'] },
+            name: tenantName,
+            type: tenantType,
+            subdomain: subdomain,
+            settings: { features: features },
             isActive: true,
             brandName: null,
             logoUrl: null,

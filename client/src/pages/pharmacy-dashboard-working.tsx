@@ -218,6 +218,7 @@ export default function PharmacyDashboardWorking() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
           <TabsTrigger value="workflow">Workflow</TabsTrigger>
+          <TabsTrigger value="user-roles">User Roles</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -483,6 +484,52 @@ export default function PharmacyDashboardWorking() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="user-roles" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Employee Management</CardTitle>
+              <CardDescription>Manage pharmacy staff and their roles</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => window.location.href = '/pharmacy-employee-management'}
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  Manage Pharmacy Employees
+                </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Active Staff</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-green-600">2</div>
+                      <p className="text-xs text-muted-foreground">Currently employed</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Available Roles</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-1">
+                        <p className="text-sm">• Pharmacist</p>
+                        <p className="text-sm">• Billing Staff</p>
+                        <p className="text-sm">• Receptionist</p>
+                        <p className="text-sm">• Tenant Admin</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="inventory" className="space-y-4">
