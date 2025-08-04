@@ -401,7 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("[MARKETPLACE] Loading products for marketplace");
       
-      const products = await storage.getMarketplaceProducts();
+      const products = await storage.getPublicMarketplaceProducts();
       
       console.log(`[MARKETPLACE] Found ${products.length} active products`);
       res.json(products);
