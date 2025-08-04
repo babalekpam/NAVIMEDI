@@ -4128,12 +4128,22 @@ Report ID: ${report.id}
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      // Find the supplier profile for this user
+      // Find the supplier profile by organization name (more secure than email)
       const suppliers = await storage.getMedicalSuppliers();
-      const supplierProfile = suppliers.find(s => s.contactEmail === user.email);
+      const supplierProfile = suppliers.find(s => 
+        s.organizationSlug === user.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') ||
+        s.contactEmail === user.email // Fallback for existing accounts
+      );
       
       if (!supplierProfile) {
-        return res.status(404).json({ error: 'Supplier profile not found' });
+        return res.status(404).json({ 
+          error: 'Supplier profile not found',
+          debug: {
+            userOrg: user.organizationName,
+            userEmail: user.email,
+            availableSuppliers: suppliers.map(s => ({ name: s.companyName, slug: s.organizationSlug, email: s.contactEmail }))
+          }
+        });
       }
 
       res.json(supplierProfile);
@@ -4150,9 +4160,22 @@ Report ID: ${report.id}
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      // Get advertisements for this supplier based on email
+      // First find the supplier by organization name
+      const suppliers = await storage.getMedicalSuppliers();
+      const supplierProfile = suppliers.find(s => 
+        s.organizationSlug === user.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') ||
+        s.contactEmail === user.email // Fallback for existing accounts
+      );
+
+      if (!supplierProfile) {
+        return res.status(404).json({ error: 'Supplier profile not found' });
+      }
+
+      // Get advertisements for this supplier organization
       const allAdvertisements = await storage.getAllAdvertisements();
-      const supplierAds = allAdvertisements.filter(ad => ad.contactEmail === user.email);
+      const supplierAds = allAdvertisements.filter(ad => 
+        ad.contactEmail === supplierProfile.contactEmail
+      );
       
       res.json(supplierAds);
     } catch (error) {

@@ -1,172 +1,213 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Building2, Mail, Lock, AlertCircle } from 'lucide-react';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { apiRequest } from '@/lib/queryClient';
+import { Eye, EyeOff, Building2, ShieldCheck, Users } from 'lucide-react';
 
-const loginSchema = z.object({
-  contactEmail: z.string().email('Please enter a valid email address'),
-  password: z.string().min(1, 'Password is required')
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
-
-interface SupplierLoginProps {
-  onLoginSuccess: (supplier: any, token: string) => void;
-}
-
-export default function SupplierLogin({ onLoginSuccess }: SupplierLoginProps) {
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
+export default function SupplierLogin() {
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors }
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema)
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    organizationName: '',
+    username: '',
+    password: ''
   });
 
-  const onSubmit = async (data: LoginFormData) => {
-    setIsLoggingIn(true);
-    setLoginError(null);
-    
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
     try {
-      const response = await fetch('/public/suppliers/login', {
+      // Login using the standard platform login
+      const response = await apiRequest('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+          organizationName: formData.organizationName // Include organization for supplier verification
+        })
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Login failed');
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        
+        // Verify this is a supplier account by checking if they have a supplier profile
+        try {
+          await apiRequest('/api/supplier/profile');
+          
+          toast({
+            title: "Login Successful",
+            description: `Welcome back to ${formData.organizationName}!`,
+          });
+          
+          // Redirect to supplier dashboard
+          setLocation('/supplier-dashboard');
+        } catch (supplierError) {
+          // Not a supplier account
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          toast({
+            title: "Access Denied",
+            description: "This account is not registered as a medical supplier.",
+            variant: "destructive",
+          });
+        }
       }
-
-      // Store the supplier token in localStorage for session management
-      localStorage.setItem('supplierToken', result.token);
-      localStorage.setItem('supplierData', JSON.stringify(result.supplier));
-
-      toast({
-        title: 'Login Successful',
-        description: `Welcome back, ${result.supplier.companyName}!`,
-        variant: 'default'
-      });
-
-      // Call the success callback to update parent component
-      onLoginSuccess(result.supplier, result.token);
-
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Login failed';
-      setLoginError(errorMessage);
-      
       toast({
-        title: 'Login Failed',
-        description: errorMessage,
-        variant: 'destructive'
+        title: "Login Failed",
+        description: error.message || "Invalid credentials or organization name.",
+        variant: "destructive",
       });
     } finally {
-      setIsLoggingIn(false);
+      setLoading(false);
     }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-            <Building2 className="w-8 h-8 text-blue-600" />
+      <div className="w-full max-w-md space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <div className="flex justify-center">
+            <div className="bg-blue-600 p-3 rounded-full">
+              <Building2 className="h-8 w-8 text-white" />
+            </div>
           </div>
-          <CardTitle className="text-2xl">Supplier Login</CardTitle>
-          <CardDescription>
-            Sign in to access your supplier dashboard
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <Label htmlFor="contactEmail">Email Address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+          <h1 className="text-3xl font-bold text-gray-900">Supplier Portal</h1>
+          <p className="text-gray-600">Access your medical supplier dashboard</p>
+        </div>
+
+        {/* Login Form */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Sign In to Your Account</CardTitle>
+            <CardDescription>
+              Enter your organization name and credentials to access your supplier dashboard
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="organizationName">Organization Name</Label>
                 <Input
-                  id="contactEmail"
-                  type="email"
-                  {...register('contactEmail')}
-                  placeholder="your@company.com"
-                  className={`pl-10 ${errors.contactEmail ? 'border-red-500' : ''}`}
+                  id="organizationName"
+                  type="text"
+                  placeholder="e.g., MedTech Solutions Inc."
+                  value={formData.organizationName}
+                  onChange={(e) => handleInputChange('organizationName', e.target.value)}
+                  required
+                  className="w-full"
+                />
+                <p className="text-xs text-gray-500">
+                  Enter your registered company name exactly as submitted
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="Enter your username"
+                  value={formData.username}
+                  onChange={(e) => handleInputChange('username', e.target.value)}
+                  required
+                  className="w-full"
                 />
               </div>
-              {errors.contactEmail && (
-                <p className="text-red-500 text-sm mt-1">{errors.contactEmail.message}</p>
-              )}
-            </div>
 
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <Input
-                  id="password"
-                  type="password"
-                  {...register('password')}
-                  placeholder="Enter your password"
-                  className={`pl-10 ${errors.password ? 'border-red-500' : ''}`}
-                />
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    required
+                    className="w-full pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
-              )}
-            </div>
 
-            {loginError && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{loginError}</AlertDescription>
-              </Alert>
-            )}
-
-            <Button
-              type="submit"
-              className="w-full"
-              size="lg"
-              disabled={isLoggingIn}
-            >
-              {isLoggingIn ? 'Signing In...' : 'Sign In'}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <a
-                href="/supplier-register"
-                className="text-blue-600 hover:underline font-medium"
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading}
               >
-                Register as a supplier
-              </a>
-            </p>
-          </div>
+                {loading ? 'Signing In...' : 'Sign In'}
+              </Button>
+            </form>
 
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-            <p className="text-xs text-blue-800 font-medium mb-2">For Demo Purposes:</p>
-            <div className="text-xs text-blue-700 space-y-1">
-              <p><strong>Email:</strong> contact@medtech-innovations.com</p>
-              <p><strong>Password:</strong> Any password (authentication is simplified for demo)</p>
+            <div className="mt-6 pt-6 border-t">
+              <div className="text-center space-y-2">
+                <p className="text-sm text-gray-600">
+                  Don't have a supplier account?
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => setLocation('/supplier-register')}
+                  className="w-full"
+                >
+                  Register Your Organization
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Security Features */}
+        <div className="bg-white rounded-lg p-4 border">
+          <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-green-600" />
+            Secure Access Features
+          </h3>
+          <div className="space-y-2 text-sm text-gray-600">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              Organization-based authentication
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              Encrypted data transmission
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              Role-based access control
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Help Information */}
+        <Alert>
+          <Users className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Need Help?</strong> Contact our support team if you're having trouble accessing your supplier account or need assistance with registration.
+          </AlertDescription>
+        </Alert>
+      </div>
     </div>
   );
 }

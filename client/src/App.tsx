@@ -52,6 +52,7 @@ import SupplierMarketplace from "@/pages/supplier-marketplace";
 import SupplierMarketplaceTest from "@/pages/supplier-marketplace-test";
 import SupplierManagement from "@/pages/supplier-management";
 import SupplierDashboard from "@/pages/supplier-dashboard";
+import SupplierLogin from "@/pages/supplier-login";
 
 import FeaturesPage from "@/pages/features";
 import SolutionsPage from "@/pages/solutions";
@@ -381,6 +382,9 @@ function AppContent() {
         </Route>
         <Route path="/supplier-register">
           <SupplierRegister />
+        </Route>
+        <Route path="/supplier-login">
+          <SupplierLogin />
         </Route>
         
         <Route path="/admin/clients">

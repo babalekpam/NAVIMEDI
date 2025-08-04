@@ -1853,6 +1853,7 @@ export const activityLogs = pgTable("activity_logs", {
 export const medicalSuppliers = pgTable("medical_suppliers", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   companyName: text("company_name").notNull(),
+  organizationSlug: text("organization_slug").notNull().unique(), // URL-friendly unique identifier for authentication
   businessType: text("business_type").notNull(),
   contactPersonName: text("contact_person_name").notNull(),
   contactEmail: text("contact_email").notNull(),
