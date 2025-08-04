@@ -4579,6 +4579,11 @@ Report ID: ${report.id}
   app.get('/supplier-dashboard', (req, res) => {
     res.redirect(301, '/supplier-dashboard-direct');
   });
+  
+  // Supplier authentication test page
+  app.get('/supplier-test', (req, res) => {
+    res.sendFile(path.join(__dirname, '../supplier-test.html'));
+  });
 
   const server = createServer(app);
   return server;
