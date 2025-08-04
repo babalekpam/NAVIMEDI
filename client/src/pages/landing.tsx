@@ -817,6 +817,104 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Medical Device Marketplace */}
+      <section className="py-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-slate-100">
+              Medical Device Marketplace
+            </h2>
+            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
+              Browse certified medical equipment from approved suppliers with transparent pricing and seamless ordering
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
+            <Card className="border-blue-200 hover:border-blue-300 transition-all duration-300 hover:shadow-lg bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
+                    <Monitor className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Diagnostic Equipment</h3>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 mb-4">
+                  Digital stethoscopes, ultrasound machines, and advanced diagnostic tools from certified manufacturers
+                </p>
+                <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>FDA Approved</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-green-200 hover:border-green-300 transition-all duration-300 hover:shadow-lg bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 bg-green-100 dark:bg-green-900 rounded-xl">
+                    <Package className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Surgical Instruments</h3>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 mb-4">
+                  Premium surgical instrument sets, precision tools, and sterile equipment for medical procedures
+                </p>
+                <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>CE Certified</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-purple-200 hover:border-purple-300 transition-all duration-300 hover:shadow-lg bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-xl">
+                    <Laptop className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Patient Monitoring</h3>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 mb-4">
+                  Advanced patient monitoring systems, vital sign equipment, and real-time tracking devices
+                </p>
+                <div className="flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>ISO 13485</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-center">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
+              <h3 className="text-2xl font-bold mb-4 text-slate-900 dark:text-slate-100">
+                For Medical Device Suppliers
+              </h3>
+              <p className="text-slate-600 dark:text-slate-300 mb-6">
+                Join our marketplace as a certified medical device supplier and reach healthcare organizations nationwide
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="/supplier-login-direct" target="_blank" rel="noopener noreferrer">
+                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8">
+                    <ShoppingCart className="w-5 h-5 mr-2" />
+                    Supplier Login
+                  </Button>
+                </a>
+                <a href="/supplier-dashboard-direct" target="_blank" rel="noopener noreferrer">
+                  <Button size="lg" variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50 px-8">
+                    <Megaphone className="w-5 h-5 mr-2" />
+                    Advertiser Dashboard
+                  </Button>
+                </a>
+              </div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
+                Test Credentials: medtech_admin / password
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Professional CTA Section */}
       <section className="py-24 bg-gradient-to-br from-emerald-600 via-blue-600 to-emerald-700">
         <div className="container mx-auto px-6">
