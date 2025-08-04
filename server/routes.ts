@@ -229,10 +229,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { imageName } = req.params;
       
-      // Set headers for image response
-      res.setHeader('Content-Type', 'image/svg+xml');
-      res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
-      
       // Create SVG placeholder based on image name
       let title = "Medical Device";
       let bgColor = "#f8fafc";
@@ -252,15 +248,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         textColor = "#d97706";
       }
       
-      const svgPlaceholder = `
-        <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
-          <rect width="100%" height="100%" fill="${bgColor}"/>
-          <rect x="20" y="20" width="260" height="160" fill="white" stroke="${textColor}" stroke-width="2" rx="8"/>
-          <circle cx="150" cy="80" r="25" fill="${textColor}" opacity="0.2"/>
-          <text x="150" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="${textColor}" font-weight="500">${title}</text>
-          <text x="150" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="${textColor}" opacity="0.7">Medical Equipment</text>
-        </svg>
-      `;
+      // Always serve as SVG - modern browsers handle this well in img tags
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      
+      const svgPlaceholder = `<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100%" height="100%" fill="${bgColor}"/>
+        <rect x="20" y="20" width="260" height="160" fill="white" stroke="${textColor}" stroke-width="2" rx="8"/>
+        <circle cx="150" cy="80" r="25" fill="${textColor}" opacity="0.2"/>
+        <text x="150" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="${textColor}" font-weight="500">${title}</text>
+        <text x="150" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="${textColor}" opacity="0.7">Medical Equipment</text>
+      </svg>`;
       
       res.send(svgPlaceholder);
     } catch (error) {
