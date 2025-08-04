@@ -137,6 +137,8 @@ export const Sidebar = () => {
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                 Platform Management
               </h3>
+              {/* DEBUG: Show items being rendered */}
+              {console.log('Platform items:', platformItems.map(i => i.label))}
               {platformItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location === item.path;
