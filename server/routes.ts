@@ -224,6 +224,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Serve placeholder images (public access for marketplace)
+  app.get("/api/placeholder/:imageName", (req, res) => {
+    try {
+      const { imageName } = req.params;
+      
+      // For development, serve a simple placeholder response
+      // In production, these would be actual image files
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+      
+      // Simple placeholder response
+      const base64Image = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=';
+      
+      const buffer = Buffer.from(base64Image, 'base64');
+      res.send(buffer);
+    } catch (error) {
+      console.error("Error serving placeholder image:", error);
+      res.status(404).json({ error: "Image not found" });
+    }
+  });
+
   // Public platform statistics endpoint for landing page
   app.get("/api/platform/stats", async (req, res) => {
     try {
@@ -720,7 +741,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       "/api/suppliers/register",
       "/api/auth/login",
       "/api/auth/user",
-
+      "/api/marketplace/products"
     ];
     
     if (publicEndpoints.includes(req.path)) {
@@ -814,13 +835,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Protected routes - require authentication (with exclusions)
   app.use("/api", (req, res, next) => {
-    // Skip authentication for supplier login
-    console.log('[MIDDLEWARE DEBUG] Path:', req.path, 'Method:', req.method);
-    if (req.path === '/supplier/login' || req.path.includes('/supplier/login')) {
-      console.log('[MIDDLEWARE DEBUG] Skipping auth for supplier login');
+    // Skip authentication for supplier login and placeholder images
+    console.log('[AUTH DEBUG] Path:', req.path, 'User from auth:', !!req.user);
+    if (req.path === '/supplier/login' || 
+        req.path.includes('/supplier/login') ||
+        req.path.startsWith('/placeholder/') ||
+        req.path.startsWith('/api/placeholder/') ||
+        req.path === '/api/marketplace/products') {
+      console.log('[AUTH DEBUG] Skipping auth for public endpoint');
       return next();
     }
-    console.log('[MIDDLEWARE DEBUG] Applying auth middleware');
+    console.log('[AUTH DEBUG] Applying auth middleware');
     authenticateToken(req, res, next);
   });
 
@@ -5224,7 +5249,7 @@ Report ID: ${report.id}
   // =====================================
   
   // Get all marketplace products (public catalog for healthcare providers)
-  app.get("/api/marketplace/products", authenticateToken, async (req, res) => {
+  app.get("/api/marketplace/products", async (req, res) => {
     try {
       const { category, search, status = 'active', page = 1, limit = 20 } = req.query;
       const offset = (Number(page) - 1) * Number(limit);
