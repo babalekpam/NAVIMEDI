@@ -137,8 +137,21 @@ export const Sidebar = () => {
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                 Platform Management
               </h3>
-              {/* DEBUG: Show items being rendered */}
-              {console.log('Platform items:', platformItems.map(i => i.label))}
+
+              {/* Advertisement Marketplace - Always visible */}
+              <button
+                onClick={() => setLocation('/advertisements')}
+                className={cn(
+                  "w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors mb-2",
+                  location === '/advertisements'
+                    ? "text-blue-600 bg-blue-50"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                )}
+              >
+                <Megaphone className={cn("mr-3 h-4 w-4", location === '/advertisements' ? "text-blue-600" : "text-gray-400")} />
+                Advertisement Marketplace
+              </button>
+
               {platformItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location === item.path;
