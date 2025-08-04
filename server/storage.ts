@@ -5063,6 +5063,53 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(medicalSuppliers.createdAt));
   }
 
+  async getMedicalSupplierById(id: string): Promise<MedicalSupplier | undefined> {
+    const [supplier] = await db.select()
+      .from(medicalSuppliers)
+      .where(eq(medicalSuppliers.id, id));
+    return supplier || undefined;
+  }
+
+  // =====================================
+  // MARKETPLACE PRODUCTS (PUBLIC ACCESS)
+  // =====================================
+
+  async getMarketplaceProducts(): Promise<any[]> {
+    const products = await db.select().from(marketplaceProducts)
+      .where(eq(marketplaceProducts.status, 'active'));
+    
+    // Enhance with supplier information
+    const enhancedProducts = await Promise.all(
+      products.map(async (product) => {
+        try {
+          const supplier = await this.getMedicalSupplierById(product.supplierId);
+          return {
+            ...product,
+            supplierName: supplier?.companyName || 'Unknown Supplier',
+            supplierContact: {
+              email: supplier?.contactEmail || '',
+              phone: supplier?.contactPhone || '',
+              address: supplier?.address || ''
+            },
+            rating: 4.5, // Default rating
+            reviews: Math.floor(Math.random() * 50) + 5 // Random review count
+          };
+        } catch (error) {
+          console.error(`Error getting supplier for product ${product.id}:`, error);
+          return {
+            ...product,
+            supplierName: 'Unknown Supplier',
+            supplierContact: { email: '', phone: '', address: '' },
+            rating: 4.5,
+            reviews: 5
+          };
+        }
+      })
+    );
+    
+    return enhancedProducts;
+  }
+
   async updateMedicalSupplier(id: string, updates: Partial<MedicalSupplier>): Promise<MedicalSupplier | undefined> {
     const [updated] = await db.update(medicalSuppliers)
       .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })

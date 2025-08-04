@@ -392,6 +392,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // =====================================
+  // PUBLIC MARKETPLACE ENDPOINTS
+  // =====================================
+  
+  // Get all active products for marketplace (public endpoint)
+  app.get("/api/marketplace/products", async (req, res) => {
+    try {
+      console.log("[MARKETPLACE] Loading products for marketplace");
+      
+      const products = await storage.getMarketplaceProducts();
+      
+      console.log(`[MARKETPLACE] Found ${products.length} active products`);
+      res.json(products);
+    } catch (error) {
+      console.error("Error loading marketplace products:", error);
+      res.status(500).json({ message: "Failed to load products" });
+    }
+  });
+
+  // =====================================
+  // SUPPLIER AUTHENTICATION & PRODUCT MANAGEMENT ENDPOINTS
+  // =====================================
+
   // Supplier-specific login endpoint (before middleware)
   app.post('/api/supplier/login', async (req, res) => {
     try {

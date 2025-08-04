@@ -27,6 +27,7 @@ export const PublicHeader = ({ className = "" }: PublicHeaderProps) => {
           <nav className="hidden lg:flex items-center gap-8">
             <Link href="/features" className="text-slate-600 hover:text-emerald-600 transition-colors font-medium">Features</Link>
             <Link href="/solutions" className="text-slate-600 hover:text-emerald-600 transition-colors font-medium">Solutions</Link>
+            <Link href="/marketplace" className="text-slate-600 hover:text-emerald-600 transition-colors font-medium">Marketplace</Link>
             <Link href="/pricing" className="text-slate-600 hover:text-emerald-600 transition-colors font-medium">Pricing</Link>
             <Link href="/security" className="text-slate-600 hover:text-emerald-600 transition-colors font-medium">Security</Link>
             <a href="/supplier-login-direct" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 transition-colors font-medium">
