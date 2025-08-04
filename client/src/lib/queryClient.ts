@@ -9,10 +9,13 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
-  method: string,
   url: string,
-  data?: unknown
-): Promise<Response> {
+  options?: {
+    method?: string;
+    body?: unknown;
+    headers?: Record<string, string>;
+  }
+): Promise<any> {
   const token = localStorage.getItem("auth_token");
   
   // Clear corrupted tokens
@@ -24,9 +27,13 @@ export async function apiRequest(
     throw new Error('Invalid token - redirecting to login');
   }
   
+  const method = options?.method || 'GET';
+  const data = options?.body;
+  
   const headers: Record<string, string> = {
     ...(data ? { "Content-Type": "application/json" } : {}),
     ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+    ...(options?.headers || {}),
   };
 
   const res = await fetch(url, {
@@ -37,7 +44,7 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
-  return res;
+  return res.json();
 }
 
 // Legacy function for backward compatibility
