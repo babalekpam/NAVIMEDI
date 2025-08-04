@@ -216,7 +216,7 @@ export default function Advertisements() {
               : 'There was an error loading the advertisements. Please try again later.'
             }
           </p>
-          <Button onClick={() => window.location.href = '/api/login'} className="bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={() => window.location.href = '/login'} className="bg-emerald-600 hover:bg-emerald-700">
             Login to Access Marketplace
           </Button>
         </div>

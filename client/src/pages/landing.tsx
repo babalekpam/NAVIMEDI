@@ -266,12 +266,12 @@ export default function LandingPage() {
                 </Button>
               </Link>
               
-              <a href="/api/login">
+              <Link href="/login">
                 <Button size="lg" variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50 px-8 py-4 text-lg">
                   <Monitor className="w-5 h-5 mr-2" />
                   Provider Login
                 </Button>
-              </a>
+              </Link>
               <Link href="/supplier-register">
                 <Button size="lg" variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-50 px-8 py-4 text-lg">
                   <Package className="w-5 h-5 mr-2" />
@@ -757,12 +757,12 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/api/login">
+            <Link href="/login">
               <Button size="lg" className="bg-white text-emerald-600 hover:bg-emerald-50 px-8">
                 <Heart className="w-5 h-5 mr-2" />
                 Start Free Trial
               </Button>
-            </a>
+            </Link>
             <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
               <Users className="w-5 h-5 mr-2" />
               Schedule Demo
