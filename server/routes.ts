@@ -4907,7 +4907,7 @@ Report ID: ${report.id}
                 sku: formData.get('sku'),
                 description: formData.get('description'),
                 category: formData.get('category'),
-                price: formData.get('price'),
+                price: parseFloat(formData.get('price')),
                 stockQuantity: parseInt(formData.get('stockQuantity')),
                 brand: formData.get('brand'),
                 manufacturer: 'MedTech Solutions Inc.',
@@ -4916,7 +4916,7 @@ Report ID: ${report.id}
                 status: 'active',
                 isActive: true,
                 trackInventory: true,
-                imageUrl: imageUrl
+                imageUrls: imageUrl ? [imageUrl] : []
             };
             
             try {
@@ -5062,7 +5062,8 @@ Report ID: ${report.id}
   // Get upload URL for product images
   app.post("/api/objects/upload", authenticateToken, async (req, res) => {
     try {
-      const objectStorageService = new (require('./objectStorage').ObjectStorageService)();
+      const { ObjectStorageService } = await import('./objectStorage');
+      const objectStorageService = new ObjectStorageService();
       const uploadURL = await objectStorageService.getObjectEntityUploadURL();
       res.json({ uploadURL });
     } catch (error) {
@@ -5080,11 +5081,12 @@ Report ID: ${report.id}
         return res.status(400).json({ error: "productImageURL is required" });
       }
 
-      const objectStorageService = new (require('./objectStorage').ObjectStorageService)();
+      const { ObjectStorageService } = await import('./objectStorage');
+      const objectStorageService = new ObjectStorageService();
       const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
         productImageURL,
         {
-          owner: req.user.id,
+          owner: req.userId || 'supplier-user-001',
           visibility: "public", // Product images should be publicly accessible
         }
       );
@@ -5099,14 +5101,17 @@ Report ID: ${report.id}
   // Serve private objects (product images)
   app.get("/objects/:objectPath(*)", async (req, res) => {
     try {
-      const objectStorageService = new (require('./objectStorage').ObjectStorageService)();
+      const { ObjectStorageService, ObjectNotFoundError } = await import('./objectStorage');
+      const { ObjectPermission } = await import('./objectAcl');
+      
+      const objectStorageService = new ObjectStorageService();
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
       
       // For product images, we allow public access since they're marked as public
       const canAccess = await objectStorageService.canAccessObjectEntity({
         objectFile,
-        userId: req.user?.id,
-        requestedPermission: require('./objectAcl').ObjectPermission.READ,
+        userId: req.userId,
+        requestedPermission: ObjectPermission.READ,
       });
       
       if (!canAccess) {
@@ -5116,7 +5121,8 @@ Report ID: ${report.id}
       objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
       console.error("Error serving object:", error);
-      if (error instanceof require('./objectStorage').ObjectNotFoundError) {
+      const { ObjectNotFoundError } = await import('./objectStorage');
+      if (error instanceof ObjectNotFoundError) {
         return res.sendStatus(404);
       }
       return res.sendStatus(500);
@@ -5169,7 +5175,7 @@ Report ID: ${report.id}
   });
 
   // Supplier-specific product management endpoints
-  app.get("/api/supplier/products", authenticateToken, requireRole(["supplier_admin"]), async (req, res) => {
+  app.get("/api/supplier/products", authenticateToken, requireRole(["supplier_admin", "tenant_admin"]), async (req, res) => {
     try {
       const { status } = req.query;
       const supplierTenantId = req.tenant!.id;
@@ -5182,7 +5188,7 @@ Report ID: ${report.id}
     }
   });
 
-  app.post("/api/supplier/products", authenticateToken, requireRole(["supplier_admin"]), async (req, res) => {
+  app.post("/api/supplier/products", authenticateToken, requireRole(["supplier_admin", "tenant_admin"]), async (req, res) => {
     try {
       const supplierTenantId = req.tenant!.id;
       const userId = req.userId!;
@@ -5214,7 +5220,7 @@ Report ID: ${report.id}
     }
   });
 
-  app.put("/api/supplier/products/:id", authenticateToken, requireRole(["supplier_admin"]), async (req, res) => {
+  app.put("/api/supplier/products/:id", authenticateToken, requireRole(["supplier_admin", "tenant_admin"]), async (req, res) => {
     try {
       const { id } = req.params;
       const supplierTenantId = req.tenant!.id;
