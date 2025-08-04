@@ -51,7 +51,7 @@ export default function SupplierLogin() {
         
         // Force complete page reload to supplier dashboard to clear any cached state
         setTimeout(() => {
-          window.location.replace('/supplier-dashboard');
+          window.location.replace('/supplier-dashboard-direct');
         }, 100);
       }
     } catch (error: any) {

@@ -848,6 +848,25 @@ function Router() {
 }
 
 function App() {
+  // CRITICAL: Force redirect suppliers away from React completely
+  React.useEffect(() => {
+    const userType = localStorage.getItem('userType');
+    const currentPath = window.location.pathname;
+    
+    // If supplier user is trying to access React routes, redirect to direct pages
+    if (userType === 'supplier') {
+      console.log('[APP ROOT] Supplier detected in React app, redirecting...');
+      if (currentPath === '/dashboard' || currentPath === '/') {
+        window.location.replace('/supplier-dashboard-direct');
+        return;
+      }
+      if (currentPath.includes('supplier') && !currentPath.includes('direct')) {
+        window.location.replace('/supplier-dashboard-direct');
+        return;
+      }
+    }
+  }, []);
+
   // CRITICAL: Check if this is a supplier session IMMEDIATELY
   const userType = localStorage.getItem('userType');
   const currentPath = window.location.pathname;

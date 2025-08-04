@@ -4580,6 +4580,31 @@ Report ID: ${report.id}
     res.redirect(301, '/supplier-dashboard-direct');
   });
   
+  app.get('/supplier-marketplace', (req, res) => {
+    res.redirect(301, '/supplier-dashboard-direct');
+  });
+  
+  // CRITICAL: Force redirect hospital routes when supplier is logged in
+  app.get('/dashboard', (req, res) => {
+    // Check if this is a supplier session based on token
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.decode(token);
+        if (decoded && decoded.userType === 'supplier') {
+          console.log('[DASHBOARD REDIRECT] Supplier trying to access hospital dashboard, redirecting...');
+          return res.redirect(301, '/supplier-dashboard-direct');
+        }
+      } catch (e) {
+        // Continue to normal handling
+      }
+    }
+    // Continue to React app for hospital users
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  });
+  
   // Supplier authentication test page
   app.get('/supplier-test', (req, res) => {
     res.sendFile(path.join(__dirname, '../supplier-test.html'));

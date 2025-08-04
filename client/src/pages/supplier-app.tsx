@@ -55,7 +55,7 @@ export default function SupplierApp() {
         <Switch>
           <Route path="/supplier-login" component={SupplierLogin} />
           <Route path="/supplier-register" component={SupplierRegister} />
-          <Route path="/supplier-dashboard">
+          <Route path="/supplier-dashboard-direct">
             {isAuthenticated ? (
               <SupplierDashboard />
             ) : (
@@ -69,7 +69,7 @@ export default function SupplierApp() {
             {() => {
               // Default route - redirect based on auth status
               if (isAuthenticated) {
-                window.location.replace('/supplier-dashboard');
+                window.location.replace('/supplier-dashboard-direct');
               } else {
                 window.location.replace('/supplier-login');
               }
