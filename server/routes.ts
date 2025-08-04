@@ -9,7 +9,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { aiHealthAnalyzer } from "./ai-health-analyzer";
 import { sendWelcomeEmail, generateTemporaryPassword } from "./email-service.js";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+// Removed Replit Auth - using unified JWT authentication only
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
@@ -96,15 +96,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Setup Replit Auth middleware
-  await setupAuth(app);
-
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  // JWT Authentication routes only - no Replit Auth
+  
+  // Standard JWT login endpoint
+  app.post("/api/auth/login", async (req, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      const { username, password } = req.body;
+
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+
+      console.log(`[SECURITY AUDIT] Login attempt from IP: ${req.ip}`);
+
+      // Get all users across tenants for super admin authentication
+      const allUsers = await storage.getAllUsers();
+      const user = allUsers.find(u => 
+        (u.username === username || u.email === username) &&
+        u.isActive
+      );
+
+      if (!user) {
+        console.log(`[SECURITY AUDIT] Login failed - user not found: ${username}`);
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Verify password
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        console.log(`[SECURITY AUDIT] Login failed - invalid password: ${username}`);  
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Get tenant information
+      const tenant = await storage.getTenant(user.tenantId);
+      if (!tenant) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      console.log(`[SECURITY AUDIT] Login successful: ${username}`);
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { 
+          userId: user.id, 
+          tenantId: user.tenantId,
+          role: user.role
+        },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      res.json({
+        message: "Login successful",
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          tenantId: user.tenantId,
+          isActive: user.isActive
+        },
+        tenant: {
+          id: tenant.id,
+          name: tenant.name,
+          type: tenant.type
+        }
+      });
+
+    } catch (error) {
+      console.error("Error during login:", error);
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  // Logout endpoint
+  app.post("/api/auth/logout", (req, res) => {
+    res.json({ message: "Logged out successfully" });
+  });
+
+  // Get current user endpoint
+  app.get("/api/auth/user", authenticateToken, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const tenant = await storage.getTenant(user.tenantId);
+      
+      res.json({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        tenantId: user.tenantId,
+        isActive: user.isActive,
+        tenant: tenant ? {
+          id: tenant.id,
+          name: tenant.name,
+          type: tenant.type
+        } : null
+      });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -257,7 +355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: adminFirstName,
           lastName: adminLastName,
           organizationName: organizationName,
-          loginUrl: `${req.protocol}://${req.get('host')}/api/login`,
+          loginUrl: `${req.protocol}://${req.get('host')}/login`,
           tempPassword: null
         });
       } catch (emailError) {
@@ -514,9 +612,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       "/api/suppliers/register",
       "/api/auth/login",
       "/api/auth/user",
-      "/api/login",
-      "/api/logout",
-      "/api/callback"
+
     ];
     
     if (publicEndpoints.includes(req.path)) {
