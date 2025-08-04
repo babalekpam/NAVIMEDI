@@ -278,6 +278,12 @@ export default function LandingPage() {
                   Supplier Register
                 </Button>
               </Link>
+              <Link href="/supplier-marketplace">
+                <Button size="lg" variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50 px-8 py-4 text-lg">
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  Supplier Marketplace
+                </Button>
+              </Link>
               <Link href="/patient-login">
                 <Button size="lg" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50 px-8 py-4 text-lg">
                   <User className="w-5 h-5 mr-2" />
