@@ -4598,7 +4598,25 @@ Report ID: ${report.id}
             padding: 10px 0; 
             border-bottom: 1px solid #e5e7eb;
         }
-        .product-row:last-child { border-bottom: none; }
+        .product-row:last-child { border-border: none; }
+        
+        /* Upload Styles */
+        .form-group input[type="file"] {
+            padding: 8px 0;
+            border: 2px dashed #d1d5db;
+            border-radius: 4px;
+            background: #f9fafb;
+            text-align: center;
+            cursor: pointer;
+        }
+        .form-group input[type="file"]:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -4682,9 +4700,20 @@ Report ID: ${report.id}
                             <input type="text" id="productBrand" name="brand" required>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label for="productImage">Product Image</label>
+                        <input type="file" id="productImage" name="image" accept="image/*">
+                        <small style="color: #666; display: block; margin-top: 5px;">Upload a product image (optional - JPG, PNG, or WebP)</small>
+                        <div id="imagePreview" style="margin-top: 10px; display: none;">
+                            <img id="previewImg" style="max-width: 200px; max-height: 150px; border-radius: 4px; border: 1px solid #ddd;">
+                        </div>
+                    </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeModal('addProductModal')">Cancel</button>
-                        <button type="submit" class="btn">Add Product</button>
+                        <button type="submit" class="btn" id="addProductBtn">
+                            <span id="addProductBtnText">Add Product</span>
+                            <span id="addProductBtnLoading" style="display: none;">Uploading...</span>
+                        </button>
                     </div>
                 </form>
             </div>
@@ -4805,7 +4834,74 @@ Report ID: ${report.id}
         document.getElementById('addProductForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            // Show loading state
+            const addBtn = document.getElementById('addProductBtn');
+            const btnText = document.getElementById('addProductBtnText');
+            const btnLoading = document.getElementById('addProductBtnLoading');
+            
+            addBtn.disabled = true;
+            btnText.style.display = 'none';
+            btnLoading.style.display = 'inline';
+            
             const formData = new FormData(e.target);
+            const imageFile = formData.get('image');
+            let imageUrl = null;
+            
+            // Upload image first if provided
+            if (imageFile && imageFile.size > 0) {
+                try {
+                    const token = localStorage.getItem('token');
+                    
+                    // Get upload URL
+                    const uploadResponse = await fetch('/api/objects/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + token
+                        }
+                    });
+                    
+                    if (!uploadResponse.ok) {
+                        throw new Error('Failed to get upload URL');
+                    }
+                    
+                    const { uploadURL } = await uploadResponse.json();
+                    
+                    // Upload image to object storage
+                    const imageUploadResponse = await fetch(uploadURL, {
+                        method: 'PUT',
+                        body: imageFile,
+                        headers: {
+                            'Content-Type': imageFile.type
+                        }
+                    });
+                    
+                    if (!imageUploadResponse.ok) {
+                        throw new Error('Failed to upload image');
+                    }
+                    
+                    // Set ACL policy for the uploaded image
+                    const aclResponse = await fetch('/api/product-images', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        },
+                        body: JSON.stringify({
+                            productImageURL: uploadURL.split('?')[0] // Remove query parameters
+                        })
+                    });
+                    
+                    if (aclResponse.ok) {
+                        const aclResult = await aclResponse.json();
+                        imageUrl = aclResult.objectPath;
+                    }
+                    
+                } catch (error) {
+                    console.error('Image upload error:', error);
+                    alert('Warning: Image upload failed, but product will be created without image.');
+                }
+            }
+            
             const productData = {
                 name: formData.get('name'),
                 sku: formData.get('sku'),
@@ -4819,7 +4915,8 @@ Report ID: ${report.id}
                 currency: 'USD',
                 status: 'active',
                 isActive: true,
-                trackInventory: true
+                trackInventory: true,
+                imageUrl: imageUrl
             };
             
             try {
@@ -4837,6 +4934,7 @@ Report ID: ${report.id}
                     alert('Product added successfully!');
                     closeModal('addProductModal');
                     e.target.reset();
+                    document.getElementById('imagePreview').style.display = 'none';
                     // Update stats
                     updateDashboardStats();
                 } else {
@@ -4846,6 +4944,11 @@ Report ID: ${report.id}
             } catch (error) {
                 console.error('Error:', error);
                 alert('Network error. Please try again.');
+            } finally {
+                // Reset loading state
+                addBtn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoading.style.display = 'none';
             }
         });
         
@@ -4920,6 +5023,24 @@ Report ID: ${report.id}
             }
         }
         
+        // Image preview functionality
+        document.getElementById('productImage').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImg');
+            
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+        
         // Close modal when clicking outside
         window.onclick = function(event) {
             if (event.target.classList.contains('modal')) {
@@ -4934,6 +5055,74 @@ Report ID: ${report.id}
   });
 
   // Complete Express setup
+  // =====================================
+  // OBJECT STORAGE ENDPOINTS FOR PRODUCT IMAGES
+  // =====================================
+  
+  // Get upload URL for product images
+  app.post("/api/objects/upload", authenticateToken, async (req, res) => {
+    try {
+      const objectStorageService = new (require('./objectStorage').ObjectStorageService)();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error getting upload URL:", error);
+      res.status(500).json({ message: "Failed to get upload URL" });
+    }
+  });
+
+  // Set ACL policy for product images (public visibility)
+  app.put("/api/product-images", authenticateToken, async (req, res) => {
+    try {
+      const { productImageURL } = req.body;
+      
+      if (!productImageURL) {
+        return res.status(400).json({ error: "productImageURL is required" });
+      }
+
+      const objectStorageService = new (require('./objectStorage').ObjectStorageService)();
+      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
+        productImageURL,
+        {
+          owner: req.user.id,
+          visibility: "public", // Product images should be publicly accessible
+        }
+      );
+
+      res.status(200).json({ objectPath });
+    } catch (error) {
+      console.error("Error setting product image ACL:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Serve private objects (product images)
+  app.get("/objects/:objectPath(*)", async (req, res) => {
+    try {
+      const objectStorageService = new (require('./objectStorage').ObjectStorageService)();
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      
+      // For product images, we allow public access since they're marked as public
+      const canAccess = await objectStorageService.canAccessObjectEntity({
+        objectFile,
+        userId: req.user?.id,
+        requestedPermission: require('./objectAcl').ObjectPermission.READ,
+      });
+      
+      if (!canAccess) {
+        return res.sendStatus(404); // Don't reveal existence of private files
+      }
+      
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error serving object:", error);
+      if (error instanceof require('./objectStorage').ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
+
   // =====================================
   // MARKETPLACE PRODUCT CATALOG ENDPOINTS
   // =====================================
