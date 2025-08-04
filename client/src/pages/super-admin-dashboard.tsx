@@ -92,7 +92,7 @@ export default function SuperAdminDashboard() {
     mutationFn: async ({ supplierId, reason }: { supplierId: string; reason: string }) => {
       await apiRequest(`/api/admin/suppliers/${supplierId}/reject`, {
         method: 'PUT',
-        body: JSON.stringify({ reason })
+        body: { reason }
       });
     },
     onSuccess: () => {
