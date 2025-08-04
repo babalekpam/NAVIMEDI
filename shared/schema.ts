@@ -145,6 +145,8 @@ export const verificationStatusEnum = pgEnum("verification_status", [
   "denied"
 ]);
 
+
+
 export const currencyEnum = pgEnum("currency", [
   // Major International Currencies
   "USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "CNY",
