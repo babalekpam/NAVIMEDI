@@ -4653,6 +4653,14 @@ Report ID: ${report.id}
             <button class="btn" onclick="logout()">Logout</button>
         </div>
         
+        <!-- Products List Section -->
+        <div class="actions">
+            <h2>My Products</h2>
+            <div id="productsList" style="margin-top: 20px; min-height: 200px;">
+                Loading products...
+            </div>
+        </div>
+        
         <!-- Add Product Modal -->
         <div id="addProductModal" class="modal" style="display: none;">
             <div class="modal-content">
@@ -4935,8 +4943,8 @@ Report ID: ${report.id}
                     closeModal('addProductModal');
                     e.target.reset();
                     document.getElementById('imagePreview').style.display = 'none';
-                    // Update stats
-                    updateDashboardStats();
+                    // Update stats and reload products
+                    loadProducts();
                 } else {
                     const error = await response.json();
                     alert('Error adding product: ' + (error.message || 'Unknown error'));
@@ -5003,6 +5011,58 @@ Report ID: ${report.id}
             }
         }
         
+        // Load Products Function
+        async function loadProducts() {
+            const productsList = document.getElementById('productsList');
+            const totalProductsElement = document.querySelector('.stat-card:first-child .value');
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/supplier/products', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                if (response.ok) {
+                    const products = await response.json();
+                    
+                    // Update total products count
+                    if (totalProductsElement) {
+                        totalProductsElement.textContent = products.length;
+                    }
+                    
+                    if (products.length === 0) {
+                        productsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #666; background: white; border-radius: 8px;">No products found. Click "Add New Product" to get started!</div>';
+                    } else {
+                        productsList.innerHTML = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">' +
+                            products.map(product => 
+                                '<div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb;">' +
+                                    '<h3 style="margin: 0 0 10px 0; color: #333;">' + product.name + '</h3>' +
+                                    '<p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">SKU: ' + product.sku + '</p>' +
+                                    '<p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">' + product.description + '</p>' +
+                                    '<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">' +
+                                        '<div>' +
+                                            '<span style="font-size: 18px; font-weight: bold; color: #2563eb;">$' + product.price + '</span>' +
+                                            '<span style="margin-left: 15px; color: #666;">Stock: ' + product.stockQuantity + '</span>' +
+                                        '</div>' +
+                                        '<div>' +
+                                            '<span style="padding: 4px 8px; background: #10b981; color: white; border-radius: 4px; font-size: 12px;">' + product.status + '</span>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>'
+                            ).join('') +
+                        '</div>';
+                    }
+                } else {
+                    productsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #dc2626; background: white; border-radius: 8px;">Error loading products. Please try again.</div>';
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+                productsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #dc2626; background: white; border-radius: 8px;">Network error loading products</div>';
+            }
+        }
+        
         // Update dashboard stats
         async function updateDashboardStats() {
             try {
@@ -5021,6 +5081,9 @@ Report ID: ${report.id}
             } catch (error) {
                 console.error('Error updating stats:', error);
             }
+            
+            // Load products
+            loadProducts();
         }
         
         // Image preview functionality
@@ -5048,7 +5111,11 @@ Report ID: ${report.id}
             }
         }
         
-        checkAuth();
+        // Initialize page
+        if (checkAuth()) {
+            updateDashboardStats();
+            loadProducts();
+        }
     </script>
 </body>
 </html>`);
