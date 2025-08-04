@@ -49,6 +49,7 @@ import ReceptionistDashboard from "@/pages/receptionist-dashboard";
 import ConsultationHistory from "@/pages/consultation-history";
 import Advertisements from "@/pages/advertisements";
 import MarketplacePage from "@/pages/marketplace";
+import SupplierSignupPage from "@/pages/supplier-signup";
 // Supplier system moved to pure HTML to prevent conflicts
 
 import FeaturesPage from "@/pages/features";
@@ -772,6 +773,7 @@ function Router() {
           {/* Public routes - always accessible */}
           <Route path="/" component={LandingPage} />
           <Route path="/marketplace" component={MarketplacePage} />
+          <Route path="/supplier-signup" component={SupplierSignupPage} />
           <Route path="/register" component={RegisterOrganization} />
           <Route path="/features" component={FeaturesPage} />
           <Route path="/solutions" component={SolutionsPage} />

@@ -894,8 +894,14 @@ export default function LandingPage() {
                 Join our marketplace as a certified medical device supplier and reach healthcare organizations nationwide
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="/supplier-signup-direct" target="_blank" rel="noopener noreferrer">
+                  <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8">
+                    <Building2 className="w-5 h-5 mr-2" />
+                    Join Marketplace
+                  </Button>
+                </a>
                 <a href="/supplier-login-direct" target="_blank" rel="noopener noreferrer">
-                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8">
+                  <Button size="lg" variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50 px-8">
                     <ShoppingCart className="w-5 h-5 mr-2" />
                     Supplier Login
                   </Button>
@@ -908,7 +914,7 @@ export default function LandingPage() {
                 </a>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
-                Test Credentials: Use any existing supplier account
+                New suppliers: Register to join our marketplace • Existing suppliers: Login to manage products
               </p>
             </div>
           </div>

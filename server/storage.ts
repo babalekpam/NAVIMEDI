@@ -5035,10 +5035,18 @@ export class DatabaseStorage implements IStorage {
 
   // Medical Suppliers Management
   async createMedicalSupplier(supplier: InsertMedicalSupplier): Promise<MedicalSupplier> {
+    // Generate organization slug from company name
+    const organizationSlug = supplier.companyName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
     const [created] = await db.insert(medicalSuppliers)
       .values({
         ...supplier,
-        status: 'pending'
+        organizationSlug,
+        status: 'pending_review'
       })
       .returning();
     return created;

@@ -4353,6 +4353,306 @@ Report ID: ${report.id}
   // Supplier API blocking middleware moved to earlier position
 
   // SUPPLIER STORE SYSTEM - Simple HTML page to prevent React conflicts
+  app.get('/supplier-signup-direct', (req, res) => {
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Supplier Registration</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .signup-container { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .logo { 
+            text-align: center; 
+            margin-bottom: 30px; 
+        }
+        .logo h1 { 
+            color: #2563eb; 
+            margin: 0; 
+            font-size: 28px; 
+            font-weight: bold; 
+        }
+        .logo p {
+            color: #64748b;
+            margin: 5px 0 0 0;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h3 {
+            color: #1e293b;
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .form-group { 
+            flex: 1;
+            margin-bottom: 20px; 
+        }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 8px; 
+            color: #374151; 
+            font-weight: 500; 
+        }
+        .form-group input, .form-group textarea { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #e5e7eb; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus { 
+            outline: none; 
+            border-color: #2563eb; 
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .required { color: #ef4444; }
+        .btn { 
+            background: #2563eb; 
+            color: white; 
+            padding: 14px 24px; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            font-weight: 600;
+            cursor: pointer; 
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+        .btn:hover { 
+            background: #1d4ed8; 
+        }
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .message { 
+            margin: 15px 0; 
+            padding: 12px; 
+            border-radius: 8px; 
+            text-align: center;
+        }
+        .success { 
+            background: #d1fae5; 
+            color: #065f46; 
+            border: 1px solid #a7f3d0;
+        }
+        .error { 
+            background: #fee2e2; 
+            color: #991b1b; 
+            border: 1px solid #fca5a5;
+        }
+        .links {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .links a {
+            color: #2563eb;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .links a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            .signup-container {
+                padding: 20px;
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-container">
+        <div class="logo">
+            <h1>Medical Supplier Registration</h1>
+            <p>Join our healthcare marketplace and reach providers worldwide</p>
+        </div>
+
+        <form id="signupForm">
+            <div class="section">
+                <h3>Company Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="companyName">Company Name <span class="required">*</span></label>
+                        <input type="text" id="companyName" name="companyName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="businessType">Business Type <span class="required">*</span></label>
+                        <input type="text" id="businessType" name="businessType" placeholder="e.g., Medical Device Manufacturer" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="yearsInBusiness">Years in Business <span class="required">*</span></label>
+                        <input type="number" id="yearsInBusiness" name="yearsInBusiness" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="website">Website</label>
+                        <input type="url" id="website" name="website" placeholder="https://www.yourcompany.com">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Company Description <span class="required">*</span></label>
+                    <textarea id="description" name="description" placeholder="Describe your company, products, and services..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="specialties">Medical Specialties <span class="required">*</span></label>
+                    <textarea id="specialties" name="specialties" placeholder="e.g., Cardiac devices, Surgical instruments, Diagnostic equipment..." required></textarea>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Contact Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="contactEmail">Contact Email <span class="required">*</span></label>
+                        <input type="email" id="contactEmail" name="contactEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactPhone">Contact Phone <span class="required">*</span></label>
+                        <input type="tel" id="contactPhone" name="contactPhone" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Business Address</h3>
+                <div class="form-group">
+                    <label for="address">Address <span class="required">*</span></label>
+                    <input type="text" id="address" name="address" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="city">City <span class="required">*</span></label>
+                        <input type="text" id="city" name="city" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="state">State/Province <span class="required">*</span></label>
+                        <input type="text" id="state" name="state" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="zipCode">ZIP/Postal Code <span class="required">*</span></label>
+                        <input type="text" id="zipCode" name="zipCode" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="country">Country <span class="required">*</span></label>
+                    <input type="text" id="country" name="country" required>
+                </div>
+            </div>
+
+            <div id="message"></div>
+            <button type="submit" class="btn" id="signupBtn">Submit Registration</button>
+        </form>
+
+        <div class="links">
+            <a href="/supplier-login-direct">Already have an account? Login here</a>
+            <a href="/marketplace">Browse Marketplace</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const signupBtn = document.getElementById('signupBtn');
+            const messageDiv = document.getElementById('message');
+            
+            signupBtn.disabled = true;
+            signupBtn.textContent = 'Submitting Registration...';
+            messageDiv.innerHTML = '';
+            
+            const formData = new FormData(e.target);
+            const registrationData = {
+                companyName: formData.get('companyName'),
+                businessType: formData.get('businessType'),
+                yearsInBusiness: parseInt(formData.get('yearsInBusiness')),
+                website: formData.get('website') || undefined,
+                description: formData.get('description'),
+                specialties: formData.get('specialties'),
+                contactEmail: formData.get('contactEmail'),
+                contactPhone: formData.get('contactPhone'),
+                address: formData.get('address'),
+                city: formData.get('city'),
+                state: formData.get('state'),
+                zipCode: formData.get('zipCode'),
+                country: formData.get('country')
+            };
+            
+            try {
+                const response = await fetch('/public/suppliers/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(registrationData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    messageDiv.innerHTML = '<div class="message success">Registration submitted successfully! Our team will review your application and contact you within 2-3 business days.</div>';
+                    document.getElementById('signupForm').reset();
+                    
+                    // Show success message and redirect option
+                    setTimeout(() => {
+                        messageDiv.innerHTML += '<div class="message success">You can now <a href="/marketplace">browse our marketplace</a> or <a href="/supplier-login-direct">login if you already have credentials</a>.</div>';
+                    }, 2000);
+                } else {
+                    messageDiv.innerHTML = '<div class="message error">Registration failed: ' + (result.error || result.message || 'Unknown error') + '</div>';
+                }
+            } catch (error) {
+                messageDiv.innerHTML = '<div class="message error">Registration failed: ' + error.message + '</div>';
+            } finally {
+                signupBtn.disabled = false;
+                signupBtn.textContent = 'Submit Registration';
+            }
+        });
+    </script>
+</body>
+</html>`);
+  });
+
   app.get('/supplier-login-direct', (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="en">
