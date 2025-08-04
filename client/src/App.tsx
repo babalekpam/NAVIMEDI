@@ -46,6 +46,7 @@ import TrialStatusPage from "@/pages/trial-status";
 import ProfileSettingsPage from "@/pages/profile-settings";
 import ReceptionistDashboard from "@/pages/receptionist-dashboard";
 import ConsultationHistory from "@/pages/consultation-history";
+import Advertisements from "@/pages/advertisements";
 
 import FeaturesPage from "@/pages/features";
 import SolutionsPage from "@/pages/solutions";
@@ -609,6 +610,19 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <ConsultationHistory />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/advertisements">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto">
+                  <Advertisements />
                 </main>
               </div>
             </div>

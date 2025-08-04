@@ -48,6 +48,15 @@ import {
   pharmacyReportTemplates,
   hospitalBills,
   departments,
+  advertisements,
+  adViews,
+  adInquiries,
+  type Advertisement,
+  type InsertAdvertisement,
+  type AdView,
+  type InsertAdView,
+  type AdInquiry,
+  type InsertAdInquiry,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -549,6 +558,26 @@ export interface IStorage {
   updateHospitalBill(id: string, updates: Partial<HospitalBill>, tenantId: string): Promise<HospitalBill | undefined>;
   getHospitalAnalytics(tenantId: string): Promise<any>;
   getHospitalAnalyticsByProvider(providerId: string, tenantId: string): Promise<any>;
+
+  // Advertisement Management
+  getAllAdvertisements(): Promise<Advertisement[]>;
+  getAdvertisement(id: string): Promise<Advertisement | undefined>;
+  getAdvertisementsByTenant(tenantId: string): Promise<Advertisement[]>;
+  createAdvertisement(advertisement: InsertAdvertisement): Promise<Advertisement>;
+  updateAdvertisement(id: string, updates: Partial<Advertisement>, tenantId: string): Promise<Advertisement | undefined>;
+  updateAdvertisementStatus(id: string, statusUpdate: { status: string; reviewNotes?: string; reviewedBy?: string; reviewedAt?: string }): Promise<Advertisement | undefined>;
+  deleteAdvertisement(id: string, tenantId: string): Promise<boolean>;
+  incrementAdvertisementImpressions(id: string): Promise<void>;
+  incrementAdvertisementClicks(id: string): Promise<void>;
+
+  // Advertisement Views Management
+  createAdView(view: InsertAdView): Promise<AdView>;
+  getAdViews(advertisementId: string): Promise<AdView[]>;
+
+  // Advertisement Inquiries Management
+  createAdInquiry(inquiry: InsertAdInquiry): Promise<AdInquiry>;
+  getAdInquiries(advertisementId: string): Promise<AdInquiry[]>;
+  updateAdInquiry(id: string, updates: Partial<AdInquiry>): Promise<AdInquiry | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4826,6 +4855,136 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
     
     return department || null;
+  }
+
+  // Advertisement Management Implementation
+  async getAllAdvertisements(): Promise<Advertisement[]> {
+    return await db.select()
+      .from(advertisements)
+      .where(eq(advertisements.status, 'active'))
+      .orderBy(desc(advertisements.createdAt));
+  }
+
+  async getAdvertisement(id: string): Promise<Advertisement | undefined> {
+    const [advertisement] = await db.select()
+      .from(advertisements)
+      .where(eq(advertisements.id, id))
+      .limit(1);
+    
+    return advertisement || undefined;
+  }
+
+  async getAdvertisementsByTenant(tenantId: string): Promise<Advertisement[]> {
+    return await db.select()
+      .from(advertisements)
+      .where(eq(advertisements.tenantId, tenantId))
+      .orderBy(desc(advertisements.createdAt));
+  }
+
+  async createAdvertisement(advertisement: InsertAdvertisement): Promise<Advertisement> {
+    const [created] = await db.insert(advertisements)
+      .values(advertisement)
+      .returning();
+    return created;
+  }
+
+  async updateAdvertisement(id: string, updates: Partial<Advertisement>, tenantId: string): Promise<Advertisement | undefined> {
+    const [updated] = await db.update(advertisements)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(
+        eq(advertisements.id, id),
+        eq(advertisements.tenantId, tenantId)
+      ))
+      .returning();
+    
+    return updated || undefined;
+  }
+
+  async updateAdvertisementStatus(id: string, statusUpdate: { 
+    status: string; 
+    reviewNotes?: string; 
+    reviewedBy?: string; 
+    reviewedAt?: string 
+  }): Promise<Advertisement | undefined> {
+    const [updated] = await db.update(advertisements)
+      .set({ 
+        status: statusUpdate.status as any,
+        reviewNotes: statusUpdate.reviewNotes,
+        reviewedBy: statusUpdate.reviewedBy,
+        reviewedAt: statusUpdate.reviewedAt ? new Date(statusUpdate.reviewedAt) : undefined,
+        updatedAt: sql`CURRENT_TIMESTAMP`
+      })
+      .where(eq(advertisements.id, id))
+      .returning();
+    
+    return updated || undefined;
+  }
+
+  async deleteAdvertisement(id: string, tenantId: string): Promise<boolean> {
+    const result = await db.delete(advertisements)
+      .where(and(
+        eq(advertisements.id, id),
+        eq(advertisements.tenantId, tenantId)
+      ));
+    
+    return result.rowCount > 0;
+  }
+
+  async incrementAdvertisementImpressions(id: string): Promise<void> {
+    await db.update(advertisements)
+      .set({ 
+        impressions: sql`${advertisements.impressions} + 1`,
+        updatedAt: sql`CURRENT_TIMESTAMP`
+      })
+      .where(eq(advertisements.id, id));
+  }
+
+  async incrementAdvertisementClicks(id: string): Promise<void> {
+    await db.update(advertisements)
+      .set({ 
+        clicks: sql`${advertisements.clicks} + 1`,
+        updatedAt: sql`CURRENT_TIMESTAMP`
+      })
+      .where(eq(advertisements.id, id));
+  }
+
+  // Advertisement Views Management
+  async createAdView(view: InsertAdView): Promise<AdView> {
+    const [created] = await db.insert(adViews)
+      .values(view)
+      .returning();
+    return created;
+  }
+
+  async getAdViews(advertisementId: string): Promise<AdView[]> {
+    return await db.select()
+      .from(adViews)
+      .where(eq(adViews.advertisementId, advertisementId))
+      .orderBy(desc(adViews.viewedAt));
+  }
+
+  // Advertisement Inquiries Management
+  async createAdInquiry(inquiry: InsertAdInquiry): Promise<AdInquiry> {
+    const [created] = await db.insert(adInquiries)
+      .values(inquiry)
+      .returning();
+    return created;
+  }
+
+  async getAdInquiries(advertisementId: string): Promise<AdInquiry[]> {
+    return await db.select()
+      .from(adInquiries)
+      .where(eq(adInquiries.advertisementId, advertisementId))
+      .orderBy(desc(adInquiries.createdAt));
+  }
+
+  async updateAdInquiry(id: string, updates: Partial<AdInquiry>): Promise<AdInquiry | undefined> {
+    const [updated] = await db.update(adInquiries)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(adInquiries.id, id))
+      .returning();
+    
+    return updated || undefined;
   }
 }
 

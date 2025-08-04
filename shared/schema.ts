@@ -231,6 +231,47 @@ export const medicalSpecialtyEnum = pgEnum("medical_specialty", [
   "gastroenterology"
 ]);
 
+// Advertisement System Enums
+export const adCategoryEnum = pgEnum("ad_category", [
+  "medical_devices",
+  "diagnostic_equipment",
+  "surgical_instruments",
+  "laboratory_equipment",
+  "pharmacy_supplies",
+  "software_solutions",
+  "consulting_services",
+  "training_programs",
+  "maintenance_services",
+  "insurance_services",
+  "facility_management",
+  "telemedicine_solutions"
+]);
+
+export const adStatusEnum = pgEnum("ad_status", [
+  "draft",
+  "pending_review",
+  "approved",
+  "active",
+  "paused",
+  "expired",
+  "rejected",
+  "suspended"
+]);
+
+export const adPriorityEnum = pgEnum("ad_priority", [
+  "standard",
+  "featured",
+  "premium",
+  "sponsored"
+]);
+
+export const adBillingTypeEnum = pgEnum("ad_billing_type", [
+  "monthly",
+  "per_click",
+  "per_impression",
+  "fixed_duration"
+]);
+
 // Currency Configuration Table
 export const currencies = pgTable("currencies", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -2983,3 +3024,173 @@ export const insertDepartmentSchema = createInsertSchema(departments).omit({
 
 export type Department = typeof departments.$inferSelect;
 export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
+
+// Advertisement System Tables
+export const advertisements = pgTable("advertisements", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(), // Advertiser's tenant
+  companyName: text("company_name").notNull(),
+  contactEmail: text("contact_email").notNull(),
+  contactPhone: text("contact_phone"),
+  websiteUrl: text("website_url"),
+  
+  // Advertisement Content
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  category: adCategoryEnum("category").notNull(),
+  targetAudience: text("target_audience").array().default([]), // ["hospitals", "pharmacies", "laboratories"]
+  keywords: text("keywords").array().default([]),
+  
+  // Media Assets
+  imageUrls: text("image_urls").array().default([]),
+  videoUrl: text("video_url"),
+  brochureUrl: text("brochure_url"),
+  
+  // Pricing and Product Info
+  priceRange: text("price_range"), // e.g., "$1,000 - $5,000"
+  currency: currencyEnum("currency").default("USD"),
+  productSpecifications: jsonb("product_specifications").default('{}'),
+  certifications: text("certifications").array().default([]),
+  
+  // Advertisement Settings
+  status: adStatusEnum("status").default("draft"),
+  priority: adPriorityEnum("priority").default("standard"),
+  billingType: adBillingTypeEnum("billing_type").default("monthly"),
+  monthlyFee: decimal("monthly_fee", { precision: 10, scale: 2 }),
+  clickRate: decimal("click_rate", { precision: 10, scale: 4 }), // Per click cost
+  impressionRate: decimal("impression_rate", { precision: 10, scale: 6 }), // Per impression cost
+  
+  // Campaign Duration
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  isActive: boolean("is_active").default(false),
+  autoRenew: boolean("auto_renew").default(false),
+  
+  // Analytics
+  impressions: integer("impressions").default(0),
+  clicks: integer("clicks").default(0),
+  conversions: integer("conversions").default(0),
+  
+  // Approval Process
+  submittedAt: timestamp("submitted_at"),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: uuid("reviewed_by").references(() => users.id),
+  reviewNotes: text("review_notes"),
+  rejectionReason: text("rejection_reason"),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const adViews = pgTable("ad_views", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  advertisementId: uuid("advertisement_id").references(() => advertisements.id).notNull(),
+  viewerTenantId: uuid("viewer_tenant_id").references(() => tenants.id),
+  viewerUserId: uuid("viewer_user_id").references(() => users.id),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  referrer: text("referrer"),
+  
+  // View Details
+  viewDuration: integer("view_duration"), // seconds
+  clickedThrough: boolean("clicked_through").default(false),
+  conversionTracked: boolean("conversion_tracked").default(false),
+  
+  viewedAt: timestamp("viewed_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const adInquiries = pgTable("ad_inquiries", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  advertisementId: uuid("advertisement_id").references(() => advertisements.id).notNull(),
+  inquirerTenantId: uuid("inquirer_tenant_id").references(() => tenants.id).notNull(),
+  inquirerUserId: uuid("inquirer_user_id").references(() => users.id).notNull(),
+  
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  inquirerContactInfo: jsonb("inquirer_contact_info").notNull(),
+  
+  status: text("status").default("pending"), // pending, responded, closed
+  respondedAt: timestamp("responded_at"),
+  response: text("response"),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Advertisement Relations
+export const advertisementsRelations = relations(advertisements, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [advertisements.tenantId],
+    references: [tenants.id]
+  }),
+  reviewedByUser: one(users, {
+    fields: [advertisements.reviewedBy],
+    references: [users.id]
+  }),
+  views: many(adViews),
+  inquiries: many(adInquiries)
+}));
+
+export const adViewsRelations = relations(adViews, ({ one }) => ({
+  advertisement: one(advertisements, {
+    fields: [adViews.advertisementId],
+    references: [advertisements.id]
+  }),
+  viewerTenant: one(tenants, {
+    fields: [adViews.viewerTenantId],
+    references: [tenants.id]
+  }),
+  viewerUser: one(users, {
+    fields: [adViews.viewerUserId],
+    references: [users.id]
+  })
+}));
+
+export const adInquiriesRelations = relations(adInquiries, ({ one }) => ({
+  advertisement: one(advertisements, {
+    fields: [adInquiries.advertisementId],
+    references: [advertisements.id]
+  }),
+  inquirerTenant: one(tenants, {
+    fields: [adInquiries.inquirerTenantId],
+    references: [tenants.id]  
+  }),
+  inquirerUser: one(users, {
+    fields: [adInquiries.inquirerUserId],
+    references: [users.id]
+  })
+}));
+
+// Advertisement Schema and Types
+export const insertAdvertisementSchema = createInsertSchema(advertisements).omit({
+  id: true,
+  impressions: true,
+  clicks: true,
+  conversions: true,
+  reviewedAt: true,
+  reviewedBy: true,
+  reviewNotes: true,
+  rejectionReason: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertAdViewSchema = createInsertSchema(adViews).omit({
+  id: true,
+  viewedAt: true
+});
+
+export const insertAdInquirySchema = createInsertSchema(adInquiries).omit({
+  id: true,
+  respondedAt: true,
+  response: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export type Advertisement = typeof advertisements.$inferSelect;
+export type InsertAdvertisement = z.infer<typeof insertAdvertisementSchema>;
+export type AdView = typeof adViews.$inferSelect;
+export type InsertAdView = z.infer<typeof insertAdViewSchema>;
+export type AdInquiry = typeof adInquiries.$inferSelect;
+export type InsertAdInquiry = z.infer<typeof insertAdInquirySchema>;

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertRolePermissionSchema, RolePermission, InsertRolePermission, insertDepartmentSchema, departments } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertRolePermissionSchema, RolePermission, InsertRolePermission, insertDepartmentSchema, departments, insertAdvertisementSchema, insertAdViewSchema, insertAdInquirySchema } from "@shared/schema";
 import { authenticateToken, requireRole } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -3710,6 +3710,181 @@ Report ID: ${report.id}
         error: 'Failed to send test email', 
         details: error instanceof Error ? error.message : 'Unknown error'
       });
+    }
+  });
+
+  // Advertisement System Routes
+  
+  // Get all advertisements (public - for marketplace viewing)
+  app.get('/api/advertisements', async (req, res) => {
+    try {
+      const advertisements = await storage.getAllAdvertisements();
+      res.json(advertisements);
+    } catch (error) {
+      console.error('Error fetching advertisements:', error);
+      res.status(500).json({ error: 'Failed to fetch advertisements' });
+    }
+  });
+
+  // Get advertisements by tenant (authenticated)
+  app.get('/api/advertisements/my', authenticateToken, setTenantContext, async (req, res) => {
+    try {
+      const advertisements = await storage.getAdvertisementsByTenant(req.tenantId!);
+      res.json(advertisements);
+    } catch (error) {
+      console.error('Error fetching tenant advertisements:', error);
+      res.status(500).json({ error: 'Failed to fetch advertisements' });
+    }
+  });
+
+  // Create new advertisement
+  app.post('/api/advertisements', authenticateToken, setTenantContext, async (req, res) => {
+    try {
+      const validationResult = insertAdvertisementSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: 'Invalid advertisement data', 
+          details: validationResult.error.errors 
+        });
+      }
+
+      const advertisementData = {
+        ...validationResult.data,
+        tenantId: req.tenantId!,
+        status: 'pending_review' as const,
+        submittedAt: new Date().toISOString()
+      };
+
+      const advertisement = await storage.createAdvertisement(advertisementData);
+      res.status(201).json(advertisement);
+    } catch (error) {
+      console.error('Error creating advertisement:', error);
+      res.status(500).json({ error: 'Failed to create advertisement' });
+    }
+  });
+
+  // Update advertisement status (admin only)
+  app.patch('/api/advertisements/:id/status', authenticateToken, requireRole(['super_admin', 'tenant_admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, reviewNotes } = req.body;
+
+      const validStatuses = ['draft', 'pending_review', 'approved', 'active', 'paused', 'expired', 'rejected', 'suspended'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+      }
+
+      const userId = req.user?.id || req.userId;
+      const advertisement = await storage.updateAdvertisementStatus(id, {
+        status,
+        reviewNotes,
+        reviewedBy: userId,
+        reviewedAt: new Date().toISOString()
+      });
+
+      if (!advertisement) {
+        return res.status(404).json({ error: 'Advertisement not found' });
+      }
+
+      res.json(advertisement);
+    } catch (error) {
+      console.error('Error updating advertisement status:', error);
+      res.status(500).json({ error: 'Failed to update advertisement status' });
+    }
+  });
+
+  // Delete advertisement
+  app.delete('/api/advertisements/:id', authenticateToken, setTenantContext, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteAdvertisement(id, req.tenantId!);
+      
+      if (!success) {
+        return res.status(404).json({ error: 'Advertisement not found' });
+      }
+
+      res.json({ message: 'Advertisement deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting advertisement:', error);
+      res.status(500).json({ error: 'Failed to delete advertisement' });
+    }
+  });
+
+  // Track advertisement views
+  app.post('/api/advertisements/:id/view', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { viewDuration, clickedThrough } = req.body;
+
+      const viewData = {
+        advertisementId: id,
+        viewerTenantId: req.tenantId || null,
+        viewerUserId: req.userId || null,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        referrer: req.get('Referer'),
+        viewDuration,
+        clickedThrough: !!clickedThrough
+      };
+
+      const view = await storage.createAdView(viewData);
+      
+      // Update advertisement impression count
+      await storage.incrementAdvertisementImpressions(id);
+      
+      if (clickedThrough) {
+        await storage.incrementAdvertisementClicks(id);
+      }
+
+      res.status(201).json(view);
+    } catch (error) {
+      console.error('Error tracking advertisement view:', error);
+      res.status(500).json({ error: 'Failed to track view' });
+    }
+  });
+
+  // Create advertisement inquiry
+  app.post('/api/advertisements/:id/inquire', authenticateToken, setTenantContext, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const validationResult = insertAdInquirySchema.safeParse({
+        ...req.body,
+        advertisementId: id,
+        inquirerTenantId: req.tenantId!,
+        inquirerUserId: req.userId || req.user?.id
+      });
+
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: 'Invalid inquiry data', 
+          details: validationResult.error.errors 
+        });
+      }
+
+      const inquiry = await storage.createAdInquiry(validationResult.data);
+      res.status(201).json(inquiry);
+    } catch (error) {
+      console.error('Error creating advertisement inquiry:', error);
+      res.status(500).json({ error: 'Failed to create inquiry' });
+    }
+  });
+
+  // Get advertisement inquiries (for advertisers)
+  app.get('/api/advertisements/:id/inquiries', authenticateToken, setTenantContext, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verify the advertisement belongs to the current tenant
+      const advertisement = await storage.getAdvertisement(id);
+      if (!advertisement || advertisement.tenantId !== req.tenantId) {
+        return res.status(404).json({ error: 'Advertisement not found' });
+      }
+
+      const inquiries = await storage.getAdInquiries(id);
+      res.json(inquiries);
+    } catch (error) {
+      console.error('Error fetching advertisement inquiries:', error);
+      res.status(500).json({ error: 'Failed to fetch inquiries' });
     }
   });
 
