@@ -5035,12 +5035,30 @@ export class DatabaseStorage implements IStorage {
 
   // Medical Suppliers Management
   async createMedicalSupplier(supplier: any): Promise<MedicalSupplier> {
-    // Generate organization slug from company name
-    const organizationSlug = supplier.companyName
+    // Generate base organization slug from company name
+    const baseSlug = supplier.companyName
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
+
+    // Check if slug exists and make it unique
+    let organizationSlug = baseSlug;
+    let counter = 1;
+    
+    while (true) {
+      const existing = await db.select()
+        .from(medicalSuppliers)
+        .where(eq(medicalSuppliers.organizationSlug, organizationSlug))
+        .limit(1);
+      
+      if (existing.length === 0) {
+        break; // Slug is unique
+      }
+      
+      organizationSlug = `${baseSlug}-${counter}`;
+      counter++;
+    }
 
     const [created] = await db.insert(medicalSuppliers)
       .values({
