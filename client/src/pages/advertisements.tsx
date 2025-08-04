@@ -33,6 +33,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
+import { useTenant } from "@/contexts/tenant-context-fixed";
 
 interface Advertisement {
   id: string;
@@ -99,11 +101,18 @@ const STATUS_COLORS = {
 export default function Advertisements() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { currentTenant } = useTenant();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedAd, setSelectedAd] = useState<Advertisement | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+
+  // Check if user is a supplier (can post advertisements)
+  const isSupplier = currentTenant?.type === 'supplier';
+  // Healthcare practices can only view advertisements, not create them
+  const isHealthcarePractice = ['hospital', 'pharmacy', 'laboratory'].includes(currentTenant?.type || '');
 
   // Fetch advertisements
   const { data: advertisements, isLoading, error } = useQuery({
@@ -227,22 +236,36 @@ export default function Advertisements() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Medical Marketplace</h1>
-          <p className="text-gray-600">Discover medical devices, equipment, and healthcare services</p>
+          {isHealthcarePractice ? (
+            <p className="text-gray-600">Discover medical devices, equipment, and healthcare services from suppliers</p>
+          ) : (
+            <p className="text-gray-600">Discover medical devices, equipment, and healthcare services</p>
+          )}
         </div>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button className="bg-emerald-600 hover:bg-emerald-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Post Advertisement
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Advertisement</DialogTitle>
-            </DialogHeader>
-            <CreateAdForm onSubmit={(data) => createAdMutation.mutate(data)} />
-          </DialogContent>
-        </Dialog>
+        {/* Only show Post Advertisement button for suppliers */}
+        {isSupplier && (
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button className="bg-emerald-600 hover:bg-emerald-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Post Advertisement
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create New Advertisement</DialogTitle>
+              </DialogHeader>
+              <CreateAdForm onSubmit={(data) => createAdMutation.mutate(data)} />
+            </DialogContent>
+          </Dialog>
+        )}
+        {/* Show informational message for healthcare practices */}
+        {isHealthcarePractice && (
+          <div className="text-right">
+            <p className="text-sm text-gray-500 mb-1">Healthcare Practice</p>
+            <p className="text-xs text-gray-400">Browse and contact medical suppliers</p>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
@@ -316,26 +339,31 @@ export default function Advertisements() {
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleToggleStatus(ad)}
-                      disabled={updateStatusMutation.isPending}
-                    >
-                      {ad.status === 'active' ? 
-                        <Pause className="w-4 h-4" /> : 
-                        <Play className="w-4 h-4" />
-                      }
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => deleteAdMutation.mutate(ad.id)}
-                      disabled={deleteAdMutation.isPending}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    {/* Only show edit/delete controls for suppliers */}
+                    {isSupplier && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleToggleStatus(ad)}
+                          disabled={updateStatusMutation.isPending}
+                        >
+                          {ad.status === 'active' ? 
+                            <Pause className="w-4 h-4" /> : 
+                            <Play className="w-4 h-4" />
+                          }
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => deleteAdMutation.mutate(ad.id)}
+                          disabled={deleteAdMutation.isPending}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
                 <CardTitle className="text-lg">{ad.title}</CardTitle>
@@ -382,7 +410,7 @@ export default function Advertisements() {
                   onClick={() => handleViewAd(ad)}
                 >
                   <MessageSquare className="w-4 h-4 mr-2" />
-                  View Details & Inquire
+                  {isHealthcarePractice ? "Contact Supplier" : "View Details & Inquire"}
                 </Button>
               </CardContent>
             </Card>
@@ -396,8 +424,11 @@ export default function Advertisements() {
           <h3 className="text-lg font-medium text-gray-900 mb-2">No advertisements found</h3>
           <p className="text-gray-600 mb-4">
             {filterCategory || filterStatus ? 
-              "Try adjusting your filters or create the first advertisement." :
-              "Be the first to post an advertisement in the medical marketplace."
+              "Try adjusting your filters to find relevant medical suppliers." :
+              (isHealthcarePractice ? 
+                "No advertisements available. Medical suppliers will post their products and services here." :
+                "Be the first to post an advertisement in the medical marketplace."
+              )
             }
           </p>
           <Button onClick={() => setShowCreateDialog(true)}>
