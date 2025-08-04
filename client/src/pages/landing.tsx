@@ -40,7 +40,9 @@ import {
   Rocket,
   MessageCircle,
   Phone,
-  Mail
+  Mail,
+  Megaphone,
+  ShoppingCart
 } from "lucide-react";
 
 // Professional healthcare platform branding
@@ -291,6 +293,79 @@ export default function LandingPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* Advertisement Marketplace Section */}
+      <section className="py-20 bg-gradient-to-br from-blue-50 to-emerald-50">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <Badge className="mb-6 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
+              <Megaphone className="w-4 h-4 mr-2" />
+              New Feature Launch
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900">
+              Medical Device <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Marketplace</span>
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+              Discover and showcase cutting-edge medical devices, healthcare services, and innovative solutions 
+              from trusted vendors and service providers.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            <Card className="group border-emerald-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-500 bg-white hover:bg-gradient-to-br hover:from-emerald-50 hover:to-blue-50">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="p-3 bg-emerald-100 group-hover:bg-emerald-200 rounded-xl transition-colors">
+                    <Stethoscope className="w-7 h-7 text-emerald-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900">Medical Equipment</h3>
+                </div>
+                <p className="text-slate-600 leading-relaxed text-lg">
+                  Browse advanced diagnostic equipment, surgical instruments, and cutting-edge medical technology from certified vendors.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="group border-blue-200 hover:border-blue-400 hover:shadow-2xl transition-all duration-500 bg-white hover:bg-gradient-to-br hover:from-blue-50 hover:to-emerald-50">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="p-3 bg-blue-100 group-hover:bg-blue-200 rounded-xl transition-colors">
+                    <Users className="w-7 h-7 text-blue-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900">Healthcare Services</h3>
+                </div>
+                <p className="text-slate-600 leading-relaxed text-lg">
+                  Connect with specialized healthcare service providers, consultants, and professional support services.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="group border-emerald-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-500 bg-white hover:bg-gradient-to-br hover:from-emerald-50 hover:to-blue-50">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="p-3 bg-emerald-100 group-hover:bg-emerald-200 rounded-xl transition-colors">
+                    <Zap className="w-7 h-7 text-emerald-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900">Innovation Hub</h3>
+                </div>
+                <p className="text-slate-600 leading-relaxed text-lg">
+                  Discover the latest healthcare innovations, research partnerships, and technology solutions for modern medicine.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-center">
+            <Link href="/advertisements">
+              <Button size="lg" className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 shadow-xl shadow-emerald-600/25 px-8 py-4 text-lg">
+                <ShoppingCart className="w-5 h-5 mr-2" />
+                Explore Marketplace
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
