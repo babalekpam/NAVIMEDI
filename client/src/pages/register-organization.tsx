@@ -105,7 +105,7 @@ export default function RegisterOrganization() {
         
         // Redirect to login after 3 seconds
         setTimeout(() => {
-          window.location.href = '/api/login';
+          setLocation('/login');
         }, 3000);
       } else {
         const errorData = await response.json();
@@ -120,51 +120,6 @@ export default function RegisterOrganization() {
       toast({
         title: "Network Error",
         description: "Unable to connect to the server. Please check your connection and try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-
-    setIsLoading(true);
-    
-    try {
-      const response = await fetch("/api/register-organization", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          organizationName: formData.organizationName,
-          organizationType: formData.organizationType,
-          adminFirstName: formData.adminFirstName,
-          adminLastName: formData.adminLastName,
-          adminEmail: formData.adminEmail,
-          adminPassword: formData.adminPassword,
-          confirmPassword: formData.confirmPassword,
-          phoneNumber: formData.phoneNumber || null,
-          address: formData.address || null,
-          country: formData.country || null,
-          description: formData.description || null
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to register organization");
-      }
-
-      setIsSuccess(true);
-      toast({
-        title: "Organization Registered!",
-        description: "Your organization has been successfully registered. You can now sign in with your admin credentials.",
-      });
-
-    } catch (error: any) {
-      toast({
-        title: "Registration Failed",
-        description: error.message || "An error occurred during registration. Please try again.",
         variant: "destructive",
       });
     } finally {
