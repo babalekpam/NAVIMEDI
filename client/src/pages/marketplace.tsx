@@ -59,10 +59,20 @@ export default function MarketplacePage() {
   // Quote request mutation
   const quoteRequestMutation = useMutation({
     mutationFn: async (quoteData: any) => {
-      return await apiRequest("/api/marketplace/quote-requests", {
+      const response = await fetch("/api/marketplace/quote-requests", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(quoteData),
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Request failed" }));
+        throw new Error(`${response.status}: ${errorData.message || "Request failed"}`);
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       toast({
@@ -175,8 +185,7 @@ export default function MarketplacePage() {
       email: quoteForm.email,
       phone: quoteForm.phone,
       quantity: quantity,
-      message: quoteForm.message,
-      requestedAt: new Date().toISOString()
+      message: quoteForm.message
     };
 
     quoteRequestMutation.mutate(quoteData);

@@ -559,8 +559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phone,
         quantity: qty,
         message,
-        status: 'pending',
-        requestedAt: requestedAt || new Date().toISOString()
+        status: 'pending'
       });
 
       console.log(`[QUOTE REQUEST] Quote request ${quoteRequest.id} created successfully`);

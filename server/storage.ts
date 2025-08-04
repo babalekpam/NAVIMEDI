@@ -5195,8 +5195,21 @@ export class DatabaseStorage implements IStorage {
   // =====================================
 
   async createQuoteRequest(quoteRequest: any): Promise<QuoteRequest> {
-    const [created] = await db.insert(quoteRequests).values(quoteRequest).returning();
-    return created;
+    try {
+      // Ensure proper data types for timestamp fields
+      const insertData = {
+        ...quoteRequest,
+        requestedAt: sql`CURRENT_TIMESTAMP`,
+        createdAt: sql`CURRENT_TIMESTAMP`,
+        updatedAt: sql`CURRENT_TIMESTAMP`
+      };
+      
+      const [created] = await db.insert(quoteRequests).values(insertData).returning();
+      return created;
+    } catch (error) {
+      console.error('Quote request creation error:', error);
+      throw error;
+    }
   }
 
   async getQuoteRequest(id: string): Promise<QuoteRequest | undefined> {
