@@ -894,12 +894,12 @@ export default function LandingPage() {
                 Join our marketplace as a certified medical device supplier and reach healthcare organizations nationwide
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="/supplier-signup-direct" target="_blank" rel="noopener noreferrer">
+                <Link href="/supplier-portal">
                   <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8">
                     <Building2 className="w-5 h-5 mr-2" />
-                    Join Marketplace
+                    Supplier Portal
                   </Button>
-                </a>
+                </Link>
                 <a href="/supplier-login-direct" target="_blank" rel="noopener noreferrer">
                   <Button size="lg" variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50 px-8">
                     <ShoppingCart className="w-5 h-5 mr-2" />

@@ -30,12 +30,9 @@ export const PublicHeader = ({ className = "" }: PublicHeaderProps) => {
             <Link href="/marketplace" className="text-slate-600 hover:text-emerald-600 transition-colors font-medium">Marketplace</Link>
             <Link href="/pricing" className="text-slate-600 hover:text-emerald-600 transition-colors font-medium">Pricing</Link>
             <Link href="/security" className="text-slate-600 hover:text-emerald-600 transition-colors font-medium">Security</Link>
-            <a href="/supplier-signup-direct" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 transition-colors font-medium">
-              Join as Supplier
-            </a>
-            <a href="/supplier-login-direct" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 transition-colors font-medium">
-              Supplier Login
-            </a>
+            <Link href="/supplier-portal" className="text-blue-600 hover:text-blue-700 transition-colors font-medium">
+              Supplier Portal
+            </Link>
             <Link href="/contact" className="text-slate-600 hover:text-emerald-600 transition-colors font-medium">Contact</Link>
           </nav>
 
