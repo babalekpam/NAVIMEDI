@@ -4283,6 +4283,205 @@ Report ID: ${report.id}
   // Supplier API blocking middleware moved to earlier position
 
   // SUPPLIER STORE SYSTEM - Simple HTML page to prevent React conflicts
+  app.get('/supplier-login-direct', (req, res) => {
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Supplier Login</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-container { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+        .logo { 
+            text-align: center; 
+            margin-bottom: 30px; 
+        }
+        .logo h1 { 
+            color: #2563eb; 
+            margin: 0; 
+            font-size: 28px; 
+            font-weight: bold; 
+        }
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 8px; 
+            color: #374151; 
+            font-weight: 500; 
+        }
+        .form-group input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #d1d5db; 
+            border-radius: 6px; 
+            font-size: 16px; 
+            box-sizing: border-box;
+        }
+        .form-group input:focus { 
+            outline: none; 
+            border-color: #2563eb; 
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); 
+        }
+        .btn { 
+            width: 100%; 
+            padding: 12px; 
+            background: #2563eb; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 16px; 
+            font-weight: 500; 
+            cursor: pointer; 
+            margin-top: 10px;
+        }
+        .btn:hover { 
+            background: #1d4ed8; 
+        }
+        .btn:disabled { 
+            background: #9ca3af; 
+            cursor: not-allowed; 
+        }
+        .error { 
+            color: #dc2626; 
+            margin-top: 10px; 
+            font-size: 14px; 
+        }
+        .success { 
+            color: #059669; 
+            margin-top: 10px; 
+            font-size: 14px; 
+        }
+        .test-credentials {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            border-left: 4px solid #2563eb;
+        }
+        .test-credentials h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #374151;
+        }
+        .test-credentials code {
+            display: block;
+            font-family: monospace;
+            color: #2563eb;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>🏥 Medical Supplier Login</h1>
+        </div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="organizationName">Organization Name</label>
+                <input type="text" id="organizationName" name="organizationName" required>
+            </div>
+            
+            <button type="submit" class="btn" id="loginBtn">Sign In</button>
+            
+            <div id="message"></div>
+        </form>
+
+        <div class="test-credentials">
+            <h3>Test Credentials:</h3>
+            <code>Username: medtech_admin</code>
+            <code>Password: password</code>
+            <code>Organization: MedTech Solutions Inc</code>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loginBtn = document.getElementById('loginBtn');
+            const messageDiv = document.getElementById('message');
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing In...';
+            messageDiv.innerHTML = '';
+            
+            const formData = new FormData(e.target);
+            const loginData = {
+                username: formData.get('username'),
+                password: formData.get('password'),
+                organizationName: formData.get('organizationName')
+            };
+            
+            try {
+                const response = await fetch('/api/supplier/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(loginData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Store authentication data
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    localStorage.setItem('userType', 'supplier');
+                    
+                    messageDiv.innerHTML = '<div class="success">Login successful! Redirecting...</div>';
+                    
+                    // Redirect to supplier dashboard
+                    setTimeout(() => {
+                        window.location.href = '/supplier-dashboard-direct';
+                    }, 1000);
+                } else {
+                    messageDiv.innerHTML = '<div class="error">' + (result.message || 'Login failed') + '</div>';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                messageDiv.innerHTML = '<div class="error">Network error. Please try again.</div>';
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+            }
+        });
+    </script>
+</body>
+</html>`);
+  });
+
   app.get('/supplier-dashboard-direct', (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="en">
