@@ -51,6 +51,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "dashboard", label: t("dashboard"), icon: BarChart3, path: "/dashboard", roles: ["physician", "nurse", "lab_technician", "receptionist", "billing_staff", "tenant_admin", "director"] },
   { id: "super-admin-dashboard", label: t("dashboard"), icon: BarChart3, path: "/super-admin-dashboard", roles: ["super_admin"] },
   { id: "supplier-management", label: "Supplier Management", icon: Building2, path: "/supplier-management", roles: ["super_admin"] },
+  { id: "advertisements", label: "Advertisement Marketplace", icon: Megaphone, path: "/advertisements", roles: ["super_admin"] },
   { id: "telemedicine-booking", label: "Telemedicine Booking", icon: Video, path: "/telemedicine-booking", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "register-patient", label: t("register-patient"), icon: UserPlus, path: "/patients?action=register", roles: ["receptionist", "tenant_admin", "director"] },
   { id: "book-appointment", label: t("book-appointment"), icon: CalendarPlus, path: "/appointments?action=book", roles: ["receptionist", "tenant_admin", "director"] },
@@ -76,7 +77,6 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
 
   { id: "health-recommendations", label: t("health-recommendations"), icon: Brain, path: "/health-recommendations", roles: ["physician", "nurse", "tenant_admin", "director"] },
   { id: "medical-communications", label: t("medical-communications"), icon: Languages, path: "/medical-communications", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
-  { id: "advertisements", label: "Advertisement Marketplace", icon: Megaphone, path: "/advertisements", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director", "super_admin", "pharmacist", "lab_technician", "billing_staff"] },
   { id: "patient-access-management", label: "Patient Access Management", icon: Shield, path: "/patient-access-management", roles: ["physician", "tenant_admin", "director", "super_admin"] },
   
   // Operations Section (only for tenant users - excluding pharmacy users)
