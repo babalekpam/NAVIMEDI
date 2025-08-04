@@ -4421,7 +4421,7 @@ Report ID: ${report.id}
             <h3>Test Credentials:</h3>
             <code>Username: medtech_admin</code>
             <code>Password: password</code>
-            <code>Organization: MedTech Solutions Inc</code>
+            <code>Organization: MedTech Solutions Inc.</code>
         </div>
     </div>
 

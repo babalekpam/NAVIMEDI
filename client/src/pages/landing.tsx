@@ -908,7 +908,7 @@ export default function LandingPage() {
                 </a>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
-                Test Credentials: medtech_admin / password
+                Test Credentials: Use any existing supplier account
               </p>
             </div>
           </div>
