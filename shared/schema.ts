@@ -37,6 +37,14 @@ export const supplierStatusEnum = pgEnum("supplier_status", [
   "rejected"
 ]);
 
+export const quoteRequestStatusEnum = pgEnum("quote_request_status", [
+  "pending",
+  "quoted",
+  "accepted",
+  "rejected",
+  "expired"
+]);
+
 export const appointmentStatusEnum = pgEnum("appointment_status", [
   "scheduled",
   "confirmed", 
@@ -3397,6 +3405,28 @@ export const productReviews = pgTable("product_reviews", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Quote Request System for Marketplace
+export const quoteRequests = pgTable("quote_requests", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  productId: uuid("product_id").references(() => marketplaceProducts.id).notNull(),
+  productName: text("product_name").notNull(),
+  supplierName: text("supplier_name").notNull(),
+  companyName: text("company_name").notNull(),
+  contactName: text("contact_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  quantity: integer("quantity").notNull(),
+  message: text("message"),
+  status: quoteRequestStatusEnum("status").default("pending").notNull(),
+  requestedAt: timestamp("requested_at").default(sql`CURRENT_TIMESTAMP`),
+  quotedPrice: decimal("quoted_price", { precision: 10, scale: 2 }),
+  quotedAt: timestamp("quoted_at"),
+  quotedBy: text("quoted_by"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Marketplace Relations
 export const marketplaceProductsRelations = relations(marketplaceProducts, ({ one, many }) => ({
   supplierTenant: one(tenants, {
@@ -3604,3 +3634,13 @@ export type InsertMarketplaceOrderItem = z.infer<typeof insertMarketplaceOrderIt
 
 export type ProductReview = typeof productReviews.$inferSelect;
 export type InsertProductReview = z.infer<typeof insertProductReviewSchema>;
+
+// Quote request insert schema and types
+export const insertQuoteRequestSchema = createInsertSchema(quoteRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export type QuoteRequest = typeof quoteRequests.$inferSelect;
+export type InsertQuoteRequest = z.infer<typeof insertQuoteRequestSchema>;

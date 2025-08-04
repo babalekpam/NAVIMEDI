@@ -56,6 +56,7 @@ import {
   marketplaceOrders,
   marketplaceOrderItems,
   productReviews,
+  quoteRequests,
   type Advertisement,
   type InsertAdvertisement,
   type AdView,
@@ -72,6 +73,8 @@ import {
   type InsertMarketplaceOrderItem,
   type ProductReview,
   type InsertProductReview,
+  type QuoteRequest,
+  type InsertQuoteRequest,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -603,6 +606,13 @@ export interface IStorage {
   updateMedicalSupplier(id: string, updates: Partial<MedicalSupplier>): Promise<MedicalSupplier | undefined>;
   updateMedicalSupplierStatus(id: string, status: string, reason?: string): Promise<MedicalSupplier | undefined>;
   approveMedicalSupplier(id: string, approvedBy: string): Promise<MedicalSupplier | undefined>;
+
+  // Quote Request Management
+  createQuoteRequest(quoteRequest: any): Promise<QuoteRequest>;
+  getQuoteRequest(id: string): Promise<QuoteRequest | undefined>;
+  getQuoteRequests(): Promise<QuoteRequest[]>;
+  getQuoteRequestsByProduct(productId: string): Promise<QuoteRequest[]>;
+  updateQuoteRequest(id: string, updates: Partial<QuoteRequest>): Promise<QuoteRequest | undefined>;
 
   // Marketplace Product Management
   getMarketplaceProducts(filters: { category?: string; search?: string; status?: string; limit: number; offset: number }): Promise<MarketplaceProduct[]>;
@@ -5175,6 +5185,42 @@ export class DatabaseStorage implements IStorage {
         updatedAt: sql`CURRENT_TIMESTAMP` 
       })
       .where(eq(medicalSuppliers.id, id))
+      .returning();
+    
+    return updated || undefined;
+  }
+
+  // =====================================
+  // QUOTE REQUEST MANAGEMENT
+  // =====================================
+
+  async createQuoteRequest(quoteRequest: any): Promise<QuoteRequest> {
+    const [created] = await db.insert(quoteRequests).values(quoteRequest).returning();
+    return created;
+  }
+
+  async getQuoteRequest(id: string): Promise<QuoteRequest | undefined> {
+    const [quote] = await db.select().from(quoteRequests).where(eq(quoteRequests.id, id));
+    return quote || undefined;
+  }
+
+  async getQuoteRequests(): Promise<QuoteRequest[]> {
+    return await db.select()
+      .from(quoteRequests)
+      .orderBy(desc(quoteRequests.createdAt));
+  }
+
+  async getQuoteRequestsByProduct(productId: string): Promise<QuoteRequest[]> {
+    return await db.select()
+      .from(quoteRequests)
+      .where(eq(quoteRequests.productId, productId))
+      .orderBy(desc(quoteRequests.createdAt));
+  }
+
+  async updateQuoteRequest(id: string, updates: Partial<QuoteRequest>): Promise<QuoteRequest | undefined> {
+    const [updated] = await db.update(quoteRequests)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(quoteRequests.id, id))
       .returning();
     
     return updated || undefined;

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Search, Filter, Star, ShoppingCart, Eye, MapPin, Phone, Mail } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Search, Filter, Star, ShoppingCart, Eye, MapPin, Phone, Mail, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { PublicHeader } from "@/components/layout/public-header";
 
 interface Product {
@@ -35,9 +39,46 @@ export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [priceRange, setPriceRange] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [quoteProduct, setQuoteProduct] = useState<Product | null>(null);
+  const [quoteForm, setQuoteForm] = useState({
+    companyName: "",
+    contactName: "",
+    email: "",
+    phone: "",
+    quantity: "",
+    message: ""
+  });
+
+  const { toast } = useToast();
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/marketplace/products"],
+  });
+
+  // Quote request mutation
+  const quoteRequestMutation = useMutation({
+    mutationFn: async (quoteData: any) => {
+      return await apiRequest("/api/marketplace/quote-requests", {
+        method: "POST",
+        body: JSON.stringify(quoteData),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Quote Request Sent",
+        description: "Your quote request has been sent to the supplier. They will contact you soon.",
+      });
+      setShowQuoteModal(false);
+      resetQuoteForm();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send quote request. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const categories = [
@@ -71,6 +112,75 @@ export default function MarketplacePage() {
     
     return matchesSearch && matchesCategory && matchesPrice && product.status === "active";
   });
+
+  const resetQuoteForm = () => {
+    setQuoteForm({
+      companyName: "",
+      contactName: "",
+      email: "",
+      phone: "",
+      quantity: "",
+      message: ""
+    });
+  };
+
+  const handleQuoteRequest = (product: Product) => {
+    setQuoteProduct(product);
+    setShowQuoteModal(true);
+  };
+
+  const handleSubmitQuote = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!quoteProduct) return;
+    
+    // Validation
+    if (!quoteForm.companyName || !quoteForm.contactName || !quoteForm.email || !quoteForm.quantity) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(quoteForm.email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Quantity validation
+    const quantity = parseInt(quoteForm.quantity);
+    if (isNaN(quantity) || quantity <= 0) {
+      toast({
+        title: "Invalid Quantity",
+        description: "Please enter a valid quantity.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const quoteData = {
+      productId: quoteProduct.id,
+      productName: quoteProduct.name,
+      supplierName: quoteProduct.supplierName,
+      companyName: quoteForm.companyName,
+      contactName: quoteForm.contactName,
+      email: quoteForm.email,
+      phone: quoteForm.phone,
+      quantity: quantity,
+      message: quoteForm.message,
+      requestedAt: new Date().toISOString()
+    };
+
+    quoteRequestMutation.mutate(quoteData);
+  };
 
   function checkPriceRange(price: number, range: string): boolean {
     switch (range) {
@@ -335,7 +445,11 @@ export default function MarketplacePage() {
                               </div>
                             </div>
                             
-                            <Button className="w-full" size="lg">
+                            <Button 
+                              className="w-full" 
+                              size="lg"
+                              onClick={() => handleQuoteRequest(product)}
+                            >
                               <ShoppingCart className="h-4 w-4 mr-2" />
                               Request Quote
                             </Button>
@@ -344,7 +458,11 @@ export default function MarketplacePage() {
                       </DialogContent>
                     </Dialog>
                     
-                    <Button size="sm" disabled={product.stockQuantity === 0}>
+                    <Button 
+                      size="sm" 
+                      disabled={product.stockQuantity === 0}
+                      onClick={() => handleQuoteRequest(product)}
+                    >
                       <ShoppingCart className="h-4 w-4 mr-2" />
                       Quote
                     </Button>
@@ -355,6 +473,109 @@ export default function MarketplacePage() {
           </div>
         )}
       </div>
+
+      {/* Quote Request Modal */}
+      <Dialog open={showQuoteModal} onOpenChange={setShowQuoteModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Request Quote</DialogTitle>
+            <DialogDescription>
+              {quoteProduct && `Get a quote for ${quoteProduct.name} from ${quoteProduct.supplierName}`}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmitQuote} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="companyName">Company Name *</Label>
+                <Input
+                  id="companyName"
+                  value={quoteForm.companyName}
+                  onChange={(e) => setQuoteForm(prev => ({ ...prev, companyName: e.target.value }))}
+                  placeholder="Your company name"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contactName">Contact Name *</Label>
+                <Input
+                  id="contactName"
+                  value={quoteForm.contactName}
+                  onChange={(e) => setQuoteForm(prev => ({ ...prev, contactName: e.target.value }))}
+                  placeholder="Your full name"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={quoteForm.email}
+                  onChange={(e) => setQuoteForm(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="your@company.com"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={quoteForm.phone}
+                  onChange={(e) => setQuoteForm(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="+1 (555) 123-4567"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="quantity">Quantity Needed *</Label>
+              <Input
+                id="quantity"
+                type="number"
+                min="1"
+                value={quoteForm.quantity}
+                onChange={(e) => setQuoteForm(prev => ({ ...prev, quantity: e.target.value }))}
+                placeholder="How many units do you need?"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="message">Additional Message</Label>
+              <Textarea
+                id="message"
+                value={quoteForm.message}
+                onChange={(e) => setQuoteForm(prev => ({ ...prev, message: e.target.value }))}
+                placeholder="Any specific requirements or questions..."
+                rows={3}
+              />
+            </div>
+            
+            <div className="flex gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowQuoteModal(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={quoteRequestMutation.isPending}
+                className="flex-1"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                {quoteRequestMutation.isPending ? "Sending..." : "Send Quote Request"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
     </>
   );

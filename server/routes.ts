@@ -511,6 +511,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Quote request endpoint (public endpoint)
+  app.post("/api/marketplace/quote-requests", async (req, res) => {
+    try {
+      const {
+        productId,
+        productName,
+        supplierName,
+        companyName,
+        contactName,
+        email,
+        phone,
+        quantity,
+        message,
+        requestedAt
+      } = req.body;
+
+      // Validation
+      if (!productId || !productName || !companyName || !contactName || !email || !quantity) {
+        return res.status(400).json({ 
+          message: "Missing required fields: productId, productName, companyName, contactName, email, quantity" 
+        });
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Invalid email address" });
+      }
+
+      // Quantity validation
+      const qty = parseInt(quantity);
+      if (isNaN(qty) || qty <= 0) {
+        return res.status(400).json({ message: "Quantity must be a positive number" });
+      }
+
+      console.log(`[QUOTE REQUEST] New quote request from ${companyName} for ${productName} (Qty: ${qty})`);
+
+      // Create quote request record
+      const quoteRequest = await storage.createQuoteRequest({
+        productId,
+        productName,
+        supplierName,
+        companyName,
+        contactName,
+        email,
+        phone,
+        quantity: qty,
+        message,
+        status: 'pending',
+        requestedAt: requestedAt || new Date().toISOString()
+      });
+
+      console.log(`[QUOTE REQUEST] Quote request ${quoteRequest.id} created successfully`);
+
+      // TODO: Send email notification to supplier
+      // TODO: Send confirmation email to customer
+
+      res.json({ 
+        success: true, 
+        message: "Quote request submitted successfully", 
+        quoteRequestId: quoteRequest.id 
+      });
+    } catch (error) {
+      console.error("Error creating quote request:", error);
+      res.status(500).json({ message: "Failed to submit quote request" });
+    }
+  });
+
   // =====================================
   // SUPPLIER AUTHENTICATION & PRODUCT MANAGEMENT ENDPOINTS
   // =====================================
