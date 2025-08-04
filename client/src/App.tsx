@@ -51,6 +51,7 @@ import SupplierRegister from "@/pages/supplier-register";
 import SupplierMarketplace from "@/pages/supplier-marketplace";
 import SupplierMarketplaceTest from "@/pages/supplier-marketplace-test";
 import SupplierManagement from "@/pages/supplier-management";
+import SupplierDashboard from "@/pages/supplier-dashboard";
 
 import FeaturesPage from "@/pages/features";
 import SolutionsPage from "@/pages/solutions";
@@ -365,6 +366,22 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
+        <Route path="/supplier-dashboard">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <SupplierDashboard />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/supplier-register">
+          <SupplierRegister />
+        </Route>
         
         <Route path="/admin/clients">
           <ProtectedRoute>
@@ -638,7 +655,7 @@ function AppContent() {
               <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto">
+                <main className="flex-1 overflow-y-auto p-6">
                   <Advertisements />
                 </main>
               </div>

@@ -4120,6 +4120,47 @@ Report ID: ${report.id}
     }
   });
 
+  // Supplier-specific API endpoints
+  app.get('/api/supplier/profile', authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      // Find the supplier profile for this user
+      const suppliers = await storage.getMedicalSuppliers();
+      const supplierProfile = suppliers.find(s => s.contactEmail === user.email);
+      
+      if (!supplierProfile) {
+        return res.status(404).json({ error: 'Supplier profile not found' });
+      }
+
+      res.json(supplierProfile);
+    } catch (error) {
+      console.error('[SUPPLIER] Error fetching supplier profile:', error);
+      res.status(500).json({ error: 'Failed to fetch supplier profile' });
+    }
+  });
+
+  app.get('/api/supplier/advertisements', authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      // Get advertisements for this supplier based on email
+      const allAdvertisements = await storage.getAllAdvertisements();
+      const supplierAds = allAdvertisements.filter(ad => ad.contactEmail === user.email);
+      
+      res.json(supplierAds);
+    } catch (error) {
+      console.error('[SUPPLIER] Error fetching supplier advertisements:', error);
+      res.status(500).json({ error: 'Failed to fetch supplier advertisements' });
+    }
+  });
+
   const server = createServer(app);
   return server;
 }
