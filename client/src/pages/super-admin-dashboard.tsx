@@ -111,6 +111,96 @@ export default function SuperAdminDashboard() {
     }
   });
 
+  const suspendSupplierMutation = useMutation({
+    mutationFn: async ({ supplierId, reason }: { supplierId: string; reason: string }) => {
+      await apiRequest(`/api/admin/suppliers/${supplierId}/suspend`, {
+        method: 'PUT',
+        body: { reason }
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Supplier Suspended",
+        description: "The supplier account has been suspended.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/suppliers'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Suspension Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const activateSupplierMutation = useMutation({
+    mutationFn: async (supplierId: string) => {
+      await apiRequest(`/api/admin/suppliers/${supplierId}/activate`, {
+        method: 'PUT'
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Supplier Activated",
+        description: "The supplier account has been activated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/suppliers'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Activation Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const suspendTenantMutation = useMutation({
+    mutationFn: async ({ tenantId, reason }: { tenantId: string; reason: string }) => {
+      await apiRequest(`/api/admin/tenants/${tenantId}/suspend`, {
+        method: 'PUT',
+        body: { reason }
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Tenant Suspended",
+        description: "The tenant account has been suspended.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tenants'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Suspension Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const activateTenantMutation = useMutation({
+    mutationFn: async (tenantId: string) => {
+      await apiRequest(`/api/admin/tenants/${tenantId}/activate`, {
+        method: 'PUT'
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Tenant Activated",
+        description: "The tenant account has been activated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tenants'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Activation Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
   if (tenantsLoading || statsLoading || suppliersLoading) {
     return (
       <div className="p-6">
@@ -142,9 +232,21 @@ export default function SuperAdminDashboard() {
         return <Badge variant="default" className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Approved</Badge>;
       case 'rejected':
         return <Badge variant="destructive" className="bg-red-100 text-red-800"><XCircle className="w-3 h-3 mr-1" />Rejected</Badge>;
+      case 'suspended':
+        return <Badge variant="destructive" className="bg-orange-100 text-orange-800"><XCircle className="w-3 h-3 mr-1" />Suspended</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
+  };
+
+  const getTenantStatusBadge = (tenant: any) => {
+    if (tenant.suspendedAt) {
+      return <Badge variant="destructive" className="bg-orange-100 text-orange-800"><XCircle className="w-3 h-3 mr-1" />Suspended</Badge>;
+    }
+    if (!tenant.isActive) {
+      return <Badge variant="destructive" className="bg-red-100 text-red-800"><XCircle className="w-3 h-3 mr-1" />Inactive</Badge>;
+    }
+    return <Badge variant="default" className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Active</Badge>;
   };
 
   const pendingSuppliers = suppliers?.filter(s => s.status === 'pending_review') || [];
@@ -285,29 +387,57 @@ export default function SuperAdminDashboard() {
                             <p className="text-sm"><strong>Description:</strong> {supplier.businessDescription}</p>
                           </div>
 
-                          {supplier.status === 'pending_review' && (
-                            <div className="flex gap-3 pt-4">
+                          <div className="flex gap-3 pt-4">
+                            {supplier.status === 'pending_review' && (
+                              <>
+                                <Button 
+                                  onClick={() => approveSupplierMutation.mutate(supplier.id)}
+                                  disabled={approveSupplierMutation.isPending}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  Approve
+                                </Button>
+                                <Button 
+                                  variant="destructive"
+                                  onClick={() => rejectSupplierMutation.mutate({ 
+                                    supplierId: supplier.id, 
+                                    reason: 'Did not meet platform requirements' 
+                                  })}
+                                  disabled={rejectSupplierMutation.isPending}
+                                >
+                                  <XCircle className="w-4 h-4 mr-2" />
+                                  Reject
+                                </Button>
+                              </>
+                            )}
+                            
+                            {supplier.status === 'approved' && (
                               <Button 
-                                onClick={() => approveSupplierMutation.mutate(supplier.id)}
-                                disabled={approveSupplierMutation.isPending}
+                                variant="outline"
+                                onClick={() => suspendSupplierMutation.mutate({ 
+                                  supplierId: supplier.id, 
+                                  reason: 'Account suspended for policy violations' 
+                                })}
+                                disabled={suspendSupplierMutation.isPending}
+                                className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                              >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Suspend
+                              </Button>
+                            )}
+                            
+                            {supplier.status === 'suspended' && (
+                              <Button 
+                                onClick={() => activateSupplierMutation.mutate(supplier.id)}
+                                disabled={activateSupplierMutation.isPending}
                                 className="bg-green-600 hover:bg-green-700"
                               >
                                 <CheckCircle className="w-4 h-4 mr-2" />
-                                Approve
+                                Activate
                               </Button>
-                              <Button 
-                                variant="destructive"
-                                onClick={() => rejectSupplierMutation.mutate({ 
-                                  supplierId: supplier.id, 
-                                  reason: 'Did not meet platform requirements' 
-                                })}
-                                disabled={rejectSupplierMutation.isPending}
-                              >
-                                <XCircle className="w-4 h-4 mr-2" />
-                                Reject
-                              </Button>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
                     </Card>
@@ -346,19 +476,49 @@ export default function SuperAdminDashboard() {
                             <Badge className={getTenantTypeColor(tenant.type)}>
                               {tenant.type}
                             </Badge>
-                            <Badge variant={tenant.isActive ? "default" : "secondary"}>
-                              {tenant.isActive ? "Active" : "Inactive"}
-                            </Badge>
+                            {getTenantStatusBadge(tenant)}
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">
-                          {tenant.stats.userCount} users
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {tenant.stats.patientCount} patients
-                        </p>
+                      <div className="flex items-center space-x-4">
+                        <div className="text-right">
+                          <p className="text-sm font-medium">
+                            {tenant.stats.userCount} users
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {tenant.stats.patientCount} patients
+                          </p>
+                        </div>
+                        
+                        <div className="flex flex-col gap-2">
+                          {tenant.isActive && !tenant.suspendedAt && tenant.type !== 'platform' && (
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              onClick={() => suspendTenantMutation.mutate({ 
+                                tenantId: tenant.id, 
+                                reason: 'Account suspended for policy violations' 
+                              })}
+                              disabled={suspendTenantMutation.isPending}
+                              className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                            >
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Suspend
+                            </Button>
+                          )}
+                          
+                          {(!tenant.isActive || tenant.suspendedAt) && tenant.type !== 'platform' && (
+                            <Button 
+                              size="sm"
+                              onClick={() => activateTenantMutation.mutate(tenant.id)}
+                              disabled={activateTenantMutation.isPending}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Activate
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))

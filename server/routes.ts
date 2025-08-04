@@ -810,6 +810,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/admin/suppliers/:id/suspend", authenticateToken, async (req, res) => {
+    try {
+      if (req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+      
+      const { id } = req.params;
+      const { reason } = req.body;
+      
+      const supplier = await storage.updateMedicalSupplierStatus(id, 'suspended', reason);
+      
+      res.json({ message: "Supplier suspended successfully", supplier });
+    } catch (error) {
+      console.error("Error suspending supplier:", error);
+      res.status(500).json({ message: "Failed to suspend supplier" });
+    }
+  });
+
+  app.put("/api/admin/suppliers/:id/activate", authenticateToken, async (req, res) => {
+    try {
+      if (req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+      
+      const { id } = req.params;
+      
+      const supplier = await storage.updateMedicalSupplierStatus(id, 'approved');
+      
+      res.json({ message: "Supplier activated successfully", supplier });
+    } catch (error) {
+      console.error("Error activating supplier:", error);
+      res.status(500).json({ message: "Failed to activate supplier" });
+    }
+  });
+
+  app.put("/api/admin/tenants/:id/suspend", authenticateToken, async (req, res) => {
+    try {
+      if (req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+      
+      const { id } = req.params;
+      const { reason } = req.body;
+      
+      await storage.updateTenant(id, { 
+        isActive: false,
+        suspendedAt: new Date(),
+        suspensionReason: reason 
+      });
+      
+      res.json({ message: "Tenant suspended successfully" });
+    } catch (error) {
+      console.error("Error suspending tenant:", error);
+      res.status(500).json({ message: "Failed to suspend tenant" });
+    }
+  });
+
+  app.put("/api/admin/tenants/:id/activate", authenticateToken, async (req, res) => {
+    try {
+      if (req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+      
+      const { id } = req.params;
+      
+      await storage.updateTenant(id, { 
+        isActive: true,
+        suspendedAt: null,
+        suspensionReason: null 
+      });
+      
+      res.json({ message: "Tenant activated successfully" });
+    } catch (error) {
+      console.error("Error activating tenant:", error);
+      res.status(500).json({ message: "Failed to activate tenant" });
+    }
+  });
+
   // Apply tenant context middleware to all API routes (except public endpoints)
   app.use("/api", (req, res, next) => {
     // Skip tenant middleware for public endpoints
