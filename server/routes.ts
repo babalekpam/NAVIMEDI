@@ -4275,6 +4275,107 @@ Report ID: ${report.id}
     }
   });
 
+  // CRITICAL: Direct supplier login page that bypasses React completely
+  app.get('/supplier-login-direct', (req, res) => {
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Login - Healthcare Platform</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { max-width: 400px; margin: 80px auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+        input { width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        input:focus { outline: none; border-color: #667eea; }
+        button { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600; }
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .message { margin-top: 15px; padding: 10px; border-radius: 4px; text-align: center; }
+        .error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+        .info { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🏥 Supplier Portal</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="organizationName">Organization Name</label>
+                <input type="text" id="organizationName" value="MedTech Solutions Inc." required>
+            </div>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" value="medtech_admin" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" value="password" required>
+            </div>
+            <button type="submit" id="loginBtn">Login to Dashboard</button>
+        </form>
+        <div id="message"></div>
+        <div class="info">Healthcare Supplier Management Platform<br>Secure access to marketplace analytics</div>
+    </div>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const loginBtn = document.getElementById('loginBtn');
+            const messageDiv = document.getElementById('message');
+            loginBtn.textContent = 'Authenticating...';
+            loginBtn.disabled = true;
+            messageDiv.innerHTML = '';
+            try {
+                console.log('Attempting supplier login...');
+                const response = await fetch('/api/supplier/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        organizationName: document.getElementById('organizationName').value,
+                        username: document.getElementById('username').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+                const data = await response.json();
+                console.log('Login response:', data);
+                if (data.success && data.token && data.user) {
+                    console.log('Login successful, user type:', data.user.userType);
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('userType', 'supplier');
+                    localStorage.setItem('supplierAuth', 'true');
+                    messageDiv.className = 'message success';
+                    messageDiv.textContent = 'Login successful! Redirecting to dashboard...';
+                    console.log('Redirecting to supplier dashboard...');
+                    setTimeout(() => {
+                        window.location.href = '/supplier-dashboard';
+                    }, 1000);
+                } else {
+                    throw new Error(data.message || 'Login failed - invalid credentials');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'Error: ' + error.message;
+            } finally {
+                loginBtn.textContent = 'Login to Dashboard';
+                loginBtn.disabled = false;
+            }
+        });
+        localStorage.clear();
+        sessionStorage.clear();
+    </script>
+</body>
+</html>`;
+    res.send(html);
+  });
+
   const server = createServer(app);
   return server;
 }

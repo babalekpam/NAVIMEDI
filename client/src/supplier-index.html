@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Platform - MedTech Solutions</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 400px; margin: 50px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        .error { color: red; margin-top: 10px; }
+        .loading { text-align: center; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Supplier Login</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="organizationName">Organization Name:</label>
+                <input type="text" id="organizationName" value="MedTech Solutions Inc." required>
+            </div>
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" value="medtech_admin" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" value="password" required>
+            </div>
+            <button type="submit" id="loginBtn">Login</button>
+        </form>
+        <div id="message" class="error"></div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loginBtn = document.getElementById('loginBtn');
+            const messageDiv = document.getElementById('message');
+            
+            loginBtn.textContent = 'Logging in...';
+            loginBtn.disabled = true;
+            messageDiv.textContent = '';
+            
+            try {
+                const response = await fetch('/api/supplier/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        organizationName: document.getElementById('organizationName').value,
+                        username: document.getElementById('username').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.token) {
+                    // Clear any existing storage
+                    localStorage.clear();
+                    
+                    // Set supplier authentication
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('userType', 'supplier');
+                    
+                    messageDiv.style.color = 'green';
+                    messageDiv.textContent = 'Login successful! Redirecting...';
+                    
+                    // Force redirect to supplier dashboard
+                    setTimeout(() => {
+                        window.location.href = '/supplier-dashboard';
+                    }, 500);
+                } else {
+                    throw new Error(data.message || 'Login failed');
+                }
+            } catch (error) {
+                messageDiv.style.color = 'red';
+                messageDiv.textContent = error.message;
+            } finally {
+                loginBtn.textContent = 'Login';
+                loginBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
