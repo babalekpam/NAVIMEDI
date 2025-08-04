@@ -1058,7 +1058,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       "/api/suppliers/register",
       "/api/auth/login",
       "/api/auth/user",
-      "/api/marketplace/products"
+      "/api/marketplace/products",
+      "/api/advertisements",
+      "/api/marketplace/quote-requests",
+      "/advertisements",
+      "/marketplace/products",
+      "/marketplace/quote-requests"
     ];
     
     if (publicEndpoints.includes(req.path)) {
@@ -1152,17 +1157,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Protected routes - require authentication (with exclusions)
   app.use("/api", (req, res, next) => {
-    // Skip authentication for supplier login and placeholder images
-    console.log('[AUTH DEBUG] Path:', req.path, 'User from auth:', !!req.user);
+    // Skip authentication for public endpoints
     if (req.path === '/supplier/login' || 
         req.path.includes('/supplier/login') ||
         req.path.startsWith('/placeholder/') ||
         req.path.startsWith('/api/placeholder/') ||
-        req.path === '/api/marketplace/products') {
-      console.log('[AUTH DEBUG] Skipping auth for public endpoint');
+        req.path === '/marketplace/products' ||
+        req.path === '/advertisements' ||
+        req.path === '/marketplace/quote-requests') {
       return next();
     }
-    console.log('[AUTH DEBUG] Applying auth middleware');
     authenticateToken(req, res, next);
   });
 

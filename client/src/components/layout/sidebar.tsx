@@ -51,7 +51,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "dashboard", label: t("dashboard"), icon: BarChart3, path: "/dashboard", roles: ["physician", "nurse", "lab_technician", "receptionist", "billing_staff", "tenant_admin", "director"] },
   { id: "super-admin-dashboard", label: t("dashboard"), icon: BarChart3, path: "/super-admin-dashboard", roles: ["super_admin"] },
   { id: "supplier-management", label: "Supplier Management", icon: Building2, path: "/supplier-management", roles: ["super_admin"] },
-  { id: "advertisements", label: "Advertisement Marketplace", icon: Megaphone, path: "/advertisements", roles: ["super_admin"] },
+  { id: "advertisements", label: "Advertisement Marketplace", icon: Megaphone, path: "/advertisements", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director", "pharmacist", "lab_technician", "super_admin"] },
   { id: "telemedicine-booking", label: "Telemedicine Booking", icon: Video, path: "/telemedicine-booking", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "register-patient", label: t("register-patient"), icon: UserPlus, path: "/patients?action=register", roles: ["receptionist", "tenant_admin", "director"] },
   { id: "book-appointment", label: t("book-appointment"), icon: CalendarPlus, path: "/appointments?action=book", roles: ["receptionist", "tenant_admin", "director"] },
@@ -181,7 +181,7 @@ export const Sidebar = () => {
   if (user.role === "lab_technician" || (user.role === "tenant_admin" && isLaboratoryTenant)) {
     
     const laboratoryItems = filteredItems.filter(item => 
-      ["dashboard", "lab-records", "lab-orders", "lab-results", "post-lab-results", "achievements", "reports"].includes(item.id)
+      ["dashboard", "lab-records", "lab-orders", "lab-results", "post-lab-results", "achievements", "reports", "advertisements"].includes(item.id)
     );
     
     // Add laboratory billing as a special item for lab tenants
@@ -243,7 +243,7 @@ export const Sidebar = () => {
     console.log('[SIDEBAR] ✅ User role:', user.role, 'Tenant type:', currentTenant?.type);
     
     const pharmacyItems = filteredItems.filter(item => 
-      ["pharmacy-dashboard", "prescription-archives", "pharmacy-patient-management", "pharmacy-employee-management", "pharmacy-billing", "pharmacy-insurance-claims", "admin-dashboard"].includes(item.id)
+      ["pharmacy-dashboard", "prescription-archives", "pharmacy-patient-management", "pharmacy-employee-management", "pharmacy-billing", "pharmacy-insurance-claims", "admin-dashboard", "advertisements"].includes(item.id)
     );
     
     return (
@@ -313,7 +313,7 @@ export const Sidebar = () => {
     return clinicalItemIds.includes(item.id) && !["pharmacy-dashboard", "lab-records"].includes(item.id);
   });
   const operationItems = filteredItems.filter(item => {
-    const operationItemIds = ["billing", "service-prices"];
+    const operationItemIds = ["billing", "service-prices", "advertisements"];
     return operationItemIds.includes(item.id);
   });
   const adminItems = filteredItems.filter(item => {
