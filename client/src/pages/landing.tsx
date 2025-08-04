@@ -706,10 +706,12 @@ export default function LandingPage() {
                 Start Free Trial
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
-              <Users className="w-5 h-5 mr-2" />
-              Schedule Demo
-            </Button>
+            <a href="#contact" className="inline-block">
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+                <Users className="w-5 h-5 mr-2" />
+                Schedule Demo
+              </Button>
+            </a>
           </div>
           
           <div className="mt-12 flex flex-wrap justify-center items-center gap-8 text-emerald-100">
@@ -907,41 +909,50 @@ export default function LandingPage() {
             
             <Card className="bg-white text-slate-900 p-8">
               <h3 className="text-2xl font-bold mb-6">Schedule Your Personal Demo</h3>
-              <div className="space-y-4">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.target as HTMLFormElement;
+                const formData = new FormData(form);
+                const firstName = formData.get('firstName');
+                const lastName = formData.get('lastName');
+                const organization = formData.get('organization');
+                alert('Demo request submitted for ' + firstName + ' ' + lastName + ' from ' + organization + '. We will contact you within 24 hours!');
+                form.reset();
+              }} className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">First Name</label>
-                    <input type="text" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
+                    <input name="firstName" type="text" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">Last Name</label>
-                    <input type="text" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
+                    <input name="lastName" type="text" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Work Email</label>
-                  <input type="email" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
+                  <input name="email" type="email" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Organization</label>
-                  <input type="text" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
+                  <input name="organization" type="text" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Organization Type</label>
-                  <select className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                    <option>Select organization type</option>
-                    <option>Hospital</option>
-                    <option>Clinic</option>
-                    <option>Pharmacy</option>
-                    <option>Laboratory</option>
-                    <option>Other</option>
+                  <select name="organizationType" required className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    <option value="">Select organization type</option>
+                    <option value="hospital">Hospital</option>
+                    <option value="clinic">Clinic</option>
+                    <option value="pharmacy">Pharmacy</option>
+                    <option value="laboratory">Laboratory</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
-                <Button className="w-full bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 py-3 text-lg">
+                <Button type="submit" className="w-full bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 py-3 text-lg">
                   Schedule Demo
                   <Calendar className="w-5 h-5 ml-2" />
                 </Button>
-              </div>
+              </form>
             </Card>
           </div>
         </div>
