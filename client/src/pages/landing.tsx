@@ -42,7 +42,9 @@ import {
   Phone,
   Mail,
   Megaphone,
-  ShoppingCart
+  ShoppingCart,
+  Package,
+  Laptop
 } from "lucide-react";
 
 // Professional healthcare platform branding
@@ -359,14 +361,32 @@ export default function LandingPage() {
             </Card>
           </div>
 
-          <div className="text-center">
-            <Link href="/advertisements">
-              <Button size="lg" className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 shadow-xl shadow-emerald-600/25 px-8 py-4 text-lg">
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                Explore Marketplace
-                <ArrowRight className="w-5 h-5 ml-2" />
+          <div className="text-center bg-gradient-to-r from-emerald-600 to-blue-600 rounded-2xl p-8 text-white">
+            <div className="mb-6">
+              <Badge className="mb-4 bg-white/20 text-white border-white/30 hover:bg-white/30">
+                <Package className="w-4 h-4 mr-2" />
+                NEW: Medical Device Marketplace
+              </Badge>
+              <h3 className="text-3xl font-bold mb-2">Discover Medical Solutions</h3>
+              <p className="text-lg text-white/90 mb-6">
+                Connect with leading medical device vendors and healthcare service providers. 
+                Browse innovative solutions and streamline your procurement process.
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/advertisements">
+                <Button size="lg" className="bg-white text-emerald-600 hover:bg-gray-100 shadow-xl px-8 py-4 text-lg font-semibold">
+                  <Package className="w-5 h-5 mr-2" />
+                  Explore Marketplace
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
+              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg">
+                <Building2 className="w-5 h-5 mr-2" />
+                Post Advertisement
               </Button>
-            </Link>
+            </div>
           </div>
         </div>
       </section>
