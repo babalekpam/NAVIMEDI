@@ -25,7 +25,16 @@ export const tenantTypeEnum = pgEnum("tenant_type", [
   "clinic", 
   "pharmacy",
   "laboratory",
-  "insurance_provider"
+  "insurance_provider",
+  "medical_supplier"
+]);
+
+export const supplierStatusEnum = pgEnum("supplier_status", [
+  "pending_review",
+  "approved", 
+  "active",
+  "suspended",
+  "rejected"
 ]);
 
 export const appointmentStatusEnum = pgEnum("appointment_status", [
@@ -1838,6 +1847,38 @@ export const activityLogs = pgTable("activity_logs", {
   timestamp: timestamp("timestamp").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Medical Suppliers Registration table
+export const medicalSuppliers = pgTable("medical_suppliers", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyName: text("company_name").notNull(),
+  businessType: text("business_type").notNull(),
+  contactPersonName: text("contact_person_name").notNull(),
+  contactEmail: text("contact_email").notNull(),
+  contactPhone: text("contact_phone").notNull(),
+  websiteUrl: text("website_url"),
+  businessAddress: text("business_address").notNull(),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  country: text("country").notNull(),
+  zipCode: text("zip_code").notNull(),
+  businessDescription: text("business_description").notNull(),
+  productCategories: text("product_categories").array().default([]),
+  yearsInBusiness: text("years_in_business").notNull(),
+  numberOfEmployees: text("number_of_employees").notNull(),
+  annualRevenue: text("annual_revenue").notNull(),
+  certifications: text("certifications").array().default([]),
+  status: supplierStatusEnum("status").default("pending_review").notNull(),
+  termsAccepted: boolean("terms_accepted").notNull(),
+  marketingConsent: boolean("marketing_consent").default(false),
+  tenantId: uuid("tenant_id").references(() => tenants.id), // Will be set when approved
+  approvedBy: uuid("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  rejectionReason: text("rejection_reason"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Department Relations
 export const departmentsRelations = relations(departments, ({ one }) => ({
   tenant: one(tenants, {
@@ -3188,9 +3229,23 @@ export const insertAdInquirySchema = createInsertSchema(adInquiries).omit({
   updatedAt: true
 });
 
+// Medical Suppliers Insert Schema
+export const insertMedicalSupplierSchema = createInsertSchema(medicalSuppliers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  tenantId: true,
+  approvedBy: true,
+  approvedAt: true
+});
+
 export type Advertisement = typeof advertisements.$inferSelect;
 export type InsertAdvertisement = z.infer<typeof insertAdvertisementSchema>;
 export type AdView = typeof adViews.$inferSelect;
 export type InsertAdView = z.infer<typeof insertAdViewSchema>;
 export type AdInquiry = typeof adInquiries.$inferSelect;
 export type InsertAdInquiry = z.infer<typeof insertAdInquirySchema>;
+
+// Medical Suppliers Types
+export type MedicalSupplier = typeof medicalSuppliers.$inferSelect;
+export type InsertMedicalSupplier = z.infer<typeof insertMedicalSupplierSchema>;

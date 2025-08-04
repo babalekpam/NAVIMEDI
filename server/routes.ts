@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertRolePermissionSchema, RolePermission, InsertRolePermission, insertDepartmentSchema, departments, insertAdvertisementSchema, insertAdViewSchema, insertAdInquirySchema } from "@shared/schema";
+import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertRolePermissionSchema, RolePermission, InsertRolePermission, insertDepartmentSchema, departments, insertAdvertisementSchema, insertAdViewSchema, insertAdInquirySchema, insertMedicalSupplierSchema } from "@shared/schema";
 import { authenticateToken, requireRole } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
@@ -14,6 +14,88 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // PUBLIC ENDPOINTS (before any middleware)
+  
+  // Public supplier registration endpoint (outside /api path to avoid middleware)
+  app.post('/public/suppliers/register', async (req, res) => {
+    try {
+      const validationResult = insertMedicalSupplierSchema.safeParse(req.body);
+
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: 'Invalid supplier registration data', 
+          details: validationResult.error.errors 
+        });
+      }
+
+      const supplier = await storage.createMedicalSupplier(validationResult.data);
+      
+      res.status(201).json({
+        message: 'Supplier registration submitted successfully',
+        id: supplier.id,
+        status: supplier.status
+      });
+    } catch (error) {
+      console.error('Error registering supplier:', error);
+      res.status(500).json({ error: 'Failed to register supplier' });
+    }
+  });
+
+  // Public supplier login endpoint
+  app.post('/public/suppliers/login', async (req, res) => {
+    try {
+      const { contactEmail, password } = req.body;
+
+      if (!contactEmail || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+      }
+
+      // For now, we'll implement a simple check
+      // In a real system, suppliers would have proper authentication
+      const supplier = await storage.getMedicalSupplierByEmail(contactEmail);
+      
+      if (!supplier) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      // Check if supplier is approved
+      if (supplier.status !== 'approved') {
+        return res.status(403).json({ 
+          error: 'Account not approved', 
+          status: supplier.status,
+          message: supplier.status === 'pending_review' ? 
+            'Your registration is under review. You will be notified when approved.' :
+            'Your account has been rejected. Please contact support.'
+        });
+      }
+
+      // Generate a simple token for supplier session
+      const token = jwt.sign(
+        { 
+          supplierId: supplier.id, 
+          contactEmail: supplier.contactEmail,
+          type: 'supplier'
+        },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      res.json({
+        message: 'Login successful',
+        token,
+        supplier: {
+          id: supplier.id,
+          companyName: supplier.companyName,
+          contactEmail: supplier.contactEmail,
+          status: supplier.status
+        }
+      });
+    } catch (error) {
+      console.error('Error during supplier login:', error);
+      res.status(500).json({ error: 'Login failed' });
+    }
+  });
+
   // Setup Replit Auth middleware
   await setupAuth(app);
 
@@ -376,6 +458,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       "/api/health",
       "/api/platform/stats",
       "/api/tenant/register",
+      "/api/suppliers/register",
       "/api/auth/login",
       "/api/auth/user",
       "/api/login",

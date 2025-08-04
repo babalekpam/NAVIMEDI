@@ -47,6 +47,8 @@ import ProfileSettingsPage from "@/pages/profile-settings";
 import ReceptionistDashboard from "@/pages/receptionist-dashboard";
 import ConsultationHistory from "@/pages/consultation-history";
 import Advertisements from "@/pages/advertisements";
+import SupplierRegister from "@/pages/supplier-register";
+import SupplierMarketplace from "@/pages/supplier-marketplace";
 
 import FeaturesPage from "@/pages/features";
 import SolutionsPage from "@/pages/solutions";
@@ -773,6 +775,8 @@ function Router() {
           <Route path="/pricing" component={PricingPage} />
           <Route path="/laboratory-registration" component={LaboratoryRegistration} />
           <Route path="/pharmacy-registration" component={PharmacyRegistration} />
+          <Route path="/supplier-register" component={SupplierRegister} />
+          <Route path="/supplier-marketplace" component={SupplierMarketplace} />
           <Route path="/patient-portal-public" component={PatientPortalPublic} />
           <Route path="/patient-login" component={PatientLogin} />
           <Route path="/login" component={Login} />

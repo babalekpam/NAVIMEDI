@@ -51,12 +51,15 @@ import {
   advertisements,
   adViews,
   adInquiries,
+  medicalSuppliers,
   type Advertisement,
   type InsertAdvertisement,
   type AdView,
   type InsertAdView,
   type AdInquiry,
   type InsertAdInquiry,
+  type MedicalSupplier,
+  type InsertMedicalSupplier,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -578,6 +581,14 @@ export interface IStorage {
   createAdInquiry(inquiry: InsertAdInquiry): Promise<AdInquiry>;
   getAdInquiries(advertisementId: string): Promise<AdInquiry[]>;
   updateAdInquiry(id: string, updates: Partial<AdInquiry>): Promise<AdInquiry | undefined>;
+
+  // Medical Suppliers Management
+  createMedicalSupplier(supplier: InsertMedicalSupplier): Promise<MedicalSupplier>;
+  getMedicalSupplier(id: string): Promise<MedicalSupplier | undefined>;
+  getMedicalSupplierByEmail(email: string): Promise<MedicalSupplier | undefined>;
+  getMedicalSuppliers(): Promise<MedicalSupplier[]>;
+  updateMedicalSupplier(id: string, updates: Partial<MedicalSupplier>): Promise<MedicalSupplier | undefined>;
+  approveMedicalSupplier(id: string, approvedBy: string): Promise<MedicalSupplier | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4982,6 +4993,60 @@ export class DatabaseStorage implements IStorage {
     const [updated] = await db.update(adInquiries)
       .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
       .where(eq(adInquiries.id, id))
+      .returning();
+    
+    return updated || undefined;
+  }
+
+  // Medical Suppliers Management
+  async createMedicalSupplier(supplier: InsertMedicalSupplier): Promise<MedicalSupplier> {
+    const [created] = await db.insert(medicalSuppliers)
+      .values({
+        ...supplier,
+        status: 'pending'
+      })
+      .returning();
+    return created;
+  }
+
+  async getMedicalSupplier(id: string): Promise<MedicalSupplier | undefined> {
+    const [supplier] = await db.select()
+      .from(medicalSuppliers)
+      .where(eq(medicalSuppliers.id, id));
+    return supplier || undefined;
+  }
+
+  async getMedicalSupplierByEmail(email: string): Promise<MedicalSupplier | undefined> {
+    const [supplier] = await db.select()
+      .from(medicalSuppliers)
+      .where(eq(medicalSuppliers.contactEmail, email));
+    return supplier || undefined;
+  }
+
+  async getMedicalSuppliers(): Promise<MedicalSupplier[]> {
+    return await db.select()
+      .from(medicalSuppliers)
+      .orderBy(desc(medicalSuppliers.createdAt));
+  }
+
+  async updateMedicalSupplier(id: string, updates: Partial<MedicalSupplier>): Promise<MedicalSupplier | undefined> {
+    const [updated] = await db.update(medicalSuppliers)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(medicalSuppliers.id, id))
+      .returning();
+    
+    return updated || undefined;
+  }
+
+  async approveMedicalSupplier(id: string, approvedBy: string): Promise<MedicalSupplier | undefined> {
+    const [updated] = await db.update(medicalSuppliers)
+      .set({ 
+        status: 'approved',
+        approvedBy,
+        approvedAt: sql`CURRENT_TIMESTAMP`,
+        updatedAt: sql`CURRENT_TIMESTAMP` 
+      })
+      .where(eq(medicalSuppliers.id, id))
       .returning();
     
     return updated || undefined;
