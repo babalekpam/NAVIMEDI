@@ -205,6 +205,20 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-emerald-50/30">
+      {/* BRIGHT MARKETPLACE BANNER - IMPOSSIBLE TO MISS */}
+      <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white py-4 text-center">
+        <div className="container mx-auto px-6">
+          <div className="flex items-center justify-center gap-4 text-lg font-bold">
+            <Package className="w-6 h-6" />
+            <span>🚀 NEW: MEDICAL DEVICE MARKETPLACE NOW LIVE! 🚀</span>
+            <Link href="/advertisements">
+              <Button className="bg-white text-red-600 hover:bg-gray-100 font-bold px-6 py-2 ml-4">
+                EXPLORE NOW →
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
 
       <PublicHeader />
 
