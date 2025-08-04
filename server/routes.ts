@@ -229,16 +229,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { imageName } = req.params;
       
-      // For development, serve a simple placeholder response
-      // In production, these would be actual image files
-      res.setHeader('Content-Type', 'image/jpeg');
+      // Set headers for image response
+      res.setHeader('Content-Type', 'image/svg+xml');
       res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
       
-      // Simple placeholder response
-      const base64Image = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=';
+      // Create SVG placeholder based on image name
+      let title = "Medical Device";
+      let bgColor = "#f8fafc";
+      let textColor = "#64748b";
       
-      const buffer = Buffer.from(base64Image, 'base64');
-      res.send(buffer);
+      if (imageName.includes('ultrasound')) {
+        title = "Ultrasound Machine";
+        bgColor = "#dbeafe";
+        textColor = "#3b82f6";
+      } else if (imageName.includes('surgical')) {
+        title = "Surgical Instruments";
+        bgColor = "#dcfce7";
+        textColor = "#16a34a";
+      } else if (imageName.includes('product1')) {
+        title = "Digital Stethoscope";
+        bgColor = "#fef3c7";
+        textColor = "#d97706";
+      }
+      
+      const svgPlaceholder = `
+        <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100%" height="100%" fill="${bgColor}"/>
+          <rect x="20" y="20" width="260" height="160" fill="white" stroke="${textColor}" stroke-width="2" rx="8"/>
+          <circle cx="150" cy="80" r="25" fill="${textColor}" opacity="0.2"/>
+          <text x="150" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="${textColor}" font-weight="500">${title}</text>
+          <text x="150" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="${textColor}" opacity="0.7">Medical Equipment</text>
+        </svg>
+      `;
+      
+      res.send(svgPlaceholder);
     } catch (error) {
       console.error("Error serving placeholder image:", error);
       res.status(404).json({ error: "Image not found" });
