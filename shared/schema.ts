@@ -276,6 +276,34 @@ export const adPriorityEnum = pgEnum("ad_priority", [
   "sponsored"
 ]);
 
+export const productStatusEnum = pgEnum("product_status", [
+  "draft",
+  "active",
+  "inactive",
+  "discontinued",
+  "out_of_stock"
+]);
+
+export const orderStatusEnum = pgEnum("marketplace_order_status", [
+  "pending",
+  "confirmed",
+  "processing",
+  "shipped",
+  "delivered",
+  "cancelled",
+  "refunded"
+]);
+
+export const orderItemStatusEnum = pgEnum("order_item_status", [
+  "pending",
+  "confirmed",
+  "processing",
+  "shipped",
+  "delivered",
+  "cancelled",
+  "returned"
+]);
+
 export const adBillingTypeEnum = pgEnum("ad_billing_type", [
   "monthly",
   "per_click",
@@ -3161,6 +3189,271 @@ export const adInquiries = pgTable("ad_inquiries", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Marketplace Product Catalog - Tenant Isolated Products
+export const marketplaceProducts = pgTable("marketplace_products", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  supplierTenantId: uuid("supplier_tenant_id").references(() => tenants.id).notNull(), // Medical supplier's tenant
+  name: text("name").notNull(),
+  sku: text("sku").notNull(), // Stock Keeping Unit - unique per supplier
+  description: text("description").notNull(),
+  shortDescription: text("short_description"),
+  category: adCategoryEnum("category").notNull(),
+  subcategory: text("subcategory"),
+  brand: text("brand"),
+  manufacturer: text("manufacturer"),
+  
+  // Pricing - Multi-currency support
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  currency: currencyEnum("currency").default("USD"),
+  compareAtPrice: decimal("compare_at_price", { precision: 10, scale: 2 }), // Original price for discount display
+  costPrice: decimal("cost_price", { precision: 10, scale: 2 }), // Supplier's cost (private)
+  
+  // Inventory Management
+  stockQuantity: integer("stock_quantity").default(0),
+  lowStockThreshold: integer("low_stock_threshold").default(10),
+  trackInventory: boolean("track_inventory").default(true),
+  backordersAllowed: boolean("backorders_allowed").default(false),
+  
+  // Product Status and Visibility
+  status: productStatusEnum("status").default("draft"),
+  isActive: boolean("is_active").default(false),
+  isFeatured: boolean("is_featured").default(false),
+  requiresPrescription: boolean("requires_prescription").default(false),
+  
+  // Product Specifications and Media
+  specifications: jsonb("specifications").default('{}'), // Technical specs, dimensions, etc.
+  features: text("features").array().default([]),
+  imageUrls: text("image_urls").array().default([]),
+  documentUrls: text("document_urls").array().default([]), // Manuals, certificates, etc.
+  videoUrl: text("video_url"),
+  
+  // Regulatory and Compliance
+  regulatoryApprovals: text("regulatory_approvals").array().default([]), // FDA, CE, etc.
+  certifications: text("certifications").array().default([]),
+  warrantPeriod: text("warranty_period"), // "2 years", "1 year", etc.
+  complianceNotes: text("compliance_notes"),
+  
+  // SEO and Searchability
+  metaTitle: text("meta_title"),
+  metaDescription: text("meta_description"),
+  searchKeywords: text("search_keywords").array().default([]),
+  
+  // Shipping and Logistics
+  weight: decimal("weight", { precision: 8, scale: 2 }), // kg
+  dimensions: jsonb("dimensions").$type<{
+    length: number;
+    width: number;
+    height: number;
+    unit: string; // cm, inches
+  }>(),
+  shippingClass: text("shipping_class"), // standard, hazardous, fragile, etc.
+  leadTime: integer("lead_time_days").default(1), // Days to process order
+  
+  // Analytics and Performance
+  viewCount: integer("view_count").default(0),
+  orderCount: integer("order_count").default(0),
+  avgRating: decimal("avg_rating", { precision: 3, scale: 2 }).default("0.00"),
+  totalReviews: integer("total_reviews").default(0),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Marketplace Orders - Cross-tenant ordering system
+export const marketplaceOrders = pgTable("marketplace_orders", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderNumber: text("order_number").notNull().unique(), // Human-readable order number
+  
+  // Tenant Isolation: Buyer and Seller
+  buyerTenantId: uuid("buyer_tenant_id").references(() => tenants.id).notNull(), // Hospital/Pharmacy/Lab placing order
+  buyerUserId: uuid("buyer_user_id").references(() => users.id).notNull(), // User who placed the order
+  supplierTenantId: uuid("supplier_tenant_id").references(() => tenants.id).notNull(), // Medical supplier fulfilling order
+  
+  // Order Details
+  status: orderStatusEnum("status").default("pending"),
+  subtotal: decimal("subtotal", { precision: 12, scale: 2 }).notNull(),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default("0.00"),
+  shippingAmount: decimal("shipping_amount", { precision: 10, scale: 2 }).default("0.00"),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default("0.00"),
+  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
+  currency: currencyEnum("currency").default("USD"),
+  
+  // Shipping Information
+  shippingAddress: jsonb("shipping_address").notNull().$type<{
+    name: string;
+    company?: string;
+    address1: string;
+    address2?: string;
+    city: string;
+    state: string;
+    country: string;
+    zipCode: string;
+    phone?: string;
+  }>(),
+  
+  billingAddress: jsonb("billing_address").$type<{
+    name: string;
+    company?: string;
+    address1: string;
+    address2?: string;
+    city: string;
+    state: string;
+    country: string;
+    zipCode: string;
+    phone?: string;
+  }>(),
+  
+  // Order Processing
+  orderDate: timestamp("order_date").default(sql`CURRENT_TIMESTAMP`),
+  expectedDeliveryDate: timestamp("expected_delivery_date"),
+  actualDeliveryDate: timestamp("actual_delivery_date"),
+  shippingCarrier: text("shipping_carrier"),
+  trackingNumber: text("tracking_number"),
+  
+  // Order Notes and Communication
+  buyerNotes: text("buyer_notes"),
+  supplierNotes: text("supplier_notes"),
+  internalNotes: text("internal_notes"), // For platform admins
+  
+  // Payment Information (reference to external payment system)
+  paymentMethod: text("payment_method"), // credit_card, purchase_order, net_terms
+  paymentStatus: text("payment_status").default("pending"), // pending, paid, failed, refunded
+  paymentReference: text("payment_reference"), // External payment ID
+  purchaseOrderNumber: text("purchase_order_number"),
+  
+  // Cancellation and Returns
+  cancelledAt: timestamp("cancelled_at"),
+  cancellationReason: text("cancellation_reason"),
+  refundAmount: decimal("refund_amount", { precision: 10, scale: 2 }),
+  refundedAt: timestamp("refunded_at"),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Marketplace Order Items - Individual products in orders
+export const marketplaceOrderItems = pgTable("marketplace_order_items", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: uuid("order_id").references(() => marketplaceOrders.id).notNull(),
+  productId: uuid("product_id").references(() => marketplaceProducts.id).notNull(),
+  
+  // Product snapshot at time of order (prevents price/detail changes affecting historical orders)
+  productName: text("product_name").notNull(),
+  productSku: text("product_sku").notNull(),
+  productDescription: text("product_description"),
+  
+  // Pricing at time of order
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  quantity: integer("quantity").notNull(),
+  lineTotal: decimal("line_total", { precision: 12, scale: 2 }).notNull(),
+  
+  // Individual item status (allows partial fulfillment)
+  status: orderItemStatusEnum("status").default("pending"),
+  
+  // Item-specific shipping
+  shippedQuantity: integer("shipped_quantity").default(0),
+  shippedAt: timestamp("shipped_at"),
+  deliveredQuantity: integer("delivered_quantity").default(0),
+  deliveredAt: timestamp("delivered_at"),
+  
+  // Returns and exchanges
+  returnedQuantity: integer("returned_quantity").default(0),
+  returnReason: text("return_reason"),
+  returnedAt: timestamp("returned_at"),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Product Reviews and Ratings (Cross-tenant feedback system)
+export const productReviews = pgTable("product_reviews", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  productId: uuid("product_id").references(() => marketplaceProducts.id).notNull(),
+  reviewerTenantId: uuid("reviewer_tenant_id").references(() => tenants.id).notNull(), // Organization that purchased
+  reviewerUserId: uuid("reviewer_user_id").references(() => users.id).notNull(), // User who wrote review
+  orderId: uuid("order_id").references(() => marketplaceOrders.id), // Verified purchase
+  
+  rating: integer("rating").notNull(), // 1-5 stars
+  title: text("title"),
+  review: text("review"),
+  pros: text("pros").array().default([]),
+  cons: text("cons").array().default([]),
+  
+  // Review moderation
+  isVerifiedPurchase: boolean("is_verified_purchase").default(false),
+  isApproved: boolean("is_approved").default(false),
+  moderatedBy: uuid("moderated_by").references(() => users.id),
+  moderatedAt: timestamp("moderated_at"),
+  
+  // Helpfulness voting
+  helpfulVotes: integer("helpful_votes").default(0),
+  totalVotes: integer("total_votes").default(0),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Marketplace Relations
+export const marketplaceProductsRelations = relations(marketplaceProducts, ({ one, many }) => ({
+  supplierTenant: one(tenants, {
+    fields: [marketplaceProducts.supplierTenantId],
+    references: [tenants.id]
+  }),
+  orderItems: many(marketplaceOrderItems),
+  reviews: many(productReviews)
+}));
+
+export const marketplaceOrdersRelations = relations(marketplaceOrders, ({ one, many }) => ({
+  buyerTenant: one(tenants, {
+    fields: [marketplaceOrders.buyerTenantId],
+    references: [tenants.id]
+  }),
+  supplierTenant: one(tenants, {
+    fields: [marketplaceOrders.supplierTenantId],
+    references: [tenants.id]
+  }),
+  buyerUser: one(users, {
+    fields: [marketplaceOrders.buyerUserId],
+    references: [users.id]
+  }),
+  orderItems: many(marketplaceOrderItems),
+  reviews: many(productReviews)
+}));
+
+export const marketplaceOrderItemsRelations = relations(marketplaceOrderItems, ({ one }) => ({
+  order: one(marketplaceOrders, {
+    fields: [marketplaceOrderItems.orderId],
+    references: [marketplaceOrders.id]
+  }),
+  product: one(marketplaceProducts, {
+    fields: [marketplaceOrderItems.productId],
+    references: [marketplaceProducts.id]
+  })
+}));
+
+export const productReviewsRelations = relations(productReviews, ({ one }) => ({
+  product: one(marketplaceProducts, {
+    fields: [productReviews.productId],
+    references: [marketplaceProducts.id]
+  }),
+  reviewerTenant: one(tenants, {
+    fields: [productReviews.reviewerTenantId],
+    references: [tenants.id]
+  }),
+  reviewerUser: one(users, {
+    fields: [productReviews.reviewerUserId],
+    references: [users.id]
+  }),
+  order: one(marketplaceOrders, {
+    fields: [productReviews.orderId],
+    references: [marketplaceOrders.id]
+  }),
+  moderatedByUser: one(users, {
+    fields: [productReviews.moderatedBy],
+    references: [users.id]
+  })
+}));
+
 // Advertisement Relations
 export const advertisementsRelations = relations(advertisements, ({ one, many }) => ({
   tenant: one(tenants, {
@@ -3252,3 +3545,54 @@ export type InsertAdInquiry = z.infer<typeof insertAdInquirySchema>;
 // Medical Suppliers Types
 export type MedicalSupplier = typeof medicalSuppliers.$inferSelect;
 export type InsertMedicalSupplier = z.infer<typeof insertMedicalSupplierSchema>;
+
+// Marketplace Insert Schemas
+export const insertMarketplaceProductSchema = createInsertSchema(marketplaceProducts).omit({
+  id: true,
+  viewCount: true,
+  orderCount: true,
+  avgRating: true,
+  totalReviews: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertMarketplaceOrderSchema = createInsertSchema(marketplaceOrders).omit({
+  id: true,
+  orderDate: true,
+  cancelledAt: true,
+  refundedAt: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertMarketplaceOrderItemSchema = createInsertSchema(marketplaceOrderItems).omit({
+  id: true,
+  shippedAt: true,
+  deliveredAt: true,
+  returnedAt: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertProductReviewSchema = createInsertSchema(productReviews).omit({
+  id: true,
+  moderatedAt: true,
+  helpfulVotes: true,
+  totalVotes: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+// Marketplace Types
+export type MarketplaceProduct = typeof marketplaceProducts.$inferSelect;
+export type InsertMarketplaceProduct = z.infer<typeof insertMarketplaceProductSchema>;
+
+export type MarketplaceOrder = typeof marketplaceOrders.$inferSelect;
+export type InsertMarketplaceOrder = z.infer<typeof insertMarketplaceOrderSchema>;
+
+export type MarketplaceOrderItem = typeof marketplaceOrderItems.$inferSelect;
+export type InsertMarketplaceOrderItem = z.infer<typeof insertMarketplaceOrderItemSchema>;
+
+export type ProductReview = typeof productReviews.$inferSelect;
+export type InsertProductReview = z.infer<typeof insertProductReviewSchema>;

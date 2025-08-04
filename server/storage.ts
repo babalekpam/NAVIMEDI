@@ -52,6 +52,10 @@ import {
   adViews,
   adInquiries,
   medicalSuppliers,
+  marketplaceProducts,
+  marketplaceOrders,
+  marketplaceOrderItems,
+  productReviews,
   type Advertisement,
   type InsertAdvertisement,
   type AdView,
@@ -60,6 +64,14 @@ import {
   type InsertAdInquiry,
   type MedicalSupplier,
   type InsertMedicalSupplier,
+  type MarketplaceProduct,
+  type InsertMarketplaceProduct,
+  type MarketplaceOrder,
+  type InsertMarketplaceOrder,
+  type MarketplaceOrderItem,
+  type InsertMarketplaceOrderItem,
+  type ProductReview,
+  type InsertProductReview,
   type Tenant,
   type InsertTenant,
   type User, 
@@ -156,7 +168,7 @@ import {
   type InsertDepartment
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, like, or, isNull, gt } from "drizzle-orm";
+import { eq, and, desc, sql, like, or, isNull, gt, ilike, gte, lte, lt, ne, inArray, asc, isNotNull } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -591,6 +603,26 @@ export interface IStorage {
   updateMedicalSupplier(id: string, updates: Partial<MedicalSupplier>): Promise<MedicalSupplier | undefined>;
   updateMedicalSupplierStatus(id: string, status: string, reason?: string): Promise<MedicalSupplier | undefined>;
   approveMedicalSupplier(id: string, approvedBy: string): Promise<MedicalSupplier | undefined>;
+
+  // Marketplace Product Management
+  getMarketplaceProducts(filters: { category?: string; search?: string; status?: string; limit: number; offset: number }): Promise<MarketplaceProduct[]>;
+  getMarketplaceProduct(id: string): Promise<MarketplaceProduct | undefined>;
+  getSupplierProducts(supplierTenantId: string, status?: string): Promise<MarketplaceProduct[]>;
+  createMarketplaceProduct(product: InsertMarketplaceProduct): Promise<MarketplaceProduct>;
+  updateMarketplaceProduct(id: string, updates: Partial<MarketplaceProduct>, supplierTenantId: string): Promise<MarketplaceProduct | undefined>;
+  incrementProductViewCount(productId: string): Promise<void>;
+
+  // Marketplace Order Management
+  createMarketplaceOrder(order: InsertMarketplaceOrder): Promise<MarketplaceOrder>;
+  generateOrderNumber(): Promise<string>;
+  getBuyerOrders(buyerTenantId: string, filters: { status?: string; limit: number; offset: number }): Promise<MarketplaceOrder[]>;
+  getSupplierOrders(supplierTenantId: string, filters: { status?: string; limit: number; offset: number }): Promise<MarketplaceOrder[]>;
+  updateOrderStatus(orderId: string, status: string, notes: string, tenantId: string): Promise<MarketplaceOrder | undefined>;
+
+  // Product Reviews Management
+  createProductReview(review: InsertProductReview): Promise<ProductReview>;
+  getProductReviews(productId: string, filters: { limit: number; offset: number; approvedOnly: boolean }): Promise<ProductReview[]>;
+  hasUserPurchasedProduct(userId: string, productId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -5079,6 +5111,284 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updated || undefined;
+  }
+
+  // =====================================
+  // MARKETPLACE PRODUCT MANAGEMENT
+  // =====================================
+  
+  async getMarketplaceProducts(filters: { category?: string; search?: string; status?: string; limit: number; offset: number }): Promise<MarketplaceProduct[]> {
+    let query = db.select().from(marketplaceProducts);
+    
+    const conditions = [];
+    
+    if (filters.status) {
+      conditions.push(eq(marketplaceProducts.status, filters.status));
+    }
+    
+    if (filters.category) {
+      conditions.push(eq(marketplaceProducts.category, filters.category));
+    }
+    
+    if (filters.search) {
+      conditions.push(
+        or(
+          ilike(marketplaceProducts.name, `%${filters.search}%`),
+          ilike(marketplaceProducts.description, `%${filters.search}%`),
+          ilike(marketplaceProducts.brand, `%${filters.search}%`)
+        )
+      );
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query
+      .orderBy(desc(marketplaceProducts.createdAt))
+      .limit(filters.limit)
+      .offset(filters.offset);
+  }
+
+  async getMarketplaceProduct(id: string): Promise<MarketplaceProduct | undefined> {
+    const [product] = await db.select()
+      .from(marketplaceProducts)
+      .where(eq(marketplaceProducts.id, id));
+    return product || undefined;
+  }
+
+  async getSupplierProducts(supplierTenantId: string, status?: string): Promise<MarketplaceProduct[]> {
+    let query = db.select()
+      .from(marketplaceProducts)
+      .where(eq(marketplaceProducts.supplierTenantId, supplierTenantId));
+    
+    if (status) {
+      query = query.where(
+        and(
+          eq(marketplaceProducts.supplierTenantId, supplierTenantId),
+          eq(marketplaceProducts.status, status)
+        )
+      );
+    }
+    
+    return await query.orderBy(desc(marketplaceProducts.createdAt));
+  }
+
+  async createMarketplaceProduct(product: InsertMarketplaceProduct): Promise<MarketplaceProduct> {
+    const [created] = await db.insert(marketplaceProducts)
+      .values(product)
+      .returning();
+    return created;
+  }
+
+  async updateMarketplaceProduct(id: string, updates: Partial<MarketplaceProduct>, supplierTenantId: string): Promise<MarketplaceProduct | undefined> {
+    const [updated] = await db.update(marketplaceProducts)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(
+        and(
+          eq(marketplaceProducts.id, id),
+          eq(marketplaceProducts.supplierTenantId, supplierTenantId)
+        )
+      )
+      .returning();
+    
+    return updated || undefined;
+  }
+
+  async incrementProductViewCount(productId: string): Promise<void> {
+    await db.update(marketplaceProducts)
+      .set({ 
+        viewCount: sql`${marketplaceProducts.viewCount} + 1`,
+        updatedAt: sql`CURRENT_TIMESTAMP`
+      })
+      .where(eq(marketplaceProducts.id, productId));
+  }
+
+  // =====================================
+  // MARKETPLACE ORDER MANAGEMENT
+  // =====================================
+  
+  async createMarketplaceOrder(order: InsertMarketplaceOrder): Promise<MarketplaceOrder> {
+    const [created] = await db.insert(marketplaceOrders)
+      .values({
+        ...order,
+        orderDate: sql`CURRENT_TIMESTAMP`
+      })
+      .returning();
+    return created;
+  }
+
+  async generateOrderNumber(): Promise<string> {
+    const today = new Date();
+    const year = today.getFullYear().toString().slice(-2);
+    const month = (today.getMonth() + 1).toString().padStart(2, '0');
+    
+    // Get count of orders today for sequential numbering
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    
+    const todayOrderCount = await db.select({ count: sql`count(*)` })
+      .from(marketplaceOrders)
+      .where(
+        and(
+          gte(marketplaceOrders.orderDate, startOfDay),
+          lt(marketplaceOrders.orderDate, endOfDay)
+        )
+      );
+    
+    const orderNum = (Number(todayOrderCount[0]?.count) + 1).toString().padStart(4, '0');
+    return `ORD-${year}${month}-${orderNum}`;
+  }
+
+  async getBuyerOrders(buyerTenantId: string, filters: { status?: string; limit: number; offset: number }): Promise<MarketplaceOrder[]> {
+    let query = db.select()
+      .from(marketplaceOrders)
+      .where(eq(marketplaceOrders.buyerTenantId, buyerTenantId));
+    
+    if (filters.status) {
+      query = query.where(
+        and(
+          eq(marketplaceOrders.buyerTenantId, buyerTenantId),
+          eq(marketplaceOrders.status, filters.status)
+        )
+      );
+    }
+    
+    return await query
+      .orderBy(desc(marketplaceOrders.orderDate))
+      .limit(filters.limit)
+      .offset(filters.offset);
+  }
+
+  async getSupplierOrders(supplierTenantId: string, filters: { status?: string; limit: number; offset: number }): Promise<MarketplaceOrder[]> {
+    let query = db.select()
+      .from(marketplaceOrders)
+      .where(eq(marketplaceOrders.supplierTenantId, supplierTenantId));
+    
+    if (filters.status) {
+      query = query.where(
+        and(
+          eq(marketplaceOrders.supplierTenantId, supplierTenantId),
+          eq(marketplaceOrders.status, filters.status)
+        )
+      );
+    }
+    
+    return await query
+      .orderBy(desc(marketplaceOrders.orderDate))
+      .limit(filters.limit)
+      .offset(filters.offset);
+  }
+
+  async updateOrderStatus(orderId: string, status: string, notes: string, tenantId: string): Promise<MarketplaceOrder | undefined> {
+    const updateData: any = {
+      status,
+      updatedAt: sql`CURRENT_TIMESTAMP`
+    };
+    
+    // Add status-specific fields
+    if (status === 'shipped' && notes) {
+      updateData.trackingNumber = notes;
+    } else if (status === 'cancelled') {
+      updateData.cancelledAt = sql`CURRENT_TIMESTAMP`;
+      updateData.cancellationReason = notes;
+    } else if (status === 'delivered') {
+      updateData.actualDeliveryDate = sql`CURRENT_TIMESTAMP`;
+    }
+    
+    if (notes) {
+      updateData.supplierNotes = notes;
+    }
+    
+    const [updated] = await db.update(marketplaceOrders)
+      .set(updateData)
+      .where(
+        or(
+          eq(marketplaceOrders.supplierTenantId, tenantId),
+          eq(marketplaceOrders.buyerTenantId, tenantId)
+        )
+      )
+      .returning();
+    
+    return updated || undefined;
+  }
+
+  // =====================================
+  // PRODUCT REVIEWS MANAGEMENT
+  // =====================================
+  
+  async createProductReview(review: InsertProductReview): Promise<ProductReview> {
+    const [created] = await db.insert(productReviews)
+      .values(review)
+      .returning();
+    
+    // Update product average rating
+    await this.updateProductRating(review.productId);
+    
+    return created;
+  }
+
+  async getProductReviews(productId: string, filters: { limit: number; offset: number; approvedOnly: boolean }): Promise<ProductReview[]> {
+    let query = db.select()
+      .from(productReviews)
+      .where(eq(productReviews.productId, productId));
+    
+    if (filters.approvedOnly) {
+      query = query.where(
+        and(
+          eq(productReviews.productId, productId),
+          eq(productReviews.isApproved, true)
+        )
+      );
+    }
+    
+    return await query
+      .orderBy(desc(productReviews.createdAt))
+      .limit(filters.limit)
+      .offset(filters.offset);
+  }
+
+  async hasUserPurchasedProduct(userId: string, productId: string): Promise<boolean> {
+    // Check if user has successfully purchased this product
+    const [purchase] = await db.select()
+      .from(marketplaceOrders)
+      .innerJoin(marketplaceOrderItems, eq(marketplaceOrders.id, marketplaceOrderItems.orderId))
+      .where(
+        and(
+          eq(marketplaceOrders.buyerUserId, userId),
+          eq(marketplaceOrderItems.productId, productId),
+          ne(marketplaceOrders.status, 'cancelled'),
+          ne(marketplaceOrders.status, 'refunded')
+        )
+      )
+      .limit(1);
+    
+    return !!purchase;
+  }
+
+  private async updateProductRating(productId: string): Promise<void> {
+    // Calculate average rating and total reviews
+    const [stats] = await db.select({
+      avgRating: sql`AVG(${productReviews.rating})`,
+      totalReviews: sql`COUNT(*)`
+    })
+    .from(productReviews)
+    .where(
+      and(
+        eq(productReviews.productId, productId),
+        eq(productReviews.isApproved, true)
+      )
+    );
+    
+    if (stats) {
+      await db.update(marketplaceProducts)
+        .set({
+          avgRating: stats.avgRating ? Number(stats.avgRating).toFixed(2) : "0.00",
+          totalReviews: Number(stats.totalReviews),
+          updatedAt: sql`CURRENT_TIMESTAMP`
+        })
+        .where(eq(marketplaceProducts.id, productId));
+    }
   }
 }
 

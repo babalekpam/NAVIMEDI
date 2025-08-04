@@ -4375,6 +4375,295 @@ Report ID: ${report.id}
   });
 
   // Complete Express setup
+  // =====================================
+  // MARKETPLACE PRODUCT CATALOG ENDPOINTS
+  // =====================================
+  
+  // Get all marketplace products (public catalog for healthcare providers)
+  app.get("/api/marketplace/products", authenticateToken, async (req, res) => {
+    try {
+      const { category, search, status = 'active', page = 1, limit = 20 } = req.query;
+      const offset = (Number(page) - 1) * Number(limit);
+      
+      const products = await storage.getMarketplaceProducts({
+        category: category as string,
+        search: search as string,
+        status: status as string,
+        limit: Number(limit),
+        offset
+      });
+      
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching marketplace products:", error);
+      res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
+  // Get single marketplace product with details
+  app.get("/api/marketplace/products/:id", authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const product = await storage.getMarketplaceProduct(id);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Increment view count
+      await storage.incrementProductViewCount(id);
+      
+      res.json(product);
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      res.status(500).json({ message: "Failed to fetch product" });
+    }
+  });
+
+  // Supplier-specific product management endpoints
+  app.get("/api/supplier/products", authenticateToken, requireRole(["supplier_admin"]), async (req, res) => {
+    try {
+      const { status } = req.query;
+      const supplierTenantId = req.tenant!.id;
+      
+      const products = await storage.getSupplierProducts(supplierTenantId, status as string);
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching supplier products:", error);
+      res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
+  app.post("/api/supplier/products", authenticateToken, requireRole(["supplier_admin"]), async (req, res) => {
+    try {
+      const supplierTenantId = req.tenant!.id;
+      const userId = req.userId!;
+      
+      const productData = {
+        ...req.body,
+        supplierTenantId,
+        status: 'draft' // All new products start as draft
+      };
+      
+      const product = await storage.createMarketplaceProduct(productData);
+      
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: supplierTenantId,
+        userId,
+        entityType: "marketplace_product",
+        entityId: product.id,
+        action: "create",
+        newData: productData,
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+      
+      res.status(201).json(product);
+    } catch (error) {
+      console.error("Error creating product:", error);
+      res.status(500).json({ message: "Failed to create product" });
+    }
+  });
+
+  app.put("/api/supplier/products/:id", authenticateToken, requireRole(["supplier_admin"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const supplierTenantId = req.tenant!.id;
+      const userId = req.userId!;
+      
+      const updatedProduct = await storage.updateMarketplaceProduct(id, req.body, supplierTenantId);
+      
+      if (!updatedProduct) {
+        return res.status(404).json({ message: "Product not found or unauthorized" });
+      }
+      
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: supplierTenantId,
+        userId,
+        entityType: "marketplace_product",
+        entityId: id,
+        action: "update",
+        newData: req.body,
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+      
+      res.json(updatedProduct);
+    } catch (error) {
+      console.error("Error updating product:", error);
+      res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+
+  // =====================================
+  // MARKETPLACE ORDER MANAGEMENT ENDPOINTS
+  // =====================================
+  
+  // Create marketplace order (hospitals/pharmacies/labs placing orders)
+  app.post("/api/marketplace/orders", authenticateToken, requireRole(["tenant_admin", "director", "physician", "pharmacist", "lab_technician"]), async (req, res) => {
+    try {
+      const buyerTenantId = req.tenant!.id;
+      const buyerUserId = req.userId!;
+      
+      const orderData = {
+        ...req.body,
+        buyerTenantId,
+        buyerUserId,
+        orderNumber: await storage.generateOrderNumber(),
+        status: 'pending'
+      };
+      
+      const order = await storage.createMarketplaceOrder(orderData);
+      
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: buyerTenantId,
+        userId: buyerUserId,
+        entityType: "marketplace_order",
+        entityId: order.id,
+        action: "create",
+        newData: orderData,
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+      
+      res.status(201).json(order);
+    } catch (error) {
+      console.error("Error creating order:", error);
+      res.status(500).json({ message: "Failed to create order" });
+    }
+  });
+
+  // Get orders for buyer (hospital/pharmacy/lab)
+  app.get("/api/marketplace/orders/buyer", authenticateToken, requireRole(["tenant_admin", "director", "physician", "pharmacist", "lab_technician"]), async (req, res) => {
+    try {
+      const buyerTenantId = req.tenant!.id;
+      const { status, page = 1, limit = 20 } = req.query;
+      const offset = (Number(page) - 1) * Number(limit);
+      
+      const orders = await storage.getBuyerOrders(buyerTenantId, {
+        status: status as string,
+        limit: Number(limit),
+        offset
+      });
+      
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching buyer orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  // Get orders for supplier
+  app.get("/api/marketplace/orders/supplier", authenticateToken, requireRole(["supplier_admin"]), async (req, res) => {
+    try {
+      const supplierTenantId = req.tenant!.id;
+      const { status, page = 1, limit = 20 } = req.query;
+      const offset = (Number(page) - 1) * Number(limit);
+      
+      const orders = await storage.getSupplierOrders(supplierTenantId, {
+        status: status as string,
+        limit: Number(limit),
+        offset
+      });
+      
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching supplier orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  // Update order status (suppliers fulfilling orders)
+  app.put("/api/marketplace/orders/:id/status", authenticateToken, requireRole(["supplier_admin", "tenant_admin"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, notes } = req.body;
+      const tenantId = req.tenant!.id;
+      const userId = req.userId!;
+      
+      const updatedOrder = await storage.updateOrderStatus(id, status, notes, tenantId);
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ message: "Order not found or unauthorized" });
+      }
+      
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId,
+        userId,
+        entityType: "marketplace_order",
+        entityId: id,
+        action: "status_update",
+        newData: { status, notes },
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+      
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      res.status(500).json({ message: "Failed to update order status" });
+    }
+  });
+
+  // =====================================
+  // PRODUCT REVIEWS AND RATINGS ENDPOINTS
+  // =====================================
+  
+  // Create product review (verified purchasers only)
+  app.post("/api/marketplace/products/:productId/reviews", authenticateToken, async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const reviewerTenantId = req.tenant!.id;
+      const reviewerUserId = req.userId!;
+      
+      // Verify purchaser has bought this product
+      const hasPurchased = await storage.hasUserPurchasedProduct(reviewerUserId, productId);
+      
+      if (!hasPurchased) {
+        return res.status(403).json({ message: "You can only review products you have purchased" });
+      }
+      
+      const reviewData = {
+        ...req.body,
+        productId,
+        reviewerTenantId,
+        reviewerUserId,
+        isVerifiedPurchase: true,
+        isApproved: false // Reviews need moderation
+      };
+      
+      const review = await storage.createProductReview(reviewData);
+      res.status(201).json(review);
+    } catch (error) {
+      console.error("Error creating review:", error);
+      res.status(500).json({ message: "Failed to create review" });
+    }
+  });
+
+  // Get product reviews
+  app.get("/api/marketplace/products/:productId/reviews", async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const { page = 1, limit = 10 } = req.query;
+      const offset = (Number(page) - 1) * Number(limit);
+      
+      const reviews = await storage.getProductReviews(productId, {
+        limit: Number(limit),
+        offset,
+        approvedOnly: true
+      });
+      
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching product reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
