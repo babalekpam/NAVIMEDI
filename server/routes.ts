@@ -4120,6 +4120,86 @@ Report ID: ${report.id}
     }
   });
 
+  // Supplier-specific login endpoint
+  app.post('/api/supplier/login', async (req, res) => {
+    try {
+      const { username, password, organizationName } = req.body;
+      
+      if (!username || !password || !organizationName) {
+        return res.status(400).json({ message: "Username, password, and organization name are required" });
+      }
+
+      console.log('[SUPPLIER LOGIN] Attempting login for:', { username, organizationName });
+
+      // Find the supplier organization first
+      const suppliers = await storage.getMedicalSuppliers();
+      const supplierOrg = suppliers.find(s => 
+        s.companyName.toLowerCase() === organizationName.toLowerCase() ||
+        s.organizationSlug === organizationName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')
+      );
+
+      if (!supplierOrg) {
+        console.log('[SUPPLIER LOGIN] Organization not found:', organizationName);
+        return res.status(400).json({ message: "Organization not found" });
+      }
+
+      console.log('[SUPPLIER LOGIN] Found supplier organization:', supplierOrg.companyName);
+
+      // Find user by email (supplier users are typically associated by email)
+      const allUsers = await storage.getAllUsers();
+      const user = allUsers.find(u => 
+        u.username === username &&
+        u.email === supplierOrg.contactEmail
+      );
+
+      if (!user || !await bcrypt.compare(password, user.password)) {
+        console.log('[SUPPLIER LOGIN] Invalid credentials for:', username);
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      if (!user.isActive) {
+        return res.status(401).json({ message: "Account is disabled" });
+      }
+
+      console.log('[SUPPLIER LOGIN] Successful login for supplier:', user.username);
+
+      // Update last login
+      await storage.updateUser(user.id, { lastLogin: new Date() });
+
+      const token = jwt.sign(
+        { 
+          userId: user.id, 
+          tenantId: user.tenantId, 
+          role: user.role,
+          username: user.username,
+          userType: 'supplier',
+          organizationName: supplierOrg.companyName
+        },
+        JWT_SECRET,
+        { expiresIn: "8h" }
+      );
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          tenantId: user.tenantId,
+          userType: 'supplier',
+          organizationName: supplierOrg.companyName
+        }
+      });
+
+    } catch (error) {
+      console.error('[SUPPLIER LOGIN] Error:', error);
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
   // Supplier-specific API endpoints
   app.get('/api/supplier/profile', authenticateToken, async (req, res) => {
     try {

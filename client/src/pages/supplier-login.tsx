@@ -25,21 +25,24 @@ export default function SupplierLogin() {
     setLoading(true);
 
     try {
-      // Login using the standard platform login
-      const response = await apiRequest('/api/auth/login', {
+      // Clear any existing authentication state first
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userType');
+      
+      // Login using organization-specific supplier login endpoint
+      const response = await apiRequest('/api/supplier/login', {
         method: 'POST',
         body: JSON.stringify({
           username: formData.username,
           password: formData.password,
-          organizationName: formData.organizationName // Include organization for supplier verification
+          organizationName: formData.organizationName
         })
       });
 
       if (response.token) {
         localStorage.setItem('token', response.token);
         localStorage.setItem('user', JSON.stringify(response.user));
-        
-        // Store supplier context and redirect immediately to supplier dashboard
         localStorage.setItem('userType', 'supplier');
         localStorage.setItem('organizationName', formData.organizationName);
         
@@ -48,10 +51,8 @@ export default function SupplierLogin() {
           description: `Welcome back to ${formData.organizationName}!`,
         });
         
-        // Force immediate redirect to supplier dashboard
-        setTimeout(() => {
-          window.location.href = '/supplier-dashboard';
-        }, 100);
+        // Force redirect to supplier dashboard
+        window.location.href = '/supplier-dashboard';
       }
     } catch (error: any) {
       console.error('Login error:', error);
