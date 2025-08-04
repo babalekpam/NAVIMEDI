@@ -20,6 +20,7 @@ import {
   Star,
   Activity
 } from 'lucide-react';
+// Simple supplier dashboard - isolated from hospital authentication system
 
 interface SupplierData {
   id: string;
@@ -62,29 +63,63 @@ export default function SupplierDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
+  
+  // Simple supplier authentication check - no dependencies on hospital auth system
+  const [currentUser, setCurrentUser] = React.useState(null);
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
 
-  // Check if user is actually a supplier, if not redirect to supplier login
   React.useEffect(() => {
     const userType = localStorage.getItem('userType');
     const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
     
-    if (!token || userType !== 'supplier') {
-      // Not a supplier login, redirect to supplier login
-      window.location.href = '/supplier-login';
+    if (userType !== 'supplier' || !token || !user) {
+      console.log('[SUPPLIER DASHBOARD] Not authenticated as supplier, redirecting');
+      localStorage.clear();
+      window.location.replace('/supplier-login');
       return;
     }
+
+    try {
+      const userData = JSON.parse(user);
+      if (userData.userType === 'supplier') {
+        setCurrentUser(userData);
+        setIsAuthenticated(true);
+        console.log('[SUPPLIER DASHBOARD] Authenticated supplier:', userData.username);
+      } else {
+        localStorage.clear();
+        window.location.replace('/supplier-login');
+      }
+    } catch (e) {
+      localStorage.clear();
+      window.location.replace('/supplier-login');
+    }
   }, []);
+
+  // Don't render anything if not authenticated
+  if (!isAuthenticated || !currentUser) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Verifying supplier authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch supplier profile
   const { data: supplierProfile, isLoading: profileLoading } = useQuery({
     queryKey: ['/api/supplier/profile'],
-    queryFn: () => apiRequest('/api/supplier/profile')
+    queryFn: () => apiRequest('/api/supplier/profile'),
+    enabled: isAuthenticated  // Only fetch when authenticated
   });
 
   // Fetch supplier advertisements
   const { data: advertisements, isLoading: adsLoading } = useQuery({
     queryKey: ['/api/supplier/advertisements'],
-    queryFn: () => apiRequest('/api/supplier/advertisements')
+    queryFn: () => apiRequest('/api/supplier/advertisements'),
+    enabled: isAuthenticated  // Only fetch when authenticated
   });
 
   const getStatusColor = (status: string) => {

@@ -121,7 +121,17 @@ function AppContent() {
     
     // If user is a supplier and not on supplier pages, redirect to supplier dashboard
     if (userType === 'supplier' && token && !currentPath.startsWith('/supplier')) {
-      window.location.href = '/supplier-dashboard';
+      console.log('[APP] Redirecting supplier to dashboard');
+      window.location.replace('/supplier-dashboard');
+      return;
+    }
+
+    // If on supplier dashboard but not a supplier, redirect to supplier login
+    if (currentPath === '/supplier-dashboard' && userType !== 'supplier') {
+      console.log('[APP] Non-supplier on supplier dashboard, redirecting to login');
+      localStorage.clear();
+      window.location.replace('/supplier-login');
+      return;
     }
   }, []);
 

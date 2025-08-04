@@ -49,8 +49,10 @@ export default function SupplierLogin() {
           description: `Welcome back to ${formData.organizationName}!`,
         });
         
-        // Force redirect to supplier dashboard
-        window.location.href = '/supplier-dashboard';
+        // Force complete page reload to supplier dashboard to clear any cached state
+        setTimeout(() => {
+          window.location.replace('/supplier-dashboard');
+        }, 100);
       }
     } catch (error: any) {
       console.error('Login error:', error);
