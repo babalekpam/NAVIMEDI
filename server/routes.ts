@@ -1,6 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import path from "path";
+import { fileURLToPath } from 'url';
 import { storage } from "./storage";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import { insertUserSchema, insertTenantSchema, insertPatientSchema, insertAppointmentSchema, insertPrescriptionSchema, insertLabOrderSchema, insertInsuranceClaimSchema, insertServicePriceSchema, insertInsurancePlanCoverageSchema, insertClaimLineItemSchema, insertSubscriptionSchema, insertReportSchema, insertMedicalCommunicationSchema, insertCommunicationTranslationSchema, insertSupportedLanguageSchema, insertMedicalPhraseSchema, insertPhraseTranslationSchema, insertLaboratorySchema, insertLabResultSchema, insertLabOrderAssignmentSchema, insertLaboratoryApplicationSchema, insertVitalSignsSchema, insertVisitSummarySchema, insertHealthRecommendationSchema, insertHealthAnalysisSchema, insertRolePermissionSchema, RolePermission, InsertRolePermission, insertDepartmentSchema, departments, insertAdvertisementSchema, insertAdViewSchema, insertAdInquirySchema, insertMedicalSupplierSchema } from "@shared/schema";
 import { authenticateToken, requireRole } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
@@ -4584,68 +4589,15 @@ Report ID: ${report.id}
     res.redirect(301, '/supplier-dashboard-direct');
   });
   
-  // CRITICAL: Block access to hospital dashboard and force redirect
-  app.get('/', (req, res) => {
-    // Check localStorage via cookie or query param for supplier users
-    console.log('[ROOT ACCESS] Checking for supplier redirect...');
-    res.send(`<!DOCTYPE html>
-<html>
-<head><title>Healthcare Platform</title></head>
-<body>
-<script>
-const userType = localStorage.getItem('userType');
-console.log('Root access - userType:', userType);
-if (userType === 'supplier') {
-  console.log('Supplier detected, redirecting to supplier dashboard...');
-  window.location.replace('/supplier-dashboard-direct');
-} else {
-  console.log('Loading hospital system...');
-  window.location.replace('/dashboard');
-}
-</script>
-<div style="text-align: center; padding: 50px;">
-  <h2>Loading Healthcare Platform...</h2>
-  <p>Detecting user type...</p>
-</div>
-</body>
-</html>`);
-  });
-
-  // CRITICAL: Force redirect hospital routes when supplier is logged in
-  app.get('/dashboard', (req, res) => {
-    console.log('[DASHBOARD ACCESS] Hospital dashboard requested');
-    res.send(`<!DOCTYPE html>
-<html>
-<head><title>Healthcare Platform</title></head>
-<body>
-<script>
-const userType = localStorage.getItem('userType');
-console.log('Dashboard access - userType:', userType);
-if (userType === 'supplier') {
-  console.log('Supplier trying to access hospital dashboard, redirecting...');
-  alert('Supplier users must use the supplier dashboard. Redirecting...');
-  window.location.replace('/supplier-dashboard-direct');
-} else {
-  console.log('Loading hospital dashboard...');
-  window.location.replace('/hospital-dashboard');
-}
-</script>
-<div style="text-align: center; padding: 50px;">
-  <h2>Checking Access Permissions...</h2>
-  <p>Redirecting to appropriate dashboard...</p>
-</div>
-</body>
-</html>`);
-  });
-  
-  // Hospital dashboard route
-  app.get('/hospital-dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  // Default route for hospital system
+  app.get('/', (req, res, next) => {
+    // Let Vite handle this route for the hospital system
+    next();
   });
   
   // Supplier authentication test page
   app.get('/supplier-test', (req, res) => {
-    res.sendFile(path.join(__dirname, '../supplier-test.html'));
+    res.sendFile(path.join(process.cwd(), 'supplier-test.html'));
   });
 
   const server = createServer(app);
