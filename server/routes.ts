@@ -50,7 +50,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         businessAddress: req.body.address,
         city: req.body.city,
         state: req.body.state,
-        country: req.body.country,
+        country: req.body.country || 'USA',
         zipCode: req.body.zipCode,
         businessDescription: req.body.description,
         productCategories: req.body.specialties ? [req.body.specialties] : [],
