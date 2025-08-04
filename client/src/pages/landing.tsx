@@ -272,16 +272,16 @@ export default function LandingPage() {
                   Provider Login
                 </Button>
               </Link>
-              <Link href="/supplier-register">
+              <Link href="/supplier-login-direct">
                 <Button size="lg" variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-50 px-8 py-4 text-lg">
                   <Package className="w-5 h-5 mr-2" />
-                  Supplier Register
+                  Supplier Login
                 </Button>
               </Link>
-              <Link href="/supplier-marketplace">
+              <Link href="/advertisements">
                 <Button size="lg" variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50 px-8 py-4 text-lg">
                   <ShoppingCart className="w-5 h-5 mr-2" />
-                  Supplier Marketplace
+                  Medical Marketplace
                 </Button>
               </Link>
               <Link href="/patient-login">
@@ -418,10 +418,12 @@ export default function LandingPage() {
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg">
-                <Building2 className="w-5 h-5 mr-2" />
-                Post Advertisement
-              </Button>
+              <Link href="/supplier-login-direct">
+                <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg">
+                  <Building2 className="w-5 h-5 mr-2" />
+                  Supplier Portal
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
