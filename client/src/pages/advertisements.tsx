@@ -106,7 +106,7 @@ export default function Advertisements() {
   const [filterStatus, setFilterStatus] = useState<string>("");
 
   // Fetch advertisements
-  const { data: advertisements, isLoading } = useQuery({
+  const { data: advertisements, isLoading, error } = useQuery({
     queryKey: ['/api/advertisements'],
     queryFn: () => apiRequest('/api/advertisements')
   });
@@ -199,6 +199,26 @@ export default function Advertisements() {
               <div key={i} className="h-64 bg-gray-200 rounded"></div>
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 bg-white">
+        <div className="text-center py-12">
+          <Package className="w-16 h-16 text-red-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to load advertisements</h3>
+          <p className="text-gray-600 mb-4">
+            {error?.message?.includes('Invalid or expired token') 
+              ? 'Your session has expired. Please log in again to access the marketplace.'
+              : 'There was an error loading the advertisements. Please try again later.'
+            }
+          </p>
+          <Button onClick={() => window.location.href = '/api/login'} className="bg-emerald-600 hover:bg-emerald-700">
+            Login to Access Marketplace
+          </Button>
         </div>
       </div>
     );
