@@ -102,8 +102,8 @@ export default function Advertisements() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedAd, setSelectedAd] = useState<Advertisement | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
-  const [filterCategory, setFilterCategory] = useState<string>("");
-  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
 
   // Fetch advertisements
   const { data: advertisements, isLoading, error } = useQuery({
@@ -170,8 +170,8 @@ export default function Advertisements() {
   });
 
   const filteredAds = advertisements?.filter((ad: Advertisement) => {
-    if (filterCategory && ad.category !== filterCategory) return false;
-    if (filterStatus && ad.status !== filterStatus) return false;
+    if (filterCategory && filterCategory !== "all" && ad.category !== filterCategory) return false;
+    if (filterStatus && filterStatus !== "all" && ad.status !== filterStatus) return false;
     return true;
   });
 
@@ -254,7 +254,7 @@ export default function Advertisements() {
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               {CATEGORIES.map((cat) => (
                 <SelectItem key={cat.value} value={cat.value}>
                   {cat.label}
@@ -270,7 +270,7 @@ export default function Advertisements() {
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Statuses</SelectItem>
+              <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="paused">Paused</SelectItem>
               <SelectItem value="expired">Expired</SelectItem>
@@ -278,12 +278,12 @@ export default function Advertisements() {
             </SelectContent>
           </Select>
         </div>
-        {(filterCategory || filterStatus) && (
+        {(filterCategory !== "all" || filterStatus !== "all") && (
           <Button 
             variant="outline" 
             onClick={() => {
-              setFilterCategory("");
-              setFilterStatus("");
+              setFilterCategory("all");
+              setFilterStatus("all");
             }}
             className="self-end"
           >
