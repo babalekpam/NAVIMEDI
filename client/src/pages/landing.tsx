@@ -306,7 +306,7 @@ export default function LandingPage() {
               New Feature Launch
             </Badge>
             <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900">
-              Medical Device <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Marketplace</span>
+              Medical Device <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Advertisement Marketplace</span>
             </h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
               Discover and showcase cutting-edge medical devices, healthcare services, and innovative solutions 
