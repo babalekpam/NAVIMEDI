@@ -205,20 +205,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-emerald-50/30">
-      {/* BRIGHT MARKETPLACE BANNER - IMPOSSIBLE TO MISS */}
-      <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white py-4 text-center">
-        <div className="container mx-auto px-6">
-          <div className="flex items-center justify-center gap-4 text-lg font-bold">
-            <Package className="w-6 h-6" />
-            <span>🚀 NEW: MEDICAL DEVICE MARKETPLACE NOW LIVE! 🚀</span>
-            <Link href="/advertisements">
-              <Button className="bg-white text-red-600 hover:bg-gray-100 font-bold px-6 py-2 ml-4">
-                EXPLORE NOW →
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+
 
       <PublicHeader />
 
@@ -257,14 +244,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
               
-              {/* PROMINENT MARKETPLACE BUTTON */}
-              <Link href="/advertisements">
-                <Button size="lg" className="bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 shadow-xl shadow-red-500/25 px-8 py-4 text-lg text-white font-bold">
-                  <Package className="w-5 h-5 mr-2" />
-                  🚀 MARKETPLACE
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
+
               
               <Link href="/login">
                 <Button size="lg" variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50 px-8 py-4 text-lg">
@@ -272,18 +252,7 @@ export default function LandingPage() {
                   Provider Login
                 </Button>
               </Link>
-              <Link href="/supplier-login-direct">
-                <Button size="lg" variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-50 px-8 py-4 text-lg">
-                  <Package className="w-5 h-5 mr-2" />
-                  Supplier Login
-                </Button>
-              </Link>
-              <Link href="/advertisements">
-                <Button size="lg" variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50 px-8 py-4 text-lg">
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  Medical Marketplace
-                </Button>
-              </Link>
+
               <Link href="/patient-login">
                 <Button size="lg" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50 px-8 py-4 text-lg">
                   <User className="w-5 h-5 mr-2" />
@@ -397,35 +366,7 @@ export default function LandingPage() {
             </Card>
           </div>
 
-          <div className="text-center bg-gradient-to-r from-emerald-600 to-blue-600 rounded-2xl p-8 text-white">
-            <div className="mb-6">
-              <Badge className="mb-4 bg-white/20 text-white border-white/30 hover:bg-white/30">
-                <Package className="w-4 h-4 mr-2" />
-                NEW: Medical Device Marketplace
-              </Badge>
-              <h3 className="text-3xl font-bold mb-2">Discover Medical Solutions</h3>
-              <p className="text-lg text-white/90 mb-6">
-                Connect with leading medical device vendors and healthcare service providers. 
-                Browse innovative solutions and streamline your procurement process.
-              </p>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/advertisements">
-                <Button size="lg" className="bg-white text-emerald-600 hover:bg-gray-100 shadow-xl px-8 py-4 text-lg font-semibold">
-                  <Package className="w-5 h-5 mr-2" />
-                  Explore Marketplace
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-              <Link href="/supplier-login-direct">
-                <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg">
-                  <Building2 className="w-5 h-5 mr-2" />
-                  Supplier Portal
-                </Button>
-              </Link>
-            </div>
-          </div>
+
         </div>
       </section>
 
