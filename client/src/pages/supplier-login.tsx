@@ -26,9 +26,7 @@ export default function SupplierLogin() {
 
     try {
       // Clear any existing authentication state first
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('userType');
+      localStorage.clear(); // Clear everything to prevent conflicts
       
       // Login using organization-specific supplier login endpoint
       const response = await apiRequest('/api/supplier/login', {

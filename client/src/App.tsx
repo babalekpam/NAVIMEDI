@@ -1,3 +1,4 @@
+import React from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -112,6 +113,18 @@ import LaboratoryDashboard from "@/pages/laboratory-dashboard";
 
 
 function AppContent() {
+  // Check for supplier authentication and redirect appropriately
+  React.useEffect(() => {
+    const userType = localStorage.getItem('userType');
+    const token = localStorage.getItem('token');
+    const currentPath = window.location.pathname;
+    
+    // If user is a supplier and not on supplier pages, redirect to supplier dashboard
+    if (userType === 'supplier' && token && !currentPath.startsWith('/supplier')) {
+      window.location.href = '/supplier-dashboard';
+    }
+  }, []);
+
   return (
     <div className="min-h-screen">
       <Switch>

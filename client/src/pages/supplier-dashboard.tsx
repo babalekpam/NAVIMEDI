@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,6 +62,18 @@ export default function SupplierDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
+
+  // Check if user is actually a supplier, if not redirect to supplier login
+  React.useEffect(() => {
+    const userType = localStorage.getItem('userType');
+    const token = localStorage.getItem('token');
+    
+    if (!token || userType !== 'supplier') {
+      // Not a supplier login, redirect to supplier login
+      window.location.href = '/supplier-login';
+      return;
+    }
+  }, []);
 
   // Fetch supplier profile
   const { data: supplierProfile, isLoading: profileLoading } = useQuery({
