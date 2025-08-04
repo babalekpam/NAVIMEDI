@@ -113,22 +113,26 @@ import LaboratoryDashboard from "@/pages/laboratory-dashboard";
 
 
 function AppContent() {
-  // Check for supplier authentication and redirect appropriately
+  // PRIORITY: Check for supplier authentication FIRST and redirect immediately
   React.useEffect(() => {
     const userType = localStorage.getItem('userType');
     const token = localStorage.getItem('token');
     const currentPath = window.location.pathname;
     
-    // If user is a supplier and not on supplier pages, redirect to supplier dashboard
-    if (userType === 'supplier' && token && !currentPath.startsWith('/supplier')) {
-      console.log('[APP] Redirecting supplier to dashboard');
-      window.location.replace('/supplier-dashboard');
-      return;
+    console.log('[APP DEBUG] UserType:', userType, 'Path:', currentPath);
+    
+    // CRITICAL: If user is a supplier, IMMEDIATELY redirect to supplier routes
+    if (userType === 'supplier' && token) {
+      if (!currentPath.startsWith('/supplier')) {
+        console.log('[APP] SUPPLIER DETECTED - Force redirect to supplier dashboard');
+        window.location.replace('/supplier-dashboard');
+        return;
+      }
     }
 
-    // If on supplier dashboard but not a supplier, redirect to supplier login
-    if (currentPath === '/supplier-dashboard' && userType !== 'supplier') {
-      console.log('[APP] Non-supplier on supplier dashboard, redirecting to login');
+    // If on supplier routes but not a supplier, redirect to supplier login
+    if (currentPath.startsWith('/supplier') && userType !== 'supplier') {
+      console.log('[APP] Non-supplier on supplier routes, redirecting to login');
       localStorage.clear();
       window.location.replace('/supplier-login');
       return;
@@ -825,6 +829,8 @@ function Router() {
           <Route path="/laboratory-registration" component={LaboratoryRegistration} />
           <Route path="/pharmacy-registration" component={PharmacyRegistration} />
           <Route path="/supplier-register" component={SupplierRegister} />
+          <Route path="/supplier-login" component={SupplierLogin} />
+          <Route path="/supplier-dashboard" component={SupplierDashboard} />
           <Route path="/supplier-marketplace" component={SupplierMarketplace} />
           <Route path="/patient-portal-public" component={PatientPortalPublic} />
           <Route path="/patient-login" component={PatientLogin} />
