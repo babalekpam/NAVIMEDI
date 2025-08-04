@@ -26,6 +26,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Registration request body:', req.body);
       
+      // Validate username and password
+      if (!req.body.username || req.body.username.length < 3) {
+        return res.status(400).json({ error: 'Username must be at least 3 characters long' });
+      }
+      
+      if (!req.body.password || req.body.password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+      }
+
+      // Hash the password
+      const saltRounds = 10;
+      const passwordHash = await bcrypt.hash(req.body.password, saltRounds);
+
       // Map form data to database schema
       const supplierData = {
         companyName: req.body.companyName,
@@ -45,6 +58,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         numberOfEmployees: req.body.numberOfEmployees || "1-10",
         annualRevenue: req.body.annualRevenue || "Under $1M",
         certifications: [],
+        username: req.body.username,
+        passwordHash: passwordHash,
         termsAccepted: req.body.termsAccepted === true || req.body.termsAccepted === "true",
         marketingConsent: req.body.marketingConsent === true || req.body.marketingConsent === "true"
       };
@@ -56,7 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'companyName', 'businessType', 'contactPersonName', 'contactEmail', 
         'contactPhone', 'businessAddress', 'city', 'state', 'country', 
         'zipCode', 'businessDescription', 'yearsInBusiness', 'numberOfEmployees', 
-        'annualRevenue', 'termsAccepted'
+        'annualRevenue', 'username', 'passwordHash', 'termsAccepted'
       ];
       
       const missingFields = requiredFields.filter(field => !supplierData[field]);
@@ -89,11 +104,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Email and password are required' });
       }
 
-      // For now, we'll implement a simple check
-      // In a real system, suppliers would have proper authentication
+      // Find supplier by email
       const supplier = await storage.getMedicalSupplierByEmail(contactEmail);
       
       if (!supplier) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(password, supplier.passwordHash);
+      if (!isPasswordValid) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
@@ -108,11 +128,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Generate a simple token for supplier session
+      // Generate a JWT token for supplier session
       const token = jwt.sign(
         { 
           supplierId: supplier.id, 
+          username: supplier.username,
           contactEmail: supplier.contactEmail,
+          companyName: supplier.companyName,
           type: 'supplier'
         },
         JWT_SECRET,
@@ -125,6 +147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         supplier: {
           id: supplier.id,
           companyName: supplier.companyName,
+          username: supplier.username,
           contactEmail: supplier.contactEmail,
           status: supplier.status
         }
@@ -764,6 +787,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error approving supplier:", error);
       res.status(500).json({ message: "Failed to approve supplier" });
+    }
+  });
+
+  app.put("/api/admin/suppliers/:id/reject", authenticateToken, async (req, res) => {
+    try {
+      if (req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+      
+      const { id } = req.params;
+      const { reason } = req.body;
+      const supplier = await storage.updateMedicalSupplierStatus(id, 'rejected', reason);
+      
+      // TODO: Send rejection email to supplier
+      
+      res.json({ message: "Supplier rejected successfully", supplier });
+    } catch (error) {
+      console.error("Error rejecting supplier:", error);
+      res.status(500).json({ message: "Failed to reject supplier" });
     }
   });
 

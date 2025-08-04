@@ -1898,6 +1898,9 @@ export const medicalSuppliers = pgTable("medical_suppliers", {
   numberOfEmployees: text("number_of_employees").notNull(),
   annualRevenue: text("annual_revenue").notNull(),
   certifications: text("certifications").array().default([]),
+  // Authentication credentials for supplier login
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
   status: supplierStatusEnum("status").default("pending_review").notNull(),
   termsAccepted: boolean("terms_accepted").notNull(),
   marketingConsent: boolean("marketing_consent").default(false),

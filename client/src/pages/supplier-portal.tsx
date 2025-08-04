@@ -33,6 +33,8 @@ export default function SupplierPortal() {
     description: "",
     specialties: "",
     yearsInBusiness: "",
+    username: "",
+    password: "",
     termsAccepted: false
   });
 
@@ -104,6 +106,9 @@ export default function SupplierPortal() {
         description: "",
         specialties: "",
         yearsInBusiness: "",
+        username: "",
+        password: "",
+        confirmPassword: "",
         termsAccepted: false
       });
     },
@@ -136,6 +141,33 @@ export default function SupplierPortal() {
       toast({
         title: "Error",
         description: "Please accept the terms and conditions",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!signupData.username || signupData.username.length < 3) {
+      toast({
+        title: "Error",
+        description: "Username must be at least 3 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!signupData.password || signupData.password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (signupData.password !== signupData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
         variant: "destructive",
       });
       return;
@@ -343,6 +375,35 @@ export default function SupplierPortal() {
                           placeholder="https://www.yourcompany.com"
                         />
                       </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="username">Username *</Label>
+                          <Input
+                            id="username"
+                            value={signupData.username}
+                            onChange={(e) => setSignupData(prev => ({ ...prev, username: e.target.value }))}
+                            placeholder="Choose a unique username"
+                            required
+                            minLength={3}
+                          />
+                          <p className="text-xs text-gray-500">Minimum 3 characters. You'll use this to log in.</p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="password">Password *</Label>
+                          <Input
+                            id="password"
+                            type="password"
+                            value={signupData.password}
+                            onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))}
+                            placeholder="Create a secure password"
+                            required
+                            minLength={6}
+                          />
+                          <p className="text-xs text-gray-500">Minimum 6 characters for security.</p>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Business Address */}
@@ -416,6 +477,51 @@ export default function SupplierPortal() {
                             <SelectItem value="Other">Other</SelectItem>
                           </SelectContent>
                         </Select>
+                      </div>
+                    </div>
+
+                    {/* Account Setup */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Users className="h-5 w-5" />
+                        Account Setup
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="username">Username *</Label>
+                          <Input
+                            id="username"
+                            value={signupData.username}
+                            onChange={(e) => setSignupData(prev => ({ ...prev, username: e.target.value }))}
+                            placeholder="medtech_admin"
+                            required
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="password">Password *</Label>
+                          <Input
+                            id="password"
+                            type="password"
+                            value={signupData.password}
+                            onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))}
+                            placeholder="Min 6 characters"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          value={signupData.confirmPassword}
+                          onChange={(e) => setSignupData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                          placeholder="Re-enter your password"
+                          required
+                        />
                       </div>
                     </div>
 
