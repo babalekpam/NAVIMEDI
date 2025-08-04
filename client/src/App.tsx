@@ -54,6 +54,7 @@ import SupplierMarketplaceTest from "@/pages/supplier-marketplace-test";
 import SupplierManagement from "@/pages/supplier-management";
 import SupplierDashboard from "@/pages/supplier-dashboard";
 import SupplierLogin from "@/pages/supplier-login";
+import SupplierApp from "@/pages/supplier-app";
 
 import FeaturesPage from "@/pages/features";
 import SolutionsPage from "@/pages/solutions";
@@ -847,6 +848,17 @@ function Router() {
 }
 
 function App() {
+  // CRITICAL: Check if this is a supplier session IMMEDIATELY
+  const userType = localStorage.getItem('userType');
+  const currentPath = window.location.pathname;
+  
+  // If supplier or on supplier routes, use completely isolated supplier app
+  if (userType === 'supplier' || currentPath.startsWith('/supplier')) {
+    console.log('[APP ROOT] Supplier session detected, loading SupplierApp');
+    return <SupplierApp />;
+  }
+
+  // Otherwise use hospital system
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
