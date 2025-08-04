@@ -32,7 +32,7 @@ export const Header = () => {
 
   const handleLogout = () => {
     logout();
-    setLocation("/login");
+    // No need to setLocation since logout() already redirects to "/"
   };
 
   const dismissNotification = (notificationId: number) => {

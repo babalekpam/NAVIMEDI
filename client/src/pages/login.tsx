@@ -45,12 +45,9 @@ export default function Login() {
       localStorage.setItem("auth_token", response.token);
       localStorage.setItem("auth_user", JSON.stringify(response.user));
       
-      // Redirect based on user role
-      if (response.user.role === 'super_admin') {
-        setLocation("/dashboard");
-      } else {
-        setLocation("/dashboard");
-      }
+      // Force a page reload to ensure auth state is properly initialized
+      // This ensures the useAuth hook picks up the new authentication state
+      window.location.href = "/dashboard";
     } catch (err: any) {
       setError(err.message || "Login failed");
     } finally {
