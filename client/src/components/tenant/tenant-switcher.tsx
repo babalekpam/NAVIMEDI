@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useTenant } from "@/contexts/tenant-context-fixed";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/hooks/useAuth";
 
 export const TenantSwitcher = () => {
   const { tenant, availableTenants, switchTenant } = useTenant();

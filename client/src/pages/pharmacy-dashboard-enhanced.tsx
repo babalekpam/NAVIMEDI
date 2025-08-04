@@ -26,8 +26,8 @@ import {
   Truck,
   X
 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
-import { useTenant } from '@/hooks/use-tenant';
+import { useAuth } from '@/hooks/useAuth';
+import { useTenant } from '@/contexts/tenant-context-fixed';
 import { SimpleReportGenerator } from '@/components/pharmacy/SimpleReportGenerator';
 
 interface PharmacyStats {

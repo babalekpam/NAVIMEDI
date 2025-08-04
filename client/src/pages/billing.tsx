@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { DollarSign, Plus, Search, Filter, MoreHorizontal, FileText, CreditCard, X, Eye, Send, Calendar, CheckCircle, Clock, AlertCircle, Trash2, Calculator, Copy, Edit, Share, Download } from "lucide-react";
 import { InsuranceClaim, Patient, ServicePrice, InsuranceProvider, PatientInsurance, ClaimLineItem, insertInsuranceClaimSchema, insertClaimLineItemSchema } from "@shared/schema";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/tenant-context-fixed";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";

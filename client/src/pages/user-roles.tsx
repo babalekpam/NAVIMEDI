@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { UserCheck, Users, Plus, Edit, HelpCircle, Info, Shield, Key, Eye, EyeOff, Settings } from "lucide-react";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useTranslation } from "@/contexts/translation-context";
 import { apiRequest, queryClient } from "@/lib/queryClient";
