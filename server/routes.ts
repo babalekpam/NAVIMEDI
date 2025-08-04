@@ -451,6 +451,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Supplier management routes for super admin
+  app.get("/api/admin/suppliers", authenticateToken, async (req, res) => {
+    try {
+      if (req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+      
+      const suppliers = await storage.getAllMedicalSuppliers();
+      res.json(suppliers);
+    } catch (error) {
+      console.error("Error fetching suppliers:", error);
+      res.status(500).json({ message: "Failed to fetch suppliers" });
+    }
+  });
+
+  app.put("/api/admin/suppliers/:id/approve", authenticateToken, async (req, res) => {
+    try {
+      if (req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+      
+      const { id } = req.params;
+      const supplier = await storage.updateMedicalSupplierStatus(id, 'approved');
+      
+      // TODO: Send approval email to supplier
+      
+      res.json({ message: "Supplier approved successfully", supplier });
+    } catch (error) {
+      console.error("Error approving supplier:", error);
+      res.status(500).json({ message: "Failed to approve supplier" });
+    }
+  });
+
+  app.put("/api/admin/suppliers/:id/reject", authenticateToken, async (req, res) => {
+    try {
+      if (req.user?.role !== 'super_admin') {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+      
+      const { id } = req.params;
+      const { reason } = req.body;
+      
+      const supplier = await storage.updateMedicalSupplierStatus(id, 'rejected', reason);
+      
+      // TODO: Send rejection email to supplier with reason
+      
+      res.json({ message: "Supplier rejected", supplier });
+    } catch (error) {
+      console.error("Error rejecting supplier:", error);
+      res.status(500).json({ message: "Failed to reject supplier" });
+    }
+  });
+
   // Apply tenant context middleware to all API routes (except public endpoints)
   app.use("/api", (req, res, next) => {
     // Skip tenant middleware for public endpoints

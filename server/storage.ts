@@ -587,7 +587,9 @@ export interface IStorage {
   getMedicalSupplier(id: string): Promise<MedicalSupplier | undefined>;
   getMedicalSupplierByEmail(email: string): Promise<MedicalSupplier | undefined>;
   getMedicalSuppliers(): Promise<MedicalSupplier[]>;
+  getAllMedicalSuppliers(): Promise<MedicalSupplier[]>;
   updateMedicalSupplier(id: string, updates: Partial<MedicalSupplier>): Promise<MedicalSupplier | undefined>;
+  updateMedicalSupplierStatus(id: string, status: string, reason?: string): Promise<MedicalSupplier | undefined>;
   approveMedicalSupplier(id: string, approvedBy: string): Promise<MedicalSupplier | undefined>;
 }
 
@@ -5032,6 +5034,33 @@ export class DatabaseStorage implements IStorage {
   async updateMedicalSupplier(id: string, updates: Partial<MedicalSupplier>): Promise<MedicalSupplier | undefined> {
     const [updated] = await db.update(medicalSuppliers)
       .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(medicalSuppliers.id, id))
+      .returning();
+    
+    return updated || undefined;
+  }
+
+  async getAllMedicalSuppliers(): Promise<MedicalSupplier[]> {
+    return await db.select()
+      .from(medicalSuppliers)
+      .orderBy(desc(medicalSuppliers.createdAt));
+  }
+
+  async updateMedicalSupplierStatus(id: string, status: string, reason?: string): Promise<MedicalSupplier | undefined> {
+    const updates: any = { 
+      status,
+      updatedAt: sql`CURRENT_TIMESTAMP` 
+    };
+
+    if (status === 'rejected' && reason) {
+      updates.rejectionReason = reason;
+      updates.rejectedAt = sql`CURRENT_TIMESTAMP`;
+    } else if (status === 'approved') {
+      updates.approvedAt = sql`CURRENT_TIMESTAMP`;
+    }
+
+    const [updated] = await db.update(medicalSuppliers)
+      .set(updates)
       .where(eq(medicalSuppliers.id, id))
       .returning();
     

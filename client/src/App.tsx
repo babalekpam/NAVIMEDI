@@ -50,6 +50,7 @@ import Advertisements from "@/pages/advertisements";
 import SupplierRegister from "@/pages/supplier-register";
 import SupplierMarketplace from "@/pages/supplier-marketplace";
 import SupplierMarketplaceTest from "@/pages/supplier-marketplace-test";
+import SupplierManagement from "@/pages/supplier-management";
 
 import FeaturesPage from "@/pages/features";
 import SolutionsPage from "@/pages/solutions";
@@ -346,6 +347,19 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <SuperAdminDashboard />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/supplier-management">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <SupplierManagement />
                 </main>
               </div>
             </div>
@@ -777,7 +791,7 @@ function Router() {
           <Route path="/laboratory-registration" component={LaboratoryRegistration} />
           <Route path="/pharmacy-registration" component={PharmacyRegistration} />
           <Route path="/supplier-register" component={SupplierRegister} />
-          <Route path="/supplier-marketplace" component={SupplierMarketplaceTest} />
+          <Route path="/supplier-marketplace" component={SupplierMarketplace} />
           <Route path="/patient-portal-public" component={PatientPortalPublic} />
           <Route path="/patient-login" component={PatientLogin} />
           <Route path="/login" component={Login} />
