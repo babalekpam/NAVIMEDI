@@ -794,7 +794,15 @@ function Router() {
 }
 
 function App() {
-  // Suppliers now use completely isolated HTML pages
+  // IMMEDIATE: Block suppliers before any React rendering
+  const userType = localStorage.getItem('userType');
+  if (userType === 'supplier') {
+    // Force redirect immediately
+    window.location.replace('/supplier-dashboard-direct');
+    // Return empty div to prevent React from rendering anything
+    return <div style={{display: 'none'}}>Redirecting supplier...</div>;
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

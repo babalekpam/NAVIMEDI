@@ -4280,6 +4280,8 @@ Report ID: ${report.id}
     }
   });
 
+  // Supplier API blocking middleware moved to earlier position
+
   // SUPPLIER STORE SYSTEM - Simple HTML page to prevent React conflicts
   app.get('/supplier-dashboard-direct', (req, res) => {
     res.send(`<!DOCTYPE html>
