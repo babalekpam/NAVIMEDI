@@ -675,8 +675,62 @@ function CreateAdForm({ onSubmit }: { onSubmit: (data: any) => void }) {
 }
 
 function AdDetailView({ ad }: { ad: Advertisement }) {
+  const { toast } = useToast();
+  const [showInquiryForm, setShowInquiryForm] = useState(false);
+  const [inquiryData, setInquiryData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    message: '',
+    interestedIn: ad.title
+  });
+  
   const category = CATEGORIES.find(c => c.value === ad.category);
   const CategoryIcon = category?.icon || Package;
+
+  const handleSendInquiry = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const response = await fetch('/api/marketplace/inquiries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...inquiryData,
+          advertisementId: ad.id,
+          supplierEmail: ad.contactEmail,
+          supplierCompany: ad.companyName
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Inquiry sent successfully",
+          description: "The supplier will contact you directly via email or phone.",
+        });
+        setShowInquiryForm(false);
+        setInquiryData({
+          name: '',
+          email: '',
+          phone: '',
+          company: '',
+          message: '',
+          interestedIn: ad.title
+        });
+      } else {
+        throw new Error('Failed to send inquiry');
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to send inquiry",
+        description: "Please try again or contact the supplier directly.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -775,10 +829,93 @@ function AdDetailView({ ad }: { ad: Advertisement }) {
             </CardContent>
           </Card>
 
-          <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
-            <MessageSquare className="w-4 h-4 mr-2" />
-            Send Inquiry
-          </Button>
+          {!showInquiryForm ? (
+            <Button 
+              className="w-full bg-emerald-600 hover:bg-emerald-700"
+              onClick={() => setShowInquiryForm(true)}
+            >
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Send Inquiry
+            </Button>
+          ) : (
+            <Card>
+              <CardContent className="p-4">
+                <h4 className="font-semibold mb-3">Send Inquiry</h4>
+                <form onSubmit={handleSendInquiry} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="inquiry-name">Name *</Label>
+                      <Input
+                        id="inquiry-name"
+                        value={inquiryData.name}
+                        onChange={(e) => setInquiryData(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Your full name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="inquiry-email">Email *</Label>
+                      <Input
+                        id="inquiry-email"
+                        type="email"
+                        value={inquiryData.email}
+                        onChange={(e) => setInquiryData(prev => ({ ...prev, email: e.target.value }))}
+                        placeholder="your@email.com"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="inquiry-phone">Phone</Label>
+                      <Input
+                        id="inquiry-phone"
+                        value={inquiryData.phone}
+                        onChange={(e) => setInquiryData(prev => ({ ...prev, phone: e.target.value }))}
+                        placeholder="Your phone number"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="inquiry-company">Company</Label>
+                      <Input
+                        id="inquiry-company"
+                        value={inquiryData.company}
+                        onChange={(e) => setInquiryData(prev => ({ ...prev, company: e.target.value }))}
+                        placeholder="Your organization"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="inquiry-message">Message *</Label>
+                    <Textarea
+                      id="inquiry-message"
+                      value={inquiryData.message}
+                      onChange={(e) => setInquiryData(prev => ({ ...prev, message: e.target.value }))}
+                      placeholder="Please provide details about your inquiry, quantity needed, timeline, etc."
+                      rows={4}
+                      required
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <Button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-700">
+                      Send Inquiry
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setShowInquiryForm(false)}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

@@ -578,6 +578,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Advertisement inquiry endpoint (public endpoint)
+  app.post("/api/marketplace/inquiries", async (req, res) => {
+    try {
+      const {
+        name,
+        email,
+        phone,
+        company,
+        message,
+        interestedIn,
+        advertisementId,
+        supplierEmail,
+        supplierCompany
+      } = req.body;
+
+      // Validation
+      if (!name || !email || !message || !advertisementId) {
+        return res.status(400).json({ 
+          message: "Missing required fields: name, email, message, advertisementId" 
+        });
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Invalid email address" });
+      }
+
+      console.log(`[INQUIRY] New inquiry from ${name} (${company || 'Individual'}) about: ${interestedIn}`);
+
+      // For now, we'll just log the inquiry and return success
+      // In the future, this could be stored in a database table and/or forwarded via email
+      const inquiryData = {
+        name,
+        email,
+        phone,
+        company,
+        message,
+        interestedIn,
+        advertisementId,
+        supplierEmail,
+        supplierCompany,
+        submittedAt: new Date().toISOString()
+      };
+
+      console.log(`[INQUIRY] Inquiry details:`, inquiryData);
+
+      // TODO: Store inquiry in database
+      // TODO: Send email notification to supplier
+      // TODO: Send confirmation email to inquirer
+
+      res.json({ 
+        success: true, 
+        message: "Inquiry submitted successfully. The supplier will contact you directly." 
+      });
+    } catch (error) {
+      console.error("Error submitting inquiry:", error);
+      res.status(500).json({ message: "Failed to submit inquiry" });
+    }
+  });
+
   // =====================================
   // SUPPLIER AUTHENTICATION & PRODUCT MANAGEMENT ENDPOINTS
   // =====================================
@@ -1164,7 +1225,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.path.startsWith('/api/placeholder/') ||
         req.path === '/marketplace/products' ||
         req.path === '/advertisements' ||
-        req.path === '/marketplace/quote-requests') {
+        req.path === '/marketplace/quote-requests' ||
+        req.path === '/marketplace/inquiries') {
       return next();
     }
     authenticateToken(req, res, next);
