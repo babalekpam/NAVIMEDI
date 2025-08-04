@@ -48,13 +48,7 @@ import ProfileSettingsPage from "@/pages/profile-settings";
 import ReceptionistDashboard from "@/pages/receptionist-dashboard";
 import ConsultationHistory from "@/pages/consultation-history";
 import Advertisements from "@/pages/advertisements";
-import SupplierRegister from "@/pages/supplier-register";
-import SupplierMarketplace from "@/pages/supplier-marketplace";
-import SupplierMarketplaceTest from "@/pages/supplier-marketplace-test";
-import SupplierManagement from "@/pages/supplier-management";
-import SupplierDashboard from "@/pages/supplier-dashboard";
-import SupplierLogin from "@/pages/supplier-login";
-import SupplierApp from "@/pages/supplier-app";
+// Supplier system moved to pure HTML to prevent conflicts
 
 import FeaturesPage from "@/pages/features";
 import SolutionsPage from "@/pages/solutions";
@@ -114,31 +108,7 @@ import LaboratoryDashboard from "@/pages/laboratory-dashboard";
 
 
 function AppContent() {
-  // PRIORITY: Check for supplier authentication FIRST and redirect immediately
-  React.useEffect(() => {
-    const userType = localStorage.getItem('userType');
-    const token = localStorage.getItem('token');
-    const currentPath = window.location.pathname;
-    
-    console.log('[APP DEBUG] UserType:', userType, 'Path:', currentPath);
-    
-    // CRITICAL: If user is a supplier, IMMEDIATELY redirect to supplier routes
-    if (userType === 'supplier' && token) {
-      if (!currentPath.startsWith('/supplier')) {
-        console.log('[APP] SUPPLIER DETECTED - Force redirect to supplier dashboard');
-        window.location.replace('/supplier-dashboard');
-        return;
-      }
-    }
-
-    // If on supplier routes but not a supplier, redirect to supplier login
-    if (currentPath.startsWith('/supplier') && userType !== 'supplier') {
-      console.log('[APP] Non-supplier on supplier routes, redirecting to login');
-      localStorage.clear();
-      window.location.replace('/supplier-login');
-      return;
-    }
-  }, []);
+  // Supplier authentication now handled by direct HTML pages
 
   return (
     <div className="min-h-screen">
@@ -382,28 +352,7 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
-        <Route path="/supplier-management">
-          <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <SupplierManagement />
-                </main>
-              </div>
-            </div>
-          </ProtectedRoute>
-        </Route>
-        <Route path="/supplier-dashboard">
-          <SupplierDashboard />
-        </Route>
-        <Route path="/supplier-register">
-          <SupplierRegister />
-        </Route>
-        <Route path="/supplier-login">
-          <SupplierLogin />
-        </Route>
+        {/* Supplier routes now handled by direct HTML pages */}
         
         <Route path="/admin/clients">
           <ProtectedRoute>
@@ -829,10 +778,7 @@ function Router() {
           <Route path="/pricing" component={PricingPage} />
           <Route path="/laboratory-registration" component={LaboratoryRegistration} />
           <Route path="/pharmacy-registration" component={PharmacyRegistration} />
-          <Route path="/supplier-register" component={SupplierRegister} />
-          <Route path="/supplier-login" component={SupplierLogin} />
-          <Route path="/supplier-dashboard" component={SupplierDashboard} />
-          <Route path="/supplier-marketplace" component={SupplierMarketplace} />
+          {/* Supplier routes handled by direct HTML pages */}
           <Route path="/patient-portal-public" component={PatientPortalPublic} />
           <Route path="/patient-login" component={PatientLogin} />
           <Route path="/login" component={Login} />
@@ -848,36 +794,7 @@ function Router() {
 }
 
 function App() {
-  // CRITICAL: Force redirect suppliers away from React completely
-  React.useEffect(() => {
-    const userType = localStorage.getItem('userType');
-    const currentPath = window.location.pathname;
-    
-    // If supplier user is trying to access React routes, redirect to direct pages
-    if (userType === 'supplier') {
-      console.log('[APP ROOT] Supplier detected in React app, redirecting...');
-      if (currentPath === '/dashboard' || currentPath === '/') {
-        window.location.replace('/supplier-dashboard-direct');
-        return;
-      }
-      if (currentPath.includes('supplier') && !currentPath.includes('direct')) {
-        window.location.replace('/supplier-dashboard-direct');
-        return;
-      }
-    }
-  }, []);
-
-  // CRITICAL: Check if this is a supplier session IMMEDIATELY
-  const userType = localStorage.getItem('userType');
-  const currentPath = window.location.pathname;
-  
-  // If supplier or on supplier routes, use completely isolated supplier app
-  if (userType === 'supplier' || currentPath.startsWith('/supplier')) {
-    console.log('[APP ROOT] Supplier session detected, loading SupplierApp');
-    return <SupplierApp />;
-  }
-
-  // Otherwise use hospital system
+  // Suppliers now use completely isolated HTML pages
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

@@ -4280,184 +4280,83 @@ Report ID: ${report.id}
     }
   });
 
-  // CRITICAL: Direct supplier dashboard page that bypasses React completely
+  // SUPPLIER STORE SYSTEM - Simple HTML page to prevent React conflicts
   app.get('/supplier-dashboard-direct', (req, res) => {
-    const html = `<!DOCTYPE html>
+    res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supplier Dashboard - Healthcare Platform</title>
+    <title>Medical Supply Store Dashboard</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f8fafc; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; }
-        .header h1 { margin: 0; display: flex; align-items: center; gap: 10px; }
-        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .header { background: #2563eb; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .header h1 { margin: 0; }
+        .user-info { margin-top: 10px; opacity: 0.9; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 20px 0; }
         .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .stat-card h3 { margin: 0 0 10px 0; color: #64748b; font-size: 14px; font-weight: 600; }
-        .stat-card .value { font-size: 24px; font-weight: bold; color: #1e293b; }
-        .stat-card .change { font-size: 12px; color: #10b981; margin-top: 5px; }
-        .section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .section h2 { margin: 0 0 20px 0; color: #1e293b; }
-        .table { width: 100%; border-collapse: collapse; }
-        .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        .table th { background: #f8fafc; font-weight: 600; color: #475569; }
-        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
-        .badge.active { background: #dcfce7; color: #166534; }
-        .badge.pending { background: #fef3c7; color: #92400e; }
-        .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; }
-        .btn-primary { background: #3b82f6; color: white; }
-        .btn-secondary { background: #f1f5f9; color: #475569; }
-        .user-info { color: white; opacity: 0.9; }
-        .logout-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-        .logout-btn:hover { background: rgba(255,255,255,0.3); }
+        .stat-card h3 { margin: 0 0 10px 0; color: #666; font-size: 14px; }
+        .stat-card .value { font-size: 24px; font-weight: bold; color: #333; }
+        .actions { background: white; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .btn { padding: 10px 20px; margin: 5px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .btn:hover { background: #1d4ed8; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="nav">
-            <h1>🏥 MedTech Solutions - Supplier Dashboard</h1>
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <div class="user-info" id="userInfo">Loading...</div>
-                <button class="logout-btn" onclick="logout()">Logout</button>
-            </div>
-        </div>
-    </div>
-    
     <div class="container">
-        <div class="stats-grid">
+        <div class="header">
+            <h1>🏪 Medical Supply Store Dashboard</h1>
+            <div class="user-info" id="userInfo">Loading...</div>
+        </div>
+        
+        <div class="stats">
             <div class="stat-card">
-                <h3>Active Advertisements</h3>
-                <div class="value" id="activeAds">0</div>
-                <div class="change">+2 this month</div>
+                <h3>Products Listed</h3>
+                <div class="value">247</div>
             </div>
             <div class="stat-card">
-                <h3>Total Impressions</h3>
-                <div class="value" id="totalImpressions">0</div>
-                <div class="change">+12.5% from last month</div>
-            </div>
-            <div class="stat-card">
-                <h3>Click-through Rate</h3>
-                <div class="value" id="clickRate">0%</div>
-                <div class="change">+0.3% from last month</div>
+                <h3>Monthly Orders</h3>
+                <div class="value">142</div>
             </div>
             <div class="stat-card">
                 <h3>Monthly Revenue</h3>
-                <div class="value" id="monthlyRevenue">$0</div>
-                <div class="change">+8.2% from last month</div>
+                <div class="value">$28,450</div>
+            </div>
+            <div class="stat-card">
+                <h3>Store Rating</h3>
+                <div class="value">4.8/5</div>
             </div>
         </div>
         
-        <div class="section">
-            <h2>Advertisement Performance</h2>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Advertisement</th>
-                        <th>Category</th>
-                        <th>Status</th>
-                        <th>Impressions</th>
-                        <th>Clicks</th>
-                        <th>CTR</th>
-                        <th>Revenue</th>
-                    </tr>
-                </thead>
-                <tbody id="adsTable">
-                    <tr>
-                        <td colspan="7" style="text-align: center; color: #64748b;">Loading advertisements...</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="actions">
+            <h2>Quick Actions</h2>
+            <button class="btn" onclick="alert('Add Product - Coming Soon!')">Add New Product</button>
+            <button class="btn" onclick="alert('Manage Orders - Coming Soon!')">Manage Orders</button>
+            <button class="btn" onclick="alert('View Reports - Coming Soon!')">View Reports</button>
+            <button class="btn" onclick="logout()">Logout</button>
         </div>
     </div>
 
     <script>
-        let currentUser = null;
-        
-        // Check authentication
         function checkAuth() {
             const userType = localStorage.getItem('userType');
             const token = localStorage.getItem('token');
             const user = localStorage.getItem('user');
             
             if (userType !== 'supplier' || !token || !user) {
-                console.log('Not authenticated as supplier, redirecting...');
                 window.location.href = '/supplier-login-direct';
                 return false;
             }
             
             try {
-                currentUser = JSON.parse(user);
+                const currentUser = JSON.parse(user);
                 document.getElementById('userInfo').textContent = 
                     currentUser.firstName + ' ' + currentUser.lastName + ' (' + currentUser.organizationName + ')';
                 return true;
             } catch (e) {
-                console.error('Error parsing user data:', e);
                 window.location.href = '/supplier-login-direct';
                 return false;
-            }
-        }
-        
-        // Load dashboard data
-        async function loadDashboard() {
-            if (!checkAuth()) return;
-            
-            try {
-                const token = localStorage.getItem('token');
-                
-                // Fetch supplier advertisements
-                const response = await fetch('/api/supplier/advertisements', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                
-                if (response.ok) {
-                    const ads = await response.json();
-                    console.log('Loaded advertisements:', ads);
-                    
-                    // Update stats
-                    const activeAds = ads.filter(ad => ad.isActive).length;
-                    const totalImpressions = ads.reduce((sum, ad) => sum + (ad.impressions || 0), 0);
-                    const totalClicks = ads.reduce((sum, ad) => sum + (ad.clicks || 0), 0);
-                    const totalRevenue = ads.reduce((sum, ad) => sum + (ad.monthlyFee || 0), 0);
-                    const clickRate = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(1) : '0.0';
-                    
-                    document.getElementById('activeAds').textContent = activeAds;
-                    document.getElementById('totalImpressions').textContent = totalImpressions.toLocaleString();
-                    document.getElementById('clickRate').textContent = clickRate + '%';
-                    document.getElementById('monthlyRevenue').textContent = '$' + totalRevenue.toLocaleString();
-                    
-                    // Update table
-                    const tbody = document.getElementById('adsTable');
-                    if (ads.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #64748b;">No advertisements found. Create your first ad to get started!</td></tr>';
-                    } else {
-                        tbody.innerHTML = ads.map(ad => {
-                            const ctr = ad.impressions > 0 ? ((ad.clicks / ad.impressions) * 100).toFixed(1) : '0.0';
-                            const statusClass = ad.isActive ? 'active' : 'pending';
-                            const statusText = ad.isActive ? 'Active' : 'Inactive';
-                            
-                            return \`<tr>
-                                <td>\${ad.title}</td>
-                                <td>\${ad.category}</td>
-                                <td><span class="badge \${statusClass}">\${statusText}</span></td>
-                                <td>\${(ad.impressions || 0).toLocaleString()}</td>
-                                <td>\${(ad.clicks || 0).toLocaleString()}</td>
-                                <td>\${ctr}%</td>
-                                <td>$\${(ad.monthlyFee || 0).toLocaleString()}</td>
-                            </tr>\`;
-                        }).join('');
-                    }
-                } else {
-                    console.error('Failed to load advertisements:', response.status);
-                    document.getElementById('adsTable').innerHTML = 
-                        '<tr><td colspan="7" style="text-align: center; color: #dc2626;">Failed to load advertisements</td></tr>';
-                }
-            } catch (error) {
-                console.error('Error loading dashboard:', error);
-                document.getElementById('adsTable').innerHTML = 
-                    '<tr><td colspan="7" style="text-align: center; color: #dc2626;">Error loading data</td></tr>';
             }
         }
         
@@ -4467,139 +4366,13 @@ Report ID: ${report.id}
             window.location.href = '/supplier-login-direct';
         }
         
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', loadDashboard);
+        checkAuth();
     </script>
 </body>
-</html>`;
-    res.send(html);
+</html>`);
   });
 
-  // CRITICAL: Direct supplier login page that bypasses React completely
-  app.get('/supplier-login-direct', (req, res) => {
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supplier Login - Healthcare Platform</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
-        .container { max-width: 400px; margin: 80px auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #333; margin-bottom: 30px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
-        input { width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
-        input:focus { outline: none; border-color: #667eea; }
-        button { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600; }
-        button:hover { opacity: 0.9; }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
-        .message { margin-top: 15px; padding: 10px; border-radius: 4px; text-align: center; }
-        .error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-        .success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-        .info { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2>🏥 Supplier Portal</h2>
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="organizationName">Organization Name</label>
-                <input type="text" id="organizationName" value="MedTech Solutions Inc." required>
-            </div>
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" value="medtech_admin" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" value="password" required>
-            </div>
-            <button type="submit" id="loginBtn">Login to Dashboard</button>
-        </form>
-        <div id="message"></div>
-        <div class="info">Healthcare Supplier Management Platform<br>Secure access to marketplace analytics</div>
-    </div>
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const loginBtn = document.getElementById('loginBtn');
-            const messageDiv = document.getElementById('message');
-            loginBtn.textContent = 'Authenticating...';
-            loginBtn.disabled = true;
-            messageDiv.innerHTML = '';
-            try {
-                console.log('Attempting supplier login...');
-                const response = await fetch('/api/supplier/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        organizationName: document.getElementById('organizationName').value,
-                        username: document.getElementById('username').value,
-                        password: document.getElementById('password').value
-                    })
-                });
-                const data = await response.json();
-                console.log('Login response:', data);
-                if (data.success && data.token && data.user) {
-                    console.log('Login successful, user type:', data.user.userType);
-                    localStorage.clear();
-                    sessionStorage.clear();
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    localStorage.setItem('userType', 'supplier');
-                    localStorage.setItem('supplierAuth', 'true');
-                    messageDiv.className = 'message success';
-                    messageDiv.textContent = 'Login successful! Redirecting to dashboard...';
-                    console.log('Redirecting to supplier dashboard...');
-                    setTimeout(() => {
-                        window.location.href = '/supplier-dashboard-direct';
-                    }, 1000);
-                } else {
-                    throw new Error(data.message || 'Login failed - invalid credentials');
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                messageDiv.className = 'message error';
-                messageDiv.textContent = 'Error: ' + error.message;
-            } finally {
-                loginBtn.textContent = 'Login to Dashboard';
-                loginBtn.disabled = false;
-            }
-        });
-        localStorage.clear();
-        sessionStorage.clear();
-    </script>
-</body>
-</html>`;
-    res.send(html);
-  });
-
-  // CRITICAL: Redirect supplier routes to direct pages (bypass React entirely)
-  app.get('/supplier-login', (req, res) => {
-    res.redirect(301, '/supplier-login-direct');
-  });
-  
-  app.get('/supplier-dashboard', (req, res) => {
-    res.redirect(301, '/supplier-dashboard-direct');
-  });
-  
-  app.get('/supplier-marketplace', (req, res) => {
-    res.redirect(301, '/supplier-dashboard-direct');
-  });
-  
-  // Default route for hospital system
-  app.get('/', (req, res, next) => {
-    // Let Vite handle this route for the hospital system
-    next();
-  });
-  
-  // Supplier authentication test page
-  app.get('/supplier-test', (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'supplier-test.html'));
-  });
-
-  const server = createServer(app);
-  return server;
+  // Complete Express setup
+  const httpServer = createServer(app);
+  return httpServer;
 }
