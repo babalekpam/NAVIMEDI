@@ -552,8 +552,8 @@ export default function UserRoles() {
   const availableRoles = getAvailableRoles();
 
   const filteredUsers = usersData.filter(userItem => {
-    const matchesSearch = userItem.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         userItem.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (userItem.username?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                         (userItem.email?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === "all" || userItem.role === roleFilter;
     const matchesStatus = statusFilter === "all" || 
                          (statusFilter === "active" && userItem.isActive) ||
