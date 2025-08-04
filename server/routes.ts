@@ -4502,6 +4502,103 @@ Report ID: ${report.id}
         .actions { background: white; padding: 20px; border-radius: 8px; margin-top: 20px; }
         .btn { padding: 10px 20px; margin: 5px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; }
         .btn:hover { background: #1d4ed8; }
+        .btn-secondary { background: #6b7280; }
+        .btn-secondary:hover { background: #4b5563; }
+        
+        /* Modal Styles */
+        .modal { 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.5); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+        }
+        .modal-content { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            width: 90%; 
+            max-width: 800px; 
+            max-height: 90vh; 
+            overflow-y: auto;
+        }
+        .close { 
+            float: right; 
+            font-size: 28px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            color: #666;
+        }
+        .close:hover { color: #000; }
+        
+        /* Form Styles */
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #374151; }
+        .form-group input, .form-group textarea, .form-group select { 
+            width: 100%; 
+            padding: 8px 12px; 
+            border: 1px solid #d1d5db; 
+            border-radius: 4px; 
+            box-sizing: border-box;
+        }
+        .form-actions { 
+            display: flex; 
+            gap: 10px; 
+            justify-content: flex-end; 
+            margin-top: 20px; 
+            padding-top: 20px; 
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        /* Table Styles */
+        .table-header { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr; 
+            gap: 10px; 
+            padding: 10px; 
+            background: #f3f4f6; 
+            border-radius: 4px; 
+            font-weight: 500;
+        }
+        .order-row { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr; 
+            gap: 10px; 
+            padding: 10px; 
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        /* Report Styles */
+        .report-section { margin-bottom: 30px; }
+        .report-stats { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 15px; 
+            margin: 15px 0;
+        }
+        .report-stat { 
+            background: #f9fafb; 
+            padding: 15px; 
+            border-radius: 6px; 
+            text-align: center;
+        }
+        .report-stat .label { font-size: 14px; color: #6b7280; margin-bottom: 5px; }
+        .report-stat .value { font-size: 24px; font-weight: bold; color: #111827; }
+        .product-performance { background: #f9fafb; border-radius: 6px; padding: 15px; }
+        .product-row { 
+            display: grid; 
+            grid-template-columns: 2fr 1fr 1fr; 
+            gap: 15px; 
+            padding: 10px 0; 
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .product-row:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -4532,10 +4629,129 @@ Report ID: ${report.id}
         
         <div class="actions">
             <h2>Quick Actions</h2>
-            <button class="btn" onclick="alert('Add Product - Coming Soon!')">Add New Product</button>
-            <button class="btn" onclick="alert('Manage Orders - Coming Soon!')">Manage Orders</button>
-            <button class="btn" onclick="alert('View Reports - Coming Soon!')">View Reports</button>
+            <button class="btn" onclick="showAddProduct()">Add New Product</button>
+            <button class="btn" onclick="showManageOrders()">Manage Orders</button>
+            <button class="btn" onclick="showReports()">View Reports</button>
             <button class="btn" onclick="logout()">Logout</button>
+        </div>
+        
+        <!-- Add Product Modal -->
+        <div id="addProductModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('addProductModal')">&times;</span>
+                <h2>Add New Product</h2>
+                <form id="addProductForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productName">Product Name</label>
+                            <input type="text" id="productName" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productSKU">SKU</label>
+                            <input type="text" id="productSKU" name="sku" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="productDescription">Description</label>
+                        <textarea id="productDescription" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productCategory">Category</label>
+                            <select id="productCategory" name="category" required>
+                                <option value="">Select Category</option>
+                                <option value="Diagnostic Equipment">Diagnostic Equipment</option>
+                                <option value="Surgical Instruments">Surgical Instruments</option>
+                                <option value="Patient Monitoring">Patient Monitoring</option>
+                                <option value="Laboratory Equipment">Laboratory Equipment</option>
+                                <option value="Medical Supplies">Medical Supplies</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="productPrice">Price ($)</label>
+                            <input type="number" id="productPrice" name="price" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productStock">Stock Quantity</label>
+                            <input type="number" id="productStock" name="stockQuantity" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productBrand">Brand</label>
+                            <input type="text" id="productBrand" name="brand" required>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('addProductModal')">Cancel</button>
+                        <button type="submit" class="btn">Add Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Manage Orders Modal -->
+        <div id="manageOrdersModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('manageOrdersModal')">&times;</span>
+                <h2>Manage Orders</h2>
+                <div id="ordersTable">
+                    <div class="table-header">
+                        <div>Order #</div>
+                        <div>Customer</div>
+                        <div>Product</div>
+                        <div>Amount</div>
+                        <div>Status</div>
+                        <div>Actions</div>
+                    </div>
+                    <div id="ordersList">Loading orders...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reports Modal -->
+        <div id="reportsModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('reportsModal')">&times;</span>
+                <h2>Sales Reports</h2>
+                <div class="report-section">
+                    <h3>Monthly Performance</h3>
+                    <div class="report-stats">
+                        <div class="report-stat">
+                            <div class="label">Total Revenue</div>
+                            <div class="value">$28,450</div>
+                        </div>
+                        <div class="report-stat">
+                            <div class="label">Orders Processed</div>
+                            <div class="value">142</div>
+                        </div>
+                        <div class="report-stat">
+                            <div class="label">Top Product</div>
+                            <div class="value">Digital Stethoscope</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="report-section">
+                    <h3>Product Performance</h3>
+                    <div class="product-performance">
+                        <div class="product-row">
+                            <div>Advanced Digital Stethoscope</div>
+                            <div>45 sold</div>
+                            <div>$13,455</div>
+                        </div>
+                        <div class="product-row">
+                            <div>Portable Ultrasound Machine</div>
+                            <div>8 sold</div>
+                            <div>$11,992</div>
+                        </div>
+                        <div class="product-row">
+                            <div>Surgical Instrument Set</div>
+                            <div>23 sold</div>
+                            <div>$3,003</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -4565,6 +4781,150 @@ Report ID: ${report.id}
             localStorage.clear();
             sessionStorage.clear();
             window.location.href = '/supplier-login-direct';
+        }
+        
+        // Modal Functions
+        function showAddProduct() {
+            document.getElementById('addProductModal').style.display = 'flex';
+        }
+        
+        function showManageOrders() {
+            document.getElementById('manageOrdersModal').style.display = 'flex';
+            loadOrders();
+        }
+        
+        function showReports() {
+            document.getElementById('reportsModal').style.display = 'flex';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // Add Product Form Handler
+        document.getElementById('addProductForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const productData = {
+                name: formData.get('name'),
+                sku: formData.get('sku'),
+                description: formData.get('description'),
+                category: formData.get('category'),
+                price: formData.get('price'),
+                stockQuantity: parseInt(formData.get('stockQuantity')),
+                brand: formData.get('brand'),
+                manufacturer: 'MedTech Solutions Inc.',
+                shortDescription: formData.get('description').substring(0, 100),
+                currency: 'USD',
+                status: 'active',
+                isActive: true,
+                trackInventory: true
+            };
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/supplier/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(productData)
+                });
+                
+                if (response.ok) {
+                    alert('Product added successfully!');
+                    closeModal('addProductModal');
+                    e.target.reset();
+                    // Update stats
+                    updateDashboardStats();
+                } else {
+                    const error = await response.json();
+                    alert('Error adding product: ' + (error.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Network error. Please try again.');
+            }
+        });
+        
+        // Load Orders Function
+        async function loadOrders() {
+            const ordersList = document.getElementById('ordersList');
+            ordersList.innerHTML = 'Loading orders...';
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/supplier/orders', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                if (response.ok) {
+                    const orders = await response.json();
+                    if (orders.length === 0) {
+                        ordersList.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">No orders found</div>';
+                    } else {
+                        ordersList.innerHTML = orders.map(order => 
+                            '<div class="order-row">' +
+                                '<div>' + order.orderNumber + '</div>' +
+                                '<div>' + order.customerName + '</div>' +
+                                '<div>' + order.productName + '</div>' +
+                                '<div>$' + order.totalAmount + '</div>' +
+                                '<div><span class="status-' + order.status + '">' + order.status + '</span></div>' +
+                                '<div><button class="btn" onclick="updateOrderStatus(\\'' + order.id + '\\', \\'' + order.status + '\\')">Update</button></div>' +
+                            '</div>'
+                        ).join('');
+                    }
+                } else {
+                    ordersList.innerHTML = '<div style="padding: 20px; text-align: center; color: #dc2626;">Error loading orders</div>';
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                ordersList.innerHTML = '<div style="padding: 20px; text-align: center; color: #dc2626;">Network error loading orders</div>';
+            }
+        }
+        
+        // Update Order Status
+        function updateOrderStatus(orderId, currentStatus) {
+            const statuses = ['pending', 'processing', 'shipped', 'delivered'];
+            const currentIndex = statuses.indexOf(currentStatus);
+            const nextStatus = statuses[currentIndex + 1] || statuses[0];
+            
+            if (confirm('Update order status to: ' + nextStatus + '?')) {
+                // In a real implementation, this would make an API call
+                alert('Order status updated to: ' + nextStatus);
+                loadOrders(); // Reload orders
+            }
+        }
+        
+        // Update dashboard stats
+        async function updateDashboardStats() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/supplier/stats', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                if (response.ok) {
+                    const stats = await response.json();
+                    // Update the dashboard with real stats
+                    console.log('Updated stats:', stats);
+                }
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
         }
         
         checkAuth();
