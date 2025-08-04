@@ -798,31 +798,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const { id } = req.params;
       const { reason } = req.body;
-      const supplier = await storage.updateMedicalSupplierStatus(id, 'rejected', reason);
-      
-      // TODO: Send rejection email to supplier
-      
-      res.json({ message: "Supplier rejected successfully", supplier });
-    } catch (error) {
-      console.error("Error rejecting supplier:", error);
-      res.status(500).json({ message: "Failed to reject supplier" });
-    }
-  });
-
-  app.put("/api/admin/suppliers/:id/reject", authenticateToken, async (req, res) => {
-    try {
-      if (req.user?.role !== 'super_admin') {
-        return res.status(403).json({ message: "Super admin access required" });
-      }
-      
-      const { id } = req.params;
-      const { reason } = req.body;
       
       const supplier = await storage.updateMedicalSupplierStatus(id, 'rejected', reason);
       
       // TODO: Send rejection email to supplier with reason
       
-      res.json({ message: "Supplier rejected", supplier });
+      res.json({ message: "Supplier rejected successfully", supplier });
     } catch (error) {
       console.error("Error rejecting supplier:", error);
       res.status(500).json({ message: "Failed to reject supplier" });
