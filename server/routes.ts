@@ -779,11 +779,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const { id } = req.params;
+      
+      // Update supplier status to approved
       const supplier = await storage.updateMedicalSupplierStatus(id, 'approved');
       
-      // TODO: Send approval email to supplier
+      if (!supplier) {
+        return res.status(404).json({ message: "Supplier not found" });
+      }
       
-      res.json({ message: "Supplier approved successfully", supplier });
+      // Create a tenant for the approved supplier
+      const supplierTenant = await storage.createTenant({
+        name: supplier.companyName,
+        type: 'medical_supplier',
+        subdomain: supplier.organizationSlug,
+        settings: {
+          features: ['marketplace', 'product_management', 'order_management'],
+          planType: 'supplier_basic',
+          description: `Medical device supplier: ${supplier.businessDescription}`
+        },
+        isActive: true,
+        organizationType: 'independent',
+        brandName: supplier.companyName,
+        defaultLanguage: 'en',
+        supportedLanguages: ['en'],
+        baseCurrency: 'USD',
+        supportedCurrencies: ['USD']
+      });
+      
+      // Create supplier admin user account
+      const hashedPassword = await bcrypt.hash(supplier.passwordHash, 12);
+      const supplierUser = await storage.createUser({
+        username: supplier.username,
+        email: supplier.contactEmail,
+        password: hashedPassword,
+        firstName: supplier.contactPersonName.split(' ')[0] || supplier.contactPersonName,
+        lastName: supplier.contactPersonName.split(' ').slice(1).join(' ') || '',
+        role: 'supplier_admin',
+        tenantId: supplierTenant.id,
+        isActive: true,
+        mustChangePassword: false,
+        isTemporaryPassword: false
+      });
+      
+      // Update supplier with tenant ID
+      await storage.updateMedicalSupplier(id, {
+        tenantId: supplierTenant.id,
+        approvedBy: req.user?.id,
+        approvedAt: new Date()
+      });
+      
+      // Create a sample product for the new supplier so they appear in marketplace
+      try {
+        const sampleProduct = await storage.createMarketplaceProduct({
+          supplierTenantId: supplierTenant.id,
+          name: `${supplier.companyName} - Sample Product`,
+          sku: `${supplier.organizationSlug}-SAMPLE-001`,
+          description: `Sample product from ${supplier.companyName}. This supplier specializes in ${supplier.businessType} with ${supplier.yearsInBusiness} years of experience. Contact them to discuss your specific medical equipment needs.`,
+          shortDescription: `Sample product from ${supplier.companyName}`,
+          category: supplier.productCategories?.[0] || "Medical Supplies",
+          subcategory: "General",
+          brand: supplier.companyName,
+          manufacturer: supplier.companyName,
+          price: "1.00",
+          currency: "USD",
+          stockQuantity: 1000,
+          lowStockThreshold: 10,
+          trackInventory: true,
+          status: "active",
+          isActive: true,
+          isFeatured: false,
+          requiresPrescription: false,
+          specifications: {
+            "Supplier": supplier.companyName,
+            "Contact": supplier.contactEmail,
+            "Experience": `${supplier.yearsInBusiness} years`,
+            "Specialization": supplier.businessType
+          },
+          features: [`${supplier.yearsInBusiness} years of experience`, "Certified medical supplier", "Professional service"],
+          metaTitle: `${supplier.companyName} - Medical Equipment Supplier`,
+          metaDescription: `Professional medical equipment supplier with ${supplier.yearsInBusiness} years of experience in ${supplier.businessType}.`,
+          searchKeywords: [supplier.companyName.toLowerCase(), supplier.businessType.toLowerCase(), "medical", "supplier"],
+          shippingClass: "standard",
+          leadTimeDays: 7
+        });
+        
+        console.log(`[SUPPLIER APPROVAL] Created sample product ${sampleProduct.id} for supplier ${supplier.companyName}`);
+      } catch (productError) {
+        console.log(`[SUPPLIER APPROVAL] Failed to create sample product: ${productError.message}`);
+        // Don't fail the approval if product creation fails
+      }
+      
+      console.log(`[SUPPLIER APPROVAL] Created tenant ${supplierTenant.id} and user ${supplierUser.id} for supplier ${supplier.companyName}`);
+      
+      res.json({ 
+        message: "Supplier approved successfully and added to marketplace", 
+        supplier,
+        tenant: supplierTenant,
+        supplierUser: { id: supplierUser.id, email: supplierUser.email }
+      });
     } catch (error) {
       console.error("Error approving supplier:", error);
       res.status(500).json({ message: "Failed to approve supplier" });
