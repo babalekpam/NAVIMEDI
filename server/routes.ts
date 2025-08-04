@@ -24,16 +24,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public supplier registration endpoint (outside /api path to avoid middleware)
   app.post('/public/suppliers/register', async (req, res) => {
     try {
-      const validationResult = insertMedicalSupplierSchema.safeParse(req.body);
+      console.log('Registration request body:', req.body);
+      
+      // Map form data to database schema
+      const supplierData = {
+        companyName: req.body.companyName,
+        businessType: req.body.businessType,
+        contactPersonName: req.body.contactPersonName || req.body.companyName,
+        contactEmail: req.body.contactEmail,
+        contactPhone: req.body.contactPhone,
+        websiteUrl: req.body.website || null,
+        businessAddress: req.body.address,
+        city: req.body.city,
+        state: req.body.state,
+        country: req.body.country,
+        zipCode: req.body.zipCode,
+        businessDescription: req.body.description,
+        productCategories: req.body.specialties ? [req.body.specialties] : [],
+        yearsInBusiness: req.body.yearsInBusiness || "1-2",
+        numberOfEmployees: req.body.numberOfEmployees || "1-10",
+        annualRevenue: req.body.annualRevenue || "Under $1M",
+        certifications: [],
+        termsAccepted: req.body.termsAccepted === true || req.body.termsAccepted === "true",
+        marketingConsent: req.body.marketingConsent === true || req.body.marketingConsent === "true"
+      };
 
-      if (!validationResult.success) {
+      console.log('Mapped supplier data:', supplierData);
+
+      // Validate only the required fields (excluding auto-generated ones)
+      const requiredFields = [
+        'companyName', 'businessType', 'contactPersonName', 'contactEmail', 
+        'contactPhone', 'businessAddress', 'city', 'state', 'country', 
+        'zipCode', 'businessDescription', 'yearsInBusiness', 'numberOfEmployees', 
+        'annualRevenue', 'termsAccepted'
+      ];
+      
+      const missingFields = requiredFields.filter(field => !supplierData[field]);
+      if (missingFields.length > 0) {
         return res.status(400).json({ 
-          error: 'Invalid supplier registration data', 
-          details: validationResult.error.errors 
+          error: 'Missing required fields', 
+          details: missingFields 
         });
       }
 
-      const supplier = await storage.createMedicalSupplier(validationResult.data);
+      const supplier = await storage.createMedicalSupplier(supplierData);
       
       res.status(201).json({
         message: 'Supplier registration submitted successfully',

@@ -595,7 +595,7 @@ export interface IStorage {
   updateAdInquiry(id: string, updates: Partial<AdInquiry>): Promise<AdInquiry | undefined>;
 
   // Medical Suppliers Management
-  createMedicalSupplier(supplier: InsertMedicalSupplier): Promise<MedicalSupplier>;
+  createMedicalSupplier(supplier: any): Promise<MedicalSupplier>;
   getMedicalSupplier(id: string): Promise<MedicalSupplier | undefined>;
   getMedicalSupplierByEmail(email: string): Promise<MedicalSupplier | undefined>;
   getMedicalSuppliers(): Promise<MedicalSupplier[]>;
@@ -5034,7 +5034,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Medical Suppliers Management
-  async createMedicalSupplier(supplier: InsertMedicalSupplier): Promise<MedicalSupplier> {
+  async createMedicalSupplier(supplier: any): Promise<MedicalSupplier> {
     // Generate organization slug from company name
     const organizationSlug = supplier.companyName
       .toLowerCase()

@@ -3528,11 +3528,15 @@ export const insertAdInquirySchema = createInsertSchema(adInquiries).omit({
 // Medical Suppliers Insert Schema
 export const insertMedicalSupplierSchema = createInsertSchema(medicalSuppliers).omit({
   id: true,
+  organizationSlug: true, // Generated automatically
+  status: true, // Set automatically
   createdAt: true,
   updatedAt: true,
   tenantId: true,
   approvedBy: true,
-  approvedAt: true
+  approvedAt: true,
+  rejectionReason: true,
+  notes: true
 });
 
 export type Advertisement = typeof advertisements.$inferSelect;

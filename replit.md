@@ -12,7 +12,8 @@ NaviMED is a multi-tenant healthcare platform connecting independent pharmacies 
 - Complete 100% translation system implementation (fixed Aug 4, 2025)
 - Fixed organization registration authorization issues - registration now works without authentication tokens (Aug 4, 2025)
 - Confirmed enterprise-grade multi-tenant architecture with complete data isolation between all organizations (Aug 4, 2025)
-- **SUPPLIER AUTHENTICATION SOLUTION:** Created direct HTML pages bypassing React entirely - use `/supplier-login-direct` and `/supplier-dashboard-direct` URLs ONLY (Aug 4, 2025)
+- **SUPPLIER AUTHENTICATION SOLUTION:** Created unified supplier portal at `/supplier-portal` with combined login/signup functionality (Aug 4, 2025)
+- Fixed supplier registration validation by properly mapping form fields to database schema and excluding auto-generated fields (Aug 4, 2025)
 
 ## System Architecture
 The platform is built on a modern stack for scalability, security, and maintainability, featuring a strong multi-tenant architecture with strict data isolation per organization (hospital, pharmacy, laboratory).
