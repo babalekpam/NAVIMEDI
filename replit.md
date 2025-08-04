@@ -19,6 +19,7 @@ NaviMED is a multi-tenant healthcare platform connecting independent pharmacies 
 - **AUTOMATIC MARKETPLACE INTEGRATION:** Enhanced supplier approval process to automatically create tenant accounts and sample marketplace products for approved suppliers (Aug 4, 2025)
 - **COMPLETE QUOTE REQUEST SYSTEM:** Implemented functional quote request functionality with database schema, API endpoints, form validation, and proper error handling for marketplace customers (Aug 4, 2025)
 - **ROLE-BASED ADVERTISEMENT ACCESS:** Fixed authorization issues - healthcare practices (hospitals, pharmacies, laboratories) can now only view and contact advertisers, while advertisement posting is restricted to suppliers only (Aug 4, 2025)
+- **FUNCTIONAL INQUIRY SYSTEM:** Implemented complete contact functionality for advertisements with expandable inquiry forms, backend API validation, and success notifications (Aug 4, 2025)
 
 ## System Architecture
 The platform is built on a modern stack for scalability, security, and maintainability, featuring a strong multi-tenant architecture with strict data isolation per organization (hospital, pharmacy, laboratory).
