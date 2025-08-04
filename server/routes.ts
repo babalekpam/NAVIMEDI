@@ -4584,24 +4584,62 @@ Report ID: ${report.id}
     res.redirect(301, '/supplier-dashboard-direct');
   });
   
+  // CRITICAL: Block access to hospital dashboard and force redirect
+  app.get('/', (req, res) => {
+    // Check localStorage via cookie or query param for supplier users
+    console.log('[ROOT ACCESS] Checking for supplier redirect...');
+    res.send(`<!DOCTYPE html>
+<html>
+<head><title>Healthcare Platform</title></head>
+<body>
+<script>
+const userType = localStorage.getItem('userType');
+console.log('Root access - userType:', userType);
+if (userType === 'supplier') {
+  console.log('Supplier detected, redirecting to supplier dashboard...');
+  window.location.replace('/supplier-dashboard-direct');
+} else {
+  console.log('Loading hospital system...');
+  window.location.replace('/dashboard');
+}
+</script>
+<div style="text-align: center; padding: 50px;">
+  <h2>Loading Healthcare Platform...</h2>
+  <p>Detecting user type...</p>
+</div>
+</body>
+</html>`);
+  });
+
   // CRITICAL: Force redirect hospital routes when supplier is logged in
   app.get('/dashboard', (req, res) => {
-    // Check if this is a supplier session based on token
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      try {
-        const token = authHeader.split(' ')[1];
-        const jwt = require('jsonwebtoken');
-        const decoded = jwt.decode(token);
-        if (decoded && decoded.userType === 'supplier') {
-          console.log('[DASHBOARD REDIRECT] Supplier trying to access hospital dashboard, redirecting...');
-          return res.redirect(301, '/supplier-dashboard-direct');
-        }
-      } catch (e) {
-        // Continue to normal handling
-      }
-    }
-    // Continue to React app for hospital users
+    console.log('[DASHBOARD ACCESS] Hospital dashboard requested');
+    res.send(`<!DOCTYPE html>
+<html>
+<head><title>Healthcare Platform</title></head>
+<body>
+<script>
+const userType = localStorage.getItem('userType');
+console.log('Dashboard access - userType:', userType);
+if (userType === 'supplier') {
+  console.log('Supplier trying to access hospital dashboard, redirecting...');
+  alert('Supplier users must use the supplier dashboard. Redirecting...');
+  window.location.replace('/supplier-dashboard-direct');
+} else {
+  console.log('Loading hospital dashboard...');
+  window.location.replace('/hospital-dashboard');
+}
+</script>
+<div style="text-align: center; padding: 50px;">
+  <h2>Checking Access Permissions...</h2>
+  <p>Redirecting to appropriate dashboard...</p>
+</div>
+</body>
+</html>`);
+  });
+  
+  // Hospital dashboard route
+  app.get('/hospital-dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/dist/index.html'));
   });
   
