@@ -203,10 +203,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-emerald-50/30">
-      {/* TEST BANNER FOR ADVERTISEMENT MARKETPLACE */}
-      <div className="bg-red-500 text-white p-4 text-center text-xl font-bold cursor-pointer" onClick={() => window.location.href = '/advertisements'}>
-        🚀 NEW: Medical Device Advertisement Marketplace - Click Here to Explore! 🚀
-      </div>
+
       <PublicHeader />
 
       {/* Hero Section */}
