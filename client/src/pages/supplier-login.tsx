@@ -39,27 +39,19 @@ export default function SupplierLogin() {
         localStorage.setItem('token', response.token);
         localStorage.setItem('user', JSON.stringify(response.user));
         
-        // Verify this is a supplier account by checking if they have a supplier profile
-        try {
-          await apiRequest('/api/supplier/profile');
-          
-          toast({
-            title: "Login Successful",
-            description: `Welcome back to ${formData.organizationName}!`,
-          });
-          
-          // Redirect to supplier dashboard
-          setLocation('/supplier-dashboard');
-        } catch (supplierError) {
-          // Not a supplier account
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          toast({
-            title: "Access Denied",
-            description: "This account is not registered as a medical supplier.",
-            variant: "destructive",
-          });
-        }
+        // Store supplier context and redirect immediately to supplier dashboard
+        localStorage.setItem('userType', 'supplier');
+        localStorage.setItem('organizationName', formData.organizationName);
+        
+        toast({
+          title: "Login Successful",
+          description: `Welcome back to ${formData.organizationName}!`,
+        });
+        
+        // Force immediate redirect to supplier dashboard
+        setTimeout(() => {
+          window.location.href = '/supplier-dashboard';
+        }, 100);
       }
     } catch (error: any) {
       console.error('Login error:', error);

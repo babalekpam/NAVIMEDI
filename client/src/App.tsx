@@ -368,17 +368,7 @@ function AppContent() {
           </ProtectedRoute>
         </Route>
         <Route path="/supplier-dashboard">
-          <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <SupplierDashboard />
-                </main>
-              </div>
-            </div>
-          </ProtectedRoute>
+          <SupplierDashboard />
         </Route>
         <Route path="/supplier-register">
           <SupplierRegister />
