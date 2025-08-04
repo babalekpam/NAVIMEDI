@@ -4571,6 +4571,15 @@ Report ID: ${report.id}
     res.send(html);
   });
 
+  // CRITICAL: Redirect supplier routes to direct pages (bypass React entirely)
+  app.get('/supplier-login', (req, res) => {
+    res.redirect(301, '/supplier-login-direct');
+  });
+  
+  app.get('/supplier-dashboard', (req, res) => {
+    res.redirect(301, '/supplier-dashboard-direct');
+  });
+
   const server = createServer(app);
   return server;
 }
