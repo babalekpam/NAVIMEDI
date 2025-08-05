@@ -74,7 +74,7 @@ app.use((req, res, next) => {
     const existingTenant = await db.select().from(tenants).where(eq(tenants.subdomain, 'argilette')).limit(1);
     
     let platformTenant;
-    if (existingTenant.length === 0) {
+    if (Array.isArray(existingTenant) && existingTenant.length === 0) {
       const [tenant] = await db.insert(tenants).values({
         name: "ARGILETTE Platform",
         type: "hospital",
