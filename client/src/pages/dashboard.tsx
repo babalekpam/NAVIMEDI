@@ -51,35 +51,48 @@ export default function Dashboard() {
   const { data: platformMetrics, isLoading: platformLoading, refetch: refetchPlatform } = useQuery<PlatformMetrics>({
     queryKey: ["/api/platform/metrics"],
     enabled: !!user && isSuperAdmin,
+    staleTime: 2 * 60 * 1000, // 2 minutes for super admin metrics
   });
 
-  // Regular metrics for other users
+  // Regular metrics for other users - optimized with better caching
   const { data: metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useQuery<DashboardMetrics>({
     queryKey: ["/api/dashboard/metrics"],
     enabled: !!user && !!tenant && !isSuperAdmin,
+    staleTime: 30 * 1000, // 30 seconds for dashboard metrics
+    refetchInterval: 60 * 1000, // Auto-refresh every minute
   });
 
-
+  // Only fetch appointments if we actually need them (not for all users)
+  const shouldFetchAppointments = !!user && !!tenant && !isSuperAdmin && 
+    (user?.role === 'physician' || user?.role === 'nurse' || user?.role === 'tenant_admin' || user?.role === 'director');
 
   const { data: todayAppointments = [], isLoading: appointmentsLoading } = useQuery({
     queryKey: ["/api/appointments", "date", new Date().toISOString().split('T')[0]],
-    enabled: !!user && !!tenant && !isSuperAdmin,
+    enabled: shouldFetchAppointments,
+    staleTime: 2 * 60 * 1000, // 2 minutes for appointment data
   });
 
-  // Get doctor's specific appointments if user is a physician
+  // Get doctor's specific appointments if user is a physician - more targeted
   const { data: doctorAppointments = [], isLoading: doctorAppointmentsLoading } = useQuery({
     queryKey: ["/api/appointments/provider", user?.id || user?.userId],
     enabled: !!user && !!tenant && user?.role === 'physician' && !!(user?.id || user?.userId),
+    staleTime: 2 * 60 * 1000, // 2 minutes for doctor appointments
   });
+
+  // Only fetch lab orders for roles that need them
+  const shouldFetchLabOrders = !!user && !!tenant && !isSuperAdmin && 
+    (user?.role === 'physician' || user?.role === 'lab_technician' || user?.role === 'tenant_admin' || user?.role === 'director');
 
   const { data: pendingLabOrders = [], isLoading: labOrdersLoading } = useQuery({
     queryKey: ["/api/lab-orders", "pending", "true"],
-    enabled: !!user && !!tenant && !isSuperAdmin,
+    enabled: shouldFetchLabOrders,
+    staleTime: 2 * 60 * 1000, // 2 minutes for lab order data
   });
 
   const { data: tenantsList = [], isLoading: tenantsLoading } = useQuery({
     queryKey: ["/api/tenants"],
     enabled: !!user && isSuperAdmin,
+    staleTime: 5 * 60 * 1000, // 5 minutes for tenant list
   });
 
   if (!user) {

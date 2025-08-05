@@ -42,8 +42,7 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
         console.log('TenantFixed: Using apiRequest to fetch tenant data');
         
         // Use the established apiRequest function which handles routing correctly
-        const response = await apiRequest('GET', '/api/tenant/current');
-        const tenantData = await response.json();
+        const tenantData = await apiRequest('/api/tenant/current');
         
         console.log('TenantFixed: Successfully received tenant data:', tenantData?.name || 'No name');
         console.log('TenantFixed: Full tenant data structure:', tenantData);
