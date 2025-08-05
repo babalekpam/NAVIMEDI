@@ -99,6 +99,7 @@ app.use((req, res, next) => {
       const hashedPassword = await bcrypt.hash('Serrega1208@', 10);
       
       await db.insert(users).values({
+        id: nanoid(),
         tenantId: platformTenant.id,
         username: 'abel_admin',
         email: 'abel@argilette.com',
