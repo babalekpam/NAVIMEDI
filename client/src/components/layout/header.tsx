@@ -24,11 +24,7 @@ export const Header = () => {
   const { tenant } = useTenant();
   const [, setLocation] = useLocation();
   const { t } = useTranslation();
-  const [notifications, setNotifications] = useState([
-    { id: 1, type: "lab_result", message: "Lab results available for Patient #1254", time: "2 min ago", urgent: true },
-    { id: 2, type: "insurance", message: "Insurance claim approved - $150", time: "5 min ago", urgent: false },
-    { id: 3, type: "appointment", message: "New appointment request", time: "10 min ago", urgent: false }
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const handleLogout = () => {
     logout();

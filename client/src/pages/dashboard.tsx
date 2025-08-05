@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import React from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,8 +37,15 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { tenant } = useTenant();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   const isSuperAdmin = user?.role === 'super_admin';
+
+  // Clear stale cache on component mount
+  React.useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["/api/dashboard/metrics"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+  }, [queryClient]);
   
   console.log('Dashboard Debug:', {
     isSuperAdmin,
@@ -58,8 +66,8 @@ export default function Dashboard() {
   const { data: metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useQuery<DashboardMetrics>({
     queryKey: ["/api/dashboard/metrics"],
     enabled: !!user && !!tenant && !isSuperAdmin,
-    staleTime: 30 * 1000, // 30 seconds for dashboard metrics
-    refetchInterval: 60 * 1000, // Auto-refresh every minute
+    staleTime: 0, // Force fresh data every time
+    refetchInterval: 30 * 1000, // Auto-refresh every 30 seconds
   });
 
   // Only fetch appointments if we actually need them (not for all users)

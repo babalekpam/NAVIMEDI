@@ -22,19 +22,7 @@ export const AlertPanel = ({ pendingLabCount, loading = false }: AlertPanelProps
 
   return (
     <div className="space-y-4">
-      {/* High Priority Alert */}
-      <Alert className="border-red-200 bg-red-50">
-        <AlertTriangle className="h-4 w-4 text-red-600" />
-        <AlertDescription className="text-red-800">
-          <div>
-            <p className="font-medium">Critical Values Detected</p>
-            <p className="text-sm">Patient vitals require immediate attention</p>
-            <p className="text-xs text-red-600 mt-1">2 minutes ago</p>
-          </div>
-        </AlertDescription>
-      </Alert>
-
-      {/* Lab Results Alert */}
+      {/* Only show lab results alert if there are pending results */}
       {pendingLabCount > 0 && (
         <Alert className="border-yellow-200 bg-yellow-50">
           <Clock className="h-4 w-4 text-yellow-600" />
@@ -42,35 +30,24 @@ export const AlertPanel = ({ pendingLabCount, loading = false }: AlertPanelProps
             <div>
               <p className="font-medium">Lab Results Pending Review</p>
               <p className="text-sm">{pendingLabCount} results need your attention</p>
-              <p className="text-xs text-yellow-600 mt-1">15 minutes ago</p>
+              <p className="text-xs text-yellow-600 mt-1">Needs review</p>
             </div>
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Information Alert */}
-      <Alert className="border-blue-200 bg-blue-50">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800">
-          <div>
-            <p className="font-medium">Insurance Verification</p>
-            <p className="text-sm">3 patients need insurance verification</p>
-            <p className="text-xs text-blue-600 mt-1">1 hour ago</p>
-          </div>
-        </AlertDescription>
-      </Alert>
-
-      {/* Success Alert */}
-      <Alert className="border-green-200 bg-green-50">
-        <CheckCircle className="h-4 w-4 text-green-600" />
-        <AlertDescription className="text-green-800">
-          <div>
-            <p className="font-medium">System Backup Complete</p>
-            <p className="text-sm">All patient data securely backed up</p>
-            <p className="text-xs text-green-600 mt-1">2 hours ago</p>
-          </div>
-        </AlertDescription>
-      </Alert>
+      {/* Show message when no alerts */}
+      {pendingLabCount === 0 && (
+        <Alert className="border-green-200 bg-green-50">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            <div>
+              <p className="font-medium">All Clear</p>
+              <p className="text-sm">No urgent notifications at this time</p>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 };
