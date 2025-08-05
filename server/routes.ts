@@ -455,17 +455,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mustChangePassword: false
       });
 
-      // Send welcome email (optional)
+      // Send registration confirmation email
       try {
-        await sendWelcomeEmail(adminEmail, {
-          firstName: adminFirstName,
-          lastName: adminLastName,
-          organizationName: organizationName,
-          loginUrl: `${req.protocol}://${req.get('host')}/login`,
-          tempPassword: null
-        });
+        const { sendRegistrationConfirmationEmail } = await import('./email-service');
+        const loginUrl = `${req.protocol}://${req.get('host')}/login`;
+        const emailSent = await sendRegistrationConfirmationEmail(
+          adminEmail,
+          `${adminFirstName} ${adminLastName}`,
+          organizationName,
+          loginUrl
+        );
+        console.log(`Registration confirmation email ${emailSent ? 'sent successfully' : 'failed'} to ${adminEmail}`);
       } catch (emailError) {
-        console.error('Failed to send welcome email:', emailError);
+        console.error('Failed to send registration confirmation email:', emailError);
         // Don't fail registration if email fails
       }
 
@@ -1167,9 +1169,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get tenant information for email
       const tenant = await storage.getTenant(user.tenantId);
       
-      // Send welcome email with credentials
+      // Send welcome email with credentials AND registration confirmation
       if (tenant) {
-        const emailSent = await sendWelcomeEmail({
+        // Send welcome email with temporary password
+        const welcomeEmailSent = await sendWelcomeEmail({
           userEmail: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
@@ -1179,8 +1182,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           loginUrl: `${req.protocol}://${req.get('host')}/login`
         });
         
-        if (!emailSent) {
+        // Also send registration confirmation email
+        const { sendRegistrationConfirmationEmail } = await import('./email-service');
+        const confirmationEmailSent = await sendRegistrationConfirmationEmail(
+          user.email,
+          `${user.firstName} ${user.lastName}`,
+          tenant.name,
+          `${req.protocol}://${req.get('host')}/login`
+        );
+        
+        if (!welcomeEmailSent) {
           console.warn(`Failed to send welcome email to ${user.email}`);
+        }
+        if (!confirmationEmailSent) {
+          console.warn(`Failed to send confirmation email to ${user.email}`);
+        } else {
+          console.log(`Registration confirmation email sent successfully to ${user.email}`);
         }
       }
 

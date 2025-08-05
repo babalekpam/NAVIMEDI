@@ -52,6 +52,137 @@ interface WelcomeEmailParams {
   loginUrl: string;
 }
 
+// Send confirmation email for new registrations
+export async function sendRegistrationConfirmationEmail(
+  userEmail: string, 
+  userName: string, 
+  organizationName: string,
+  loginUrl: string = 'https://navimed-healthcare.replit.app/login'
+): Promise<boolean> {
+  
+  const confirmationHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Welcome to NaviMED Healthcare Platform</title>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #2563eb, #10b981); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+            .welcome-message { background: white; padding: 25px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2563eb; }
+            .features { background: white; padding: 25px; border-radius: 8px; margin-bottom: 20px; }
+            .feature-item { margin: 15px 0; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+            .feature-item:last-child { border-bottom: none; }
+            .feature-icon { color: #10b981; font-weight: bold; margin-right: 10px; }
+            .button { background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; }
+            .footer { text-align: center; color: #6b7280; font-size: 14px; margin-top: 30px; }
+            .logo { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div class="logo">🏥 NAVIMED</div>
+                <h1 style="margin: 0;">Welcome to NaviMED Healthcare Platform!</h1>
+                <p style="margin: 10px 0 0 0; opacity: 0.9;">Your registration was successful</p>
+            </div>
+            
+            <div class="content">
+                <div class="welcome-message">
+                    <h2 style="color: #2563eb; margin-top: 0;">Hello ${userName}!</h2>
+                    <p>Thank you for registering with NaviMED Healthcare Platform. Your account for <strong>${organizationName}</strong> has been successfully created and is ready to use.</p>
+                    <p>You now have access to our comprehensive suite of healthcare management tools designed to streamline your operations and improve patient care.</p>
+                </div>
+
+                <div class="features">
+                    <h3 style="color: #2563eb; margin-top: 0;">What you can do with NaviMED:</h3>
+                    
+                    <div class="feature-item">
+                        <span class="feature-icon">📅</span>
+                        <strong>Appointment Management:</strong> Schedule, track, and manage patient appointments
+                    </div>
+                    
+                    <div class="feature-item">
+                        <span class="feature-icon">👨‍⚕️</span>
+                        <strong>Patient Records:</strong> Secure electronic health records with comprehensive patient data
+                    </div>
+                    
+                    <div class="feature-item">
+                        <span class="feature-icon">💊</span>
+                        <strong>Prescription Management:</strong> Digital prescriptions with pharmacy integration
+                    </div>
+                    
+                    <div class="feature-item">
+                        <span class="feature-icon">🧪</span>
+                        <strong>Laboratory Integration:</strong> Lab order management and results tracking
+                    </div>
+                    
+                    <div class="feature-item">
+                        <span class="feature-icon">💰</span>
+                        <strong>Billing & Insurance:</strong> Automated insurance claims and billing management
+                    </div>
+                    
+                    <div class="feature-item">
+                        <span class="feature-icon">🛒</span>
+                        <strong>Medical Marketplace:</strong> Access to medical supplies and equipment vendors
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin: 30px 0;">
+                    <p style="margin-bottom: 20px;">Ready to get started? Access your dashboard:</p>
+                    <a href="${loginUrl}" class="button">Login to Your Dashboard</a>
+                </div>
+
+                <div style="background: #e0f2fe; padding: 20px; border-radius: 8px; border-left: 4px solid #0288d1;">
+                    <h4 style="color: #0288d1; margin-top: 0;">Need Help?</h4>
+                    <p style="margin-bottom: 0;">Our support team is here to help you get the most out of NaviMED. Contact us anytime for assistance with setup, training, or technical support.</p>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>Thank you for choosing NaviMED Healthcare Platform</p>
+                <p style="font-size: 12px; color: #9ca3af;">This email was sent to ${userEmail} because you registered for a NaviMED account.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+
+  const confirmationText = `
+Welcome to NaviMED Healthcare Platform!
+
+Hello ${userName},
+
+Thank you for registering with NaviMED Healthcare Platform. Your account for ${organizationName} has been successfully created and is ready to use.
+
+You now have access to our comprehensive healthcare management tools:
+
+• Appointment Management - Schedule and track patient appointments
+• Patient Records - Secure electronic health records  
+• Prescription Management - Digital prescriptions with pharmacy integration
+• Laboratory Integration - Lab order management and results tracking
+• Billing & Insurance - Automated insurance claims and billing
+• Medical Marketplace - Access to medical supplies and equipment
+
+Ready to get started? Log in to your dashboard at: ${loginUrl}
+
+Need help? Our support team is here to assist you with setup, training, and technical support.
+
+Thank you for choosing NaviMED Healthcare Platform!
+  `;
+
+  return await sendEmail({
+    to: userEmail,
+    from: 'noreply@navimed-healthcare.com',
+    subject: 'Welcome to NaviMED - Registration Confirmed',
+    text: confirmationText,
+    html: confirmationHtml
+  });
+}
+
 export async function sendWelcomeEmail(params: WelcomeEmailParams): Promise<boolean> {
   const htmlContent = `
     <!DOCTYPE html>
