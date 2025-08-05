@@ -59,14 +59,7 @@ export default function Dashboard() {
     enabled: !!user && !!tenant && !isSuperAdmin,
   });
 
-  // Debug metrics data
-  console.log('Dashboard Metrics Debug:', {
-    metrics,
-    metricsLoading,
-    user: user?.role,
-    tenant: tenant?.name,
-    queryEnabled: !!user && !!tenant && !isSuperAdmin
-  });
+
 
   const { data: todayAppointments = [], isLoading: appointmentsLoading } = useQuery({
     queryKey: ["/api/appointments", "date", new Date().toISOString().split('T')[0]],
@@ -1681,13 +1674,6 @@ export default function Dashboard() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900">Patient Portal</h1>
       <p className="text-gray-600">Welcome back, {user.firstName}. Your health information and appointments.</p>
-    </div>
-  );
-
-  const renderTenantAdminDashboard = () => (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-      <p className="text-gray-600">Welcome back, {user.firstName}. Organization management and oversight.</p>
     </div>
   );
 
