@@ -4,6 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PublicHeader } from "@/components/layout/public-header";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
+import healthcareTeam from "@assets/image_1754352574197.png";
+import medicalImaging from "@assets/image_1754352599331.png";
+import healthAssessment from "@assets/image_1754352626174.png";
+import healthcareManagement from "@assets/image_1754352650858.png";
+import healthcareSecurity from "@assets/image_1754352725355.png";
+import medicalSupply from "@assets/image_1754352767570.png";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { 

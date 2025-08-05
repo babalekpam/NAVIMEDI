@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { ProtectedRoute } from "@/components/layout/protected-route";
-import LandingPage from "@/pages/landing";
+import LandingPage from "@/pages/landing-fixed";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import RegisterOrganization from "@/pages/register-organization";
