@@ -2995,11 +2995,7 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async getPatientCheckIn(id: string, tenantId: string): Promise<PatientCheckIn | undefined> {
-    const [checkIn] = await db.select().from(patientCheckIns)
-      .where(and(eq(patientCheckIns.id, id), eq(patientCheckIns.tenantId, tenantId)));
-    return checkIn || undefined;
-  }
+
 
   async getPatientCheckInsByDate(date: string, tenantId: string): Promise<any[]> {
     const targetDate = new Date(date);
@@ -4171,26 +4167,7 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(prescriptions.updatedAt));
   }
 
-  async generateInventoryReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
-    // Generate sample inventory data since we don't have an inventory table
-    const medicationList = [
-      { name: 'Amoxicillin', currentStock: 150, minimumStock: 50, expiryDate: '2025-12-31', supplier: 'PharmaCorp' },
-      { name: 'Ibuprofen', currentStock: 200, minimumStock: 75, expiryDate: '2026-06-30', supplier: 'MediSupply' },
-      { name: 'Metformin', currentStock: 89, minimumStock: 100, expiryDate: '2025-09-15', supplier: 'HealthDist' },
-      { name: 'Lisinopril', currentStock: 45, minimumStock: 30, expiryDate: '2026-03-20', supplier: 'PharmaCorp' },
-      { name: 'Atorvastatin', currentStock: 120, minimumStock: 60, expiryDate: '2025-11-10', supplier: 'MediSupply' },
-    ];
 
-    return medicationList.map(med => ({
-      medicationName: med.name,
-      currentStock: med.currentStock,
-      minimumStock: med.minimumStock,
-      stockStatus: med.currentStock <= med.minimumStock ? 'Low Stock' : 'In Stock',
-      expiryDate: med.expiryDate,
-      supplier: med.supplier,
-      lastUpdated: new Date().toISOString().split('T')[0],
-    }));
-  }
 
   async generatePatientReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
     const { start, end } = dateRange;
@@ -4247,30 +4224,7 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(pharmacyPatientInsurance.createdAt));
   }
 
-  async generatePrescriptionReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
-    const { start, end } = dateRange;
-    let query = db
-      .select({
-        medicationName: prescriptions.medicationName,
-        prescriptionCount: sql<number>`COUNT(*)`,
-        totalQuantity: sql<number>`SUM(${prescriptions.quantity})`,
-        status: prescriptions.status,
-        lastDispensed: sql<string>`MAX(${prescriptions.updatedAt})`,
-      })
-      .from(prescriptions)
-      .where(eq(prescriptions.pharmacyId, tenantId));
 
-    if (start) {
-      query = query.where(sql`${prescriptions.createdAt} >= ${start}`);
-    }
-    if (end) {
-      query = query.where(sql`${prescriptions.createdAt} <= ${end}`);
-    }
-
-    return await query
-      .groupBy(prescriptions.medicationName, prescriptions.status)
-      .orderBy(prescriptions.medicationName);
-  }
 
   async generateInventoryReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
     // This would typically query an inventory table, but for now we'll use prescription data
