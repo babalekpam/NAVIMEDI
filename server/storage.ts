@@ -2143,10 +2143,10 @@ export class DatabaseStorage implements IStorage {
       );
 
     return {
-      todayAppointments: todayAppointmentsResult.count,
-      pendingLabResults: pendingLabResultsResult.count,
-      activePrescriptions: activePrescriptionsResult.count,
-      monthlyClaimsTotal: monthlyClaimsResult.total
+      todayAppointments: Number(todayAppointmentsResult.count) || 0,
+      pendingLabResults: Number(pendingLabResultsResult.count) || 0,
+      activePrescriptions: Number(activePrescriptionsResult.count) || 0,
+      monthlyClaimsTotal: Number(monthlyClaimsResult.total) || 0
     };
   }
 

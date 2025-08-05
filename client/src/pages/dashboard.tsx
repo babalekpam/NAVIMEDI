@@ -59,6 +59,15 @@ export default function Dashboard() {
     enabled: !!user && !!tenant && !isSuperAdmin,
   });
 
+  // Debug metrics data
+  console.log('Dashboard Metrics Debug:', {
+    metrics,
+    metricsLoading,
+    user: user?.role,
+    tenant: tenant?.name,
+    queryEnabled: !!user && !!tenant && !isSuperAdmin
+  });
+
   const { data: todayAppointments = [], isLoading: appointmentsLoading } = useQuery({
     queryKey: ["/api/appointments", "date", new Date().toISOString().split('T')[0]],
     enabled: !!user && !!tenant && !isSuperAdmin,
