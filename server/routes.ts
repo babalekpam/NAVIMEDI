@@ -6261,6 +6261,33 @@ Report ID: ${report.id}
     }
   });
 
+  // Test Data Creation API - Super Admin Only
+  app.post("/api/admin/create-test-data", authenticateToken, async (req, res) => {
+    try {
+      console.log("Test data creation request - User:", req.user);
+      
+      if (req.user.role !== 'super_admin') {
+        return res.status(403).json({ message: "Access denied. Super admin role required." });
+      }
+
+      // Import and run the test data creation
+      const { createHospitalTestData } = await import('./create-hospital-test-data.js');
+      const result = await createHospitalTestData();
+      
+      res.json({
+        success: true,
+        message: "Hospital test data created successfully",
+        details: result
+      });
+    } catch (error) {
+      console.error("Error creating test data:", error);
+      res.status(500).json({ 
+        message: "Failed to create test data",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
