@@ -36,20 +36,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Root endpoint for basic health check with timeout protection
-app.get('/', (req, res) => {
-  // Set a timeout to ensure quick response
-  const timeout = setTimeout(() => {
-    if (!res.headersSent) {
-      res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
-    }
-  }, 100);
-  
-  // Clear timeout if response is sent earlier
-  res.on('finish', () => clearTimeout(timeout));
-  
-  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
-});
+// Note: Root route (/) is handled by Vite middleware for frontend serving
 
 app.use((req, res, next) => {
   const start = Date.now();
