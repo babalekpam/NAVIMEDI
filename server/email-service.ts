@@ -3,11 +3,11 @@ import { MailService } from '@sendgrid/mail';
 // Validate SendGrid API key format and existence
 if (!process.env.SENDGRID_API_KEY) {
   console.warn("SENDGRID_API_KEY environment variable not set. Email functionality will be disabled.");
-} else if (!process.env.SENDGRID_API_KEY.startsWith('SG.') && !process.env.SENDGRID_API_KEY.startsWith('SK')) {
-  console.error("API key does not start with \"SG.\" or \"SK\".");
-  console.warn("Invalid SendGrid API key format. Email functionality will be disabled.");
-} else {
+} else if (process.env.SENDGRID_API_KEY.startsWith('SG.') || process.env.SENDGRID_API_KEY.startsWith('SK')) {
   console.log(`Valid SendGrid API key configured (format: ${process.env.SENDGRID_API_KEY?.substring(0, 3)}...)`);
+} else {
+  console.warn("SENDGRID_API_KEY should start with 'SG.' (update the secret in Deployment settings)");
+  console.warn("Email functionality may be limited with current API key format.");
 }
 
 const mailService = new MailService();

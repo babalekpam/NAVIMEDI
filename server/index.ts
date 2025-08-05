@@ -13,8 +13,22 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Simple health check endpoint for deployment - responds immediately
+// Health check endpoint with timeout protection
 app.get('/health', (req, res) => {
+  // Set a timeout to ensure quick response
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      res.status(200).json({ 
+        status: 'healthy', 
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+      });
+    }
+  }, 100);
+  
+  // Clear timeout if response is sent earlier
+  res.on('finish', () => clearTimeout(timeout));
+  
   res.status(200).json({ 
     status: 'healthy', 
     timestamp: new Date().toISOString(),
@@ -22,10 +36,19 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Simple root endpoint for basic health check - responds immediately
+// Root endpoint for basic health check with timeout protection
 app.get('/', (req, res) => {
-  // Simple OK response for health checks
-  res.status(200).send('OK');
+  // Set a timeout to ensure quick response
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+    }
+  }, 100);
+  
+  // Clear timeout if response is sent earlier
+  res.on('finish', () => clearTimeout(timeout));
+  
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
 app.use((req, res, next) => {
@@ -58,9 +81,12 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
-  // Initialize platform admin on startup
+// Move expensive startup operations to a separate initialization function
+const initializeApp = async () => {
+  // Initialize platform admin after server starts
   try {
+    log('🔄 Starting comprehensive platform initialization...');
+    
     // Create platform tenant (ARGILETTE)
     const existingTenant = await db.select().from(tenants).where(eq(tenants.subdomain, 'argilette')).limit(1);
     
@@ -113,7 +139,9 @@ app.use((req, res, next) => {
   } catch (error) {
     log("❌ Platform initialization failed: " + error);
   }
+};
 
+(async () => {
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -145,6 +173,12 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    // Call initialization after server is ready
+    setTimeout(() => {
+      initializeApp().catch(error => {
+        log(`Initialization failed: ${error}`);
+      });
+    }, 1000); // Run 1 second after server starts
   });
 
   // Graceful shutdown handling
