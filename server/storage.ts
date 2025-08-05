@@ -682,7 +682,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values([insertUser]).returning();
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
@@ -723,8 +723,7 @@ export class DatabaseStorage implements IStorage {
       const role = user[0].role;
       switch (role) {
         case 'physician':
-        case 'doctor':
-          return []; // By default, doctors have NO scheduling/confirmation permissions
+          return []; // By default, physicians have NO scheduling/confirmation permissions
         case 'receptionist':
           return ['schedule_appointments', 'confirm_appointments', 'cancel_appointments'];
         case 'tenant_admin':
@@ -3452,18 +3451,7 @@ export class DatabaseStorage implements IStorage {
     return request || undefined;
   }
 
-  async createPatientAccessRequest(request: any): Promise<any> {
-    const [newRequest] = await db.insert(patientAccessRequests).values(request).returning();
-    return newRequest;
-  }
 
-  async updatePatientAccessRequest(id: string, updates: any, tenantId: string): Promise<any | undefined> {
-    const [updated] = await db.update(patientAccessRequests)
-      .set(updates)
-      .where(and(eq(patientAccessRequests.id, id), eq(patientAccessRequests.tenantId, tenantId)))
-      .returning();
-    return updated || undefined;
-  }
 
   async getPatientAccessRequestsByPhysician(physicianId: string, tenantId: string): Promise<any[]> {
     return await db.select({
@@ -3540,7 +3528,7 @@ export class DatabaseStorage implements IStorage {
   async denyPatientAccessRequest(id: string, reviewedBy: string, reviewNotes: string, tenantId: string): Promise<any | undefined> {
     const [updated] = await db.update(patientAccessRequests)
       .set({
-        status: 'denied',
+        status: 'rejected',
         reviewedBy,
         reviewedDate: new Date(),
         reviewNotes,
