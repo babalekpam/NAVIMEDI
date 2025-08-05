@@ -13,6 +13,30 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Health check endpoint for deployment
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
+// Root endpoint for basic health check
+app.get('/', (req, res) => {
+  if (req.path === '/' && !req.headers.accept?.includes('text/html')) {
+    // API health check
+    res.status(200).json({ 
+      message: 'NaviMED Healthcare Platform API is running',
+      status: 'healthy',
+      version: '1.0.0'
+    });
+  } else {
+    // Let the frontend handle this route
+    res.status(200).send('OK');
+  }
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -122,6 +146,7 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
+  
   server.listen({
     port,
     host: "0.0.0.0",
@@ -129,4 +154,39 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
   });
-})();
+
+  // Graceful shutdown handling
+  const gracefulShutdown = (signal: string) => {
+    log(`Received ${signal}. Starting graceful shutdown...`);
+    server.close((err) => {
+      if (err) {
+        log(`Error during shutdown: ${err}`);
+        process.exit(1);
+      }
+      log('Server closed. Exiting process.');
+      process.exit(0);
+    });
+  };
+
+  // Handle process signals
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+  // Handle uncaught exceptions
+  process.on('uncaughtException', (err) => {
+    log(`Uncaught Exception: ${err.message}`);
+    gracefulShutdown('uncaughtException');
+  });
+
+  // Handle unhandled promise rejections
+  process.on('unhandledRejection', (reason, promise) => {
+    log(`Unhandled Rejection at: ${promise}, reason: ${reason}`);
+    // Don't exit immediately, just log the error
+  });
+
+  // Keep the process alive
+  process.stdin.resume();
+})().catch((error) => {
+  log(`Application startup failed: ${error}`);
+  process.exit(1);
+});
