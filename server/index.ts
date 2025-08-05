@@ -13,7 +13,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Health check endpoint for deployment
+// Simple health check endpoint for deployment - responds immediately
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'healthy', 
@@ -22,19 +22,10 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Root endpoint for basic health check
+// Simple root endpoint for basic health check - responds immediately
 app.get('/', (req, res) => {
-  if (req.path === '/' && !req.headers.accept?.includes('text/html')) {
-    // API health check
-    res.status(200).json({ 
-      message: 'NaviMED Healthcare Platform API is running',
-      status: 'healthy',
-      version: '1.0.0'
-    });
-  } else {
-    // Let the frontend handle this route
-    res.status(200).send('OK');
-  }
+  // Simple OK response for health checks
+  res.status(200).send('OK');
 });
 
 app.use((req, res, next) => {
