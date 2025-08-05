@@ -14,6 +14,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { aiHealthAnalyzer } from "./ai-health-analyzer";
 import { sendWelcomeEmail, generateTemporaryPassword } from "./email-service.js";
+import { resetAllCounters } from "./reset-all-counters.js";
 // Removed Replit Auth - using unified JWT authentication only
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
@@ -6221,6 +6222,42 @@ Report ID: ${report.id}
     } catch (error) {
       console.error("Error fetching product reviews:", error);
       res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  // Counter Reset API - Super Admin Only
+  app.post("/api/admin/reset-counters", authenticateToken, async (req, res) => {
+    try {
+      console.log("Counter reset request - User:", req.user);
+      
+      if (req.user.role !== 'super_admin') {
+        return res.status(403).json({ message: "Access denied. Super admin role required." });
+      }
+
+      const result = await resetAllCounters();
+      
+      res.json({
+        success: true,
+        message: "All counters have been successfully reset to zero",
+        details: {
+          resetCounters: [
+            "Work shift prescriptions, revenue, and insurance claims",
+            "User levels, points, tests completed, and streaks",
+            "Advertisement impressions, clicks, and conversions",
+            "Product view counts, order counts, ratings, and reviews",
+            "Activity log points",
+            "Stock quantities reset to zero"
+          ],
+          timestamp: result.timestamp,
+          resetBy: req.user.username || req.user.email
+        }
+      });
+    } catch (error) {
+      console.error("Error resetting counters:", error);
+      res.status(500).json({ 
+        message: "Failed to reset counters",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
