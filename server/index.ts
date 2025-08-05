@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { trialSuspensionService } from "./trial-suspension-service";
 import { createTestHospital } from "./create-test-hospital";
+import { nanoid } from "nanoid";
 
 const app = express();
 app.use(express.json());
