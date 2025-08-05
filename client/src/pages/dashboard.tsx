@@ -337,6 +337,236 @@ export default function Dashboard() {
     );
   }
 
+  // Tenant Admin Dashboard (defined early to avoid hoisting issues)
+  const renderTenantAdminDashboard = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Hospital Admin Dashboard</h1>
+          <p className="text-gray-600 mt-1">Welcome back, {user.firstName}. Complete hospital management and oversight for {tenant?.name}.</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+            <Building2 className="h-3 w-3 mr-1" />
+            {tenant?.type === 'hospital' ? 'Hospital Admin' : 'Organization Admin'}
+          </Badge>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => refetchMetrics()}
+            disabled={metricsLoading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${metricsLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Today's Appointments</p>
+                <p className="text-3xl font-bold text-gray-900">{metrics?.todayAppointments || 0}</p>
+                <p className="text-xs text-blue-600 mt-1">All departments</p>
+              </div>
+              <Calendar className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pending Lab Results</p>
+                <p className="text-3xl font-bold text-gray-900">{metrics?.pendingLabResults || 0}</p>
+                <p className="text-xs text-purple-600 mt-1">Awaiting review</p>
+              </div>
+              <TestTube className="h-8 w-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Prescriptions</p>
+                <p className="text-3xl font-bold text-gray-900">{metrics?.activePrescriptions || 0}</p>
+                <p className="text-xs text-green-600 mt-1">Current patients</p>
+              </div>
+              <Pill className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Monthly Claims</p>
+                <p className="text-3xl font-bold text-gray-900">${metrics?.monthlyClaimsTotal || 0}</p>
+                <p className="text-xs text-green-600 mt-1">Insurance revenue</p>
+              </div>
+              <DollarSign className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions for Hospital Admin */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Hospital Management Actions</CardTitle>
+          <CardDescription>Quick access to key hospital administration functions</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Button 
+              className="h-24 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/patients'}
+            >
+              <Users className="h-6 w-6" />
+              <span>Patient Management</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-24 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/appointments'}
+            >
+              <Calendar className="h-6 w-6" />
+              <span>Appointments</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-24 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/lab-orders'}
+            >
+              <TestTube className="h-6 w-6" />
+              <span>Laboratory</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-24 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/prescriptions'}
+            >
+              <Pill className="h-6 w-6" />
+              <span>Prescriptions</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Hospital Overview Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Today's Schedule Overview</CardTitle>
+            <CardDescription>Current appointments across all departments</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {appointmentsLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="animate-pulse p-3 border rounded-lg">
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : todayAppointments && todayAppointments.length > 0 ? (
+                todayAppointments.slice(0, 5).map((appointment: any, index: number) => {
+                  const appointmentDate = new Date(appointment.appointmentDate);
+                  const timeString = appointmentDate.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                  });
+                  const isUrgent = appointment.status === 'urgent' || appointment.type === 'emergency';
+                  
+                  return (
+                    <div key={appointment.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-3 h-3 rounded-full ${isUrgent ? 'bg-red-500' : 'bg-blue-500'}`}></div>
+                        <div>
+                          <p className="font-medium">
+                            {timeString} - {appointment.patient?.firstName || 'Unknown'} {appointment.patient?.lastName || 'Patient'}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {appointment.type} • Dr. {appointment.provider?.lastName || 'TBD'}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant={isUrgent ? 'destructive' : 'default'}>
+                        {appointment.status || 'scheduled'}
+                      </Badge>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No appointments scheduled for today</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-3"
+                    onClick={() => window.location.href = '/appointments'}
+                  >
+                    Schedule New Appointment
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Lab Orders</CardTitle>
+            <CardDescription>Recent laboratory test requests requiring attention</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {pendingLabOrders && pendingLabOrders.length > 0 ? (
+                pendingLabOrders.slice(0, 5).map((order: any, index: number) => (
+                  <div key={order.id || index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                    <div className="flex items-center space-x-3">
+                      <TestTube className="h-5 w-5 text-purple-600" />
+                      <div>
+                        <p className="font-medium">{order.testType}</p>
+                        <p className="text-sm text-gray-600">
+                          Patient: {order.patient?.firstName} {order.patient?.lastName}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Ordered: {new Date(order.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant="secondary">
+                      {order.status || 'pending'}
+                    </Badge>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <TestTube className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No pending lab orders</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-3"
+                    onClick={() => window.location.href = '/lab-orders'}
+                  >
+                    View All Lab Orders
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
   // Role-specific dashboards for healthcare professionals
   const renderRoleSpecificDashboard = () => {
     switch (user.role) {
