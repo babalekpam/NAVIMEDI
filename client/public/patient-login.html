@@ -479,7 +479,7 @@
                         // Show success message
                         alert(`🔐 Authentication Successful!\n\nWelcome ${data.patient.firstName} ${data.patient.lastName}!\nHospital: ${data.patient.hospital}\nMRN: ${data.patient.mrn}\n\nRedirecting to your secure health portal...`);
                         
-                        // Redirect to mobile app
+                        // Redirect to mobile app  
                         setTimeout(() => {
                             window.location.href = '/mobile-app';
                         }, 1500);

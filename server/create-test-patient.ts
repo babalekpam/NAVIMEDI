@@ -18,11 +18,15 @@ export async function createTestPatient() {
     }
 
     // Check if Sarah Johnson already exists in Metro General
-    const hospitalPatients = await storage.getPatientsByTenant(hospital.id);
-    const existingPatient = hospitalPatients.find(p => p.mrn === 'MRN-789012345');
-    if (existingPatient) {
-      console.log(`Sarah Johnson already exists at ${hospital.name} with MRN: MRN-789012345`);
-      return existingPatient;
+    try {
+      const hospitalPatients = await storage.getPatientsByTenant(hospital.id);
+      const existingPatient = hospitalPatients.find(p => p.mrn === 'MRN-789012345');
+      if (existingPatient) {
+        console.log(`Sarah Johnson already exists at ${hospital.name} with MRN: MRN-789012345`);
+        return existingPatient;
+      }
+    } catch (error) {
+      console.log('Could not check existing patients, will create new one...');
     }
 
     // Create test patient Sarah Johnson
