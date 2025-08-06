@@ -6612,6 +6612,11 @@ Report ID: ${report.id}
     }
   });
 
+  // Mobile app direct route (redirect to working static HTML)
+  app.get('/mobile-app', (req, res) => {
+    res.redirect('/mobile-app.html');
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
