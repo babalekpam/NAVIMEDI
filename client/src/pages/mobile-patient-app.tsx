@@ -262,7 +262,7 @@ export default function MobilePatientApp() {
             <Button 
               variant="outline" 
               className="flex flex-col items-center p-4 h-auto"
-              onClick={() => setActiveTab('appointments')}
+              onClick={() => setActiveTab('visits')}
             >
               <Calendar className="w-6 h-6 mb-2 text-green-500" />
               <span className="text-sm">Book Visit</span>
@@ -284,7 +284,7 @@ export default function MobilePatientApp() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Next Appointment</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setActiveTab('appointments')}>
+            <Button variant="ghost" size="sm" onClick={() => setActiveTab('visits')}>
               View All
             </Button>
           </div>
@@ -310,7 +310,7 @@ export default function MobilePatientApp() {
             <div className="text-center py-4">
               <Calendar className="w-8 h-8 text-gray-300 mx-auto mb-2" />
               <p className="text-sm text-gray-500">No upcoming appointments</p>
-              <Button size="sm" className="mt-2" onClick={() => setActiveTab('appointments')}>
+              <Button size="sm" className="mt-2" onClick={() => setActiveTab('visits')}>
                 Schedule Visit
               </Button>
             </div>
@@ -350,10 +350,16 @@ export default function MobilePatientApp() {
     <div className="space-y-4 pb-20">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">My Medications</h2>
-        <Button size="sm">
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setActiveTab('more')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+          <Button size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        </div>
       </div>
 
       {prescriptionsLoading ? (
@@ -410,7 +416,13 @@ export default function MobilePatientApp() {
   // Medical Records Tab
   const renderRecords = () => (
     <div className="space-y-4 pb-20">
-      <h2 className="text-xl font-bold">Medical Records</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">Medical Records</h2>
+        <Button variant="outline" size="sm" onClick={() => setActiveTab('more')}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+      </div>
       
       {profileLoading ? (
         <div className="text-center py-8">
@@ -491,7 +503,7 @@ export default function MobilePatientApp() {
     <div className="space-y-4 pb-20">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">Log Vitals</h2>
-        <Button variant="outline" size="sm" onClick={() => setActiveTab('dashboard')}>
+        <Button variant="outline" size="sm" onClick={() => setActiveTab('overview')}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
@@ -647,10 +659,16 @@ export default function MobilePatientApp() {
     <div className="space-y-4 pb-20">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">Messages</h2>
-        <Button size="sm">
-          <Plus className="w-4 h-4 mr-2" />
-          New
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setActiveTab('more')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+          <Button size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            New
+          </Button>
+        </div>
       </div>
 
       {messagesLoading ? (
@@ -842,9 +860,16 @@ export default function MobilePatientApp() {
   // Test Results Section
   const renderResults = () => (
     <div className="space-y-4 pb-20">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">Test Results</h2>
+        <Button variant="outline" size="sm" onClick={() => setActiveTab('more')}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+      </div>
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Test Results</CardTitle>
+          <CardTitle className="text-lg">Lab Results</CardTitle>
         </CardHeader>
         <CardContent>
           {labResults.length > 0 ? (
@@ -879,9 +904,16 @@ export default function MobilePatientApp() {
   // Health Tracking Section
   const renderHealthTracking = () => (
     <div className="space-y-4 pb-20">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">Track Your Health</h2>
+        <Button variant="outline" size="sm" onClick={() => setActiveTab('more')}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+      </div>
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Track Your Health</CardTitle>
+          <CardTitle className="text-lg">Health Metrics</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -910,9 +942,16 @@ export default function MobilePatientApp() {
   // Billing Section
   const renderBilling = () => (
     <div className="space-y-4 pb-20">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">Bills & Payments</h2>
+        <Button variant="outline" size="sm" onClick={() => setActiveTab('more')}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+      </div>
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Bills & Payments</CardTitle>
+          <CardTitle className="text-lg">Account Balance</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -947,6 +986,7 @@ export default function MobilePatientApp() {
       case 'overview': return renderDashboard();
       case 'find-care': return renderFindCare();
       case 'visits': return renderAppointments();
+      case 'appointments': return renderAppointments();
       case 'directory': return renderDirectory();
       case 'more': return renderMoreMenu();
       case 'records': return renderRecords();
