@@ -54,6 +54,52 @@ import navimedLogo from "@assets/carnet_1754492017427.png";
 export default function MobilePatientApp() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
+
+  // Patient authentication and access control - Strict privacy enforcement
+  if (!user || user.role !== "patient") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md text-center">
+          <CardContent className="p-8">
+            <div className="flex items-center justify-center space-x-3 mb-4">
+              <img 
+                src={navimedLogo} 
+                alt="Carnet" 
+                className="h-10 w-10 object-contain"
+              />
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">Carnet</h1>
+                <p className="text-xs text-gray-600">Private Health App</p>
+              </div>
+            </div>
+            <Shield className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Access Restricted</h2>
+            <p className="text-gray-600 mb-4 text-sm">
+              This is your private Carnet health app. Each patient has their own secure, isolated access 
+              linked to their chosen hospital and doctors.
+            </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium">Privacy Features:</p>
+                  <ul className="mt-1 text-xs list-disc list-inside">
+                    <li>Complete data isolation per patient</li>
+                    <li>Hospital and doctor linkage verification</li>
+                    <li>Secure authentication required</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <Button onClick={() => window.location.href = "/patient-login"} className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700">
+              <Heart className="h-4 w-4 mr-2" />
+              Access Your Carnet
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   const [activeTab, setActiveTab] = useState("overview");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -90,30 +136,43 @@ export default function MobilePatientApp() {
     };
   }, []);
 
-  // Fetch patient data
+  // Fetch patient's private data - completely isolated per patient
   const { data: patientProfile, isLoading: profileLoading } = useQuery({
-    queryKey: ['/api/patients/profile'],
+    queryKey: ['/api/patients/profile', user.id],
+    enabled: !!user?.id && user.role === 'patient',
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes for mobile
   });
 
+  // All patient data is private and isolated to the authenticated patient only
   const { data: appointments = [], isLoading: appointmentsLoading } = useQuery({
     queryKey: ['/api/appointments/patient', user?.id],
-    enabled: !!user?.id,
+    enabled: !!user?.id && user.role === 'patient',
   });
 
   const { data: prescriptions = [], isLoading: prescriptionsLoading } = useQuery({
     queryKey: ['/api/prescriptions/patient', user?.id],
-    enabled: !!user?.id,
+    enabled: !!user?.id && user.role === 'patient',
   });
 
   const { data: labResults = [], isLoading: labResultsLoading } = useQuery({
     queryKey: ['/api/patients', user?.id, 'lab-results', 'all'],
-    enabled: !!user?.id,
+    enabled: !!user?.id && user.role === 'patient',
   });
 
   const { data: messages = [], isLoading: messagesLoading } = useQuery({
     queryKey: ['/api/medical-communications/patient', user?.id],
-    enabled: !!user?.id,
+    enabled: !!user?.id && user.role === 'patient',
+  });
+
+  // Patient's linked healthcare providers - hospital and doctors
+  const { data: linkedProviders = [], isLoading: providersLoading } = useQuery({
+    queryKey: ['/api/patients', user?.id, 'linked-providers'],
+    enabled: !!user?.id && user.role === 'patient',
+  });
+
+  const { data: patientHospital, isLoading: hospitalLoading } = useQuery({
+    queryKey: ['/api/patients', user?.id, 'hospital'],
+    enabled: !!user?.id && user.role === 'patient',
   });
 
   // Quick vitals submission

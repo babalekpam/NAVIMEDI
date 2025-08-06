@@ -161,6 +161,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Patient Carnet Authentication - Secure private access
+  app.post('/api/auth/patient-login', async (req, res) => {
+    try {
+      const { email, password, carnetPassword } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+      }
+
+      console.log(`[CARNET AUTH] Login attempt for patient: ${email} from IP: ${req.ip}`);
+
+      // Find user by email and verify they are a patient
+      const allUsers = await storage.getAllUsers();
+      const user = allUsers.find(u => u.email === email && u.role === 'patient' && u.isActive);
+
+      if (!user) {
+        console.log(`[CARNET AUTH] Patient not found or inactive: ${email}`);
+        return res.status(401).json({ message: 'Invalid patient credentials' });
+      }
+
+      // Verify password
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        console.log(`[CARNET AUTH] Invalid password for patient: ${email}`);
+        return res.status(401).json({ message: 'Invalid patient credentials' });
+      }
+
+      // Get patient profile with hospital linkage
+      const patient = await storage.getPatient(user.id);
+      if (!patient) {
+        console.log(`[CARNET AUTH] Patient profile not found: ${email}`);
+        return res.status(401).json({ message: 'Patient profile not found' });
+      }
+
+      // Check if Carnet is enabled (default to true if not set)
+      if (patient.carnetEnabled === false) {
+        console.log(`[CARNET AUTH] Carnet access disabled for patient: ${email}`);
+        return res.status(401).json({ message: 'Carnet access is disabled for this account' });
+      }
+
+      // Generate JWT token for patient session with hospital isolation
+      const token = jwt.sign(
+        { 
+          userId: user.id,
+          patientId: patient.id,
+          role: user.role,
+          tenantId: user.tenantId,
+          hospitalId: patient.primaryHospitalId,
+          dataIsolationLevel: patient.dataIsolationLevel || 'strict'
+        },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      console.log(`[CARNET AUTH] Login successful for patient: ${patient.firstName} ${patient.lastName} (${patient.id})`);
+
+      res.json({
+        token,
+        patient: {
+          id: patient.id,
+          firstName: patient.firstName,
+          lastName: patient.lastName,
+          primaryHospitalId: patient.primaryHospitalId,
+          dataIsolationLevel: patient.dataIsolationLevel || 'strict'
+        },
+        message: 'Carnet access granted'
+      });
+
+    } catch (error) {
+      console.error('Patient Carnet login error:', error);
+      res.status(500).json({ message: 'Internal server error during patient login' });
+    }
+  });
+
   // JWT Authentication routes only - no Replit Auth
   
   // Standard JWT login endpoint
