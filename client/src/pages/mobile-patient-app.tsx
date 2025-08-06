@@ -46,7 +46,7 @@ import {
   Wifi,
   WifiOff
 } from "lucide-react";
-import navimedLogo from "@assets/JPG_1753663321927.jpg";
+import navimedLogo from "@assets/carnet_1754492017427.png";
 
 export default function MobilePatientApp() {
   const { user, logout } = useAuth();
@@ -169,7 +169,7 @@ export default function MobilePatientApp() {
       <div className="flex items-center space-x-3">
         <img src={navimedLogo} alt="NaviMed" className="h-8 w-8 rounded-lg object-contain" />
         <div>
-          <h1 className="text-lg font-semibold text-blue-600">NaviMed</h1>
+          <h1 className="text-lg font-semibold text-red-600">NaviMed</h1>
           <p className="text-xs text-gray-500">Patient App</p>
         </div>
       </div>

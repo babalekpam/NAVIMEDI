@@ -65,7 +65,7 @@ export default function MobileAppWrapper({ children }: MobileAppWrapperProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="bg-white bg-opacity-20 p-2 rounded-lg">
-                    <Smartphone className="w-5 h-5 text-white" />
+                    <img src="/app-icon.png" alt="NaviMED" className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-sm">Install NaviMed App</h3>
