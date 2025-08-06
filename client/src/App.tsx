@@ -7,7 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { TenantProvider } from "@/contexts/tenant-context-fixed";
 import { TranslationProvider } from "@/contexts/translation-context";
 import { AuthProvider } from "@/contexts/auth-context";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/auth-context";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { ProtectedRoute } from "@/components/layout/protected-route";
