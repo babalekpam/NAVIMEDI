@@ -282,11 +282,9 @@ function AppContent() {
           <PatientPortalPublic />
         </Route>
         <Route path="/mobile-app">
-          <ProtectedRoute>
-            <MobileAppWrapper>
-              <MobilePatientApp />
-            </MobileAppWrapper>
-          </ProtectedRoute>
+          <MobileAppWrapper>
+            <MobilePatientApp />
+          </MobileAppWrapper>
         </Route>
         <Route path="/telemedicine-booking">
           <ProtectedRoute>

@@ -55,46 +55,71 @@ export default function MobilePatientApp() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
 
-  // Patient authentication and access control - Strict privacy enforcement
-  if (!user || user.role !== "patient") {
+  // Show demo/preview mode if not authenticated as patient
+  const isPatientLoggedIn = user && user.role === "patient";
+  
+  if (!isPatientLoggedIn) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md text-center">
           <CardContent className="p-8">
-            <div className="flex items-center justify-center space-x-3 mb-4">
+            <div className="flex items-center justify-center space-x-3 mb-6">
               <img 
                 src={navimedLogo} 
                 alt="Carnet" 
-                className="h-10 w-10 object-contain"
+                className="h-12 w-12 object-contain"
               />
               <div>
-                <h1 className="text-lg font-bold text-gray-900">Carnet</h1>
-                <p className="text-xs text-gray-600">Private Health App</p>
+                <h1 className="text-2xl font-bold text-gray-900">Carnet</h1>
+                <p className="text-sm text-gray-600">Private Health App</p>
               </div>
             </div>
-            <Shield className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Access Restricted</h2>
-            <p className="text-gray-600 mb-4 text-sm">
-              This is your private Carnet health app. Each patient has their own secure, isolated access 
-              linked to their chosen hospital and doctors.
-            </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-              <div className="flex items-start space-x-2">
-                <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
-                <div className="text-sm text-blue-800">
-                  <p className="font-medium">Privacy Features:</p>
-                  <ul className="mt-1 text-xs list-disc list-inside">
-                    <li>Complete data isolation per patient</li>
-                    <li>Hospital and doctor linkage verification</li>
-                    <li>Secure authentication required</li>
-                  </ul>
-                </div>
+            
+            <div className="mb-6">
+              <Smartphone className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Mobile App Preview</h2>
+              <p className="text-gray-600 text-sm">
+                This is a preview of the Carnet mobile app. Each patient gets their own secure, 
+                private access to their health information.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-6 text-xs">
+              <div className="bg-white border rounded-lg p-3">
+                <Heart className="h-6 w-6 text-red-500 mx-auto mb-2" />
+                <p className="font-medium">Health Records</p>
+                <p className="text-gray-500">Private access</p>
+              </div>
+              <div className="bg-white border rounded-lg p-3">
+                <Pill className="h-6 w-6 text-green-500 mx-auto mb-2" />
+                <p className="font-medium">Medications</p>
+                <p className="text-gray-500">Track & remind</p>
+              </div>
+              <div className="bg-white border rounded-lg p-3">
+                <Calendar className="h-6 w-6 text-blue-500 mx-auto mb-2" />
+                <p className="font-medium">Appointments</p>
+                <p className="text-gray-500">Book & manage</p>
+              </div>
+              <div className="bg-white border rounded-lg p-3">
+                <MessageCircle className="h-6 w-6 text-purple-500 mx-auto mb-2" />
+                <p className="font-medium">Messages</p>
+                <p className="text-gray-500">Secure chat</p>
               </div>
             </div>
-            <Button onClick={() => window.location.href = "/patient-login"} className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700">
-              <Heart className="h-4 w-4 mr-2" />
-              Access Your Carnet
-            </Button>
+
+            <div className="space-y-2">
+              <Button 
+                onClick={() => window.location.href = "/patient-login"} 
+                className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+              >
+                <Heart className="h-4 w-4 mr-2" />
+                Access Your Carnet
+              </Button>
+              
+              <p className="text-xs text-gray-500">
+                Available on iOS App Store & Google Play
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -349,20 +374,20 @@ export default function MobilePatientApp() {
           </div>
         </CardHeader>
         <CardContent>
-          {appointments.length > 0 ? (
+          {Array.isArray(appointments) && appointments.length > 0 ? (
             <div className="border rounded-lg p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-sm">{appointments[0].providerName || 'Dr. Johnson'}</p>
+                  <p className="font-semibold text-sm">{appointments[0]?.providerName || 'Dr. Johnson'}</p>
                   <p className="text-xs text-gray-600">
-                    {new Date(appointments[0].dateTime).toLocaleDateString()} at{' '}
-                    {new Date(appointments[0].dateTime).toLocaleTimeString([], { 
+                    {appointments[0]?.dateTime ? new Date(appointments[0].dateTime).toLocaleDateString() : 'Today'} at{' '}
+                    {appointments[0]?.dateTime ? new Date(appointments[0].dateTime).toLocaleTimeString([], { 
                       hour: '2-digit', 
                       minute: '2-digit' 
-                    })}
+                    }) : '2:00 PM'}
                   </p>
                 </div>
-                <Badge variant="outline">{appointments[0].type || 'Check-up'}</Badge>
+                <Badge variant="outline">{appointments[0]?.type || 'Check-up'}</Badge>
               </div>
             </div>
           ) : (
@@ -426,9 +451,9 @@ export default function MobilePatientApp() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="text-sm text-gray-600 mt-2">Loading medications...</p>
         </div>
-      ) : prescriptions && prescriptions.length > 0 ? (
+      ) : Array.isArray(prescriptions) && prescriptions.length > 0 ? (
         <div className="space-y-3">
-          {prescriptions.map((prescription) => (
+          {prescriptions.map((prescription: any) => (
             <Card key={prescription.id} className="shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
