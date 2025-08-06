@@ -43,7 +43,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(path.join(publicPath, "mobile-app.html"));
   });
 
+  app.get("/main-portal.html", (req, res) => {
+    res.sendFile(path.join(publicPath, "main-portal.html"));
+  });
+
   // Platform overview redirect routes
+  app.get("/", (req, res) => {
+    res.redirect("/main-portal.html");
+  });
+  
+  app.get("/portals", (req, res) => {
+    res.redirect("/main-portal.html");
+  });
   app.get("/platform", (req, res) => {
     res.redirect("/platform-overview.html");
   });
