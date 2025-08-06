@@ -6617,6 +6617,11 @@ Report ID: ${report.id}
     res.redirect('/mobile-app.html');
   });
 
+  // Patient login direct route (redirect to working static HTML)
+  app.get('/patient-login', (req, res) => {
+    res.redirect('/patient-login.html');
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
