@@ -10,8 +10,18 @@
     <meta name="apple-mobile-web-app-title" content="Carnet">
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        .heart { color: #ef4444; }
-        .gradient-bg { background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%); }
+        
+        /* NaviMED Brand Colors */
+        :root {
+            --navimed-blue: hsl(207, 90%, 54%);
+            --navimed-teal: hsl(174, 100%, 20%);
+            --navimed-green: hsl(122, 39%, 49%);
+            --navimed-orange: hsl(36, 100%, 50%);
+            --navimed-red: hsl(4, 90%, 58%);
+        }
+        
+        .heart { color: var(--navimed-red); }
+        .gradient-bg { background: linear-gradient(135deg, var(--navimed-blue) 0%, var(--navimed-teal) 100%); }
     </style>
 </head>
 <body class="bg-blue-50">
@@ -37,24 +47,24 @@
                 
                 <!-- Features Grid -->
                 <div class="space-y-4 mb-8">
-                    <div class="bg-blue-100 p-4 rounded-lg border-l-4 border-blue-500">
-                        <h3 class="font-semibold text-blue-900">📋 Health Records</h3>
-                        <p class="text-sm text-blue-700 mt-1">Access your complete medical history securely</p>
+                    <div class="p-4 rounded-lg border-l-4" style="background-color: hsl(207, 90%, 95%); border-color: var(--navimed-blue);">
+                        <h3 class="font-semibold" style="color: var(--navimed-blue);">📋 Health Records</h3>
+                        <p class="text-sm mt-1" style="color: hsl(207, 90%, 40%);">Access your complete medical history securely</p>
                     </div>
                     
-                    <div class="bg-green-100 p-4 rounded-lg border-l-4 border-green-500">
-                        <h3 class="font-semibold text-green-900">📅 Appointments</h3>
-                        <p class="text-sm text-green-700 mt-1">Schedule and manage doctor visits</p>
+                    <div class="p-4 rounded-lg border-l-4" style="background-color: hsl(122, 39%, 95%); border-color: var(--navimed-green);">
+                        <h3 class="font-semibold" style="color: var(--navimed-green);">📅 Appointments</h3>
+                        <p class="text-sm mt-1" style="color: hsl(122, 39%, 40%);">Schedule and manage doctor visits</p>
                     </div>
                     
-                    <div class="bg-purple-100 p-4 rounded-lg border-l-4 border-purple-500">
-                        <h3 class="font-semibold text-purple-900">💊 Medications</h3>
-                        <p class="text-sm text-purple-700 mt-1">Track prescriptions and reminders</p>
+                    <div class="p-4 rounded-lg border-l-4" style="background-color: hsl(174, 100%, 95%); border-color: var(--navimed-teal);">
+                        <h3 class="font-semibold" style="color: var(--navimed-teal);">💊 Medications</h3>
+                        <p class="text-sm mt-1" style="color: hsl(174, 100%, 30%);">Track prescriptions and reminders</p>
                     </div>
                     
-                    <div class="bg-red-100 p-4 rounded-lg border-l-4 border-red-500">
-                        <h3 class="font-semibold text-red-900">💬 Secure Messaging</h3>
-                        <p class="text-sm text-red-700 mt-1">Chat with healthcare providers</p>
+                    <div class="p-4 rounded-lg border-l-4" style="background-color: hsl(4, 90%, 95%); border-color: var(--navimed-red);">
+                        <h3 class="font-semibold" style="color: var(--navimed-red);">💬 Secure Messaging</h3>
+                        <p class="text-sm mt-1" style="color: hsl(4, 90%, 40%);">Chat with healthcare providers</p>
                     </div>
                 </div>
                 
@@ -70,23 +80,23 @@
                     <div class="text-center">
                         <p class="text-sm text-gray-500 mb-2">Available on</p>
                         <div class="flex justify-center space-x-4">
-                            <span class="text-xs bg-gray-100 px-3 py-1 rounded-full">📱 iOS App Store</span>
-                            <span class="text-xs bg-gray-100 px-3 py-1 rounded-full">🤖 Google Play</span>
+                            <span class="text-xs px-3 py-1 rounded-full" style="background-color: hsl(207, 90%, 95%); color: var(--navimed-blue);">📱 iOS App Store</span>
+                            <span class="text-xs px-3 py-1 rounded-full" style="background-color: hsl(122, 39%, 95%); color: var(--navimed-green);">🤖 Google Play</span>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Security Features -->
                 <div class="mt-8 pt-6 border-t border-gray-200">
-                    <div class="bg-green-50 p-4 rounded-lg">
+                    <div class="p-4 rounded-lg" style="background-color: hsl(122, 39%, 98%);">
                         <div class="flex items-center justify-center space-x-6 text-sm">
                             <div class="flex items-center space-x-2">
-                                <span class="w-3 h-3 bg-green-500 rounded-full"></span>
-                                <span class="text-green-800 font-medium">🔒 Secure & Private</span>
+                                <span class="w-3 h-3 rounded-full" style="background-color: var(--navimed-green);"></span>
+                                <span class="font-medium" style="color: var(--navimed-green);">🔒 Secure & Private</span>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <span class="w-3 h-3 bg-blue-500 rounded-full"></span>
-                                <span class="text-blue-800 font-medium">✅ HIPAA Compliant</span>
+                                <span class="w-3 h-3 rounded-full" style="background-color: var(--navimed-blue);"></span>
+                                <span class="font-medium" style="color: var(--navimed-blue);">✅ HIPAA Compliant</span>
                             </div>
                         </div>
                         <p class="text-center text-xs text-gray-600 mt-3">
