@@ -35,6 +35,7 @@ export default function SupplierPortal() {
     yearsInBusiness: "",
     username: "",
     password: "",
+    confirmPassword: "",
     termsAccepted: false
   });
 
