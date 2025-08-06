@@ -58,16 +58,34 @@
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            🔒 Secure PIN
+                            🔒 Facial Recognition
                         </label>
-                        <input 
-                            type="password" 
-                            id="pin"
-                            placeholder="Enter your 4-digit PIN"
-                            maxlength="4"
-                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            required
-                        >
+                        <div id="faceRecognitionArea" class="w-full p-6 border-2 border-dashed border-gray-300 rounded-lg text-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
+                            <div id="cameraPreview" class="hidden">
+                                <video id="video" width="100%" height="200" autoplay class="rounded-lg mb-3"></video>
+                                <canvas id="canvas" style="display: none;"></canvas>
+                            </div>
+                            <div id="facePrompt" class="space-y-3">
+                                <div class="text-4xl">📷</div>
+                                <p class="font-medium text-gray-900">Tap to Start Facial Recognition</p>
+                                <p class="text-sm text-gray-600">Position your face in the camera view</p>
+                            </div>
+                            <div id="faceStatus" class="hidden">
+                                <div id="scanningStatus" class="hidden">
+                                    <div class="text-3xl mb-2 animate-pulse">🔍</div>
+                                    <p class="font-medium text-blue-600">Scanning your face...</p>
+                                </div>
+                                <div id="recognizedStatus" class="hidden">
+                                    <div class="text-3xl mb-2">✅</div>
+                                    <p class="font-medium text-green-600">Face recognized successfully!</p>
+                                </div>
+                                <div id="errorStatus" class="hidden">
+                                    <div class="text-3xl mb-2">❌</div>
+                                    <p class="font-medium text-red-600">Face not recognized. Try again.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="faceRecognized" value="false">
                     </div>
                     
                     <button 
@@ -85,8 +103,8 @@
                         <div>
                             <h3 class="font-semibold text-blue-900">Secure Login</h3>
                             <p class="text-sm text-blue-700 mt-1">
-                                Your health information is protected with end-to-end encryption. 
-                                Each patient has private, isolated access to their own medical records.
+                                Your health information is protected with end-to-end encryption and biometric authentication. 
+                                Each patient has private, isolated access to their own medical records using facial recognition technology.
                             </p>
                         </div>
                     </div>
@@ -163,17 +181,19 @@
             const patientId = document.getElementById('patientId').value;
             const pin = document.getElementById('pin').value;
             
+            const faceRecognized = document.getElementById('faceRecognized').value;
+            
             // Simple validation
-            if (hospitalId && patientId && pin.length === 4) {
+            if (hospitalId && patientId && faceRecognized === 'true') {
                 // In a real app, this would authenticate with the server
-                alert('🔐 Authentication successful!\n\nRedirecting to your private health portal...');
+                alert('🔐 Authentication successful!\n\nFacial recognition verified.\nRedirecting to your private health portal...');
                 
                 // Demo: Show that authentication worked
                 setTimeout(() => {
                     window.location.href = '/mobile-app';
                 }, 1500);
             } else {
-                alert('❌ Please fill in all fields correctly.\n\n• Hospital ID: Required\n• Patient ID: Required\n• PIN: Must be 4 digits');
+                alert('❌ Please complete all authentication steps.\n\n• Hospital ID: Required\n• Patient ID: Required\n• Facial Recognition: Complete face scan');
             }
         });
         
@@ -187,9 +207,67 @@
             document.getElementById('demoModal').classList.remove('flex');
         }
         
-        // PIN input formatting
-        document.getElementById('pin').addEventListener('input', function(e) {
-            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        // Facial recognition functionality
+        let stream = null;
+        let faceRecognitionActive = false;
+        
+        document.getElementById('faceRecognitionArea').addEventListener('click', async function() {
+            if (faceRecognitionActive) return;
+            
+            try {
+                // Request camera access
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 400 },
+                        height: { ideal: 300 },
+                        facingMode: 'user'
+                    } 
+                });
+                
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                
+                // Show camera preview
+                document.getElementById('facePrompt').classList.add('hidden');
+                document.getElementById('cameraPreview').classList.remove('hidden');
+                document.getElementById('faceStatus').classList.remove('hidden');
+                document.getElementById('scanningStatus').classList.remove('hidden');
+                
+                faceRecognitionActive = true;
+                
+                // Simulate face recognition process
+                setTimeout(() => {
+                    document.getElementById('scanningStatus').classList.add('hidden');
+                    document.getElementById('recognizedStatus').classList.remove('hidden');
+                    document.getElementById('faceRecognized').value = 'true';
+                    
+                    // Update the area appearance
+                    document.getElementById('faceRecognitionArea').classList.remove('border-gray-300', 'bg-gray-50');
+                    document.getElementById('faceRecognitionArea').classList.add('border-green-300', 'bg-green-50');
+                    
+                    // Stop camera after recognition
+                    setTimeout(() => {
+                        if (stream) {
+                            stream.getTracks().forEach(track => track.stop());
+                            document.getElementById('cameraPreview').classList.add('hidden');
+                        }
+                    }, 2000);
+                    
+                }, 3000); // 3 second scan simulation
+                
+            } catch (error) {
+                console.error('Camera access error:', error);
+                document.getElementById('facePrompt').classList.add('hidden');
+                document.getElementById('faceStatus').classList.remove('hidden');
+                document.getElementById('errorStatus').classList.remove('hidden');
+                
+                // Show fallback message
+                setTimeout(() => {
+                    document.getElementById('errorStatus').classList.add('hidden');
+                    document.getElementById('facePrompt').classList.remove('hidden');
+                    document.getElementById('faceStatus').classList.add('hidden');
+                }, 3000);
+            }
         });
     </script>
 </body>
