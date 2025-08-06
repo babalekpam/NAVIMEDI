@@ -284,6 +284,185 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Messaging Tab -->
+            <div id="content-messaging" class="tab-content hidden">
+                <div class="space-y-4">
+                    <!-- Active Conversations -->
+                    <div class="bg-white rounded-xl p-4 card-shadow">
+                        <h3 class="font-bold text-gray-800 mb-3">Healthcare Providers</h3>
+                        <div class="space-y-3">
+                            <div class="border border-blue-200 rounded-lg p-3 bg-blue-50">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <span class="text-blue-600">👨‍⚕️</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-blue-800">Dr. Wilson</h4>
+                                        <p class="text-sm text-blue-700">Primary Care Physician</p>
+                                        <p class="text-xs text-blue-600">Last message: 2 hours ago</p>
+                                    </div>
+                                    <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+                                </div>
+                                <button class="mt-2 w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-medium">
+                                    Send Message
+                                </button>
+                            </div>
+                            
+                            <div class="border border-teal-200 rounded-lg p-3 bg-teal-50">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center">
+                                        <span class="text-teal-600">🏥</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-teal-800">Cardiology Department</h4>
+                                        <p class="text-sm text-teal-700">Specialist Care Team</p>
+                                        <p class="text-xs text-teal-600">Last message: 1 day ago</p>
+                                    </div>
+                                    <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                                </div>
+                                <button class="mt-2 w-full bg-teal-600 text-white py-2 rounded-lg text-sm font-medium">
+                                    Send Message
+                                </button>
+                            </div>
+
+                            <div class="border border-green-200 rounded-lg p-3 bg-green-50">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                        <span class="text-green-600">💊</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-green-800">Pharmacy Team</h4>
+                                        <p class="text-sm text-green-700">Medication Support</p>
+                                        <p class="text-xs text-green-600">Last message: 3 days ago</p>
+                                    </div>
+                                    <div class="w-3 h-3 bg-gray-400 rounded-full"></div>
+                                </div>
+                                <button class="mt-2 w-full bg-green-600 text-white py-2 rounded-lg text-sm font-medium">
+                                    Send Message
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Message Security Info -->
+                    <div class="bg-white rounded-xl p-4 card-shadow">
+                        <h3 class="font-bold text-gray-800 mb-3">Message Security</h3>
+                        <div class="text-sm text-gray-600 space-y-2">
+                            <p class="flex items-center space-x-2">
+                                <span class="text-green-600">🔒</span>
+                                <span>All messages are HIPAA-compliant and encrypted</span>
+                            </p>
+                            <p class="flex items-center space-x-2">
+                                <span class="text-blue-600">⚡</span>
+                                <span>Providers typically respond within 24 hours</span>
+                            </p>
+                            <p class="flex items-center space-x-2">
+                                <span class="text-red-600">🚨</span>
+                                <span>For emergencies, call 911 or go to ER</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Tab -->
+            <div id="content-notifications" class="tab-content hidden">
+                <div class="space-y-4">
+                    <!-- Today's Alerts -->
+                    <div class="bg-white rounded-xl p-4 card-shadow">
+                        <h3 class="font-bold text-gray-800 mb-3">Today's Alerts</h3>
+                        <div class="space-y-3">
+                            <div class="border border-red-200 rounded-lg p-3 bg-red-50">
+                                <div class="flex items-start space-x-3">
+                                    <div class="text-red-600 text-lg mt-1">💊</div>
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-red-800">Medication Reminder</h4>
+                                        <p class="text-sm text-red-700">Lisinopril 10mg due at 8:00 PM</p>
+                                        <p class="text-xs text-red-600 mt-1">Set reminder for tonight</p>
+                                    </div>
+                                    <button class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full">
+                                        Remind Me
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="border border-blue-200 rounded-lg p-3 bg-blue-50">
+                                <div class="flex items-start space-x-3">
+                                    <div class="text-blue-600 text-lg mt-1">📅</div>
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-blue-800">Appointment Today</h4>
+                                        <p class="text-sm text-blue-700">Checkup with Dr. Wilson at 2:00 PM</p>
+                                        <p class="text-xs text-blue-600 mt-1">Metro General Hospital, Room 305</p>
+                                    </div>
+                                    <button class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full">
+                                        Directions
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Alerts -->
+                    <div class="bg-white rounded-xl p-4 card-shadow">
+                        <h3 class="font-bold text-gray-800 mb-3">Recent Alerts</h3>
+                        <div class="space-y-3">
+                            <div class="border border-green-200 rounded-lg p-3 bg-green-50">
+                                <div class="flex items-start space-x-3">
+                                    <div class="text-green-600 text-lg mt-1">📋</div>
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-green-800">Lab Results Available</h4>
+                                        <p class="text-sm text-green-700">Blood work from Jan 15 visit</p>
+                                        <p class="text-xs text-green-600 mt-1">All values within normal range</p>
+                                    </div>
+                                    <button class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full">
+                                        View Results
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="border border-orange-200 rounded-lg p-3 bg-orange-50">
+                                <div class="flex items-start space-x-3">
+                                    <div class="text-orange-600 text-lg mt-1">🩺</div>
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-orange-800">Health Reminder</h4>
+                                        <p class="text-sm text-orange-700">Blood pressure reading due</p>
+                                        <p class="text-xs text-orange-600 mt-1">Weekly monitoring recommended</p>
+                                    </div>
+                                    <button class="text-xs bg-orange-200 text-orange-800 px-2 py-1 rounded-full">
+                                        Log Reading
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notification Settings -->
+                    <div class="bg-white rounded-xl p-4 card-shadow">
+                        <h3 class="font-bold text-gray-800 mb-3">Notification Settings</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-700">Medication Reminders</span>
+                                <div class="w-10 h-6 bg-blue-600 rounded-full relative">
+                                    <div class="w-4 h-4 bg-white rounded-full absolute right-1 top-1"></div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-700">Appointment Alerts</span>
+                                <div class="w-10 h-6 bg-blue-600 rounded-full relative">
+                                    <div class="w-4 h-4 bg-white rounded-full absolute right-1 top-1"></div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-700">Lab Result Notifications</span>
+                                <div class="w-10 h-6 bg-gray-300 rounded-full relative">
+                                    <div class="w-4 h-4 bg-white rounded-full absolute left-1 top-1"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Bottom Navigation -->
@@ -293,11 +472,11 @@
                     <div class="text-blue-600 text-lg">🏠</div>
                     <div class="text-xs text-blue-600 font-medium">Home</div>
                 </button>
-                <button onclick="showMessaging()" class="p-3 text-center">
+                <button onclick="showTab('messaging')" class="p-3 text-center">
                     <div class="text-gray-600 text-lg">💬</div>
                     <div class="text-xs text-gray-600">Messages</div>
                 </button>
-                <button onclick="showNotifications()" class="p-3 text-center">
+                <button onclick="showTab('notifications')" class="p-3 text-center">
                     <div class="text-gray-600 text-lg">🔔</div>
                     <div class="text-xs text-gray-600">Alerts</div>
                 </button>
@@ -331,13 +510,7 @@
                 document.getElementById('tab-' + tabName).className.replace('tab-inactive', 'tab-active');
         }
 
-        function showMessaging() {
-            alert('💬 Secure Messaging\n\nConnect with your healthcare providers:\n\n• Dr. Wilson (Primary Care)\n• Cardiology Department\n• Pharmacy Team\n\nYour messages are HIPAA-compliant and secure.');
-        }
 
-        function showNotifications() {
-            alert('🔔 Health Alerts\n\nYour notifications:\n\n• Medication reminder: Lisinopril due at 8 PM\n• Appointment reminder: Checkup today at 2 PM\n• Lab results available for review\n• Blood pressure reading reminder');
-        }
 
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
