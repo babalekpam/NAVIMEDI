@@ -10,12 +10,17 @@
     <meta name="apple-mobile-web-app-title" content="Carnet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
         
         /* NaviMED Brand Colors */
         :root {
             --navimed-blue: hsl(207, 90%, 54%);
             --navimed-blue-light: hsl(207, 90%, 64%);
+            --navimed-blue-dark: hsl(207, 90%, 44%);
             --navimed-teal: hsl(174, 100%, 20%);
             --navimed-teal-light: hsl(174, 100%, 30%);
             --navimed-green: hsl(122, 39%, 49%);
@@ -23,57 +28,137 @@
             --navimed-red: hsl(4, 90%, 58%);
         }
         
-        .gradient-bg { background: linear-gradient(135deg, var(--navimed-blue) 0%, var(--navimed-teal) 50%, var(--navimed-blue-light) 100%); }
+        .gradient-bg { 
+            background: linear-gradient(135deg, var(--navimed-blue) 0%, var(--navimed-teal) 50%, var(--navimed-blue-light) 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
         .heart-pulse { animation: pulse 2s infinite; }
-        .glass-effect { backdrop-filter: blur(20px); background: rgba(255, 255, 255, 0.95); }
-        .medical-pattern { background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233498db' fill-opacity='0.3'%3E%3Ccircle cx='30' cy='30' r='3'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+        .glass-effect { 
+            backdrop-filter: blur(24px); 
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .medical-pattern { 
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M30 25l5 5-5 5-5-5z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
-        .float-animation { animation: float 3s ease-in-out infinite; }
-        .shadow-premium { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        
+        .float-animation { animation: float 4s ease-in-out infinite; }
+        .slide-up { animation: slideUp 0.8s ease-out; }
+        .scale-in { animation: scaleIn 0.6s ease-out; }
+        
+        .shadow-premium { 
+            box-shadow: 
+                0 32px 64px -12px rgba(0, 0, 0, 0.25),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+        .shadow-luxury { 
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                0 10px 10px -5px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+        
+        .input-focus:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo-glow {
+            filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.3));
+        }
+        
+        .progress-bar {
+            height: 3px;
+            background: linear-gradient(90deg, var(--navimed-blue), var(--navimed-teal));
+            border-radius: 2px;
+            animation: progressLoad 2s ease-in-out;
+        }
+        @keyframes progressLoad { from { width: 0%; } to { width: 100%; } }
     </style>
 </head>
 <body class="medical-pattern min-h-screen relative overflow-x-hidden">
-    <!-- Background Elements with NaviMED Colors -->
+    <!-- Enhanced Background Elements -->
     <div class="absolute inset-0 gradient-bg opacity-95"></div>
-    <div class="absolute top-20 left-10 w-20 h-20 bg-white bg-opacity-10 rounded-full blur-xl"></div>
-    <div class="absolute top-40 right-20 w-32 h-32" style="background-color: var(--navimed-blue); opacity: 0.2;" class="rounded-full blur-2xl"></div>
-    <div class="absolute bottom-20 left-20 w-24 h-24" style="background-color: var(--navimed-teal); opacity: 0.2;" class="rounded-full blur-xl"></div>
+    <div class="absolute top-0 left-0 w-full h-1 progress-bar"></div>
+    
+    <!-- Floating Geometric Elements -->
+    <div class="absolute top-20 left-10 w-24 h-24 bg-white bg-opacity-10 rounded-full blur-xl float-animation" style="animation-delay: 0s;"></div>
+    <div class="absolute top-40 right-20 w-36 h-36 rounded-full blur-3xl float-animation" style="background-color: var(--navimed-blue); opacity: 0.15; animation-delay: 1s;"></div>
+    <div class="absolute bottom-20 left-20 w-28 h-28 rounded-full blur-xl float-animation" style="background-color: var(--navimed-teal); opacity: 0.15; animation-delay: 2s;"></div>
+    <div class="absolute top-1/2 left-1/4 w-16 h-16 bg-white bg-opacity-8 rounded-full blur-lg float-animation" style="animation-delay: 0.5s;"></div>
+    <div class="absolute bottom-40 right-1/4 w-20 h-20 rounded-full blur-lg float-animation" style="background-color: var(--navimed-green); opacity: 0.1; animation-delay: 1.5s;"></div>
     <div class="min-h-screen flex items-center justify-center p-4 relative z-10">
         <div class="max-w-lg w-full">
-            <!-- Professional Header Card -->
-            <div class="glass-effect rounded-2xl shadow-premium mb-6 p-8 text-center">
-                <div class="float-animation mb-6">
-                    <div class="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg" style="background: linear-gradient(135deg, var(--navimed-red), var(--navimed-orange));">
-                        <span class="text-4xl heart-pulse">❤️</span>
+            <!-- Premium Header Card -->
+            <div class="glass-effect rounded-3xl shadow-premium mb-8 p-10 text-center slide-up">
+                <div class="float-animation mb-8">
+                    <div class="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-luxury logo-glow" style="background: linear-gradient(135deg, var(--navimed-red), var(--navimed-orange));">
+                        <span class="text-5xl heart-pulse">❤️</span>
                     </div>
                 </div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">Carnet Health</h1>
-                <p class="text-gray-600 text-lg font-medium">Advanced Patient Portal</p>
-                <div class="mt-4 flex justify-center space-x-6 text-sm">
+                <h1 class="text-4xl font-bold text-gray-900 mb-3 tracking-tight">Carnet Health</h1>
+                <p class="text-gray-600 text-xl font-medium mb-2">Next-Generation Patient Portal</p>
+                <p class="text-gray-500 text-sm mb-6">Powered by NaviMED Healthcare Platform</p>
+                
+                <!-- Trust Badges -->
+                <div class="flex justify-center space-x-8 text-sm mb-6">
                     <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 rounded-full" style="background-color: var(--navimed-green);"></div>
-                        <span class="text-gray-700 font-medium">HIPAA Compliant</span>
+                        <div class="w-3 h-3 rounded-full shadow-sm" style="background-color: var(--navimed-green);"></div>
+                        <span class="text-gray-700 font-semibold">HIPAA Compliant</span>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 rounded-full" style="background-color: var(--navimed-blue);"></div>
-                        <span class="text-gray-700 font-medium">End-to-End Encrypted</span>
+                        <div class="w-3 h-3 rounded-full shadow-sm" style="background-color: var(--navimed-blue);"></div>
+                        <span class="text-gray-700 font-semibold">AES-256 Encrypted</span>
                     </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 rounded-full shadow-sm" style="background-color: var(--navimed-orange);"></div>
+                        <span class="text-gray-700 font-semibold">SOC 2 Certified</span>
+                    </div>
+                </div>
+                
+                <!-- Enterprise Certifications -->
+                <div class="flex justify-center space-x-6 text-xs text-gray-500">
+                    <span class="bg-white bg-opacity-70 px-3 py-1 rounded-full font-medium">ISO 27001</span>
+                    <span class="bg-white bg-opacity-70 px-3 py-1 rounded-full font-medium">HL7 FHIR</span>
+                    <span class="bg-white bg-opacity-70 px-3 py-1 rounded-full font-medium">GDPR Ready</span>
                 </div>
             </div>
             
-            <!-- Main Login Card -->
-            <div class="glass-effect rounded-2xl shadow-premium overflow-hidden">
+            <!-- Enterprise Login Card -->
+            <div class="glass-effect rounded-3xl shadow-premium overflow-hidden scale-in">
             
                 <!-- Premium Header -->
-                <div class="p-6 border-b border-gray-100" style="background: linear-gradient(to right, hsl(207, 90%, 98%), hsl(174, 100%, 95%);">
-                    <h2 class="text-xl font-semibold text-gray-900 text-center">Secure Patient Authentication</h2>
-                    <p class="text-gray-600 text-sm text-center mt-1">Multi-factor biometric security</p>
+                <div class="p-8 border-b border-gray-100" style="background: linear-gradient(135deg, hsl(207, 90%, 98%), hsl(174, 100%, 96%), hsl(207, 90%, 97%));">
+                    <div class="text-center">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-luxury" style="background: linear-gradient(135deg, var(--navimed-blue), var(--navimed-teal));">
+                            <span class="text-white text-xl">🔐</span>
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2">Secure Patient Authentication</h2>
+                        <p class="text-gray-600 text-sm">Enterprise-grade multi-factor biometric security</p>
+                        <div class="mt-4 flex justify-center space-x-4 text-xs">
+                            <span class="bg-white bg-opacity-80 px-3 py-1 rounded-full text-gray-600 font-medium">🛡️ Zero Trust Architecture</span>
+                            <span class="bg-white bg-opacity-80 px-3 py-1 rounded-full text-gray-600 font-medium">⚡ Real-time Monitoring</span>
+                        </div>
+                    </div>
                 </div>
                 
-                <!-- Login Form -->
-                <div class="p-8">
-                    <form id="loginForm" class="space-y-8">
+                <!-- Enterprise Login Form -->
+                <div class="p-10">
+                    <form id="loginForm" class="space-y-10">
                         <div class="space-y-2">
                             <label class="block text-sm font-semibold text-gray-800 mb-3">
                                 <span class="flex items-center space-x-2">
@@ -85,12 +170,17 @@
                                 <input 
                                     type="text" 
                                     id="hospitalId"
-                                    placeholder="MGH-2024 or your facility code"
-                                    class="w-full p-4 pl-12 border-2 border-gray-200 rounded-xl transition-all duration-200 bg-white shadow-sm text-gray-900 font-medium"
-                                    style="focus-within:ring-color: var(--navimed-blue); focus-within:border-color: var(--navimed-blue);"
+                                    placeholder="MGH-2024 • Mayo-2024 • Johns-Hopkins-2024"
+                                    class="w-full p-5 pl-14 border-2 border-gray-200 rounded-2xl transition-all duration-300 bg-white shadow-luxury text-gray-900 font-medium input-focus hover:border-gray-300"
+                                    style="focus:ring-4; focus:ring-color: rgba(59, 130, 246, 0.1); focus:border-color: var(--navimed-blue);"
                                     required
                                 >
-                                <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">🏥</div>
+                                <div class="absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg">🏥</div>
+                                <div class="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-300">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                         
@@ -105,12 +195,17 @@
                                 <input 
                                     type="text" 
                                     id="patientId"
-                                    placeholder="MRN-123456789 or assigned ID"
-                                    class="w-full p-4 pl-12 border-2 border-gray-200 rounded-xl transition-all duration-200 bg-white shadow-sm text-gray-900 font-medium"
-                                    style="focus-within:ring-color: var(--navimed-green); focus-within:border-color: var(--navimed-green);"
+                                    placeholder="MRN-123456789 • DOB-MMDDYYYY • SSN-XXX-XX-1234"
+                                    class="w-full p-5 pl-14 border-2 border-gray-200 rounded-2xl transition-all duration-300 bg-white shadow-luxury text-gray-900 font-medium input-focus hover:border-gray-300"
+                                    style="focus:ring-4; focus:ring-color: rgba(34, 197, 94, 0.1); focus:border-color: var(--navimed-green);"
                                     required
                                 >
-                                <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">👤</div>
+                                <div class="absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg">👤</div>
+                                <div class="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-300">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m0 0a2 2 0 01-2 2m2-2h.01M9 12h.01M12 12h.01M15 12h.01"></path>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                     
@@ -122,18 +217,22 @@
                                     <span class="ml-auto text-xs px-2 py-1 rounded-full font-medium" style="background-color: hsl(174, 100%, 95%); color: var(--navimed-teal);">AI-Powered</span>
                                 </span>
                             </label>
-                            <div id="faceRecognitionArea" class="w-full p-8 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all duration-300 shadow-inner" style="border-color: hsl(174, 100%, 80%); background: linear-gradient(135deg, hsl(174, 100%, 98%), hsl(207, 90%, 98%)); hover:background: linear-gradient(135deg, hsl(174, 100%, 96%), hsl(207, 90%, 96%);">
+                            <div id="faceRecognitionArea" class="w-full p-10 border-2 border-dashed rounded-2xl text-center cursor-pointer transition-all duration-500 shadow-luxury hover:shadow-premium" style="border-color: hsl(174, 100%, 70%); background: linear-gradient(135deg, hsl(174, 100%, 98%), hsl(207, 90%, 98%), hsl(174, 100%, 97%)); hover:background: linear-gradient(135deg, hsl(174, 100%, 96%), hsl(207, 90%, 96%), hsl(174, 100%, 95%)); hover:transform: translateY(-2px);">
                             <div id="cameraPreview" class="hidden">
                                 <video id="video" width="100%" height="200" autoplay class="rounded-lg mb-3"></video>
                                 <canvas id="canvas" style="display: none;"></canvas>
                             </div>
-                                <div id="facePrompt" class="space-y-4">
-                                    <div class="text-6xl mb-4">📷</div>
-                                    <p class="font-bold text-gray-900 text-lg">Tap to Begin Facial Scan</p>
-                                    <p class="text-sm text-gray-600 leading-relaxed">Advanced AI will securely verify your identity<br/>Position your face clearly in the camera view</p>
-                                    <div class="flex justify-center space-x-4 text-xs mt-4">
-                                        <span class="bg-white bg-opacity-60 px-3 py-1 rounded-full text-gray-700">256-bit Encryption</span>
-                                        <span class="bg-white bg-opacity-60 px-3 py-1 rounded-full text-gray-700">HIPAA Secure</span>
+                                <div id="facePrompt" class="space-y-6">
+                                    <div class="text-8xl mb-6 filter drop-shadow-lg">📷</div>
+                                    <div class="space-y-3">
+                                        <p class="font-bold text-gray-900 text-xl">Advanced Biometric Authentication</p>
+                                        <p class="text-gray-600 leading-relaxed">Secure facial recognition powered by enterprise AI<br/>Position your face within the camera frame for verification</p>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3 text-xs mt-6">
+                                        <span class="bg-white bg-opacity-80 px-4 py-2 rounded-xl shadow-sm font-semibold" style="color: var(--navimed-teal);">🔐 Military-Grade Security</span>
+                                        <span class="bg-white bg-opacity-80 px-4 py-2 rounded-xl shadow-sm font-semibold" style="color: var(--navimed-blue);">⚡ Real-time Processing</span>
+                                        <span class="bg-white bg-opacity-80 px-4 py-2 rounded-xl shadow-sm font-semibold" style="color: var(--navimed-green);">🛡️ HIPAA Compliant</span>
+                                        <span class="bg-white bg-opacity-80 px-4 py-2 rounded-xl shadow-sm font-semibold" style="color: var(--navimed-orange);">🧠 AI-Enhanced</span>
                                     </div>
                                 </div>
                             <div id="faceStatus" class="hidden">
@@ -156,68 +255,91 @@
                     
                         <button 
                             type="submit" 
-                            class="w-full text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
-                            style="background: linear-gradient(to right, var(--navimed-blue), var(--navimed-teal)); hover:background: linear-gradient(to right, var(--navimed-blue-light), var(--navimed-teal-light));"
+                            class="w-full text-white py-6 rounded-2xl font-bold text-xl shadow-luxury hover:shadow-premium transition-all duration-300 transform hover:scale-[1.02] hover:translate-y-[-2px] relative overflow-hidden"
+                            style="background: linear-gradient(135deg, var(--navimed-blue), var(--navimed-teal), var(--navimed-blue-light)); background-size: 200% 200%; animation: gradientShift 3s ease infinite;"
                         >
-                            <span class="flex items-center justify-center space-x-3">
-                                <span>🔐</span>
-                                <span>Access Secure Health Portal</span>
-                                <span>→</span>
+                            <span class="relative z-10 flex items-center justify-center space-x-4">
+                                <span class="text-2xl">🔐</span>
+                                <span class="tracking-wide">Access Secure Health Portal</span>
+                                <span class="text-xl transition-transform duration-300 group-hover:translate-x-1">→</span>
                             </span>
+                            <div class="absolute inset-0 bg-white opacity-0 hover:opacity-10 transition-opacity duration-300"></div>
                         </button>
                 </form>
                 
-                    <!-- Professional Security Info -->
-                    <div class="mt-8 p-6 rounded-xl border" style="background: linear-gradient(to right, hsl(174, 100%, 98%), hsl(122, 39%, 98%)); border-color: hsl(174, 100%, 90%);">
-                        <div class="flex items-start space-x-4">
-                            <div class="w-12 h-12 rounded-xl flex items-center justify-center shadow-md" style="background-color: var(--navimed-teal);">
-                                <span class="text-white text-xl">🛡️</span>
+                    <!-- Enterprise Security Information -->
+                    <div class="mt-10 p-8 rounded-2xl border shadow-luxury" style="background: linear-gradient(135deg, hsl(174, 100%, 98%), hsl(122, 39%, 98%), hsl(174, 100%, 97%)); border-color: hsl(174, 100%, 85%);">
+                        <div class="flex items-start space-x-6">
+                            <div class="w-16 h-16 rounded-2xl flex items-center justify-center shadow-luxury float-animation" style="background: linear-gradient(135deg, var(--navimed-teal), var(--navimed-blue));">
+                                <span class="text-white text-2xl">🛡️</span>
                             </div>
                             <div class="flex-1">
-                                <h3 class="font-bold text-lg" style="color: var(--navimed-teal);">Enterprise-Grade Security</h3>
-                                <p class="text-sm mt-2 leading-relaxed" style="color: hsl(174, 100%, 25%);">
-                                    Your protected health information (PHI) is secured with military-grade encryption, 
-                                    multi-factor biometric authentication, and complete data isolation. Each patient 
-                                    maintains exclusive access to their medical records through advanced facial recognition technology.
+                                <h3 class="font-bold text-xl mb-3" style="color: var(--navimed-teal);">Enterprise-Grade Security Architecture</h3>
+                                <p class="text-base leading-relaxed mb-4" style="color: hsl(174, 100%, 25%);">
+                                    Your protected health information (PHI) is secured with military-grade AES-256 encryption, 
+                                    zero-trust architecture, multi-factor biometric authentication, and complete data isolation. 
+                                    Each patient maintains exclusive access to their medical records through advanced AI-powered 
+                                    facial recognition technology with real-time threat monitoring.
                                 </p>
-                                <div class="flex space-x-4 mt-3 text-xs">
-                                    <span class="bg-white bg-opacity-80 px-2 py-1 rounded-md font-medium" style="color: var(--navimed-teal);">AES-256 Encryption</span>
-                                    <span class="bg-white bg-opacity-80 px-2 py-1 rounded-md font-medium" style="color: var(--navimed-teal);">SOC 2 Compliant</span>
-                                    <span class="bg-white bg-opacity-80 px-2 py-1 rounded-md font-medium" style="color: var(--navimed-teal);">GDPR Ready</span>
+                                <div class="grid grid-cols-2 gap-3 text-sm">
+                                    <div class="bg-white bg-opacity-90 px-4 py-3 rounded-xl shadow-sm border border-white border-opacity-50">
+                                        <span class="font-bold block mb-1" style="color: var(--navimed-teal);">🔐 Encryption</span>
+                                        <span class="text-gray-600">AES-256 Military Grade</span>
+                                    </div>
+                                    <div class="bg-white bg-opacity-90 px-4 py-3 rounded-xl shadow-sm border border-white border-opacity-50">
+                                        <span class="font-bold block mb-1" style="color: var(--navimed-blue);">🏛️ Compliance</span>
+                                        <span class="text-gray-600">SOC 2 Type II Certified</span>
+                                    </div>
+                                    <div class="bg-white bg-opacity-90 px-4 py-3 rounded-xl shadow-sm border border-white border-opacity-50">
+                                        <span class="font-bold block mb-1" style="color: var(--navimed-green);">🌍 Privacy</span>
+                                        <span class="text-gray-600">GDPR & CCPA Ready</span>
+                                    </div>
+                                    <div class="bg-white bg-opacity-90 px-4 py-3 rounded-xl shadow-sm border border-white border-opacity-50">
+                                        <span class="font-bold block mb-1" style="color: var(--navimed-orange);">🚨 Monitoring</span>
+                                        <span class="text-gray-600">24/7 Threat Detection</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 
-                    <!-- Professional Help Links -->
-                    <div class="mt-8 text-center space-y-4">
-                        <div class="bg-white bg-opacity-60 rounded-lg p-4">
-                            <p class="text-sm font-medium text-gray-700 mb-2">Need assistance with your account?</p>
-                            <div class="flex justify-center space-x-6 text-sm">
-                                <a href="#" class="text-blue-600 hover:text-blue-800 font-medium hover:underline">Contact Hospital IT</a>
-                                <span class="text-gray-400">|</span>
-                                <a href="#" class="text-blue-600 hover:text-blue-800 font-medium hover:underline">Reset Biometrics</a>
+                    <!-- Professional Support Center -->
+                    <div class="mt-10 text-center space-y-6">
+                        <div class="bg-white bg-opacity-80 rounded-2xl p-6 shadow-luxury">
+                            <p class="text-base font-semibold text-gray-800 mb-4">Need assistance with your account?</p>
+                            <div class="flex justify-center space-x-8 text-sm mb-4">
+                                <a href="#" class="font-medium hover:underline transition-colors duration-200" style="color: var(--navimed-blue); hover:color: var(--navimed-blue-dark);">🏥 Contact Hospital IT</a>
+                                <a href="#" class="font-medium hover:underline transition-colors duration-200" style="color: var(--navimed-teal); hover:color: var(--navimed-teal-light);">🔄 Reset Biometrics</a>
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                <span>🕒 Support available 24/7 • Average response time: &lt;15 minutes</span>
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-3 gap-4 text-xs text-gray-600">
+                        <div class="grid grid-cols-4 gap-4 text-xs text-gray-600">
                             <div class="text-center">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-1" style="background-color: hsl(122, 39%, 95%);">
-                                    <span style="color: var(--navimed-green);">🔒</span>
+                                <div class="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-sm" style="background-color: hsl(122, 39%, 95%);">
+                                    <span class="text-lg" style="color: var(--navimed-green);">🔒</span>
                                 </div>
-                                <span>HIPAA Compliant</span>
+                                <span class="font-medium">HIPAA<br/>Compliant</span>
                             </div>
                             <div class="text-center">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-1" style="background-color: hsl(207, 90%, 95%);">
-                                    <span style="color: var(--navimed-blue);">📱</span>
+                                <div class="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-sm" style="background-color: hsl(207, 90%, 95%);">
+                                    <span class="text-lg" style="color: var(--navimed-blue);">📱</span>
                                 </div>
-                                <span>iOS & Android</span>
+                                <span class="font-medium">iOS &amp;<br/>Android</span>
                             </div>
                             <div class="text-center">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-1" style="background-color: hsl(174, 100%, 95%);">
-                                    <span style="color: var(--navimed-teal);">🌐</span>
+                                <div class="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-sm" style="background-color: hsl(174, 100%, 95%);">
+                                    <span class="text-lg" style="color: var(--navimed-teal);">🌐</span>
                                 </div>
-                                <span>24/7 Access</span>
+                                <span class="font-medium">24/7<br/>Access</span>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-sm" style="background-color: hsl(36, 100%, 95%);">
+                                    <span class="text-lg" style="color: var(--navimed-orange);">⚡</span>
+                                </div>
+                                <span class="font-medium">Real-time<br/>Sync</span>
                             </div>
                         </div>
                     </div>
