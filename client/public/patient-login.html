@@ -259,7 +259,7 @@
                     
                         <button 
                             type="submit" 
-                            onclick="window.location.href='/mobile-app'"
+                            onclick="window.location.href='/patient-portal'"
                             class="w-full text-white py-6 rounded-2xl font-bold text-xl shadow-luxury hover:shadow-premium transition-all duration-300 transform hover:scale-[1.02] hover:translate-y-[-2px] relative overflow-hidden"
                             style="background: linear-gradient(135deg, var(--navimed-blue), var(--navimed-teal), var(--navimed-blue-light)); background-size: 200% 200%; animation: gradientShift 3s ease infinite;"
                         >
@@ -483,9 +483,9 @@
                         // Show success message
                         alert(`🔐 Authentication Successful!\n\nWelcome ${data.patient.firstName} ${data.patient.lastName}!\nHospital: ${data.patient.hospital}\nMRN: ${data.patient.mrn}\n\nRedirecting to your secure health portal...`);
                         
-                        // Redirect to mobile app  
+                        // Redirect to patient portal  
                         setTimeout(() => {
-                            window.location.href = '/mobile-app';
+                            window.location.href = '/patient-portal';
                         }, 1500);
                     } else {
                         throw new Error(data.message || 'Authentication failed');

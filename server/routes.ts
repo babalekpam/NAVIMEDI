@@ -6704,6 +6704,11 @@ Report ID: ${report.id}
     res.redirect('/patient-login.html');
   });
 
+  // Patient portal direct route (redirect to working static HTML)
+  app.get('/patient-portal', (req, res) => {
+    res.redirect('/patient-portal.html');
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
