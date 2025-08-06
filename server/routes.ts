@@ -1,5 +1,4 @@
 import type { Express } from "express";
-import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { fileURLToPath } from 'url';
@@ -23,46 +22,6 @@ import { formatCurrency, getCurrencyInfo, convertCurrency, getTenantCurrencies, 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Serve static HTML files directly
-  const publicPath = path.resolve(__dirname, "..", "client", "public");
-  
-  // Direct route for platform overview
-  app.get("/platform-overview.html", (req, res) => {
-    res.sendFile(path.join(publicPath, "platform-overview.html"));
-  });
-  
-  app.get("/patient-login.html", (req, res) => {
-    res.sendFile(path.join(publicPath, "patient-login.html"));
-  });
-  
-  app.get("/patient-portal.html", (req, res) => {
-    res.sendFile(path.join(publicPath, "patient-portal.html"));
-  });
-  
-  app.get("/mobile-app.html", (req, res) => {
-    res.sendFile(path.join(publicPath, "mobile-app.html"));
-  });
-
-  app.get("/main-portal.html", (req, res) => {
-    res.sendFile(path.join(publicPath, "main-portal.html"));
-  });
-
-  // Platform overview redirect routes
-  app.get("/", (req, res) => {
-    res.redirect("/main-portal.html");
-  });
-  
-  app.get("/portals", (req, res) => {
-    res.redirect("/main-portal.html");
-  });
-  app.get("/platform", (req, res) => {
-    res.redirect("/platform-overview.html");
-  });
-  
-  app.get("/overview", (req, res) => {
-    res.redirect("/platform-overview.html");
-  });
-
   // PUBLIC ENDPOINTS (before any middleware)
   
   // Public supplier registration endpoint (outside /api path to avoid middleware)
@@ -202,71 +161,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Simple Patient Authentication for Carnet Mobile App
-  app.post('/api/auth/patient-login', async (req, res) => {
-    try {
-      const { mrn, hospital, password, email } = req.body;
-
-      console.log(`[CARNET AUTH] Login attempt - MRN: ${mrn}, Hospital: ${hospital}, Email: ${email}`);
-
-      // For demo - accept the test patient credentials
-      if ((mrn === 'MRN-789012345' || email === 'sarah.johnson@email.com') && 
-          (!hospital || hospital === 'metro-general') && 
-          (!password || password === 'patient123')) {
-        
-        // Get the test patient from storage
-        const testPatients = await storage.getAllPatients();
-        const testPatient = testPatients.find(p => p.mrn === 'MRN-789012345');
-        
-        if (testPatient) {
-          // Generate JWT token for patient session
-          const token = jwt.sign(
-            { 
-              patientId: testPatient.id,
-              mrn: testPatient.mrn,
-              firstName: testPatient.firstName,
-              lastName: testPatient.lastName,
-              email: testPatient.email,
-              tenantId: testPatient.tenantId,
-              role: 'patient'
-            },
-            JWT_SECRET,
-            { expiresIn: '7d' }
-          );
-
-          res.json({
-            success: true,
-            message: 'Login successful',
-            token,
-            patient: {
-              id: testPatient.id,
-              mrn: testPatient.mrn,
-              firstName: testPatient.firstName,
-              lastName: testPatient.lastName,
-              email: testPatient.email,
-              tenantId: testPatient.tenantId,
-              hospital: 'Metro General Hospital'
-            }
-          });
-          return;
-        }
-      }
-
-      // Invalid credentials
-      console.log(`[CARNET AUTH] Invalid credentials provided`);
-      res.status(401).json({ 
-        success: false, 
-        message: 'Invalid patient credentials. Please check your MRN and password.' 
-      });
-    } catch (error) {
-      console.error('Error during patient login:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Server error during login. Please try again.' 
-      });
-    }
-  });
-
   // JWT Authentication routes only - no Replit Auth
   
   // Standard JWT login endpoint
@@ -352,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current user endpoint
   app.get("/api/auth/user", authenticateToken, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.id);
+      const user = await storage.getUser(req.user.userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -377,26 +271,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
-
-  // Get current tenant endpoint
-  app.get("/api/tenant/current", authenticateToken, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.id);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      const tenant = await storage.getTenant(user.tenantId);
-      if (!tenant) {
-        return res.status(404).json({ message: "Tenant not found" });
-      }
-      
-      res.json(tenant);
-    } catch (error) {
-      console.error("Error fetching tenant:", error);
-      res.status(500).json({ message: "Failed to fetch tenant" });
     }
   });
 
@@ -872,88 +746,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('[SUPPLIER LOGIN] Error:', error);
-      res.status(500).json({ message: "Login failed" });
-    }
-  });
-
-  // PATIENT MOBILE APP AUTHENTICATION (for Carnet app)
-  app.post("/api/patient/login", async (req, res) => {
-    try {
-      const { hospitalId, patientId, biometricData } = req.body;
-      
-      if (!hospitalId || !patientId) {
-        return res.status(400).json({ message: "Hospital ID and Patient ID are required" });
-      }
-
-      // Find hospital tenant
-      const hospitals = await storage.getAllTenants();
-      let hospital = hospitals.find(h => 
-        h.name.toLowerCase().includes(hospitalId.toLowerCase()) ||
-        h.subdomain === hospitalId ||
-        h.id === hospitalId
-      );
-      
-      if (!hospital) {
-        return res.status(400).json({ message: "Hospital not found" });
-      }
-
-      // Find patient by MRN or other identifiers
-      const patients = await storage.getPatientsByTenant(hospital.id);
-      let patient = patients.find(p => 
-        p.mrn === patientId ||
-        p.mrn.includes(patientId) ||
-        (p.firstName + ' ' + p.lastName).toLowerCase().includes(patientId.toLowerCase())
-      );
-
-      // Also search by name if MRN not found
-      if (!patient && patientId.toLowerCase().includes('sarah')) {
-        patient = patients.find(p => 
-          p.firstName.toLowerCase() === 'sarah' && 
-          p.lastName.toLowerCase() === 'johnson'
-        );
-      }
-
-      if (!patient) {
-        return res.status(401).json({ message: "Patient not found or invalid credentials" });
-      }
-
-      // Check if patient has Carnet access enabled
-      if (!patient.carnetEnabled) {
-        return res.status(403).json({ message: "Mobile app access not enabled for this patient" });
-      }
-
-      // For demo purposes, accept basic authentication
-      // In production, this would include biometric verification
-      console.log(`Patient login attempt: ${patient.firstName} ${patient.lastName} from ${hospital.name}`);
-
-      // Create JWT token for patient
-      const token = jwt.sign(
-        { 
-          userId: patient.id,
-          patientId: patient.id,
-          tenantId: hospital.id,
-          role: 'patient',
-          username: `${patient.firstName} ${patient.lastName}`,
-          mrn: patient.mrn
-        },
-        JWT_SECRET,
-        { expiresIn: "24h" }
-      );
-
-      res.json({
-        message: "Login successful",
-        token,
-        patient: {
-          id: patient.id,
-          firstName: patient.firstName,
-          lastName: patient.lastName,
-          mrn: patient.mrn,
-          hospital: hospital.name,
-          carnetEnabled: patient.carnetEnabled
-        }
-      });
-    } catch (error) {
-      console.error("Patient login error:", error);
       res.status(500).json({ message: "Login failed" });
     }
   });
@@ -1654,7 +1446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/appointments", authenticateToken, requireTenant, async (req, res) => {
     try {
-      console.log("[DEBUG] Creating appointment - User:", req.user?.role, "User ID:", req.user?.id, "Tenant:", req.tenant?.id);
+      console.log("[DEBUG] Creating appointment - User:", req.user?.role, "User ID:", req.user?.userId, "Tenant:", req.tenant?.id);
       console.log("[DEBUG] Request body:", req.body);
       
       // ROLE-BASED APPOINTMENT SCHEDULING RESTRICTIONS
@@ -6724,21 +6516,6 @@ Report ID: ${report.id}
       console.error('Error updating tenant currencies:', error);
       res.status(500).json({ error: 'Failed to update currency settings' });
     }
-  });
-
-  // Mobile app direct route (redirect to working static HTML)
-  app.get('/mobile-app', (req, res) => {
-    res.redirect('/mobile-app.html');
-  });
-
-  // Patient login direct route (redirect to working static HTML)
-  app.get('/patient-login', (req, res) => {
-    res.redirect('/patient-login.html');
-  });
-
-  // Patient portal direct route (redirect to working static HTML)
-  app.get('/patient-portal', (req, res) => {
-    res.redirect('/patient-portal.html');
   });
 
   const httpServer = createServer(app);

@@ -425,8 +425,6 @@ export const users = pgTable("users", {
 export const patients = pgTable("patients", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
-  // Patient's chosen hospital - critical for Carnet app access and data isolation
-  primaryHospitalId: uuid("primary_hospital_id").references(() => tenants.id),
   mrn: text("mrn").notNull(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
@@ -442,28 +440,6 @@ export const patients = pgTable("patients", {
   medicalHistory: jsonb("medical_history").default('[]'),
   allergies: jsonb("allergies").default('[]'),
   medications: jsonb("medications").default('[]'),
-  // Carnet mobile app privacy and security settings
-  carnetEnabled: boolean("carnet_enabled").default(true),
-  carnetPassword: text("carnet_password"), // Additional security for mobile access
-  dataIsolationLevel: text("data_isolation_level").default('strict'), // strict, limited, shared
-  privacyPreferences: jsonb("privacy_preferences").default('{}'),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
-});
-
-// Patient-Doctor linkage table for secure provider relationships in Carnet
-export const patientDoctorLinks = pgTable("patient_doctor_links", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  patientId: uuid("patient_id").references(() => patients.id, { onDelete: "cascade" }).notNull(),
-  doctorId: uuid("doctor_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  hospitalId: uuid("hospital_id").references(() => tenants.id, { onDelete: "cascade" }).notNull(),
-  isPrimary: boolean("is_primary").default(false),
-  specialtyAccess: jsonb("specialty_access").default('[]'), // Which specialties this doctor can access
-  accessLevel: text("access_level").default('full'), // full, limited, emergency_only, view_only
-  patientApproved: boolean("patient_approved").default(false), // Patient must approve doctor access
-  approvedAt: timestamp("approved_at"),
-  approvedBy: uuid("approved_by").references(() => users.id),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
@@ -2209,19 +2185,10 @@ export const patientsRelations = relations(patients, ({ one, many }) => ({
     fields: [patients.tenantId],
     references: [tenants.id]
   }),
-  primaryHospital: one(tenants, {
-    fields: [patients.primaryHospitalId],
-    references: [tenants.id]
-  }),
-  primaryPhysician: one(users, {
-    fields: [patients.primaryPhysicianId],
-    references: [users.id]
-  }),
   preferredPharmacy: one(pharmacies, {
     fields: [patients.preferredPharmacyId],
     references: [pharmacies.id]
   }),
-  doctorLinks: many(patientDoctorLinks),
   appointments: many(appointments),
   prescriptions: many(prescriptions),
   labOrders: many(labOrders),
@@ -2232,25 +2199,6 @@ export const patientsRelations = relations(patients, ({ one, many }) => ({
   visitSummaries: many(visitSummaries),
   patientBills: many(patientBills),
   patientPayments: many(patientPayments)
-}));
-
-export const patientDoctorLinksRelations = relations(patientDoctorLinks, ({ one }) => ({
-  patient: one(patients, {
-    fields: [patientDoctorLinks.patientId],
-    references: [patients.id]
-  }),
-  doctor: one(users, {
-    fields: [patientDoctorLinks.doctorId],
-    references: [users.id]
-  }),
-  hospital: one(tenants, {
-    fields: [patientDoctorLinks.hospitalId],
-    references: [tenants.id]
-  }),
-  approver: one(users, {
-    fields: [patientDoctorLinks.approvedBy],
-    references: [users.id]
-  })
 }));
 
 // Laboratory Relations

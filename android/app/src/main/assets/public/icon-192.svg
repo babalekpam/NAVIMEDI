@@ -1,8 +1,0 @@
-<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="192" height="192" rx="24" fill="#2563eb"/>
-  <path d="M48 96C48 69.4903 69.4903 48 96 48C122.51 48 144 69.4903 144 96C144 122.51 122.51 144 96 144C69.4903 144 48 122.51 48 96Z" fill="white"/>
-  <path d="M96 72C108.15 72 118.32 79.68 121.44 90H132C128.32 73.44 113.28 60 96 60C78.72 60 63.68 73.44 60 90H70.56C73.68 79.68 83.85 72 96 72Z" fill="#2563eb"/>
-  <path d="M96 120C83.85 120 73.68 112.32 70.56 102H60C63.68 118.56 78.72 132 96 132C113.28 132 128.32 118.56 132 102H121.44C118.32 112.32 108.15 120 96 120Z" fill="#2563eb"/>
-  <circle cx="96" cy="96" r="8" fill="#2563eb"/>
-  <text x="96" y="168" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">NaviMED</text>
-</svg>
