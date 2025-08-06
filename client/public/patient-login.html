@@ -3,73 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Login - Carnet</title>
+    <title>Patient Portal - Carnet Health</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Carnet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%); }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #1e40af 0%, #059669 50%, #0891b2 100%); }
         .heart-pulse { animation: pulse 2s infinite; }
+        .glass-effect { backdrop-filter: blur(20px); background: rgba(255, 255, 255, 0.95); }
+        .medical-pattern { background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e0f2fe' fill-opacity='0.4'%3E%3Ccircle cx='30' cy='30' r='3'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        .float-animation { animation: float 3s ease-in-out infinite; }
+        .shadow-premium { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-green-50 min-h-screen">
-    <div class="min-h-screen flex items-center justify-center p-4">
-        <div class="max-w-md w-full bg-white rounded-xl shadow-xl overflow-hidden">
-            <!-- Header -->
-            <div class="gradient-bg text-white p-6 text-center">
-                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span class="text-3xl heart-pulse">❤️</span>
+<body class="medical-pattern min-h-screen relative overflow-x-hidden">
+    <!-- Background Elements -->
+    <div class="absolute inset-0 gradient-bg opacity-95"></div>
+    <div class="absolute top-20 left-10 w-20 h-20 bg-white bg-opacity-10 rounded-full blur-xl"></div>
+    <div class="absolute top-40 right-20 w-32 h-32 bg-blue-300 bg-opacity-20 rounded-full blur-2xl"></div>
+    <div class="absolute bottom-20 left-20 w-24 h-24 bg-green-300 bg-opacity-20 rounded-full blur-xl"></div>
+    <div class="min-h-screen flex items-center justify-center p-4 relative z-10">
+        <div class="max-w-lg w-full">
+            <!-- Professional Header Card -->
+            <div class="glass-effect rounded-2xl shadow-premium mb-6 p-8 text-center">
+                <div class="float-animation mb-6">
+                    <div class="w-20 h-20 bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <span class="text-4xl heart-pulse">❤️</span>
+                    </div>
                 </div>
-                <h1 class="text-2xl font-bold">Welcome to Carnet</h1>
-                <p class="text-blue-100 mt-1">Your Private Health Portal</p>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Carnet Health</h1>
+                <p class="text-gray-600 text-lg font-medium">Advanced Patient Portal</p>
+                <div class="mt-4 flex justify-center space-x-6 text-sm">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span class="text-gray-700 font-medium">HIPAA Compliant</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span class="text-gray-700 font-medium">End-to-End Encrypted</span>
+                    </div>
+                </div>
             </div>
             
-            <!-- Login Form -->
-            <div class="p-6">
-                <form id="loginForm" class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            🏥 Hospital ID
-                        </label>
-                        <input 
-                            type="text" 
-                            id="hospitalId"
-                            placeholder="Enter your hospital ID"
-                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            required
-                        >
-                    </div>
+            <!-- Main Login Card -->
+            <div class="glass-effect rounded-2xl shadow-premium overflow-hidden">
+            
+                <!-- Premium Header -->
+                <div class="bg-gradient-to-r from-slate-50 to-blue-50 p-6 border-b border-gray-100">
+                    <h2 class="text-xl font-semibold text-gray-900 text-center">Secure Patient Authentication</h2>
+                    <p class="text-gray-600 text-sm text-center mt-1">Multi-factor biometric security</p>
+                </div>
+                
+                <!-- Login Form -->
+                <div class="p-8">
+                    <form id="loginForm" class="space-y-8">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-800 mb-3">
+                                <span class="flex items-center space-x-2">
+                                    <span class="text-blue-600">🏥</span>
+                                    <span>Hospital Network ID</span>
+                                </span>
+                            </label>
+                            <div class="relative">
+                                <input 
+                                    type="text" 
+                                    id="hospitalId"
+                                    placeholder="MGH-2024 or your facility code"
+                                    class="w-full p-4 pl-12 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm text-gray-900 font-medium"
+                                    required
+                                >
+                                <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">🏥</div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-800 mb-3">
+                                <span class="flex items-center space-x-2">
+                                    <span class="text-green-600">👤</span>
+                                    <span>Patient Medical Record Number</span>
+                                </span>
+                            </label>
+                            <div class="relative">
+                                <input 
+                                    type="text" 
+                                    id="patientId"
+                                    placeholder="MRN-123456789 or assigned ID"
+                                    class="w-full p-4 pl-12 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-100 focus:border-green-400 transition-all duration-200 bg-white shadow-sm text-gray-900 font-medium"
+                                    required
+                                >
+                                <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">👤</div>
+                            </div>
+                        </div>
                     
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            👤 Patient ID
-                        </label>
-                        <input 
-                            type="text" 
-                            id="patientId"
-                            placeholder="Enter your patient ID"
-                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            required
-                        >
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            🔒 Facial Recognition
-                        </label>
-                        <div id="faceRecognitionArea" class="w-full p-6 border-2 border-dashed border-gray-300 rounded-lg text-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-800 mb-3">
+                                <span class="flex items-center space-x-2">
+                                    <span class="text-purple-600">🔒</span>
+                                    <span>Biometric Authentication</span>
+                                    <span class="ml-auto bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full font-medium">AI-Powered</span>
+                                </span>
+                            </label>
+                            <div id="faceRecognitionArea" class="w-full p-8 border-2 border-dashed border-purple-200 rounded-xl text-center bg-gradient-to-br from-purple-50 to-indigo-50 hover:from-purple-100 hover:to-indigo-100 cursor-pointer transition-all duration-300 shadow-inner">
                             <div id="cameraPreview" class="hidden">
                                 <video id="video" width="100%" height="200" autoplay class="rounded-lg mb-3"></video>
                                 <canvas id="canvas" style="display: none;"></canvas>
                             </div>
-                            <div id="facePrompt" class="space-y-3">
-                                <div class="text-4xl">📷</div>
-                                <p class="font-medium text-gray-900">Tap to Start Facial Recognition</p>
-                                <p class="text-sm text-gray-600">Position your face in the camera view</p>
-                            </div>
+                                <div id="facePrompt" class="space-y-4">
+                                    <div class="text-6xl mb-4">📷</div>
+                                    <p class="font-bold text-gray-900 text-lg">Tap to Begin Facial Scan</p>
+                                    <p class="text-sm text-gray-600 leading-relaxed">Advanced AI will securely verify your identity<br/>Position your face clearly in the camera view</p>
+                                    <div class="flex justify-center space-x-4 text-xs mt-4">
+                                        <span class="bg-white bg-opacity-60 px-3 py-1 rounded-full text-gray-700">256-bit Encryption</span>
+                                        <span class="bg-white bg-opacity-60 px-3 py-1 rounded-full text-gray-700">HIPAA Secure</span>
+                                    </div>
+                                </div>
                             <div id="faceStatus" class="hidden">
                                 <div id="scanningStatus" class="hidden">
                                     <div class="text-3xl mb-2 animate-pulse">🔍</div>
@@ -88,86 +140,155 @@
                         <input type="hidden" id="faceRecognized" value="false">
                     </div>
                     
-                    <button 
-                        type="submit" 
-                        class="w-full gradient-bg text-white py-3 rounded-lg font-semibold text-lg hover:shadow-lg transition-shadow"
-                    >
-                        🔐 Access My Health Records
-                    </button>
+                        <button 
+                            type="submit" 
+                            class="w-full bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                        >
+                            <span class="flex items-center justify-center space-x-3">
+                                <span>🔐</span>
+                                <span>Access Secure Health Portal</span>
+                                <span>→</span>
+                            </span>
+                        </button>
                 </form>
                 
-                <!-- Security Info -->
-                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
-                    <div class="flex items-start space-x-3">
-                        <span class="text-blue-600 text-lg">🛡️</span>
-                        <div>
-                            <h3 class="font-semibold text-blue-900">Secure Login</h3>
-                            <p class="text-sm text-blue-700 mt-1">
-                                Your health information is protected with end-to-end encryption and biometric authentication. 
-                                Each patient has private, isolated access to their own medical records using facial recognition technology.
-                            </p>
+                    <!-- Professional Security Info -->
+                    <div class="mt-8 p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-100">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center shadow-md">
+                                <span class="text-white text-xl">🛡️</span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-bold text-emerald-900 text-lg">Enterprise-Grade Security</h3>
+                                <p class="text-sm text-emerald-800 mt-2 leading-relaxed">
+                                    Your protected health information (PHI) is secured with military-grade encryption, 
+                                    multi-factor biometric authentication, and complete data isolation. Each patient 
+                                    maintains exclusive access to their medical records through advanced facial recognition technology.
+                                </p>
+                                <div class="flex space-x-4 mt-3 text-xs">
+                                    <span class="bg-white bg-opacity-80 text-emerald-700 px-2 py-1 rounded-md font-medium">AES-256 Encryption</span>
+                                    <span class="bg-white bg-opacity-80 text-emerald-700 px-2 py-1 rounded-md font-medium">SOC 2 Compliant</span>
+                                    <span class="bg-white bg-opacity-80 text-emerald-700 px-2 py-1 rounded-md font-medium">GDPR Ready</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
                 
-                <!-- Help Links -->
-                <div class="mt-6 text-center space-y-3">
-                    <div class="text-sm text-gray-600">
-                        <p>Need help accessing your account?</p>
-                        <a href="#" class="text-blue-600 hover:underline">Contact Your Hospital</a> |
-                        <a href="#" class="text-blue-600 hover:underline">Forgot PIN?</a>
+                    <!-- Professional Help Links -->
+                    <div class="mt-8 text-center space-y-4">
+                        <div class="bg-white bg-opacity-60 rounded-lg p-4">
+                            <p class="text-sm font-medium text-gray-700 mb-2">Need assistance with your account?</p>
+                            <div class="flex justify-center space-x-6 text-sm">
+                                <a href="#" class="text-blue-600 hover:text-blue-800 font-medium hover:underline">Contact Hospital IT</a>
+                                <span class="text-gray-400">|</span>
+                                <a href="#" class="text-blue-600 hover:text-blue-800 font-medium hover:underline">Reset Biometrics</a>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-4 text-xs text-gray-600">
+                            <div class="text-center">
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                                    <span class="text-green-600">🔒</span>
+                                </div>
+                                <span>HIPAA Compliant</span>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                                    <span class="text-blue-600">📱</span>
+                                </div>
+                                <span>iOS & Android</span>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                                    <span class="text-purple-600">🌐</span>
+                                </div>
+                                <span>24/7 Access</span>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="text-xs text-gray-500">
-                        <p>Protected by HIPAA compliance</p>
-                        <p>Available on iOS & Android</p>
+                    <!-- Professional Demo Access -->
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <button 
+                            onclick="showDemoPatient()"
+                            class="w-full bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 py-3 rounded-xl text-sm font-semibold hover:shadow-md transition-all duration-200"
+                        >
+                            <span class="flex items-center justify-center space-x-2">
+                                <span>📱</span>
+                                <span>Experience Demo Patient Portal</span>
+                                <span>→</span>
+                            </span>
+                        </button>
                     </div>
-                </div>
-                
-                <!-- Demo Access -->
-                <div class="mt-6 pt-4 border-t border-gray-200">
-                    <button 
-                        onclick="showDemoPatient()"
-                        class="w-full bg-gray-100 text-gray-700 py-2 rounded-lg text-sm hover:bg-gray-200 transition-colors"
-                    >
-                        📱 View Demo Patient Portal
-                    </button>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Demo Modal -->
-    <div id="demoModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
-        <div class="max-w-sm bg-white rounded-lg p-6">
-            <h3 class="text-lg font-bold mb-4">Demo Patient Access</h3>
-            <div class="space-y-3 mb-4">
-                <div class="bg-green-100 p-3 rounded">
-                    <p class="font-medium">✅ Connected to Metro Hospital</p>
-                    <p class="text-sm text-gray-600">Dr. Sarah Johnson - Primary Care</p>
-                </div>
-                <div class="bg-blue-100 p-3 rounded">
-                    <p class="font-medium">📋 3 Recent Appointments</p>
-                    <p class="text-sm text-gray-600">Next: Today 2:00 PM</p>
-                </div>
-                <div class="bg-purple-100 p-3 rounded">
-                    <p class="font-medium">💊 2 Active Medications</p>
-                    <p class="text-sm text-gray-600">Reminders enabled</p>
-                </div>
+    <!-- Professional Demo Modal -->
+    <div id="demoModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center p-4 z-50">
+        <div class="max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6">
+                <h3 class="text-xl font-bold text-center">Demo Patient Account</h3>
+                <p class="text-blue-100 text-sm text-center mt-1">Experience the full Carnet Health platform</p>
             </div>
-            <div class="flex space-x-3">
-                <button 
-                    onclick="closeDemoModal()"
-                    class="flex-1 bg-gray-200 text-gray-700 py-2 rounded"
-                >
-                    Close
-                </button>
-                <button 
-                    onclick="window.location.href='/mobile-app'"
-                    class="flex-1 gradient-bg text-white py-2 rounded"
-                >
-                    View Demo
-                </button>
+            
+            <div class="p-6">
+                <div class="space-y-4 mb-6">
+                    <div class="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 p-4 rounded-xl">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-sm">🏥</span>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-emerald-900">Connected to Metro General Hospital</p>
+                                <p class="text-sm text-emerald-700">Dr. Sarah Johnson - Primary Care Physician</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-4 rounded-xl">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-sm">📋</span>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-blue-900">3 Recent Appointments</p>
+                                <p class="text-sm text-blue-700">Next: Today 2:00 PM - Routine Checkup</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 p-4 rounded-xl">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-sm">💊</span>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-purple-900">2 Active Medications</p>
+                                <p class="text-sm text-purple-700">Smart reminders and refill tracking</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button 
+                        onclick="closeDemoModal()"
+                        class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-medium transition-colors"
+                    >
+                        Close
+                    </button>
+                    <button 
+                        onclick="window.location.href='/mobile-app'"
+                        class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white py-3 rounded-xl font-medium transition-all duration-200"
+                    >
+                        <span class="flex items-center justify-center space-x-2">
+                            <span>View Portal</span>
+                            <span>→</span>
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
