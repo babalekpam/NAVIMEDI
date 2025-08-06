@@ -108,6 +108,8 @@ import PharmacyReports from "@/pages/pharmacy-reports";
 import PrescriptionArchives from "@/pages/prescription-archives";
 import PharmacyEmployeeManagement from "@/pages/pharmacy-employee-management";
 import LaboratoryDashboard from "@/pages/laboratory-dashboard";
+import MobilePatientApp from "@/pages/mobile-patient-app";
+import MobileAppWrapper from "@/components/mobile/mobile-app-wrapper";
 
 
 
@@ -278,6 +280,13 @@ function AppContent() {
         </Route>
         <Route path="/patient-portal-public">
           <PatientPortalPublic />
+        </Route>
+        <Route path="/mobile-app">
+          <ProtectedRoute>
+            <MobileAppWrapper>
+              <MobilePatientApp />
+            </MobileAppWrapper>
+          </ProtectedRoute>
         </Route>
         <Route path="/telemedicine-booking">
           <ProtectedRoute>
