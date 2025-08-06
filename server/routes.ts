@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { fileURLToPath } from 'url';
@@ -22,6 +23,13 @@ import { formatCurrency, getCurrencyInfo, convertCurrency, getTenantCurrencies, 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve static HTML files from client/public
+  const publicPath = path.resolve(__dirname, "..", "client", "public");
+  app.use("/platform-overview.html", express.static(publicPath));
+  app.use("/patient-login.html", express.static(publicPath));
+  app.use("/patient-portal.html", express.static(publicPath));
+  app.use("/mobile-app.html", express.static(publicPath));
+
   // PUBLIC ENDPOINTS (before any middleware)
   
   // Public supplier registration endpoint (outside /api path to avoid middleware)
