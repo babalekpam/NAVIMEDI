@@ -844,6 +844,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PATIENT MOBILE APP AUTHENTICATION (for Carnet app)
+  app.post("/api/patient/login", async (req, res) => {
+    try {
+      const { hospitalId, patientId, biometricData } = req.body;
+      
+      if (!hospitalId || !patientId) {
+        return res.status(400).json({ message: "Hospital ID and Patient ID are required" });
+      }
+
+      // Find hospital tenant
+      const hospitals = await storage.getAllTenants();
+      let hospital = hospitals.find(h => 
+        h.name.toLowerCase().includes(hospitalId.toLowerCase()) ||
+        h.subdomain === hospitalId ||
+        h.id === hospitalId
+      );
+      
+      if (!hospital) {
+        return res.status(400).json({ message: "Hospital not found" });
+      }
+
+      // Find patient by MRN or other identifiers
+      const patients = await storage.getPatientsByTenant(hospital.id);
+      let patient = patients.find(p => 
+        p.mrn === patientId ||
+        p.mrn.includes(patientId) ||
+        (p.firstName + ' ' + p.lastName).toLowerCase().includes(patientId.toLowerCase())
+      );
+
+      if (!patient) {
+        return res.status(401).json({ message: "Patient not found or invalid credentials" });
+      }
+
+      // Check if patient has Carnet access enabled
+      if (!patient.carnetEnabled) {
+        return res.status(403).json({ message: "Mobile app access not enabled for this patient" });
+      }
+
+      // For demo purposes, accept basic authentication
+      // In production, this would include biometric verification
+      console.log(`Patient login attempt: ${patient.firstName} ${patient.lastName} from ${hospital.name}`);
+
+      // Create JWT token for patient
+      const token = jwt.sign(
+        { 
+          userId: patient.id,
+          patientId: patient.id,
+          tenantId: hospital.id,
+          role: 'patient',
+          username: `${patient.firstName} ${patient.lastName}`,
+          mrn: patient.mrn
+        },
+        JWT_SECRET,
+        { expiresIn: "24h" }
+      );
+
+      res.json({
+        message: "Login successful",
+        token,
+        patient: {
+          id: patient.id,
+          firstName: patient.firstName,
+          lastName: patient.lastName,
+          mrn: patient.mrn,
+          hospital: hospital.name,
+          carnetEnabled: patient.carnetEnabled
+        }
+      });
+    } catch (error) {
+      console.error("Patient login error:", error);
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
   // Authentication routes (before tenant middleware)
   app.post("/api/auth/login", async (req, res) => {
     try {

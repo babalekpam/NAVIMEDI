@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { trialSuspensionService } from "./trial-suspension-service";
 import { createTestHospital } from "./create-test-hospital";
+import { createTestPatient } from "./create-test-patient";
 import { nanoid } from "nanoid";
 
 const app = express();
@@ -120,6 +121,14 @@ const initializeApp = async () => {
     }
     
     log("✓ Platform initialization complete");
+    
+    // Create test patient Sarah Johnson for Carnet demo
+    try {
+      await createTestPatient();
+      log('✓ Test patient Sarah Johnson ready for Carnet demo');
+    } catch (error) {
+      log('❌ Failed to create test patient: ' + error);
+    }
     
     // TEMPORARY: Disable test hospital creation during platform reset
     // await createTestHospital();

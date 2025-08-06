@@ -172,7 +172,8 @@
                                 <input 
                                     type="text" 
                                     id="hospitalId"
-                                    placeholder="MGH-2024 • Mayo-2024 • Johns-Hopkins-2024"
+                                    placeholder="Try: Test Hospital (for demo)"
+                                    value="Test Hospital"
                                     class="w-full p-5 pl-14 border-2 border-gray-200 rounded-2xl transition-all duration-300 bg-white shadow-luxury text-gray-900 font-medium input-focus hover:border-gray-300"
                                     style="focus:ring-4; focus:ring-color: rgba(59, 130, 246, 0.1); focus:border-color: var(--navimed-blue);"
                                     required
@@ -197,7 +198,8 @@
                                 <input 
                                     type="text" 
                                     id="patientId"
-                                    placeholder="MRN-123456789 • DOB-MMDDYYYY • SSN-XXX-XX-1234"
+                                    placeholder="Try: MRN-789012345 (Sarah Johnson)"
+                                    value="MRN-789012345"
                                     class="w-full p-5 pl-14 border-2 border-gray-200 rounded-2xl transition-all duration-300 bg-white shadow-luxury text-gray-900 font-medium input-focus hover:border-gray-300"
                                     style="focus:ring-4; focus:ring-color: rgba(34, 197, 94, 0.1); focus:border-color: var(--navimed-green);"
                                     required
@@ -436,7 +438,7 @@
 
     <script>
         // Handle form submission
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const hospitalId = document.getElementById('hospitalId').value;
@@ -445,15 +447,54 @@
             
             const faceRecognized = document.getElementById('faceRecognized').value;
             
-            // Simple validation
+            // Authentication with backend
             if (hospitalId && patientId && faceRecognized === 'true') {
-                // In a real app, this would authenticate with the server
-                alert('🔐 Authentication successful!\n\nFacial recognition verified.\nRedirecting to your private health portal...');
-                
-                // Demo: Show that authentication worked
-                setTimeout(() => {
-                    window.location.href = '/mobile-app';
-                }, 1500);
+                try {
+                    // Show loading state
+                    const submitButton = document.querySelector('button[type="submit"]');
+                    const originalText = submitButton.innerHTML;
+                    submitButton.innerHTML = '<span class="flex items-center justify-center space-x-3"><span>🔄</span><span>Authenticating...</span></span>';
+                    submitButton.disabled = true;
+                    
+                    // Send login request to backend
+                    const response = await fetch('/api/patient/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            hospitalId: hospitalId,
+                            patientId: patientId,
+                            biometricData: { faceRecognized: true }
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        // Store the authentication token
+                        localStorage.setItem('patientToken', data.token);
+                        localStorage.setItem('patientInfo', JSON.stringify(data.patient));
+                        
+                        // Show success message
+                        alert(`🔐 Authentication Successful!\n\nWelcome ${data.patient.firstName} ${data.patient.lastName}!\nHospital: ${data.patient.hospital}\nMRN: ${data.patient.mrn}\n\nRedirecting to your secure health portal...`);
+                        
+                        // Redirect to mobile app
+                        setTimeout(() => {
+                            window.location.href = '/mobile-app';
+                        }, 1500);
+                    } else {
+                        throw new Error(data.message || 'Authentication failed');
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    alert('❌ Authentication Failed: ' + error.message);
+                    
+                    // Reset button
+                    const submitButton = document.querySelector('button[type="submit"]');
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+                }
             } else {
                 alert('❌ Please complete all authentication steps.\n\n• Hospital ID: Required\n• Patient ID: Required\n• Facial Recognition: Complete face scan');
             }
