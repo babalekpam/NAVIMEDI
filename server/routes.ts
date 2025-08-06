@@ -15,6 +15,8 @@ import { z } from "zod";
 import { aiHealthAnalyzer } from "./ai-health-analyzer";
 import { sendWelcomeEmail, generateTemporaryPassword } from "./email-service.js";
 import { resetAllCounters } from "./reset-all-counters.js";
+import { detectLocationFromRequest, generateTenantLocationConfig, detectLanguageFromRequest } from "./geo-location-service.js";
+import { formatCurrency, getCurrencyInfo, convertCurrency, getTenantCurrencies, getTenantBaseCurrency, getAllCurrencies, getAfricanCurrencies } from "./currency-utils.js";
 // Removed Replit Auth - using unified JWT authentication only
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
@@ -369,6 +371,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Organization registration endpoint (public, no auth required)
   app.post("/api/tenant/register", async (req, res) => {
     try {
+      // Detect user location and currency preferences
+      const locationInfo = detectLocationFromRequest(req);
+      const suggestedConfig = generateTenantLocationConfig(locationInfo);
+      const detectedLanguage = detectLanguageFromRequest(req);
+      
       const {
         organizationName,
         organizationType,
@@ -421,21 +428,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .replace(/^-|-$/g, '')
         .substring(0, 50);
 
-      // Create tenant
+      // Create tenant with auto-detected currency and location settings
       const newTenant = await storage.createTenant({
         name: organizationName,
         type: organizationType as any,
         subdomain: subdomain,
         settings: {
           features: [organizationType, 'basic'],
-          trialDays: 14
+          trialDays: 14,
+          detectedCountry: locationInfo.country,
+          detectedRegion: locationInfo.region,
+          autoConfigured: true,
+          configurationTimestamp: new Date().toISOString()
         },
         isActive: true,
         parentTenantId: null,
         organizationType: 'independent',
         phoneNumber: phoneNumber || null,
         address: address || null,
-        description: description || null
+        description: description || null,
+        // Auto-detected currency settings
+        baseCurrency: suggestedConfig.baseCurrency,
+        supportedCurrencies: suggestedConfig.supportedCurrencies,
+        defaultLanguage: detectedLanguage
       });
 
       // Hash password
@@ -477,13 +492,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: newTenant.id,
           name: newTenant.name,
           type: newTenant.type,
-          subdomain: newTenant.subdomain
+          subdomain: newTenant.subdomain,
+          baseCurrency: newTenant.baseCurrency,
+          supportedCurrencies: newTenant.supportedCurrencies,
+          defaultLanguage: newTenant.defaultLanguage
         },
         admin: {
           id: adminUser.id,
           email: adminUser.email,
           firstName: adminUser.firstName,
           lastName: adminUser.lastName
+        },
+        autoConfiguration: {
+          detectedLocation: locationInfo,
+          appliedCurrency: suggestedConfig.baseCurrency,
+          appliedLanguage: detectedLanguage,
+          availableCurrencies: suggestedConfig.supportedCurrencies
         }
       });
 
@@ -1110,32 +1134,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error activating tenant:", error);
       res.status(500).json({ message: "Failed to activate tenant" });
     }
-  });
-
-  // Apply tenant context middleware to all API routes (except public endpoints)
-  app.use("/api", (req, res, next) => {
-    // Skip tenant middleware for public endpoints
-    const publicEndpoints = [
-      "/api/health",
-      "/api/platform/stats",
-      "/api/tenant/register",
-      "/api/suppliers/register",
-      "/api/auth/login",
-      "/api/auth/user",
-      "/api/marketplace/products",
-      "/api/advertisements",
-      "/api/marketplace/quote-requests",
-      "/advertisements",
-      "/marketplace/products",
-      "/marketplace/quote-requests"
-    ];
-    
-    if (publicEndpoints.includes(req.path)) {
-      return next();
-    }
-    
-    // Apply tenant middleware for all other endpoints
-    setTenantContext(req, res, next);
   });
 
   app.post("/api/auth/register", async (req, res) => {
@@ -6302,6 +6300,193 @@ Report ID: ${report.id}
         message: "Failed to create test data",
         error: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+
+  // Apply tenant context middleware to all API routes (except public endpoints)
+  app.use("/api", (req, res, next) => {
+    // Skip tenant middleware for public endpoints
+    const publicEndpoints = [
+      "/api/health",
+      "/api/platform/stats",
+      "/api/tenant/register",
+      "/api/suppliers/register",
+      "/api/auth/login",
+      "/api/auth/user",
+      "/api/marketplace/products",
+      "/api/advertisements",
+      "/api/marketplace/quote-requests",
+      "/advertisements",
+      "/marketplace/products",
+      "/marketplace/quote-requests",
+      "/api/location",
+      "/api/currencies",
+      "/api/currencies/african",
+      "/api/currencies/convert",
+      "/api/currencies/format"
+    ];
+    
+    if (publicEndpoints.includes(req.path)) {
+      return next();
+    }
+    
+    // Apply tenant middleware for all other endpoints
+    setTenantContext(req, res, next);
+  });
+
+  // MULTI-CURRENCY API ENDPOINTS
+  
+  // Get location information and suggested currency
+  app.get('/api/location', async (req, res) => {
+    try {
+      const locationInfo = detectLocationFromRequest(req);
+      const suggestedConfig = generateTenantLocationConfig(locationInfo);
+      const detectedLanguage = detectLanguageFromRequest(req);
+      
+      res.json({
+        location: locationInfo,
+        suggestedCurrency: locationInfo.detectedCurrency?.currency || 'USD',
+        suggestedCurrencies: locationInfo.detectedCurrency?.supportedCurrencies || ['USD'],
+        region: locationInfo.detectedCurrency?.region || 'Unknown',
+        suggestedLanguage: detectedLanguage,
+        tenantConfig: suggestedConfig
+      });
+    } catch (error) {
+      console.error('Location detection error:', error);
+      res.status(500).json({ error: 'Failed to detect location' });
+    }
+  });
+
+  // Get tenant's currencies
+  app.get('/api/tenant/currencies', authenticateToken, setTenantContext, async (req, res) => {
+    try {
+      const baseCurrency = await getTenantBaseCurrency(req.tenantId!);
+      const supportedCurrencyCodes = await getTenantCurrencies(req.tenantId!);
+      
+      const supportedCurrencies = await Promise.all(
+        supportedCurrencyCodes.map(async (code) => {
+          const info = await getCurrencyInfo(code);
+          return info || {
+            code,
+            name: code,
+            symbol: code,
+            decimalPlaces: 2,
+            region: '',
+            country: ''
+          };
+        })
+      );
+      
+      res.json({
+        baseCurrency,
+        supportedCurrencies
+      });
+    } catch (error) {
+      console.error('Error fetching tenant currencies:', error);
+      res.status(500).json({ error: 'Failed to fetch tenant currencies' });
+    }
+  });
+
+  // Get all available currencies
+  app.get('/api/currencies', async (req, res) => {
+    try {
+      const currencies = await getAllCurrencies();
+      res.json(currencies);
+    } catch (error) {
+      console.error('Error fetching currencies:', error);
+      res.status(500).json({ error: 'Failed to fetch currencies' });
+    }
+  });
+
+  // Get African currencies specifically
+  app.get('/api/currencies/african', async (req, res) => {
+    try {
+      const currencies = await getAfricanCurrencies();
+      res.json(currencies);
+    } catch (error) {
+      console.error('Error fetching African currencies:', error);
+      res.status(500).json({ error: 'Failed to fetch African currencies' });
+    }
+  });
+
+  // Convert currency amounts
+  app.post('/api/currencies/convert', async (req, res) => {
+    try {
+      const { amount, fromCurrency, toCurrency } = req.body;
+      
+      if (!amount || !fromCurrency || !toCurrency) {
+        return res.status(400).json({ error: 'Missing required conversion parameters' });
+      }
+      
+      const conversion = await convertCurrency(
+        parseFloat(amount),
+        fromCurrency,
+        toCurrency
+      );
+      
+      if (!conversion) {
+        return res.status(400).json({ error: 'Currency conversion failed' });
+      }
+      
+      res.json(conversion);
+    } catch (error) {
+      console.error('Currency conversion error:', error);
+      res.status(500).json({ error: 'Failed to convert currency' });
+    }
+  });
+
+  // Format currency amount
+  app.post('/api/currencies/format', async (req, res) => {
+    try {
+      const { amount, currencyCode } = req.body;
+      
+      if (!amount || !currencyCode) {
+        return res.status(400).json({ error: 'Missing amount or currency code' });
+      }
+      
+      const formatted = await formatCurrency(amount, currencyCode);
+      res.json({ formatted });
+    } catch (error) {
+      console.error('Currency formatting error:', error);
+      res.status(500).json({ error: 'Failed to format currency' });
+    }
+  });
+
+  // Update tenant currency settings (admin only)
+  app.patch('/api/tenant/currencies', authenticateToken, requireRole(['super_admin', 'tenant_admin']), setTenantContext, async (req, res) => {
+    try {
+      const { baseCurrency, supportedCurrencies } = req.body;
+      
+      if (!baseCurrency || !Array.isArray(supportedCurrencies)) {
+        return res.status(400).json({ error: 'Invalid currency configuration' });
+      }
+      
+      // Verify all currencies exist
+      for (const currency of [baseCurrency, ...supportedCurrencies]) {
+        const info = await getCurrencyInfo(currency);
+        if (!info) {
+          return res.status(400).json({ error: `Unsupported currency: ${currency}` });
+        }
+      }
+      
+      // Update tenant settings
+      const updatedTenant = await storage.updateTenant(req.tenantId!, {
+        baseCurrency,
+        supportedCurrencies
+      });
+      
+      if (!updatedTenant) {
+        return res.status(404).json({ error: 'Tenant not found' });
+      }
+      
+      res.json({
+        message: 'Currency settings updated successfully',
+        baseCurrency,
+        supportedCurrencies
+      });
+    } catch (error) {
+      console.error('Error updating tenant currencies:', error);
+      res.status(500).json({ error: 'Failed to update currency settings' });
     }
   });
 
