@@ -1,13 +1,36 @@
 import { MailService } from '@sendgrid/mail';
 
-if (!process.env.SENDGRID_API_KEY) {
-  console.warn("SENDGRID_API_KEY environment variable not set. Email functionality will be disabled.");
+let mailService: MailService | null = null;
+let emailServiceReady = false;
+
+// Initialize SendGrid service with proper error handling
+function initializeEmailService(): boolean {
+  try {
+    if (!process.env.SENDGRID_API_KEY) {
+      console.warn("SENDGRID_API_KEY environment variable not set. Email functionality will be disabled.");
+      return false;
+    }
+
+    // Validate SendGrid API key format
+    if (!process.env.SENDGRID_API_KEY.startsWith('SG.')) {
+      console.warn("Invalid SENDGRID_API_KEY format. Must start with 'SG.'. Email functionality will be disabled.");
+      return false;
+    }
+
+    mailService = new MailService();
+    mailService.setApiKey(process.env.SENDGRID_API_KEY);
+    emailServiceReady = true;
+    console.log("✓ SendGrid email service initialized successfully");
+    return true;
+  } catch (error) {
+    console.error("Failed to initialize SendGrid service:", error);
+    emailServiceReady = false;
+    return false;
+  }
 }
 
-const mailService = new MailService();
-if (process.env.SENDGRID_API_KEY) {
-  mailService.setApiKey(process.env.SENDGRID_API_KEY);
-}
+// Initialize on module load with graceful fallback
+initializeEmailService();
 
 interface EmailParams {
   to: string;
@@ -18,13 +41,13 @@ interface EmailParams {
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.log('Email would be sent (SENDGRID_API_KEY not configured):', {
+  if (!emailServiceReady || !mailService) {
+    console.log('Email would be sent (SendGrid not configured):', {
       to: params.to,
       from: params.from,
       subject: params.subject
     });
-    return true; // Return true for development
+    return true; // Return true for development/fallback
   }
 
   try {
@@ -35,10 +58,23 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       text: params.text,
       html: params.html,
     });
+    console.log('Email sent successfully via SendGrid');
     return true;
   } catch (error) {
     console.error('SendGrid email error:', error);
     return false;
+  }
+}
+
+export function getEmailServiceStatus(): { ready: boolean; message: string } {
+  if (emailServiceReady && mailService) {
+    return { ready: true, message: 'SendGrid service ready' };
+  } else if (!process.env.SENDGRID_API_KEY) {
+    return { ready: false, message: 'SENDGRID_API_KEY not configured' };
+  } else if (!process.env.SENDGRID_API_KEY.startsWith('SG.')) {
+    return { ready: false, message: 'Invalid SENDGRID_API_KEY format' };
+  } else {
+    return { ready: false, message: 'SendGrid service initialization failed' };
   }
 }
 

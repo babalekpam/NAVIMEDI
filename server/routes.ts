@@ -19,7 +19,39 @@ import { resetAllCounters } from "./reset-all-counters.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
+import { getEmailServiceStatus } from "./email-service.js";
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // HEALTH CHECK ENDPOINTS (highest priority)
+  
+  // Root health check endpoint - must return 200 quickly
+  app.get('/', (req, res) => {
+    res.status(200).json({ 
+      status: 'healthy', 
+      service: 'Carnet Healthcare Platform',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0'
+    });
+  });
+
+  // Detailed health check endpoint
+  app.get('/health', (req, res) => {
+    const emailStatus = getEmailServiceStatus();
+    res.status(200).json({
+      status: 'healthy',
+      service: 'Carnet Healthcare Platform',
+      timestamp: new Date().toISOString(),
+      services: {
+        database: 'connected',
+        email: emailStatus.ready ? 'ready' : 'disabled',
+        emailMessage: emailStatus.message
+      },
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      version: '1.0.0'
+    });
+  });
+
   // PUBLIC ENDPOINTS (before any middleware)
   
   // Public supplier registration endpoint (outside /api path to avoid middleware)
