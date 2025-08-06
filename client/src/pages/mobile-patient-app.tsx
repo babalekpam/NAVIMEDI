@@ -44,14 +44,17 @@ import {
   CheckCircle,
   Smartphone,
   Wifi,
-  WifiOff
+  WifiOff,
+  Users,
+  CreditCard,
+  Grid3X3
 } from "lucide-react";
 import navimedLogo from "@assets/carnet_1754492017427.png";
 
 export default function MobilePatientApp() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("overview");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [notifications, setNotifications] = useState([]);
@@ -140,11 +143,11 @@ export default function MobilePatientApp() {
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 z-50">
       <div className="flex justify-around items-center">
         {[
-          { id: 'dashboard', icon: Home, label: 'Home' },
-          { id: 'records', icon: FileText, label: 'Records' },
-          { id: 'medications', icon: Pill, label: 'Meds' },
-          { id: 'appointments', icon: Calendar, label: 'Visits' },
-          { id: 'messages', icon: MessageCircle, label: 'Messages' }
+          { id: 'overview', icon: Activity, label: 'Overview' },
+          { id: 'find-care', icon: Search, label: 'Find Care' },
+          { id: 'visits', icon: Video, label: 'Visits' },
+          { id: 'directory', icon: Users, label: 'Directory' },
+          { id: 'more', icon: Menu, label: 'More' }
         ].map(({ id, icon: Icon, label }) => (
           <button
             key={id}
@@ -747,15 +750,212 @@ export default function MobilePatientApp() {
     </>
   );
 
+  // More Menu Items
+  const renderMoreMenu = () => (
+    <div className="space-y-4 pb-20">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">More Features</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            {[
+              { id: 'records', label: 'My Records', icon: FileText, color: 'text-blue-600' },
+              { id: 'messages', label: 'Messages', icon: MessageCircle, color: 'text-green-600' },
+              { id: 'results', label: 'Test Results', icon: FileText, color: 'text-purple-600' },
+              { id: 'medications', label: 'Medications', icon: Pill, color: 'text-red-600' },
+              { id: 'health', label: 'Track Health', icon: Heart, color: 'text-pink-600' },
+              { id: 'billing', label: 'Bills & Payments', icon: CreditCard, color: 'text-yellow-600' },
+            ].map(({ id, label, icon: Icon, color }) => (
+              <Button
+                key={id}
+                variant="outline"
+                className="flex flex-col items-center p-4 h-auto"
+                onClick={() => setActiveTab(id)}
+              >
+                <Icon className={`w-6 h-6 mb-2 ${color}`} />
+                <span className="text-sm">{label}</span>
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Find Care Section
+  const renderFindCare = () => (
+    <div className="space-y-4 pb-20">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Find Healthcare Providers</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Input placeholder="Search for doctors, specialties, or services" />
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                'Primary Care', 'Cardiology', 'Dermatology', 'Orthopedics'
+              ].map((specialty) => (
+                <Button key={specialty} variant="outline" className="h-auto py-3">
+                  {specialty}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Directory Section
+  const renderDirectory = () => (
+    <div className="space-y-4 pb-20">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Hospital Directory</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[
+              { name: 'Dr. Sarah Johnson', specialty: 'Primary Care', phone: '(555) 123-4567' },
+              { name: 'Dr. Michael Chen', specialty: 'Cardiology', phone: '(555) 234-5678' },
+              { name: 'Dr. Emily Davis', specialty: 'Dermatology', phone: '(555) 345-6789' }
+            ].map((doctor, index) => (
+              <div key={index} className="border rounded-lg p-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold">{doctor.name}</p>
+                    <p className="text-sm text-gray-600">{doctor.specialty}</p>
+                    <p className="text-xs text-gray-500">{doctor.phone}</p>
+                  </div>
+                  <Button size="sm">Contact</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Test Results Section
+  const renderResults = () => (
+    <div className="space-y-4 pb-20">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Test Results</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {labResults.length > 0 ? (
+            <div className="space-y-3">
+              {labResults.map((result: any, index: number) => (
+                <div key={index} className="border rounded-lg p-3">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-semibold text-sm">{result.testName}</p>
+                      <p className="text-xs text-gray-600">
+                        {new Date(result.orderedDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Badge variant={result.status === 'completed' ? 'default' : 'secondary'}>
+                      {result.status || 'Completed'}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No test results available</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Health Tracking Section
+  const renderHealthTracking = () => (
+    <div className="space-y-4 pb-20">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Track Your Health</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-red-50 p-4 rounded-lg">
+                <Heart className="w-8 h-8 text-red-600 mb-2" />
+                <p className="font-semibold">Blood Pressure</p>
+                <p className="text-sm text-gray-600">120/80 mmHg</p>
+              </div>
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <Scale className="w-8 h-8 text-blue-600 mb-2" />
+                <p className="font-semibold">Weight</p>
+                <p className="text-sm text-gray-600">165 lbs</p>
+              </div>
+            </div>
+            <Button className="w-full">
+              <Plus className="w-4 h-4 mr-2" />
+              Add New Measurement
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Billing Section
+  const renderBilling = () => (
+    <div className="space-y-4 pb-20">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Bills & Payments</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[
+              { description: 'Annual Checkup', amount: '$150.00', status: 'Paid', date: '2025-01-15' },
+              { description: 'Lab Tests', amount: '$85.00', status: 'Pending', date: '2025-01-20' }
+            ].map((bill, index) => (
+              <div key={index} className="border rounded-lg p-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold text-sm">{bill.description}</p>
+                    <p className="text-xs text-gray-600">{bill.date}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{bill.amount}</p>
+                    <Badge variant={bill.status === 'Paid' ? 'default' : 'secondary'}>
+                      {bill.status}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   // Main render method
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard': return renderDashboard();
+      case 'overview': return renderDashboard();
+      case 'find-care': return renderFindCare();
+      case 'visits': return renderAppointments();
+      case 'directory': return renderDirectory();
+      case 'more': return renderMoreMenu();
       case 'records': return renderRecords();
-      case 'medications': return renderMedications();
-      case 'vitals': return renderVitals();
-      case 'appointments': return renderAppointments();
       case 'messages': return renderMessages();
+      case 'results': return renderResults();
+      case 'medications': return renderMedications();
+      case 'health': return renderHealthTracking();
+      case 'billing': return renderBilling();
+      case 'vitals': return renderVitals();
       default: return renderDashboard();
     }
   };
