@@ -1,0 +1,20 @@
+{
+  "name": "carnet-mobile-app",
+  "version": "1.0.0",
+  "description": "Carnet Private Health App for iOS and Android",
+  "scripts": {
+    "build": "npm run build:web && npm run sync:mobile",
+    "build:web": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "sync:mobile": "npx cap sync",
+    "mobile:ios": "npx cap open ios",
+    "mobile:android": "npx cap open android", 
+    "build:ios": "npx cap build ios --release",
+    "build:android": "npx cap build android --release",
+    "deploy:mobile": "./build-mobile.sh"
+  },
+  "capacitor": {
+    "appId": "com.navimed.carnet",
+    "appName": "Carnet",
+    "platforms": ["ios", "android"]
+  }
+}

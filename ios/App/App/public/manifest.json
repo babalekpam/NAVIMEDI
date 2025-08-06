@@ -1,0 +1,176 @@
+{
+  "name": "Carnet - Private Health App",
+  "short_name": "Carnet",
+  "description": "Your private healthcare management app - secure access to medical records, medications, appointments, and communication with your care team.",
+  "start_url": "/mobile-app",
+  "display": "standalone",
+  "theme_color": "#3b82f6",
+  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "scope": "/",
+  "id": "/mobile-app",
+  "prefer_related_applications": true,
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.navimed.carnet",
+      "id": "com.navimed.carnet"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/carnet-private-health/id123456789"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/carnet-icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/carnet-icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/carnet-icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/carnet-icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/carnet-icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/carnet-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/carnet-icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/carnet-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["health", "medical", "healthcare", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
+  "shortcuts": [
+    {
+      "name": "My Health Overview",
+      "short_name": "Overview",
+      "description": "View your health dashboard and recent activity",
+      "url": "/mobile-app?tab=overview",
+      "icons": [
+        {
+          "src": "/carnet-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "My Medications",
+      "short_name": "Medications",
+      "description": "View and manage your medications",
+      "url": "/mobile-app?tab=medications",
+      "icons": [
+        {
+          "src": "/carnet-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Book Appointment",
+      "short_name": "Appointments",
+      "description": "Schedule your next visit",
+      "url": "/mobile-app?tab=appointments",
+      "icons": [
+        {
+          "src": "/carnet-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Secure Messages",
+      "short_name": "Messages",
+      "description": "Message your care team securely",
+      "url": "/mobile-app?tab=messages",
+      "icons": [
+        {
+          "src": "/carnet-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Test Results",
+      "short_name": "Results",
+      "description": "View your latest test results",
+      "url": "/mobile-app?tab=results",
+      "icons": [
+        {
+          "src": "/carnet-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/carnet-screenshot-mobile-overview.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Health Overview Dashboard"
+    },
+    {
+      "src": "/carnet-screenshot-mobile-medications.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Medications Management"
+    },
+    {
+      "src": "/carnet-screenshot-tablet.png",
+      "sizes": "1024x768",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Complete Health Records"
+    }
+  ],
+  "display_override": ["window-controls-overlay", "standalone"],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "handle_links": "preferred",
+  "protocol_handlers": [
+    {
+      "protocol": "web+carnet",
+      "url": "/mobile-app?action=%s"
+    }
+  ]
+}
