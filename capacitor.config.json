@@ -39,7 +39,9 @@
     "buildOptions": {
       "releaseType": "APK",
       "signingType": "apksigner"
-    }
+    },
+    "allowMixedContent": true,
+    "icon": "client/public/carnet-icon.svg"
   },
   "ios": {
     "scheme": "Carnet",
