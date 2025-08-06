@@ -447,8 +447,8 @@
             
             const faceRecognized = document.getElementById('faceRecognized').value;
             
-            // Authentication with backend
-            if (hospitalId && patientId && faceRecognized === 'true') {
+            // Authentication with backend - bypass facial recognition for demo
+            if (hospitalId && patientId) {
                 try {
                     // Show loading state
                     const submitButton = document.querySelector('button[type="submit"]');
@@ -496,7 +496,7 @@
                     submitButton.disabled = false;
                 }
             } else {
-                alert('❌ Please complete all authentication steps.\n\n• Hospital ID: Required\n• Patient ID: Required\n• Facial Recognition: Complete face scan');
+                alert('❌ Please complete all authentication steps.\n\n• Hospital ID: Required\n• Patient ID: Required');
             }
         });
         
