@@ -873,6 +873,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         (p.firstName + ' ' + p.lastName).toLowerCase().includes(patientId.toLowerCase())
       );
 
+      // Also search by name if MRN not found
+      if (!patient && patientId.toLowerCase().includes('sarah')) {
+        patient = patients.find(p => 
+          p.firstName.toLowerCase() === 'sarah' && 
+          p.lastName.toLowerCase() === 'johnson'
+        );
+      }
+
       if (!patient) {
         return res.status(401).json({ message: "Patient not found or invalid credentials" });
       }

@@ -3,27 +3,31 @@ import bcrypt from "bcrypt";
 
 export async function createTestPatient() {
   try {
-    // Get a hospital tenant to associate with the patient
+    // Get Metro General Hospital tenant specifically
     const hospitals = await storage.getAllTenants();
-    const hospital = hospitals.find(t => t.type === 'hospital');
+    const hospital = hospitals.find(t => 
+      t.type === 'hospital' && 
+      (t.name.toLowerCase().includes('metro') || 
+       t.name.toLowerCase().includes('general') ||
+       t.subdomain.includes('metro'))
+    );
     
     if (!hospital) {
-      console.log('No hospital tenant found, creating test hospital first...');
+      console.log('Metro General Hospital not found, please create it first...');
       return false;
     }
 
-    // Check if Sarah Johnson already exists
-    const allPatients = await storage.getAllPatients();
-    const existingPatient = allPatients.find(p => p.mrn === 'MRN-789012345');
+    // Check if Sarah Johnson already exists in Metro General
+    const hospitalPatients = await storage.getPatientsByTenant(hospital.id);
+    const existingPatient = hospitalPatients.find(p => p.mrn === 'MRN-789012345');
     if (existingPatient) {
-      console.log('Sarah Johnson already exists with MRN: MRN-789012345');
+      console.log(`Sarah Johnson already exists at ${hospital.name} with MRN: MRN-789012345`);
       return existingPatient;
     }
 
     // Create test patient Sarah Johnson
     const testPatient = {
       tenantId: hospital.id, // Associated with hospital
-      primaryHospitalId: hospital.id, // Primary hospital for Carnet access
       mrn: 'MRN-789012345', // Medical Record Number
       firstName: 'Sarah',
       lastName: 'Johnson',

@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { trialSuspensionService } from "./trial-suspension-service";
 import { createTestHospital } from "./create-test-hospital";
 import { createTestPatient } from "./create-test-patient";
+import { createMetroGeneral } from "./create-metro-general";
 import { nanoid } from "nanoid";
 
 const app = express();
@@ -122,10 +123,18 @@ const initializeApp = async () => {
     
     log("✓ Platform initialization complete");
     
+    // Create Metro General Hospital for Sarah Johnson
+    try {
+      await createMetroGeneral();
+      log('✓ Metro General Hospital ready');
+    } catch (error) {
+      log('❌ Failed to create Metro General: ' + error);
+    }
+
     // Create test patient Sarah Johnson for Carnet demo
     try {
       await createTestPatient();
-      log('✓ Test patient Sarah Johnson ready for Carnet demo');
+      log('✓ Test patient Sarah Johnson ready for Carnet demo at Metro General');
     } catch (error) {
       log('❌ Failed to create test patient: ' + error);
     }
