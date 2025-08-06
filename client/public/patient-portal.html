@@ -62,18 +62,24 @@
         <!-- Tab Navigation -->
         <div class="bg-white border-b sticky top-16 z-10">
             <div class="max-w-sm mx-auto">
-                <div class="flex">
-                    <button onclick="showTab('overview')" id="tab-overview" class="flex-1 py-3 px-2 text-xs font-medium text-center tab-active">
+                <div class="flex overflow-x-auto">
+                    <button onclick="showTab('overview')" id="tab-overview" class="flex-shrink-0 py-3 px-3 text-xs font-medium text-center tab-active">
                         📋 Overview
                     </button>
-                    <button onclick="showTab('records')" id="tab-records" class="flex-1 py-3 px-2 text-xs font-medium text-center tab-inactive">
+                    <button onclick="showTab('records')" id="tab-records" class="flex-shrink-0 py-3 px-3 text-xs font-medium text-center tab-inactive">
                         🏥 Records
                     </button>
-                    <button onclick="showTab('medications')" id="tab-medications" class="flex-1 py-3 px-2 text-xs font-medium text-center tab-inactive">
+                    <button onclick="showTab('medications')" id="tab-medications" class="flex-shrink-0 py-3 px-3 text-xs font-medium text-center tab-inactive">
                         💊 Meds
                     </button>
-                    <button onclick="showTab('appointments')" id="tab-appointments" class="flex-1 py-3 px-2 text-xs font-medium text-center tab-inactive">
+                    <button onclick="showTab('appointments')" id="tab-appointments" class="flex-shrink-0 py-3 px-3 text-xs font-medium text-center tab-inactive">
                         📅 Visits
+                    </button>
+                    <button onclick="showTab('video')" id="tab-video" class="flex-shrink-0 py-3 px-3 text-xs font-medium text-center tab-inactive">
+                        📹 Video
+                    </button>
+                    <button onclick="showTab('labs')" id="tab-labs" class="flex-shrink-0 py-3 px-3 text-xs font-medium text-center tab-inactive">
+                        🧪 Labs
                     </button>
                 </div>
             </div>
@@ -460,6 +466,207 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Appointments Tab -->
+            <div id="content-video" class="tab-content hidden">
+                <div class="space-y-4">
+                    <!-- Upcoming Video Appointments -->
+                    <div class="bg-white rounded-xl p-4 card-shadow">
+                        <h3 class="font-bold text-gray-800 mb-3">Upcoming Video Appointments</h3>
+                        <div class="space-y-3">
+                            <div class="border border-green-200 rounded-lg p-3 bg-green-50">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h4 class="font-semibold text-green-800">Telehealth Consultation</h4>
+                                        <p class="text-sm text-green-700">Dr. Wilson - Cardiology Follow-up</p>
+                                    </div>
+                                    <span class="text-xs px-2 py-1 bg-green-200 text-green-800 rounded-full">Tomorrow</span>
+                                </div>
+                                <div class="text-sm text-green-700 space-y-1">
+                                    <p>📅 February 7, 2025 at 10:00 AM</p>
+                                    <p>⏱️ Duration: 30 minutes</p>
+                                    <p>📱 Platform: Secure NaviMED Video</p>
+                                </div>
+                                <div class="mt-3 space-y-2">
+                                    <button class="w-full bg-green-600 text-white py-2 rounded-lg text-sm font-medium">
+                                        📹 Join Video Call
+                                    </button>
+                                    <button class="w-full bg-green-100 text-green-800 py-2 rounded-lg text-sm font-medium">
+                                        📋 Test Connection
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video Appointment History -->
+                    <div class="bg-white rounded-xl p-4 card-shadow">
+                        <h3 class="font-bold text-gray-800 mb-3">Recent Video Sessions</h3>
+                        <div class="space-y-3">
+                            <div class="border border-blue-200 rounded-lg p-3 bg-blue-50">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h4 class="font-semibold text-blue-800">Diabetes Management Review</h4>
+                                        <p class="text-sm text-blue-700">Dr. Wilson - Primary Care</p>
+                                    </div>
+                                    <span class="text-xs px-2 py-1 bg-blue-200 text-blue-800 rounded-full">Completed</span>
+                                </div>
+                                <div class="text-sm text-blue-700">
+                                    <p>📅 January 20, 2025</p>
+                                    <p>⏱️ Duration: 25 minutes</p>
+                                    <p>📋 Notes: Medication adjustments discussed</p>
+                                </div>
+                                <button class="mt-2 w-full bg-blue-100 text-blue-800 py-2 rounded-lg text-sm font-medium">
+                                    View Session Notes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video Setup & Requirements -->
+                    <div class="bg-white rounded-xl p-4 card-shadow">
+                        <h3 class="font-bold text-gray-800 mb-3">Video Setup Guide</h3>
+                        <div class="text-sm text-gray-600 space-y-3">
+                            <div class="flex items-start space-x-2">
+                                <span class="text-green-600">📱</span>
+                                <div>
+                                    <p class="font-medium">Mobile Ready</p>
+                                    <p class="text-xs">Works on iPhone, Android, and web browsers</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-2">
+                                <span class="text-blue-600">🔒</span>
+                                <div>
+                                    <p class="font-medium">HIPAA Secure</p>
+                                    <p class="text-xs">End-to-end encrypted video calls</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-2">
+                                <span class="text-orange-600">⚡</span>
+                                <div>
+                                    <p class="font-medium">Connection Required</p>
+                                    <p class="text-xs">Stable internet and camera access needed</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="mt-3 w-full bg-gradient-to-r from-blue-600 to-green-600 text-white py-3 rounded-lg font-semibold">
+                            📅 Schedule Video Appointment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lab Results Tab -->
+            <div id="content-labs" class="tab-content hidden">
+                <div class="space-y-4">
+                    <!-- Recent Lab Results -->
+                    <div class="bg-white rounded-xl p-4 card-shadow">
+                        <h3 class="font-bold text-gray-800 mb-3">Recent Lab Results</h3>
+                        <div class="space-y-3">
+                            <div class="border border-green-200 rounded-lg p-3 bg-green-50">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h4 class="font-semibold text-green-800">Comprehensive Metabolic Panel</h4>
+                                        <p class="text-sm text-green-700">Ordered by Dr. Wilson</p>
+                                    </div>
+                                    <span class="text-xs px-2 py-1 bg-green-200 text-green-800 rounded-full">Normal</span>
+                                </div>
+                                <div class="text-sm text-green-700 space-y-1">
+                                    <p>📅 Collection Date: January 15, 2025</p>
+                                    <p>🏥 Lab: Metro General Laboratory</p>
+                                    <p>📋 Status: Results reviewed by provider</p>
+                                </div>
+                                <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+                                    <div class="bg-green-100 p-2 rounded">
+                                        <p class="font-medium text-green-800">Glucose: 95 mg/dL</p>
+                                        <p class="text-green-600">Normal (70-100)</p>
+                                    </div>
+                                    <div class="bg-green-100 p-2 rounded">
+                                        <p class="font-medium text-green-800">HbA1c: 6.8%</p>
+                                        <p class="text-green-600">Good Control (<7%)</p>
+                                    </div>
+                                </div>
+                                <button class="mt-3 w-full bg-green-600 text-white py-2 rounded-lg text-sm font-medium">
+                                    📊 View Full Results
+                                </button>
+                            </div>
+
+                            <div class="border border-yellow-200 rounded-lg p-3 bg-yellow-50">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h4 class="font-semibold text-yellow-800">Lipid Panel</h4>
+                                        <p class="text-sm text-yellow-700">Annual screening</p>
+                                    </div>
+                                    <span class="text-xs px-2 py-1 bg-yellow-200 text-yellow-800 rounded-full">Review</span>
+                                </div>
+                                <div class="text-sm text-yellow-700 space-y-1">
+                                    <p>📅 Collection Date: January 15, 2025</p>
+                                    <p>🏥 Lab: Metro General Laboratory</p>
+                                    <p>📋 Status: Pending provider review</p>
+                                </div>
+                                <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+                                    <div class="bg-yellow-100 p-2 rounded">
+                                        <p class="font-medium text-yellow-800">Total Chol: 185 mg/dL</p>
+                                        <p class="text-yellow-600">Borderline (<200)</p>
+                                    </div>
+                                    <div class="bg-yellow-100 p-2 rounded">
+                                        <p class="font-medium text-yellow-800">LDL: 115 mg/dL</p>
+                                        <p class="text-yellow-600">Elevated (>100)</p>
+                                    </div>
+                                </div>
+                                <button class="mt-3 w-full bg-yellow-600 text-white py-2 rounded-lg text-sm font-medium">
+                                    📊 View Full Results
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pending Lab Orders -->
+                    <div class="bg-white rounded-xl p-4 card-shadow">
+                        <h3 class="font-bold text-gray-800 mb-3">Pending Lab Orders</h3>
+                        <div class="space-y-3">
+                            <div class="border border-blue-200 rounded-lg p-3 bg-blue-50">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h4 class="font-semibold text-blue-800">Quarterly HbA1c</h4>
+                                        <p class="text-sm text-blue-700">Diabetes monitoring</p>
+                                    </div>
+                                    <span class="text-xs px-2 py-1 bg-blue-200 text-blue-800 rounded-full">Scheduled</span>
+                                </div>
+                                <div class="text-sm text-blue-700">
+                                    <p>📅 Due Date: February 15, 2025</p>
+                                    <p>🏥 Lab: Metro General Laboratory</p>
+                                    <p>📋 Fasting Required: No</p>
+                                </div>
+                                <button class="mt-3 w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-medium">
+                                    📅 Schedule Lab Visit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lab History & Trends -->
+                    <div class="bg-white rounded-xl p-4 card-shadow">
+                        <h3 class="font-bold text-gray-800 mb-3">Lab Trends</h3>
+                        <div class="space-y-3">
+                            <div class="bg-gray-50 p-3 rounded-lg">
+                                <h4 class="font-semibold text-gray-800 mb-2">HbA1c Trend (Last 12 Months)</h4>
+                                <div class="flex items-end space-x-2 h-16">
+                                    <div class="bg-red-300 w-6 h-12 rounded-t flex items-end justify-center text-xs text-red-800">7.2</div>
+                                    <div class="bg-yellow-300 w-6 h-10 rounded-t flex items-end justify-center text-xs text-yellow-800">7.0</div>
+                                    <div class="bg-green-300 w-6 h-8 rounded-t flex items-end justify-center text-xs text-green-800">6.8</div>
+                                    <div class="bg-green-400 w-6 h-7 rounded-t flex items-end justify-center text-xs text-green-800">6.7</div>
+                                </div>
+                                <p class="text-xs text-gray-600 mt-2">📈 Improving trend - Keep up the good work!</p>
+                            </div>
+                        </div>
+                        
+                        <button class="mt-3 w-full bg-gradient-to-r from-blue-600 to-teal-600 text-white py-3 rounded-lg font-semibold">
+                            📊 View Complete Lab History
+                        </button>
                     </div>
                 </div>
             </div>
