@@ -20,28 +20,7 @@ import { resetAllCounters } from "./reset-all-counters.js";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // HEALTH CHECK ENDPOINTS (highest priority)
-  
-  // Root health check endpoint - must return 200 quickly
-  app.get('/', (req, res) => {
-    try {
-      res.status(200).json({ 
-        status: 'healthy', 
-        service: 'Carnet Healthcare Platform',
-        timestamp: new Date().toISOString(),
-        version: '1.0.0'
-      });
-    } catch (error) {
-      console.error('Health check error:', error);
-      res.status(200).json({ 
-        status: 'healthy', 
-        service: 'Carnet Healthcare Platform',
-        timestamp: new Date().toISOString(),
-        version: '1.0.0',
-        note: 'Basic health check passed'
-      });
-    }
-  });
+
 
   // Detailed health check endpoint
   app.get('/health', (req, res) => {

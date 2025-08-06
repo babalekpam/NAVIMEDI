@@ -4271,32 +4271,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(sql`COUNT(*) DESC`);
   }
 
-  async generateInsuranceReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
-    const { start, end } = dateRange;
-    
-    let query = db
-      .select({
-        insuranceProvider: pharmacyPatientInsurance.insuranceProviderName,
-        policyCount: sql<number>`COUNT(DISTINCT ${pharmacyPatientInsurance.policyNumber})`,
-        patientCount: sql<number>`COUNT(DISTINCT ${pharmacyPatientInsurance.patientId})`,
-        verificationStatus: pharmacyPatientInsurance.verificationStatus,
-        averageCopay: sql<number>`AVG(${pharmacyPatientInsurance.copayAmount})`,
-        averageDeductible: sql<number>`AVG(${pharmacyPatientInsurance.deductibleAmount})`,
-      })
-      .from(pharmacyPatientInsurance)
-      .where(eq(pharmacyPatientInsurance.tenantId, tenantId));
 
-    if (start) {
-      query = query.where(sql`${pharmacyPatientInsurance.createdAt} >= ${start}`);
-    }
-    if (end) {
-      query = query.where(sql`${pharmacyPatientInsurance.createdAt} <= ${end}`);
-    }
-
-    return await query
-      .groupBy(pharmacyPatientInsurance.insuranceProviderName, pharmacyPatientInsurance.verificationStatus)
-      .orderBy(pharmacyPatientInsurance.insuranceProviderName);
-  }
 
   async getPharmacyReportTemplatesByTenant(tenantId: string): Promise<PharmacyReportTemplate[]> {
     return await db.select().from(pharmacyReportTemplates).where(eq(pharmacyReportTemplates.tenantId, tenantId));
@@ -4501,31 +4476,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  // Patient Access Request Management for Multi-Doctor Separation
-  async createPatientAccessRequest(request: InsertPatientAccessRequest): Promise<PatientAccessRequest> {
-    const [newRequest] = await db.insert(patientAccessRequests).values(request).returning();
-    return newRequest;
-  }
 
-  async getPatientAccessRequests(tenantId: string, doctorId?: string): Promise<PatientAccessRequest[]> {
-    const whereClause = doctorId 
-      ? and(eq(patientAccessRequests.tenantId, tenantId), 
-            or(eq(patientAccessRequests.requestingPhysicianId, doctorId), 
-               eq(patientAccessRequests.targetPhysicianId, doctorId)))
-      : eq(patientAccessRequests.tenantId, tenantId);
-
-    return await db.select().from(patientAccessRequests)
-      .where(whereClause)
-      .orderBy(desc(patientAccessRequests.createdAt));
-  }
-
-  async updatePatientAccessRequest(id: string, updates: Partial<PatientAccessRequest>, tenantId: string): Promise<PatientAccessRequest | undefined> {
-    const [updatedRequest] = await db.update(patientAccessRequests)
-      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
-      .where(and(eq(patientAccessRequests.id, id), eq(patientAccessRequests.tenantId, tenantId)))
-      .returning();
-    return updatedRequest || undefined;
-  }
 
   async logPatientAccess(log: InsertPatientAccessAuditLog): Promise<PatientAccessAuditLog> {
     const [newLog] = await db.insert(patientAccessAuditLog).values(log).returning();
