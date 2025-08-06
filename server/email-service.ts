@@ -2,19 +2,25 @@ import { MailService } from '@sendgrid/mail';
 
 let mailService: MailService | null = null;
 let emailServiceReady = false;
+let initializationAttempted = false;
 
-// Initialize SendGrid service with proper error handling
+// Lazy initialization of SendGrid service with proper error handling
 function initializeEmailService(): boolean {
+  if (initializationAttempted) {
+    return emailServiceReady;
+  }
+
+  initializationAttempted = true;
+
   try {
     if (!process.env.SENDGRID_API_KEY) {
-      console.warn("SENDGRID_API_KEY environment variable not set. Email functionality will be disabled.");
+      console.warn("⚠️ SENDGRID_API_KEY environment variable not set. Email functionality will be disabled.");
       return false;
     }
 
-    // Validate SendGrid API key format
+    // Validate SendGrid API key format but allow continuation if invalid format
     if (!process.env.SENDGRID_API_KEY.startsWith('SG.')) {
-      console.warn("Invalid SENDGRID_API_KEY format. Must start with 'SG.'. Email functionality will be disabled.");
-      return false;
+      console.warn("⚠️ SENDGRID_API_KEY format may be invalid (should start with 'SG.'). Attempting to continue...");
     }
 
     mailService = new MailService();
@@ -23,14 +29,13 @@ function initializeEmailService(): boolean {
     console.log("✓ SendGrid email service initialized successfully");
     return true;
   } catch (error) {
-    console.error("Failed to initialize SendGrid service:", error);
+    console.error("❌ Failed to initialize SendGrid service:", error);
     emailServiceReady = false;
     return false;
   }
 }
 
-// Initialize on module load with graceful fallback
-initializeEmailService();
+// Remove immediate initialization to prevent startup blocking
 
 interface EmailParams {
   to: string;
@@ -41,13 +46,18 @@ interface EmailParams {
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
+  // Attempt lazy initialization before sending
+  if (!emailServiceReady) {
+    initializeEmailService();
+  }
+
   if (!emailServiceReady || !mailService) {
-    console.log('Email would be sent (SendGrid not configured):', {
+    console.log('📧 Email would be sent (SendGrid not configured):', {
       to: params.to,
       from: params.from,
       subject: params.subject
     });
-    return true; // Return true for development/fallback
+    return true; // Return true for development/fallback mode
   }
 
   try {
@@ -58,21 +68,30 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       text: params.text,
       html: params.html,
     });
-    console.log('Email sent successfully via SendGrid');
+    console.log('✅ Email sent successfully via SendGrid');
     return true;
   } catch (error) {
-    console.error('SendGrid email error:', error);
+    console.error('❌ SendGrid email error:', error);
+    // Log more specific error information for debugging
+    if (error && typeof error === 'object' && 'response' in error) {
+      console.error('SendGrid API response:', (error as any).response?.body);
+    }
     return false;
   }
 }
 
 export function getEmailServiceStatus(): { ready: boolean; message: string } {
+  // Attempt lazy initialization if not yet attempted
+  if (!initializationAttempted) {
+    initializeEmailService();
+  }
+
   if (emailServiceReady && mailService) {
     return { ready: true, message: 'SendGrid service ready' };
   } else if (!process.env.SENDGRID_API_KEY) {
     return { ready: false, message: 'SENDGRID_API_KEY not configured' };
-  } else if (!process.env.SENDGRID_API_KEY.startsWith('SG.')) {
-    return { ready: false, message: 'Invalid SENDGRID_API_KEY format' };
+  } else if (process.env.SENDGRID_API_KEY && !process.env.SENDGRID_API_KEY.startsWith('SG.')) {
+    return { ready: false, message: 'SENDGRID_API_KEY format warning (should start with SG.)' };
   } else {
     return { ready: false, message: 'SendGrid service initialization failed' };
   }
