@@ -23,12 +23,34 @@ import { formatCurrency, getCurrencyInfo, convertCurrency, getTenantCurrencies, 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Serve static HTML files from client/public
+  // Serve static HTML files directly
   const publicPath = path.resolve(__dirname, "..", "client", "public");
-  app.use("/platform-overview.html", express.static(publicPath));
-  app.use("/patient-login.html", express.static(publicPath));
-  app.use("/patient-portal.html", express.static(publicPath));
-  app.use("/mobile-app.html", express.static(publicPath));
+  
+  // Direct route for platform overview
+  app.get("/platform-overview.html", (req, res) => {
+    res.sendFile(path.join(publicPath, "platform-overview.html"));
+  });
+  
+  app.get("/patient-login.html", (req, res) => {
+    res.sendFile(path.join(publicPath, "patient-login.html"));
+  });
+  
+  app.get("/patient-portal.html", (req, res) => {
+    res.sendFile(path.join(publicPath, "patient-portal.html"));
+  });
+  
+  app.get("/mobile-app.html", (req, res) => {
+    res.sendFile(path.join(publicPath, "mobile-app.html"));
+  });
+
+  // Platform overview redirect routes
+  app.get("/platform", (req, res) => {
+    res.redirect("/platform-overview.html");
+  });
+  
+  app.get("/overview", (req, res) => {
+    res.redirect("/platform-overview.html");
+  });
 
   // PUBLIC ENDPOINTS (before any middleware)
   
