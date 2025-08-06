@@ -370,7 +370,7 @@ export const tenants = pgTable("tenants", {
   settings: jsonb("settings").default('{}'),
   isActive: boolean("is_active").default(true),
   // Multi-tenant relationships
-  parentTenantId: uuid("parent_tenant_id").references((): any => tenants.id), // For hospital-owned pharmacies
+  parentTenantId: uuid("parent_tenant_id").references(() => tenants.id), // For hospital-owned pharmacies
   organizationType: text("organization_type", { enum: ["independent", "hospital_owned"] }).default("independent"),
   // White-label branding
   brandName: text("brand_name"),

@@ -7,36 +7,10 @@ import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { trialSuspensionService } from "./trial-suspension-service";
 import { createTestHospital } from "./create-test-hospital";
-import { nanoid } from "nanoid";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Health check endpoint with timeout protection
-app.get('/health', (req, res) => {
-  // Set a timeout to ensure quick response
-  const timeout = setTimeout(() => {
-    if (!res.headersSent) {
-      res.status(200).json({ 
-        status: 'healthy', 
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime()
-      });
-    }
-  }, 100);
-  
-  // Clear timeout if response is sent earlier
-  res.on('finish', () => clearTimeout(timeout));
-  
-  res.status(200).json({ 
-    status: 'healthy', 
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
-});
-
-// Note: Root route (/) is handled by Vite middleware for frontend serving
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -68,17 +42,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// Move expensive startup operations to a separate initialization function
-const initializeApp = async () => {
-  // Initialize platform admin after server starts
+(async () => {
+  // Initialize platform admin on startup
   try {
-    log('🔄 Starting comprehensive platform initialization...');
-    
     // Create platform tenant (ARGILETTE)
     const existingTenant = await db.select().from(tenants).where(eq(tenants.subdomain, 'argilette')).limit(1);
     
     let platformTenant;
-    if (Array.isArray(existingTenant) && existingTenant.length === 0) {
+    if (existingTenant.length === 0) {
       const [tenant] = await db.insert(tenants).values({
         name: "ARGILETTE Platform",
         type: "hospital",
@@ -103,7 +74,6 @@ const initializeApp = async () => {
       const hashedPassword = await bcrypt.hash('Serrega1208@', 10);
       
       await db.insert(users).values({
-        id: nanoid(),
         tenantId: platformTenant.id,
         username: 'abel_admin',
         email: 'abel@argilette.com',
@@ -126,9 +96,7 @@ const initializeApp = async () => {
   } catch (error) {
     log("❌ Platform initialization failed: " + error);
   }
-};
 
-(async () => {
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -153,53 +121,11 @@ const initializeApp = async () => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
-    // Call initialization after server is ready
-    setTimeout(() => {
-      initializeApp().catch(error => {
-        log(`Initialization failed: ${error}`);
-      });
-    }, 1000); // Run 1 second after server starts
   });
-
-  // Graceful shutdown handling
-  const gracefulShutdown = (signal: string) => {
-    log(`Received ${signal}. Starting graceful shutdown...`);
-    server.close((err) => {
-      if (err) {
-        log(`Error during shutdown: ${err}`);
-        process.exit(1);
-      }
-      log('Server closed. Exiting process.');
-      process.exit(0);
-    });
-  };
-
-  // Handle process signals
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-  // Handle uncaught exceptions
-  process.on('uncaughtException', (err) => {
-    log(`Uncaught Exception: ${err.message}`);
-    gracefulShutdown('uncaughtException');
-  });
-
-  // Handle unhandled promise rejections
-  process.on('unhandledRejection', (reason, promise) => {
-    log(`Unhandled Rejection at: ${promise}, reason: ${reason}`);
-    // Don't exit immediately, just log the error
-  });
-
-  // Keep the process alive
-  process.stdin.resume();
-})().catch((error) => {
-  log(`Application startup failed: ${error}`);
-  process.exit(1);
-});
+})();

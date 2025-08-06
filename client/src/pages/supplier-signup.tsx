@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Building2, ArrowRight, CheckCircle } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -31,61 +30,6 @@ const supplierSignupSchema = z.object({
 
 type SupplierSignupForm = z.infer<typeof supplierSignupSchema>;
 
-// Most industrial countries in the world
-const INDUSTRIAL_COUNTRIES = [
-  { value: "United States", label: "United States" },
-  { value: "China", label: "China" },
-  { value: "Japan", label: "Japan" },
-  { value: "Germany", label: "Germany" },
-  { value: "India", label: "India" },
-  { value: "United Kingdom", label: "United Kingdom" },
-  { value: "France", label: "France" },
-  { value: "Italy", label: "Italy" },
-  { value: "Brazil", label: "Brazil" },
-  { value: "Canada", label: "Canada" },
-  { value: "Russia", label: "Russia" },
-  { value: "South Korea", label: "South Korea" },
-  { value: "Spain", label: "Spain" },
-  { value: "Australia", label: "Australia" },
-  { value: "Mexico", label: "Mexico" },
-  { value: "Indonesia", label: "Indonesia" },
-  { value: "Netherlands", label: "Netherlands" },
-  { value: "Saudi Arabia", label: "Saudi Arabia" },
-  { value: "Turkey", label: "Turkey" },
-  { value: "Taiwan", label: "Taiwan" },
-  { value: "Belgium", label: "Belgium" },
-  { value: "Switzerland", label: "Switzerland" },
-  { value: "Ireland", label: "Ireland" },
-  { value: "Argentina", label: "Argentina" },
-  { value: "Israel", label: "Israel" },
-  { value: "Nigeria", label: "Nigeria" },
-  { value: "Norway", label: "Norway" },
-  { value: "Austria", label: "Austria" },
-  { value: "Sweden", label: "Sweden" },
-  { value: "Egypt", label: "Egypt" },
-  { value: "Bangladesh", label: "Bangladesh" },
-  { value: "South Africa", label: "South Africa" },
-  { value: "Philippines", label: "Philippines" },
-  { value: "Finland", label: "Finland" },
-  { value: "Chile", label: "Chile" },
-  { value: "Denmark", label: "Denmark" },
-  { value: "Vietnam", label: "Vietnam" },
-  { value: "Malaysia", label: "Malaysia" },
-  { value: "Singapore", label: "Singapore" },
-  { value: "Thailand", label: "Thailand" },
-  { value: "New Zealand", label: "New Zealand" },
-  { value: "Czech Republic", label: "Czech Republic" },
-  { value: "Romania", label: "Romania" },
-  { value: "Portugal", label: "Portugal" },
-  { value: "Peru", label: "Peru" },
-  { value: "Algeria", label: "Algeria" },
-  { value: "Qatar", label: "Qatar" },
-  { value: "Kazakhstan", label: "Kazakhstan" },
-  { value: "Kuwait", label: "Kuwait" },
-  { value: "Morocco", label: "Morocco" },
-  { value: "Ecuador", label: "Ecuador" }
-];
-
 export default function SupplierSignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
@@ -94,7 +38,6 @@ export default function SupplierSignupPage() {
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors },
     reset
   } = useForm<SupplierSignupForm>({
@@ -380,23 +323,10 @@ export default function SupplierSignupPage() {
 
                 <div>
                   <Label htmlFor="country">Country *</Label>
-                  <Controller
-                    name="country"
-                    control={control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger className={errors.country ? "border-red-500" : ""}>
-                          <SelectValue placeholder="Select your country" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {INDUSTRIAL_COUNTRIES.map((country) => (
-                            <SelectItem key={country.value} value={country.value}>
-                              {country.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
+                  <Input
+                    id="country"
+                    {...register("country")}
+                    className={errors.country ? "border-red-500" : ""}
                   />
                   {errors.country && (
                     <p className="text-sm text-red-500 mt-1">{errors.country.message}</p>

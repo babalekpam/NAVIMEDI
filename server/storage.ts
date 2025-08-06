@@ -723,7 +723,8 @@ export class DatabaseStorage implements IStorage {
       const role = user[0].role;
       switch (role) {
         case 'physician':
-          return []; // By default, physicians have NO scheduling/confirmation permissions
+        case 'doctor':
+          return []; // By default, doctors have NO scheduling/confirmation permissions
         case 'receptionist':
           return ['schedule_appointments', 'confirm_appointments', 'cancel_appointments'];
         case 'tenant_admin':
@@ -869,23 +870,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Cross-tenant patients for pharmacy billing (patients with prescriptions sent to this pharmacy)
-  async getPatientsWithPrescriptionsForPharmacy(pharmacyTenantId: string, search?: string): Promise<Patient[]> {
-    let whereConditions = and(
-      eq(prescriptions.pharmacyTenantId, pharmacyTenantId),
-      eq(patients.isActive, true)
-    );
-
-    if (search) {
-      whereConditions = and(
-        whereConditions,
-        sql`(LOWER(${patients.firstName}) LIKE LOWER('%' || ${search} || '%') OR 
-             LOWER(${patients.lastName}) LIKE LOWER('%' || ${search} || '%') OR 
-             ${patients.mrn} LIKE '%' || ${search} || '%')`
-      );
-    }
-
+  async getPatientsWithPrescriptionsForPharmacy(pharmacyTenantId: string): Promise<Patient[]> {
     const patientsWithPrescriptions = await db
-      .selectDistinct({
+      .select({
         id: patients.id,
         tenantId: patients.tenantId,
         firstName: patients.firstName,
@@ -902,14 +889,21 @@ export class DatabaseStorage implements IStorage {
         medicalHistory: patients.medicalHistory,
         isActive: patients.isActive,
         createdAt: patients.createdAt,
-        updatedAt: patients.updatedAt,
-        insuranceInfo: patients.insuranceInfo,
-        preferredPharmacyId: patients.preferredPharmacyId,
-        primaryPhysicianId: patients.primaryPhysicianId
+        updatedAt: patients.updatedAt
       })
       .from(patients)
       .innerJoin(prescriptions, eq(prescriptions.patientId, patients.id))
-      .where(whereConditions)
+      .where(
+        and(
+          eq(prescriptions.pharmacyTenantId, pharmacyTenantId),
+          eq(patients.isActive, true)
+        )
+      )
+      .groupBy(patients.id, patients.tenantId, patients.firstName, patients.lastName, 
+               patients.dateOfBirth, patients.gender, patients.phone, patients.email, 
+               patients.address, patients.mrn, patients.emergencyContact, patients.allergies, 
+               patients.medications, patients.medicalHistory, patients.isActive, 
+               patients.createdAt, patients.updatedAt)
       .orderBy(patients.lastName, patients.firstName);
 
     return patientsWithPrescriptions;
@@ -942,6 +936,85 @@ export class DatabaseStorage implements IStorage {
       console.error("[CROSS-TENANT INSURANCE] Query error:", error);
       throw error;
     }
+  }
+
+  async getPatientsWithPrescriptionsForPharmacy(pharmacyTenantId: string, search?: string): Promise<Patient[]> {
+    // Get patients who have prescriptions sent to this pharmacy
+    const query = db
+      .selectDistinct({
+        id: patients.id,
+        tenantId: patients.tenantId,
+        firstName: patients.firstName,
+        lastName: patients.lastName,
+        dateOfBirth: patients.dateOfBirth,
+        gender: patients.gender,
+        phone: patients.phone,
+        email: patients.email,
+        address: patients.address,
+        mrn: patients.mrn,
+        emergencyContact: patients.emergencyContact,
+        allergies: patients.allergies,
+        medications: patients.medications,
+        isActive: patients.isActive,
+        createdAt: patients.createdAt,
+        updatedAt: patients.updatedAt
+      })
+      .from(patients)
+      .innerJoin(prescriptions, eq(prescriptions.patientId, patients.id))
+      .where(
+        and(
+          eq(prescriptions.pharmacyTenantId, pharmacyTenantId),
+          eq(patients.isActive, true)
+        )
+      );
+
+    if (search) {
+      return await db
+        .select({
+          id: prescriptions.id,
+          tenantId: prescriptions.tenantId,
+          patientId: prescriptions.patientId,
+          providerId: prescriptions.providerId,
+          appointmentId: prescriptions.appointmentId,
+          pharmacyTenantId: prescriptions.pharmacyTenantId,
+          medicationName: prescriptions.medicationName,
+          dosage: prescriptions.dosage,
+          frequency: prescriptions.frequency,
+          quantity: prescriptions.quantity,
+          refills: prescriptions.refills,
+          instructions: prescriptions.instructions,
+          status: prescriptions.status,
+          prescribedDate: prescriptions.prescribedDate,
+          sentToPharmacyDate: prescriptions.sentToPharmacyDate,
+          filledDate: prescriptions.filledDate,
+          expiryDate: prescriptions.expiryDate,
+          createdAt: prescriptions.createdAt,
+          updatedAt: prescriptions.updatedAt,
+          // Provider (doctor) information
+          providerName: users.firstName,
+          providerLastName: users.lastName,
+          providerUsername: users.username,
+          // Hospital/clinic information
+          hospitalName: tenants.name,
+          hospitalType: tenants.type
+        })
+        .from(prescriptions)
+        .innerJoin(users, eq(prescriptions.providerId, users.id))
+        .innerJoin(tenants, eq(prescriptions.tenantId, tenants.id))
+        .innerJoin(patients, eq(prescriptions.patientId, patients.id))
+        .where(
+          and(
+            eq(prescriptions.pharmacyTenantId, pharmacyTenantId),
+            eq(patients.isActive, true),
+            sql`(LOWER(${patients.firstName}) LIKE LOWER('%' || ${search} || '%') OR 
+                 LOWER(${patients.lastName}) LIKE LOWER('%' || ${search} || '%') OR 
+                 ${patients.mrn} LIKE '%' || ${search} || '%')`
+          )
+        )
+        .orderBy(desc(prescriptions.sentToPharmacyDate));
+    }
+
+    return await query.orderBy(desc(patients.createdAt));
   }
 
   // Enhanced medical records methods for healthcare professionals
@@ -1290,6 +1363,53 @@ export class DatabaseStorage implements IStorage {
     return simplifiedPrescriptions;
   }
 
+  async getPrescriptionsByTenant(tenantId: string): Promise<any[]> {
+    console.log(`[PRESCRIPTION API] 🔍 Getting prescriptions for tenant: ${tenantId}`);
+    
+    try {
+      // Get prescriptions for the tenant
+      const prescriptionRecords = await db
+        .select({
+          id: prescriptions.id,
+          patientId: prescriptions.patientId,
+          providerId: prescriptions.providerId,
+          medication: prescriptions.medicationName,
+          dosage: prescriptions.dosage,
+          frequency: prescriptions.frequency,
+          quantity: prescriptions.quantity,
+          refills: prescriptions.refills,
+          instructions: prescriptions.instructions,
+          status: prescriptions.status,
+          prescribedDate: prescriptions.prescribedDate,
+          expiryDate: prescriptions.expiryDate,
+          insuranceProvider: prescriptions.insuranceProvider,
+          insuranceCopay: prescriptions.insuranceCopay,
+          insuranceCoveragePercentage: prescriptions.insuranceCoveragePercentage,
+          totalCost: prescriptions.totalCost,
+          pharmacyNotes: prescriptions.pharmacyNotes,
+          // Get patient and provider names
+          patientName: sql<string>`concat(${patients.firstName}, ' ', ${patients.lastName})`,
+          providerName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`,
+        })
+        .from(prescriptions)
+        .leftJoin(patients, eq(prescriptions.patientId, patients.id))
+        .leftJoin(users, eq(prescriptions.providerId, users.id))
+        .where(eq(prescriptions.tenantId, tenantId))
+        .orderBy(desc(prescriptions.prescribedDate));
+
+      console.log(`[PRESCRIPTION API] ✅ Found ${prescriptionRecords.length} prescriptions for tenant`);
+      
+      return prescriptionRecords.map(record => ({
+        ...record,
+        prescribedDate: record.prescribedDate?.toISOString() || new Date().toISOString(),
+        expiryDate: record.expiryDate?.toISOString() || new Date().toISOString(),
+      }));
+    } catch (error) {
+      console.error(`[PRESCRIPTION API] ❌ Error getting prescriptions for tenant:`, error);
+      throw error;
+    }
+  }
+
   async updatePrescriptionStatus(prescriptionId: string, newStatus: string): Promise<any> {
     console.log(`[PHARMACY API] 🔄 Updating prescription ${prescriptionId} to status: ${newStatus}`);
     
@@ -1583,6 +1703,36 @@ export class DatabaseStorage implements IStorage {
         sql`${labOrders.status} IN ('ordered', 'collected', 'processing')`
       )
     ).orderBy(labOrders.orderedDate);
+  }
+
+  // Laboratory workflow methods - simplified to avoid query complexity issues
+  async getLabOrdersForLaboratory(tenantId: string): Promise<any[]> {
+    // Get basic lab orders sent to this laboratory (exclude completed ones for active view)
+    const orders = await db.select().from(labOrders)
+      .where(
+        and(
+          eq(labOrders.labTenantId, tenantId),
+          sql`${labOrders.status} NOT IN ('completed', 'cancelled')`
+        )
+      )
+      .orderBy(desc(labOrders.orderedDate));
+      
+    // Enrich with patient and hospital information
+    const enrichedOrders = await Promise.all(orders.map(async (order) => {
+      const patient = await db.select().from(patients).where(eq(patients.id, order.patientId)).limit(1);
+      const hospital = await db.select().from(tenants).where(eq(tenants.id, order.tenantId)).limit(1);
+      
+      return {
+        ...order,
+        patientMrn: patient[0]?.mrn,
+        patientFirstName: patient[0]?.firstName,
+        patientLastName: patient[0]?.lastName,
+        patientDateOfBirth: patient[0]?.dateOfBirth,
+        originatingHospital: hospital[0]?.name
+      };
+    }));
+    
+    return enrichedOrders;
   }
 
   async getArchivedLabOrdersForLaboratory(tenantId: string): Promise<any[]> {
@@ -2994,7 +3144,11 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-
+  async getPatientCheckIn(id: string, tenantId: string): Promise<PatientCheckIn | undefined> {
+    const [checkIn] = await db.select().from(patientCheckIns)
+      .where(and(eq(patientCheckIns.id, id), eq(patientCheckIns.tenantId, tenantId)));
+    return checkIn || undefined;
+  }
 
   async getPatientCheckInsByDate(date: string, tenantId: string): Promise<any[]> {
     const targetDate = new Date(date);
@@ -3451,7 +3605,18 @@ export class DatabaseStorage implements IStorage {
     return request || undefined;
   }
 
+  async createPatientAccessRequest(request: any): Promise<any> {
+    const [newRequest] = await db.insert(patientAccessRequests).values(request).returning();
+    return newRequest;
+  }
 
+  async updatePatientAccessRequest(id: string, updates: any, tenantId: string): Promise<any | undefined> {
+    const [updated] = await db.update(patientAccessRequests)
+      .set(updates)
+      .where(and(eq(patientAccessRequests.id, id), eq(patientAccessRequests.tenantId, tenantId)))
+      .returning();
+    return updated || undefined;
+  }
 
   async getPatientAccessRequestsByPhysician(physicianId: string, tenantId: string): Promise<any[]> {
     return await db.select({
@@ -3528,7 +3693,7 @@ export class DatabaseStorage implements IStorage {
   async denyPatientAccessRequest(id: string, reviewedBy: string, reviewNotes: string, tenantId: string): Promise<any | undefined> {
     const [updated] = await db.update(patientAccessRequests)
       .set({
-        status: 'rejected',
+        status: 'denied',
         reviewedBy,
         reviewedDate: new Date(),
         reviewNotes,
@@ -4155,7 +4320,26 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(prescriptions.updatedAt));
   }
 
+  async generateInventoryReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
+    // Generate sample inventory data since we don't have an inventory table
+    const medicationList = [
+      { name: 'Amoxicillin', currentStock: 150, minimumStock: 50, expiryDate: '2025-12-31', supplier: 'PharmaCorp' },
+      { name: 'Ibuprofen', currentStock: 200, minimumStock: 75, expiryDate: '2026-06-30', supplier: 'MediSupply' },
+      { name: 'Metformin', currentStock: 89, minimumStock: 100, expiryDate: '2025-09-15', supplier: 'HealthDist' },
+      { name: 'Lisinopril', currentStock: 45, minimumStock: 30, expiryDate: '2026-03-20', supplier: 'PharmaCorp' },
+      { name: 'Atorvastatin', currentStock: 120, minimumStock: 60, expiryDate: '2025-11-10', supplier: 'MediSupply' },
+    ];
 
+    return medicationList.map(med => ({
+      medicationName: med.name,
+      currentStock: med.currentStock,
+      minimumStock: med.minimumStock,
+      stockStatus: med.currentStock <= med.minimumStock ? 'Low Stock' : 'In Stock',
+      expiryDate: med.expiryDate,
+      supplier: med.supplier,
+      lastUpdated: new Date().toISOString().split('T')[0],
+    }));
+  }
 
   async generatePatientReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
     const { start, end } = dateRange;
@@ -4212,7 +4396,30 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(pharmacyPatientInsurance.createdAt));
   }
 
+  async generatePrescriptionReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
+    const { start, end } = dateRange;
+    let query = db
+      .select({
+        medicationName: prescriptions.medicationName,
+        prescriptionCount: sql<number>`COUNT(*)`,
+        totalQuantity: sql<number>`SUM(${prescriptions.quantity})`,
+        status: prescriptions.status,
+        lastDispensed: sql<string>`MAX(${prescriptions.updatedAt})`,
+      })
+      .from(prescriptions)
+      .where(eq(prescriptions.pharmacyId, tenantId));
 
+    if (start) {
+      query = query.where(sql`${prescriptions.createdAt} >= ${start}`);
+    }
+    if (end) {
+      query = query.where(sql`${prescriptions.createdAt} <= ${end}`);
+    }
+
+    return await query
+      .groupBy(prescriptions.medicationName, prescriptions.status)
+      .orderBy(prescriptions.medicationName);
+  }
 
   async generateInventoryReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
     // This would typically query an inventory table, but for now we'll use prescription data

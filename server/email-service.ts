@@ -1,17 +1,11 @@
 import { MailService } from '@sendgrid/mail';
 
-// Validate SendGrid API key format and existence
 if (!process.env.SENDGRID_API_KEY) {
   console.warn("SENDGRID_API_KEY environment variable not set. Email functionality will be disabled.");
-} else if (process.env.SENDGRID_API_KEY.startsWith('SG.') || process.env.SENDGRID_API_KEY.startsWith('SK')) {
-  console.log(`Valid SendGrid API key configured (format: ${process.env.SENDGRID_API_KEY?.substring(0, 3)}...)`);
-} else {
-  console.warn("SENDGRID_API_KEY should start with 'SG.' (update the secret in Deployment settings)");
-  console.warn("Email functionality may be limited with current API key format.");
 }
 
 const mailService = new MailService();
-if (process.env.SENDGRID_API_KEY && (process.env.SENDGRID_API_KEY.startsWith('SG.') || process.env.SENDGRID_API_KEY.startsWith('SK'))) {
+if (process.env.SENDGRID_API_KEY) {
   mailService.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
@@ -24,8 +18,8 @@ interface EmailParams {
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY || (!process.env.SENDGRID_API_KEY.startsWith('SG.') && !process.env.SENDGRID_API_KEY.startsWith('SK'))) {
-    console.log('Email would be sent (SENDGRID_API_KEY not configured or invalid):', {
+  if (!process.env.SENDGRID_API_KEY) {
+    console.log('Email would be sent (SENDGRID_API_KEY not configured):', {
       to: params.to,
       from: params.from,
       subject: params.subject
@@ -38,8 +32,8 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       to: params.to,
       from: params.from,
       subject: params.subject,
-      text: params.text || '',
-      html: params.html || '',
+      text: params.text,
+      html: params.html,
     });
     return true;
   } catch (error) {
@@ -182,7 +176,7 @@ Thank you for choosing NaviMED Healthcare Platform!
 
   return await sendEmail({
     to: userEmail,
-    from: 'noreply@navimedi.com',
+    from: 'noreply@navimed-healthcare.com',
     subject: 'Welcome to NaviMED - Registration Confirmed',
     text: confirmationText,
     html: confirmationHtml
@@ -300,7 +294,7 @@ This email was sent from info@navimedi.com
 
   return await sendEmail({
     to: params.userEmail,
-    from: 'noreply@navimedi.com',
+    from: 'info@navimedi.com',
     subject: `Welcome to NaviMed - Your Account Details for ${params.organizationName}`,
     text: textContent,
     html: htmlContent

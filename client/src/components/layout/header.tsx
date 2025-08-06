@@ -53,7 +53,7 @@ export const Header = () => {
               <img src={navimedLogo} alt="NaviMed" className="h-10 w-10 rounded-lg object-contain" />
               <div>
                 <h1 className="text-xl font-bold text-blue-600">NAVIMED</h1>
-                <p className="text-xs text-gray-500">{tenant?.name || tenant?.brandName || 'Loading Organization...'}</p>
+                <p className="text-xs text-gray-500">{tenant?.name || 'Loading...'}</p>
               </div>
             </div>
           </div>
