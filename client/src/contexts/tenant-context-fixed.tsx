@@ -45,16 +45,15 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
         const tenantData = await apiRequest('/api/tenant/current');
         
         console.log('TenantFixed: Successfully received tenant data:', tenantData?.name || 'No name');
-        console.log('TenantFixed: Full tenant data structure:', tenantData);
         
-        if (tenantData && tenantData.id) {
+        if (tenantData && tenantData.id && tenantData.name) {
           setTenant(tenantData);
           setAvailableTenants([tenantData]);
-          console.log('TenantFixed: Tenant state updated successfully!');
+          console.log('TenantFixed: Tenant state updated successfully with name:', tenantData.name);
+          return; // Exit early if successful
         } else {
           console.error('TenantFixed: Invalid tenant data structure:', tenantData);
-          setTenant(null);
-          setAvailableTenants([]);
+          throw new Error('Invalid tenant data received');
         }
       } catch (error) {
         console.error('Network error fetching tenant:', error);
@@ -63,15 +62,20 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
         if (user && user.tenantId) {
           console.log('TenantFixed: Creating fallback tenant from user data');
           
-          // NO DEFAULT HOSPITAL FALLBACK - Each tenant must be independent
-          // Use the actual tenant ID from the authenticated user to maintain isolation
-          let tenantName = 'Unknown Organization';
+          // Try to get tenant name from localStorage or other sources first
+          let tenantName = 'Loading Organization...';
           let tenantType: 'hospital' | 'pharmacy' | 'laboratory' = 'hospital';
           let subdomain = 'unknown';
           let features = ['basic'];
           
           // Map known tenant IDs to their proper configurations
           const tenantMappings = {
+            '15b85353-0985-4fec-bd4d-7bc236e190cd': {
+              name: 'ARGILETTE Platform',
+              type: 'hospital' as const,
+              subdomain: 'argilette',
+              features: ['super_admin', 'tenant_management', 'multi_tenant', 'cross_tenant_reporting', 'white_label', 'unlimited']
+            },
             '9ed7c3a3-cc12-414d-bc7e-7d0c1a3cf6e9': {
               name: 'Independent Community Pharmacy',
               type: 'pharmacy' as const,
@@ -88,6 +92,24 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
               name: 'Metro General Hospital',
               type: 'hospital' as const,
               subdomain: 'metro-general',
+              features: ['ehr', 'lab', 'billing']
+            },
+            'd58e9322-b50c-47be-9bcd-6b7b553f3c8d': {
+              name: 'JOY',
+              type: 'laboratory' as const,
+              subdomain: 'joy-lab',
+              features: ['lab', 'testing', 'billing']
+            },
+            '1acd7cfd-480a-4d3b-bbf4-b882a27887d0': {
+              name: 'Test Hospital Email',
+              type: 'hospital' as const,
+              subdomain: 'test-hospital-email',
+              features: ['ehr', 'lab', 'billing']
+            },
+            'c3fef109-92de-4625-b6b6-d11c26c5c2aa': {
+              name: 'Test Hospital',
+              type: 'hospital' as const,
+              subdomain: 'test-hospital',
               features: ['ehr', 'lab', 'billing']
             }
           };
