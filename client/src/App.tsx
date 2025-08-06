@@ -281,7 +281,57 @@ function AppContent() {
           <PatientPortalPublic />
         </Route>
         <Route path="/mobile-app">
-          <MobileTest />
+          <div className="min-h-screen bg-blue-50 p-4">
+            <div className="max-w-sm mx-auto bg-white rounded-lg shadow-lg p-6">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white font-bold text-2xl">❤</span>
+                </div>
+                <h1 className="text-2xl font-bold text-gray-900">Carnet</h1>
+                <p className="text-gray-600">Mobile Health App</p>
+              </div>
+              
+              <div className="space-y-4 mb-6">
+                <div className="bg-blue-100 p-4 rounded-lg">
+                  <h3 className="font-semibold text-blue-900">Health Records</h3>
+                  <p className="text-sm text-blue-700">Access your medical history securely</p>
+                </div>
+                <div className="bg-green-100 p-4 rounded-lg">
+                  <h3 className="font-semibold text-green-900">Appointments</h3>
+                  <p className="text-sm text-green-700">Schedule and manage doctor visits</p>
+                </div>
+                <div className="bg-purple-100 p-4 rounded-lg">
+                  <h3 className="font-semibold text-purple-900">Medications</h3>
+                  <p className="text-sm text-purple-700">Track prescriptions and reminders</p>
+                </div>
+                <div className="bg-red-100 p-4 rounded-lg">
+                  <h3 className="font-semibold text-red-900">Secure Messaging</h3>
+                  <p className="text-sm text-red-700">Chat with healthcare providers</p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <button 
+                  className="w-full bg-gradient-to-r from-blue-600 to-green-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-green-700"
+                  onClick={() => window.location.href = "/patient-login"}
+                >
+                  Access Your Health Records
+                </button>
+                <p className="text-center text-sm text-gray-500">
+                  Available on iOS App Store & Google Play Store
+                </p>
+              </div>
+              
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span>Secure & Private</span>
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <span>HIPAA Compliant</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </Route>
         <Route path="/telemedicine-booking">
           <ProtectedRoute>
