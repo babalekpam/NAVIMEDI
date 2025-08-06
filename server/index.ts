@@ -12,27 +12,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Health check route - must be first for deployment health checks
-app.get('/', (req, res) => {
-  try {
-    res.status(200).json({ 
-      status: 'healthy', 
-      service: 'Carnet Healthcare Platform',
-      timestamp: new Date().toISOString(),
-      version: '1.0.0'
-    });
-  } catch (error) {
-    console.error('Health check error:', error);
-    res.status(200).json({ 
-      status: 'healthy', 
-      service: 'Carnet Healthcare Platform',
-      timestamp: new Date().toISOString(),
-      version: '1.0.0',
-      note: 'Basic health check passed'
-    });
-  }
-});
-
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -124,19 +103,8 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    // Log error for debugging but don't crash the application
-    console.error("Application error:", {
-      status,
-      message,
-      stack: err.stack,
-      path: _req.path,
-      method: _req.method
-    });
-
     res.status(status).json({ message });
-    
-    // Don't rethrow errors to prevent application crashes
-    // throw err; // Commented out to prevent crashes from non-critical errors
+    throw err;
   });
 
   // importantly only setup vite in development and after
@@ -159,20 +127,5 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
-    
-    // Run expensive background operations after server is listening
-    setTimeout(async () => {
-      try {
-        log("Starting background maintenance tasks...");
-        
-        // Run counter resets and maintenance tasks in the background
-        // This prevents blocking the health checks during deployment
-        await trialSuspensionService.checkTrialStatuses();
-        
-        log("Background maintenance tasks completed");
-      } catch (error) {
-        log(`Background maintenance error: ${error}`);
-      }
-    }, 5000); // Wait 5 seconds after server starts before running background tasks
   });
 })();

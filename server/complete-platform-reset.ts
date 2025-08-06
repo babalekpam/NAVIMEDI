@@ -1,6 +1,5 @@
 import { db } from "./db";
-import { eq, sql } from "drizzle-orm";
-import { resetAllCounters } from "./reset-all-counters.js";
+import { eq } from "drizzle-orm";
 
 /**
  * Complete platform reset - removes ALL data except super admin account

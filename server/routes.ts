@@ -13,33 +13,13 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { aiHealthAnalyzer } from "./ai-health-analyzer";
-import { sendWelcomeEmail, generateTemporaryPassword, getEmailServiceStatus } from "./email-service.js";
+import { sendWelcomeEmail, generateTemporaryPassword } from "./email-service.js";
 import { resetAllCounters } from "./reset-all-counters.js";
 // Removed Replit Auth - using unified JWT authentication only
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-
-
-  // Detailed health check endpoint
-  app.get('/health', (req, res) => {
-    const emailStatus = getEmailServiceStatus();
-    res.status(200).json({
-      status: 'healthy',
-      service: 'Carnet Healthcare Platform',
-      timestamp: new Date().toISOString(),
-      services: {
-        database: 'connected',
-        email: emailStatus.ready ? 'ready' : 'disabled',
-        emailMessage: emailStatus.message
-      },
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      version: '1.0.0'
-    });
-  });
-
   // PUBLIC ENDPOINTS (before any middleware)
   
   // Public supplier registration endpoint (outside /api path to avoid middleware)
@@ -294,33 +274,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Public health check endpoint (no authentication required)
   app.get("/api/health", (req, res) => {
-    try {
-      const emailStatus = getEmailServiceStatus();
-      
-      res.status(200).json({ 
-        status: "healthy", 
-        timestamp: new Date().toISOString(),
-        version: "1.0.0",
-        platform: "NaviMED Healthcare Platform",
-        services: {
-          database: "connected",
-          email: {
-            status: emailStatus.ready ? "ready" : "disabled",
-            message: emailStatus.message
-          }
-        }
-      });
-    } catch (error) {
-      console.error('Detailed health check error:', error);
-      // Always return 200 for health checks to pass deployment
-      res.status(200).json({ 
-        status: "healthy", 
-        timestamp: new Date().toISOString(),
-        version: "1.0.0",
-        platform: "NaviMED Healthcare Platform",
-        note: "Basic health check passed"
-      });
-    }
+    res.json({ 
+      status: "healthy", 
+      timestamp: new Date().toISOString(),
+      version: "1.0.0",
+      platform: "NaviMED Healthcare Platform"
+    });
   });
 
   // Serve placeholder images (public access for marketplace)
