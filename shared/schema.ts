@@ -673,6 +673,75 @@ export const medicationCopays = pgTable("medication_copays", {
 
 
 
+// Vital Signs Table
+export const vitalSigns = pgTable("vital_signs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  recordedBy: uuid("recorded_by").references(() => users.id).notNull(),
+  appointmentId: uuid("appointment_id").references(() => appointments.id),
+  
+  // Vital Signs Measurements
+  systolicBp: integer("systolic_bp"), // mmHg
+  diastolicBp: integer("diastolic_bp"), // mmHg
+  heartRate: integer("heart_rate"), // bpm
+  respiratoryRate: integer("respiratory_rate"), // breaths/min
+  temperature: decimal("temperature", { precision: 4, scale: 1 }), // Celsius or Fahrenheit
+  temperatureUnit: text("temperature_unit").default('C'), // C or F
+  oxygenSaturation: integer("oxygen_saturation"), // %
+  weight: decimal("weight", { precision: 5, scale: 2 }), // kg or lbs
+  weightUnit: text("weight_unit").default('kg'), // kg or lbs
+  height: decimal("height", { precision: 5, scale: 2 }), // cm or inches
+  heightUnit: text("height_unit").default('cm'), // cm or inches
+  bmi: decimal("bmi", { precision: 4, scale: 1 }), // calculated BMI
+  
+  // Additional Measurements
+  bloodGlucose: integer("blood_glucose"), // mg/dL
+  painLevel: integer("pain_level"), // 1-10 scale
+  
+  // Recording Details
+  notes: text("notes"),
+  recordedAt: timestamp("recorded_at").default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Patient Check-ins Table
+export const patientCheckIns = pgTable("patient_check_ins", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  appointmentId: uuid("appointment_id").references(() => appointments.id),
+  
+  // Check-in Details
+  checkedInBy: uuid("checked_in_by").references(() => users.id),
+  checkedInAt: timestamp("checked_in_at").default(sql`CURRENT_TIMESTAMP`),
+  status: text("status").default('checked_in'), // checked_in, waiting, called, completed, cancelled
+  
+  // Pre-visit Information
+  reasonForVisit: text("reason_for_visit"),
+  symptoms: jsonb("symptoms").default('[]'),
+  currentMedications: jsonb("current_medications").default('[]'),
+  allergies: jsonb("allergies").default('[]'),
+  
+  // Triage Information
+  priority: text("priority").default('normal'), // low, normal, high, urgent
+  triageNotes: text("triage_notes"),
+  
+  // Additional Information
+  insuranceVerified: boolean("insurance_verified").default(false),
+  copayCollected: boolean("copay_collected").default(false),
+  copayAmount: decimal("copay_amount", { precision: 10, scale: 2 }),
+  
+  // Timestamps
+  waitingStartTime: timestamp("waiting_start_time"),
+  calledTime: timestamp("called_time"),
+  completedTime: timestamp("completed_time"),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Visit Summaries created during consultation
 export const visitSummaries = pgTable("visit_summaries", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1677,32 +1746,7 @@ export const labOrderAssignments = pgTable("lab_order_assignments", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
-// Vital Signs Records
-export const vitalSigns = pgTable("vital_signs", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
-  patientId: uuid("patient_id").references(() => patients.id).notNull(),
-  appointmentId: uuid("appointment_id").references(() => appointments.id),
-  recordedBy: uuid("recorded_by_id").references(() => users.id).notNull(), // receptionist/nurse
-  // Standard vital signs
-  systolicBp: integer("blood_pressure_systolic"), // mmHg
-  diastolicBp: integer("blood_pressure_diastolic"), // mmHg
-  heartRate: integer("heart_rate"), // bpm
-  temperature: decimal("temperature", { precision: 4, scale: 1 }), // °F or °C
-  temperatureUnit: text("temperature_unit").default('F'), // F or C
-  respiratoryRate: integer("respiratory_rate"), // breaths per minute
-  oxygenSaturation: integer("oxygen_saturation"), // %
-  weight: decimal("weight", { precision: 5, scale: 2 }), // lbs or kg
-  height: decimal("height", { precision: 5, scale: 2 }), // inches or cm
-  bmi: decimal("body_mass_index", { precision: 4, scale: 1 }), // calculated
-  painLevel: integer("pain_level"), // 0-10 scale
-  // Additional measurements
-  glucoseLevel: integer("glucose_level"), // mg/dL
-  notes: text("notes"),
-  recordedAt: timestamp("recorded_at").default(sql`CURRENT_TIMESTAMP`),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
-});
+
 
 // Specialty-specific questionnaires
 export const specialtyQuestionnaires = pgTable("specialty_questionnaires", {
@@ -1740,28 +1784,7 @@ export const specialtyQuestionnaires = pgTable("specialty_questionnaires", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
-// Patient Check-ins for receptionist workflow
-export const patientCheckIns = pgTable("patient_check_ins", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
-  patientId: uuid("patient_id").references(() => patients.id).notNull(),
-  appointmentId: uuid("appointment_id").references(() => appointments.id),
-  checkedInBy: uuid("checked_in_by").references(() => users.id).notNull(), // receptionist
-  checkedInAt: timestamp("checked_in_at").default(sql`CURRENT_TIMESTAMP`),
-  reasonForVisit: text("reason_for_visit").notNull(),
-  chiefComplaint: text("chief_complaint"),
-  priorityLevel: text("priority_level", { enum: ['low', 'normal', 'high', 'urgent', 'emergency'] }).default('normal'),
-  specialInstructions: text("special_instructions"),
-  accompaniedBy: text("accompanied_by"),
-  insuranceVerified: boolean("insurance_verified").default(false),
-  copayCollected: decimal("copay_collected", { precision: 10, scale: 2 }),
-  estimatedWaitTime: integer("estimated_wait_time"), // minutes
-  vitalSignsId: uuid("vital_signs_id").references(() => vitalSigns.id),
-  questionnaireId: uuid("questionnaire_id").references(() => specialtyQuestionnaires.id),
-  status: text("status", { enum: ['waiting', 'in-room', 'with-provider', 'completed', 'cancelled'] }).default('waiting'),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
-});
+
 
 // Patient Bills - Outstanding balances that patients need to pay
 export const patientBills = pgTable("patient_bills", {
@@ -2322,14 +2345,7 @@ export const patientCheckInsRelations = relations(patientCheckIns, ({ one }) => 
     fields: [patientCheckIns.appointmentId],
     references: [appointments.id]
   }),
-  vitalSigns: one(vitalSigns, {
-    fields: [patientCheckIns.vitalSignsId],
-    references: [vitalSigns.id]
-  }),
-  questionnaire: one(specialtyQuestionnaires, {
-    fields: [patientCheckIns.questionnaireId],
-    references: [specialtyQuestionnaires.id]
-  }),
+
   checkedInBy: one(users, {
     fields: [patientCheckIns.checkedInBy],
     references: [users.id],
@@ -2944,12 +2960,7 @@ export type InsertLabOrderAssignment = z.infer<typeof insertLabOrderAssignmentSc
 export type LaboratoryApplication = typeof laboratoryApplications.$inferSelect;
 export type InsertLaboratoryApplication = z.infer<typeof insertLaboratoryApplicationSchema>;
 
-// Vital Signs and Visit Summary Types
-export type VitalSigns = typeof vitalSigns.$inferSelect;
-export type InsertVitalSigns = z.infer<typeof insertVitalSignsSchema>;
 
-export type VisitSummary = typeof visitSummaries.$inferSelect;
-export type InsertVisitSummary = z.infer<typeof insertVisitSummarySchema>;
 
 export type PatientBill = typeof patientBills.$inferSelect;
 export type InsertPatientBill = z.infer<typeof insertPatientBillSchema>;
@@ -2964,8 +2975,7 @@ export type InsertHealthRecommendation = z.infer<typeof insertHealthRecommendati
 export type HealthAnalysis = typeof healthAnalyses.$inferSelect;
 export type InsertHealthAnalysis = z.infer<typeof insertHealthAnalysisSchema>;
 
-export type PatientCheckIn = typeof patientCheckIns.$inferSelect;
-export type InsertPatientCheckIn = z.infer<typeof insertPatientCheckInSchema>;
+
 
 export type RolePermission = typeof rolePermissions.$inferSelect;
 export type InsertRolePermission = z.infer<typeof insertRolePermissionSchema>;

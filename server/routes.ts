@@ -19,8 +19,6 @@ import { resetAllCounters } from "./reset-all-counters.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
-import { getEmailServiceStatus } from "./email-service.js";
-
 export async function registerRoutes(app: Express): Promise<Server> {
   // HEALTH CHECK ENDPOINTS (highest priority)
   
