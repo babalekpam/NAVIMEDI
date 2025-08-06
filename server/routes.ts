@@ -6320,6 +6320,8 @@ Report ID: ${report.id}
       "/marketplace/products",
       "/marketplace/quote-requests",
       "/api/location",
+      "/api/countries",
+      "/api/countries/african",
       "/api/currencies",
       "/api/currencies/african",
       "/api/currencies/convert",
@@ -6332,6 +6334,32 @@ Report ID: ${report.id}
     
     // Apply tenant middleware for all other endpoints
     setTenantContext(req, res, next);
+  });
+
+  // COUNTRY API ENDPOINTS
+  
+  // Get all countries with currency information
+  app.get('/api/countries', async (req, res) => {
+    try {
+      const { getAllCountries } = await import('./country-currency-mapping');
+      const countries = getAllCountries();
+      res.json(countries);
+    } catch (error) {
+      console.error('Error fetching countries:', error);
+      res.status(500).json({ message: 'Failed to fetch countries' });
+    }
+  });
+
+  // Get African countries specifically
+  app.get('/api/countries/african', async (req, res) => {
+    try {
+      const { getAfricanCountries } = await import('./country-currency-mapping');
+      const countries = getAfricanCountries();
+      res.json(countries);
+    } catch (error) {
+      console.error('Error fetching African countries:', error);
+      res.status(500).json({ message: 'Failed to fetch African countries' });
+    }
   });
 
   // MULTI-CURRENCY API ENDPOINTS

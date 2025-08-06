@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Building2, ArrowLeft, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import CountryCurrencySelector from "@/components/forms/country-currency-selector";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 
 export default function RegisterOrganization() {
@@ -27,6 +28,9 @@ export default function RegisterOrganization() {
     phoneNumber: "",
     address: "",
     country: "",
+    countryCode: "",
+    baseCurrency: "",
+    supportedCurrencies: [] as string[],
     description: ""
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -92,6 +96,9 @@ export default function RegisterOrganization() {
           phoneNumber: formData.phoneNumber,
           address: formData.address,
           country: formData.country,
+          countryCode: formData.countryCode,
+          baseCurrency: formData.baseCurrency || 'USD',
+          supportedCurrencies: formData.supportedCurrencies.length > 0 ? formData.supportedCurrencies : ['USD'],
           description: formData.description
         }),
       });
@@ -325,57 +332,33 @@ export default function RegisterOrganization() {
                 </div>
               </div>
 
-              {/* Optional Information */}
+              {/* Location & Currency Settings */}
               <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4">Additional Information (Optional)</h3>
+                <h3 className="text-lg font-semibold mb-4">Location & Currency Settings</h3>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="country">Country</Label>
-                      <Select value={formData.country} onValueChange={(value) => setFormData({ ...formData, country: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your country" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="United States">United States</SelectItem>
-                          <SelectItem value="Canada">Canada</SelectItem>
-                          <SelectItem value="United Kingdom">United Kingdom</SelectItem>
-                          <SelectItem value="Germany">Germany</SelectItem>
-                          <SelectItem value="France">France</SelectItem>
-                          <SelectItem value="Nigeria">Nigeria</SelectItem>
-                          <SelectItem value="Ghana">Ghana</SelectItem>
-                          <SelectItem value="Kenya">Kenya</SelectItem>
-                          <SelectItem value="South Africa">South Africa</SelectItem>
-                          <SelectItem value="Egypt">Egypt</SelectItem>
-                          <SelectItem value="Morocco">Morocco</SelectItem>
-                          <SelectItem value="Tunisia">Tunisia</SelectItem>
-                          <SelectItem value="Senegal">Senegal</SelectItem>
-                          <SelectItem value="Mali">Mali</SelectItem>
-                          <SelectItem value="Burkina Faso">Burkina Faso</SelectItem>
-                          <SelectItem value="Ivory Coast">Ivory Coast</SelectItem>
-                          <SelectItem value="Togo">Togo</SelectItem>
-                          <SelectItem value="Benin">Benin</SelectItem>
-                          <SelectItem value="Tanzania">Tanzania</SelectItem>
-                          <SelectItem value="Uganda">Uganda</SelectItem>
-                          <SelectItem value="Rwanda">Rwanda</SelectItem>
-                          <SelectItem value="Ethiopia">Ethiopia</SelectItem>
-                          <SelectItem value="Cameroon">Cameroon</SelectItem>
-                          <SelectItem value="Angola">Angola</SelectItem>
-                          <SelectItem value="Mozambique">Mozambique</SelectItem>
-                          <SelectItem value="Zambia">Zambia</SelectItem>
-                          <SelectItem value="Zimbabwe">Zimbabwe</SelectItem>
-                          <SelectItem value="Botswana">Botswana</SelectItem>
-                          <SelectItem value="Namibia">Namibia</SelectItem>
-                          <SelectItem value="India">India</SelectItem>
-                          <SelectItem value="China">China</SelectItem>
-                          <SelectItem value="Japan">Japan</SelectItem>
-                          <SelectItem value="Australia">Australia</SelectItem>
-                          <SelectItem value="Brazil">Brazil</SelectItem>
-                          <SelectItem value="Mexico">Mexico</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-gray-500">Helps automatically set the appropriate currency for your organization</p>
-                    </div>
+                  <CountryCurrencySelector
+                    selectedCountry={formData.countryCode}
+                    selectedCurrency={formData.baseCurrency}
+                    onCountryChange={(countryCode, countryData) => {
+                      setFormData({
+                        ...formData,
+                        countryCode,
+                        country: countryData.name,
+                        baseCurrency: countryData.currency,
+                        supportedCurrencies: countryData.supportedCurrencies
+                      });
+                    }}
+                    onCurrencyChange={(currency) => {
+                      setFormData({
+                        ...formData,
+                        baseCurrency: currency
+                      });
+                    }}
+                    showCurrencyPreview={true}
+                    focusRegion="global"
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
 
                     <div className="space-y-2">
                       <Label htmlFor="address">Address</Label>
