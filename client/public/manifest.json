@@ -1,6 +1,6 @@
 {
-  "name": "NaviMED Patient App",
-  "short_name": "NaviMED",
+  "name": "Carnet Patient App",
+  "short_name": "Carnet",
   "description": "Your comprehensive healthcare management app - access medical records, medications, appointments, and communicate with your care team.",
   "start_url": "/mobile-app",
   "display": "standalone",

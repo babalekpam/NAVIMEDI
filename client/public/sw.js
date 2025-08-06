@@ -1,5 +1,5 @@
-// Service Worker for NaviMED Patient App
-const CACHE_NAME = 'navimed-patient-app-v1';
+// Service Worker for Carnet Patient App
+const CACHE_NAME = 'carnet-patient-app-v1';
 const OFFLINE_URL = '/mobile-app';
 
 // Resources to cache for offline functionality
@@ -157,7 +157,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification('NaviMED Health Alert', options)
+    self.registration.showNotification('Carnet Health Alert', options)
   );
 });
 
