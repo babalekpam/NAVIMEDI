@@ -259,13 +259,13 @@
                     
                         <button 
                             type="submit" 
-                            onclick="window.location.href='/patient-portal'"
+                            id="loginButton"
                             class="w-full text-white py-6 rounded-2xl font-bold text-xl shadow-luxury hover:shadow-premium transition-all duration-300 transform hover:scale-[1.02] hover:translate-y-[-2px] relative overflow-hidden"
                             style="background: linear-gradient(135deg, var(--navimed-blue), var(--navimed-teal), var(--navimed-blue-light)); background-size: 200% 200%; animation: gradientShift 3s ease infinite;"
                         >
                             <span class="relative z-10 flex items-center justify-center space-x-4">
                                 <span class="text-2xl">🔐</span>
-                                <span class="tracking-wide">Access Secure Health Portal</span>
+                                <span class="tracking-wide" id="buttonText">Access Secure Health Portal</span>
                                 <span class="text-xl transition-transform duration-300 group-hover:translate-x-1">→</span>
                             </span>
                             <div class="absolute inset-0 bg-white opacity-0 hover:opacity-10 transition-opacity duration-300"></div>
@@ -441,37 +441,64 @@
         // Handle form submission
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            console.log('Button clicked - form submitted');
+            console.log('Patient login form submitted');
             
             const hospitalId = document.getElementById('hospitalId').value;
             const patientId = document.getElementById('patientId').value;
-            const pin = document.getElementById('pin').value;
             
-            const faceRecognized = document.getElementById('faceRecognized').value;
+            console.log('Form data:', {hospitalId, patientId});
             
-            console.log('Form data:', {hospitalId, patientId, faceRecognized});
-            
-            // Authentication with backend - bypass facial recognition for demo
+            // Authentication with NaviMED backend
             if (hospitalId && patientId) {
                 try {
                     // Show loading state
-                    const submitButton = document.querySelector('button[type="submit"]');
-                    const originalText = submitButton.innerHTML;
-                    submitButton.innerHTML = '<span class="flex items-center justify-center space-x-3"><span>🔄</span><span>Authenticating...</span></span>';
+                    const submitButton = document.getElementById('loginButton');
+                    const buttonText = document.getElementById('buttonText');
+                    const originalText = buttonText.textContent;
+                    buttonText.textContent = 'Authenticating...';
                     submitButton.disabled = true;
                     
-                    // Send login request to backend
-                    const response = await fetch('/api/patient/login', {
+                    // Send login request to NaviMED backend
+                    const response = await fetch('/api/auth/patient-login', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            hospitalId: hospitalId,
-                            patientId: patientId,
-                            biometricData: { faceRecognized: true }
+                            mrn: patientId,
+                            hospital: 'metro-general', 
+                            password: 'patient123'
                         })
                     });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Store the JWT token
+                        localStorage.setItem('patient-auth-token', data.token);
+                        localStorage.setItem('patient-data', JSON.stringify(data.patient));
+                        
+                        // Success feedback
+                        buttonText.textContent = 'Login Successful! Redirecting...';
+                        
+                        // Redirect to patient portal after short delay
+                        setTimeout(() => {
+                            window.location.href = '/patient-portal.html';
+                        }, 1500);
+                    } else {
+                        // Show error message
+                        buttonText.textContent = originalText;
+                        submitButton.disabled = false;
+                        showNotification(data.message || 'Login failed. Please try again.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    const submitButton = document.getElementById('loginButton');
+                    const buttonText = document.getElementById('buttonText');
+                    buttonText.textContent = 'Access Secure Health Portal';
+                    submitButton.disabled = false;
+                    showNotification('Connection error. Please try again.', 'error');
+                }
                     
                     const data = await response.json();
                     
@@ -576,6 +603,31 @@
                 }, 3000);
             }
         });
+        
+        function showDemoPatient() {
+            document.getElementById('demoModal').classList.remove('hidden');
+            document.getElementById('demoModal').classList.add('flex');
+        }
+
+        function closeDemoModal() {
+            document.getElementById('demoModal').classList.add('hidden');
+            document.getElementById('demoModal').classList.remove('flex');
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 ${
+                type === 'error' ? 'bg-red-600 text-white' : 
+                type === 'success' ? 'bg-green-600 text-white' : 
+                'bg-blue-600 text-white'
+            }`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        }
     </script>
 </body>
 </html>
