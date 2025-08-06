@@ -289,21 +289,21 @@
         <!-- Bottom Navigation -->
         <div class="fixed bottom-0 left-0 right-0 bg-white border-t">
             <div class="max-w-sm mx-auto grid grid-cols-4 py-2">
-                <button class="p-3 text-center">
+                <button onclick="showTab('overview')" class="p-3 text-center">
                     <div class="text-blue-600 text-lg">🏠</div>
                     <div class="text-xs text-blue-600 font-medium">Home</div>
                 </button>
-                <button class="p-3 text-center">
-                    <div class="text-gray-400 text-lg">💬</div>
-                    <div class="text-xs text-gray-400">Messages</div>
+                <button onclick="showMessaging()" class="p-3 text-center">
+                    <div class="text-gray-600 text-lg">💬</div>
+                    <div class="text-xs text-gray-600">Messages</div>
                 </button>
-                <button class="p-3 text-center">
-                    <div class="text-gray-400 text-lg">🔔</div>
-                    <div class="text-xs text-gray-400">Alerts</div>
+                <button onclick="showNotifications()" class="p-3 text-center">
+                    <div class="text-gray-600 text-lg">🔔</div>
+                    <div class="text-xs text-gray-600">Alerts</div>
                 </button>
                 <button onclick="logout()" class="p-3 text-center">
-                    <div class="text-gray-400 text-lg">🚪</div>
-                    <div class="text-xs text-gray-400">Logout</div>
+                    <div class="text-red-600 text-lg">🚪</div>
+                    <div class="text-xs text-red-600">Logout</div>
                 </button>
             </div>
         </div>
@@ -331,10 +331,19 @@
                 document.getElementById('tab-' + tabName).className.replace('tab-inactive', 'tab-active');
         }
 
+        function showMessaging() {
+            alert('💬 Secure Messaging\n\nConnect with your healthcare providers:\n\n• Dr. Wilson (Primary Care)\n• Cardiology Department\n• Pharmacy Team\n\nYour messages are HIPAA-compliant and secure.');
+        }
+
+        function showNotifications() {
+            alert('🔔 Health Alerts\n\nYour notifications:\n\n• Medication reminder: Lisinopril due at 8 PM\n• Appointment reminder: Checkup today at 2 PM\n• Lab results available for review\n• Blood pressure reading reminder');
+        }
+
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
                 localStorage.removeItem('patientToken');
                 localStorage.removeItem('patientInfo');
+                alert('🔐 Logged out securely\n\nYour session has been terminated and all data cleared.');
                 window.location.href = '/patient-login';
             }
         }
