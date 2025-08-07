@@ -199,51 +199,83 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
         <FormField
           control={form.control}
           name="laboratoryId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-base font-semibold">
-                🏥 Select Laboratory to Send Lab Order *
-              </FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger className={`${!field.value ? 'border-red-300 border-2' : 'border-green-300 border-2'} h-12`}>
-                    <SelectValue placeholder="🔬 Choose which laboratory will receive this lab order" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {labsLoading ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
-                      Loading laboratories...
-                    </div>
-                  ) : laboratories.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
-                      No laboratories available
-                    </div>
-                  ) : (
-                    laboratories.map((lab: any) => (
-                      <SelectItem key={lab.id} value={lab.id}>
-                        <div className="flex flex-col w-full">
-                          <div className="font-medium text-lg">🏥 {lab.name}</div>
-                          <div className="text-sm text-muted-foreground flex items-center gap-2">
-                            <MapPin className="h-3 w-3" />
-                            {lab.address || 'Laboratory Address'}
-                            {lab.phoneNumber && (
-                              <>
-                                <span className="mx-1">•</span>
-                                <Phone className="h-3 w-3" />
-                                {lab.phoneNumber}
-                              </>
+          render={({ field }) => {
+            const selectedPatient = patients.find(p => p.id === form.watch("patientId"));
+            const preferredLab = laboratories.find((lab: any) => lab.id === selectedPatient?.preferredLaboratoryId);
+            
+            return (
+              <FormItem>
+                <FormLabel className="text-base font-semibold flex items-center gap-2">
+                  🔬 Select Laboratory to Send Lab Order *
+                  {selectedPatient && !selectedPatient.preferredLaboratoryId && (
+                    <span className="text-amber-600 text-sm font-normal">(Patient needs to choose)</span>
+                  )}
+                </FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger className={`${!field.value ? 'border-red-300 border-2' : 'border-green-300 border-2'} h-12`}>
+                      <SelectValue placeholder="🏥 Choose which laboratory will receive this lab order" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {labsLoading ? (
+                      <div className="p-4 text-center text-sm text-muted-foreground">
+                        Loading laboratories...
+                      </div>
+                    ) : laboratories.length === 0 ? (
+                      <div className="p-4 text-center text-sm text-muted-foreground">
+                        No laboratories available
+                      </div>
+                    ) : (
+                      laboratories.map((lab: any) => (
+                        <SelectItem key={lab.id} value={lab.id}>
+                          <div className="flex flex-col w-full">
+                            <div className="font-medium">
+                              {lab.name}
+                              {lab.id === selectedPatient?.preferredLaboratoryId && " ⭐ (Patient's Preferred)"}
+                            </div>
+                            {lab.address && (
+                              <div className="text-sm text-muted-foreground">
+                                📍 {lab.address}
+                              </div>
+                            )}
+                            {lab.phone && (
+                              <div className="text-sm text-muted-foreground">
+                                📞 {lab.phone}
+                              </div>
+                            )}
+                            {lab.specialties && lab.specialties.length > 0 && (
+                              <div className="text-sm text-muted-foreground">
+                                🎯 {lab.specialties.slice(0, 3).join(", ")}
+                              </div>
                             )}
                           </div>
-                        </div>
                       </SelectItem>
                     ))
                   )}
                 </SelectContent>
               </Select>
+              {preferredLab && (
+                <div className="bg-green-50 p-3 rounded-md border border-green-200">
+                  <p className="text-sm text-green-700">
+                    ✅ <strong>{preferredLab.name}</strong> is auto-selected as patient's preferred laboratory. 
+                    You can change this selection if needed.
+                  </p>
+                </div>
+              )}
+              {selectedPatient && !selectedPatient.preferredLaboratoryId && (
+                <div className="bg-amber-50 p-3 rounded-md border border-amber-200">
+                  <p className="text-sm text-amber-700">
+                    ⚠️ <strong>Patient has no preferred laboratory set.</strong> Please manually select which laboratory 
+                    should receive this lab order. Consider asking the patient to set their preferred laboratory 
+                    for future visits.
+                  </p>
+                </div>
+              )}
               <FormMessage />
             </FormItem>
-          )}
+          );
+          }}
         />
 
         <div className="space-y-4">

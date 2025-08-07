@@ -131,37 +131,67 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescr
             
             return (
               <FormItem>
-                <FormLabel>Send to Pharmacy</FormLabel>
+                <FormLabel className="text-base font-semibold flex items-center gap-2">
+                  💊 Select Pharmacy to Send Prescription *
+                  {selectedPatient && !selectedPatient.preferredPharmacyId && (
+                    <span className="text-amber-600 text-sm font-normal">(Patient needs to choose)</span>
+                  )}
+                </FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select pharmacy" />
+                    <SelectTrigger className={`${!field.value ? 'border-red-300 border-2' : 'border-green-300 border-2'} h-12`}>
+                      <SelectValue placeholder="🏥 Choose which pharmacy will receive this prescription" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {pharmaciesLoading ? (
-                      <SelectItem value="loading" disabled>Loading pharmacies...</SelectItem>
+                      <div className="p-4 text-center text-sm text-muted-foreground">
+                        Loading pharmacies...
+                      </div>
                     ) : (pharmacies as any[]).length > 0 ? (
                       (pharmacies as any[]).map((pharmacy: any) => (
                         <SelectItem key={pharmacy.id} value={pharmacy.id}>
-                          {pharmacy.name}
-                          {pharmacy.id === selectedPatient?.preferredPharmacyId && " (Patient's Preferred)"}
+                          <div className="flex flex-col w-full">
+                            <div className="font-medium">
+                              {pharmacy.name}
+                              {pharmacy.id === selectedPatient?.preferredPharmacyId && " ⭐ (Patient's Preferred)"}
+                            </div>
+                            {pharmacy.address && (
+                              <div className="text-sm text-muted-foreground">
+                                📍 {pharmacy.address}
+                              </div>
+                            )}
+                            {pharmacy.phone && (
+                              <div className="text-sm text-muted-foreground">
+                                📞 {pharmacy.phone}
+                              </div>
+                            )}
+                          </div>
                         </SelectItem>
                       ))
                     ) : (
-                      <SelectItem value="no-pharmacies" disabled>No pharmacies available</SelectItem>
+                      <div className="p-4 text-center text-sm text-muted-foreground">
+                        No pharmacies available
+                      </div>
                     )}
                   </SelectContent>
                 </Select>
                 {preferredPharmacy && (
-                  <FormDescription>
-                    Auto-selected {preferredPharmacy.name} as patient's preferred pharmacy. You can change this if needed.
-                  </FormDescription>
+                  <div className="bg-green-50 p-3 rounded-md border border-green-200">
+                    <p className="text-sm text-green-700">
+                      ✅ <strong>{preferredPharmacy.name}</strong> is auto-selected as patient's preferred pharmacy. 
+                      You can change this selection if needed.
+                    </p>
+                  </div>
                 )}
                 {selectedPatient && !selectedPatient.preferredPharmacyId && (
-                  <FormDescription>
-                    Patient has no preferred pharmacy set. Please select one manually.
-                  </FormDescription>
+                  <div className="bg-amber-50 p-3 rounded-md border border-amber-200">
+                    <p className="text-sm text-amber-700">
+                      ⚠️ <strong>Patient has no preferred pharmacy set.</strong> Please manually select which pharmacy 
+                      should receive this prescription. Consider asking the patient to set their preferred pharmacy 
+                      for future visits.
+                    </p>
+                  </div>
                 )}
                 <FormMessage />
               </FormItem>
