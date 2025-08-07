@@ -13,22 +13,30 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Dedicated health check endpoint for deployment monitoring
+// Multiple health check endpoints for deployment monitoring
+// These must respond immediately without any heavy operations
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    service: 'healthcare-platform',
-    timestamp: new Date().toISOString()
-  });
+  res.status(200).json({ status: 'ok' });
 });
 
-// API-specific health check endpoint 
-app.get('/api/health-check', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    service: 'healthcare-platform',
-    timestamp: new Date().toISOString()
-  });
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+app.get('/status', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+// Simple text responses for deployment systems that expect plain text
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
+});
+
+// Root endpoint simplified - just serve the frontend
+// If deployment systems need JSON, they should use /health, /healthz, or /status
+app.get('/', (req, res, next) => {
+  // Always serve the frontend for root requests
+  next();
 });
 
 app.use((req, res, next) => {
