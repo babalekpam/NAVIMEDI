@@ -1864,23 +1864,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/lab-orders", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
-      // Convert string dates to Date objects and prepare data
-      const requestData = { ...req.body };
-      if (requestData.orderedDate && typeof requestData.orderedDate === 'string') {
-        requestData.orderedDate = new Date(requestData.orderedDate);
+      console.log("[DEBUG] Lab order request body:", JSON.stringify(req.body, null, 2));
+      
+      const requestData = req.body;
+      
+      // Handle multiple lab orders from the enhanced form
+      if (requestData.labOrders && Array.isArray(requestData.labOrders)) {
+        const createdOrders = [];
+        
+        for (const orderData of requestData.labOrders) {
+          // Convert string dates to Date objects and prepare data for each order
+          const labOrderData = {
+            ...orderData,
+            tenantId: req.tenant!.id,
+            providerId: req.user!.id,
+            orderedDate: new Date(),
+            appointmentId: orderData.appointmentId || null,
+            labTenantId: requestData.laboratoryId || null // Use laboratoryId from main request
+          };
+          
+          console.log("[DEBUG] Processing lab order:", labOrderData);
+
+          const validatedData = insertLabOrderSchema.parse(labOrderData);
+          const labOrder = await storage.createLabOrder(validatedData);
+          
+          // Create audit log for each order
+          await storage.createAuditLog({
+            tenantId: req.tenant!.id,
+            userId: req.user!.id,
+            entityType: "lab_order",
+            entityId: labOrder.id,
+            action: "create",
+            newData: labOrder,
+            ipAddress: req.ip,
+            userAgent: req.get("User-Agent")
+          });
+          
+          createdOrders.push(labOrder);
+        }
+        
+        console.log("[DEBUG] Created", createdOrders.length, "lab orders successfully");
+        return res.status(201).json({ 
+          message: `Successfully created ${createdOrders.length} lab orders`, 
+          orders: createdOrders 
+        });
+      }
+      
+      // Handle single lab order (legacy format)
+      const singleOrderData = { ...requestData };
+      if (singleOrderData.orderedDate && typeof singleOrderData.orderedDate === 'string') {
+        singleOrderData.orderedDate = new Date(singleOrderData.orderedDate);
       }
       
       const labOrderData = {
-        ...requestData,
+        ...singleOrderData,
         tenantId: req.tenant!.id,
         providerId: req.user!.id,
-        orderedDate: requestData.orderedDate || new Date(),
-        appointmentId: requestData.appointmentId || null,
-        labTenantId: requestData.labTenantId || null
+        orderedDate: singleOrderData.orderedDate || new Date(),
+        appointmentId: singleOrderData.appointmentId || null,
+        labTenantId: singleOrderData.labTenantId || null
       };
 
       const validatedData = insertLabOrderSchema.parse(labOrderData);
-
       const labOrder = await storage.createLabOrder(validatedData);
 
       // Create audit log
@@ -1899,6 +1944,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Create lab order error:", error);
       if (error instanceof z.ZodError) {
+        console.error("Validation errors:", error.errors);
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
       res.status(500).json({ message: "Internal server error" });
