@@ -362,6 +362,7 @@ export interface IStorage {
   getLabResult(id: string, tenantId: string): Promise<LabResult | undefined>;
   createLabResult(labResult: InsertLabResult): Promise<LabResult>;
   updateLabResult(id: string, updates: Partial<LabResult>, tenantId: string): Promise<LabResult | undefined>;
+  updateLabResultStatus(id: string, status: string): Promise<LabResult | undefined>;
   getLabResultsByOrder(labOrderId: string, tenantId: string): Promise<LabResult[]>;
   getLabResultsByPatient(patientId: string, tenantId: string): Promise<LabResult[]>;
   getLabResultsByTenant(tenantId: string): Promise<LabResult[]>;
@@ -2311,6 +2312,14 @@ export class DatabaseStorage implements IStorage {
     const [labResult] = await db.update(labResults)
       .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
       .where(and(eq(labResults.id, id), eq(labResults.tenantId, tenantId)))
+      .returning();
+    return labResult || undefined;
+  }
+
+  async updateLabResultStatus(id: string, status: string): Promise<LabResult | undefined> {
+    const [labResult] = await db.update(labResults)
+      .set({ status, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(labResults.id, id))
       .returning();
     return labResult || undefined;
   }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -64,6 +64,39 @@ export default function LabResults() {
   const { user } = useAuth();
   const { tenant } = useTenant();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Handle marking as reviewed
+  const markAsReviewedMutation = useMutation({
+    mutationFn: async (labResultId: string) => {
+      const { apiRequest } = await import("@/lib/queryClient");
+      const response = await apiRequest("PATCH", `/api/lab-results/${labResultId}`, {
+        status: "reviewed"
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/lab-results"] });
+      toast({
+        title: "Result reviewed",
+        description: "Lab result has been marked as reviewed successfully."
+      });
+      // Clear selected result to refresh the view
+      setSelectedResult(null);
+    },
+    onError: (error) => {
+      console.error("Error marking as reviewed:", error);
+      toast({
+        title: "Update failed",
+        description: "Unable to mark result as reviewed. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleMarkAsReviewed = (labResultId: string) => {
+    markAsReviewedMutation.mutate(labResultId);
+  };
 
   // Handle file download
   const handleFileDownload = async (attachmentPath: string, testName: string) => {
@@ -417,7 +450,22 @@ export default function LabResults() {
 
                   {/* Actions */}
                   <div className="space-y-2">
-                    <Button variant="outline" className="w-full">
+                    {selectedResult.status === "pending" && (
+                      <Button 
+                        className="w-full bg-green-600 hover:bg-green-700"
+                        onClick={() => handleMarkAsReviewed(selectedResult.id)}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Mark as Reviewed
+                      </Button>
+                    )}
+                    {selectedResult.status === "reviewed" && (
+                      <div className="flex items-center justify-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                        <span className="text-green-800 font-medium">Result Reviewed</span>
+                      </div>
+                    )}
+                    <Button variant="outline" className="w-full" onClick={() => handleFileDownload(selectedResult.attachmentPath || '', selectedResult.testName)}>
                       <Download className="h-4 w-4 mr-2" />
                       Download Report
                     </Button>

@@ -3518,6 +3518,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update lab result status
+  app.patch("/api/lab-results/:labResultId", authenticateToken, requireRole(["physician", "nurse", "lab_technician", "tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
+    try {
+      const { labResultId } = req.params;
+      const { status } = req.body;
+      
+      // Validate status
+      const validStatuses = ['pending', 'completed', 'reviewed'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid status. Must be one of: pending, completed, reviewed" });
+      }
+      
+      // Update lab result status
+      const updatedResult = await storage.updateLabResultStatus(labResultId, status);
+      
+      if (!updatedResult) {
+        return res.status(404).json({ message: "Lab result not found" });
+      }
+      
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenantId!,
+        userId: req.userId!,
+        entityType: "lab_result",
+        entityId: labResultId,
+        action: "update",
+        oldData: { status: updatedResult.status },
+        newData: { status: status },
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+      
+      res.json(updatedResult);
+    } catch (error) {
+      console.error("Error updating lab result status:", error);
+      res.status(500).json({ message: "Failed to update lab result status" });
+    }
+  });
+
   // Lab Order Assignment Routes
   app.post("/api/lab-order-assignments", authenticateToken, requireRole(["physician", "nurse", "lab_technician", "tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
     try {
