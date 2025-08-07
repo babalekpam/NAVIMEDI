@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { trialSuspensionService } from "./trial-suspension-service";
 import { createTestHospital } from "./create-test-hospital";
+import path from "path";
 
 const app = express();
 app.use(express.json());
@@ -183,6 +184,28 @@ async function initializePlatform() {
         error: 'Internal server error',
         message: process.env.NODE_ENV === 'development' ? message : 'Internal server error'
       });
+    }
+  });
+
+  // Handle client-side routing - serve index.html for non-API routes
+  app.get('*', (req, res, next) => {
+    // Skip API routes, static assets, and webhooks
+    if (req.path.startsWith('/api/') || 
+        req.path.startsWith('/public/') || 
+        req.path.startsWith('/webhook/') ||
+        req.path.includes('.') || // Skip requests for files with extensions
+        req.path.startsWith('/_')) {
+      return next();
+    }
+    
+    // For client-side routes, we need to serve index.html
+    if (app.get("env") === "development") {
+      // In development, let Vite handle it
+      return next();
+    } else {
+      // In production, serve the built index.html
+      const indexPath = path.resolve(import.meta.dirname, "dist/public/index.html");
+      res.sendFile(indexPath);
     }
   });
 
