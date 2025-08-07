@@ -5,6 +5,7 @@ import { db } from "./db";
 import { tenants, users } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
+import { nanoid } from "nanoid";
 import { trialSuspensionService } from "./trial-suspension-service";
 import { createTestHospital } from "./create-test-hospital";
 
@@ -58,7 +59,8 @@ app.use((req, res, next) => {
     const existingTenant = await db.select().from(tenants).where(eq(tenants.subdomain, 'argilette')).limit(1);
     
     let platformTenant;
-    if (existingTenant.length === 0) {
+    const tenantResult = Array.isArray(existingTenant) ? existingTenant : [];
+    if (tenantResult.length === 0) {
       const [tenant] = await db.insert(tenants).values({
         name: "ARGILETTE Platform",
         type: "hospital",
@@ -79,10 +81,11 @@ app.use((req, res, next) => {
     // Create super admin user
     const existingAdmin = await db.select().from(users).where(eq(users.email, 'abel@argilette.com')).limit(1);
     
-    if (existingAdmin.length === 0) {
+    if (!existingAdmin || existingAdmin.length === 0) {
       const hashedPassword = await bcrypt.hash('Serrega1208@', 10);
       
       await db.insert(users).values({
+        id: nanoid(),
         tenantId: platformTenant.id,
         username: 'abel_admin',
         email: 'abel@argilette.com',

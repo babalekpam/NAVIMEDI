@@ -723,7 +723,6 @@ export class DatabaseStorage implements IStorage {
       const role = user[0].role;
       switch (role) {
         case 'physician':
-        case 'doctor':
           return []; // By default, doctors have NO scheduling/confirmation permissions
         case 'receptionist':
           return ['schedule_appointments', 'confirm_appointments', 'cancel_appointments'];
@@ -1358,7 +1357,7 @@ export class DatabaseStorage implements IStorage {
         const [updatedPrescription] = await db
           .update(prescriptions)
           .set({ 
-            status: newStatus,
+            status: newStatus as any,
             updatedAt: new Date()
           })
           .where(eq(prescriptions.id, prescriptionId))
@@ -1387,9 +1386,9 @@ export class DatabaseStorage implements IStorage {
         ORDER BY archived_at DESC
       `);
       
-      console.log(`[PHARMACY API] ✅ Found ${archiveResults.length} archived prescriptions`);
+      console.log(`[PHARMACY API] ✅ Found ${Array.isArray(archiveResults.rows) ? archiveResults.rows.length : 0} archived prescriptions`);
       
-      return archiveResults.map((row: any) => ({
+      return (archiveResults.rows || []).map((row: any) => ({
         id: row.id,
         originalPrescriptionId: row.original_prescription_id,
         tenantId: row.tenant_id,
