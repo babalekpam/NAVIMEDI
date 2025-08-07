@@ -3082,7 +3082,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Medical Communications routes
   app.get("/api/medical-communications", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const communications = await storage.getMedicalCommunicationsByTenant(req.user.tenantId);
+      const communications = await storage.getMedicalCommunicationsByTenant(req.tenantId!);
       res.json(communications);
     } catch (error) {
       console.error("Failed to fetch communications:", error);
@@ -3093,7 +3093,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/medical-communications/:id", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { id } = req.params;
-      const communication = await storage.getMedicalCommunication(id, req.user.tenantId);
+      const communication = await storage.getMedicalCommunication(id, req.tenantId!);
       
       if (!communication) {
         return res.status(404).json({ message: "Communication not found" });
@@ -3110,16 +3110,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertMedicalCommunicationSchema.parse({
         ...req.body,
-        tenantId: req.user.tenantId,
-        senderId: req.user.userId,
+        tenantId: req.tenantId!,
+        senderId: req.userId!,
       });
 
       const communication = await storage.createMedicalCommunication(validatedData);
 
       // Create audit log
       await storage.createAuditLog({
-        tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        tenantId: req.tenantId!,
+        userId: req.userId!,
         entityType: "medical_communication",
         entityId: communication.id,
         action: "CREATE",
@@ -3140,7 +3140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const updates = req.body;
 
-      const communication = await storage.updateMedicalCommunication(id, updates, req.user.tenantId);
+      const communication = await storage.updateMedicalCommunication(id, updates, req.tenantId!);
       
       if (!communication) {
         return res.status(404).json({ message: "Communication not found" });
@@ -3148,8 +3148,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create audit log
       await storage.createAuditLog({
-        tenantId: req.user.tenantId,
-        userId: req.user.userId,
+        tenantId: req.tenantId!,
+        userId: req.userId!,
         entityType: "medical_communication",
         entityId: communication.id,
         action: "UPDATE",

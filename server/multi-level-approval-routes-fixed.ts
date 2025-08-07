@@ -99,7 +99,7 @@ router.post('/patient-access-requests/:requestId/approve', authenticateToken, re
     const isFinalApproval = currentLevel >= maxLevel;
     (stepData as any).isFinalApproval = isFinalApproval;
 
-    const result = await storage.processApprovalStep(requestId, tenantId, stepData);
+    await storage.processApprovalStep(requestId, tenantId, stepData);
 
     res.json({ 
       message: isFinalApproval ? 'Access request approved successfully' : 'Approval processed, moved to next level',
