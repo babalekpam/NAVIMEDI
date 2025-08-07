@@ -65,10 +65,10 @@ export function PatientAccessRequestManager({ userRole }: PatientAccessRequestMa
       
       return apiRequest('/api/patient-access-requests', {
         method: 'POST',
-        body: JSON.stringify({
+        body: {
           ...data,
           accessGrantedUntil: accessGrantedUntil.toISOString()
-        })
+        }
       });
     },
     onSuccess: () => {
@@ -94,7 +94,7 @@ export function PatientAccessRequestManager({ userRole }: PatientAccessRequestMa
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       return apiRequest(`/api/patient-access-requests/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(data)
+        body: data
       });
     },
     onSuccess: () => {
