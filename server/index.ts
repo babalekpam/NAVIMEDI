@@ -13,7 +13,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Simple health check endpoint for deployment - fast and independent
+// Dedicated health check endpoint for deployment monitoring
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'ok', 
@@ -22,8 +22,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Root endpoint health check for deployment - fast and independent  
-app.get('/', (req, res) => {
+// API-specific health check endpoint 
+app.get('/api/health-check', (req, res) => {
   res.status(200).json({ 
     status: 'ok', 
     service: 'healthcare-platform',
