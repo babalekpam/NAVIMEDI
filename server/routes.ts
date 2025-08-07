@@ -4253,8 +4253,14 @@ Report ID: ${report.id}
       const userId = req.user?.id;
       const tenantId = req.tenant!.id;
 
+      // Convert string dates to Date objects if needed
+      const requestData = { ...req.body };
+      if (requestData.accessGrantedUntil && typeof requestData.accessGrantedUntil === 'string') {
+        requestData.accessGrantedUntil = new Date(requestData.accessGrantedUntil);
+      }
+
       const request = await storage.createPatientAccessRequest({
-        ...req.body,
+        ...requestData,
         requestingPhysicianId: userId,
         tenantId: tenantId
       });
