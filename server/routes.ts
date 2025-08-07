@@ -956,7 +956,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (!uuidPattern.test(tenantId)) {
             // If not a UUID, try to find tenant by name
             const tenants = await storage.getAllTenants();
-            const tenant = tenants.find(t => t.name.toLowerCase() === tenantId.toLowerCase());
+            console.log(`[DEBUG] Looking for tenant: "${tenantId}" (length: ${tenantId.length})`);
+            console.log(`[DEBUG] Available tenants: ${tenants.map(t => `"${t.name}"`).join(', ')}`);
+            const tenant = tenants.find(t => {
+              const match = t.name.toLowerCase() === tenantId.toLowerCase();
+              if (match) {
+                console.log(`[DEBUG] MATCHED: "${t.name}" === "${tenantId}"`);
+              }
+              return match;
+            });
             if (tenant) {
               actualTenantId = tenant.id;
               console.log(`[SECURITY AUDIT] Tenant found by name: ${tenant.name} (${tenant.id})`);
