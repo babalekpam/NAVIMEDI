@@ -671,52 +671,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('[SUPPLIER LOGIN] Found supplier organization:', supplierOrg.companyName);
 
-      // Find user by email (supplier users are typically associated by email)
-      const allUsers = await storage.getAllUsers();
-      const user = allUsers.find(u => 
-        u.username === username &&
-        u.email === supplierOrg.contactEmail
-      );
+      // Check if supplier account is approved
+      if (supplierOrg.status !== 'approved') {
+        return res.status(403).json({ 
+          message: 'Account not approved', 
+          status: supplierOrg.status 
+        });
+      }
 
-      if (!user || !await bcrypt.compare(password, user.password)) {
-        console.log('[SUPPLIER LOGIN] Invalid credentials for:', username);
+      // Find supplier by username or email and verify password directly against supplier record
+      let supplier = null;
+      console.log('[SUPPLIER LOGIN DEBUG] Checking username:', username);
+      console.log('[SUPPLIER LOGIN DEBUG] Against contactEmail:', supplierOrg.contactEmail);
+      console.log('[SUPPLIER LOGIN DEBUG] Against username:', supplierOrg.username);
+      
+      if (username === supplierOrg.contactEmail || username === supplierOrg.username) {
+        supplier = supplierOrg;
+        console.log('[SUPPLIER LOGIN DEBUG] Username/email match found');
+      } else {
+        console.log('[SUPPLIER LOGIN DEBUG] No username/email match');
+      }
+
+      if (!supplier) {
+        console.log('[SUPPLIER LOGIN] No supplier match');
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      if (!user.isActive) {
-        return res.status(401).json({ message: "Account is disabled" });
+      const passwordValid = await bcrypt.compare(password, supplier.passwordHash);
+      console.log('[SUPPLIER LOGIN DEBUG] Password valid:', passwordValid);
+      
+      if (!passwordValid) {
+        console.log('[SUPPLIER LOGIN] Invalid password for:', username);
+        return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      console.log('[SUPPLIER LOGIN] Successful login for supplier:', user.username);
-
-      // Update last login
-      await storage.updateUser(user.id, { lastLogin: new Date() });
+      console.log('[SUPPLIER LOGIN] Successful login for supplier:', supplier.username);
 
       const token = jwt.sign(
         { 
-          userId: user.id, 
-          tenantId: user.tenantId, 
-          role: user.role,
-          username: user.username,
-          userType: 'supplier',
-          organizationName: supplierOrg.companyName
+          supplierId: supplier.id,
+          username: supplier.username,
+          contactEmail: supplier.contactEmail,
+          companyName: supplier.companyName,
+          type: 'supplier'
         },
         JWT_SECRET,
-        { expiresIn: "8h" }
+        { expiresIn: "24h" }
       );
 
       res.json({
+        message: 'Login successful',
         token,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-          tenantId: user.tenantId,
-          userType: 'supplier',
-          organizationName: supplierOrg.companyName
+        supplier: {
+          id: supplier.id,
+          companyName: supplier.companyName,
+          username: supplier.username,
+          contactEmail: supplier.contactEmail,
+          status: supplier.status
         }
       });
 
