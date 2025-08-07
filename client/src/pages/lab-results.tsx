@@ -57,7 +57,7 @@ interface LabResult {
 
 export default function LabResults() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("pending"); // Default to pending to prioritize pending results
   const [abnormalFilter, setAbnormalFilter] = useState("all");
   const [selectedResult, setSelectedResult] = useState<LabResult | null>(null);
   
@@ -176,11 +176,18 @@ export default function LabResults() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Lab Results</h1>
+        <div className="flex items-center gap-3 mb-2">
+          <TestTube className="h-8 w-8 text-purple-600" />
+          <h1 className="text-3xl font-bold text-gray-900">Lab Results</h1>
+          <Badge className="bg-purple-100 text-purple-800 border-purple-200">
+            <Clock className="h-3 w-3 mr-1" />
+            Pending Priority
+          </Badge>
+        </div>
         <p className="text-gray-600">
           {tenant?.type === 'laboratory' 
-            ? "View and manage all lab results from your laboratory"
-            : "View lab results for your organization's patients"
+            ? "Manage and review lab results - pending results are prioritized for quick review"
+            : "View lab results for your patients - pending results are shown first for immediate attention"
           }
         </p>
       </div>
@@ -242,9 +249,20 @@ export default function LabResults() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Lab Results</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                Lab Results
+                {statusFilter === "pending" && (
+                  <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {filteredResults.length} Pending
+                  </Badge>
+                )}
+              </CardTitle>
               <CardDescription>
-                Click on a result to view detailed information
+                {statusFilter === "pending" 
+                  ? "Pending lab results requiring immediate attention - click to view details"
+                  : "Click on a result to view detailed information"
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
