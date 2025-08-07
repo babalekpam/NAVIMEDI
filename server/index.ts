@@ -12,6 +12,15 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Health check endpoint for deployment
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    service: 'NaviMED Healthcare Platform'
+  });
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

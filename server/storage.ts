@@ -3447,18 +3447,7 @@ export class DatabaseStorage implements IStorage {
     return request || undefined;
   }
 
-  async createPatientAccessRequest(request: any): Promise<any> {
-    const [newRequest] = await db.insert(patientAccessRequests).values(request).returning();
-    return newRequest;
-  }
-
-  async updatePatientAccessRequest(id: string, updates: any, tenantId: string): Promise<any | undefined> {
-    const [updated] = await db.update(patientAccessRequests)
-      .set(updates)
-      .where(and(eq(patientAccessRequests.id, id), eq(patientAccessRequests.tenantId, tenantId)))
-      .returning();
-    return updated || undefined;
-  }
+  // Removed duplicate methods - using properly typed versions below
 
   async getPatientAccessRequestsByPhysician(physicianId: string, tenantId: string): Promise<any[]> {
     return await db.select({
@@ -4271,32 +4260,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(sql`COUNT(*) DESC`);
   }
 
-  async generateInsuranceReport(tenantId: string, dateRange: { start?: string; end?: string } = {}): Promise<any[]> {
-    const { start, end } = dateRange;
-    
-    let query = db
-      .select({
-        insuranceProvider: pharmacyPatientInsurance.insuranceProviderName,
-        policyCount: sql<number>`COUNT(DISTINCT ${pharmacyPatientInsurance.policyNumber})`,
-        patientCount: sql<number>`COUNT(DISTINCT ${pharmacyPatientInsurance.patientId})`,
-        verificationStatus: pharmacyPatientInsurance.verificationStatus,
-        averageCopay: sql<number>`AVG(${pharmacyPatientInsurance.copayAmount})`,
-        averageDeductible: sql<number>`AVG(${pharmacyPatientInsurance.deductibleAmount})`,
-      })
-      .from(pharmacyPatientInsurance)
-      .where(eq(pharmacyPatientInsurance.tenantId, tenantId));
-
-    if (start) {
-      query = query.where(sql`${pharmacyPatientInsurance.createdAt} >= ${start}`);
-    }
-    if (end) {
-      query = query.where(sql`${pharmacyPatientInsurance.createdAt} <= ${end}`);
-    }
-
-    return await query
-      .groupBy(pharmacyPatientInsurance.insuranceProviderName, pharmacyPatientInsurance.verificationStatus)
-      .orderBy(pharmacyPatientInsurance.insuranceProviderName);
-  }
+  // Removed duplicate method - using the first implementation above
 
   async getPharmacyReportTemplatesByTenant(tenantId: string): Promise<PharmacyReportTemplate[]> {
     return await db.select().from(pharmacyReportTemplates).where(eq(pharmacyReportTemplates.tenantId, tenantId));
