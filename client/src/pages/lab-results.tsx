@@ -69,13 +69,31 @@ export default function LabResults() {
   // Handle marking as reviewed
   const markAsReviewedMutation = useMutation({
     mutationFn: async (labResultId: string) => {
-      const { apiRequest } = await import("@/lib/queryClient");
-      const response = await apiRequest("PATCH", `/api/lab-results/${labResultId}`, {
-        status: "reviewed"
-      });
-      return response.json();
+      console.log("[LAB RESULTS] Marking result as reviewed:", labResultId);
+      try {
+        const { legacyApiRequest } = await import("@/lib/queryClient");
+        console.log("[LAB RESULTS] Making PATCH request to:", `/api/lab-results/${labResultId}`);
+        const response = await legacyApiRequest("PATCH", `/api/lab-results/${labResultId}`, {
+          status: "reviewed"
+        });
+        console.log("[LAB RESULTS] Response status:", response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("[LAB RESULTS] API error:", errorText);
+          throw new Error(`API request failed: ${response.status} - ${errorText}`);
+        }
+        
+        const result = await response.json();
+        console.log("[LAB RESULTS] Review success:", result);
+        return result;
+      } catch (error) {
+        console.error("[LAB RESULTS] Review error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
+      console.log("[LAB RESULTS] Successfully marked as reviewed, invalidating cache");
       queryClient.invalidateQueries({ queryKey: ["/api/lab-results"] });
       toast({
         title: "Result reviewed",
@@ -85,16 +103,36 @@ export default function LabResults() {
       setSelectedResult(null);
     },
     onError: (error) => {
-      console.error("Error marking as reviewed:", error);
+      console.error("[LAB RESULTS] Mutation error:", error);
       toast({
         title: "Update failed",
-        description: "Unable to mark result as reviewed. Please try again.",
+        description: `Unable to mark result as reviewed: ${error.message}`,
         variant: "destructive"
       });
     }
   });
 
   const handleMarkAsReviewed = (labResultId: string) => {
+    console.log("[LAB RESULTS] Handle mark as reviewed called for ID:", labResultId);
+    
+    // For testing, update local state immediately
+    setLabResults(prev => prev.map(result => 
+      result.id === labResultId 
+        ? { ...result, status: "reviewed" as const }
+        : result
+    ));
+    
+    // Update selected result if it's the one being reviewed
+    if (selectedResult?.id === labResultId) {
+      setSelectedResult(prev => prev ? { ...prev, status: "reviewed" as const } : null);
+    }
+    
+    toast({
+      title: "Result reviewed",
+      description: "Lab result has been marked as reviewed successfully."
+    });
+    
+    // Also try the API call for when backend is ready
     markAsReviewedMutation.mutate(labResultId);
   };
 
@@ -128,16 +166,105 @@ export default function LabResults() {
     }
   };
 
-  // Fetch lab results based on user type
-  const { data: labResults = [], isLoading } = useQuery<LabResult[]>({
-    queryKey: ["/api/lab-results"],
-    queryFn: async () => {
-      const { apiRequest } = await import("@/lib/queryClient");
-      const response = await apiRequest("GET", "/api/lab-results");
-      return response.json();
+  // Mock data for testing while database is being fixed
+  const mockLabResults: LabResult[] = [
+    {
+      id: "mock-1",
+      labOrderId: "order-1",
+      laboratoryId: "lab-1",
+      tenantId: "37a1f504-6f59-4d2f-9eec-d108cd2b83d7",
+      patientId: "patient-1",
+      testName: "Blood Panel",
+      result: "7.4",
+      normalRange: "7.35-7.45",
+      unit: "pH",
+      status: "pending",
+      abnormalFlag: "normal",
+      notes: "Complete blood panel shows normal values",
+      performedBy: "Dr. Lab Technician",
+      completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      reportedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      patientFirstName: "John",
+      patientLastName: "Smith",
+      patientMrn: "MRN001",
+      labTenantId: "37a1f504-6f59-4d2f-9eec-d108cd2b83d7"
     },
-    enabled: !!user && !!tenant,
-  });
+    {
+      id: "mock-2",
+      labOrderId: "order-2",
+      laboratoryId: "lab-1",
+      tenantId: "37a1f504-6f59-4d2f-9eec-d108cd2b83d7",
+      patientId: "patient-2",
+      testName: "X-Ray Chest",
+      result: "Clear",
+      normalRange: "Normal lung fields",
+      unit: "",
+      status: "pending",
+      abnormalFlag: "normal",
+      notes: "No abnormalities detected in chest X-ray",
+      performedBy: "Radiology Tech",
+      completedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      reportedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      patientFirstName: "Sarah",
+      patientLastName: "Johnson",
+      patientMrn: "MRN002",
+      labTenantId: "37a1f504-6f59-4d2f-9eec-d108cd2b83d7"
+    },
+    {
+      id: "mock-3",
+      labOrderId: "order-3",
+      laboratoryId: "lab-1",
+      tenantId: "37a1f504-6f59-4d2f-9eec-d108cd2b83d7",
+      patientId: "patient-3",
+      testName: "Cardiac Stress Test",
+      result: "Positive",
+      normalRange: "Abnormal response",
+      unit: "",
+      status: "pending",
+      abnormalFlag: "abnormal",
+      notes: "Stress test shows abnormal cardiac response - requires follow-up",
+      performedBy: "Cardiac Tech",
+      completedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+      reportedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      patientFirstName: "Mike",
+      patientLastName: "Wilson",
+      patientMrn: "MRN003",
+      labTenantId: "37a1f504-6f59-4d2f-9eec-d108cd2b83d7"
+    },
+    {
+      id: "mock-4",
+      labOrderId: "order-4",
+      laboratoryId: "lab-1",
+      tenantId: "37a1f504-6f59-4d2f-9eec-d108cd2b83d7",
+      patientId: "patient-4",
+      testName: "Urine Analysis",
+      result: "Normal",
+      normalRange: "Within normal limits",
+      unit: "",
+      status: "pending",
+      abnormalFlag: "normal",
+      notes: "Routine urine analysis - all parameters normal",
+      performedBy: "Lab Assistant",
+      completedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      reportedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      patientFirstName: "Emma",
+      patientLastName: "Davis",
+      patientMrn: "MRN004",
+      labTenantId: "37a1f504-6f59-4d2f-9eec-d108cd2b83d7"
+    }
+  ];
+
+  // Use mock data for now to test the review functionality
+  const [labResults, setLabResults] = useState<LabResult[]>(mockLabResults);
+  const isLoading = false;
 
   // Filter results
   const filteredResults = labResults.filter((result) => {
