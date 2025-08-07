@@ -90,6 +90,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     const data = await response.json();
     
+    console.log('Login successful, user data:', data.user);
+    
     // Store authentication data immediately to prevent multiple login attempts
     localStorage.setItem("auth_token", data.token);
     localStorage.setItem("auth_user", JSON.stringify(data.user));
@@ -97,26 +99,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setToken(data.token);
     setUser(data.user);
     
-    // Check if user needs to change temporary password
-    if (data.user.mustChangePassword || data.user.isTemporaryPassword) {
-      window.location.href = '/change-password';
-    } else if (data.user.role === 'patient') {
-      window.location.href = '/patient-portal';
-    } else if (data.user.role === 'super_admin') {
-      // Super admin gets their own dashboard with platform oversight
-      window.location.href = '/super-admin-dashboard';
-    } else if (data.user.role === 'tenant_admin' || data.user.role === 'director') {
-      // Redirect tenant admins to unified admin dashboard
-      window.location.href = '/admin-dashboard';
-    } else if (data.user.role === 'lab_technician') {
-      window.location.href = '/laboratory-dashboard';
-    } else if (data.user.role === 'pharmacist') {
-      window.location.href = '/pharmacy-dashboard';
-    } else if (data.user.role === 'receptionist') {
-      window.location.href = '/receptionist-dashboard';
-    } else {
-      window.location.href = '/dashboard';
-    }
+    // Add a small delay to ensure state is set before redirect
+    setTimeout(() => {
+      // Check if user needs to change temporary password
+      if (data.user.mustChangePassword || data.user.isTemporaryPassword) {
+        window.location.href = '/change-password';
+      } else if (data.user.role === 'patient') {
+        window.location.href = '/patient-portal';
+      } else if (data.user.role === 'super_admin') {
+        // Super admin gets their own dashboard with platform oversight
+        console.log('Redirecting super admin to dashboard');
+        window.location.href = '/super-admin-dashboard';
+      } else if (data.user.role === 'tenant_admin' || data.user.role === 'director') {
+        // Redirect tenant admins to unified admin dashboard
+        window.location.href = '/admin-dashboard';
+      } else if (data.user.role === 'lab_technician') {
+        window.location.href = '/laboratory-dashboard';
+      } else if (data.user.role === 'pharmacist') {
+        window.location.href = '/pharmacy-dashboard';
+      } else if (data.user.role === 'receptionist') {
+        window.location.href = '/receptionist-dashboard';
+      } else {
+        window.location.href = '/dashboard';
+      }
+    }, 100);
   };
 
   const logout = () => {
