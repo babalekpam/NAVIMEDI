@@ -746,9 +746,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Username and password are required" });
       }
 
+      console.log(`[SECURITY AUDIT] Login attempt for ${username} from IP: ${req.ip}`);
+
       let user;
       
-      // SECURITY: Super admin login with enhanced security logging
+      // SECURITY: Super admin login - no tenant required
       if (username === 'abel@argilette.com' || username === 'abel_admin') {
         console.log(`[SECURITY AUDIT] Super admin login attempt from IP: ${req.ip}`);
         // Get all users with this username/email across all tenants
@@ -760,38 +762,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user) {
           console.log(`[SECURITY AUDIT] Super admin login successful: ${user.username}`);
         }
-      } else if (tenantId) {
-        // Regular tenant user login - support both tenant UUID and tenant name
-        let actualTenantId = tenantId;
+      } else {
+        // SECURITY FIX: For regular users, first find the user by credentials across all tenants
+        // Then validate they belong to the specified organization
+        console.log(`[SECURITY AUDIT] Regular user login attempt for: ${username}`);
         
-        // Check if tenantId is a UUID pattern or tenant name
-        const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        const allUsers = await storage.getAllUsers();
+        const candidateUsers = allUsers.filter(u => 
+          (u.username === username || u.email === username) && u.isActive
+        );
         
-        if (!uuidPattern.test(tenantId)) {
-          // SECURITY: Log tenant lookup attempts for security monitoring
-          console.log(`[SECURITY AUDIT] Tenant lookup by name: ${tenantId} from IP: ${req.ip}`);
-          // If not a UUID, try to find tenant by name
-          const tenants = await storage.getAllTenants();
-          const tenant = tenants.find(t => t.name.toLowerCase() === tenantId.toLowerCase());
-          if (tenant) {
-            actualTenantId = tenant.id;
-            console.log(`[SECURITY AUDIT] Tenant found: ${tenant.name} (${tenant.id})`);
-          } else {
-            console.log(`[SECURITY WARNING] Unknown tenant lookup attempt: ${tenantId}`);
-            return res.status(400).json({ message: "Organization not found" });
+        if (candidateUsers.length === 0) {
+          console.log(`[SECURITY AUDIT] No user found with username/email: ${username}`);
+          return res.status(401).json({ message: "Invalid credentials" });
+        }
+        
+        // Verify password for all candidate users
+        let authenticatedUser = null;
+        for (const candidateUser of candidateUsers) {
+          if (candidateUser.password && await bcrypt.compare(password, candidateUser.password)) {
+            authenticatedUser = candidateUser;
+            break;
           }
         }
         
-        user = await storage.getUserByUsername(username, actualTenantId);
-      } else {
-        return res.status(400).json({ message: "Tenant ID is required for regular users" });
+        if (!authenticatedUser) {
+          console.log(`[SECURITY AUDIT] Password verification failed for: ${username}`);
+          return res.status(401).json({ message: "Invalid credentials" });
+        }
+        
+        // SECURITY: Now validate tenant access
+        if (tenantId) {
+          let actualTenantId = tenantId;
+          
+          // Check if tenantId is a UUID pattern or tenant name
+          const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+          
+          if (!uuidPattern.test(tenantId)) {
+            // If not a UUID, try to find tenant by name
+            const tenants = await storage.getAllTenants();
+            const tenant = tenants.find(t => t.name.toLowerCase() === tenantId.toLowerCase());
+            if (tenant) {
+              actualTenantId = tenant.id;
+              console.log(`[SECURITY AUDIT] Tenant found by name: ${tenant.name} (${tenant.id})`);
+            } else {
+              console.log(`[SECURITY WARNING] Unknown tenant lookup attempt: ${tenantId} for user: ${username}`);
+              return res.status(400).json({ message: "Organization not found" });
+            }
+          }
+          
+          // CRITICAL SECURITY CHECK: Verify user belongs to the specified tenant
+          if (authenticatedUser.tenantId !== actualTenantId) {
+            console.log(`[SECURITY VIOLATION] User ${username} (tenant: ${authenticatedUser.tenantId}) attempted to access different tenant: ${actualTenantId} from IP: ${req.ip}`);
+            return res.status(403).json({ message: "Access denied: You are not authorized to access this organization" });
+          }
+          
+          user = authenticatedUser;
+          console.log(`[SECURITY AUDIT] User ${username} successfully authenticated for tenant: ${actualTenantId}`);
+        } else {
+          // If no tenantId provided, user can only access their own tenant
+          user = authenticatedUser;
+          console.log(`[SECURITY AUDIT] User ${username} authenticated for their default tenant: ${user.tenantId}`);
+        }
       }
 
-      if (!user || !await bcrypt.compare(password, user.password)) {
+      // Final validation for user existence
+      if (!user) {
+        console.log(`[SECURITY AUDIT] Authentication failed - no valid user found for: ${username}`);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       if (!user.isActive) {
+        console.log(`[SECURITY AUDIT] Authentication failed - account disabled for: ${username}`);
         return res.status(401).json({ message: "Account is disabled" });
       }
 

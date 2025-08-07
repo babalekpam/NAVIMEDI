@@ -107,6 +107,9 @@ export default function Login() {
                 value={tenantId}
                 onChange={(e) => setTenantId(e.target.value)}
               />
+              <p className="text-xs text-gray-500">
+                You can only access organizations you are authorized for
+              </p>
             </div>
 
             <div className="space-y-2">
