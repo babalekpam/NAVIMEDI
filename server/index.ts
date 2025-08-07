@@ -104,16 +104,27 @@ app.use((req, res, next) => {
     // await createTestHospital();
   } catch (error) {
     log("❌ Platform initialization failed: " + error);
+    console.error("Platform initialization error:", error);
   }
 
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+    
+    console.error('Unhandled error:', {
+      url: req.url,
+      method: req.method,
+      error: err.stack || err.message || err
+    });
 
-    res.status(status).json({ message });
-    throw err;
+    if (!res.headersSent) {
+      res.status(status).json({ 
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? message : 'Internal server error'
+      });
+    }
   });
 
   // importantly only setup vite in development and after
@@ -136,5 +147,15 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+  });
+
+  // Handle process errors to prevent crashes
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  });
+
+  process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    process.exit(1);
   });
 })();
