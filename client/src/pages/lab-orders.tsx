@@ -118,9 +118,11 @@ export default function LabOrders() {
       
       console.log("Sending lab order data to API:", data);
       
-      // Send the complete data structure to the backend
-      const response = await apiRequest("POST", "/api/lab-orders", data);
-      return response.json();
+      // Send the complete data structure to the backend using correct format
+      return await apiRequest('/api/lab-orders', {
+        method: 'POST',
+        body: data,
+      });
     },
     onSuccess: (result) => {
       console.log("Lab order created successfully:", result);
