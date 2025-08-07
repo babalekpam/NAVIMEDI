@@ -13,18 +13,33 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+
+
 // Multiple health check endpoints for deployment monitoring
 // These must respond immediately without any heavy operations
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
+  res.status(200).json({ 
+    status: 'ok', 
+    service: 'carnet-healthcare',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
 });
 
 app.get('/healthz', (req, res) => {
-  res.status(200).json({ status: 'ok' });
+  res.status(200).json({ 
+    status: 'ok', 
+    service: 'carnet-healthcare',
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.get('/status', (req, res) => {
-  res.status(200).json({ status: 'ok' });
+  res.status(200).json({ 
+    status: 'ok', 
+    service: 'carnet-healthcare',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Simple text responses for deployment systems that expect plain text
@@ -32,12 +47,34 @@ app.get('/ping', (req, res) => {
   res.status(200).send('pong');
 });
 
-// Root endpoint simplified - just serve the frontend
-// If deployment systems need JSON, they should use /health, /healthz, or /status
-app.get('/', (req, res, next) => {
-  // Always serve the frontend for root requests
-  next();
+// Additional health endpoints commonly used by deployment systems
+app.get('/ready', (req, res) => {
+  res.status(200).send('OK');
 });
+
+app.get('/alive', (req, res) => {
+  res.status(200).send('OK');
+});
+
+app.get('/liveness', (req, res) => {
+  res.status(200).json({ status: 'ok', alive: true });
+});
+
+app.get('/readiness', (req, res) => {
+  res.status(200).json({ status: 'ok', ready: true });
+});
+
+// Explicit deployment health check endpoint
+app.get('/deployment-health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    service: 'carnet-healthcare',
+    deployment: 'ready',
+    timestamp: new Date().toISOString()
+  });
+});
+
+
 
 app.use((req, res, next) => {
   const start = Date.now();
