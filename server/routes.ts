@@ -12,6 +12,8 @@ import { setTenantContext, requireTenant } from "./middleware/tenant";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
+import speakeasy from "speakeasy";
+import qrcode from "qrcode";
 import { aiHealthAnalyzer } from "./ai-health-analyzer";
 import { sendWelcomeEmail, generateTemporaryPassword } from "./email-service";
 import { resetAllCounters } from "./reset-all-counters";
@@ -164,7 +166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // MFA Setup endpoint - Generate QR code and secret
   app.post("/api/auth/mfa/setup", authenticateToken, async (req, res) => {
     try {
-      const user = await storage.getUserById(req.user!.id);
+      const user = await storage.getUser(req.user!.id);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -173,10 +175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "MFA is already enabled for this account" });
       }
 
-      // Generate TOTP secret using speakeasy
-      const speakeasy = require('speakeasy');
-      const qrcode = require('qrcode');
-      
+      // Generate TOTP secret using speakeasy      
       const secret = speakeasy.generateSecret({
         name: `NaviMED (${user.username})`,
         issuer: 'NaviMED Healthcare Platform',
@@ -218,13 +217,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "MFA token is required" });
       }
 
-      const user = await storage.getUserById(req.user!.id);
+      const user = await storage.getUser(req.user!.id);
       if (!user || !user.mfaSecret) {
         return res.status(404).json({ message: "MFA setup not found" });
       }
 
       // Verify the TOTP token
-      const speakeasy = require('speakeasy');
       const verified = speakeasy.totp.verify({
         secret: user.mfaSecret,
         encoding: 'base32',
@@ -257,13 +255,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Current password is required" });
       }
 
-      const user = await storage.getUserById(req.user!.id);
+      const user = await storage.getUser(req.user!.id);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
 
       // Verify current password
-      const bcrypt = require('bcrypt');
       if (!await bcrypt.compare(currentPassword, user.password)) {
         return res.status(400).json({ message: "Invalid password" });
       }
@@ -282,10 +279,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // MFA Verification endpoint for login
+  app.post("/api/auth/mfa/verify", async (req, res) => {
+    try {
+      const { username, password, tenantId, mfaCode, isBackupCode } = req.body;
+      
+      if (!username || !password || !mfaCode) {
+        return res.status(400).json({ message: "Username, password, and MFA code are required" });
+      }
+
+      // Find the user
+      let user: any;
+      if (tenantId) {
+        user = await storage.getUserByEmailOrUsername(username, tenantId);
+      } else {
+        // For super admin login without tenant
+        const allUsers = await storage.getAllUsers();
+        user = allUsers.find(u => u.username === username || u.email === username);
+      }
+
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Check if MFA is enabled
+      if (!user.mfaEnabled) {
+        return res.status(400).json({ message: "MFA is not enabled for this account" });
+      }
+
+      // Verify MFA code
+      let mfaValid = false;
+      
+      if (isBackupCode && user.mfaBackupCodes && user.mfaBackupCodes.includes(mfaCode.toUpperCase())) {
+        // Valid backup code - remove it from the list
+        const updatedBackupCodes = user.mfaBackupCodes.filter((code: string) => code !== mfaCode.toUpperCase());
+        await storage.updateUser(user.id, { mfaBackupCodes: updatedBackupCodes });
+        mfaValid = true;
+        console.log(`[SECURITY AUDIT] MFA backup code used for user: ${username}`);
+      } else if (!isBackupCode && user.mfaSecret) {
+        // Check TOTP token
+        mfaValid = speakeasy.totp.verify({
+          secret: user.mfaSecret,
+          encoding: 'base32',
+          token: mfaCode,
+          window: 2 // Allow 2 time steps (1 minute) of drift
+        });
+      }
+
+      if (!mfaValid) {
+        console.log(`[SECURITY AUDIT] MFA verification failed for user: ${username}`);
+        return res.status(401).json({ message: "Invalid MFA code" });
+      }
+
+      console.log(`[SECURITY AUDIT] MFA verification successful for user: ${username}`);
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { 
+          id: user.id, 
+          userId: user.id,
+          username: user.username, 
+          role: user.role, 
+          tenantId: user.tenantId,
+          email: user.email
+        },
+        JWT_SECRET,
+        { expiresIn: "24h" }
+      );
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          tenantId: user.tenantId,
+          isActive: user.isActive
+        }
+      });
+    } catch (error) {
+      console.error("MFA verification error:", error);
+      res.status(500).json({ message: "MFA verification failed" });
+    }
+  });
+
   // MFA Status endpoint
   app.get("/api/auth/mfa/status", authenticateToken, async (req, res) => {
     try {
-      const user = await storage.getUserById(req.user!.id);
+      const user = await storage.getUser(req.user!.id);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -915,7 +1005,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Verify MFA token
-        const speakeasy = require('speakeasy');
         let mfaValid = false;
         
         // Check if it's a backup code first
