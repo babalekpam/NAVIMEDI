@@ -12,19 +12,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { useTenant } from "@/contexts/tenant-context-fixed";
+import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
 import { useLocation } from "wouter";
 import { TenantSwitcher } from "@/components/tenant/tenant-switcher";
 import { LanguageSelector } from "@/components/language-selector";
 import { useState } from "react";
 
+interface Notification {
+  id: number;
+  message: string;
+  type: string;
+  time: string;
+  urgent: boolean;
+}
+
 export const Header = () => {
   const { user, logout } = useAuth();
   const { tenant } = useTenant();
   const [, setLocation] = useLocation();
   const { t } = useTranslation();
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const handleLogout = () => {
     logout();
@@ -41,7 +49,7 @@ export const Header = () => {
 
   if (!user) return null;
 
-  const userInitials = `${user.firstName[0]}${user.lastName[0]}`;
+  const userInitials = `${user?.firstName?.[0] || 'U'}${user?.lastName?.[0] || 'N'}`;
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
@@ -53,7 +61,7 @@ export const Header = () => {
               <img src={navimedLogo} alt="NaviMed" className="h-10 w-10 rounded-lg object-contain" />
               <div>
                 <h1 className="text-xl font-bold text-blue-600">NAVIMED</h1>
-                <p className="text-xs text-gray-500">{tenant?.name || 'Loading...'}</p>
+                <p className="text-xs text-gray-500">{tenant?.name || tenant?.brandName || 'Healthcare Organization'}</p>
               </div>
             </div>
           </div>
