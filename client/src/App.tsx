@@ -817,9 +817,26 @@ function App() {
   // Check for supplier redirect, but only for dashboard/protected routes
   const userType = localStorage.getItem('userType');
   const currentPath = window.location.pathname;
+  const authUser = localStorage.getItem('auth_user');
   
-  // Only redirect suppliers if they're trying to access protected dashboard routes
-  // Allow suppliers to access public pages like marketplace, landing, etc.
+  // Clear supplier userType if user is logging in with regular auth system
+  if (authUser && userType === 'supplier') {
+    try {
+      const user = JSON.parse(authUser);
+      // If user has a valid auth role that's not supplier-related, clear the userType
+      if (user.role && user.role !== 'supplier') {
+        localStorage.removeItem('userType');
+        console.log('Cleared supplier userType for authenticated user with role:', user.role);
+      }
+    } catch (e) {
+      // If auth_user is corrupted, clear both
+      localStorage.removeItem('userType');
+      localStorage.removeItem('auth_user');
+    }
+  }
+  
+  // Only redirect suppliers if they're trying to access protected routes
+  // AND they don't have a valid auth session (meaning they're only supplier users)
   const publicRoutes = [
     '/', '/marketplace', '/supplier-portal', '/supplier-signup', 
     '/register', '/features', '/solutions', '/security', '/contact', 
@@ -827,8 +844,9 @@ function App() {
     '/patient-portal-public', '/patient-login', '/login'
   ];
   
-  if (userType === 'supplier' && !publicRoutes.includes(currentPath) && !currentPath.startsWith('/supplier-')) {
-    // Only redirect suppliers trying to access protected routes
+  const updatedUserType = localStorage.getItem('userType'); // Get updated value
+  if (updatedUserType === 'supplier' && !authUser && !publicRoutes.includes(currentPath) && !currentPath.startsWith('/supplier-')) {
+    // Only redirect suppliers trying to access protected routes if they don't have regular auth
     window.location.replace('/supplier-dashboard-direct');
     return <div style={{display: 'none'}}>Redirecting supplier...</div>;
   }
