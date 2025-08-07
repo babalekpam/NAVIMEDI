@@ -13,21 +13,21 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Health check endpoint - must be fast and not depend on initialization
+// Simple health check endpoint for deployment - fast and independent
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'ok', 
-    timestamp: new Date().toISOString(),
-    service: 'NaviMED Healthcare Platform'
+    service: 'healthcare-platform',
+    timestamp: new Date().toISOString()
   });
 });
 
-// Root endpoint health check for deployment
+// Root endpoint health check for deployment - fast and independent  
 app.get('/', (req, res) => {
   res.status(200).json({ 
     status: 'ok', 
-    timestamp: new Date().toISOString(),
-    service: 'NaviMED Healthcare Platform'
+    service: 'healthcare-platform',
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -61,8 +61,10 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
-  // Initialize platform admin on startup
+// Initialize platform asynchronously after server starts
+let platformInitialized = false;
+
+async function initializePlatform() {
   try {
     // Create platform tenant (ARGILETTE)
     const existingTenant = await db.select().from(tenants).where(eq(tenants.subdomain, 'argilette')).limit(1);
@@ -110,15 +112,15 @@ app.use((req, res, next) => {
       log("✓ Super admin already exists");
     }
     
+    platformInitialized = true;
     log("✓ Platform initialization complete");
-    
-    // TEMPORARY: Disable test hospital creation during platform reset
-    // await createTestHospital();
   } catch (error) {
     log("❌ Platform initialization failed: " + error);
     console.error("Platform initialization error:", error);
   }
+}
 
+(async () => {
   const server = await registerRoutes(app);
 
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
@@ -159,6 +161,11 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Initialize platform after server is running
+    initializePlatform().catch(error => {
+      console.error("Platform initialization error:", error);
+    });
   });
 
   // Handle process errors to prevent crashes

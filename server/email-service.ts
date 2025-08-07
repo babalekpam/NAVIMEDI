@@ -1,12 +1,15 @@
 import { MailService } from '@sendgrid/mail';
 
-if (!process.env.SENDGRID_API_KEY) {
-  console.warn("SENDGRID_API_KEY environment variable not set. Email functionality will be disabled.");
-}
+let mailService: MailService | null = null;
 
-const mailService = new MailService();
-if (process.env.SENDGRID_API_KEY) {
+// Only initialize SendGrid if we have a valid API key
+if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.startsWith('SG.')) {
+  mailService = new MailService();
   mailService.setApiKey(process.env.SENDGRID_API_KEY);
+} else if (process.env.SENDGRID_API_KEY && !process.env.SENDGRID_API_KEY.startsWith('SG.')) {
+  console.warn("Invalid SENDGRID_API_KEY format. API key must start with 'SG.' - Email functionality will be disabled.");
+} else {
+  console.warn("SENDGRID_API_KEY environment variable not set. Email functionality will be disabled.");
 }
 
 interface EmailParams {
@@ -18,8 +21,8 @@ interface EmailParams {
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.log('Email would be sent (SENDGRID_API_KEY not configured):', {
+  if (!mailService) {
+    console.log('Email would be sent (SendGrid not configured):', {
       to: params.to,
       from: params.from,
       subject: params.subject
@@ -28,13 +31,16 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
   }
 
   try {
-    await mailService.send({
+    const emailData: any = {
       to: params.to,
       from: params.from,
       subject: params.subject,
-      text: params.text,
-      html: params.html,
-    });
+    };
+    
+    if (params.text) emailData.text = params.text;
+    if (params.html) emailData.html = params.html;
+    
+    await mailService.send(emailData);
     return true;
   } catch (error) {
     console.error('SendGrid email error:', error);

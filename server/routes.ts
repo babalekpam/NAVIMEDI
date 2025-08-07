@@ -13,8 +13,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { aiHealthAnalyzer } from "./ai-health-analyzer";
-import { sendWelcomeEmail, generateTemporaryPassword } from "./email-service.js";
-import { resetAllCounters } from "./reset-all-counters.js";
+import { sendWelcomeEmail, generateTemporaryPassword } from "./email-service";
+import { resetAllCounters } from "./reset-all-counters";
 // Removed Replit Auth - using unified JWT authentication only
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
