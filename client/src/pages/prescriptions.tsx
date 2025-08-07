@@ -71,7 +71,7 @@ export default function PrescriptionsPage() {
     mutationFn: async (prescriptionData: any) => {
       return await apiRequest('/api/prescriptions', {
         method: 'POST',
-        body: JSON.stringify(prescriptionData),
+        body: prescriptionData,
       });
     },
     onSuccess: () => {
@@ -213,7 +213,7 @@ export default function PrescriptionsPage() {
             <PrescriptionForm 
               onSubmit={handleCreatePrescription}
               isLoading={createPrescriptionMutation.isPending}
-              patients={patients}
+              patients={patients as any[]}
             />
           </DialogContent>
         </Dialog>
