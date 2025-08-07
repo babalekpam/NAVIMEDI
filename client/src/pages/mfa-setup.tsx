@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,7 @@ interface MfaSetupData {
 export default function MfaSetup() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [setupData, setSetupData] = useState<MfaSetupData | null>(null);
   const [verificationCode, setVerificationCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
@@ -55,6 +56,8 @@ export default function MfaSetup() {
       });
     },
     onSuccess: () => {
+      // Invalidate MFA status cache so the settings page updates
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/mfa/status"] });
       toast({
         title: "MFA Enabled Successfully",
         description: "Multi-factor authentication is now enabled for your account"
