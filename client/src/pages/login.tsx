@@ -45,9 +45,27 @@ export default function Login() {
       localStorage.setItem("auth_token", response.token);
       localStorage.setItem("auth_user", JSON.stringify(response.user));
       
-      // Force a page reload to ensure auth state is properly initialized
-      // This ensures the useAuth hook picks up the new authentication state
-      window.location.href = "/dashboard";
+      console.log('Login page - user role:', response.user.role);
+      
+      // Role-based redirection matching auth context logic
+      if (response.user.mustChangePassword || response.user.isTemporaryPassword) {
+        window.location.href = '/change-password';
+      } else if (response.user.role === 'patient') {
+        window.location.href = '/patient-portal';
+      } else if (response.user.role === 'super_admin') {
+        console.log('Redirecting super admin to super-admin-dashboard');
+        window.location.href = '/super-admin-dashboard';
+      } else if (response.user.role === 'tenant_admin' || response.user.role === 'director') {
+        window.location.href = '/admin-dashboard';
+      } else if (response.user.role === 'lab_technician') {
+        window.location.href = '/laboratory-dashboard';
+      } else if (response.user.role === 'pharmacist') {
+        window.location.href = '/pharmacy-dashboard';
+      } else if (response.user.role === 'receptionist') {
+        window.location.href = '/receptionist-dashboard';
+      } else {
+        window.location.href = '/dashboard';
+      }
     } catch (err: any) {
       setError(err.message || "Login failed");
     } finally {

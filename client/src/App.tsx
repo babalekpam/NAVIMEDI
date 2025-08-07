@@ -768,7 +768,7 @@ function AppContent() {
 }
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -781,7 +781,7 @@ function Router() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <div className="min-h-screen">
         <Switch>
@@ -803,8 +803,8 @@ function Router() {
           <Route path="/patient-login" component={PatientLogin} />
           <Route path="/login" component={Login} />
           
-          {/* Default to landing page for unauthenticated users */}
-          <Route component={LandingPage} />
+          {/* 404 Not Found - should only show for truly unmatched routes */}
+          <Route component={NotFound} />
         </Switch>
       </div>
     );
