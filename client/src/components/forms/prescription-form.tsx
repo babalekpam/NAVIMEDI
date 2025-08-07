@@ -158,7 +158,8 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescr
                             </div>
                             {pharmacy.address && (
                               <div className="text-sm text-muted-foreground">
-                                📍 {pharmacy.address}
+                                📍 {typeof pharmacy.address === 'string' ? pharmacy.address : 
+                                     `${pharmacy.address.street || ''} ${pharmacy.address.city || ''}, ${pharmacy.address.state || ''} ${pharmacy.address.zipCode || ''}`.trim()}
                               </div>
                             )}
                             {pharmacy.phone && (
