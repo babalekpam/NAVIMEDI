@@ -259,6 +259,11 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
+
+        {/* Public routes accessible even when logged in */}
+        <Route path="/marketplace" component={MarketplacePage} />
+        <Route path="/supplier-portal" component={SupplierPortal} />
+        <Route path="/supplier-signup" component={SupplierSignupPage} />
         <Route path="/patient-access-management">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
