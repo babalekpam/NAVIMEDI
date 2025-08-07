@@ -814,12 +814,22 @@ function Router() {
 }
 
 function App() {
-  // IMMEDIATE: Block suppliers before any React rendering
+  // Check for supplier redirect, but only for dashboard/protected routes
   const userType = localStorage.getItem('userType');
-  if (userType === 'supplier') {
-    // Force redirect immediately
+  const currentPath = window.location.pathname;
+  
+  // Only redirect suppliers if they're trying to access protected dashboard routes
+  // Allow suppliers to access public pages like marketplace, landing, etc.
+  const publicRoutes = [
+    '/', '/marketplace', '/supplier-portal', '/supplier-signup', 
+    '/register', '/features', '/solutions', '/security', '/contact', 
+    '/pricing', '/laboratory-registration', '/pharmacy-registration',
+    '/patient-portal-public', '/patient-login', '/login'
+  ];
+  
+  if (userType === 'supplier' && !publicRoutes.includes(currentPath) && !currentPath.startsWith('/supplier-')) {
+    // Only redirect suppliers trying to access protected routes
     window.location.replace('/supplier-dashboard-direct');
-    // Return empty div to prevent React from rendering anything
     return <div style={{display: 'none'}}>Redirecting supplier...</div>;
   }
 
