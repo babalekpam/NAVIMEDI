@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield, Building2 } from "lucide-react";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 import { apiRequest } from "@/lib/queryClient";
+import MfaVerify from "./mfa-verify";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -15,6 +16,7 @@ export default function Login() {
   const [tenantId, setTenantId] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [requiresMfa, setRequiresMfa] = useState(false);
   const [, setLocation] = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,6 +42,13 @@ export default function Login() {
           tenantId: tenantId || undefined
         }
       });
+
+      // Check if MFA is required
+      if (response.requiresMfa) {
+        setRequiresMfa(true);
+        setIsLoading(false);
+        return;
+      }
 
       // Store auth token and user data
       localStorage.setItem("auth_token", response.token);
@@ -72,6 +81,51 @@ export default function Login() {
       setIsLoading(false);
     }
   };
+
+  const handleMfaSuccess = (token: string, user: any) => {
+    // Store auth token and user data
+    localStorage.setItem("auth_token", token);
+    localStorage.setItem("auth_user", JSON.stringify(user));
+    
+    console.log('MFA Login success - user role:', user.role);
+    
+    // Role-based redirection matching auth context logic
+    if (user.mustChangePassword || user.isTemporaryPassword) {
+      window.location.href = '/change-password';
+    } else if (user.role === 'patient') {
+      window.location.href = '/patient-portal';
+    } else if (user.role === 'super_admin') {
+      console.log('Redirecting super admin to super-admin-dashboard');
+      window.location.href = '/super-admin-dashboard';
+    } else if (user.role === 'tenant_admin' || user.role === 'director') {
+      window.location.href = '/admin-dashboard';
+    } else if (user.role === 'lab_technician') {
+      window.location.href = '/laboratory-dashboard';
+    } else if (user.role === 'pharmacist') {
+      window.location.href = '/pharmacy-dashboard';
+    } else if (user.role === 'receptionist') {
+      window.location.href = '/receptionist-dashboard';
+    } else {
+      window.location.href = '/dashboard';
+    }
+  };
+
+  const handleMfaBack = () => {
+    setRequiresMfa(false);
+    setError("");
+  };
+
+  if (requiresMfa) {
+    return (
+      <MfaVerify
+        username={username}
+        password={password}
+        tenantId={tenantId}
+        onMfaSuccess={handleMfaSuccess}
+        onBack={handleMfaBack}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">

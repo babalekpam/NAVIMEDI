@@ -418,6 +418,11 @@ export const users = pgTable("users", {
   isTemporaryPassword: boolean("is_temporary_password").default(false),
   mustChangePassword: boolean("must_change_password").default(false),
   lastLogin: timestamp("last_login"),
+  // Multi-Factor Authentication fields
+  mfaEnabled: boolean("mfa_enabled").default(false),
+  mfaSecret: text("mfa_secret"), // TOTP secret key
+  mfaBackupCodes: jsonb("mfa_backup_codes"), // Array of backup recovery codes
+  lastMfaSetupAt: timestamp("last_mfa_setup_at"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
@@ -2735,7 +2740,8 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  lastLogin: true
+  lastLogin: true,
+  lastMfaSetupAt: true
 });
 
 export const insertPatientSchema = createInsertSchema(patients).omit({

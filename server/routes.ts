@@ -161,6 +161,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // JWT Authentication routes only - no Replit Auth - REMOVED OLD INSECURE LOGIN
 
+  // MFA Setup endpoint - Generate QR code and secret
+  app.post("/api/auth/mfa/setup", authenticateToken, async (req, res) => {
+    try {
+      const user = await storage.getUserById(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.mfaEnabled) {
+        return res.status(400).json({ message: "MFA is already enabled for this account" });
+      }
+
+      // Generate TOTP secret using speakeasy
+      const speakeasy = require('speakeasy');
+      const qrcode = require('qrcode');
+      
+      const secret = speakeasy.generateSecret({
+        name: `NaviMED (${user.username})`,
+        issuer: 'NaviMED Healthcare Platform',
+        length: 32
+      });
+
+      // Generate backup codes (8 codes, 8 characters each)
+      const backupCodes = [];
+      for (let i = 0; i < 8; i++) {
+        backupCodes.push(Math.random().toString(36).substring(2, 10).toUpperCase());
+      }
+
+      // Store the secret temporarily (not enabled yet)
+      await storage.updateUser(user.id, {
+        mfaSecret: secret.base32,
+        mfaBackupCodes: backupCodes
+      });
+
+      // Generate QR code
+      const qrCodeDataUrl = await qrcode.toDataURL(secret.otpauth_url);
+
+      res.json({
+        secret: secret.base32,
+        qrCode: qrCodeDataUrl,
+        backupCodes: backupCodes,
+        manualEntryKey: secret.base32
+      });
+    } catch (error) {
+      console.error("MFA setup error:", error);
+      res.status(500).json({ message: "Failed to setup MFA" });
+    }
+  });
+
+  // MFA Verify and Enable endpoint
+  app.post("/api/auth/mfa/verify-setup", authenticateToken, async (req, res) => {
+    try {
+      const { token } = req.body;
+      if (!token) {
+        return res.status(400).json({ message: "MFA token is required" });
+      }
+
+      const user = await storage.getUserById(req.user!.id);
+      if (!user || !user.mfaSecret) {
+        return res.status(404).json({ message: "MFA setup not found" });
+      }
+
+      // Verify the TOTP token
+      const speakeasy = require('speakeasy');
+      const verified = speakeasy.totp.verify({
+        secret: user.mfaSecret,
+        encoding: 'base32',
+        token: token,
+        window: 2 // Allow 2 time steps (1 minute) of drift
+      });
+
+      if (!verified) {
+        return res.status(400).json({ message: "Invalid MFA token" });
+      }
+
+      // Enable MFA
+      await storage.updateUser(user.id, {
+        mfaEnabled: true,
+        lastMfaSetupAt: new Date()
+      });
+
+      res.json({ message: "MFA enabled successfully" });
+    } catch (error) {
+      console.error("MFA verification error:", error);
+      res.status(500).json({ message: "Failed to verify MFA" });
+    }
+  });
+
+  // MFA Disable endpoint
+  app.post("/api/auth/mfa/disable", authenticateToken, async (req, res) => {
+    try {
+      const { currentPassword } = req.body;
+      if (!currentPassword) {
+        return res.status(400).json({ message: "Current password is required" });
+      }
+
+      const user = await storage.getUserById(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Verify current password
+      const bcrypt = require('bcrypt');
+      if (!await bcrypt.compare(currentPassword, user.password)) {
+        return res.status(400).json({ message: "Invalid password" });
+      }
+
+      // Disable MFA
+      await storage.updateUser(user.id, {
+        mfaEnabled: false,
+        mfaSecret: null,
+        mfaBackupCodes: null
+      });
+
+      res.json({ message: "MFA disabled successfully" });
+    } catch (error) {
+      console.error("MFA disable error:", error);
+      res.status(500).json({ message: "Failed to disable MFA" });
+    }
+  });
+
+  // MFA Status endpoint
+  app.get("/api/auth/mfa/status", authenticateToken, async (req, res) => {
+    try {
+      const user = await storage.getUserById(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({
+        mfaEnabled: user.mfaEnabled || false,
+        lastSetupAt: user.lastMfaSetupAt,
+        hasBackupCodes: !!(user.mfaBackupCodes && user.mfaBackupCodes.length > 0)
+      });
+    } catch (error) {
+      console.error("MFA status error:", error);
+      res.status(500).json({ message: "Failed to get MFA status" });
+    }
+  });
+
   // Logout endpoint
   app.post("/api/auth/logout", (req, res) => {
     res.json({ message: "Logged out successfully" });
@@ -762,6 +902,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Account is disabled" });
       }
 
+      // Check if MFA is enabled and token is provided
+      const { mfaToken } = req.body;
+      if (user.mfaEnabled) {
+        if (!mfaToken) {
+          // Return special response indicating MFA is required
+          return res.status(200).json({
+            requiresMfa: true,
+            userId: user.id,
+            message: "MFA token required"
+          });
+        }
+
+        // Verify MFA token
+        const speakeasy = require('speakeasy');
+        let mfaValid = false;
+        
+        // Check if it's a backup code first
+        if (user.mfaBackupCodes && user.mfaBackupCodes.includes(mfaToken.toUpperCase())) {
+          // Valid backup code - remove it from the list
+          const updatedBackupCodes = user.mfaBackupCodes.filter(code => code !== mfaToken.toUpperCase());
+          await storage.updateUser(user.id, { mfaBackupCodes: updatedBackupCodes });
+          mfaValid = true;
+          console.log(`[SECURITY AUDIT] MFA backup code used for user: ${username}`);
+        } else if (user.mfaSecret) {
+          // Check TOTP token
+          mfaValid = speakeasy.totp.verify({
+            secret: user.mfaSecret,
+            encoding: 'base32',
+            token: mfaToken,
+            window: 2 // Allow 2 time steps (1 minute) of drift
+          });
+        }
+
+        if (!mfaValid) {
+          console.log(`[SECURITY AUDIT] MFA verification failed for user: ${username}`);
+          return res.status(401).json({ message: "Invalid MFA token" });
+        }
+
+        console.log(`[SECURITY AUDIT] MFA verification successful for user: ${username}`);
+      }
+
       // Update last login
       await storage.updateUser(user.id, { lastLogin: new Date() });
 
@@ -798,7 +979,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
-          tenantId: user.tenantId
+          tenantId: user.tenantId,
+          mfaEnabled: user.mfaEnabled || false
         }
       });
     } catch (error) {

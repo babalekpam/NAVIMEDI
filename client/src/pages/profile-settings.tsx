@@ -40,6 +40,7 @@ import {
   Globe
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import MfaSettings from "@/components/mfa-settings";
 
 interface UserProfile {
   id: string;
@@ -805,112 +806,8 @@ export default function ProfileSettingsPage() {
                 </CardContent>
               </Card>
 
-              {/* Two-Factor Authentication */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Smartphone className="w-5 h-5" />
-                    Two-Factor Authentication
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-medium">Authenticator App</h4>
-                      <p className="text-sm text-gray-500">
-                        {twoFactorEnabled 
-                          ? "Two-factor authentication is enabled" 
-                          : "Add an extra layer of security to your account"
-                        }
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {twoFactorEnabled ? (
-                        <>
-                          <Badge className="bg-green-100 text-green-800">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Enabled
-                          </Badge>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => disable2FAMutation.mutate()}
-                            disabled={disable2FAMutation.isPending}
-                          >
-                            {disable2FAMutation.isPending ? 'Disabling...' : 'Disable'}
-                          </Button>
-                        </>
-                      ) : (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setup2FAMutation.mutate()}
-                          disabled={setup2FAMutation.isPending}
-                        >
-                          {setup2FAMutation.isPending ? 'Setting up...' : 'Enable 2FA'}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 2FA Setup Dialog */}
-                  {show2FASetup && (
-                    <div className="p-4 border rounded-lg bg-blue-50">
-                      <h4 className="font-medium mb-2">Setup Two-Factor Authentication</h4>
-                      <div className="space-y-4">
-                        <div>
-                          <p className="text-sm text-gray-600 mb-2">
-                            1. Scan this QR code with your authenticator app:
-                          </p>
-                          <div className="flex justify-center p-4 bg-white border rounded">
-                            {qrCode ? (
-                              <img src={qrCode} alt="2FA QR Code" className="w-32 h-32" />
-                            ) : (
-                              <div className="w-32 h-32 bg-gray-200 flex items-center justify-center">
-                                QR Code
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <p className="text-sm text-gray-600 mb-2">
-                            2. Enter the verification code from your app:
-                          </p>
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="000000"
-                              value={verificationCode}
-                              onChange={(e) => setVerificationCode(e.target.value)}
-                              maxLength={6}
-                              className="font-mono text-center"
-                            />
-                            <Button 
-                              onClick={() => verify2FAMutation.mutate(verificationCode)}
-                              disabled={verify2FAMutation.isPending || verificationCode.length !== 6}
-                            >
-                              {verify2FAMutation.isPending ? 'Verifying...' : 'Verify'}
-                            </Button>
-                          </div>
-                        </div>
-
-                        {backupCodes.length > 0 && (
-                          <div>
-                            <p className="text-sm text-gray-600 mb-2">
-                              3. Save these backup codes in a safe place:
-                            </p>
-                            <div className="p-3 bg-gray-100 rounded font-mono text-sm">
-                              {backupCodes.map((code, index) => (
-                                <div key={index}>{code}</div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              {/* Multi-Factor Authentication */}
+              <MfaSettings />
 
               {/* Login Sessions */}
               <Card>

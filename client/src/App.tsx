@@ -15,6 +15,7 @@ import LandingPage from "@/pages/landing-fixed";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import RegisterOrganization from "@/pages/register-organization";
+import MfaSetup from "@/pages/mfa-setup";
 import Dashboard from "@/pages/dashboard";
 import Patients from "@/pages/patients";
 import PatientMedicalRecords from "@/pages/patient-medical-records";
@@ -122,6 +123,11 @@ function AppContent() {
         <Route path="/login" component={Login} />
         <Route path="/register" component={RegisterOrganization} />
         <Route path="/change-password" component={ChangePasswordPage} />
+        <Route path="/mfa-setup">
+          <ProtectedRoute>
+            <MfaSetup />
+          </ProtectedRoute>
+        </Route>
         <Route path="/dashboard">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
