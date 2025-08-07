@@ -60,8 +60,11 @@ export default function SupplierPortal() {
         description: "Welcome back! Redirecting to your dashboard...",
       });
       
-      // Store token and redirect
+      // Store token for supplier authentication
       localStorage.setItem('supplierToken', data.token);
+      localStorage.setItem('supplierData', JSON.stringify(data.supplier));
+      
+      // Redirect to supplier dashboard
       window.location.href = '/supplier-dashboard-direct';
     },
     onError: (error: Error) => {
