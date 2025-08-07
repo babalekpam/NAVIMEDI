@@ -187,26 +187,22 @@ async function initializePlatform() {
     }
   });
 
-  // Handle client-side routing - serve index.html for non-API routes
+  // Client-side routing fallback for production
   app.get('*', (req, res, next) => {
-    // Skip API routes, static assets, and webhooks
+    // Skip API routes, public routes, and static assets
     if (req.path.startsWith('/api/') || 
         req.path.startsWith('/public/') || 
-        req.path.startsWith('/webhook/') ||
-        req.path.includes('.') || // Skip requests for files with extensions
-        req.path.startsWith('/_')) {
+        req.path.includes('.')) {
       return next();
     }
     
-    // For client-side routes, we need to serve index.html
-    if (app.get("env") === "development") {
-      // In development, let Vite handle it
-      return next();
-    } else {
-      // In production, serve the built index.html
-      const indexPath = path.resolve(import.meta.dirname, "dist/public/index.html");
-      res.sendFile(indexPath);
+    // For client-side routes in production, serve index.html from dist
+    if (app.get("env") !== "development") {
+      const indexPath = path.resolve(process.cwd(), "dist/public/index.html");
+      return res.sendFile(indexPath);
     }
+    
+    next();
   });
 
   // importantly only setup vite in development and after
