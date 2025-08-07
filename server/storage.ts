@@ -57,6 +57,12 @@ import {
   marketplaceOrderItems,
   productReviews,
   quoteRequests,
+  approvalWorkflowTemplates,
+  patientAccessApprovalHistory,
+  type ApprovalWorkflowTemplate,
+  type InsertApprovalWorkflowTemplate,
+  type PatientAccessApprovalHistory,
+  type InsertPatientAccessApprovalHistory,
   type Advertisement,
   type InsertAdvertisement,
   type AdView,
@@ -4474,7 +4480,31 @@ export class DatabaseStorage implements IStorage {
 
   // Patient Access Request Management for Multi-Doctor Separation
   async createPatientAccessRequest(request: InsertPatientAccessRequest): Promise<PatientAccessRequest> {
-    const [newRequest] = await db.insert(patientAccessRequests).values(request).returning();
+    // Determine approval workflow based on context
+    const workflow = await this.determineApprovalWorkflow(
+      request.accessContext || 'routine',
+      request.patientSensitivityLevel || 'standard',
+      request.urgency || 'normal',
+      request.dataCategories || [],
+      request.tenantId
+    );
+    
+    // Prepare request with workflow
+    const requestWithWorkflow = {
+      ...request,
+      approvalWorkflow: workflow,
+      requiredApprovalLevels: workflow.levels.length,
+      riskLevel: this.calculateRiskLevel(request),
+      autoApprovalEligible: this.checkAutoApprovalEligibility(request, workflow)
+    };
+
+    const [newRequest] = await db.insert(patientAccessRequests).values(requestWithWorkflow).returning();
+    
+    // Auto-approve if eligible
+    if (requestWithWorkflow.autoApprovalEligible) {
+      await this.processAutoApproval(newRequest.id, request.tenantId);
+    }
+    
     return newRequest;
   }
 
@@ -4549,6 +4579,221 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
 
     return activeRequest.length > 0;
+  }
+
+  // Multi-level Approval Workflow Methods
+  async determineApprovalWorkflow(context: string, sensitivity: string, urgency: string, dataCategories: string[], tenantId: string) {
+    // Find matching workflow template
+    const templates = await db.select().from(approvalWorkflowTemplates)
+      .where(and(
+        eq(approvalWorkflowTemplates.tenantId, tenantId),
+        eq(approvalWorkflowTemplates.isActive, true)
+      ));
+    
+    // Find the most specific matching template
+    const matchingTemplate = templates.find(t => 
+      (t.triggerConditions.patientSensitivity?.includes(sensitivity) || !t.triggerConditions.patientSensitivity?.length) &&
+      (t.triggerConditions.accessContext?.includes(context) || !t.triggerConditions.accessContext?.length) &&
+      (t.triggerConditions.urgency?.includes(urgency) || !t.triggerConditions.urgency?.length) &&
+      (dataCategories.some(cat => t.triggerConditions.dataCategories?.includes(cat)) || !t.triggerConditions.dataCategories?.length)
+    ) || templates.find(t => t.isDefault);
+
+    if (matchingTemplate) {
+      return matchingTemplate.workflow;
+    }
+
+    // Default workflow for standard cases
+    return {
+      levels: [
+        {
+          level: 1,
+          approverRole: sensitivity === 'restricted' ? 'director' : 'physician',
+          required: true,
+          completed: false,
+          timeoutHours: urgency === 'emergency' ? 1 : 24
+        }
+      ]
+    };
+  }
+
+  calculateRiskLevel(request: any): string {
+    let riskScore = 0;
+    
+    // Sensitivity scoring
+    if (request.patientSensitivityLevel === 'restricted') riskScore += 3;
+    else if (request.patientSensitivityLevel === 'sensitive') riskScore += 2;
+    else riskScore += 1;
+    
+    // Context scoring
+    if (request.accessContext === 'research') riskScore += 2;
+    else if (request.accessContext === 'legal') riskScore += 3;
+    else if (request.accessContext === 'consultation') riskScore += 1;
+    
+    // Data categories scoring
+    const sensitiveCategories = ['mental_health', 'sensitive_notes', 'genetic_data'];
+    if (request.dataCategories?.some((cat: string) => sensitiveCategories.includes(cat))) {
+      riskScore += 2;
+    }
+    
+    if (riskScore >= 6) return 'high';
+    if (riskScore >= 4) return 'medium';
+    return 'low';
+  }
+
+  checkAutoApprovalEligibility(request: any, workflow: any): boolean {
+    // Emergency cases with low sensitivity can be auto-approved
+    if (request.urgency === 'emergency' && request.patientSensitivityLevel === 'standard') {
+      return true;
+    }
+    
+    // Routine access to standard patients by same department
+    if (request.accessContext === 'routine' && 
+        request.patientSensitivityLevel === 'standard' &&
+        request.requestType === 'access' &&
+        request.accessType === 'read') {
+      return true;
+    }
+    
+    return false;
+  }
+
+  async processAutoApproval(requestId: string, tenantId: string): Promise<void> {
+    await db.update(patientAccessRequests)
+      .set({
+        status: 'approved',
+        autoApprovedAt: new Date(),
+        autoApprovalReason: 'Met auto-approval criteria for routine access',
+        reviewedDate: new Date()
+      })
+      .where(and(eq(patientAccessRequests.id, requestId), eq(patientAccessRequests.tenantId, tenantId)));
+  }
+
+  async processApprovalStep(requestId: string, approverId: string, decision: string, notes?: string, conditions?: string): Promise<boolean> {
+    const request = await db.select().from(patientAccessRequests)
+      .where(eq(patientAccessRequests.id, requestId))
+      .limit(1);
+      
+    if (!request[0]) return false;
+
+    const currentRequest = request[0];
+    const workflow = currentRequest.approvalWorkflow as any;
+    
+    if (!workflow || !workflow.levels) return false;
+
+    const currentLevel = workflow.levels.find((l: any) => l.level === currentRequest.currentApprovalLevel);
+    
+    if (!currentLevel) return false;
+
+    // Record the approval step
+    await db.insert(patientAccessApprovalHistory).values({
+      accessRequestId: requestId,
+      tenantId: currentRequest.tenantId,
+      approvalLevel: currentRequest.currentApprovalLevel,
+      approverRole: currentLevel.approverRole,
+      approverId,
+      action: decision === 'approve' ? 'approved' : 'denied',
+      decision,
+      notes,
+      conditions
+    });
+
+    // Update workflow
+    currentLevel.completed = true;
+    currentLevel.approvedBy = approverId;
+    currentLevel.approvedAt = new Date().toISOString();
+    currentLevel.notes = notes;
+
+    if (decision === 'deny') {
+      // Request denied
+      await db.update(patientAccessRequests)
+        .set({
+          status: 'denied',
+          approvalWorkflow: workflow,
+          reviewedBy: approverId,
+          reviewedDate: new Date(),
+          reviewNotes: notes
+        })
+        .where(eq(patientAccessRequests.id, requestId));
+      return true;
+    }
+
+    // Check if all required levels are completed
+    const requiredLevels = workflow.levels.filter((l: any) => l.required);
+    const completedRequired = requiredLevels.filter((l: any) => l.completed);
+    
+    if (completedRequired.length >= requiredLevels.length) {
+      // All approvals complete
+      await db.update(patientAccessRequests)
+        .set({
+          status: 'approved',
+          approvalWorkflow: workflow,
+          reviewedBy: approverId,
+          reviewedDate: new Date(),
+          reviewNotes: notes
+        })
+        .where(eq(patientAccessRequests.id, requestId));
+    } else {
+      // Move to next level
+      await db.update(patientAccessRequests)
+        .set({
+          currentApprovalLevel: currentRequest.currentApprovalLevel + 1,
+          approvalWorkflow: workflow
+        })
+        .where(eq(patientAccessRequests.id, requestId));
+    }
+
+    return true;
+  }
+
+  async getApprovalHistory(requestId: string): Promise<PatientAccessApprovalHistory[]> {
+    return await db.select().from(patientAccessApprovalHistory)
+      .where(eq(patientAccessApprovalHistory.accessRequestId, requestId))
+      .orderBy(patientAccessApprovalHistory.approvalLevel);
+  }
+
+  async getPendingApprovalsForUser(userId: string, userRole: string, tenantId: string): Promise<any[]> {
+    return await db.select({
+      id: patientAccessRequests.id,
+      patientId: patientAccessRequests.patientId,
+      requestType: patientAccessRequests.requestType,
+      reason: patientAccessRequests.reason,
+      urgency: patientAccessRequests.urgency,
+      accessContext: patientAccessRequests.accessContext,
+      patientSensitivityLevel: patientAccessRequests.patientSensitivityLevel,
+      currentApprovalLevel: patientAccessRequests.currentApprovalLevel,
+      approvalWorkflow: patientAccessRequests.approvalWorkflow,
+      requestedDate: patientAccessRequests.requestedDate,
+      // Patient info
+      patientFirstName: patients.firstName,
+      patientLastName: patients.lastName,
+      patientMrn: patients.mrn,
+      // Requesting physician info
+      requestingPhysicianFirstName: users.firstName,
+      requestingPhysicianLastName: users.lastName
+    })
+    .from(patientAccessRequests)
+    .innerJoin(patients, eq(patientAccessRequests.patientId, patients.id))
+    .innerJoin(users, eq(patientAccessRequests.requestingPhysicianId, users.id))
+    .where(and(
+      eq(patientAccessRequests.tenantId, tenantId),
+      eq(patientAccessRequests.status, 'pending'),
+      sql`JSON_EXTRACT(${patientAccessRequests.approvalWorkflow}, CONCAT('$.levels[', ${patientAccessRequests.currentApprovalLevel} - 1, '].approverRole')) = ${userRole}`
+    ))
+    .orderBy(desc(patientAccessRequests.requestedDate));
+  }
+
+  async createApprovalWorkflowTemplate(template: InsertApprovalWorkflowTemplate): Promise<ApprovalWorkflowTemplate> {
+    const [newTemplate] = await db.insert(approvalWorkflowTemplates).values(template).returning();
+    return newTemplate;
+  }
+
+  async getApprovalWorkflowTemplates(tenantId: string): Promise<ApprovalWorkflowTemplate[]> {
+    return await db.select().from(approvalWorkflowTemplates)
+      .where(and(
+        eq(approvalWorkflowTemplates.tenantId, tenantId),
+        eq(approvalWorkflowTemplates.isActive, true)
+      ))
+      .orderBy(approvalWorkflowTemplates.name);
   }
 
   async getHospitalAnalyticsByProvider(providerId: string, tenantId: string): Promise<any> {

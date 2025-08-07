@@ -4313,6 +4313,98 @@ Report ID: ${report.id}
     }
   });
 
+  // Multi-level Approval Workflow Routes
+  app.post("/api/patient-access-requests/:id/approve", requireRole(["tenant_admin", "director", "physician", "compliance_officer"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { notes, conditions } = req.body;
+      const approverId = req.user?.id;
+
+      const success = await storage.processApprovalStep(id, approverId, 'approve', notes, conditions);
+      if (!success) {
+        return res.status(404).json({ message: "Access request not found or approval failed" });
+      }
+
+      // Get updated request
+      const updatedRequest = await storage.getPatientAccessRequest(id, req.tenant!.id);
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error approving access request:", error);
+      res.status(500).json({ message: "Failed to approve access request" });
+    }
+  });
+
+  app.post("/api/patient-access-requests/:id/deny", requireRole(["tenant_admin", "director", "physician", "compliance_officer"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { notes } = req.body;
+      const approverId = req.user?.id;
+
+      const success = await storage.processApprovalStep(id, approverId, 'deny', notes);
+      if (!success) {
+        return res.status(404).json({ message: "Access request not found or denial failed" });
+      }
+
+      // Get updated request
+      const updatedRequest = await storage.getPatientAccessRequest(id, req.tenant!.id);
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error denying access request:", error);
+      res.status(500).json({ message: "Failed to deny access request" });
+    }
+  });
+
+  app.get("/api/patient-access-requests/:id/history", requireRole(["tenant_admin", "director", "physician"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const history = await storage.getApprovalHistory(id);
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching approval history:", error);
+      res.status(500).json({ message: "Failed to fetch approval history" });
+    }
+  });
+
+  app.get("/api/my-pending-approvals", requireRole(["tenant_admin", "director", "physician", "compliance_officer"]), async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+      const tenantId = req.tenant!.id;
+
+      const pendingApprovals = await storage.getPendingApprovalsForUser(userId, userRole, tenantId);
+      res.json(pendingApprovals);
+    } catch (error) {
+      console.error("Error fetching pending approvals:", error);
+      res.status(500).json({ message: "Failed to fetch pending approvals" });
+    }
+  });
+
+  // Approval Workflow Template Management
+  app.get("/api/approval-workflow-templates", requireRole(["tenant_admin", "director"]), async (req, res) => {
+    try {
+      const tenantId = req.tenant!.id;
+      const templates = await storage.getApprovalWorkflowTemplates(tenantId);
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching workflow templates:", error);
+      res.status(500).json({ message: "Failed to fetch workflow templates" });
+    }
+  });
+
+  app.post("/api/approval-workflow-templates", requireRole(["tenant_admin", "director"]), async (req, res) => {
+    try {
+      const tenantId = req.tenant!.id;
+      const template = await storage.createApprovalWorkflowTemplate({
+        ...req.body,
+        tenantId
+      });
+      res.json(template);
+    } catch (error) {
+      console.error("Error creating workflow template:", error);
+      res.status(500).json({ message: "Failed to create workflow template" });
+    }
+  });
+
   app.get("/api/patient-access-audit", requireRole(["tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
       const tenantId = req.tenant!.id;
@@ -6373,6 +6465,11 @@ Report ID: ${report.id}
       });
     }
   });
+
+  // Mount multi-level approval routes
+  // Note: Using dynamic import to avoid circular dependencies
+  const { default: multiLevelApprovalRoutes } = await import('./multi-level-approval-routes-fixed.js');
+  app.use('/api', multiLevelApprovalRoutes);
 
   const httpServer = createServer(app);
   return httpServer;

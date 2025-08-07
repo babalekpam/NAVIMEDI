@@ -73,6 +73,7 @@ import { PatientManagement } from "@/pages/docs/patient-management";
 import { ApiDocs as ApiDocsPage } from "@/pages/docs/api-docs";
 import { AppointmentScheduling } from "@/pages/docs/appointment-scheduling";
 import { BillingInsurance } from "@/pages/docs/billing-insurance";
+import MultiLevelApprovalsPage from "@/pages/multi-level-approvals";
 import { SecurityCompliance } from "@/pages/docs/security-compliance";
 import { PlatformOverview } from "@/pages/docs/platform-overview";
 import { OrganizationSetup } from "@/pages/docs/organization-setup";
@@ -405,6 +406,19 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <Reports />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/multi-level-approvals">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <MultiLevelApprovalsPage />
                 </main>
               </div>
             </div>
