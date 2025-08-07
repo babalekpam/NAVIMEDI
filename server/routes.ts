@@ -1872,6 +1872,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (requestData.labOrders && Array.isArray(requestData.labOrders)) {
         const createdOrders = [];
         
+        // First, get the laboratory tenant_id from the laboratoryId
+        const laboratoryTenantId = requestData.laboratoryId ? 
+          await storage.getLaboratoryTenantId(requestData.laboratoryId) : null;
+        
+        console.log("[DEBUG] Laboratory ID:", requestData.laboratoryId, "-> Tenant ID:", laboratoryTenantId);
+        
         for (const orderData of requestData.labOrders) {
           // Convert string dates to Date objects and prepare data for each order
           const labOrderData = {
@@ -1880,7 +1886,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             providerId: req.user!.id,
             orderedDate: new Date(),
             appointmentId: orderData.appointmentId || null,
-            labTenantId: requestData.laboratoryId || null // Use laboratoryId from main request
+            labTenantId: laboratoryTenantId // Use the laboratory's tenant_id instead of laboratory id
           };
           
           console.log("[DEBUG] Processing lab order:", labOrderData);
