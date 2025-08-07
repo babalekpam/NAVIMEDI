@@ -11,10 +11,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InsuranceCoverageCalculator } from "@/components/forms/insurance-coverage-calculator";
+import { PrescriptionForm } from "@/components/forms/prescription-form";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useTranslation } from "@/contexts/translation-context";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Activity, Users, DollarSign, Package, Clock, AlertTriangle, CheckCircle, XCircle, Search, FileText, Download, Pill, Plus } from 'lucide-react';
 
 interface Prescription {
@@ -50,11 +52,44 @@ export default function PrescriptionsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
   const [isProcessingModalOpen, setIsProcessingModalOpen] = useState(false);
+  const [isNewPrescriptionModalOpen, setIsNewPrescriptionModalOpen] = useState(false);
 
   // Fetch prescriptions using same endpoint as pharmacy dashboard
   const { data: prescriptions = [], isLoading } = useQuery<Prescription[]>({
     queryKey: ['/api/pharmacy/prescriptions', tenant?.id],
     enabled: !!tenant?.id && tenant?.type === 'pharmacy',
+  });
+
+  // Fetch patients for prescription creation
+  const { data: patients = [] } = useQuery({
+    queryKey: ['/api/patients'],
+    enabled: !!tenant?.id,
+  });
+
+  // Create prescription mutation
+  const createPrescriptionMutation = useMutation({
+    mutationFn: async (prescriptionData: any) => {
+      return await apiRequest('/api/prescriptions', {
+        method: 'POST',
+        body: JSON.stringify(prescriptionData),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Prescription created successfully",
+      });
+      setIsNewPrescriptionModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/pharmacy/prescriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create prescription",
+        variant: "destructive",
+      });
+    },
   });
 
   // Status update mutation using pharmacy API
@@ -136,6 +171,10 @@ export default function PrescriptionsPage() {
     setIsProcessingModalOpen(true);
   };
 
+  const handleCreatePrescription = (prescriptionData: any) => {
+    createPrescriptionMutation.mutate(prescriptionData);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -157,10 +196,27 @@ export default function PrescriptionsPage() {
             Manage and track prescriptions across the healthcare network
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Prescription
-        </Button>
+        <Dialog open={isNewPrescriptionModalOpen} onOpenChange={setIsNewPrescriptionModalOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              New Prescription
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create New Prescription</DialogTitle>
+              <DialogDescription>
+                Fill out the prescription details and select a pharmacy to send it to.
+              </DialogDescription>
+            </DialogHeader>
+            <PrescriptionForm 
+              onSubmit={handleCreatePrescription}
+              isLoading={createPrescriptionMutation.isPending}
+              patients={patients}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Metrics Cards */}
