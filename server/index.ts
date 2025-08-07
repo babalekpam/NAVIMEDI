@@ -13,7 +13,16 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Health check endpoint for deployment
+// Health check endpoint - must be fast and not depend on initialization
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    service: 'NaviMED Healthcare Platform'
+  });
+});
+
+// Root endpoint health check for deployment
 app.get('/', (req, res) => {
   res.status(200).json({ 
     status: 'ok', 
