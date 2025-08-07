@@ -21,7 +21,8 @@ import {
   Clock,
   FileText,
   Download,
-  Eye
+  Eye,
+  Info as InfoIcon
 } from "lucide-react";
 import { useTenant } from "@/hooks/use-tenant";
 import { useAuth } from "@/hooks/use-auth";
@@ -166,7 +167,7 @@ export default function LabResults() {
     }
   };
 
-  // Mock data for testing while database is being fixed
+  // Mock data showing proper lab workflow: completed labs ready for physician review
   const mockLabResults: LabResult[] = [
     {
       id: "mock-1",
@@ -178,9 +179,9 @@ export default function LabResults() {
       result: "7.4",
       normalRange: "7.35-7.45",
       unit: "pH",
-      status: "pending",
+      status: "completed",
       abnormalFlag: "normal",
-      notes: "Complete blood panel shows normal values",
+      notes: "Complete blood panel shows normal values - ready for physician review",
       performedBy: "Dr. Lab Technician",
       completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
       reportedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
@@ -201,9 +202,9 @@ export default function LabResults() {
       result: "Clear",
       normalRange: "Normal lung fields",
       unit: "",
-      status: "pending",
+      status: "completed",
       abnormalFlag: "normal",
-      notes: "No abnormalities detected in chest X-ray",
+      notes: "No abnormalities detected in chest X-ray - awaiting physician review",
       performedBy: "Radiology Tech",
       completedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
       reportedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
@@ -224,9 +225,9 @@ export default function LabResults() {
       result: "Positive",
       normalRange: "Abnormal response",
       unit: "",
-      status: "pending",
+      status: "completed",
       abnormalFlag: "abnormal",
-      notes: "Stress test shows abnormal cardiac response - requires follow-up",
+      notes: "URGENT: Stress test shows abnormal cardiac response - requires immediate physician review",
       performedBy: "Cardiac Tech",
       completedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
       reportedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
@@ -247,9 +248,9 @@ export default function LabResults() {
       result: "Normal",
       normalRange: "Within normal limits",
       unit: "",
-      status: "pending",
+      status: "completed",
       abnormalFlag: "normal",
-      notes: "Routine urine analysis - all parameters normal",
+      notes: "Routine urine analysis - all parameters normal, ready for review",
       performedBy: "Lab Assistant",
       completedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
       reportedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
@@ -281,12 +282,26 @@ export default function LabResults() {
     return matchesSearch && matchesStatus && matchesAbnormal;
   });
 
+  // Sort prioritizing: 1) Completed labs awaiting review, 2) Abnormal results, 3) Most recent
+  const sortedResults = filteredResults.sort((a, b) => {
+    // Prioritize completed labs over reviewed ones (physicians need to review completed labs)
+    if (a.status === "completed" && b.status === "reviewed") return -1;
+    if (a.status === "reviewed" && b.status === "completed") return 1;
+    
+    // Within same status, prioritize abnormal results
+    if (a.abnormalFlag === "abnormal" && b.abnormalFlag !== "abnormal") return -1;
+    if (a.abnormalFlag !== "abnormal" && b.abnormalFlag === "abnormal") return 1;
+    
+    // Finally sort by completion date (newest first)
+    return new Date(b.completedAt || "").getTime() - new Date(a.completedAt || "").getTime();
+  });
+
   // Get status badge
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      completed: { color: "bg-green-100 text-green-800", icon: CheckCircle },
-      reviewed: { color: "bg-blue-100 text-blue-800", icon: FileText },
-      pending: { color: "bg-yellow-100 text-yellow-800", icon: Clock },
+      completed: { color: "bg-orange-100 text-orange-800", icon: Clock },
+      reviewed: { color: "bg-green-100 text-green-800", icon: CheckCircle },
+      pending: { color: "bg-yellow-100 text-yellow-800", icon: FileText },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.completed;
@@ -339,17 +354,30 @@ export default function LabResults() {
         <div className="flex items-center gap-3 mb-2">
           <TestTube className="h-8 w-8 text-purple-600" />
           <h1 className="text-3xl font-bold text-gray-900">Lab Results</h1>
-          <Badge className="bg-purple-100 text-purple-800 border-purple-200">
+          <Badge className="bg-orange-100 text-orange-800 border-orange-200">
             <Clock className="h-3 w-3 mr-1" />
-            Pending Priority
+            Completed - Awaiting Review
           </Badge>
         </div>
-        <p className="text-gray-600">
+        <p className="text-gray-600 mb-4">
           {tenant?.type === 'laboratory' 
-            ? "Manage and review lab results - pending results are prioritized for quick review"
-            : "View lab results for your patients - pending results are shown first for immediate attention"
+            ? "Review completed lab results and mark them as reviewed for physicians"
+            : "Review lab results that have been completed by lab technicians - only completed results can be reviewed"
           }
         </p>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex">
+            <InfoIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
+            <div>
+              <h4 className="text-sm font-medium text-blue-900 mb-1">Lab Workflow</h4>
+              <p className="text-sm text-blue-700">
+                <strong>Lab Technician:</strong> Completes tests and uploads results → 
+                <strong> Physician:</strong> Reviews completed results and marks as reviewed → 
+                <strong> Patient Care:</strong> Reviewed results are available for patient communication
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters and Search */}
@@ -398,7 +426,7 @@ export default function LabResults() {
             </div>
             <div className="flex items-center text-sm text-gray-600">
               <Activity className="h-4 w-4 mr-1" />
-              {filteredResults.length} results found
+              {sortedResults.length} results found
             </div>
           </div>
         </CardContent>
@@ -411,10 +439,10 @@ export default function LabResults() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 Lab Results
-                {statusFilter === "pending" && (
+                {statusFilter === "completed" && (
                   <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200">
                     <Clock className="h-3 w-3 mr-1" />
-                    {filteredResults.length} Pending
+                    {sortedResults.filter(r => r.status === "completed").length} Awaiting Review
                   </Badge>
                 )}
               </CardTitle>
@@ -427,13 +455,13 @@ export default function LabResults() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {filteredResults.length === 0 ? (
+                {sortedResults.length === 0 ? (
                   <div className="text-center py-8">
                     <TestTube className="h-12 w-12 mx-auto text-gray-300" />
                     <p className="mt-2 text-gray-500">No lab results found</p>
                   </div>
                 ) : (
-                  filteredResults.map((result) => (
+                  sortedResults.map((result) => (
                     <div
                       key={result.id}
                       className={`p-4 border rounded-lg cursor-pointer transition-colors ${
