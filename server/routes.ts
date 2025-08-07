@@ -77,7 +77,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'annualRevenue', 'username', 'passwordHash', 'termsAccepted'
       ];
       
-      const missingFields = requiredFields.filter(field => !supplierData[field]);
+      const missingFields = requiredFields.filter(field => !(supplierData as any)[field]);
       if (missingFields.length > 0) {
         return res.status(400).json({ 
           error: 'Missing required fields', 
@@ -325,7 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (!isBackupCode && user.mfaSecret) {
         // Check TOTP token
         mfaValid = speakeasy.totp.verify({
-          secret: user.mfaSecret,
+          secret: user.mfaSecret!,
           encoding: 'base32',
           token: mfaCode,
           window: 2 // Allow 2 time steps (1 minute) of drift
@@ -1016,9 +1016,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let mfaValid = false;
         
         // Check if it's a backup code first
-        if (user.mfaBackupCodes && user.mfaBackupCodes.includes(mfaToken.toUpperCase())) {
+        if (user.mfaBackupCodes && Array.isArray(user.mfaBackupCodes) && user.mfaBackupCodes.includes(mfaToken.toUpperCase())) {
           // Valid backup code - remove it from the list
-          const updatedBackupCodes = user.mfaBackupCodes.filter(code => code !== mfaToken.toUpperCase());
+          const updatedBackupCodes = (user.mfaBackupCodes as string[]).filter(code => code !== mfaToken.toUpperCase());
           await storage.updateUser(user.id, { mfaBackupCodes: updatedBackupCodes });
           mfaValid = true;
           console.log(`[SECURITY AUDIT] MFA backup code used for user: ${username}`);
