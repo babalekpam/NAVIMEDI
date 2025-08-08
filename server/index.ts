@@ -176,7 +176,8 @@ async function initializePlatform() {
   }
 }
 
-(async () => {
+// Initialize server and keep running
+async function startServer() {
   const server = await registerRoutes(app);
 
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
@@ -233,4 +234,10 @@ async function initializePlatform() {
     console.error('Uncaught Exception:', error);
     process.exit(1);
   });
-})();
+}
+
+// Start the server
+startServer().catch(error => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+});
