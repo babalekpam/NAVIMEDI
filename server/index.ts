@@ -12,61 +12,54 @@ import path from "path";
 
 const app = express();
 
-// CRITICAL: Fastest possible health check for deployment systems
-// Must be the very first route before any middleware
-app.get('/', (req, res) => {
-  // Always return 200 OK for deployment health checks
-  res.status(200).json({
-    status: 'ok',
-    service: 'carnet-healthcare',
-    health: 'healthy',
-    timestamp: new Date().toISOString()
-  });
+// CRITICAL: Primary health check endpoint for Replit deployment
+// This must be the FIRST route defined - before any middleware
+app.get('/', (req, res, next) => {
+  // Check if this is a health check request by examining request characteristics
+  const userAgent = req.get('User-Agent')?.toLowerCase() || '';
+  const accept = req.get('Accept')?.toLowerCase() || '';
+  
+  // Deployment systems and health check patterns
+  const isHealthCheck = 
+    userAgent.includes('health') ||
+    userAgent.includes('check') ||
+    userAgent.includes('monitor') ||
+    userAgent.includes('deployment') ||
+    userAgent.includes('probe') ||
+    userAgent.includes('curl') ||
+    userAgent.includes('wget') ||
+    userAgent.includes('replit') ||
+    (accept.includes('application/json') && !accept.includes('text/html')) ||
+    req.query.health !== undefined ||
+    req.query.check !== undefined ||
+    req.headers['x-health-check'] !== undefined ||
+    req.headers['x-replit-deployment'] !== undefined ||
+    !req.get('Accept') || // No accept header usually indicates automated tools
+    !userAgent || userAgent === '-'; // Empty or minimal user agents from deployment systems
+
+  if (isHealthCheck) {
+    // Immediate health check response - NO database operations or delays!
+    return res.status(200).json({
+      status: 'ok',
+      service: 'carnet-healthcare',
+      health: 'healthy',
+      message: 'NaviMED Healthcare Platform is running',
+      timestamp: new Date().toISOString(),
+      uptime: Math.floor(process.uptime()),
+      deployment: 'ready'
+    });
+  }
+  
+  // For regular browser requests, continue to Vite middleware for frontend serving
+  next();
 });
 
-// Additional explicit health check endpoints
-app.get('/_health', (req, res) => {
-  res.status(200).send('OK');
-});
-
+// Additional explicit health check endpoints for different deployment systems
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime())
-  });
-});
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-// DEPLOYMENT FIX: Simple, fast root endpoint for deployment health checks
-// Always returns 200 OK immediately to satisfy deployment system requirements
-app.get('/', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    service: 'carnet-healthcare',
-    health: 'healthy',
-    version: '1.0.0',
-    timestamp: new Date().toISOString(),
-    frontend: '/app'
-  });
-});
-
-// Frontend application access point - serves the React application
-app.get('/app*', (req, res, next) => {
-  // Continue to Vite middleware for frontend serving
-  next();
-});
-
-// Multiple health check endpoints for deployment monitoring
-// These must respond immediately without any heavy operations
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    service: 'carnet-healthcare',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
   });
 });
 
@@ -78,20 +71,6 @@ app.get('/healthz', (req, res) => {
   });
 });
 
-app.get('/status', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    service: 'carnet-healthcare',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Simple text responses for deployment systems that expect plain text
-app.get('/ping', (req, res) => {
-  res.status(200).send('pong');
-});
-
-// Additional health endpoints commonly used by deployment systems
 app.get('/ready', (req, res) => {
   res.status(200).send('OK');
 });
@@ -100,25 +79,13 @@ app.get('/alive', (req, res) => {
   res.status(200).send('OK');
 });
 
-app.get('/liveness', (req, res) => {
-  res.status(200).json({ status: 'ok', alive: true });
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
 });
 
-app.get('/readiness', (req, res) => {
-  res.status(200).json({ status: 'ok', ready: true });
-});
-
-// Explicit deployment health check endpoint
-app.get('/deployment-health', (req, res) => {
-  res.status(200).json({ 
-    status: 'healthy',
-    service: 'carnet-healthcare',
-    deployment: 'ready',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Duplicate root handler removed - using the existing comprehensive handler above
+// Express middleware setup
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -251,7 +218,7 @@ async function initializePlatform() {
   }, () => {
     log(`serving on port ${port}`);
     
-    // Initialize platform after server is running
+    // Initialize platform after server is running - non-blocking
     initializePlatform().catch(error => {
       console.error("Platform initialization error:", error);
     });
