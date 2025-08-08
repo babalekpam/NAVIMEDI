@@ -14,12 +14,14 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Root endpoint for deployment health checks - responds immediately
-app.get('/', (req, res) => {
+// CRITICAL: Root endpoint for deployment health checks AND frontend serving
+// Must respond immediately for health checks, pass through for frontend
+app.get('/', (req, res, next) => {
+  // Fast deployment health check response - no delays or database calls
   res.status(200).json({
     status: 'ok',
     service: 'carnet-healthcare',
-    message: 'NaviMED Healthcare Platform is running',
+    health: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime())
   });

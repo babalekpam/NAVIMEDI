@@ -93,3 +93,17 @@ The root endpoint (`/`) serves the frontend application and is not suitable for 
 - Includes complex JavaScript and CSS assets
 
 Always use the dedicated health check endpoints listed above for deployment monitoring.
+
+## Deployment Troubleshooting
+
+### "Health check failing because the application isn't responding to the / endpoint"
+This error occurs when the deployment system is configured to use the root endpoint (`/`) for health checks. 
+
+**Solution**: Configure your deployment to use a dedicated health check endpoint instead:
+- For fastest response: `/ready` or `/ping`
+- For detailed status: `/health` or `/deployment-health`
+
+**Example configurations:**
+- Replit: Change health check path from `/` to `/health`
+- Docker healthcheck: `curl -f http://localhost:5000/ready`
+- Load balancer: Point health checks to `/ping` instead of `/`
