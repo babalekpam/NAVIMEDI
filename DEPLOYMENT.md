@@ -42,8 +42,11 @@ The Carnet Healthcare application provides multiple health check endpoints for d
 
 ### Replit Deployments
 For Replit deployments, configure the health check endpoint to use:
-- **Primary**: `/health`
-- **Fallback**: `/ping`
+- **Primary**: `/health` (comprehensive JSON response)
+- **Fallback**: `/ping` (simple text response)
+- **Ultra-fast**: `/ready` (minimal OK response)
+
+**Important**: Do NOT use the root endpoint (`/`) for health checks in deployment configuration. Always specify one of the dedicated health check endpoints above.
 
 ### Docker/Container Deployments
 ```yaml

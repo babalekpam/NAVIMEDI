@@ -84,6 +84,34 @@ app.get('/deployment-health', (req, res) => {
   });
 });
 
+// Root endpoint handler for deployment health checks
+// Place before any other middleware that could interfere
+app.use('/', (req, res, next) => {
+  // Only handle GET requests to the root path
+  if (req.method === 'GET' && req.path === '/') {
+    // Check for deployment system indicators
+    const userAgent = req.get('User-Agent')?.toLowerCase() || '';
+    
+    // Common deployment system patterns
+    if (userAgent.includes('healthcheck') || 
+        userAgent.includes('deployment') ||
+        userAgent.includes('probe') ||
+        req.query.healthcheck !== undefined ||
+        req.query.health !== undefined) {
+      
+      return res.status(200).json({
+        status: 'ok',
+        service: 'carnet-healthcare',
+        timestamp: new Date().toISOString(),
+        uptime: Math.floor(process.uptime())
+      });
+    }
+  }
+  
+  // Continue to next middleware for all other requests
+  next();
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
