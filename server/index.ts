@@ -11,20 +11,52 @@ import { createTestHospital } from "./create-test-hospital";
 import path from "path";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
-// CRITICAL: Root endpoint for deployment health checks AND frontend serving
-// Must respond immediately for health checks, pass through for frontend
-app.get('/', (req, res, next) => {
-  // Fast deployment health check response - no delays or database calls
+// CRITICAL: Fastest possible health check for deployment systems
+// Must be the very first route before any middleware
+app.get('/', (req, res) => {
+  // Always return 200 OK for deployment health checks
   res.status(200).json({
     status: 'ok',
     service: 'carnet-healthcare',
     health: 'healthy',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Additional explicit health check endpoints
+app.get('/_health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime())
   });
+});
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// DEPLOYMENT FIX: Simple, fast root endpoint for deployment health checks
+// Always returns 200 OK immediately to satisfy deployment system requirements
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'carnet-healthcare',
+    health: 'healthy',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    frontend: '/app'
+  });
+});
+
+// Frontend application access point - serves the React application
+app.get('/app*', (req, res, next) => {
+  // Continue to Vite middleware for frontend serving
+  next();
 });
 
 // Multiple health check endpoints for deployment monitoring
@@ -86,33 +118,7 @@ app.get('/deployment-health', (req, res) => {
   });
 });
 
-// Root endpoint handler for deployment health checks
-// Place before any other middleware that could interfere
-app.use('/', (req, res, next) => {
-  // Only handle GET requests to the root path
-  if (req.method === 'GET' && req.path === '/') {
-    // Check for deployment system indicators
-    const userAgent = req.get('User-Agent')?.toLowerCase() || '';
-    
-    // Common deployment system patterns
-    if (userAgent.includes('healthcheck') || 
-        userAgent.includes('deployment') ||
-        userAgent.includes('probe') ||
-        req.query.healthcheck !== undefined ||
-        req.query.health !== undefined) {
-      
-      return res.status(200).json({
-        status: 'ok',
-        service: 'carnet-healthcare',
-        timestamp: new Date().toISOString(),
-        uptime: Math.floor(process.uptime())
-      });
-    }
-  }
-  
-  // Continue to next middleware for all other requests
-  next();
-});
+// Duplicate root handler removed - using the existing comprehensive handler above
 
 app.use((req, res, next) => {
   const start = Date.now();
