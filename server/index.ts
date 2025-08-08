@@ -187,24 +187,6 @@ async function initializePlatform() {
     }
   });
 
-  // Client-side routing fallback for production
-  app.get('*', (req, res, next) => {
-    // Skip API routes, public routes, and static assets
-    if (req.path.startsWith('/api/') || 
-        req.path.startsWith('/public/') || 
-        req.path.includes('.')) {
-      return next();
-    }
-    
-    // For client-side routes in production, serve index.html from dist
-    if (app.get("env") !== "development") {
-      const indexPath = path.resolve(process.cwd(), "dist/public/index.html");
-      return res.sendFile(indexPath);
-    }
-    
-    next();
-  });
-
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
