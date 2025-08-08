@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [requiresMfa, setRequiresMfa] = useState(false);
   const [, setLocation] = useLocation();
+  const { login, setAuthData } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,10 +32,7 @@ export default function Login() {
     setError("");
 
     try {
-      // Clear any existing tokens first
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("auth_user");
-      
+      // First check if MFA is required with a direct API call
       const response = await apiRequest("/api/auth/login", {
         method: "POST",
         body: {
@@ -50,31 +49,9 @@ export default function Login() {
         return;
       }
 
-      // Store auth token and user data
-      localStorage.setItem("auth_token", response.token);
-      localStorage.setItem("auth_user", JSON.stringify(response.user));
+      // Use the auth context login function for proper state management
+      await login(username, password, tenantId, setLocation);
       
-      console.log('Login page - user role:', response.user.role);
-      
-      // Role-based redirection matching auth context logic
-      if (response.user.mustChangePassword || response.user.isTemporaryPassword) {
-        window.location.href = '/change-password';
-      } else if (response.user.role === 'patient') {
-        window.location.href = '/patient-portal';
-      } else if (response.user.role === 'super_admin') {
-        console.log('Redirecting super admin to super-admin-dashboard');
-        window.location.href = '/super-admin-dashboard';
-      } else if (response.user.role === 'tenant_admin' || response.user.role === 'director') {
-        window.location.href = '/admin-dashboard';
-      } else if (response.user.role === 'lab_technician') {
-        window.location.href = '/laboratory-dashboard';
-      } else if (response.user.role === 'pharmacist') {
-        window.location.href = '/pharmacy-dashboard';
-      } else if (response.user.role === 'receptionist') {
-        window.location.href = '/receptionist-dashboard';
-      } else {
-        window.location.href = '/dashboard';
-      }
     } catch (err: any) {
       setError(err.message || "Login failed");
     } finally {
@@ -83,31 +60,35 @@ export default function Login() {
   };
 
   const handleMfaSuccess = (token: string, user: any) => {
-    // Store auth token and user data
+    // Store auth token and user data in localStorage
     localStorage.setItem("auth_token", token);
     localStorage.setItem("auth_user", JSON.stringify(user));
     
+    // Update auth context state
+    setAuthData(token, user);
+    
     console.log('MFA Login success - user role:', user.role);
     
-    // Role-based redirection matching auth context logic
+    // Determine redirect path based on user role
+    let redirectPath = '/dashboard';
     if (user.mustChangePassword || user.isTemporaryPassword) {
-      window.location.href = '/change-password';
+      redirectPath = '/change-password';
     } else if (user.role === 'patient') {
-      window.location.href = '/patient-portal';
+      redirectPath = '/patient-portal';
     } else if (user.role === 'super_admin') {
-      console.log('Redirecting super admin to super-admin-dashboard');
-      window.location.href = '/super-admin-dashboard';
+      redirectPath = '/super-admin-dashboard';
     } else if (user.role === 'tenant_admin' || user.role === 'director') {
-      window.location.href = '/admin-dashboard';
+      redirectPath = '/admin-dashboard';
     } else if (user.role === 'lab_technician') {
-      window.location.href = '/laboratory-dashboard';
+      redirectPath = '/laboratory-dashboard';
     } else if (user.role === 'pharmacist') {
-      window.location.href = '/pharmacy-dashboard';
+      redirectPath = '/pharmacy-dashboard';
     } else if (user.role === 'receptionist') {
-      window.location.href = '/receptionist-dashboard';
-    } else {
-      window.location.href = '/dashboard';
+      redirectPath = '/receptionist-dashboard';
     }
+    
+    // Use React routing for navigation
+    setLocation(redirectPath);
   };
 
   const handleMfaBack = () => {
