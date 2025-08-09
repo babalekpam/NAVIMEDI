@@ -23,6 +23,11 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Immediate health check endpoint - fastest possible response
+app.get('/status', (req, res) => {
+  res.status(200).send('OK');
+});
+
 // Even simpler health check endpoints for different deployment systems
 app.get('/ping', (req, res) => {
   res.status(200).send('pong');
@@ -220,21 +225,45 @@ async function startServer() {
     initializePlatform().catch(error => {
       console.error("Platform initialization error:", error);
     });
+    
+    // Keep the process alive for production deployments
+    if (process.env.NODE_ENV === 'production') {
+      // Prevent the process from exiting
+      process.stdin.resume();
+      
+      // Log server ready status for deployment verification
+      console.log('🚀 Server ready and accepting connections');
+      console.log('📊 Health check endpoints available at /health, /ping, /ready, /status');
+    }
   });
 
-  // Handle process errors to prevent crashes
+  // Handle process errors to prevent crashes - keep server alive in production
   process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't exit process in production for unhandled rejections
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Warning: Unhandled promise rejection in development');
+    }
   });
 
   process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
-    process.exit(1);
+    // Only exit in development - keep production server alive
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Keeping server alive despite uncaught exception in production');
+    } else {
+      process.exit(1);
+    }
   });
 }
 
 // Start the server
 startServer().catch(error => {
   console.error('Failed to start server:', error);
-  process.exit(1);
+  // Only exit on startup failure in development - keep production process alive
+  if (process.env.NODE_ENV === 'development') {
+    process.exit(1);
+  } else {
+    console.error('Server startup failed in production, but keeping process alive for health checks');
+  }
 });

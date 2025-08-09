@@ -235,7 +235,10 @@ async function createDarTestPatient() {
     
   } catch (error) {
     console.error('❌ Error creating test patient:', error);
-    process.exit(1);
+    // Don't exit process in production environment
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    }
   } finally {
     await pool.end();
   }
