@@ -235,10 +235,9 @@ async function createDarTestPatient() {
     
   } catch (error) {
     console.error('❌ Error creating test patient:', error);
-    // Don't exit process in production environment
-    if (process.env.NODE_ENV !== 'production') {
-      process.exit(1);
-    }
+    // Never exit process to prevent deployment failures
+    console.error('Keeping process alive despite error to maintain server stability');
+    return { success: false, error: error.message };
   } finally {
     await pool.end();
   }

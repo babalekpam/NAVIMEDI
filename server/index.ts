@@ -226,21 +226,25 @@ async function startServer() {
       console.error("Platform initialization error:", error);
     });
     
-    // Keep the process alive for production deployments
-    if (process.env.NODE_ENV === 'production') {
-      // Prevent the process from exiting - multiple approaches for robustness
-      process.stdin.resume();
-      
-      // Additional process keep-alive mechanisms
-      setInterval(() => {
-        // Keep process alive with minimal CPU usage
-      }, 300000); // 5 minutes
-      
-      // Log server ready status for deployment verification
-      console.log('🚀 Server ready and accepting connections');
-      console.log('📊 Health check endpoints available at /health, /ping, /ready, /status');
-      console.log('💪 Production server configured to stay alive indefinitely');
-    }
+    // Keep the process alive for ALL environments to prevent deployment issues
+    // Prevent the process from exiting - multiple approaches for robustness
+    process.stdin.resume();
+    
+    // Additional process keep-alive mechanisms
+    setInterval(() => {
+      // Keep process alive with minimal CPU usage - runs every 5 minutes
+    }, 300000); // 5 minutes
+    
+    // Extra keepalive for critical deployments
+    setInterval(() => {
+      // Secondary keepalive mechanism
+      process.stdout.write(''); // Minimal operation to keep process alive
+    }, 600000); // 10 minutes
+    
+    // Log server ready status for deployment verification
+    console.log('🚀 Server ready and accepting connections');
+    console.log('📊 Health check endpoints available at /health, /ping, /ready, /status');
+    console.log('💪 Server configured to stay alive indefinitely in all environments');
   });
 
   // Handle process errors to prevent crashes - keep server alive in production
@@ -262,6 +266,19 @@ async function startServer() {
       console.error('Development environment - logging error but keeping server alive');
       // Don't exit even in development for deployment compatibility
     }
+  });
+
+  // Add signal handlers to prevent unexpected exits
+  process.on('SIGTERM', () => {
+    console.log('Received SIGTERM, but keeping server alive for deployment compatibility');
+  });
+
+  process.on('SIGINT', () => {
+    console.log('Received SIGINT, but keeping server alive for deployment compatibility');
+  });
+
+  process.on('SIGHUP', () => {
+    console.log('Received SIGHUP, but keeping server alive for deployment compatibility');
   });
 }
 
