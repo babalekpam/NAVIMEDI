@@ -19,23 +19,21 @@ app.get('/', (req, res, next) => {
   const userAgent = req.get('User-Agent')?.toLowerCase() || '';
   const accept = req.get('Accept')?.toLowerCase() || '';
   
-  // Deployment systems and health check patterns
+  // Very specific deployment systems and health check patterns
+  // Only respond with JSON for clearly automated tools, not browsers
   const isHealthCheck = 
-    userAgent.includes('health') ||
-    userAgent.includes('check') ||
-    userAgent.includes('monitor') ||
-    userAgent.includes('deployment') ||
-    userAgent.includes('probe') ||
     userAgent.includes('curl') ||
     userAgent.includes('wget') ||
-    userAgent.includes('replit') ||
-    (accept.includes('application/json') && !accept.includes('text/html')) ||
+    userAgent.includes('health-check') ||
+    userAgent.includes('deployment-tool') ||
+    userAgent.includes('monitor') && !userAgent.includes('mozilla') ||
     req.query.health !== undefined ||
     req.query.check !== undefined ||
     req.headers['x-health-check'] !== undefined ||
     req.headers['x-replit-deployment'] !== undefined ||
-    !req.get('Accept') || // No accept header usually indicates automated tools
-    !userAgent || userAgent === '-'; // Empty or minimal user agents from deployment systems
+    (accept.includes('application/json') && !accept.includes('text/html') && !accept.includes('*/*')) ||
+    (!req.get('Accept') && !userAgent) || // Truly empty headers from automated tools
+    (userAgent === '-' || userAgent === ''); // Minimal user agents from deployment systems
 
   if (isHealthCheck) {
     // Immediate health check response - NO database operations or delays!
