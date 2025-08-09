@@ -244,4 +244,9 @@ async function createDarTestPatient() {
   }
 }
 
-createDarTestPatient();
+// Commenting out automatic execution to prevent deployment exit issues
+// This should be run manually when needed, not during deployment
+// createDarTestPatient();
+
+// Export the function for manual execution when needed
+export { createDarTestPatient };

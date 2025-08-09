@@ -113,4 +113,6 @@ async function resetCounters() {
   }
 }
 
-resetCounters();
+// Commenting out automatic counter reset to prevent deployment exit issues
+// This should be run manually when needed, not during deployment
+// resetCounters();
