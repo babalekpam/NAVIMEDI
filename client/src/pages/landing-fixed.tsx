@@ -240,7 +240,7 @@ export default function LandingPage() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row justify-center gap-4 mt-12">
-            <Link href="/organizations/register">
+            <Link href="/register">
               <Button size="lg" className="px-8 py-4 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
                 <Building2 className="w-5 h-5 mr-2" />
                 Register Organization
@@ -416,7 +416,7 @@ export default function LandingPage() {
             Join thousands of healthcare organizations already using NaviMED for better patient outcomes.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link href="/organizations/register">
+            <Link href="/register">
               <Button size="lg" variant="secondary" className="px-8 py-4 text-lg">
                 <Rocket className="w-5 h-5 mr-2" />
                 Get Started Today
