@@ -101,10 +101,15 @@ async function initializeCurrencies() {
   }
 }
 
-initializeCurrencies().then(() => {
-  console.log("Currency initialization process finished");
-  process.exit(0);
-}).catch(error => {
-  console.error("Failed to initialize currencies:", error);
-  process.exit(1);
-});
+// Commenting out automatic execution to prevent deployment exit issues
+// This should be run manually when needed, not during deployment
+// initializeCurrencies().then(() => {
+//   console.log("Currency initialization process finished");
+//   process.exit(0);
+// }).catch(error => {
+//   console.error("Failed to initialize currencies:", error);
+//   process.exit(1);
+// });
+
+// Export the function for manual execution when needed
+export { initializeCurrencies };

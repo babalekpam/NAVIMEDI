@@ -107,7 +107,11 @@ async function resetCounters() {
     
   } catch (error) {
     console.error('❌ Error resetting counters:', error);
-    process.exit(1);
+    // Don't exit process in production to prevent deployment issues
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    }
+    throw error; // Let calling code handle the error
   } finally {
     await pool.end();
   }

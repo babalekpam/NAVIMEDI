@@ -66,10 +66,15 @@ async function createTestBill() {
   }
 }
 
-createTestBill().then(() => {
-  console.log("Test bill creation complete");
-  process.exit(0);
-}).catch(error => {
-  console.error("Failed to create test bill:", error);
-  process.exit(1);
-});
+// Commenting out automatic execution to prevent deployment exit issues
+// This should be run manually when needed, not during deployment
+// createTestBill().then(() => {
+//   console.log("Test bill creation complete");
+//   process.exit(0);
+// }).catch(error => {
+//   console.error("Failed to create test bill:", error);
+//   process.exit(1);
+// });
+
+// Export the function for manual execution when needed
+export { createTestBill };
