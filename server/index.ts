@@ -12,73 +12,62 @@ import path from "path";
 
 const app = express();
 
-// CRITICAL: Primary health check endpoint for Replit deployment
-// This must be the FIRST route defined - before any middleware
-app.get('/', (req, res, next) => {
-  // Check if this is a health check request by examining request characteristics
-  const userAgent = req.get('User-Agent')?.toLowerCase() || '';
-  const accept = req.get('Accept')?.toLowerCase() || '';
-  
-  // Very specific deployment systems and health check patterns
-  // Only respond with JSON for clearly automated tools, not browsers
-  const isHealthCheck = 
-    userAgent.includes('curl') ||
-    userAgent.includes('wget') ||
-    userAgent.includes('health-check') ||
-    userAgent.includes('deployment-tool') ||
-    userAgent.includes('monitor') && !userAgent.includes('mozilla') ||
-    req.query.health !== undefined ||
-    req.query.check !== undefined ||
-    req.headers['x-health-check'] !== undefined ||
-    req.headers['x-replit-deployment'] !== undefined ||
-    (accept.includes('application/json') && !accept.includes('text/html') && !accept.includes('*/*')) ||
-    (!req.get('Accept') && !userAgent) || // Truly empty headers from automated tools
-    (userAgent === '-' || userAgent === ''); // Minimal user agents from deployment systems
-
-  if (isHealthCheck) {
-    // Immediate health check response - NO database operations or delays!
-    return res.status(200).json({
-      status: 'ok',
-      service: 'carnet-healthcare',
-      health: 'healthy',
-      message: 'NaviMED Healthcare Platform is running',
-      timestamp: new Date().toISOString(),
-      uptime: Math.floor(process.uptime()),
-      deployment: 'ready'
-    });
-  }
-  
-  // For regular browser requests, continue to Vite middleware for frontend serving
-  next();
-});
-
-// Additional explicit health check endpoints for different deployment systems
+// ULTRA-FAST health check endpoint for Replit deployments
+// Responds immediately without any complex logic or detection
 app.get('/health', (req, res) => {
   res.status(200).json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: Math.floor(process.uptime())
+    status: 'ok',
+    service: 'carnet-healthcare',
+    uptime: Math.floor(process.uptime()),
+    timestamp: Date.now()
   });
 });
 
-app.get('/healthz', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    service: 'carnet-healthcare',
-    timestamp: new Date().toISOString()
-  });
+// Even simpler health check endpoints for different deployment systems
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
 });
 
 app.get('/ready', (req, res) => {
   res.status(200).send('OK');
 });
 
-app.get('/alive', (req, res) => {
-  res.status(200).send('OK');
+// Minimal root endpoint - only handles basic health checks and passes through to frontend
+app.get('/', (req, res, next) => {
+  // Only check for the most basic health check indicators (fast detection)
+  const userAgent = req.get('User-Agent');
+  const accept = req.get('Accept');
+  
+  // Simple, fast detection for common health check tools
+  if (
+    !userAgent || 
+    userAgent.includes('curl') ||
+    userAgent.includes('health-check') ||
+    req.query.health !== undefined ||
+    req.headers['x-health-check'] !== undefined
+  ) {
+    return res.status(200).json({
+      status: 'ok',
+      service: 'carnet-healthcare',
+      uptime: Math.floor(process.uptime())
+    });
+  }
+  
+  // For all other requests, continue to frontend serving
+  next();
 });
 
-app.get('/ping', (req, res) => {
-  res.status(200).send('pong');
+// Additional compatibility health check endpoints
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    service: 'carnet-healthcare',
+    timestamp: Date.now()
+  });
+});
+
+app.get('/alive', (req, res) => {
+  res.status(200).send('OK');
 });
 
 // Express middleware setup
@@ -86,8 +75,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use((req, res, next) => {
-  const start = Date.now();
   const path = req.path;
+  
+  // Skip logging and processing for health check endpoints to improve performance
+  const isHealthEndpoint = path === '/health' || path === '/ping' || path === '/ready' || 
+                           path === '/alive' || path === '/healthz' || path === '/liveness' || 
+                           path === '/readiness';
+  
+  if (isHealthEndpoint) {
+    return next();
+  }
+  
+  const start = Date.now();
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
