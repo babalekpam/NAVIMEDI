@@ -124,6 +124,12 @@ let platformInitialized = false;
 
 async function initializePlatform() {
   try {
+    // Skip platform initialization in production if database is not available
+    if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL?.includes('placeholder')) {
+      console.log('Skipping platform initialization in production without database');
+      return;
+    }
+
     // Create platform tenant (ARGILETTE)
     const existingTenant = await db.select().from(tenants).where(eq(tenants.subdomain, 'argilette')).limit(1);
     
@@ -175,12 +181,22 @@ async function initializePlatform() {
   } catch (error) {
     log("❌ Platform initialization failed: " + error);
     console.error("Platform initialization error:", error);
+    // Don't stop server startup for platform init failures
+    console.log("Server will continue running despite platform initialization failure");
   }
 }
 
 // Initialize server and keep running
 async function startServer() {
-  const server = await registerRoutes(app);
+  let server;
+  
+  try {
+    server = await registerRoutes(app);
+  } catch (error) {
+    console.error('Error during route registration:', error);
+    // Continue with server startup even if some routes fail
+    server = require('http').createServer(app);
+  }
 
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -203,10 +219,16 @@ async function startServer() {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+  try {
+    if (app.get("env") === "development") {
+      await setupVite(app, server);
+    } else {
+      serveStatic(app);
+    }
+  } catch (viteError) {
+    console.error('Vite/Static setup error (non-fatal):', viteError);
+    console.log('Continuing server startup without frontend serving');
+    // Continue server startup even if Vite setup fails
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
