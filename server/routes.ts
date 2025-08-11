@@ -3538,6 +3538,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cross-tenant pharmacy selection for hospitals/clinics (enhanced endpoint)
+  app.get("/api/pharmacies/all-available", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      // Only allow hospitals and clinics to access cross-tenant pharmacy data
+      const userTenant = req.tenant;
+      if (!['hospital', 'clinic'].includes(userTenant?.type || '')) {
+        return res.status(403).json({ message: "Access denied: Only hospitals and clinics can access cross-tenant pharmacy data" });
+      }
+
+      // Get all active pharmacy tenants for cross-tenant prescription routing
+      const allTenants = await storage.getAllTenants();
+      const pharmacyTenants = allTenants.filter(tenant => 
+        tenant.type === 'pharmacy' && tenant.isActive
+      );
+
+      // Format pharmacy data for dropdown selection
+      const availablePharmacies = pharmacyTenants.map(pharmacy => ({
+        id: pharmacy.id,
+        name: pharmacy.name,
+        type: pharmacy.type,
+        address: pharmacy.address,
+        phoneNumber: pharmacy.phoneNumber,
+        subdomain: pharmacy.subdomain,
+        organizationType: pharmacy.organizationType,
+        isActive: pharmacy.isActive
+      }));
+
+      console.log(`[CROSS-TENANT] Hospital ${userTenant.name} accessing ${availablePharmacies.length} available pharmacies`);
+      res.json(availablePharmacies);
+    } catch (error) {
+      console.error("Error fetching cross-tenant pharmacies:", error);
+      res.status(500).json({ message: "Failed to fetch available pharmacies" });
+    }
+  });
+
   // Update patient preferred pharmacy (requires patient approval)
   app.patch("/api/patients/:id/preferred-pharmacy", authenticateToken, requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director"]), async (req, res) => {
     try {
@@ -3668,6 +3703,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching laboratories:", error);
       res.status(500).json({ message: "Failed to fetch laboratories" });
+    }
+  });
+
+  // Cross-tenant laboratory selection for hospitals/clinics
+  app.get("/api/laboratories/all-available", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      // Only allow hospitals and clinics to access cross-tenant laboratory data
+      const userTenant = req.tenant;
+      if (!['hospital', 'clinic'].includes(userTenant?.type || '')) {
+        return res.status(403).json({ message: "Access denied: Only hospitals and clinics can access cross-tenant laboratory data" });
+      }
+
+      // Get all active laboratory tenants for cross-tenant lab ordering
+      const allTenants = await storage.getAllTenants();
+      const laboratoryTenants = allTenants.filter(tenant => 
+        tenant.type === 'laboratory' && tenant.isActive
+      );
+
+      // Format laboratory data for dropdown selection
+      const availableLaboratories = laboratoryTenants.map(lab => ({
+        id: lab.id,
+        name: lab.name,
+        type: lab.type,
+        address: lab.address,
+        phoneNumber: lab.phoneNumber,
+        subdomain: lab.subdomain,
+        organizationType: lab.organizationType,
+        isActive: lab.isActive
+      }));
+
+      console.log(`[CROSS-TENANT] Hospital ${userTenant.name} accessing ${availableLaboratories.length} available laboratories`);
+      res.json(availableLaboratories);
+    } catch (error) {
+      console.error("Error fetching cross-tenant laboratories:", error);
+      res.status(500).json({ message: "Failed to fetch available laboratories" });
     }
   });
 

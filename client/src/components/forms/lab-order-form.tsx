@@ -53,9 +53,13 @@ const commonLabTests = [
 ];
 
 export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrderFormProps) => {
-  // Fetch available laboratories
-  const { data: laboratories = [], isLoading: labsLoading, error: labsError } = useQuery({
-    queryKey: ["/api/laboratories/active"],
+  // Fetch available laboratories (cross-tenant for hospitals/clinics)
+  const { data: laboratories = [] as any[], isLoading: labsLoading, error: labsError } = useQuery({
+    queryKey: ["/api/laboratories/all-available"],
+    retry: 1,
+    meta: {
+      errorMessage: "Unable to load available laboratories. Please check your permissions."
+    }
   });
 
   console.log("Laboratories data:", laboratories);
