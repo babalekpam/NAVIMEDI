@@ -8,6 +8,7 @@ export interface JWTPayload {
   tenantId: string;
   role: string;
   username: string;
+  email?: string;
 }
 
 export interface AuthenticatedRequest extends Request {
@@ -16,6 +17,7 @@ export interface AuthenticatedRequest extends Request {
     tenantId: string;
     role: string;
     username: string;
+    email?: string;
   };
   tenant?: any; // Allow full tenant object from tenant middleware
   tenantId?: string;

@@ -1912,22 +1912,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Find patient record for this user using tenant-filtered search
       const tenantId = req.tenant!.id;
       const userEmail = req.user?.email;
-      console.log(`[PATIENT PORTAL DEBUG] Looking for patient with email: ${userEmail} in tenant: ${tenantId}`);
       
       const patients = await storage.getPatientsByTenant(tenantId);
-      console.log(`[PATIENT PORTAL DEBUG] Found ${patients.length} patients in tenant:`, patients.map(p => ({ email: p.email, name: `${p.firstName} ${p.lastName}` })));
-      
       const patientRecord = patients.find(p => p.email === userEmail);
       
       if (!patientRecord) {
-        console.log(`[PATIENT PORTAL DEBUG] No patient record found for email: ${userEmail}`);
         return res.status(404).json({ 
-          message: "Patient record not found in this organization",
-          debug: {
-            searchEmail: userEmail,
-            tenantId: tenantId,
-            availablePatients: patients.map(p => p.email)
-          }
+          message: "Patient record not found in this organization"
         });
       }
 
