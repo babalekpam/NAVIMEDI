@@ -596,6 +596,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Hash password
       const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
+      // Determine admin role based on organization type
+      let adminRole: 'tenant_admin' | 'lab_technician' | 'pharmacist' = 'tenant_admin'; // Default role
+      if (organizationType === 'laboratory') {
+        adminRole = 'lab_technician'; // Laboratory admin should get lab technician role for proper routing
+      } else if (organizationType === 'pharmacy') {
+        adminRole = 'pharmacist'; // Pharmacy admin should get pharmacist role for proper routing
+      } else if (organizationType === 'hospital' || organizationType === 'clinic') {
+        adminRole = 'tenant_admin'; // Hospital/clinic admin keeps tenant_admin role
+      }
+
       // Create admin user
       const adminUser = await storage.createUser({
         tenantId: newTenant.id,
@@ -604,7 +614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: hashedPassword,
         firstName: adminFirstName,
         lastName: adminLastName,
-        role: 'tenant_admin',
+        role: adminRole,
         isActive: true,
         isTemporaryPassword: false,
         mustChangePassword: false

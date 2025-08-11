@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setToken(data.token);
     setUser(data.user);
     
-    // Determine redirect path based on user role
+    // Determine redirect path based on user role and organization type
     let redirectPath = '/dashboard';
     if (data.user.mustChangePassword || data.user.isTemporaryPassword) {
       redirectPath = '/change-password';
@@ -110,7 +110,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } else if (data.user.role === 'super_admin') {
       redirectPath = '/super-admin-dashboard';
     } else if (data.user.role === 'tenant_admin' || data.user.role === 'director') {
-      redirectPath = '/admin-dashboard';
+      // For tenant admins, check organization type to route to correct dashboard
+      const tenantType = data.user.tenant?.type;
+      if (tenantType === 'laboratory') {
+        redirectPath = '/laboratory-dashboard';
+      } else if (tenantType === 'pharmacy') {
+        redirectPath = '/pharmacy-dashboard';
+      } else {
+        redirectPath = '/admin-dashboard'; // Hospital/clinic default
+      }
     } else if (data.user.role === 'lab_technician') {
       redirectPath = '/laboratory-dashboard';
     } else if (data.user.role === 'pharmacist') {
