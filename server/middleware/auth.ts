@@ -29,6 +29,7 @@ declare global {
         tenantId: string;
         role: string;
         username: string;
+        email?: string;
       };
       userId?: string; // Add userId property
       tenant?: any; // Allow full tenant object from tenant middleware
@@ -54,7 +55,8 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
       id: decoded.userId,
       tenantId: decoded.tenantId,
       role: decoded.role,
-      username: decoded.username
+      username: decoded.username,
+      email: decoded.email
     };
     req.userId = decoded.userId; // Add this line to fix the missing userId
     req.tenantId = decoded.tenantId;

@@ -1058,7 +1058,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: user.id, 
           tenantId: user.tenantId, 
           role: user.role,
-          username: user.username 
+          username: user.username,
+          email: user.email
         },
         JWT_SECRET,
         { expiresIn: "8h" }
@@ -1873,11 +1874,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Find patient record for this user using tenant-filtered search
       const tenantId = req.tenant!.id;
+      const userEmail = req.user?.email;
       const patients = await storage.getPatientsByTenant(tenantId);
-      const patientRecord = patients.find(p => p.email === req.user?.email);
+      const patientRecord = patients.find(p => p.email === userEmail);
       
       if (!patientRecord) {
-        return res.status(404).json({ message: "Patient record not found in this organization" });
+        console.log(`[PATIENT APPOINTMENTS DEBUG] No patient record found for email: ${userEmail}`);
+        return res.status(404).json({ 
+          message: "Patient record not found in this organization",
+          debug: {
+            searchEmail: userEmail,
+            tenantId: tenantId,
+            availablePatients: patients.map(p => p.email)
+          }
+        });
       }
 
       // Get appointments for this patient
@@ -1895,16 +1905,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Ensure user is a patient
       if (req.user?.role !== "patient") {
+        console.log(`[PATIENT PORTAL DEBUG] Access denied - user role: ${req.user?.role}, expected: patient`);
         return res.status(403).json({ message: "Access denied: Patient role required" });
       }
 
       // Find patient record for this user using tenant-filtered search
       const tenantId = req.tenant!.id;
+      const userEmail = req.user?.email;
+      console.log(`[PATIENT PORTAL DEBUG] Looking for patient with email: ${userEmail} in tenant: ${tenantId}`);
+      
       const patients = await storage.getPatientsByTenant(tenantId);
-      const patientRecord = patients.find(p => p.email === req.user?.email);
+      console.log(`[PATIENT PORTAL DEBUG] Found ${patients.length} patients in tenant:`, patients.map(p => ({ email: p.email, name: `${p.firstName} ${p.lastName}` })));
+      
+      const patientRecord = patients.find(p => p.email === userEmail);
       
       if (!patientRecord) {
-        return res.status(404).json({ message: "Patient record not found in this organization" });
+        console.log(`[PATIENT PORTAL DEBUG] No patient record found for email: ${userEmail}`);
+        return res.status(404).json({ 
+          message: "Patient record not found in this organization",
+          debug: {
+            searchEmail: userEmail,
+            tenantId: tenantId,
+            availablePatients: patients.map(p => p.email)
+          }
+        });
       }
 
       console.log(`[PATIENT PORTAL] Patient ${patientRecord.firstName} ${patientRecord.lastName} accessed profile`);
