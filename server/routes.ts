@@ -1863,6 +1863,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Patient-specific appointment endpoints (for patient portal)
+  app.get("/api/patient/appointments", authenticateToken, async (req, res) => {
+    try {
+      // Ensure user is a patient
+      if (req.user?.role !== "patient") {
+        return res.status(403).json({ message: "Access denied: Patient role required" });
+      }
+
+      // Find patient record for this user
+      const patients = await storage.getAllPatients();
+      const patientRecord = patients.find(p => p.email === req.user?.email);
+      
+      if (!patientRecord) {
+        return res.status(404).json({ message: "Patient record not found" });
+      }
+
+      // Get appointments for this patient
+      const appointments = await storage.getAppointmentsByPatient(patientRecord.id, patientRecord.tenantId);
+      
+      console.log(`[PATIENT PORTAL] Patient ${patientRecord.firstName} ${patientRecord.lastName} accessed ${appointments.length} appointments`);
+      res.json(appointments);
+    } catch (error) {
+      console.error("Get patient appointments error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/patient/profile", authenticateToken, async (req, res) => {
+    try {
+      // Ensure user is a patient
+      if (req.user?.role !== "patient") {
+        return res.status(403).json({ message: "Access denied: Patient role required" });
+      }
+
+      // Find patient record for this user
+      const patients = await storage.getAllPatients();
+      const patientRecord = patients.find(p => p.email === req.user?.email);
+      
+      if (!patientRecord) {
+        return res.status(404).json({ message: "Patient record not found" });
+      }
+
+      console.log(`[PATIENT PORTAL] Patient ${patientRecord.firstName} ${patientRecord.lastName} accessed profile`);
+      res.json(patientRecord);
+    } catch (error) {
+      console.error("Get patient profile error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/patient/book-appointment", authenticateToken, async (req, res) => {
+    try {
+      // Ensure user is a patient
+      if (req.user?.role !== "patient") {
+        return res.status(403).json({ message: "Access denied: Patient role required" });
+      }
+
+      // Find patient record for this user
+      const patients = await storage.getAllPatients();
+      const patientRecord = patients.find(p => p.email === req.user?.email);
+      
+      if (!patientRecord) {
+        return res.status(404).json({ message: "Patient record not found" });
+      }
+
+      // Create appointment data
+      const appointmentData = {
+        ...req.body,
+        patientId: patientRecord.id,
+        tenantId: patientRecord.tenantId,
+        status: 'scheduled' as const
+      };
+
+      const appointment = await storage.createAppointment(appointmentData);
+
+      console.log(`[PATIENT PORTAL] Patient ${patientRecord.firstName} ${patientRecord.lastName} booked appointment`);
+      res.status(201).json(appointment);
+    } catch (error) {
+      console.error("Book patient appointment error:", error);
+      res.status(500).json({ message: "Failed to book appointment" });
+    }
+  });
+
   // Prescription management routes
   app.get("/api/prescriptions", authenticateToken, requireTenant, async (req, res) => {
     try {
