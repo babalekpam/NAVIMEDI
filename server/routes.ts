@@ -1864,19 +1864,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Patient-specific appointment endpoints (for patient portal)
-  app.get("/api/patient/appointments", authenticateToken, async (req, res) => {
+  app.get("/api/patient/appointments", authenticateToken, requireTenant, async (req, res) => {
     try {
       // Ensure user is a patient
       if (req.user?.role !== "patient") {
         return res.status(403).json({ message: "Access denied: Patient role required" });
       }
 
-      // Find patient record for this user
-      const patients = await storage.getAllPatients();
+      // Find patient record for this user using tenant-filtered search
+      const tenantId = req.tenant!.id;
+      const patients = await storage.getPatientsByTenant(tenantId);
       const patientRecord = patients.find(p => p.email === req.user?.email);
       
       if (!patientRecord) {
-        return res.status(404).json({ message: "Patient record not found" });
+        return res.status(404).json({ message: "Patient record not found in this organization" });
       }
 
       // Get appointments for this patient
@@ -1890,19 +1891,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/patient/profile", authenticateToken, async (req, res) => {
+  app.get("/api/patient/profile", authenticateToken, requireTenant, async (req, res) => {
     try {
       // Ensure user is a patient
       if (req.user?.role !== "patient") {
         return res.status(403).json({ message: "Access denied: Patient role required" });
       }
 
-      // Find patient record for this user
-      const patients = await storage.getAllPatients();
+      // Find patient record for this user using tenant-filtered search
+      const tenantId = req.tenant!.id;
+      const patients = await storage.getPatientsByTenant(tenantId);
       const patientRecord = patients.find(p => p.email === req.user?.email);
       
       if (!patientRecord) {
-        return res.status(404).json({ message: "Patient record not found" });
+        return res.status(404).json({ message: "Patient record not found in this organization" });
       }
 
       console.log(`[PATIENT PORTAL] Patient ${patientRecord.firstName} ${patientRecord.lastName} accessed profile`);
@@ -1913,19 +1915,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/patient/book-appointment", authenticateToken, async (req, res) => {
+  app.post("/api/patient/book-appointment", authenticateToken, requireTenant, async (req, res) => {
     try {
       // Ensure user is a patient
       if (req.user?.role !== "patient") {
         return res.status(403).json({ message: "Access denied: Patient role required" });
       }
 
-      // Find patient record for this user
-      const patients = await storage.getAllPatients();
+      // Find patient record for this user using tenant-filtered search
+      const tenantId = req.tenant!.id;
+      const patients = await storage.getPatientsByTenant(tenantId);
       const patientRecord = patients.find(p => p.email === req.user?.email);
       
       if (!patientRecord) {
-        return res.status(404).json({ message: "Patient record not found" });
+        return res.status(404).json({ message: "Patient record not found in this organization" });
       }
 
       // Create appointment data
