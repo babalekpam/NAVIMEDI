@@ -14,28 +14,28 @@ export const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps)
   const { tenant, isLoading: tenantLoading } = useTenant();
   const [, setLocation] = useLocation();
 
-  // Always call useEffect hook
+  // Simple authentication check without aggressive redirects
   useEffect(() => {
     if (!authLoading && !user) {
-      console.log('[ProtectedRoute] No user found, redirecting to appropriate login');
-      // Check if this is a patient-related page
-      const currentPath = window.location.pathname;
-      if (currentPath.includes('patient') || currentPath.includes('telemedicine')) {
-        console.log('[ProtectedRoute] Patient page detected, redirecting to patient login');
-        setLocation("/patient-login");
-      } else {
-        console.log('[ProtectedRoute] Regular page, redirecting to login');
-        setLocation("/login");
+      // Check localStorage directly as fallback
+      const directToken = localStorage.getItem("auth_token");
+      const directUser = localStorage.getItem("auth_user");
+      
+      if (!directToken || !directUser) {
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('patient') || currentPath.includes('telemedicine')) {
+          setLocation("/patient-login");
+        } else {
+          setLocation("/login");
+        }
       }
     } else if (user && (user.mustChangePassword || user.isTemporaryPassword)) {
-      // Redirect to change password if user has temporary password
       setLocation("/change-password");
-    } else if (user) {
-      console.log('[ProtectedRoute] User authenticated:', user.email, 'Role:', user.role);
     }
   }, [authLoading, user, setLocation]);
 
-  if (authLoading || tenantLoading) {
+  // Show loading state but don't block for too long
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="space-y-4 w-64">

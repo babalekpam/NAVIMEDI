@@ -44,38 +44,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log('[AuthContext] Initializing authentication state...');
     const storedToken = localStorage.getItem("auth_token");
     const storedUser = localStorage.getItem("auth_user");
 
-    console.log('[AuthContext] Stored token exists:', !!storedToken);
-    console.log('[AuthContext] Stored user exists:', !!storedUser);
-
-    // Validate token format before using it
-    if (storedToken && storedUser && 
-        storedToken !== 'undefined' && 
-        storedToken !== 'null' && 
-        storedToken.length > 10) {
+    // Simple validation - just check if both exist
+    if (storedToken && storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        console.log('[AuthContext] Restoring user session:', parsedUser.email, 'Role:', parsedUser.role);
         setToken(storedToken);
         setUser(parsedUser);
       } catch (error) {
-        console.warn('[AuthContext] Failed to parse stored user data, clearing auth:', error);
+        // Only clear if parsing fails
         localStorage.removeItem("auth_token");
         localStorage.removeItem("auth_user");
       }
-    } else if (storedToken) {
-      // Clear corrupted tokens
-      console.warn('[AuthContext] Clearing corrupted auth data');
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("auth_user");
-    } else {
-      console.log('[AuthContext] No stored authentication found');
     }
     setIsLoading(false);
-    console.log('[AuthContext] Authentication initialization complete');
   }, []);
 
   const login = async (username: string, password: string, tenantId: string, navigate?: (path: string) => void) => {

@@ -60,36 +60,32 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  // Handle expired tokens (401 responses)
+  // Handle expired tokens (401 responses) - only if response contains auth error
   if (res.status === 401) {
-    console.warn('Token expired or invalid, redirecting to login');
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_user");
-    window.location.href = '/login';
-    throw new Error('Token expired - redirecting to login');
+    const errorText = await res.text();
+    if (errorText.includes('token') || errorText.includes('expired') || errorText.includes('unauthorized')) {
+      console.warn('Token expired or invalid, redirecting to login');
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
+      
+      const currentPath = window.location.pathname;
+      if (currentPath.includes('patient') || currentPath.includes('telemedicine')) {
+        window.location.href = '/patient-login';
+      } else {
+        window.location.href = '/login';
+      }
+      throw new Error('Token expired - redirecting to login');
+    }
+    throw new Error('Access denied');
   }
 
-  // Handle non-JSON responses (likely HTML error pages)
+  // Handle non-JSON responses more gracefully
   const contentType = res.headers.get('content-type');
   if (!contentType || !contentType.includes('application/json')) {
     const text = await res.text();
     if (text.includes('<!DOCTYPE')) {
-      // If we get HTML response and have a token, it's likely expired
-      if (token) {
-        console.warn('Received HTML response with token present - token likely expired');
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("auth_user");
-        
-        // For patient portal users, try to redirect to patient login
-        const currentPath = window.location.pathname;
-        if (currentPath.includes('patient') || currentPath.includes('telemedicine')) {
-          window.location.href = '/patient-login';
-        } else {
-          window.location.href = '/login';
-        }
-        throw new Error('Session expired. Redirecting to login...');
-      }
-      throw new Error('Unexpected HTML response - possible routing issue. Please refresh and try again.');
+      console.warn('Received HTML response instead of JSON - possible routing issue');
+      throw new Error('Service temporarily unavailable. Please try again.');
     }
     throw new Error(`Unexpected response type: ${contentType}`);
   }
