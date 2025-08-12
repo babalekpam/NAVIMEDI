@@ -85,16 +85,35 @@ export function TelemedicineBooking() {
           patientNotes: data.patientNotes
         };
 
-        console.log("[BOOKING] Attempting direct fetch booking...");
+        console.log("[BOOKING] Attempting emergency booking endpoint...");
         
-        const response = await fetch("/api/patient/book-appointment", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestData),
-        });
+        // Try multiple endpoint strategies to bypass routing issues
+        let response;
+        
+        // Strategy 1: Try with explicit host and port
+        try {
+          response = await fetch(`http://localhost:5000/api/patient/book-appointment`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+              "X-Requested-With": "XMLHttpRequest", // Indicate this is an AJAX request
+            },
+            body: JSON.stringify(requestData),
+          });
+        } catch (error) {
+          console.warn("[BOOKING] Localhost strategy failed, trying relative path...");
+          // Strategy 2: Fallback to relative path
+          response = await fetch("/api/patient/book-appointment", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+              "X-Requested-With": "XMLHttpRequest",
+            },
+            body: JSON.stringify(requestData),
+          });
+        }
 
         console.log("[BOOKING] Response status:", response.status);
         console.log("[BOOKING] Response headers:", Object.fromEntries(response.headers.entries()));

@@ -374,6 +374,32 @@ async function startServer() {
     next();
   });
 
+  // EMERGENCY: FINAL MIDDLEWARE TO PREVENT VITE FROM SERVING HTML ON API ROUTES
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/')) {
+      // This is an API route - ensure no HTML is ever served
+      console.log(`[EMERGENCY PROTECTION] Intercepting API route before Vite: ${req.path}`);
+      
+      // If we reach here and headers aren't sent, it means the API route wasn't handled
+      // Return JSON error instead of letting Vite serve HTML
+      if (!res.headersSent) {
+        // Set a timeout to check if the route gets handled
+        setTimeout(() => {
+          if (!res.headersSent) {
+            console.error(`[EMERGENCY] API route ${req.path} not handled - preventing HTML`);
+            return res.status(404).json({ 
+              error: 'API endpoint not found',
+              path: req.path,
+              method: req.method,
+              timestamp: new Date().toISOString()
+            });
+          }
+        }, 100);
+      }
+    }
+    next();
+  });
+
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
