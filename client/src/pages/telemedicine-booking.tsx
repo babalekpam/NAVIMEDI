@@ -182,8 +182,6 @@ export default function TelemedicineBooking() {
   // Create appointment booking mutation
   const createAppointmentMutation = useMutation({
     mutationFn: async (bookingData: TelemedicineBooking) => {
-      console.log('[BOOKING] Sending appointment booking request:', bookingData);
-      
       const { apiRequest } = await import("@/lib/queryClient");
       const requestData = {
         doctorId: bookingData.providerId,
@@ -196,11 +194,9 @@ export default function TelemedicineBooking() {
         patientNotes: bookingData.patientNotes
       };
       
-      console.log('[BOOKING] Request payload:', requestData);
-      
       return apiRequest("/api/patient/book-appointment", {
         method: "POST",
-        body: JSON.stringify(requestData),
+        body: requestData,
       });
     },
     onSuccess: () => {

@@ -22,6 +22,13 @@ import { resetAllCounters } from "./reset-all-counters";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // CRITICAL: Ensure all /api/* routes are handled by this router, not Vite
+  app.use('/api', (req, res, next) => {
+    // Mark this as an API request to prevent Vite catch-all interception
+    req.url = req.url; // No-op that ensures this middleware runs first
+    next();
+  });
+
   // PUBLIC ENDPOINTS (before any middleware)
   
   // Public supplier registration endpoint (outside /api path to avoid middleware)

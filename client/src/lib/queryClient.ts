@@ -30,9 +30,7 @@ export async function apiRequest(
     headers?: Record<string, string>;
   }
 ): Promise<any> {
-  console.log('[API REQUEST] Making request to:', url);
   const token = localStorage.getItem("auth_token");
-  console.log('[API REQUEST] Token exists:', !!token);
   
   // Clear corrupted tokens
   if (token && (token === 'undefined' || token === 'null' || token.length < 10)) {
@@ -55,18 +53,12 @@ export async function apiRequest(
     ...(options?.headers || {}),
   };
 
-  console.log('[API REQUEST] Headers:', headers);
-  console.log('[API REQUEST] Body:', data);
-  
   const res = await fetch(url, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
-  
-  console.log('[API REQUEST] Response status:', res.status);
-  console.log('[API REQUEST] Response headers:', Object.fromEntries(res.headers.entries()));
 
   // Handle 401 responses
   if (res.status === 401) {
@@ -89,7 +81,11 @@ export async function apiRequest(
     throw new Error(errorText || 'Access denied');
   }
 
-  await throwIfResNotOk(res);
+  // Check if response is HTML instead of JSON (routing conflict)
+  const contentType = res.headers.get('content-type');
+  if (!res.ok || !contentType?.includes('application/json')) {
+    await throwIfResNotOk(res);
+  }
   return res.json();
 }
 

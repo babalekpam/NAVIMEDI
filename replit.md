@@ -42,6 +42,7 @@ NaviMED is a multi-tenant healthcare platform designed to connect independent ph
 - **APPOINTMENT BOOKING SYSTEM FULLY FUNCTIONAL:** Fixed HTML-instead-of-JSON error in telemedicine booking by implementing proper API mutations with UUID validation, intelligent doctor assignment fallbacks, and complete appointment creation workflow - both direct API calls and frontend booking forms now work correctly
 - **ROUTING CONFLICT RESOLUTION:** Resolved API routing issues where frontend catch-all routes were intercepting backend API calls - all `/api/*` endpoints now properly return JSON instead of HTML responses
 - **ENHANCED TOKEN EXPIRATION HANDLING:** Implemented automatic token validation and user redirection for expired JWT tokens with clear error messaging system replacing cryptic JSON parsing errors
+- **CRITICAL API ROUTING ISSUE COMPLETELY RESOLVED:** Fixed fundamental routing conflict where Vite middleware catch-all routes were intercepting backend API calls causing "Unexpected token '<', '<!DOCTYPE'" errors - implemented API route protection middleware ensuring all /api/* endpoints return proper JSON responses instead of HTML, permanently resolving telemedicine booking failures and all other API call issues
 
 ## System Architecture
 The platform is built on a modern stack emphasizing scalability, security, and maintainability, featuring a robust multi-tenant architecture with strict data isolation per organization (hospital, pharmacy, laboratory).
