@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -149,9 +149,23 @@ export default function DoctorPortalFixed() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [activeTab, setActiveTab] = useState("appointments");
-  // Get appointments from shared system
+  // Get appointments from shared system with real-time updates
   const [refreshKey, setRefreshKey] = useState(0);
-  const appointments = SharedAppointmentService.getAllAppointments();
+  const [appointments, setAppointments] = useState<SharedAppointment[]>([]);
+  
+  useEffect(() => {
+    const loadAppointments = () => {
+      const sharedAppointments = SharedAppointmentService.getAllAppointments();
+      setAppointments(sharedAppointments);
+      console.log("Loading shared appointments:", sharedAppointments);
+    };
+    
+    loadAppointments();
+    
+    // Refresh appointments every 2 seconds to catch new bookings
+    const interval = setInterval(loadAppointments, 2000);
+    return () => clearInterval(interval);
+  }, [refreshKey]);
 
   const handleLogin = () => {
     const doctor = DEMO_DOCTORS.find(d => 
@@ -187,6 +201,9 @@ export default function DoctorPortalFixed() {
     const success = SharedAppointmentService.updateAppointmentStatus(appointmentId, newStatus);
     
     if (success) {
+      // Refresh appointments immediately
+      const sharedAppointments = SharedAppointmentService.getAllAppointments();
+      setAppointments(sharedAppointments);
       setRefreshKey(prev => prev + 1); // Force re-render
       toast({
         title: "Status Updated",
