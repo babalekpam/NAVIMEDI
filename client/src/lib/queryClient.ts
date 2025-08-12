@@ -8,12 +8,14 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-// Helper function to check if token is expired
+// Helper function to check if token is expired (with 30 second buffer)
 function isTokenExpired(token: string): boolean {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const currentTime = Math.floor(Date.now() / 1000);
-    return payload.exp < currentTime;
+    // Add small buffer to account for network delays
+    const bufferTime = 30; // 30 seconds buffer
+    return payload.exp < (currentTime - bufferTime);
   } catch (error) {
     console.warn('Failed to parse token:', error);
     return true;
@@ -39,21 +41,8 @@ export async function apiRequest(
     throw new Error('Invalid token - redirecting to login');
   }
   
-  // Check if token is expired before making the request
-  if (token && isTokenExpired(token)) {
-    console.warn('Token is expired, clearing and redirecting');
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_user");
-    
-    // Redirect to appropriate login page
-    const currentPath = window.location.pathname;
-    if (currentPath.includes('patient') || currentPath.includes('telemedicine')) {
-      window.location.href = '/patient-login';
-    } else {
-      window.location.href = '/login';
-    }
-    throw new Error('Session expired. Redirecting to login...');
-  }
+  // Note: Removed proactive token expiration checking to prevent premature logouts
+  // Let the server handle token validation with 401 responses instead
   
   const method = options?.method || 'GET';
   const data = options?.body;
