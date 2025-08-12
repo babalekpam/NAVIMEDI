@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,18 +24,98 @@ import {
   FileText, 
   Pill, 
   MessageSquare, 
-  Phone, 
   Video, 
   Plus, 
-  Heart, 
   Activity, 
   Stethoscope,
   CalendarCheck,
   Download,
-  Eye,
-  Send
+  Send,
+  Building2,
+  MapPin
 } from 'lucide-react';
 import navimedLogo from "@assets/navimed-logo.jpg";
+
+// Type definitions for better TypeScript support
+interface Patient {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  dateOfBirth: string;
+  tenantId: string;
+  hospitalName?: string;
+}
+
+interface Appointment {
+  id: string;
+  patientId: string;
+  providerId: string;
+  providerName?: string;
+  providerFirstName?: string;
+  providerLastName?: string;
+  appointmentDate: string;
+  type: string;
+  reason?: string;
+  status: string;
+  priority?: string;
+  tenantId: string;
+}
+
+interface Prescription {
+  id: string;
+  patientId: string;
+  medicationName: string;
+  dosage: string;
+  frequency: string;
+  instructions?: string;
+  status: string;
+  prescribedDate: string;
+  refills: number;
+  tenantId: string;
+}
+
+interface LabResult {
+  id: string;
+  patientId: string;
+  testName: string;
+  notes?: string;
+  status: string;
+  results?: any;
+  createdAt: string;
+  tenantId: string;
+}
+
+interface Message {
+  id: string;
+  subject: string;
+  message: string;
+  priority: string;
+  isRead: boolean;
+  createdAt: string;
+  tenantId: string;
+}
+
+interface Doctor {
+  id: string;
+  firstName: string;
+  lastName: string;
+  specialization?: string;
+  email: string;
+  tenantId: string;
+  role: string;
+}
+
+interface HospitalInfo {
+  id: string;
+  name: string;
+  address?: string;
+  phone?: string;
+  primaryColor?: string;
+  logoUrl?: string;
+  type: string;
+}
 
 // Appointment booking schema
 const appointmentSchema = z.object({
@@ -77,37 +157,46 @@ export default function PatientPortalNew() {
     },
   });
 
-  // Fetch patient data
-  const { data: patientProfile, isLoading: profileLoading } = useQuery({
+  // Fetch patient data with proper typing
+  const { data: patientProfile, isLoading: profileLoading } = useQuery<Patient>({
     queryKey: ["/api/patient/profile"],
     enabled: !!user && user.role === "patient"
   });
 
-  const { data: appointments = [], isLoading: appointmentsLoading } = useQuery({
+  const { data: appointments = [], isLoading: appointmentsLoading } = useQuery<Appointment[]>({
     queryKey: ["/api/patient/appointments"],
     enabled: !!user && user.role === "patient"
   });
 
-  const { data: prescriptions = [], isLoading: prescriptionsLoading } = useQuery({
+  const { data: prescriptions = [], isLoading: prescriptionsLoading } = useQuery<Prescription[]>({
     queryKey: ["/api/patient/prescriptions"],
     enabled: !!user && user.role === "patient"
   });
 
-  const { data: labResults = [], isLoading: labResultsLoading } = useQuery({
+  const { data: labResults = [], isLoading: labResultsLoading } = useQuery<LabResult[]>({
     queryKey: ["/api/patient/lab-results"],
     enabled: !!user && user.role === "patient"
   });
 
-  const { data: messages = [], isLoading: messagesLoading } = useQuery({
+  const { data: messages = [], isLoading: messagesLoading } = useQuery<Message[]>({
     queryKey: ["/api/medical-communications"],
     enabled: !!user && user.role === "patient"
   });
 
-  // Fetch available doctors for booking
-  const { data: doctors = [], isLoading: doctorsLoading } = useQuery({
-    queryKey: ["/api/users"],
-    select: (data: any[]) => data.filter(user => user.role === "physician" || user.role === "doctor"),
+  // Fetch hospital/tenant information for patient's hospital
+  const { data: hospitalInfo } = useQuery<HospitalInfo>({
+    queryKey: ["/api/tenant/current"],
     enabled: !!user && user.role === "patient"
+  });
+
+  // Fetch doctors from patient's hospital only
+  const { data: doctors = [], isLoading: doctorsLoading } = useQuery<Doctor[]>({
+    queryKey: ["/api/users", user?.tenantId],
+    select: (data: any[]) => data.filter((doctor: Doctor) => 
+      (doctor.role === "physician" || doctor.role === "doctor") && 
+      doctor.tenantId === user?.tenantId
+    ),
+    enabled: !!user && user.role === "patient" && !!user.tenantId
   });
 
   // Book appointment mutation
@@ -115,18 +204,17 @@ export default function PatientPortalNew() {
     mutationFn: async (appointmentData: AppointmentFormData) => {
       const appointmentDateTime = new Date(`${appointmentData.appointmentDate}T${appointmentData.appointmentTime}`);
       
-      return await apiRequest('/api/appointments', {
-        method: 'POST',
-        body: {
-          patientId: user?.userId,
-          providerId: appointmentData.doctorId,
-          appointmentDate: appointmentDateTime.toISOString(),
-          type: appointmentData.type,
-          reason: appointmentData.reason,
-          priority: appointmentData.priority,
-          status: 'scheduled'
-        },
+      const response = await apiRequest("POST", "/api/appointments", {
+        patientId: user?.id || user?.userId,
+        providerId: appointmentData.doctorId,
+        appointmentDate: appointmentDateTime.toISOString(),
+        type: appointmentData.type,
+        reason: appointmentData.reason,
+        priority: appointmentData.priority,
+        status: 'scheduled',
+        tenantId: user?.tenantId || hospitalInfo?.id
       });
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -149,10 +237,11 @@ export default function PatientPortalNew() {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: any) => {
-      return await apiRequest('/api/medical-communications', {
-        method: 'POST',
-        body: messageData,
+      const response = await apiRequest("POST", "/api/medical-communications", {
+        ...messageData,
+        tenantId: user?.tenantId || hospitalInfo?.id
       });
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -237,18 +326,40 @@ export default function PatientPortalNew() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
-              <img src={navimedLogo} alt="NaviMed" className="h-10 w-10 rounded-lg object-contain" />
+              <img 
+                src={hospitalInfo?.logoUrl || navimedLogo} 
+                alt={hospitalInfo?.name || "Hospital"} 
+                className="h-10 w-10 rounded-lg object-contain" 
+              />
               <div>
-                <h1 className="text-xl font-bold text-blue-600">Patient Portal</h1>
-                <p className="text-sm text-gray-500">Welcome back, {user?.firstName}</p>
+                <h1 className="text-xl font-bold" style={{ color: hospitalInfo?.primaryColor || '#2563eb' }}>
+                  {hospitalInfo?.name || 'Hospital'} Patient Portal
+                </h1>
+                <p className="text-sm text-gray-500 flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  Welcome back, {user?.firstName}
+                  {hospitalInfo?.address && (
+                    <>
+                      <span className="mx-2">•</span>
+                      <MapPin className="h-3 w-3" />
+                      {hospitalInfo.address}
+                    </>
+                  )}
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Button 
+                    style={{ 
+                      backgroundColor: hospitalInfo?.primaryColor || '#2563eb',
+                      borderColor: hospitalInfo?.primaryColor || '#2563eb'
+                    }}
+                    className="hover:opacity-90"
+                  >
                     <CalendarCheck className="h-4 w-4 mr-2" />
-                    Book Appointment
+                    Book Appointment at {hospitalInfo?.name || 'Hospital'}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
