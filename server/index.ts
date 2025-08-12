@@ -216,6 +216,29 @@ async function startServer() {
     }
   });
 
+  // API Route Protection - CRITICAL: Ensure all /api/* routes return JSON ONLY
+  // This prevents Vite middleware from intercepting API calls and returning HTML
+  app.use('/api/*', (req, res, next) => {
+    // Force JSON content type for all API responses
+    res.setHeader('Content-Type', 'application/json');
+    
+    // Override the Vite catch-all behavior for API routes
+    const originalSend = res.send;
+    res.send = function(body) {
+      if (typeof body === 'string' && body.includes('<!DOCTYPE')) {
+        // Prevent HTML responses on API routes
+        return res.status(500).json({ 
+          error: 'API route returned HTML instead of JSON',
+          endpoint: req.originalUrl,
+          method: req.method
+        });
+      }
+      return originalSend.call(this, body);
+    };
+    
+    next();
+  });
+
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
