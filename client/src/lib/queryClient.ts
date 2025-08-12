@@ -60,11 +60,13 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  // Handle expired tokens (401 responses) - only if response contains auth error
+  // Handle 401 responses
   if (res.status === 401) {
+    console.warn('Received 401 - authentication failed');
     const errorText = await res.text();
-    if (errorText.includes('token') || errorText.includes('expired') || errorText.includes('unauthorized')) {
-      console.warn('Token expired or invalid, redirecting to login');
+    
+    // Only clear auth on actual token expiration, not access denied
+    if (errorText.includes('expired') || errorText.includes('Invalid or expired token')) {
       localStorage.removeItem("auth_token");
       localStorage.removeItem("auth_user");
       
@@ -74,20 +76,9 @@ export async function apiRequest(
       } else {
         window.location.href = '/login';
       }
-      throw new Error('Token expired - redirecting to login');
+      throw new Error('Session expired - please log in again');
     }
-    throw new Error('Access denied');
-  }
-
-  // Handle non-JSON responses more gracefully
-  const contentType = res.headers.get('content-type');
-  if (!contentType || !contentType.includes('application/json')) {
-    const text = await res.text();
-    if (text.includes('<!DOCTYPE')) {
-      console.warn('Received HTML response instead of JSON - possible routing issue');
-      throw new Error('Service temporarily unavailable. Please try again.');
-    }
-    throw new Error(`Unexpected response type: ${contentType}`);
+    throw new Error(errorText || 'Access denied');
   }
 
   await throwIfResNotOk(res);
