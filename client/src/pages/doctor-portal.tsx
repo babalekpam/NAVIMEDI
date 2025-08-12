@@ -142,8 +142,7 @@ export default function DoctorPortal() {
     return baseAppointments.filter(appointment => appointment.providerId === doctorId);
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async () => {
     
     // Simulate login delay
     await new Promise(resolve => setTimeout(resolve, 800));
@@ -198,7 +197,7 @@ export default function DoctorPortal() {
               <CardDescription>Metro General Hospital</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-4">
                 <div>
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -221,10 +220,10 @@ export default function DoctorPortal() {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full">
+                <Button onClick={handleLogin} className="w-full">
                   Login
                 </Button>
-              </form>
+              </div>
               
               <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-semibold mb-2">Demo Credentials:</h3>
