@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,7 @@ import { z } from "zod";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+// Removed API imports for demo version
 import { 
   Calendar, 
   Clock, 
@@ -133,7 +132,7 @@ export default function PatientPortalNew() {
   const { user } = useAuth();
   const { tenant } = useTenant();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  // Removed queryClient for demo version
   
   const [activeTab, setActiveTab] = useState("overview");
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -312,68 +311,52 @@ export default function PatientPortalNew() {
   const messagesLoading = false;
   const doctorsLoading = false;
 
-  // Book appointment mutation (demo implementation)
-  const bookAppointmentMutation = useMutation({
-    mutationFn: async (appointmentData: AppointmentFormData) => {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Return demo success response
-      return {
-        id: `appt-${Date.now()}`,
-        ...appointmentData,
-        status: 'scheduled',
-        patientId: patientProfile.id,
-        tenantId: patientProfile.tenantId
-      };
+  // Book appointment function (demo implementation)
+  const bookAppointmentMutation = {
+    mutate: async (appointmentData: AppointmentFormData) => {
+      try {
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        toast({
+          title: "Success",
+          description: "Your appointment has been booked successfully!",
+        });
+        setIsBookingModalOpen(false);
+        appointmentForm.reset();
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to book appointment",
+          variant: "destructive",
+        });
+      }
     },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Your appointment has been booked successfully!",
-      });
-      setIsBookingModalOpen(false);
-      appointmentForm.reset();
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to book appointment",
-        variant: "destructive",
-      });
-    },
-  });
+    isPending: false
+  };
 
-  // Send message mutation (demo implementation)
-  const sendMessageMutation = useMutation({
-    mutationFn: async (messageData: any) => {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Return demo success response
-      return {
-        id: `msg-${Date.now()}`,
-        ...messageData,
-        createdAt: new Date().toISOString(),
-        isRead: false,
-        tenantId: patientProfile.tenantId
-      };
+  // Send message function (demo implementation)
+  const sendMessageMutation = {
+    mutate: async (messageData: any) => {
+      try {
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        toast({
+          title: "Success",
+          description: "Message sent successfully!",
+        });
+        setMessageForm({ subject: "", message: "", priority: "normal" });
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to send message",
+          variant: "destructive",
+        });
+      }
     },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Message sent successfully!",
-      });
-      setMessageForm({ subject: "", message: "", priority: "normal" });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send message",
-        variant: "destructive",
-      });
-    },
-  });
+    isPending: false
+  };
 
   const handleBookAppointment = (data: AppointmentFormData) => {
     bookAppointmentMutation.mutate(data);
