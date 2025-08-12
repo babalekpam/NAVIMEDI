@@ -25,9 +25,6 @@ export function PatientAccessRequestManager({ userRole }: PatientAccessRequestMa
   const [urgency, setUrgency] = useState('normal');
   const [accessType, setAccessType] = useState('read');
   const [accessDuration, setAccessDuration] = useState('24'); // Hours
-  const [accessContext, setAccessContext] = useState('routine');
-  const [patientSensitivityLevel, setPatientSensitivityLevel] = useState('standard');
-  const [dataCategories, setDataCategories] = useState<string[]>([]);
   
   // Search states
   const [patientSearchTerm, setPatientSearchTerm] = useState('');
@@ -68,13 +65,10 @@ export function PatientAccessRequestManager({ userRole }: PatientAccessRequestMa
       
       return apiRequest('/api/patient-access-requests', {
         method: 'POST',
-        body: {
+        body: JSON.stringify({
           ...data,
-          accessGrantedUntil: accessGrantedUntil.toISOString(),
-          accessContext,
-          patientSensitivityLevel,
-          dataCategories
-        }
+          accessGrantedUntil: accessGrantedUntil.toISOString()
+        })
       });
     },
     onSuccess: () => {
@@ -100,7 +94,7 @@ export function PatientAccessRequestManager({ userRole }: PatientAccessRequestMa
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       return apiRequest(`/api/patient-access-requests/${id}`, {
         method: 'PUT',
-        body: data
+        body: JSON.stringify(data)
       });
     },
     onSuccess: () => {
@@ -391,71 +385,6 @@ export function PatientAccessRequestManager({ userRole }: PatientAccessRequestMa
                       <SelectItem value="72">72 Hours</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-
-                {/* Access Context */}
-                <div>
-                  <Label htmlFor="context">Access Context</Label>
-                  <Select value={accessContext} onValueChange={setAccessContext}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select access context" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="routine">Routine Care</SelectItem>
-                      <SelectItem value="emergency">Emergency</SelectItem>
-                      <SelectItem value="consultation">Consultation</SelectItem>
-                      <SelectItem value="research">Research</SelectItem>
-                      <SelectItem value="legal">Legal/Compliance</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Patient Sensitivity Level */}
-                <div>
-                  <Label htmlFor="sensitivity">Patient Sensitivity Level</Label>
-                  <Select value={patientSensitivityLevel} onValueChange={setPatientSensitivityLevel}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select patient sensitivity level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="standard">Standard</SelectItem>
-                      <SelectItem value="sensitive">Sensitive</SelectItem>
-                      <SelectItem value="restricted">Restricted</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Data Categories */}
-                <div className="space-y-2">
-                  <Label>Data Categories Needed</Label>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    {[
-                      'medical_records',
-                      'billing', 
-                      'sensitive_notes',
-                      'mental_health',
-                      'genetic_data',
-                      'lab_results'
-                    ].map((category) => (
-                      <label key={category} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={dataCategories.includes(category)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setDataCategories([...dataCategories, category]);
-                            } else {
-                              setDataCategories(dataCategories.filter(c => c !== category));
-                            }
-                          }}
-                          className="rounded border-gray-300"
-                        />
-                        <span className="text-sm">
-                          {category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
                 </div>
 
                 <div>

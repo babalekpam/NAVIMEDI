@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +8,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield, Building2 } from "lucide-react";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 import { apiRequest } from "@/lib/queryClient";
-import MfaVerify from "./mfa-verify";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -17,9 +15,7 @@ export default function Login() {
   const [tenantId, setTenantId] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [requiresMfa, setRequiresMfa] = useState(false);
   const [, setLocation] = useLocation();
-  const { login, setAuthData } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +28,10 @@ export default function Login() {
     setError("");
 
     try {
-      // First check if MFA is required with a direct API call
+      // Clear any existing tokens first
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
+      
       const response = await apiRequest("/api/auth/login", {
         method: "POST",
         body: {
@@ -42,71 +41,37 @@ export default function Login() {
         }
       });
 
-      // Check if MFA is required
-      if (response.requiresMfa) {
-        setRequiresMfa(true);
-        setIsLoading(false);
-        return;
-      }
-
-      // Use the auth context login function for proper state management
-      await login(username, password, tenantId, setLocation);
+      // Store auth token and user data
+      localStorage.setItem("auth_token", response.token);
+      localStorage.setItem("auth_user", JSON.stringify(response.user));
       
+      console.log('Login page - user role:', response.user.role);
+      
+      // Role-based redirection matching auth context logic
+      if (response.user.mustChangePassword || response.user.isTemporaryPassword) {
+        window.location.href = '/change-password';
+      } else if (response.user.role === 'patient') {
+        window.location.href = '/patient-portal';
+      } else if (response.user.role === 'super_admin') {
+        console.log('Redirecting super admin to super-admin-dashboard');
+        window.location.href = '/super-admin-dashboard';
+      } else if (response.user.role === 'tenant_admin' || response.user.role === 'director') {
+        window.location.href = '/admin-dashboard';
+      } else if (response.user.role === 'lab_technician') {
+        window.location.href = '/laboratory-dashboard';
+      } else if (response.user.role === 'pharmacist') {
+        window.location.href = '/pharmacy-dashboard';
+      } else if (response.user.role === 'receptionist') {
+        window.location.href = '/receptionist-dashboard';
+      } else {
+        window.location.href = '/dashboard';
+      }
     } catch (err: any) {
       setError(err.message || "Login failed");
     } finally {
       setIsLoading(false);
     }
   };
-
-  const handleMfaSuccess = (token: string, user: any) => {
-    // Store auth token and user data in localStorage
-    localStorage.setItem("auth_token", token);
-    localStorage.setItem("auth_user", JSON.stringify(user));
-    
-    // Update auth context state
-    setAuthData(token, user);
-    
-    console.log('MFA Login success - user role:', user.role);
-    
-    // Determine redirect path based on user role
-    let redirectPath = '/dashboard';
-    if (user.mustChangePassword || user.isTemporaryPassword) {
-      redirectPath = '/change-password';
-    } else if (user.role === 'patient') {
-      redirectPath = '/patient-portal';
-    } else if (user.role === 'super_admin') {
-      redirectPath = '/super-admin-dashboard';
-    } else if (user.role === 'tenant_admin' || user.role === 'director') {
-      redirectPath = '/admin-dashboard';
-    } else if (user.role === 'lab_technician') {
-      redirectPath = '/laboratory-dashboard';
-    } else if (user.role === 'pharmacist') {
-      redirectPath = '/pharmacy-dashboard';
-    } else if (user.role === 'receptionist') {
-      redirectPath = '/receptionist-dashboard';
-    }
-    
-    // Use React routing for navigation
-    setLocation(redirectPath);
-  };
-
-  const handleMfaBack = () => {
-    setRequiresMfa(false);
-    setError("");
-  };
-
-  if (requiresMfa) {
-    return (
-      <MfaVerify
-        username={username}
-        password={password}
-        tenantId={tenantId}
-        onMfaSuccess={handleMfaSuccess}
-        onBack={handleMfaBack}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -142,9 +107,6 @@ export default function Login() {
                 value={tenantId}
                 onChange={(e) => setTenantId(e.target.value)}
               />
-              <p className="text-xs text-gray-500">
-                You can only access organizations you are authorized for
-              </p>
             </div>
 
             <div className="space-y-2">

@@ -42,12 +42,8 @@ The Carnet Healthcare application provides multiple health check endpoints for d
 
 ### Replit Deployments
 For Replit deployments, configure the health check endpoint to use:
-- **PRIMARY RECOMMENDED**: `/health` (fast JSON response, < 5ms)
-- **Ultra-fast alternative**: `/ping` (plain text "pong" response)
-- **Simple alternative**: `/ready` (plain text "OK" response)
-
-**CRITICAL**: Set your deployment health check path to `/health` in Replit deployment settings.
-**DO NOT use `/` (root path)** - it has been simplified but `/health` is optimized specifically for deployment health checks.
+- **Primary**: `/health`
+- **Fallback**: `/ping`
 
 ### Docker/Container Deployments
 ```yaml
@@ -87,28 +83,10 @@ readinessProbe:
 - Safe to call at high frequency (every few seconds)
 - No authentication required
 
-## Root Endpoint Optimization
-✅ **OPTIMIZED**: The root endpoint (`/`) has been simplified for better deployment compatibility:
-- **For basic health checks**: Returns immediate JSON health status (< 5ms)
-- **For browsers**: Serves the frontend React application
-- **Simple detection**: Minimal User-Agent checking to avoid complex logic
-- **Recommendation**: Use dedicated `/health` endpoint for deployment health checks
+## Root Endpoint Note
+The root endpoint (`/`) serves the frontend application and is not suitable for health checks as it:
+- Returns HTML content, not JSON
+- Takes longer to respond due to frontend loading
+- Includes complex JavaScript and CSS assets
 
-✅ **NEW**: Dedicated `/health` endpoint provides optimal deployment health checking:
-- **Ultra-fast response**: < 5ms response time
-- **No complex logic**: Direct status response without detection overhead
-- **Production optimized**: Bypasses logging and middleware for maximum performance
-
-## Deployment Troubleshooting
-
-### "Health check failing because the application isn't responding to the / endpoint"
-This error occurs when the deployment system is configured to use the root endpoint (`/`) for health checks. 
-
-**Solution**: Configure your deployment to use a dedicated health check endpoint instead:
-- For fastest response: `/ready` or `/ping`
-- For detailed status: `/health` or `/deployment-health`
-
-**Example configurations:**
-- Replit: Change health check path from `/` to `/health`
-- Docker healthcheck: `curl -f http://localhost:5000/ready`
-- Load balancer: Point health checks to `/ping` instead of `/`
+Always use the dedicated health check endpoints listed above for deployment monitoring.

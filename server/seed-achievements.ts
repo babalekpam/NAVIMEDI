@@ -265,15 +265,9 @@ export async function seedAchievements() {
 if (import.meta.url === new URL(process.argv[1], 'file:').href) {
   seedAchievements().then(() => {
     console.log("🏆 Achievement seeding completed");
-    // Don't exit process in production environment
-    if (process.env.NODE_ENV !== 'production') {
-      process.exit(0);
-    }
+    process.exit(0);
   }).catch((error) => {
     console.error("❌ Achievement seeding failed:", error);
-    // Don't exit process in production environment 
-    if (process.env.NODE_ENV !== 'production') {
-      process.exit(1);
-    }
+    process.exit(1);
   });
 }

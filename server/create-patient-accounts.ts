@@ -107,15 +107,11 @@ async function createPatientAccounts() {
   }
 }
 
-// Commenting out automatic execution to prevent deployment exit issues
-// This should be run manually when needed, not during deployment
-// createPatientAccounts().then(() => {
-//   console.log("Patient accounts setup completed");
-//   process.exit(0);
-// }).catch(error => {
-//   console.error("Patient accounts setup failed:", error);
-//   process.exit(1);
-// });
-
-// Export the function for manual execution when needed
-export { createPatientAccounts };
+// Run the function
+createPatientAccounts().then(() => {
+  console.log("Patient accounts setup completed");
+  process.exit(0);
+}).catch(error => {
+  console.error("Patient accounts setup failed:", error);
+  process.exit(1);
+});

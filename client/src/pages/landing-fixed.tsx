@@ -240,7 +240,7 @@ export default function LandingPage() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row justify-center gap-4 mt-12">
-            <Link href="/register">
+            <Link href="/organizations/register">
               <Button size="lg" className="px-8 py-4 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
                 <Building2 className="w-5 h-5 mr-2" />
                 Register Organization
@@ -416,7 +416,7 @@ export default function LandingPage() {
             Join thousands of healthcare organizations already using NaviMED for better patient outcomes.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link href="/register">
+            <Link href="/organizations/register">
               <Button size="lg" variant="secondary" className="px-8 py-4 text-lg">
                 <Rocket className="w-5 h-5 mr-2" />
                 Get Started Today
@@ -474,7 +474,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 NAVIMED By ARGILETTE Labs. All rights reserved. Next-Generation Healthcare Management Platform.</p>
+            <p>&copy; 2025 {brandName}. All rights reserved. Next-Generation Healthcare Management Platform.</p>
           </div>
         </div>
       </footer>

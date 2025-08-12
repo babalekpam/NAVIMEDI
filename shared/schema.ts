@@ -418,11 +418,6 @@ export const users = pgTable("users", {
   isTemporaryPassword: boolean("is_temporary_password").default(false),
   mustChangePassword: boolean("must_change_password").default(false),
   lastLogin: timestamp("last_login"),
-  // Multi-Factor Authentication fields
-  mfaEnabled: boolean("mfa_enabled").default(false),
-  mfaSecret: text("mfa_secret"), // TOTP secret key
-  mfaBackupCodes: jsonb("mfa_backup_codes"), // Array of backup recovery codes
-  lastMfaSetupAt: timestamp("last_mfa_setup_at"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
@@ -464,13 +459,6 @@ export const appointments = pgTable("appointments", {
   vitals: jsonb("vitals"),
   diagnosis: jsonb("diagnosis").default('[]'),
   treatmentPlan: text("treatment_plan"),
-  // Telemedicine fields
-  isTelemedicine: boolean("is_telemedicine").default(false),
-  videoCallLink: text("video_call_link"),
-  preferredDevice: text("preferred_device"), // computer, tablet, smartphone
-  telemedicineNotes: text("telemedicine_notes"),
-  videoCallStarted: timestamp("video_call_started"),
-  videoCallEnded: timestamp("video_call_ended"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
@@ -1216,40 +1204,12 @@ export const patientAccessRequests = pgTable("patient_access_requests", {
   reason: text("reason").notNull(),
   urgency: text("urgency").notNull().default('normal'), // low, normal, high, emergency
   status: accessRequestStatusEnum("status").default("pending").notNull(),
-  
-  // Multi-level approval system
-  currentApprovalLevel: integer("current_approval_level").default(1).notNull(),
-  requiredApprovalLevels: integer("required_approval_levels").default(1).notNull(),
-  approvalWorkflow: jsonb("approval_workflow").$type<{
-    levels: {
-      level: number;
-      approverRole: string; // physician, department_head, director, compliance_officer
-      required: boolean;
-      completed: boolean;
-      approvedBy?: string;
-      approvedAt?: string;
-      notes?: string;
-    }[];
-  }>(),
-  
-  // Context-based criteria
-  patientSensitivityLevel: text("patient_sensitivity_level").default("standard"), // standard, sensitive, restricted
-  accessContext: text("access_context").notNull().default("routine"), // routine, emergency, consultation, research, legal
-  riskLevel: text("risk_level").default("low"), // low, medium, high
-  dataCategories: text("data_categories").array().default([]), // medical_records, billing, sensitive_notes, mental_health, etc.
-  
   requestedDate: timestamp("requested_date").default(sql`CURRENT_TIMESTAMP`),
   reviewedDate: timestamp("reviewed_date"),
   reviewedBy: uuid("reviewed_by").references(() => users.id),
   reviewNotes: text("review_notes"),
   accessGrantedUntil: timestamp("access_granted_until"), // Temporary access expiry
   accessType: text("access_type").default("read").notNull(), // read, write, full
-  
-  // Auto-approval conditions
-  autoApprovalEligible: boolean("auto_approval_eligible").default(false),
-  autoApprovedAt: timestamp("auto_approved_at"),
-  autoApprovalReason: text("auto_approval_reason"),
-  
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
@@ -1276,76 +1236,6 @@ export const patientAccessAuditLog = pgTable("patient_access_audit_log", {
   
   // Metadata
   accessedAt: timestamp("accessed_at").default(sql`CURRENT_TIMESTAMP`)
-});
-
-// Multi-level Approval History
-export const patientAccessApprovalHistory = pgTable("patient_access_approval_history", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  accessRequestId: uuid("access_request_id").references(() => patientAccessRequests.id).notNull(),
-  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
-  
-  // Approval Details
-  approvalLevel: integer("approval_level").notNull(),
-  approverRole: text("approver_role").notNull(),
-  approverId: uuid("approver_id").references(() => users.id).notNull(),
-  action: text("action").notNull(), // approved, denied, escalated, returned
-  
-  // Decision Context
-  decision: text("decision").notNull(), // approve, deny, request_more_info, escalate
-  notes: text("notes"),
-  conditions: text("conditions"), // Any special conditions for approval
-  expiryExtension: text("expiry_extension"), // Additional time granted (stored as text)
-  
-  // Risk Assessment
-  riskAssessment: jsonb("risk_assessment").$type<{
-    level: string;
-    factors: string[];
-    mitigations: string[];
-  }>(),
-  
-  // Timestamps
-  decidedAt: timestamp("decided_at").default(sql`CURRENT_TIMESTAMP`),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
-});
-
-// Approval Workflow Templates
-export const approvalWorkflowTemplates = pgTable("approval_workflow_templates", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
-  
-  // Template Details
-  name: text("name").notNull(),
-  description: text("description"),
-  context: text("context").notNull(), // routine, sensitive, emergency, research
-  
-  // Workflow Configuration
-  workflow: jsonb("workflow").notNull().$type<{
-    levels: {
-      level: number;
-      approverRole: string;
-      required: boolean;
-      timeoutHours: number;
-      autoApprovalCriteria?: {
-        conditions: string[];
-        maxAccessDuration: number;
-      };
-    }[];
-  }>(),
-  
-  // Trigger Conditions
-  triggerConditions: jsonb("trigger_conditions").$type<{
-    patientSensitivity: string[];
-    requestType: string[];
-    urgency: string[];
-    dataCategories: string[];
-    riskLevel: string[];
-  }>(),
-  
-  isActive: boolean("is_active").default(true),
-  isDefault: boolean("is_default").default(false),
-  
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
 export const phraseTranslations = pgTable("phrase_translations", {
@@ -2747,8 +2637,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  lastLogin: true,
-  lastMfaSetupAt: true
+  lastLogin: true
 });
 
 export const insertPatientSchema = createInsertSchema(patients).omit({
@@ -3140,21 +3029,7 @@ export const insertPatientAccessRequestSchema = createInsertSchema(patientAccess
   createdAt: true,
   updatedAt: true,
   requestedDate: true,
-  reviewedDate: true,
-  currentApprovalLevel: true,
-  autoApprovedAt: true
-});
-
-export const insertPatientAccessApprovalHistorySchema = createInsertSchema(patientAccessApprovalHistory).omit({
-  id: true,
-  createdAt: true,
-  decidedAt: true
-});
-
-export const insertApprovalWorkflowTemplateSchema = createInsertSchema(approvalWorkflowTemplates).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
+  reviewedDate: true
 });
 
 export const insertPatientAccessAuditLogSchema = createInsertSchema(patientAccessAuditLog).omit({
@@ -3184,12 +3059,6 @@ export type InsertPatientAccessRequest = z.infer<typeof insertPatientAccessReque
 
 export type PatientAccessAuditLog = typeof patientAccessAuditLog.$inferSelect;
 export type InsertPatientAccessAuditLog = z.infer<typeof insertPatientAccessAuditLogSchema>;
-
-export type PatientAccessApprovalHistory = typeof patientAccessApprovalHistory.$inferSelect;
-export type InsertPatientAccessApprovalHistory = z.infer<typeof insertPatientAccessApprovalHistorySchema>;
-
-export type ApprovalWorkflowTemplate = typeof approvalWorkflowTemplates.$inferSelect;
-export type InsertApprovalWorkflowTemplate = z.infer<typeof insertApprovalWorkflowTemplateSchema>;
 
 // Work Shifts Schema and Types
 export const insertWorkShiftSchema = createInsertSchema(workShifts).omit({

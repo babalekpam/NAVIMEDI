@@ -235,18 +235,10 @@ async function createDarTestPatient() {
     
   } catch (error) {
     console.error('❌ Error creating test patient:', error);
-    // Don't exit process in production environment
-    if (process.env.NODE_ENV !== 'production') {
-      process.exit(1);
-    }
+    process.exit(1);
   } finally {
     await pool.end();
   }
 }
 
-// Commenting out automatic execution to prevent deployment exit issues
-// This should be run manually when needed, not during deployment
-// createDarTestPatient();
-
-// Export the function for manual execution when needed
-export { createDarTestPatient };
+createDarTestPatient();

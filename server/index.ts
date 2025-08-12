@@ -8,90 +8,77 @@ import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { trialSuspensionService } from "./trial-suspension-service";
 import { createTestHospital } from "./create-test-hospital";
-import path from "path";
 
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-// ULTRA-FAST health check endpoint for Replit deployments
-// Responds immediately without any complex logic or detection
+
+
+// Multiple health check endpoints for deployment monitoring
+// These must respond immediately without any heavy operations
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
+  res.status(200).json({ 
+    status: 'ok', 
     service: 'carnet-healthcare',
-    uptime: Math.floor(process.uptime()),
-    timestamp: Date.now()
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
   });
 });
 
-// Immediate health check endpoint - fastest possible response
-app.get('/status', (req, res) => {
-  res.status(200).send('OK');
-});
-
-// Even simpler health check endpoints for different deployment systems
-app.get('/ping', (req, res) => {
-  res.status(200).send('pong');
-});
-
-app.get('/ready', (req, res) => {
-  res.status(200).send('OK');
-});
-
-// Minimal root endpoint - only handles basic health checks and passes through to frontend
-app.get('/', (req, res, next) => {
-  // Only check for the most basic health check indicators (fast detection)
-  const userAgent = req.get('User-Agent');
-  const accept = req.get('Accept');
-  
-  // Simple, fast detection for common health check tools
-  if (
-    !userAgent || 
-    userAgent.includes('curl') ||
-    userAgent.includes('health-check') ||
-    req.query.health !== undefined ||
-    req.headers['x-health-check'] !== undefined
-  ) {
-    return res.status(200).json({
-      status: 'ok',
-      service: 'carnet-healthcare',
-      uptime: Math.floor(process.uptime())
-    });
-  }
-  
-  // For all other requests, continue to frontend serving
-  next();
-});
-
-// Additional compatibility health check endpoints
 app.get('/healthz', (req, res) => {
   res.status(200).json({ 
     status: 'ok', 
     service: 'carnet-healthcare',
-    timestamp: Date.now()
+    timestamp: new Date().toISOString()
   });
+});
+
+app.get('/status', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    service: 'carnet-healthcare',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Simple text responses for deployment systems that expect plain text
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
+});
+
+// Additional health endpoints commonly used by deployment systems
+app.get('/ready', (req, res) => {
+  res.status(200).send('OK');
 });
 
 app.get('/alive', (req, res) => {
   res.status(200).send('OK');
 });
 
-// Express middleware setup
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.get('/liveness', (req, res) => {
+  res.status(200).json({ status: 'ok', alive: true });
+});
+
+app.get('/readiness', (req, res) => {
+  res.status(200).json({ status: 'ok', ready: true });
+});
+
+// Explicit deployment health check endpoint
+app.get('/deployment-health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    service: 'carnet-healthcare',
+    deployment: 'ready',
+    timestamp: new Date().toISOString()
+  });
+});
+
+
 
 app.use((req, res, next) => {
-  const path = req.path;
-  
-  // Skip logging and processing for health check endpoints to improve performance
-  const isHealthEndpoint = path === '/health' || path === '/ping' || path === '/ready' || 
-                           path === '/alive' || path === '/healthz' || path === '/liveness' || 
-                           path === '/readiness';
-  
-  if (isHealthEndpoint) {
-    return next();
-  }
-  
   const start = Date.now();
+  const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
@@ -178,8 +165,7 @@ async function initializePlatform() {
   }
 }
 
-// Initialize server and keep running
-async function startServer() {
+(async () => {
   const server = await registerRoutes(app);
 
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
@@ -221,77 +207,19 @@ async function startServer() {
   }, () => {
     log(`serving on port ${port}`);
     
-    // Initialize platform after server is running - non-blocking
+    // Initialize platform after server is running
     initializePlatform().catch(error => {
       console.error("Platform initialization error:", error);
     });
-    
-    // Keep the process alive for production deployments
-    if (process.env.NODE_ENV === 'production') {
-      // Prevent the process from exiting - multiple approaches for robustness
-      process.stdin.resume();
-      
-      // Additional process keep-alive mechanisms
-      setInterval(() => {
-        // Keep process alive with minimal CPU usage
-      }, 300000); // 5 minutes
-      
-      // Log server ready status for deployment verification
-      console.log('🚀 Server ready and accepting connections');
-      console.log('📊 Health check endpoints available at /health, /ping, /ready, /status');
-      console.log('💪 Production server configured to stay alive indefinitely');
-    }
   });
 
-  // Handle process errors to prevent crashes - keep server alive in production
+  // Handle process errors to prevent crashes
   process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-    // Don't exit process in production for unhandled rejections
-    if (process.env.NODE_ENV !== 'production') {
-      console.error('Warning: Unhandled promise rejection in development');
-    }
   });
 
   process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
-    // Keep production server alive - never exit in production
-    if (process.env.NODE_ENV === 'production') {
-      console.error('Keeping production server alive despite uncaught exception');
-      console.error('Error details:', error.stack || error.message);
-    } else {
-      console.error('Development environment - logging error but keeping server alive');
-      // Don't exit even in development for deployment compatibility
-    }
+    process.exit(1);
   });
-}
-
-// Start the server - ensure deployment compatibility
-startServer().catch(error => {
-  console.error('Failed to start server:', error);
-  console.error('Error details:', error.stack || error.message);
-  
-  // Never exit in any environment for deployment compatibility
-  console.error('Keeping process alive despite startup failure for health check compatibility');
-  
-  // Set up a minimal health check server as fallback
-  const http = require('http');
-  const fallbackServer = http.createServer((req: any, res: any) => {
-    if (req.url === '/health' || req.url === '/ping' || req.url === '/ready') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ 
-        status: 'degraded', 
-        service: 'carnet-healthcare',
-        message: 'Main server failed to start, running in fallback mode',
-        timestamp: Date.now() 
-      }));
-    } else {
-      res.writeHead(503, { 'Content-Type': 'text/plain' });
-      res.end('Service temporarily unavailable');
-    }
-  });
-  
-  const port = parseInt(process.env.PORT || '5000', 10);
-  fallbackServer.listen(port, '0.0.0.0', () => {
-    console.log(`Fallback health check server running on port ${port}`);
-  });
-});
+})();

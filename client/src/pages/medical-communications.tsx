@@ -72,7 +72,8 @@ export default function MedicalCommunications() {
   const createCommunicationMutation = useMutation({
     mutationFn: async (data: any) => {
       const { apiRequest } = await import("@/lib/queryClient");
-      return apiRequest("POST", "/api/medical-communications", data);
+      const response = await apiRequest("POST", "/api/medical-communications", data);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/medical-communications"] });
@@ -83,7 +84,8 @@ export default function MedicalCommunications() {
   const markAsReadMutation = useMutation({
     mutationFn: async (id: string) => {
       const { apiRequest } = await import("@/lib/queryClient");
-      return apiRequest("PATCH", `/api/medical-communications/${id}`, { isRead: true });
+      const response = await apiRequest("PATCH", `/api/medical-communications/${id}`, { isRead: true });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/medical-communications"] });
@@ -95,12 +97,9 @@ export default function MedicalCommunications() {
       const patient = patients.find(p => p.id === comm.patientId);
       const patientName = patient ? `${patient.firstName} ${patient.lastName}` : "";
       
-      const originalContent = typeof comm.originalContent === 'string' 
-        ? JSON.parse(comm.originalContent) 
-        : comm.originalContent || {};
       const matchesSearch = patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           originalContent.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           originalContent.content?.toLowerCase().includes(searchQuery.toLowerCase());
+                           comm.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           comm.message?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesPriority = priorityFilter === "all" || comm.priority === priorityFilter;
       const matchesType = typeFilter === "all" || comm.type === typeFilter;
       const matchesLanguage = languageFilter === "all" || comm.originalLanguage === languageFilter;
@@ -292,22 +291,13 @@ export default function MedicalCommunications() {
                               <Badge variant="destructive" className="text-xs">New</Badge>
                             )}
                             <Badge variant="secondary" className="text-xs">
-                              From Staff
+                              {comm.senderRole === 'patient' ? 'From Patient' : 'From Staff'}
                             </Badge>
                           </div>
-                          {(() => {
-                            const originalContent = typeof comm.originalContent === 'string' 
-                              ? JSON.parse(comm.originalContent) 
-                              : comm.originalContent || {};
-                            return (
-                              <>
-                                <p className="text-sm font-medium mb-1">{originalContent.title || 'No title'}</p>
-                                <p className="text-sm text-gray-600 line-clamp-2">{originalContent.content || 'No content'}</p>
-                              </>
-                            );
-                          })()}
+                          <p className="text-sm font-medium mb-1">{comm.subject}</p>
+                          <p className="text-sm text-gray-600 line-clamp-2">{comm.message}</p>
                           <p className="text-xs text-gray-400 mt-2">
-                            {comm.createdAt ? new Date(comm.createdAt).toLocaleDateString() : 'N/A'} at {comm.createdAt ? new Date(comm.createdAt).toLocaleTimeString() : 'N/A'}
+                            {new Date(comm.sentAt).toLocaleDateString()} at {new Date(comm.sentAt).toLocaleTimeString()}
                           </p>
                         </div>
                         <Eye className="h-4 w-4 text-gray-400" />

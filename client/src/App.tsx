@@ -15,7 +15,6 @@ import LandingPage from "@/pages/landing-fixed";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import RegisterOrganization from "@/pages/register-organization";
-import MfaSetup from "@/pages/mfa-setup";
 import Dashboard from "@/pages/dashboard";
 import Patients from "@/pages/patients";
 import PatientMedicalRecords from "@/pages/patient-medical-records";
@@ -74,7 +73,6 @@ import { PatientManagement } from "@/pages/docs/patient-management";
 import { ApiDocs as ApiDocsPage } from "@/pages/docs/api-docs";
 import { AppointmentScheduling } from "@/pages/docs/appointment-scheduling";
 import { BillingInsurance } from "@/pages/docs/billing-insurance";
-import MultiLevelApprovalsPage from "@/pages/multi-level-approvals";
 import { SecurityCompliance } from "@/pages/docs/security-compliance";
 import { PlatformOverview } from "@/pages/docs/platform-overview";
 import { OrganizationSetup } from "@/pages/docs/organization-setup";
@@ -123,11 +121,6 @@ function AppContent() {
         <Route path="/login" component={Login} />
         <Route path="/register" component={RegisterOrganization} />
         <Route path="/change-password" component={ChangePasswordPage} />
-        <Route path="/mfa-setup">
-          <ProtectedRoute>
-            <MfaSetup />
-          </ProtectedRoute>
-        </Route>
         <Route path="/dashboard">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
@@ -259,11 +252,6 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
-
-        {/* Public routes accessible even when logged in */}
-        <Route path="/marketplace" component={MarketplacePage} />
-        <Route path="/supplier-portal" component={SupplierPortal} />
-        <Route path="/supplier-signup" component={SupplierSignupPage} />
         <Route path="/patient-access-management">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
@@ -292,15 +280,7 @@ function AppContent() {
         </Route>
         <Route path="/telemedicine-booking">
           <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <TelemedicineBooking />
-                </main>
-              </div>
-            </div>
+            <TelemedicineBooking />
           </ProtectedRoute>
         </Route>
         <Route path="/doctor-calendar">
@@ -425,19 +405,6 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <Reports />
-                </main>
-              </div>
-            </div>
-          </ProtectedRoute>
-        </Route>
-        <Route path="/multi-level-approvals">
-          <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <MultiLevelApprovalsPage />
                 </main>
               </div>
             </div>

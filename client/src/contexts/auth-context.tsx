@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User } from "@shared/schema";
-import { useLocation } from "wouter";
 
 interface AuthUser {
   id: string;
@@ -18,8 +17,7 @@ interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
-  login: (username: string, password: string, tenantId: string, navigate?: (path: string) => void) => Promise<void>;
-  setAuthData: (token: string, user: AuthUser) => void;
+  login: (username: string, password: string, tenantId: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -70,7 +68,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setIsLoading(false);
   }, []);
 
-  const login = async (username: string, password: string, tenantId: string, navigate?: (path: string) => void) => {
+  const login = async (username: string, password: string, tenantId: string) => {
     const loginData: any = { username, password };
     // Only include tenantId if it's not empty (for regular users)
     if (tenantId && tenantId.trim() !== "") {
@@ -101,35 +99,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setToken(data.token);
     setUser(data.user);
     
-    // Determine redirect path based on user role
-    let redirectPath = '/dashboard';
-    if (data.user.mustChangePassword || data.user.isTemporaryPassword) {
-      redirectPath = '/change-password';
-    } else if (data.user.role === 'patient') {
-      redirectPath = '/patient-portal';
-    } else if (data.user.role === 'super_admin') {
-      redirectPath = '/super-admin-dashboard';
-    } else if (data.user.role === 'tenant_admin' || data.user.role === 'director') {
-      redirectPath = '/admin-dashboard';
-    } else if (data.user.role === 'lab_technician') {
-      redirectPath = '/laboratory-dashboard';
-    } else if (data.user.role === 'pharmacist') {
-      redirectPath = '/pharmacy-dashboard';
-    } else if (data.user.role === 'receptionist') {
-      redirectPath = '/receptionist-dashboard';
-    }
-    
-    // Use React routing if available, otherwise fall back to window.location
-    if (navigate) {
-      navigate(redirectPath);
-    } else {
-      window.location.href = redirectPath;
-    }
-  };
-
-  const setAuthData = (token: string, user: AuthUser) => {
-    setToken(token);
-    setUser(user);
+    // Add a small delay to ensure state is set before redirect
+    setTimeout(() => {
+      // Check if user needs to change temporary password
+      if (data.user.mustChangePassword || data.user.isTemporaryPassword) {
+        window.location.href = '/change-password';
+      } else if (data.user.role === 'patient') {
+        window.location.href = '/patient-portal';
+      } else if (data.user.role === 'super_admin') {
+        // Super admin gets their own dashboard with platform oversight
+        console.log('Redirecting super admin to dashboard');
+        window.location.href = '/super-admin-dashboard';
+      } else if (data.user.role === 'tenant_admin' || data.user.role === 'director') {
+        // Redirect tenant admins to unified admin dashboard
+        window.location.href = '/admin-dashboard';
+      } else if (data.user.role === 'lab_technician') {
+        window.location.href = '/laboratory-dashboard';
+      } else if (data.user.role === 'pharmacist') {
+        window.location.href = '/pharmacy-dashboard';
+      } else if (data.user.role === 'receptionist') {
+        window.location.href = '/receptionist-dashboard';
+      } else {
+        window.location.href = '/dashboard';
+      }
+    }, 100);
   };
 
   const logout = () => {
@@ -140,7 +133,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, setAuthData, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
