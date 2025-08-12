@@ -46,7 +46,7 @@ const initializeAppointments = (): SharedAppointment[] => {
     {
       id: "appt-demo-2", 
       patientId: "patient-2",
-      providerId: "2cd7fc68-02a0-4924-b564-0dd1bd7b247b", // Lisa Chen
+      providerId: "5fe10688-b38e-458e-b38b-bf8a2507b19a", // Dr. Michael Smith (changed to Smith)
       appointmentDate: "2024-08-20T14:30:00.000Z",
       type: "follow-up",
       reason: "Family medicine consultation",
@@ -54,7 +54,7 @@ const initializeAppointments = (): SharedAppointment[] => {
       priority: "high",
       bookedAt: new Date().toISOString(),
       patientName: "Sarah Williams",
-      doctorName: "Lisa Chen"
+      doctorName: "Dr. Michael Smith"
     }
   ];
   

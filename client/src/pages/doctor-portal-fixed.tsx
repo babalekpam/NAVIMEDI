@@ -162,7 +162,7 @@ const DEMO_PATIENTS = {
   }
 };
 
-// Convert to array for easier use
+// Convert to array for easier use - Sarah Williams should appear for all doctors
 const PATIENTS_ARRAY = Object.values(DEMO_PATIENTS);
 
 export default function DoctorPortalFixed() {
