@@ -179,19 +179,46 @@ export default function TelemedicineBooking() {
     }
   };
 
-  const handleBookingSubmit = async () => {
-    try {
-      // In real app, this would submit to API
-      console.log("Booking submitted:", bookingForm);
+  // Create appointment booking mutation
+  const createAppointmentMutation = useMutation({
+    mutationFn: async (bookingData: TelemedicineBooking) => {
+      const { apiRequest } = await import("@/lib/queryClient");
+      return apiRequest("/api/patient/book-appointment", {
+        method: "POST",
+        body: JSON.stringify({
+          doctorId: bookingData.providerId,
+          appointmentDate: bookingData.date,
+          appointmentTime: bookingData.time,
+          reason: bookingData.reason,
+          type: "telemedicine",
+          symptoms: bookingData.symptoms,
+          urgency: bookingData.urgency,
+          patientNotes: bookingData.patientNotes
+        }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/patient/appointments"] });
       setStep(4);
       
       // Show success and redirect after delay
       setTimeout(() => {
         window.location.href = "/patient-portal";
       }, 3000);
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Booking failed:", error);
+      alert("Booking failed: " + (error as Error).message);
+    },
+  });
+
+  const handleBookingSubmit = async () => {
+    if (!selectedProvider || !selectedDate || !selectedTime) {
+      alert("Please complete all required fields");
+      return;
     }
+
+    createAppointmentMutation.mutate(bookingForm);
   };
 
   const renderProviderSelection = () => (
@@ -510,9 +537,16 @@ export default function TelemedicineBooking() {
         </Button>
         <Button 
           onClick={handleBookingSubmit}
-          disabled={!bookingForm.reason || !techCheckPassed}
+          disabled={!bookingForm.reason || !techCheckPassed || createAppointmentMutation.isPending}
         >
-          Book Consultation
+          {createAppointmentMutation.isPending ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Booking...
+            </>
+          ) : (
+            "Book Consultation"
+          )}
         </Button>
       </div>
     </div>
