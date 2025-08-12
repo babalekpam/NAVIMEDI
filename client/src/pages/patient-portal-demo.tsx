@@ -68,30 +68,47 @@ const DEMO_PATIENTS = [
   }
 ];
 
+// REAL Metro General Hospital doctors from database
 const DEMO_DOCTORS = [
   {
-    id: "doc-1",
-    firstName: "Dr. Emily",
-    lastName: "Carter",
+    id: "0c6ed45a-13ff-4806-8c8e-b59c699e3d03",
+    firstName: "Dr. James",
+    lastName: "Williams",
     specialization: "Internal Medicine",
-    email: "e.carter@metrohealth.com",
+    email: "dr.williams@metrogeneral.com",
     availability: ["Monday", "Wednesday", "Friday"]
   },
   {
-    id: "doc-2", 
-    firstName: "Dr. James",
-    lastName: "Chen",
+    id: "720deedd-e634-4fc2-9f52-57b6bd7f52d9", 
+    firstName: "Dr. Sarah",
+    lastName: "Johnson",
     specialization: "Cardiology",
-    email: "j.chen@metrohealth.com",
+    email: "dr.johnson@metrogeneral.com",
     availability: ["Tuesday", "Thursday", "Saturday"]
   },
   {
-    id: "doc-3",
-    firstName: "Dr. Maria",
-    lastName: "Rodriguez",
+    id: "2cd7fc68-02a0-4924-b564-0dd1bd7b247b",
+    firstName: "Dr. Lisa",
+    lastName: "Chen",
     specialization: "Family Medicine", 
-    email: "m.rodriguez@metrohealth.com",
+    email: "dr.chen@metrogeneral.com",
     availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+  },
+  {
+    id: "e6236087-ce86-4c24-9553-9fb8d6b7b960",
+    firstName: "Dr. Emily",
+    lastName: "Wilson",
+    specialization: "Pediatrics", 
+    email: "dr.wilson@metrogeneral.com",
+    availability: ["Monday", "Wednesday", "Friday"]
+  },
+  {
+    id: "49591cfd-ddb0-478c-aae9-b307ac138999",
+    firstName: "Dr. Carlos",
+    lastName: "Garcia",
+    specialization: "Orthopedics", 
+    email: "dr.garcia@metrogeneral.com",
+    availability: ["Tuesday", "Thursday"]
   }
 ];
 

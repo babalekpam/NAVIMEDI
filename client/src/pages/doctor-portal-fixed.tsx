@@ -20,37 +20,57 @@ import {
 } from 'lucide-react';
 import navimedLogo from "@assets/navimed-logo.jpg";
 
-// Demo doctors with credentials
+// REAL Metro General Hospital doctors from database
 const DEMO_DOCTORS = [
   {
-    id: "doc-1",
-    firstName: "Dr. Emily",
-    lastName: "Carter",
+    id: "0c6ed45a-13ff-4806-8c8e-b59c699e3d03",
+    firstName: "Dr. James",
+    lastName: "Williams",
     specialization: "Internal Medicine",
-    email: "e.carter@metrohealth.com",
+    email: "dr.williams@metrogeneral.com",
     phone: "(555) 101-2001",
     password: "doctor123",
     availability: ["Monday", "Wednesday", "Friday"]
   },
   {
-    id: "doc-2", 
-    firstName: "Dr. James",
-    lastName: "Chen",
+    id: "720deedd-e634-4fc2-9f52-57b6bd7f52d9", 
+    firstName: "Dr. Sarah",
+    lastName: "Johnson",
     specialization: "Cardiology",
-    email: "j.chen@metrohealth.com",
+    email: "dr.johnson@metrogeneral.com",
     phone: "(555) 101-2002",
     password: "doctor123",
     availability: ["Tuesday", "Thursday", "Saturday"]
   },
   {
-    id: "doc-3",
-    firstName: "Dr. Maria",
-    lastName: "Rodriguez",
+    id: "2cd7fc68-02a0-4924-b564-0dd1bd7b247b",
+    firstName: "Dr. Lisa",
+    lastName: "Chen",
     specialization: "Family Medicine", 
-    email: "m.rodriguez@metrohealth.com",
+    email: "dr.chen@metrogeneral.com",
     phone: "(555) 101-2003",
     password: "doctor123",
     availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+  },
+  {
+    id: "e6236087-ce86-4c24-9553-9fb8d6b7b960",
+    firstName: "Dr. Emily",
+    lastName: "Wilson",
+    specialization: "Pediatrics", 
+    email: "dr.wilson@metrogeneral.com",
+    phone: "(555) 101-2004",
+    password: "doctor123",
+    availability: ["Monday", "Wednesday", "Friday"]
+  },
+  {
+    id: "49591cfd-ddb0-478c-aae9-b307ac138999",
+    firstName: "Dr. Carlos",
+    lastName: "Garcia",
+    specialization: "Orthopedics", 
+    email: "dr.garcia@metrogeneral.com",
+    phone: "(555) 101-2005",
+    password: "doctor123",
+    availability: ["Tuesday", "Thursday"]
   }
 ];
 
@@ -92,7 +112,7 @@ export default function DoctorPortalFixed() {
     {
       id: "appt-1",
       patientId: "patient-1",
-      providerId: "doc-1",
+      providerId: "0c6ed45a-13ff-4806-8c8e-b59c699e3d03", // Dr. James Williams
       appointmentDate: "2024-08-15T10:00:00.000Z",
       type: "routine",
       reason: "Annual physical examination",
@@ -103,7 +123,7 @@ export default function DoctorPortalFixed() {
     {
       id: "appt-2", 
       patientId: "patient-2",
-      providerId: "doc-2",
+      providerId: "720deedd-e634-4fc2-9f52-57b6bd7f52d9", // Dr. Sarah Johnson
       appointmentDate: "2024-08-20T14:30:00.000Z",
       type: "follow-up",
       reason: "Blood pressure monitoring",
@@ -114,10 +134,10 @@ export default function DoctorPortalFixed() {
     {
       id: "appt-3",
       patientId: "patient-1",
-      providerId: "doc-2",
+      providerId: "2cd7fc68-02a0-4924-b564-0dd1bd7b247b", // Dr. Lisa Chen
       appointmentDate: "2024-08-22T09:15:00.000Z",
       type: "consultation",
-      reason: "Chest pain evaluation",
+      reason: "Family medicine consultation",
       status: "scheduled",
       priority: "urgent",
       bookedAt: new Date().toISOString()
@@ -125,10 +145,10 @@ export default function DoctorPortalFixed() {
     {
       id: "appt-4",
       patientId: "patient-3", 
-      providerId: "doc-3",
+      providerId: "e6236087-ce86-4c24-9553-9fb8d6b7b960", // Dr. Emily Wilson
       appointmentDate: "2024-08-18T11:00:00.000Z",
       type: "routine",
-      reason: "Diabetes checkup",
+      reason: "Pediatric checkup",
       status: "scheduled",
       priority: "normal",
       bookedAt: new Date().toISOString()
@@ -221,16 +241,16 @@ export default function DoctorPortalFixed() {
               <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-semibold mb-2">Demo Credentials:</h3>
                 <div className="space-y-2 text-sm">
-                  <p><strong>Dr. James Chen (Cardiology):</strong><br />
-                  Email: j.chen@metrohealth.com<br />
+                  <p><strong>Dr. Lisa Chen (Family Medicine):</strong><br />
+                  Email: dr.chen@metrogeneral.com<br />
                   Password: doctor123</p>
                   
-                  <p><strong>Dr. Emily Carter (Internal Medicine):</strong><br />
-                  Email: e.carter@metrohealth.com<br />
+                  <p><strong>Dr. James Williams (Internal Medicine):</strong><br />
+                  Email: dr.williams@metrogeneral.com<br />
                   Password: doctor123</p>
                   
-                  <p><strong>Dr. Maria Rodriguez (Family Medicine):</strong><br />
-                  Email: m.rodriguez@metrohealth.com<br />
+                  <p><strong>Dr. Sarah Johnson (Cardiology):</strong><br />
+                  Email: dr.johnson@metrogeneral.com<br />
                   Password: doctor123</p>
                 </div>
               </div>
