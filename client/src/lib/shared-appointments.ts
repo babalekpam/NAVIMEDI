@@ -91,11 +91,19 @@ export const SharedAppointmentService = {
 
   // Get appointments for a specific doctor
   getAppointmentsForDoctor(doctorId: string): SharedAppointment[] {
-    return sharedAppointments.filter(appt => appt.providerId === doctorId);
+    // Always refresh from localStorage first
+    this.getAllAppointments();
+    const filtered = sharedAppointments.filter(appt => appt.providerId === doctorId);
+    console.log(`=== DOCTOR APPOINTMENTS FOR ${doctorId} ===`);
+    console.log("All appointments:", sharedAppointments);
+    console.log("Filtered appointments:", filtered);
+    return filtered;
   },
 
   // Get appointments for a specific patient
   getAppointmentsForPatient(patientId: string): SharedAppointment[] {
+    // Always refresh from localStorage first
+    this.getAllAppointments();
     return sharedAppointments.filter(appt => appt.patientId === patientId);
   },
 

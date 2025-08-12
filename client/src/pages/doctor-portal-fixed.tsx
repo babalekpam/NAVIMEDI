@@ -191,8 +191,8 @@ export default function DoctorPortalFixed() {
     
     loadAppointments();
     
-    // Refresh appointments every 2 seconds to catch new bookings
-    const interval = setInterval(loadAppointments, 2000);
+    // Refresh appointments every 1 second to catch new bookings from patient portal
+    const interval = setInterval(loadAppointments, 1000);
     return () => clearInterval(interval);
   }, [refreshKey]);
 
