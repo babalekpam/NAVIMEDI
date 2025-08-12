@@ -20,47 +20,27 @@ import {
 } from 'lucide-react';
 import navimedLogo from "@assets/navimed-logo.jpg";
 
-// REAL Metro General Hospital doctors from database
+// EXACT Metro General Hospital doctors from database (matching names exactly)
 const DEMO_DOCTORS = [
   {
-    id: "0c6ed45a-13ff-4806-8c8e-b59c699e3d03",
-    firstName: "Dr. James",
-    lastName: "Williams",
+    id: "9049628e-cd05-4bd6-b08e-ee923c6dec10",
+    firstName: "Dr. David",
+    lastName: "Brown",
     specialization: "Internal Medicine",
-    email: "dr.williams@metrogeneral.com",
+    email: "dr.brown@metrogeneral.com",
     phone: "(555) 101-2001",
     password: "doctor123",
     availability: ["Monday", "Wednesday", "Friday"]
   },
   {
-    id: "720deedd-e634-4fc2-9f52-57b6bd7f52d9", 
-    firstName: "Dr. Sarah",
-    lastName: "Johnson",
-    specialization: "Cardiology",
-    email: "dr.johnson@metrogeneral.com",
-    phone: "(555) 101-2002",
-    password: "doctor123",
-    availability: ["Tuesday", "Thursday", "Saturday"]
-  },
-  {
     id: "2cd7fc68-02a0-4924-b564-0dd1bd7b247b",
-    firstName: "Dr. Lisa",
+    firstName: "Lisa",
     lastName: "Chen",
     specialization: "Family Medicine", 
     email: "dr.chen@metrogeneral.com",
-    phone: "(555) 101-2003",
+    phone: "(555) 101-2002",
     password: "doctor123",
     availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-  },
-  {
-    id: "e6236087-ce86-4c24-9553-9fb8d6b7b960",
-    firstName: "Dr. Emily",
-    lastName: "Wilson",
-    specialization: "Pediatrics", 
-    email: "dr.wilson@metrogeneral.com",
-    phone: "(555) 101-2004",
-    password: "doctor123",
-    availability: ["Monday", "Wednesday", "Friday"]
   },
   {
     id: "49591cfd-ddb0-478c-aae9-b307ac138999",
@@ -68,9 +48,69 @@ const DEMO_DOCTORS = [
     lastName: "Garcia",
     specialization: "Orthopedics", 
     email: "dr.garcia@metrogeneral.com",
-    phone: "(555) 101-2005",
+    phone: "(555) 101-2003",
     password: "doctor123",
     availability: ["Tuesday", "Thursday"]
+  },
+  {
+    id: "720deedd-e634-4fc2-9f52-57b6bd7f52d9", 
+    firstName: "Dr. Sarah",
+    lastName: "Johnson",
+    specialization: "Cardiology",
+    email: "dr.johnson@metrogeneral.com",
+    phone: "(555) 101-2004",
+    password: "doctor123",
+    availability: ["Tuesday", "Thursday", "Saturday"]
+  },
+  {
+    id: "93452ac4-f87e-4227-90f8-df124fe20cb9",
+    firstName: "Sofia",
+    lastName: "Martinez",
+    specialization: "Family Medicine", 
+    email: "dr.martinez@metrogeneral.com",
+    phone: "(555) 101-2005",
+    password: "doctor123",
+    availability: ["Monday", "Wednesday", "Friday"]
+  },
+  {
+    id: "e7d43e79-4dbf-4114-9065-eea501d6b380",
+    firstName: "Raj",
+    lastName: "Patel",
+    specialization: "Internal Medicine", 
+    email: "dr.patel@metrogeneral.com",
+    phone: "(555) 101-2006",
+    password: "doctor123",
+    availability: ["Monday", "Tuesday", "Thursday"]
+  },
+  {
+    id: "5fe10688-b38e-458e-b38b-bf8a2507b19a",
+    firstName: "Dr. Michael",
+    lastName: "Smith",
+    specialization: "Emergency Medicine", 
+    email: "dr.smith@metrogeneral.com",
+    phone: "(555) 101-2007",
+    password: "doctor123",
+    availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+  },
+  {
+    id: "0c6ed45a-13ff-4806-8c8e-b59c699e3d03",
+    firstName: "James",
+    lastName: "Williams",
+    specialization: "Internal Medicine",
+    email: "dr.williams@metrogeneral.com",
+    phone: "(555) 101-2008",
+    password: "doctor123",
+    availability: ["Monday", "Wednesday", "Friday"]
+  },
+  {
+    id: "e6236087-ce86-4c24-9553-9fb8d6b7b960",
+    firstName: "Dr. Emily",
+    lastName: "Wilson",
+    specialization: "Pediatrics", 
+    email: "dr.wilson@metrogeneral.com",
+    phone: "(555) 101-2009",
+    password: "doctor123",
+    availability: ["Monday", "Wednesday", "Friday"]
   }
 ];
 
@@ -241,12 +281,12 @@ export default function DoctorPortalFixed() {
               <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-semibold mb-2">Demo Credentials:</h3>
                 <div className="space-y-2 text-sm">
-                  <p><strong>Dr. Lisa Chen (Family Medicine):</strong><br />
+                  <p><strong>Lisa Chen (Family Medicine):</strong><br />
                   Email: dr.chen@metrogeneral.com<br />
                   Password: doctor123</p>
                   
-                  <p><strong>Dr. James Williams (Internal Medicine):</strong><br />
-                  Email: dr.williams@metrogeneral.com<br />
+                  <p><strong>Dr. David Brown (Internal Medicine):</strong><br />
+                  Email: dr.brown@metrogeneral.com<br />
                   Password: doctor123</p>
                   
                   <p><strong>Dr. Sarah Johnson (Cardiology):</strong><br />
