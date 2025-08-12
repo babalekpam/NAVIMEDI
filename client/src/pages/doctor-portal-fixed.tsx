@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { SharedAppointmentService, type SharedAppointment } from "@/lib/shared-appointments";
+import { AppointmentSync, type Appointment } from "@/lib/appointment-sync";
 import { 
   Calendar, 
   Clock, 
@@ -178,35 +178,33 @@ export default function DoctorPortalFixed() {
   const [appointmentType, setAppointmentType] = useState("");
   const [appointmentReason, setAppointmentReason] = useState("");
   const [appointmentPriority, setAppointmentPriority] = useState("normal");
-  // Get appointments from shared system with real-time updates
+  // Get appointments from sync system with real-time updates
   const [refreshKey, setRefreshKey] = useState(0);
-  const [appointments, setAppointments] = useState<SharedAppointment[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   
   useEffect(() => {
     const loadAppointments = () => {
-      const sharedAppointments = SharedAppointmentService.getAllAppointments();
-      setAppointments(sharedAppointments);
-      console.log("Loading shared appointments:", sharedAppointments);
+      console.log("🔄 Loading doctor appointments...");
+      const allAppointments = AppointmentSync.getAppointments();
+      setAppointments(allAppointments);
     };
     
     loadAppointments();
     
-    // Listen for localStorage changes from patient portal
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'shared-appointments') {
-        console.log("Storage change detected, reloading appointments");
-        loadAppointments();
-      }
+    // Listen for appointment events
+    const handleAppointmentAdded = () => {
+      console.log("🔔 New appointment detected!");
+      loadAppointments();
     };
     
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('appointmentAdded', handleAppointmentAdded);
     
-    // Refresh appointments every 1 second to catch new bookings from patient portal
-    const interval = setInterval(loadAppointments, 1000);
+    // Refresh every 2 seconds as backup
+    const interval = setInterval(loadAppointments, 2000);
     
     return () => {
       clearInterval(interval);
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('appointmentAdded', handleAppointmentAdded);
     };
   }, [refreshKey]);
 

@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { SharedAppointmentService } from "@/lib/shared-appointments";
+import { AppointmentSync } from "@/lib/appointment-sync";
 import { 
   Calendar, 
   Clock, 
@@ -196,9 +196,9 @@ export default function PatientPortalDemo() {
     },
   });
 
-  // Get real appointments from shared system for selected patient
+  // Get real appointments from sync system for selected patient
   const getPatientAppointments = (patientId: string) => {
-    return SharedAppointmentService.getAppointmentsForPatient(patientId);
+    return AppointmentSync.getPatientAppointments(patientId);
   };
 
   // Demo prescriptions for selected patient
@@ -263,17 +263,17 @@ export default function PatientPortalDemo() {
       const selectedDoctor = DEMO_DOCTORS.find(doc => doc.id === data.doctorId);
       
       if (selectedDoctor && selectedPatient) {
-        // Add appointment to shared system with debug logging
-        const appointmentId = SharedAppointmentService.addAppointment({
+        // Add appointment using new sync system
+        const appointmentId = AppointmentSync.addAppointment({
           patientId: selectedPatient.id,
-          providerId: data.doctorId,
-          appointmentDate: new Date(data.appointmentDate + 'T' + data.appointmentTime).toISOString(),
+          patientName: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
+          doctorId: data.doctorId,
+          doctorName: `${selectedDoctor.firstName} ${selectedDoctor.lastName}`,
+          date: data.appointmentDate,
+          time: data.appointmentTime,
           type: data.type,
           reason: data.reason,
-          status: "scheduled",
-          priority: data.priority,
-          patientName: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
-          doctorName: `${selectedDoctor.firstName} ${selectedDoctor.lastName}`
+          status: "scheduled"
         });
         
         console.log("=== APPOINTMENT BOOKING DEBUG ===");
@@ -292,18 +292,13 @@ export default function PatientPortalDemo() {
           patientName: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
           doctorName: `${selectedDoctor.firstName} ${selectedDoctor.lastName}`
         });
-        console.log("=== PATIENT PORTAL BOOKING DEBUG ===");
-        console.log("Appointment ID:", appointmentId);
-        console.log("Doctor ID selected:", data.doctorId);
-        console.log("All appointments after booking:", SharedAppointmentService.getAllAppointments());
-        console.log("Doctor's appointments:", SharedAppointmentService.getAppointmentsForDoctor(data.doctorId));
-        console.log("localStorage content:", localStorage.getItem('shared-appointments'));
-        
-        // Force browser storage event to notify other tabs
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'shared-appointments',
-          newValue: localStorage.getItem('shared-appointments')
-        }));
+        console.log("🎯 APPOINTMENT BOOKED SUCCESSFULLY!");
+        console.log("📝 Appointment ID:", appointmentId);
+        console.log("👤 Patient:", selectedPatient.firstName, selectedPatient.lastName);
+        console.log("👨‍⚕️ Doctor:", selectedDoctor.firstName, selectedDoctor.lastName, "ID:", data.doctorId);
+        console.log("📅 Date/Time:", data.appointmentDate, data.appointmentTime);
+        console.log("🏥 All appointments:", AppointmentSync.getAppointments());
+        console.log("👨‍⚕️ Doctor's appointments:", AppointmentSync.getDoctorAppointments(data.doctorId));
         
         // Force refresh to show new appointment
         setRefreshKey(prev => prev + 1);
