@@ -1946,11 +1946,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Patient record not found in this organization" });
       }
 
-      // Create appointment data
+      // Create appointment data with proper date parsing
+      const { appointmentDate, appointmentTime, doctorId, reason, type = 'general', duration = 30 } = req.body;
+      
+      // Combine date and time into a proper Date object
+      let appointmentDateTime;
+      if (appointmentDate && appointmentTime) {
+        appointmentDateTime = new Date(`${appointmentDate}T${appointmentTime}:00.000Z`);
+      } else {
+        appointmentDateTime = new Date(); // fallback to current time
+      }
+      
+      // Validate that the date is valid
+      if (isNaN(appointmentDateTime.getTime())) {
+        return res.status(400).json({ message: "Invalid appointment date or time" });
+      }
+      
+      // UUID validation regex
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      
+      // Determine the provider ID - prefer doctorId (if valid UUID), then primary physician, then fallback
+      let providerId = (doctorId && uuidRegex.test(doctorId)) ? doctorId : patientRecord.primaryPhysicianId;
+      
+      // If no valid provider ID, get the first available doctor in the tenant
+      if (!providerId) {
+        const doctors = await storage.getUsersByTenant(patientRecord.tenantId);
+        const availableDoctor = doctors.find(user => user.role === 'physician');
+        if (availableDoctor) {
+          providerId = availableDoctor.id;
+        } else {
+          return res.status(400).json({ message: "No available doctors found for appointment booking" });
+        }
+      }
+      
       const appointmentData = {
-        ...req.body,
         patientId: patientRecord.id,
         tenantId: patientRecord.tenantId,
+        providerId: providerId,
+        appointmentDate: appointmentDateTime,
+        type: type,
+        duration: duration,
+        notes: reason || '',
         status: 'scheduled' as const
       };
 
