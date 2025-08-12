@@ -93,6 +93,7 @@ import PharmacyBilling from "@/pages/pharmacy-billing";
 import MedicationInsuranceClaims from "@/pages/medication-insurance-claims";
 import PatientPortal from "@/pages/patient-portal";
 import PatientPortalNew from "@/pages/patient-portal-new";
+import PatientPortalDemo from "@/pages/patient-portal-demo";
 import PatientPortalStaff from "@/pages/patient-portal-staff";
 import ChangePasswordPage from "@/pages/change-password";
 import AdminDashboard from "@/pages/admin-dashboard";
@@ -273,6 +274,9 @@ function AppContent() {
         </Route>
         <Route path="/patient-portal-new">
           <PatientPortalNew />
+        </Route>
+        <Route path="/patient-portal-demo">
+          <PatientPortalDemo />
         </Route>
         <Route path="/patient-portal-staff">
           <ProtectedRoute>
