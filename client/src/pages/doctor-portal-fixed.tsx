@@ -253,6 +253,10 @@ export default function DoctorPortalFixed() {
                   <p><strong>Dr. Sarah Johnson (Cardiology):</strong><br />
                   Email: dr.johnson@metrogeneral.com<br />
                   Password: doctor123</p>
+                  
+                  <p><strong>Dr. Michael Smith (Emergency Medicine):</strong><br />
+                  Email: dr.smith@metrogeneral.com<br />
+                  Password: doctor123</p>
                 </div>
               </div>
             </CardContent>
@@ -462,7 +466,7 @@ export default function DoctorPortalFixed() {
                               className="flex items-center gap-1"
                               onClick={() => toast({
                                 title: "Appointment Details",
-                                description: `Viewing details for ${patient?.firstName} ${patient?.lastName}`,
+                                description: `Viewing details for ${appointment.patientName}`,
                               })}
                             >
                               <Eye className="h-4 w-4" />
