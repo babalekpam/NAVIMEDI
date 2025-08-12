@@ -1,7 +1,7 @@
 # Healthcare Management Platform
 
 ## Overview
-NaviMED is a multi-tenant healthcare platform designed to connect independent pharmacies with hospitals. Its primary purpose is to streamline prescription management, facilitate insurance claims, manage patient records, and enhance communication within the healthcare ecosystem. The platform aims to be a leading solution for pharmacy-hospital connectivity, improving efficiency, patient care, and secure, compliant data management.
+NaviMED is a multi-tenant healthcare platform connecting independent pharmacies and hospitals to streamline prescription management, insurance claims, patient records, and communication. Its goal is to improve efficiency, patient care, and secure, compliant data management within the healthcare ecosystem.
 
 ## User Preferences
 - Simple, everyday language for communication (user is non-technical)
