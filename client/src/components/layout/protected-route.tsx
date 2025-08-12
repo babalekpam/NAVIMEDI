@@ -17,10 +17,21 @@ export const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps)
   // Always call useEffect hook
   useEffect(() => {
     if (!authLoading && !user) {
-      setLocation("/login");
+      console.log('[ProtectedRoute] No user found, redirecting to appropriate login');
+      // Check if this is a patient-related page
+      const currentPath = window.location.pathname;
+      if (currentPath.includes('patient') || currentPath.includes('telemedicine')) {
+        console.log('[ProtectedRoute] Patient page detected, redirecting to patient login');
+        setLocation("/patient-login");
+      } else {
+        console.log('[ProtectedRoute] Regular page, redirecting to login');
+        setLocation("/login");
+      }
     } else if (user && (user.mustChangePassword || user.isTemporaryPassword)) {
       // Redirect to change password if user has temporary password
       setLocation("/change-password");
+    } else if (user) {
+      console.log('[ProtectedRoute] User authenticated:', user.email, 'Role:', user.role);
     }
   }, [authLoading, user, setLocation]);
 
