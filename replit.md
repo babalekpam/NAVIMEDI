@@ -1,7 +1,7 @@
 # Healthcare Management Platform
 
 ## Overview
-NaviMED is a multi-tenant healthcare platform connecting independent pharmacies and hospitals to streamline prescription management, insurance claims processing, patient record management, and inter-organizational communication. Its purpose is to enhance efficiency, improve patient care outcomes, and ensure secure, compliant data handling within the healthcare ecosystem.
+NaviMED is a multi-tenant healthcare platform designed to connect independent pharmacies and hospitals. Its core purpose is to streamline prescription management, insurance claims processing, patient record management, and inter-organizational communication. The platform aims to enhance efficiency, improve patient care outcomes, and ensure secure, compliant data handling within the healthcare ecosystem. It provides comprehensive solutions for managing various aspects of healthcare operations, with a vision to become a leading integrated healthcare management system.
 
 ## User Preferences
 - Simple, everyday language for communication (user is non-technical)
@@ -44,10 +44,10 @@ NaviMED is a multi-tenant healthcare platform connecting independent pharmacies 
 - ENHANCED TOKEN EXPIRATION HANDLING: Implemented automatic token validation and user redirection for expired JWT tokens with clear error messaging system replacing cryptic JSON parsing errors
 - CRITICAL API ROUTING ISSUE COMPLETELY RESOLVED: Fixed fundamental routing conflict where Vite middleware catch-all routes were intercepting backend API calls causing "Unexpected token '<', '<!DOCTYPE'" errors - implemented API route protection middleware ensuring all /api/* endpoints return proper JSON responses instead of HTML, permanently resolving telemedicine booking failures and all other API call issues
 - TELEMEDICINE BOOKING SYSTEM FULLY OPERATIONAL: Resolved final patient record lookup issue caused by email mismatch between authentication system and patient database - corrected patient email addresses to match authentication credentials, confirmed successful appointment creation with proper API responses and database persistence
-- **DEFINITIVE API ROUTING SOLUTION IMPLEMENTED:** Added multiple layers of API route protection middleware to permanently prevent Vite catch-all routes from intercepting API calls - implemented early API protection at middleware level, response interception for HTML blocking, and content-type enforcement ensuring all /api/* endpoints return JSON exclusively, completely eliminating the "Unexpected token '<', '<!DOCTYPE'" error
+- DEFINITIVE API ROUTING SOLUTION IMPLEMENTED: Added multiple layers of API route protection middleware to permanently prevent Vite catch-all routes from intercepting API calls - implemented early API protection at middleware level, response interception for HTML blocking, and content-type enforcement ensuring all /api/* endpoints return JSON exclusively, completely eliminating the "Unexpected token '<', '<!DOCTYPE'" error
 
 ## System Architecture
-The platform is built on a modern stack emphasizing scalability, security, and maintainability, featuring a robust multi-tenant architecture with strict data isolation per organization (hospital, pharmacy, laboratory).
+The platform is built on a modern stack emphasizing scalability, security, and maintainability. It features a robust multi-tenant architecture with strict data isolation per organization (hospital, pharmacy, laboratory) and enforced access control based on user roles and tenant types.
 
 **Core Technologies:**
 - **Frontend**: React, TypeScript, Tailwind CSS
@@ -56,8 +56,7 @@ The platform is built on a modern stack emphasizing scalability, security, and m
 - **Authentication**: JWT for secure user authentication and granular Role-Based Access Control (RBAC).
 
 **Key Architectural Decisions & Features:**
-- **Multi-tenancy**: Strict data isolation per organization with controlled cross-tenant interactions for specific workflows. Super admin capabilities provide system oversight.
-- **Role Separation**: Enforced access control based on user roles and tenant types.
+- **Multi-tenancy**: Strict data isolation with controlled cross-tenant interactions for specific workflows. Super admin capabilities provide system oversight.
 - **UI/UX Decisions**: Intuitive navigation, distinct role-based dashboards, color-coded alerts, streamlined workflows, comprehensive patient portal, and dynamic permission management UI.
 - **Technical Implementations**:
     - Automated Insurance Verification & Copay Calculation.
