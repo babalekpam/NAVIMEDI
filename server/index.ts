@@ -12,6 +12,46 @@ import path from "path";
 
 const app = express();
 
+// ULTIMATE API PROTECTION - FIRST MIDDLEWARE TO RUN
+// This runs before ANYTHING else and completely protects API routes
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    // Set JSON headers immediately
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'no-cache');
+    
+    // Override response methods to prevent ANY HTML
+    const originalSend = res.send.bind(res);
+    const originalEnd = res.end.bind(res);
+    
+    res.send = function(body) {
+      if (typeof body === 'string' && body.includes('<!DOCTYPE')) {
+        console.error(`[ULTIMATE PROTECTION] Blocked HTML for ${req.originalUrl}`);
+        this.setHeader('Content-Type', 'application/json');
+        return originalSend(JSON.stringify({ 
+          error: 'HTML blocked on API route',
+          path: req.originalUrl 
+        }));
+      }
+      this.setHeader('Content-Type', 'application/json');
+      return originalSend(body);
+    };
+    
+    res.end = function(chunk, encoding) {
+      if (typeof chunk === 'string' && chunk.includes('<!DOCTYPE')) {
+        console.error(`[ULTIMATE PROTECTION] Blocked HTML end() for ${req.originalUrl}`);
+        this.setHeader('Content-Type', 'application/json');
+        return originalEnd(JSON.stringify({ 
+          error: 'HTML end() blocked on API route',
+          path: req.originalUrl 
+        }), encoding);
+      }
+      return originalEnd(chunk, encoding);
+    };
+  }
+  next();
+});
+
 // ULTRA-FAST health check endpoint for Replit deployments
 // Responds immediately without any complex logic or detection
 app.get('/health', (req, res) => {
@@ -75,8 +115,7 @@ app.get('/alive', (req, res) => {
   res.status(200).send('OK');
 });
 
-// CRITICAL API PROTECTION - Must come FIRST before any other middleware
-// This prevents Vite catch-all from intercepting API calls
+// ABSOLUTE API PROTECTION - Completely prevent HTML responses on API routes
 app.use('/api', (req, res, next) => {
   // Set response headers immediately to prevent HTML responses
   res.setHeader('Content-Type', 'application/json');
@@ -84,6 +123,42 @@ app.use('/api', (req, res, next) => {
   
   // Log API calls for debugging
   console.log(`[API PROTECTION] ${req.method} ${req.originalUrl}`);
+  
+  // Override ALL response methods to prevent HTML
+  const originalSend = res.send;
+  const originalEnd = res.end;
+  const originalJson = res.json;
+  
+  res.send = function(body) {
+    if (typeof body === 'string' && body.includes('<!DOCTYPE')) {
+      console.error(`[API CRITICAL] Blocked HTML response for ${req.originalUrl}`);
+      this.setHeader('Content-Type', 'application/json');
+      return originalSend.call(this, JSON.stringify({ 
+        error: 'API route blocked HTML response',
+        endpoint: req.originalUrl,
+        method: req.method
+      }));
+    }
+    this.setHeader('Content-Type', 'application/json');
+    return originalSend.call(this, body);
+  };
+  
+  res.end = function(chunk, encoding) {
+    if (typeof chunk === 'string' && chunk.includes('<!DOCTYPE')) {
+      console.error(`[API CRITICAL] Blocked HTML end() for ${req.originalUrl}`);
+      this.setHeader('Content-Type', 'application/json');
+      return originalEnd.call(this, JSON.stringify({ 
+        error: 'API route blocked HTML end',
+        endpoint: req.originalUrl 
+      }), encoding);
+    }
+    return originalEnd.call(this, chunk, encoding);
+  };
+  
+  res.json = function(obj) {
+    this.setHeader('Content-Type', 'application/json');
+    return originalJson.call(this, obj);
+  };
   
   next();
 });
@@ -255,24 +330,45 @@ async function startServer() {
     }
   });
 
-  // API Route Protection - CRITICAL: Ensure all /api/* routes return JSON ONLY
-  // This prevents Vite middleware from intercepting API calls and returning HTML
-  app.use('/api/*', (req, res, next) => {
-    // Force JSON content type for all API responses
-    res.setHeader('Content-Type', 'application/json');
-    
-    // Override the Vite catch-all behavior for API routes
+  // FINAL API PROTECTION - Nuclear option to prevent ANY HTML on API routes
+  app.use('/api', (req, res, next) => {
+    // Completely hijack response for API routes
     const originalSend = res.send;
+    const originalEnd = res.end;
+    const originalWrite = res.write;
+    
     res.send = function(body) {
-      if (typeof body === 'string' && body.includes('<!DOCTYPE')) {
-        // Prevent HTML responses on API routes
-        return res.status(500).json({ 
-          error: 'API route returned HTML instead of JSON',
-          endpoint: req.originalUrl,
-          method: req.method
-        });
+      if (typeof body === 'string' && (body.includes('<!DOCTYPE') || body.includes('<html'))) {
+        console.error(`[NUCLEAR API PROTECTION] Completely blocked HTML for ${req.originalUrl}`);
+        this.status(500);
+        this.setHeader('Content-Type', 'application/json');
+        return originalSend.call(this, JSON.stringify({ 
+          error: 'BLOCKED: API endpoint attempted to return HTML',
+          path: req.originalUrl,
+          timestamp: new Date().toISOString()
+        }));
       }
       return originalSend.call(this, body);
+    };
+    
+    res.end = function(chunk, encoding) {
+      if (typeof chunk === 'string' && (chunk.includes('<!DOCTYPE') || chunk.includes('<html'))) {
+        console.error(`[NUCLEAR API PROTECTION] Blocked HTML end() for ${req.originalUrl}`);
+        this.setHeader('Content-Type', 'application/json');
+        return originalEnd.call(this, JSON.stringify({ 
+          error: 'BLOCKED: API endpoint attempted HTML end()',
+          path: req.originalUrl 
+        }), encoding);
+      }
+      return originalEnd.call(this, chunk, encoding);
+    };
+    
+    res.write = function(chunk, encoding, callback) {
+      if (typeof chunk === 'string' && (chunk.includes('<!DOCTYPE') || chunk.includes('<html'))) {
+        console.error(`[NUCLEAR API PROTECTION] Blocked HTML write() for ${req.originalUrl}`);
+        return false; // Prevent the write
+      }
+      return originalWrite.call(this, chunk, encoding, callback);
     };
     
     next();
