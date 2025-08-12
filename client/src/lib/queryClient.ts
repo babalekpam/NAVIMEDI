@@ -18,8 +18,6 @@ export async function apiRequest(
 ): Promise<any> {
   const token = localStorage.getItem("auth_token");
   
-  // Removed debug logging for production
-  
   // Clear corrupted tokens
   if (token && (token === 'undefined' || token === 'null' || token.length < 10)) {
     console.warn('Clearing corrupted token:', token?.substring(0, 20));
@@ -44,6 +42,25 @@ export async function apiRequest(
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
+
+  // Handle expired tokens (401 responses)
+  if (res.status === 401) {
+    console.warn('Token expired or invalid, redirecting to login');
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
+    window.location.href = '/login';
+    throw new Error('Token expired - redirecting to login');
+  }
+
+  // Handle non-JSON responses (likely HTML error pages)
+  const contentType = res.headers.get('content-type');
+  if (!contentType || !contentType.includes('application/json')) {
+    const text = await res.text();
+    if (text.includes('<!DOCTYPE')) {
+      throw new Error('Unexpected HTML response - possible routing issue. Please refresh and try again.');
+    }
+    throw new Error(`Unexpected response type: ${contentType}`);
+  }
 
   await throwIfResNotOk(res);
   return res.json();
