@@ -72,20 +72,29 @@ const initializeAppointments = (): SharedAppointment[] => {
 };
 
 // Global appointments storage with localStorage persistence
-let sharedAppointments: SharedAppointment[] = initializeAppointments();
+let sharedAppointments: SharedAppointment[] = [];
 
 export const SharedAppointmentService = {
   // Get all appointments
   getAllAppointments(): SharedAppointment[] {
+    console.log("=== GETTING ALL APPOINTMENTS ===");
     // Always refresh from localStorage
     try {
       const stored = localStorage.getItem('shared-appointments');
+      console.log("Raw localStorage data:", stored);
       if (stored) {
-        sharedAppointments = JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        sharedAppointments = parsed;
+        console.log("Loaded from localStorage:", parsed.length, "appointments");
+      } else {
+        console.log("No localStorage data found, initializing defaults");
+        sharedAppointments = initializeAppointments();
       }
     } catch (error) {
       console.log("Error loading from localStorage:", error);
+      sharedAppointments = initializeAppointments();
     }
+    console.log("Returning appointments:", sharedAppointments);
     return [...sharedAppointments];
   },
 

@@ -191,9 +191,23 @@ export default function DoctorPortalFixed() {
     
     loadAppointments();
     
+    // Listen for localStorage changes from patient portal
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'shared-appointments') {
+        console.log("Storage change detected, reloading appointments");
+        loadAppointments();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
     // Refresh appointments every 1 second to catch new bookings from patient portal
     const interval = setInterval(loadAppointments, 1000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [refreshKey]);
 
   const handleLogin = () => {

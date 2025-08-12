@@ -292,9 +292,18 @@ export default function PatientPortalDemo() {
           patientName: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
           doctorName: `${selectedDoctor.firstName} ${selectedDoctor.lastName}`
         });
+        console.log("=== PATIENT PORTAL BOOKING DEBUG ===");
+        console.log("Appointment ID:", appointmentId);
+        console.log("Doctor ID selected:", data.doctorId);
         console.log("All appointments after booking:", SharedAppointmentService.getAllAppointments());
         console.log("Doctor's appointments:", SharedAppointmentService.getAppointmentsForDoctor(data.doctorId));
         console.log("localStorage content:", localStorage.getItem('shared-appointments'));
+        
+        // Force browser storage event to notify other tabs
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'shared-appointments',
+          newValue: localStorage.getItem('shared-appointments')
+        }));
         
         // Force refresh to show new appointment
         setRefreshKey(prev => prev + 1);
