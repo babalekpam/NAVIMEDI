@@ -169,7 +169,7 @@ export default function DoctorPortalFixed() {
 
   const handleLogin = () => {
     const doctor = DEMO_DOCTORS.find(d => 
-      d.email === loginEmail && d.password === loginPassword
+      (d.email === loginEmail || d.email.split('@')[0] === loginEmail) && d.password === loginPassword
     );
 
     if (doctor) {
@@ -181,7 +181,7 @@ export default function DoctorPortalFixed() {
     } else {
       toast({
         title: "Login Failed",
-        description: "Invalid email or password. Try doctor123 as password.",
+        description: "Invalid username or password. Try dr.smith with password doctor123",
         variant: "destructive",
       });
     }
@@ -232,13 +232,13 @@ export default function DoctorPortalFixed() {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Username</Label>
                   <Input
                     id="email"
-                    type="email"
+                    type="text"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="doctor@metrohealth.com"
+                    placeholder="dr.smith"
                   />
                 </div>
                 <div>
@@ -260,19 +260,19 @@ export default function DoctorPortalFixed() {
                 <h3 className="font-semibold mb-2">Demo Credentials:</h3>
                 <div className="space-y-2 text-sm">
                   <p><strong>Lisa Chen (Family Medicine):</strong><br />
-                  Email: dr.chen@metrogeneral.com<br />
+                  Username: dr.chen<br />
                   Password: doctor123</p>
                   
                   <p><strong>Dr. David Brown (Internal Medicine):</strong><br />
-                  Email: dr.brown@metrogeneral.com<br />
+                  Username: dr.brown<br />
                   Password: doctor123</p>
                   
                   <p><strong>Dr. Sarah Johnson (Cardiology):</strong><br />
-                  Email: dr.johnson@metrogeneral.com<br />
+                  Username: dr.johnson<br />
                   Password: doctor123</p>
                   
                   <p><strong>Dr. Michael Smith (Emergency Medicine):</strong><br />
-                  Email: dr.smith@metrogeneral.com<br />
+                  Username: dr.smith<br />
                   Password: doctor123</p>
                 </div>
               </div>
