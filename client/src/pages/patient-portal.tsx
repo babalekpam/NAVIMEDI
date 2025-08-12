@@ -230,7 +230,7 @@ Report ID: ${labOrder.id}
         <p className="text-blue-100">Stay on top of your health with your personal dashboard</p>
         {patientProfile && (
           <div className="mt-4 text-sm text-blue-100">
-            <p>MRN: {patientProfile.patient.mrn} • Metro General Hospital</p>
+            <p>MRN: {patientProfile.mrn} • Metro General Hospital</p>
           </div>
         )}
       </div>
@@ -566,21 +566,21 @@ Report ID: ${labOrder.id}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Medical Record Number</p>
-                    <p className="font-medium">{patientProfile.patient.mrn}</p>
+                    <p className="font-medium">{patientProfile.mrn}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Date of Birth</p>
                     <p className="font-medium">
-                      {new Date(patientProfile.patient.dateOfBirth).toLocaleDateString()}
+                      {new Date(patientProfile.dateOfBirth).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Gender</p>
-                    <p className="font-medium capitalize">{patientProfile.patient.gender}</p>
+                    <p className="font-medium capitalize">{patientProfile.gender}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Phone</p>
-                    <p className="font-medium">{patientProfile.patient.phone}</p>
+                    <p className="font-medium">{patientProfile.phone}</p>
                   </div>
                 </div>
               </div>
@@ -590,15 +590,15 @@ Report ID: ${labOrder.id}
               {/* Medical History */}
               <div>
                 <h3 className="text-lg font-semibold mb-3">Medical History</h3>
-                {patientProfile.patient.medicalHistory && patientProfile.patient.medicalHistory.length > 0 ? (
+                {patientProfile.medicalHistory && patientProfile.medicalHistory.length > 0 ? (
                   <div className="space-y-2">
-                    {typeof patientProfile.patient.medicalHistory === 'string' ? 
-                      patientProfile.patient.medicalHistory.split(',').map((condition, index) => (
+                    {typeof patientProfile.medicalHistory === 'string' ? 
+                      patientProfile.medicalHistory.split(',').map((condition, index) => (
                         <Badge key={index} variant="outline" className="mr-2">
                           {condition.trim()}
                         </Badge>
                       )) :
-                      patientProfile.patient.medicalHistory.map((condition, index) => (
+                      patientProfile.medicalHistory.map((condition, index) => (
                         <Badge key={index} variant="outline" className="mr-2">
                           {condition}
                         </Badge>
@@ -615,9 +615,9 @@ Report ID: ${labOrder.id}
               {/* Allergies */}
               <div>
                 <h3 className="text-lg font-semibold mb-3">Allergies</h3>
-                {patientProfile.patient.allergies && patientProfile.patient.allergies.length > 0 ? (
+                {patientProfile.allergies && patientProfile.allergies.length > 0 ? (
                   <div className="space-y-2">
-                    {patientProfile.patient.allergies.map((allergy, index) => (
+                    {patientProfile.allergies.map((allergy, index) => (
                       <Badge key={index} variant="destructive" className="mr-2">
                         {allergy}
                       </Badge>

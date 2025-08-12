@@ -18,12 +18,7 @@ export async function apiRequest(
 ): Promise<any> {
   const token = localStorage.getItem("auth_token");
   
-  // Debug logging for patient portal issues
-  if (url.includes('/patient/')) {
-    console.log(`[FRONTEND DEBUG] Making request to ${url}`);
-    console.log(`[FRONTEND DEBUG] Token exists:`, !!token);
-    console.log(`[FRONTEND DEBUG] Token preview:`, token?.substring(0, 50) + '...');
-  }
+  // Removed debug logging for production
   
   // Clear corrupted tokens
   if (token && (token === 'undefined' || token === 'null' || token.length < 10)) {
