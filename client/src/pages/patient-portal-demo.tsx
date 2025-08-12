@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import navimedLogo from "@assets/navimed-logo.jpg";
 
-// Demo data - completely self-contained
+// Demo patients matching doctor portal exactly
 const DEMO_PATIENTS = [
   {
     id: "patient-1",
@@ -64,6 +64,26 @@ const DEMO_PATIENTS = [
     email: "robert.davis@email.com", 
     phone: "(555) 345-6789",
     dateOfBirth: "1978-11-08",
+    tenantId: "demo-tenant",
+    hospitalName: "Metro General Hospital"
+  },
+  {
+    id: "patient-4",
+    firstName: "Emily",
+    lastName: "Brown", 
+    email: "emily.brown@email.com",
+    phone: "(555) 456-7890",
+    dateOfBirth: "1992-04-18",
+    tenantId: "demo-tenant",
+    hospitalName: "Metro General Hospital"
+  },
+  {
+    id: "patient-5",
+    firstName: "James",
+    lastName: "Wilson",
+    email: "james.wilson@email.com",
+    phone: "(555) 567-8901", 
+    dateOfBirth: "1980-09-12",
     tenantId: "demo-tenant",
     hospitalName: "Metro General Hospital"
   }

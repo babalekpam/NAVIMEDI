@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { SharedAppointmentService, type SharedAppointment } from "@/lib/shared-appointments";
 import { 
@@ -115,7 +118,7 @@ const DEMO_DOCTORS = [
   }
 ];
 
-// Demo patients
+// Demo patients - matching patient portal data
 const DEMO_PATIENTS = {
   "patient-1": {
     id: "patient-1",
@@ -140,8 +143,27 @@ const DEMO_PATIENTS = {
     email: "robert.davis@email.com", 
     phone: "(555) 345-6789",
     dateOfBirth: "1978-11-08"
+  },
+  "patient-4": {
+    id: "patient-4",
+    firstName: "Emily",
+    lastName: "Brown", 
+    email: "emily.brown@email.com",
+    phone: "(555) 456-7890",
+    dateOfBirth: "1992-04-18"
+  },
+  "patient-5": {
+    id: "patient-5",
+    firstName: "James",
+    lastName: "Wilson",
+    email: "james.wilson@email.com",
+    phone: "(555) 567-8901", 
+    dateOfBirth: "1980-09-12"
   }
 };
+
+// Convert to array for easier use
+const PATIENTS_ARRAY = Object.values(DEMO_PATIENTS);
 
 export default function DoctorPortalFixed() {
   const { toast } = useToast();
@@ -149,6 +171,13 @@ export default function DoctorPortalFixed() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [activeTab, setActiveTab] = useState("appointments");
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [selectedPatientId, setSelectedPatientId] = useState("");
+  const [appointmentDate, setAppointmentDate] = useState("");
+  const [appointmentTime, setAppointmentTime] = useState("");
+  const [appointmentType, setAppointmentType] = useState("");
+  const [appointmentReason, setAppointmentReason] = useState("");
+  const [appointmentPriority, setAppointmentPriority] = useState("normal");
   // Get appointments from shared system with real-time updates
   const [refreshKey, setRefreshKey] = useState(0);
   const [appointments, setAppointments] = useState<SharedAppointment[]>([]);
@@ -216,6 +245,56 @@ export default function DoctorPortalFixed() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleBookAppointmentForPatient = () => {
+    if (!selectedPatientId || !appointmentDate || !appointmentTime || !appointmentType || !appointmentReason) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const selectedPatient = PATIENTS_ARRAY.find(p => p.id === selectedPatientId);
+    if (!selectedPatient || !loggedInDoctor) return;
+
+    const appointmentId = SharedAppointmentService.addAppointment({
+      patientId: selectedPatientId,
+      providerId: loggedInDoctor.id,
+      appointmentDate: new Date(appointmentDate + 'T' + appointmentTime).toISOString(),
+      type: appointmentType,
+      reason: appointmentReason,
+      status: "scheduled",
+      priority: appointmentPriority,
+      patientName: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
+      doctorName: `${loggedInDoctor.firstName} ${loggedInDoctor.lastName}`
+    });
+
+    console.log("=== DOCTOR BOOKING APPOINTMENT ===");
+    console.log("Appointment ID:", appointmentId);
+    console.log("Patient:", selectedPatient.firstName, selectedPatient.lastName);
+    console.log("Doctor:", loggedInDoctor.firstName, loggedInDoctor.lastName);
+
+    // Refresh appointments immediately
+    const sharedAppointments = SharedAppointmentService.getAllAppointments();
+    setAppointments(sharedAppointments);
+    setRefreshKey(prev => prev + 1);
+
+    toast({
+      title: "Appointment Booked",
+      description: `Appointment scheduled for ${selectedPatient.firstName} ${selectedPatient.lastName}`,
+    });
+
+    // Reset form
+    setIsBookingModalOpen(false);
+    setSelectedPatientId("");
+    setAppointmentDate("");
+    setAppointmentTime("");
+    setAppointmentType("");
+    setAppointmentReason("");
+    setAppointmentPriority("normal");
   };
 
   // Login screen
@@ -390,9 +469,15 @@ export default function DoctorPortalFixed() {
           <TabsContent value="appointments" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Patient Appointments</h2>
-              <Badge variant="outline" className="text-lg px-3 py-1">
-                {doctorAppointments.length} Total
-              </Badge>
+              <div className="flex items-center gap-3">
+                <Button onClick={() => setIsBookingModalOpen(true)} className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Book Appointment
+                </Button>
+                <Badge variant="outline" className="text-lg px-3 py-1">
+                  {doctorAppointments.length} Total
+                </Badge>
+              </div>
             </div>
 
             <div className="grid gap-4">
@@ -589,6 +674,111 @@ export default function DoctorPortalFixed() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Book Appointment Modal */}
+      <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Book Patient Appointment</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="patient">Select Patient</Label>
+              <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a patient" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PATIENTS_ARRAY.map(patient => (
+                    <SelectItem key={patient.id} value={patient.id}>
+                      {patient.firstName} {patient.lastName} - {patient.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="date">Date</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={appointmentDate}
+                  onChange={(e) => setAppointmentDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              <div>
+                <Label htmlFor="time">Time</Label>
+                <Input
+                  id="time"
+                  type="time"
+                  value={appointmentTime}
+                  onChange={(e) => setAppointmentTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="type">Appointment Type</Label>
+              <Select value={appointmentType} onValueChange={setAppointmentType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="routine">Routine Checkup</SelectItem>
+                  <SelectItem value="follow-up">Follow-up</SelectItem>
+                  <SelectItem value="urgent">Urgent Consultation</SelectItem>
+                  <SelectItem value="preventive">Preventive Care</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="reason">Reason for Visit</Label>
+              <Textarea
+                id="reason"
+                placeholder="Describe the reason for the appointment..."
+                value={appointmentReason}
+                onChange={(e) => setAppointmentReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="priority">Priority</Label>
+              <Select value={appointmentPriority} onValueChange={setAppointmentPriority}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                onClick={() => setIsBookingModalOpen(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleBookAppointmentForPatient}
+                className="flex-1"
+              >
+                Book Appointment
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
