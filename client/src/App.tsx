@@ -95,6 +95,7 @@ import PatientPortal from "@/pages/patient-portal";
 import PatientPortalNew from "@/pages/patient-portal-new";
 import PatientPortalDemo from "@/pages/patient-portal-demo";
 import DoctorPortal from "@/pages/doctor-portal";
+import DoctorPortalFixed from "@/pages/doctor-portal-fixed";
 import PatientPortalStaff from "@/pages/patient-portal-staff";
 import ChangePasswordPage from "@/pages/change-password";
 import AdminDashboard from "@/pages/admin-dashboard";
@@ -281,6 +282,9 @@ function AppContent() {
         </Route>
         <Route path="/doctor-portal">
           <DoctorPortal />
+        </Route>
+        <Route path="/doctor-portal-fixed">
+          <DoctorPortalFixed />
         </Route>
         <Route path="/patient-portal-staff">
           <ProtectedRoute>
