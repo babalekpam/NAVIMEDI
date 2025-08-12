@@ -69,7 +69,7 @@ export function TelemedicineBooking() {
     },
   });
 
-  // Direct booking mutation that bypasses the routing issue
+  // Direct booking mutation with ultimate fallback strategy
   const createAppointmentMutation = useMutation({
     mutationFn: async (data: BookingData) => {
       try {
@@ -85,59 +85,82 @@ export function TelemedicineBooking() {
           patientNotes: data.patientNotes
         };
 
-        console.log("[BOOKING] Attempting emergency booking endpoint...");
+        console.log("[BOOKING] Attempting multiple booking strategies...");
         
-        // Try multiple endpoint strategies to bypass routing issues
-        let response;
-        
-        // Strategy 1: Try with explicit host and port
+        // Strategy 1: XMLHttpRequest (bypasses some middleware issues)
         try {
-          response = await fetch(`http://localhost:5000/api/patient/book-appointment`, {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${token}`,
-              "Content-Type": "application/json",
-              "X-Requested-With": "XMLHttpRequest", // Indicate this is an AJAX request
-            },
-            body: JSON.stringify(requestData),
+          console.log("[BOOKING] Strategy 1: XMLHttpRequest");
+          const result = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/patient/book-appointment', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            
+            xhr.onload = function() {
+              console.log("[XHR] Status:", xhr.status);
+              console.log("[XHR] Response:", xhr.responseText.substring(0, 200));
+              
+              if (xhr.responseText.includes('<!DOCTYPE')) {
+                reject(new Error("XMLHttpRequest also received HTML"));
+                return;
+              }
+              
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  resolve(JSON.parse(xhr.responseText));
+                } catch (e) {
+                  reject(new Error("XMLHttpRequest received non-JSON response"));
+                }
+              } else {
+                reject(new Error(`XMLHttpRequest failed: ${xhr.status}`));
+              }
+            };
+            
+            xhr.onerror = () => reject(new Error("XMLHttpRequest network error"));
+            xhr.send(JSON.stringify(requestData));
           });
-        } catch (error) {
-          console.warn("[BOOKING] Localhost strategy failed, trying relative path...");
-          // Strategy 2: Fallback to relative path
-          response = await fetch("/api/patient/book-appointment", {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${token}`,
-              "Content-Type": "application/json",
-              "X-Requested-With": "XMLHttpRequest",
-            },
-            body: JSON.stringify(requestData),
-          });
-        }
-
-        console.log("[BOOKING] Response status:", response.status);
-        console.log("[BOOKING] Response headers:", Object.fromEntries(response.headers.entries()));
-
-        const responseText = await response.text();
-        console.log("[BOOKING] Raw response:", responseText.substring(0, 200));
-
-        if (responseText.includes('<!DOCTYPE') || responseText.includes('<html')) {
-          throw new Error("Server returned HTML instead of JSON - routing issue detected");
-        }
-
-        if (!response.ok) {
-          let errorData;
+          
+          return result;
+        } catch (xhrError) {
+          console.warn("[BOOKING] XMLHttpRequest failed:", xhrError);
+          
+          // Strategy 2: Fetch with localhost
           try {
-            errorData = JSON.parse(responseText);
-          } catch {
-            throw new Error(`HTTP ${response.status}: ${responseText}`);
-          }
-          throw new Error(errorData.message || `HTTP ${response.status}`);
-        }
+            console.log("[BOOKING] Strategy 2: Fetch with localhost");
+            const response = await fetch(`http://localhost:5000/api/patient/book-appointment`, {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+              },
+              body: JSON.stringify(requestData),
+            });
 
-        return JSON.parse(responseText);
+            const responseText = await response.text();
+            console.log("[LOCALHOST] Response:", responseText.substring(0, 200));
+
+            if (responseText.includes('<!DOCTYPE')) {
+              throw new Error("Localhost fetch also received HTML");
+            }
+
+            if (!response.ok) {
+              throw new Error(`Localhost fetch failed: ${response.status}`);
+            }
+
+            return JSON.parse(responseText);
+          } catch (localhostError) {
+            console.warn("[BOOKING] Localhost fetch failed:", localhostError);
+            
+            // Strategy 3: Show form submission fallback
+            alert(`Booking request failed due to routing conflicts.\n\nBooking Details:\n- Provider: ${data.providerId}\n- Date: ${data.date}\n- Time: ${data.time}\n- Reason: ${data.reason}\n\nPlease contact support or try refreshing the page.`);
+            
+            throw new Error("All booking strategies failed - routing conflict persists");
+          }
+        }
       } catch (error) {
-        console.error("[BOOKING] Error:", error);
+        console.error("[BOOKING] All strategies failed:", error);
         throw error;
       }
     },

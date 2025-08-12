@@ -12,6 +12,21 @@ import path from "path";
 
 const app = express();
 
+// ABSOLUTE FIRST: Direct API route handling before any middleware
+app.all('/api/*', (req, res, next) => {
+  console.log(`[ABSOLUTE FIRST] Direct API handler: ${req.method} ${req.path}`);
+  
+  // Set JSON headers immediately
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Cache-Control', 'no-cache');
+  
+  // Mark as API route
+  res.locals.directApiHandler = true;
+  
+  // Continue to specific API routes - this ensures they run before any other middleware
+  next();
+});
+
 // DEFINITIVE API INTERCEPT - HANDLE API ROUTES BEFORE ANYTHING ELSE
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) {
@@ -321,7 +336,21 @@ async function startServer() {
   });
   
   try {
+    console.log('📡 Registering API routes with maximum priority...');
     server = await registerRoutes(app);
+    
+    // CRITICAL: Add final API protection after routes are registered
+    app.use('/api/*', (req, res) => {
+      console.error(`[FINAL API CATCH] Unhandled API route: ${req.method} ${req.path}`);
+      res.status(404).json({
+        error: 'API endpoint not found',
+        path: req.path,
+        method: req.method,
+        timestamp: new Date().toISOString(),
+        note: 'This response prevented HTML from being served'
+      });
+    });
+    
   } catch (error) {
     console.error('Error during route registration:', error);
     // Continue with server startup even if some routes fail
