@@ -369,6 +369,8 @@ export default function DoctorPortalFixed() {
   console.log("Logged in doctor ID:", loggedInDoctor.id);
   console.log("All appointments:", appointments);
   console.log("localStorage content:", localStorage.getItem('shared-appointments'));
+  console.log("PATIENTS_ARRAY:", PATIENTS_ARRAY);
+  console.log("Sarah Williams in patients?", PATIENTS_ARRAY.find(p => p.firstName === 'Sarah' && p.lastName === 'Williams'));
   const doctorAppointments = appointments.filter((appt: SharedAppointment) => appt.providerId === loggedInDoctor.id);
   console.log("Doctor appointments filtered:", doctorAppointments);
   console.log("Filtering by providerId:", loggedInDoctor.id);
@@ -700,6 +702,9 @@ export default function DoctorPortalFixed() {
                       {patient.firstName} {patient.lastName} - {patient.email}
                     </SelectItem>
                   ))}
+                  {PATIENTS_ARRAY.length === 0 && (
+                    <SelectItem value="" disabled>No patients found</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
