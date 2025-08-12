@@ -30,7 +30,9 @@ export async function apiRequest(
     headers?: Record<string, string>;
   }
 ): Promise<any> {
+  console.log('[API REQUEST] Making request to:', url);
   const token = localStorage.getItem("auth_token");
+  console.log('[API REQUEST] Token exists:', !!token);
   
   // Clear corrupted tokens
   if (token && (token === 'undefined' || token === 'null' || token.length < 10)) {
@@ -53,12 +55,18 @@ export async function apiRequest(
     ...(options?.headers || {}),
   };
 
+  console.log('[API REQUEST] Headers:', headers);
+  console.log('[API REQUEST] Body:', data);
+  
   const res = await fetch(url, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
+  
+  console.log('[API REQUEST] Response status:', res.status);
+  console.log('[API REQUEST] Response headers:', Object.fromEntries(res.headers.entries()));
 
   // Handle 401 responses
   if (res.status === 401) {
