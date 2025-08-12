@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { SharedAppointmentService, type SharedAppointment } from "@/lib/shared-appointments";
 import { 
   Calendar, 
   Clock, 
@@ -148,52 +149,9 @@ export default function DoctorPortalFixed() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [activeTab, setActiveTab] = useState("appointments");
-  const [appointments, setAppointments] = useState([
-    {
-      id: "appt-1",
-      patientId: "patient-1",
-      providerId: "0c6ed45a-13ff-4806-8c8e-b59c699e3d03", // Dr. James Williams
-      appointmentDate: "2024-08-15T10:00:00.000Z",
-      type: "routine",
-      reason: "Annual physical examination",
-      status: "scheduled",
-      priority: "normal",
-      bookedAt: new Date().toISOString()
-    },
-    {
-      id: "appt-2", 
-      patientId: "patient-2",
-      providerId: "720deedd-e634-4fc2-9f52-57b6bd7f52d9", // Dr. Sarah Johnson
-      appointmentDate: "2024-08-20T14:30:00.000Z",
-      type: "follow-up",
-      reason: "Blood pressure monitoring",
-      status: "confirmed",
-      priority: "high",
-      bookedAt: new Date().toISOString()
-    },
-    {
-      id: "appt-3",
-      patientId: "patient-1",
-      providerId: "2cd7fc68-02a0-4924-b564-0dd1bd7b247b", // Dr. Lisa Chen
-      appointmentDate: "2024-08-22T09:15:00.000Z",
-      type: "consultation",
-      reason: "Family medicine consultation",
-      status: "scheduled",
-      priority: "urgent",
-      bookedAt: new Date().toISOString()
-    },
-    {
-      id: "appt-4",
-      patientId: "patient-3", 
-      providerId: "e6236087-ce86-4c24-9553-9fb8d6b7b960", // Dr. Emily Wilson
-      appointmentDate: "2024-08-18T11:00:00.000Z",
-      type: "routine",
-      reason: "Pediatric checkup",
-      status: "scheduled",
-      priority: "normal",
-      bookedAt: new Date().toISOString()
-    }
-  ]);
+  // Get appointments from shared system
+  const [refreshKey, setRefreshKey] = useState(0);
+  const appointments = SharedAppointmentService.getAllAppointments();
 
   const handleLogin = () => {
     const doctor = DEMO_DOCTORS.find(d => 
@@ -226,18 +184,21 @@ export default function DoctorPortalFixed() {
   };
 
   const updateAppointmentStatus = (appointmentId: string, newStatus: string) => {
-    setAppointments(prev => 
-      prev.map(appt => 
-        appt.id === appointmentId 
-          ? { ...appt, status: newStatus }
-          : appt
-      )
-    );
+    const success = SharedAppointmentService.updateAppointmentStatus(appointmentId, newStatus);
     
-    toast({
-      title: "Status Updated",
-      description: `Appointment status changed to ${newStatus}`,
-    });
+    if (success) {
+      setRefreshKey(prev => prev + 1); // Force re-render
+      toast({
+        title: "Status Updated",
+        description: `Appointment status changed to ${newStatus}`,
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to update appointment status",
+        variant: "destructive",
+      });
+    }
   };
 
   // Login screen

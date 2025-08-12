@@ -13,6 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { SharedAppointmentService } from "@/lib/shared-appointments";
 import { 
   Calendar, 
   Clock, 
@@ -260,6 +261,23 @@ export default function PatientPortalDemo() {
     try {
       // Simulate booking delay
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const selectedDoctor = DEMO_DOCTORS.find(doc => doc.id === data.doctorId);
+      
+      if (selectedDoctor && selectedPatient) {
+        // Add appointment to shared system
+        SharedAppointmentService.addAppointment({
+          patientId: selectedPatient.id,
+          providerId: data.doctorId,
+          appointmentDate: new Date(data.appointmentDate + 'T' + data.appointmentTime).toISOString(),
+          type: data.type,
+          reason: data.reason,
+          status: "scheduled",
+          priority: data.priority,
+          patientName: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
+          doctorName: `${selectedDoctor.firstName} ${selectedDoctor.lastName}`
+        });
+      }
       
       toast({
         title: "Success",
