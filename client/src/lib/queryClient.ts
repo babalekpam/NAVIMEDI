@@ -81,12 +81,38 @@ export async function apiRequest(
     throw new Error(errorText || 'Access denied');
   }
 
-  // Check if response is HTML instead of JSON (routing conflict)
-  const contentType = res.headers.get('content-type');
-  if (!res.ok || !contentType?.includes('application/json')) {
-    await throwIfResNotOk(res);
+  // Debug what we're receiving to catch routing issues
+  const responseText = await res.text();
+  console.log(`[FRONTEND DEBUG] Response for ${url}:`, {
+    status: res.status,
+    contentType: res.headers.get("content-type"),
+    responseStart: responseText.substring(0, 100),
+    isHTML: responseText.includes('<!DOCTYPE')
+  });
+
+  // If we get HTML instead of JSON, this is the routing issue
+  if (responseText.includes('<!DOCTYPE') || responseText.includes('<html')) {
+    console.error(`[ROUTING ERROR] Got HTML instead of JSON for ${url}`);
+    throw new Error(`Server returned HTML instead of JSON for API endpoint: ${url}`);
   }
-  return res.json();
+
+  if (!res.ok) {
+    let errorMessage;
+    try {
+      const errorData = JSON.parse(responseText);
+      errorMessage = errorData.message || `HTTP ${res.status}`;
+    } catch {
+      errorMessage = responseText || `HTTP ${res.status}`;
+    }
+    throw new Error(errorMessage);
+  }
+
+  try {
+    return JSON.parse(responseText);
+  } catch (e) {
+    console.error('JSON parse error:', e);
+    throw new Error(`Invalid JSON response from ${url}: ${responseText.substring(0, 100)}`);
+  }
 }
 
 // Legacy function for backward compatibility
