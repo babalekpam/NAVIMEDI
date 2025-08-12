@@ -408,11 +408,11 @@ export default function DoctorPortalFixed() {
                             <div className="space-y-2">
                               <div className="flex items-center gap-2 text-sm">
                                 <Phone className="h-4 w-4 text-gray-500" />
-                                <span>{patient?.phone}</span>
+                                <span>{appointment.patientName}</span>
                               </div>
                               <div className="flex items-center gap-2 text-sm">
                                 <Mail className="h-4 w-4 text-gray-500" />
-                                <span>{patient?.email}</span>
+                                <span>Patient ID: {appointment.patientId}</span>
                               </div>
                             </div>
                           </div>

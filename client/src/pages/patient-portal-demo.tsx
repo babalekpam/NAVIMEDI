@@ -162,6 +162,7 @@ export default function PatientPortalDemo() {
   const [activeTab, setActiveTab] = useState("overview");
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [messageForm, setMessageForm] = useState({ subject: "", message: "", priority: "normal" });
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const appointmentForm = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
@@ -175,33 +176,10 @@ export default function PatientPortalDemo() {
     },
   });
 
-  // Demo appointments for selected patient
-  const getPatientAppointments = (patientId: string) => [
-    {
-      id: "appt-1",
-      patientId: patientId,
-      providerId: "doc-1",
-      providerName: "Dr. Emily Carter",
-      specialization: "Internal Medicine",
-      appointmentDate: "2024-08-15T10:00:00.000Z",
-      type: "routine",
-      reason: "Annual physical examination",
-      status: "scheduled",
-      priority: "normal"
-    },
-    {
-      id: "appt-2", 
-      patientId: patientId,
-      providerId: "doc-2",
-      providerName: "Dr. James Chen",
-      specialization: "Cardiology",
-      appointmentDate: "2024-08-20T14:30:00.000Z",
-      type: "follow-up",
-      reason: "Blood pressure monitoring",
-      status: "confirmed",
-      priority: "high"
-    }
-  ];
+  // Get real appointments from shared system for selected patient
+  const getPatientAppointments = (patientId: string) => {
+    return SharedAppointmentService.getAppointmentsForPatient(patientId);
+  };
 
   // Demo prescriptions for selected patient
   const getPatientPrescriptions = (patientId: string) => [
@@ -277,6 +255,9 @@ export default function PatientPortalDemo() {
           patientName: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
           doctorName: `${selectedDoctor.firstName} ${selectedDoctor.lastName}`
         });
+        
+        // Force refresh to show new appointment
+        setRefreshKey(prev => prev + 1);
       }
       
       toast({
@@ -661,19 +642,19 @@ export default function PatientPortalDemo() {
             </div>
 
             <div className="grid gap-4">
-              {appointments.map((appointment) => (
+              {getPatientAppointments(selectedPatient.id).map((appointment) => (
                 <Card key={appointment.id}>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Stethoscope className="h-4 w-4 text-blue-500" />
-                          <h3 className="font-semibold">{appointment.providerName}</h3>
+                          <h3 className="font-semibold">{appointment.doctorName}</h3>
                           <Badge variant={appointment.status === 'confirmed' ? 'default' : 'secondary'}>
                             {appointment.status}
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-600">{appointment.specialization}</p>
+                        <p className="text-sm text-gray-600">{appointment.type}</p>
                         <p className="text-sm"><strong>Reason:</strong> {appointment.reason}</p>
                         <div className="flex items-center gap-4 text-sm text-gray-600">
                           <div className="flex items-center gap-1">
