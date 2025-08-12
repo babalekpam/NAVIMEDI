@@ -157,47 +157,160 @@ export default function PatientPortalNew() {
     },
   });
 
-  // Fetch patient data with proper typing
-  const { data: patientProfile, isLoading: profileLoading } = useQuery<Patient>({
-    queryKey: ["/api/patient/profile"],
-    enabled: !!user && user.role === "patient"
-  });
+  // Demo data for patient portal functionality
+  const patientProfile: Patient = {
+    id: user?.id || "demo-patient-1",
+    firstName: user?.firstName || "Michael",
+    lastName: user?.lastName || "Johnson", 
+    email: "michael.johnson@email.com",
+    phone: "(555) 123-4567",
+    dateOfBirth: "1985-03-15",
+    tenantId: user?.tenantId || "demo-tenant",
+    hospitalName: tenant?.name || "Metro General Hospital"
+  };
 
-  const { data: appointments = [], isLoading: appointmentsLoading } = useQuery<Appointment[]>({
-    queryKey: ["/api/patient/appointments"],
-    enabled: !!user && user.role === "patient"
-  });
+  const appointments: Appointment[] = [
+    {
+      id: "appt-1",
+      patientId: patientProfile.id,
+      providerId: "doc-1",
+      providerName: "Dr. Sarah Wilson",
+      appointmentDate: "2025-08-15T10:00:00.000Z",
+      type: "consultation",
+      reason: "Annual physical examination",
+      status: "scheduled",
+      tenantId: patientProfile.tenantId
+    },
+    {
+      id: "appt-2", 
+      patientId: patientProfile.id,
+      providerId: "doc-2",
+      providerName: "Dr. James Chen",
+      appointmentDate: "2025-08-20T14:30:00.000Z",
+      type: "follow_up",
+      reason: "Blood pressure follow-up",
+      status: "scheduled",
+      tenantId: patientProfile.tenantId
+    }
+  ];
 
-  const { data: prescriptions = [], isLoading: prescriptionsLoading } = useQuery<Prescription[]>({
-    queryKey: ["/api/patient/prescriptions"],
-    enabled: !!user && user.role === "patient"
-  });
+  const prescriptions: Prescription[] = [
+    {
+      id: "rx-1",
+      patientId: patientProfile.id,
+      medicationName: "Lisinopril 10mg",
+      dosage: "10mg",
+      frequency: "Once daily",
+      instructions: "Take with water, preferably in the morning",
+      status: "active",
+      prescribedDate: "2025-07-15",
+      refills: 5,
+      tenantId: patientProfile.tenantId
+    },
+    {
+      id: "rx-2",
+      patientId: patientProfile.id,
+      medicationName: "Metformin 500mg",
+      dosage: "500mg",
+      frequency: "Twice daily",
+      instructions: "Take with meals",
+      status: "active", 
+      prescribedDate: "2025-07-10",
+      refills: 3,
+      tenantId: patientProfile.tenantId
+    }
+  ];
 
-  const { data: labResults = [], isLoading: labResultsLoading } = useQuery<LabResult[]>({
-    queryKey: ["/api/patient/lab-results"],
-    enabled: !!user && user.role === "patient"
-  });
+  const labResults: LabResult[] = [
+    {
+      id: "lab-1",
+      patientId: patientProfile.id,
+      testName: "Complete Blood Count (CBC)",
+      notes: "All values within normal range",
+      status: "completed",
+      results: {
+        hemoglobin: "14.2 g/dL",
+        hematocrit: "42.1%",
+        platelets: "245,000/μL"
+      },
+      createdAt: "2025-07-25T08:00:00.000Z",
+      tenantId: patientProfile.tenantId
+    },
+    {
+      id: "lab-2",
+      patientId: patientProfile.id,
+      testName: "Lipid Panel",
+      notes: "Cholesterol levels slightly elevated",
+      status: "completed",
+      results: {
+        totalCholesterol: "205 mg/dL",
+        ldl: "130 mg/dL", 
+        hdl: "55 mg/dL",
+        triglycerides: "150 mg/dL"
+      },
+      createdAt: "2025-07-20T09:30:00.000Z",
+      tenantId: patientProfile.tenantId
+    }
+  ];
 
-  const { data: messages = [], isLoading: messagesLoading } = useQuery<Message[]>({
-    queryKey: ["/api/medical-communications"],
-    enabled: !!user && user.role === "patient"
-  });
+  const messages: Message[] = [
+    {
+      id: "msg-1",
+      subject: "Lab Results Available",
+      message: "Your recent lab results are now available for review in your portal.",
+      priority: "normal",
+      isRead: false,
+      createdAt: "2025-07-25T10:00:00.000Z",
+      tenantId: patientProfile.tenantId
+    }
+  ];
 
-  // Fetch hospital/tenant information for patient's hospital
-  const { data: hospitalInfo } = useQuery<HospitalInfo>({
-    queryKey: ["/api/tenant/current"],
-    enabled: !!user && user.role === "patient"
-  });
+  const hospitalInfo: HospitalInfo = {
+    id: tenant?.id || "demo-hospital",
+    name: tenant?.name || "Metro General Hospital",
+    address: "123 Medical Center Drive, Metro City, MC 12345",
+    phone: "(555) 789-0123", 
+    primaryColor: tenant?.primaryColor || "#10b981",
+    logoUrl: tenant?.logoUrl || null,
+    type: tenant?.type || "hospital"
+  };
 
-  // Fetch doctors from patient's hospital only
-  const { data: doctors = [], isLoading: doctorsLoading } = useQuery<Doctor[]>({
-    queryKey: ["/api/users", user?.tenantId],
-    select: (data: any[]) => data.filter((doctor: Doctor) => 
-      (doctor.role === "physician" || doctor.role === "doctor") && 
-      doctor.tenantId === user?.tenantId
-    ),
-    enabled: !!user && user.role === "patient" && !!user.tenantId
-  });
+  const doctors: Doctor[] = [
+    {
+      id: "doc-1",
+      firstName: "Sarah",
+      lastName: "Wilson",
+      specialization: "Internal Medicine",
+      email: "s.wilson@metrohealth.com",
+      tenantId: patientProfile.tenantId,
+      role: "physician"
+    },
+    {
+      id: "doc-2", 
+      firstName: "James",
+      lastName: "Chen",
+      specialization: "Cardiology",
+      email: "j.chen@metrohealth.com",
+      tenantId: patientProfile.tenantId,
+      role: "physician"
+    },
+    {
+      id: "doc-3",
+      firstName: "Maria",
+      lastName: "Rodriguez", 
+      specialization: "Family Medicine",
+      email: "m.rodriguez@metrohealth.com",
+      tenantId: patientProfile.tenantId,
+      role: "physician"
+    }
+  ];
+
+  const profileLoading = false;
+  const appointmentsLoading = false;
+  const prescriptionsLoading = false;
+  const labResultsLoading = false;
+  const messagesLoading = false;
+  const doctorsLoading = false;
 
   // Book appointment mutation
   const bookAppointmentMutation = useMutation({
