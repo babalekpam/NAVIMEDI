@@ -12,77 +12,6 @@ import path from "path";
 
 const app = express();
 
-// ABSOLUTE FIRST: Direct API route handling before any middleware
-app.all('/api/*', (req, res, next) => {
-  console.log(`[ABSOLUTE FIRST] Direct API handler: ${req.method} ${req.path}`);
-  
-  // Set JSON headers immediately
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Cache-Control', 'no-cache');
-  
-  // Mark as API route
-  res.locals.directApiHandler = true;
-  
-  // Continue to specific API routes - this ensures they run before any other middleware
-  next();
-});
-
-// DEFINITIVE API INTERCEPT - HANDLE API ROUTES BEFORE ANYTHING ELSE
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api/')) {
-    console.log(`[DEFINITIVE INTERCEPT] Handling API route: ${req.method} ${req.path}`);
-    
-    // Mark this request as API-only - never let it reach Vite
-    res.locals.isApiRoute = true;
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('X-API-Route', 'true');
-    
-    // Create a flag to track if the route was handled by our API routes
-    res.locals.apiHandled = false;
-    
-    // Override response methods to ensure JSON only
-    const originalSend = res.send;
-    const originalEnd = res.end;
-    const originalJson = res.json;
-    
-    res.send = function(body) {
-      if (typeof body === 'string' && body.includes('<!DOCTYPE')) {
-        console.error(`[DEFINITIVE BLOCK] Prevented HTML response for ${req.originalUrl}`);
-        this.setHeader('Content-Type', 'application/json');
-        return originalSend.call(this, JSON.stringify({ 
-          error: 'HTML response blocked on API route',
-          path: req.originalUrl,
-          method: req.method
-        }));
-      }
-      this.setHeader('Content-Type', 'application/json');
-      res.locals.apiHandled = true;
-      return originalSend.call(this, body);
-    };
-    
-    res.json = function(obj) {
-      res.locals.apiHandled = true;
-      this.setHeader('Content-Type', 'application/json');
-      return originalJson.call(this, obj);
-    };
-    
-    res.end = function(chunk, encoding) {
-      if (typeof chunk === 'string' && chunk.includes('<!DOCTYPE')) {
-        console.error(`[DEFINITIVE BLOCK] Prevented HTML end() for ${req.originalUrl}`);
-        this.setHeader('Content-Type', 'application/json');
-        return originalEnd.call(this, JSON.stringify({ 
-          error: 'HTML end() blocked on API route',
-          path: req.originalUrl 
-        }), encoding);
-      }
-      res.locals.apiHandled = true;
-      return originalEnd.call(this, chunk, encoding);
-    };
-  }
-  next();
-});
-
 // ULTRA-FAST health check endpoint for Replit deployments
 // Responds immediately without any complex logic or detection
 app.get('/health', (req, res) => {
@@ -146,54 +75,6 @@ app.get('/alive', (req, res) => {
   res.status(200).send('OK');
 });
 
-// ABSOLUTE API PROTECTION - Completely prevent HTML responses on API routes
-app.use('/api', (req, res, next) => {
-  // Set response headers immediately to prevent HTML responses
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('X-API-Route', 'true');
-  
-  // Log API calls for debugging
-  console.log(`[API PROTECTION] ${req.method} ${req.originalUrl}`);
-  
-  // Override ALL response methods to prevent HTML
-  const originalSend = res.send;
-  const originalEnd = res.end;
-  const originalJson = res.json;
-  
-  res.send = function(body) {
-    if (typeof body === 'string' && body.includes('<!DOCTYPE')) {
-      console.error(`[API CRITICAL] Blocked HTML response for ${req.originalUrl}`);
-      this.setHeader('Content-Type', 'application/json');
-      return originalSend.call(this, JSON.stringify({ 
-        error: 'API route blocked HTML response',
-        endpoint: req.originalUrl,
-        method: req.method
-      }));
-    }
-    this.setHeader('Content-Type', 'application/json');
-    return originalSend.call(this, body);
-  };
-  
-  res.end = function(chunk, encoding) {
-    if (typeof chunk === 'string' && chunk.includes('<!DOCTYPE')) {
-      console.error(`[API CRITICAL] Blocked HTML end() for ${req.originalUrl}`);
-      this.setHeader('Content-Type', 'application/json');
-      return originalEnd.call(this, JSON.stringify({ 
-        error: 'API route blocked HTML end',
-        endpoint: req.originalUrl 
-      }), encoding);
-    }
-    return originalEnd.call(this, chunk, encoding);
-  };
-  
-  res.json = function(obj) {
-    this.setHeader('Content-Type', 'application/json');
-    return originalJson.call(this, obj);
-  };
-  
-  next();
-});
-
 // Express middleware setup
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -243,12 +124,6 @@ let platformInitialized = false;
 
 async function initializePlatform() {
   try {
-    // Skip platform initialization in production if database is not available
-    if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL?.includes('placeholder')) {
-      console.log('Skipping platform initialization in production without database');
-      return;
-    }
-
     // Create platform tenant (ARGILETTE)
     const existingTenant = await db.select().from(tenants).where(eq(tenants.subdomain, 'argilette')).limit(1);
     
@@ -300,62 +175,12 @@ async function initializePlatform() {
   } catch (error) {
     log("❌ Platform initialization failed: " + error);
     console.error("Platform initialization error:", error);
-    // Don't stop server startup for platform init failures
-    console.log("Server will continue running despite platform initialization failure");
   }
 }
 
 // Initialize server and keep running
 async function startServer() {
-  let server;
-  
-  // ADDITIONAL API PROTECTION - catches any requests that slip through
-  app.use((req, res, next) => {
-    if (req.path.startsWith('/api/')) {
-      // Ensure API routes NEVER get HTML responses
-      const originalSend = res.send;
-      const originalJson = res.json;
-      
-      res.send = function(body) {
-        if (typeof body === 'string' && body.includes('<!DOCTYPE')) {
-          console.error(`[API ERROR] HTML response blocked for ${req.originalUrl}`);
-          return res.status(500).json({ 
-            error: 'HTML response blocked on API route',
-            endpoint: req.originalUrl 
-          });
-        }
-        return originalSend.call(this, body);
-      };
-      
-      res.json = function(obj) {
-        res.setHeader('Content-Type', 'application/json');
-        return originalJson.call(this, obj);
-      };
-    }
-    next();
-  });
-  
-  try {
-    console.log('📡 Registering API routes with maximum priority...');
-    server = await registerRoutes(app);
-    
-    // CRITICAL: Add final API protection after routes are registered
-    app.use('/api/*', (req, res) => {
-      console.error(`[FINAL API CATCH] Unhandled API route: ${req.method} ${req.path}`);
-      res.status(404).json({
-        error: 'API endpoint not found',
-        path: req.path,
-        method: req.method,
-        timestamp: new Date().toISOString(),
-        note: 'This response prevented HTML from being served'
-      });
-    });
-    
-  } catch (error) {
-    console.error('Error during route registration:', error);
-    // Continue with server startup even if some routes fail
-    server = require('http').createServer(app);
-  }
+  const server = await registerRoutes(app);
 
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -375,84 +200,13 @@ async function startServer() {
     }
   });
 
-  // FINAL API PROTECTION - Nuclear option to prevent ANY HTML on API routes
-  app.use('/api', (req, res, next) => {
-    // Completely hijack response for API routes
-    const originalSend = res.send;
-    const originalEnd = res.end;
-    const originalWrite = res.write;
-    
-    res.send = function(body) {
-      if (typeof body === 'string' && (body.includes('<!DOCTYPE') || body.includes('<html'))) {
-        console.error(`[NUCLEAR API PROTECTION] Completely blocked HTML for ${req.originalUrl}`);
-        this.status(500);
-        this.setHeader('Content-Type', 'application/json');
-        return originalSend.call(this, JSON.stringify({ 
-          error: 'BLOCKED: API endpoint attempted to return HTML',
-          path: req.originalUrl,
-          timestamp: new Date().toISOString()
-        }));
-      }
-      return originalSend.call(this, body);
-    };
-    
-    res.end = function(chunk, encoding) {
-      if (typeof chunk === 'string' && (chunk.includes('<!DOCTYPE') || chunk.includes('<html'))) {
-        console.error(`[NUCLEAR API PROTECTION] Blocked HTML end() for ${req.originalUrl}`);
-        this.setHeader('Content-Type', 'application/json');
-        return originalEnd.call(this, JSON.stringify({ 
-          error: 'BLOCKED: API endpoint attempted HTML end()',
-          path: req.originalUrl 
-        }), encoding);
-      }
-      return originalEnd.call(this, chunk, encoding);
-    };
-    
-    res.write = function(chunk, encoding, callback) {
-      if (typeof chunk === 'string' && (chunk.includes('<!DOCTYPE') || chunk.includes('<html'))) {
-        console.error(`[NUCLEAR API PROTECTION] Blocked HTML write() for ${req.originalUrl}`);
-        return false; // Prevent the write
-      }
-      return originalWrite.call(this, chunk, encoding, callback);
-    };
-    
-    next();
-  });
-
-  // FINAL VITE PROTECTION - Prevent any unhandled API routes from reaching Vite
-  app.use((req, res, next) => {
-    if (req.path.startsWith('/api/')) {
-      console.log(`[FINAL VITE PROTECTION] Pre-Vite check for: ${req.path}`);
-      
-      // Set a short timeout to check if our API routes handled this
-      setTimeout(() => {
-        if (res.locals.isApiRoute && !res.locals.apiHandled && !res.headersSent) {
-          console.error(`[FINAL PROTECTION] Unhandled API route - blocking Vite: ${req.path}`);
-          return res.status(404).json({ 
-            error: 'API endpoint not found - blocked before Vite',
-            path: req.path,
-            method: req.method,
-            timestamp: new Date().toISOString()
-          });
-        }
-      }, 50);
-    }
-    next();
-  });
-
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  try {
-    if (app.get("env") === "development") {
-      await setupVite(app, server);
-    } else {
-      serveStatic(app);
-    }
-  } catch (viteError) {
-    console.error('Vite/Static setup error (non-fatal):', viteError);
-    console.log('Continuing server startup without frontend serving');
-    // Continue server startup even if Vite setup fails
+  if (app.get("env") === "development") {
+    await setupVite(app, server);
+  } else {
+    serveStatic(app);
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
@@ -472,25 +226,21 @@ async function startServer() {
       console.error("Platform initialization error:", error);
     });
     
-    // Keep the process alive for ALL environments to prevent deployment issues
-    // Prevent the process from exiting - multiple approaches for robustness
-    process.stdin.resume();
-    
-    // Additional process keep-alive mechanisms
-    setInterval(() => {
-      // Keep process alive with minimal CPU usage - runs every 5 minutes
-    }, 300000); // 5 minutes
-    
-    // Extra keepalive for critical deployments
-    setInterval(() => {
-      // Secondary keepalive mechanism
-      process.stdout.write(''); // Minimal operation to keep process alive
-    }, 600000); // 10 minutes
-    
-    // Log server ready status for deployment verification
-    console.log('🚀 Server ready and accepting connections');
-    console.log('📊 Health check endpoints available at /health, /ping, /ready, /status');
-    console.log('💪 Server configured to stay alive indefinitely in all environments');
+    // Keep the process alive for production deployments
+    if (process.env.NODE_ENV === 'production') {
+      // Prevent the process from exiting - multiple approaches for robustness
+      process.stdin.resume();
+      
+      // Additional process keep-alive mechanisms
+      setInterval(() => {
+        // Keep process alive with minimal CPU usage
+      }, 300000); // 5 minutes
+      
+      // Log server ready status for deployment verification
+      console.log('🚀 Server ready and accepting connections');
+      console.log('📊 Health check endpoints available at /health, /ping, /ready, /status');
+      console.log('💪 Production server configured to stay alive indefinitely');
+    }
   });
 
   // Handle process errors to prevent crashes - keep server alive in production
@@ -512,19 +262,6 @@ async function startServer() {
       console.error('Development environment - logging error but keeping server alive');
       // Don't exit even in development for deployment compatibility
     }
-  });
-
-  // Add signal handlers to prevent unexpected exits
-  process.on('SIGTERM', () => {
-    console.log('Received SIGTERM, but keeping server alive for deployment compatibility');
-  });
-
-  process.on('SIGINT', () => {
-    console.log('Received SIGINT, but keeping server alive for deployment compatibility');
-  });
-
-  process.on('SIGHUP', () => {
-    console.log('Received SIGHUP, but keeping server alive for deployment compatibility');
   });
 }
 

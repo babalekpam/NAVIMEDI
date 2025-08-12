@@ -261,15 +261,19 @@ export async function seedAchievements() {
   }
 }
 
-// Commenting out automatic execution to prevent deployment exit issues
-// This should be run manually when needed, not during deployment
-// if (import.meta.url === new URL(process.argv[1], 'file:').href) {
-//   seedAchievements().then(() => {
-//     console.log("🏆 Achievement seeding completed");
-//   }).catch((error) => {
-//     console.error("❌ Achievement seeding failed:", error);
-//   });
-// }
-
-// Export the function for manual execution when needed
-export { seedAchievements };
+// Run if called directly
+if (import.meta.url === new URL(process.argv[1], 'file:').href) {
+  seedAchievements().then(() => {
+    console.log("🏆 Achievement seeding completed");
+    // Don't exit process in production environment
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(0);
+    }
+  }).catch((error) => {
+    console.error("❌ Achievement seeding failed:", error);
+    // Don't exit process in production environment 
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    }
+  });
+}

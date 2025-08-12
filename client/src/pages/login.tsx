@@ -69,7 +69,7 @@ export default function Login() {
     
     console.log('MFA Login success - user role:', user.role);
     
-    // Determine redirect path based on user role and organization type
+    // Determine redirect path based on user role
     let redirectPath = '/dashboard';
     if (user.mustChangePassword || user.isTemporaryPassword) {
       redirectPath = '/change-password';
@@ -78,15 +78,7 @@ export default function Login() {
     } else if (user.role === 'super_admin') {
       redirectPath = '/super-admin-dashboard';
     } else if (user.role === 'tenant_admin' || user.role === 'director') {
-      // For tenant admins, check organization type to route to correct dashboard
-      const tenantType = user.tenant?.type;
-      if (tenantType === 'laboratory') {
-        redirectPath = '/laboratory-dashboard';
-      } else if (tenantType === 'pharmacy') {
-        redirectPath = '/pharmacy-dashboard';
-      } else {
-        redirectPath = '/admin-dashboard'; // Hospital/clinic default
-      }
+      redirectPath = '/admin-dashboard';
     } else if (user.role === 'lab_technician') {
       redirectPath = '/laboratory-dashboard';
     } else if (user.role === 'pharmacist') {

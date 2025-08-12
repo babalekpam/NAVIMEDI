@@ -81,17 +81,15 @@ async function resetAllCounters() {
   }
 }
 
-// Commenting out automatic execution to prevent deployment exit issues
-// This should be run manually when needed, not during deployment
-// if (require.main === module) {
-//   completePlatformReset()
-//     .then(() => {
-//       console.log("Platform reset completed successfully");
-//     })
-//     .catch((error) => {
-//       console.error("Platform reset failed:", error);
-//     });
-// }
-
-// Export the function for manual execution when needed
-module.exports = { completePlatformReset, resetAllCounters };
+// Execute if run directly
+if (require.main === module) {
+  completePlatformReset()
+    .then(() => {
+      console.log("Platform reset completed successfully");
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error("Platform reset failed:", error);
+      process.exit(1);
+    });
+}

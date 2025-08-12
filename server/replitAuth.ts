@@ -9,9 +9,7 @@ import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
 if (!process.env.REPLIT_DOMAINS) {
-  console.warn("Warning: Environment variable REPLIT_DOMAINS not provided - Replit OAuth will be disabled");
-  // Don't throw error to prevent deployment failures
-  // throw new Error("Environment variable REPLIT_DOMAINS not provided");
+  throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
 
 const getOidcConfig = memoize(

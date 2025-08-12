@@ -441,7 +441,6 @@ export const patients = pgTable("patients", {
   emergencyContact: jsonb("emergency_contact"),
   insuranceInfo: jsonb("insurance_info"),
   preferredPharmacyId: uuid("preferred_pharmacy_id").references(() => pharmacies.id),
-  preferredLaboratoryId: uuid("preferred_laboratory_id").references(() => laboratories.id),
   primaryPhysicianId: uuid("primary_physician_id").references(() => users.id), // Assigned primary doctor
   medicalHistory: jsonb("medical_history").default('[]'),
   allergies: jsonb("allergies").default('[]'),

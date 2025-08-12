@@ -22,13 +22,6 @@ import { resetAllCounters } from "./reset-all-counters";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // CRITICAL: Ensure all /api/* routes are handled by this router, not Vite
-  app.use('/api', (req, res, next) => {
-    // Mark this as an API request to prevent Vite catch-all interception
-    req.url = req.url; // No-op that ensures this middleware runs first
-    next();
-  });
-
   // PUBLIC ENDPOINTS (before any middleware)
   
   // Public supplier registration endpoint (outside /api path to avoid middleware)
@@ -603,16 +596,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Hash password
       const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
-      // Determine admin role based on organization type
-      let adminRole: 'tenant_admin' | 'lab_technician' | 'pharmacist' = 'tenant_admin'; // Default role
-      if (organizationType === 'laboratory') {
-        adminRole = 'lab_technician'; // Laboratory admin should get lab technician role for proper routing
-      } else if (organizationType === 'pharmacy') {
-        adminRole = 'pharmacist'; // Pharmacy admin should get pharmacist role for proper routing
-      } else if (organizationType === 'hospital' || organizationType === 'clinic') {
-        adminRole = 'tenant_admin'; // Hospital/clinic admin keeps tenant_admin role
-      }
-
       // Create admin user
       const adminUser = await storage.createUser({
         tenantId: newTenant.id,
@@ -621,7 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: hashedPassword,
         firstName: adminFirstName,
         lastName: adminLastName,
-        role: adminRole,
+        role: 'tenant_admin',
         isActive: true,
         isTemporaryPassword: false,
         mustChangePassword: false
@@ -1065,8 +1048,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: user.id, 
           tenantId: user.tenantId, 
           role: user.role,
-          username: user.username,
-          email: user.email
+          username: user.username 
         },
         JWT_SECRET,
         { expiresIn: "8h" }
@@ -1868,142 +1850,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
       res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Patient-specific appointment endpoints (for patient portal)
-  app.get("/api/patient/appointments", authenticateToken, requireTenant, async (req, res) => {
-    try {
-      // Ensure user is a patient
-      if (req.user?.role !== "patient") {
-        return res.status(403).json({ message: "Access denied: Patient role required" });
-      }
-
-      // Find patient record for this user using tenant-filtered search
-      const tenantId = req.tenant!.id;
-      const userEmail = req.user?.email;
-      const patients = await storage.getPatientsByTenant(tenantId);
-      const patientRecord = patients.find(p => p.email === userEmail);
-      
-      if (!patientRecord) {
-        console.log(`[PATIENT APPOINTMENTS DEBUG] No patient record found for email: ${userEmail}`);
-        return res.status(404).json({ 
-          message: "Patient record not found in this organization",
-          debug: {
-            searchEmail: userEmail,
-            tenantId: tenantId,
-            availablePatients: patients.map(p => p.email)
-          }
-        });
-      }
-
-      // Get appointments for this patient
-      const appointments = await storage.getAppointmentsByPatient(patientRecord.id, patientRecord.tenantId);
-      
-      console.log(`[PATIENT PORTAL] Patient ${patientRecord.firstName} ${patientRecord.lastName} accessed ${appointments.length} appointments`);
-      res.json(appointments);
-    } catch (error) {
-      console.error("Get patient appointments error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.get("/api/patient/profile", authenticateToken, requireTenant, async (req, res) => {
-    try {
-      // Ensure user is a patient
-      if (req.user?.role !== "patient") {
-        console.log(`[PATIENT PORTAL DEBUG] Access denied - user role: ${req.user?.role}, expected: patient`);
-        return res.status(403).json({ message: "Access denied: Patient role required" });
-      }
-
-      // Find patient record for this user using tenant-filtered search
-      const tenantId = req.tenant!.id;
-      const userEmail = req.user?.email;
-      
-      const patients = await storage.getPatientsByTenant(tenantId);
-      const patientRecord = patients.find(p => p.email === userEmail);
-      
-      if (!patientRecord) {
-        return res.status(404).json({ 
-          message: "Patient record not found in this organization"
-        });
-      }
-
-      console.log(`[PATIENT PORTAL] Patient ${patientRecord.firstName} ${patientRecord.lastName} accessed profile`);
-      res.json(patientRecord);
-    } catch (error) {
-      console.error("Get patient profile error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.post("/api/patient/book-appointment", authenticateToken, requireTenant, async (req, res) => {
-    try {
-      // Ensure user is a patient
-      if (req.user?.role !== "patient") {
-        return res.status(403).json({ message: "Access denied: Patient role required" });
-      }
-
-      // Find patient record for this user using tenant-filtered search
-      const tenantId = req.tenant!.id;
-      const patients = await storage.getPatientsByTenant(tenantId);
-      const patientRecord = patients.find(p => p.email === req.user?.email);
-      
-      if (!patientRecord) {
-        return res.status(404).json({ message: "Patient record not found in this organization" });
-      }
-
-      // Create appointment data with proper date parsing
-      const { appointmentDate, appointmentTime, doctorId, reason, type = 'general', duration = 30 } = req.body;
-      
-      // Combine date and time into a proper Date object
-      let appointmentDateTime;
-      if (appointmentDate && appointmentTime) {
-        appointmentDateTime = new Date(`${appointmentDate}T${appointmentTime}:00.000Z`);
-      } else {
-        appointmentDateTime = new Date(); // fallback to current time
-      }
-      
-      // Validate that the date is valid
-      if (isNaN(appointmentDateTime.getTime())) {
-        return res.status(400).json({ message: "Invalid appointment date or time" });
-      }
-      
-      // UUID validation regex
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      
-      // Determine the provider ID - prefer doctorId (if valid UUID), then primary physician, then fallback
-      let providerId = (doctorId && uuidRegex.test(doctorId)) ? doctorId : patientRecord.primaryPhysicianId;
-      
-      // If no valid provider ID, get the first available doctor in the tenant
-      if (!providerId) {
-        const doctors = await storage.getUsersByTenant(patientRecord.tenantId);
-        const availableDoctor = doctors.find(user => user.role === 'physician');
-        if (availableDoctor) {
-          providerId = availableDoctor.id;
-        } else {
-          return res.status(400).json({ message: "No available doctors found for appointment booking" });
-        }
-      }
-      
-      const appointmentData = {
-        patientId: patientRecord.id,
-        tenantId: patientRecord.tenantId,
-        providerId: providerId,
-        appointmentDate: appointmentDateTime,
-        type: type,
-        duration: duration,
-        notes: reason || '',
-        status: 'scheduled' as const
-      };
-
-      const appointment = await storage.createAppointment(appointmentData);
-
-      console.log(`[PATIENT PORTAL] Patient ${patientRecord.firstName} ${patientRecord.lastName} booked appointment`);
-      res.status(201).json(appointment);
-    } catch (error) {
-      console.error("Book patient appointment error:", error);
-      res.status(500).json({ message: "Failed to book appointment" });
     }
   });
 
@@ -3682,41 +3528,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Cross-tenant pharmacy selection for hospitals/clinics (enhanced endpoint)
-  app.get("/api/pharmacies/all-available", authenticateToken, requireTenant, async (req, res) => {
-    try {
-      // Only allow hospitals and clinics to access cross-tenant pharmacy data
-      const userTenant = req.tenant;
-      if (!['hospital', 'clinic'].includes(userTenant?.type || '')) {
-        return res.status(403).json({ message: "Access denied: Only hospitals and clinics can access cross-tenant pharmacy data" });
-      }
-
-      // Get all active pharmacy tenants for cross-tenant prescription routing
-      const allTenants = await storage.getAllTenants();
-      const pharmacyTenants = allTenants.filter(tenant => 
-        tenant.type === 'pharmacy' && tenant.isActive
-      );
-
-      // Format pharmacy data for dropdown selection
-      const availablePharmacies = pharmacyTenants.map(pharmacy => ({
-        id: pharmacy.id,
-        name: pharmacy.name,
-        type: pharmacy.type,
-        address: pharmacy.address,
-        phoneNumber: pharmacy.phoneNumber,
-        subdomain: pharmacy.subdomain,
-        organizationType: pharmacy.organizationType,
-        isActive: pharmacy.isActive
-      }));
-
-      console.log(`[CROSS-TENANT] Hospital ${userTenant.name} accessing ${availablePharmacies.length} available pharmacies`);
-      res.json(availablePharmacies);
-    } catch (error) {
-      console.error("Error fetching cross-tenant pharmacies:", error);
-      res.status(500).json({ message: "Failed to fetch available pharmacies" });
-    }
-  });
-
   // Update patient preferred pharmacy (requires patient approval)
   app.patch("/api/patients/:id/preferred-pharmacy", authenticateToken, requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director"]), async (req, res) => {
     try {
@@ -3847,41 +3658,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching laboratories:", error);
       res.status(500).json({ message: "Failed to fetch laboratories" });
-    }
-  });
-
-  // Cross-tenant laboratory selection for hospitals/clinics
-  app.get("/api/laboratories/all-available", authenticateToken, requireTenant, async (req, res) => {
-    try {
-      // Only allow hospitals and clinics to access cross-tenant laboratory data
-      const userTenant = req.tenant;
-      if (!['hospital', 'clinic'].includes(userTenant?.type || '')) {
-        return res.status(403).json({ message: "Access denied: Only hospitals and clinics can access cross-tenant laboratory data" });
-      }
-
-      // Get all active laboratory tenants for cross-tenant lab ordering
-      const allTenants = await storage.getAllTenants();
-      const laboratoryTenants = allTenants.filter(tenant => 
-        tenant.type === 'laboratory' && tenant.isActive
-      );
-
-      // Format laboratory data for dropdown selection
-      const availableLaboratories = laboratoryTenants.map(lab => ({
-        id: lab.id,
-        name: lab.name,
-        type: lab.type,
-        address: lab.address,
-        phoneNumber: lab.phoneNumber,
-        subdomain: lab.subdomain,
-        organizationType: lab.organizationType,
-        isActive: lab.isActive
-      }));
-
-      console.log(`[CROSS-TENANT] Hospital ${userTenant.name} accessing ${availableLaboratories.length} available laboratories`);
-      res.json(availableLaboratories);
-    } catch (error) {
-      console.error("Error fetching cross-tenant laboratories:", error);
-      res.status(500).json({ message: "Failed to fetch available laboratories" });
     }
   });
 

@@ -47,17 +47,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const storedToken = localStorage.getItem("auth_token");
     const storedUser = localStorage.getItem("auth_user");
 
-    // Simple validation - just check if both exist
-    if (storedToken && storedUser) {
+    // Validate token format before using it
+    if (storedToken && storedUser && 
+        storedToken !== 'undefined' && 
+        storedToken !== 'null' && 
+        storedToken.length > 10) {
       try {
         const parsedUser = JSON.parse(storedUser);
         setToken(storedToken);
         setUser(parsedUser);
       } catch (error) {
-        // Only clear if parsing fails
+        console.warn('Failed to parse stored user data, clearing auth:', error);
         localStorage.removeItem("auth_token");
         localStorage.removeItem("auth_user");
       }
+    } else if (storedToken) {
+      // Clear corrupted tokens
+      console.warn('Clearing corrupted auth data');
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
     }
     setIsLoading(false);
   }, []);
@@ -93,7 +101,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setToken(data.token);
     setUser(data.user);
     
-    // Determine redirect path based on user role and organization type
+    // Determine redirect path based on user role
     let redirectPath = '/dashboard';
     if (data.user.mustChangePassword || data.user.isTemporaryPassword) {
       redirectPath = '/change-password';
@@ -102,15 +110,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } else if (data.user.role === 'super_admin') {
       redirectPath = '/super-admin-dashboard';
     } else if (data.user.role === 'tenant_admin' || data.user.role === 'director') {
-      // For tenant admins, check organization type to route to correct dashboard
-      const tenantType = data.user.tenant?.type;
-      if (tenantType === 'laboratory') {
-        redirectPath = '/laboratory-dashboard';
-      } else if (tenantType === 'pharmacy') {
-        redirectPath = '/pharmacy-dashboard';
-      } else {
-        redirectPath = '/admin-dashboard'; // Hospital/clinic default
-      }
+      redirectPath = '/admin-dashboard';
     } else if (data.user.role === 'lab_technician') {
       redirectPath = '/laboratory-dashboard';
     } else if (data.user.role === 'pharmacist') {

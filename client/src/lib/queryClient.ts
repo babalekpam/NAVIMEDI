@@ -8,20 +8,6 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-// Helper function to check if token is expired (with 30 second buffer)
-function isTokenExpired(token: string): boolean {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const currentTime = Math.floor(Date.now() / 1000);
-    // Add small buffer to account for network delays
-    const bufferTime = 30; // 30 seconds buffer
-    return payload.exp < (currentTime - bufferTime);
-  } catch (error) {
-    console.warn('Failed to parse token:', error);
-    return true;
-  }
-}
-
 export async function apiRequest(
   url: string,
   options?: {
@@ -41,9 +27,6 @@ export async function apiRequest(
     throw new Error('Invalid token - redirecting to login');
   }
   
-  // Note: Removed proactive token expiration checking to prevent premature logouts
-  // Let the server handle token validation with 401 responses instead
-  
   const method = options?.method || 'GET';
   const data = options?.body;
   
@@ -60,59 +43,8 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  // Handle 401 responses
-  if (res.status === 401) {
-    console.warn('Received 401 - authentication failed');
-    const errorText = await res.text();
-    
-    // Only clear auth on actual token expiration, not access denied
-    if (errorText.includes('expired') || errorText.includes('Invalid or expired token')) {
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("auth_user");
-      
-      const currentPath = window.location.pathname;
-      if (currentPath.includes('patient') || currentPath.includes('telemedicine')) {
-        window.location.href = '/patient-login';
-      } else {
-        window.location.href = '/login';
-      }
-      throw new Error('Session expired - please log in again');
-    }
-    throw new Error(errorText || 'Access denied');
-  }
-
-  // Debug what we're receiving to catch routing issues
-  const responseText = await res.text();
-  console.log(`[FRONTEND DEBUG] Response for ${url}:`, {
-    status: res.status,
-    contentType: res.headers.get("content-type"),
-    responseStart: responseText.substring(0, 100),
-    isHTML: responseText.includes('<!DOCTYPE')
-  });
-
-  // If we get HTML instead of JSON, this is the routing issue
-  if (responseText.includes('<!DOCTYPE') || responseText.includes('<html')) {
-    console.error(`[ROUTING ERROR] Got HTML instead of JSON for ${url}`);
-    throw new Error(`Server returned HTML instead of JSON for API endpoint: ${url}`);
-  }
-
-  if (!res.ok) {
-    let errorMessage;
-    try {
-      const errorData = JSON.parse(responseText);
-      errorMessage = errorData.message || `HTTP ${res.status}`;
-    } catch {
-      errorMessage = responseText || `HTTP ${res.status}`;
-    }
-    throw new Error(errorMessage);
-  }
-
-  try {
-    return JSON.parse(responseText);
-  } catch (e) {
-    console.error('JSON parse error:', e);
-    throw new Error(`Invalid JSON response from ${url}: ${responseText.substring(0, 100)}`);
-  }
+  await throwIfResNotOk(res);
+  return res.json();
 }
 
 // Legacy function for backward compatibility

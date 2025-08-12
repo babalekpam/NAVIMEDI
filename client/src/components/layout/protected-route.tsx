@@ -14,28 +14,17 @@ export const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps)
   const { tenant, isLoading: tenantLoading } = useTenant();
   const [, setLocation] = useLocation();
 
-  // Simple authentication check without aggressive redirects
+  // Always call useEffect hook
   useEffect(() => {
     if (!authLoading && !user) {
-      // Check localStorage directly as fallback
-      const directToken = localStorage.getItem("auth_token");
-      const directUser = localStorage.getItem("auth_user");
-      
-      if (!directToken || !directUser) {
-        const currentPath = window.location.pathname;
-        if (currentPath.includes('patient') || currentPath.includes('telemedicine')) {
-          setLocation("/patient-login");
-        } else {
-          setLocation("/login");
-        }
-      }
+      setLocation("/login");
     } else if (user && (user.mustChangePassword || user.isTemporaryPassword)) {
+      // Redirect to change password if user has temporary password
       setLocation("/change-password");
     }
   }, [authLoading, user, setLocation]);
 
-  // Show loading state but don't block for too long
-  if (authLoading) {
+  if (authLoading || tenantLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="space-y-4 w-64">

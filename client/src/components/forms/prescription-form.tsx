@@ -19,27 +19,10 @@ interface PrescriptionFormProps {
 }
 
 export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescription, isEditing = false }: PrescriptionFormProps) => {
-  // Fetch available pharmacies for prescription routing (cross-tenant for hospitals/clinics)
+  // Fetch available pharmacies for prescription routing
   const { data: pharmacies = [], isLoading: pharmaciesLoading } = useQuery({
-    queryKey: ["/api/pharmacies/all-available"],
-    retry: 1,
-    meta: {
-      errorMessage: "Unable to load available pharmacies. Please check your permissions."
-    },
-    // Fallback to regular API if cross-tenant fails (for backwards compatibility)
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/pharmacies/all-available");
-        if (response.ok) {
-          return response.json();
-        }
-        // If cross-tenant fails, try regular endpoint
-        const fallbackResponse = await fetch("/api/pharmacies");
-        return fallbackResponse.json();
-      } catch (error) {
-        throw error;
-      }
-    }
+    queryKey: ["/api/pharmacies"],
+    enabled: true
   });
 
   // Create a simplified schema just for the form fields we need
