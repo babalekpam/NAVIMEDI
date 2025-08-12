@@ -75,6 +75,19 @@ app.get('/alive', (req, res) => {
   res.status(200).send('OK');
 });
 
+// CRITICAL API PROTECTION - Must come FIRST before any other middleware
+// This prevents Vite catch-all from intercepting API calls
+app.use('/api', (req, res, next) => {
+  // Set response headers immediately to prevent HTML responses
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('X-API-Route', 'true');
+  
+  // Log API calls for debugging
+  console.log(`[API PROTECTION] ${req.method} ${req.originalUrl}`);
+  
+  next();
+});
+
 // Express middleware setup
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -189,6 +202,32 @@ async function initializePlatform() {
 // Initialize server and keep running
 async function startServer() {
   let server;
+  
+  // ADDITIONAL API PROTECTION - catches any requests that slip through
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/')) {
+      // Ensure API routes NEVER get HTML responses
+      const originalSend = res.send;
+      const originalJson = res.json;
+      
+      res.send = function(body) {
+        if (typeof body === 'string' && body.includes('<!DOCTYPE')) {
+          console.error(`[API ERROR] HTML response blocked for ${req.originalUrl}`);
+          return res.status(500).json({ 
+            error: 'HTML response blocked on API route',
+            endpoint: req.originalUrl 
+          });
+        }
+        return originalSend.call(this, body);
+      };
+      
+      res.json = function(obj) {
+        res.setHeader('Content-Type', 'application/json');
+        return originalJson.call(this, obj);
+      };
+    }
+    next();
+  });
   
   try {
     server = await registerRoutes(app);
