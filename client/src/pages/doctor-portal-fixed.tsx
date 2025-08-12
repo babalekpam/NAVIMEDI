@@ -272,10 +272,12 @@ export default function DoctorPortalFixed() {
       doctorName: `${loggedInDoctor.firstName} ${loggedInDoctor.lastName}`
     });
 
-    console.log("=== DOCTOR BOOKING APPOINTMENT ===");
+    console.log("=== DOCTOR SCHEDULING FOR PATIENT ===");
     console.log("Appointment ID:", appointmentId);
-    console.log("Patient:", selectedPatient.firstName, selectedPatient.lastName);
-    console.log("Doctor:", loggedInDoctor.firstName, loggedInDoctor.lastName);
+    console.log("Doctor scheduling:", loggedInDoctor.firstName, loggedInDoctor.lastName);
+    console.log("For patient:", selectedPatient.firstName, selectedPatient.lastName);
+    console.log("Date/Time:", appointmentDate, appointmentTime);
+    console.log("Type:", appointmentType, "| Reason:", appointmentReason);
 
     // Refresh appointments immediately
     const sharedAppointments = SharedAppointmentService.getAllAppointments();
@@ -283,8 +285,8 @@ export default function DoctorPortalFixed() {
     setRefreshKey(prev => prev + 1);
 
     toast({
-      title: "Appointment Booked",
-      description: `Appointment scheduled for ${selectedPatient.firstName} ${selectedPatient.lastName}`,
+      title: "Patient Scheduled",
+      description: `${selectedPatient.firstName} ${selectedPatient.lastName} scheduled for ${new Date(appointmentDate + 'T' + appointmentTime).toLocaleDateString()} at ${new Date(appointmentDate + 'T' + appointmentTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`,
     });
 
     // Reset form
@@ -472,7 +474,7 @@ export default function DoctorPortalFixed() {
               <div className="flex items-center gap-3">
                 <Button onClick={() => setIsBookingModalOpen(true)} className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  Book Appointment
+                  Schedule Patient
                 </Button>
                 <Badge variant="outline" className="text-lg px-3 py-1">
                   {doctorAppointments.length} Total
@@ -679,15 +681,18 @@ export default function DoctorPortalFixed() {
       <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Book Patient Appointment</DialogTitle>
+            <DialogTitle>Schedule Patient Appointment</DialogTitle>
+            <p className="text-sm text-gray-600">
+              Doctor: {loggedInDoctor.firstName} {loggedInDoctor.lastName} ({loggedInDoctor.specialization})
+            </p>
           </DialogHeader>
           
           <div className="space-y-4">
             <div>
-              <Label htmlFor="patient">Select Patient</Label>
+              <Label htmlFor="patient">Select Your Patient</Label>
               <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a patient" />
+                  <SelectValue placeholder="Choose from your patients" />
                 </SelectTrigger>
                 <SelectContent>
                   {PATIENTS_ARRAY.map(patient => (
@@ -773,7 +778,7 @@ export default function DoctorPortalFixed() {
                 onClick={handleBookAppointmentForPatient}
                 className="flex-1"
               >
-                Book Appointment
+                Schedule Appointment
               </Button>
             </div>
           </div>
