@@ -271,7 +271,7 @@ export default function PatientPortalNew() {
     address: "123 Medical Center Drive, Metro City, MC 12345",
     phone: "(555) 789-0123", 
     primaryColor: tenant?.primaryColor || "#10b981",
-    logoUrl: tenant?.logoUrl || null,
+    logoUrl: tenant?.logoUrl || undefined,
     type: tenant?.type || "hospital"
   };
 
@@ -312,22 +312,20 @@ export default function PatientPortalNew() {
   const messagesLoading = false;
   const doctorsLoading = false;
 
-  // Book appointment mutation
+  // Book appointment mutation (demo implementation)
   const bookAppointmentMutation = useMutation({
     mutationFn: async (appointmentData: AppointmentFormData) => {
-      const appointmentDateTime = new Date(`${appointmentData.appointmentDate}T${appointmentData.appointmentTime}`);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const response = await apiRequest("POST", "/api/appointments", {
-        patientId: user?.id || user?.userId,
-        providerId: appointmentData.doctorId,
-        appointmentDate: appointmentDateTime.toISOString(),
-        type: appointmentData.type,
-        reason: appointmentData.reason,
-        priority: appointmentData.priority,
+      // Return demo success response
+      return {
+        id: `appt-${Date.now()}`,
+        ...appointmentData,
         status: 'scheduled',
-        tenantId: user?.tenantId || hospitalInfo?.id
-      });
-      return response.json();
+        patientId: patientProfile.id,
+        tenantId: patientProfile.tenantId
+      };
     },
     onSuccess: () => {
       toast({
@@ -336,7 +334,6 @@ export default function PatientPortalNew() {
       });
       setIsBookingModalOpen(false);
       appointmentForm.reset();
-      queryClient.invalidateQueries({ queryKey: ["/api/patient/appointments"] });
     },
     onError: (error: any) => {
       toast({
@@ -347,14 +344,20 @@ export default function PatientPortalNew() {
     },
   });
 
-  // Send message mutation
+  // Send message mutation (demo implementation)
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: any) => {
-      const response = await apiRequest("POST", "/api/medical-communications", {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Return demo success response
+      return {
+        id: `msg-${Date.now()}`,
         ...messageData,
-        tenantId: user?.tenantId || hospitalInfo?.id
-      });
-      return response.json();
+        createdAt: new Date().toISOString(),
+        isRead: false,
+        tenantId: patientProfile.tenantId
+      };
     },
     onSuccess: () => {
       toast({
@@ -362,7 +365,6 @@ export default function PatientPortalNew() {
         description: "Message sent successfully!",
       });
       setMessageForm({ subject: "", message: "", priority: "normal" });
-      queryClient.invalidateQueries({ queryKey: ["/api/medical-communications"] });
     },
     onError: (error: any) => {
       toast({

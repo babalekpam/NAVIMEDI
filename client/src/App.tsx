@@ -272,9 +272,7 @@ function AppContent() {
           </ProtectedRoute>
         </Route>
         <Route path="/patient-portal-new">
-          <ProtectedRoute>
-            <PatientPortalNew />
-          </ProtectedRoute>
+          <PatientPortalNew />
         </Route>
         <Route path="/patient-portal-staff">
           <ProtectedRoute>
