@@ -142,8 +142,11 @@ export default function DoctorPortal() {
     return baseAppointments.filter(appointment => appointment.providerId === doctorId);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Simulate login delay
+    await new Promise(resolve => setTimeout(resolve, 800));
     
     const doctor = DEMO_DOCTORS.find(d => 
       d.email === loginForm.email && d.password === loginForm.password
@@ -173,7 +176,10 @@ export default function DoctorPortal() {
     });
   };
 
-  const updateAppointmentStatus = (appointmentId: string, newStatus: string) => {
+  const updateAppointmentStatus = async (appointmentId: string, newStatus: string) => {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     toast({
       title: "Status Updated",
       description: `Appointment status changed to ${newStatus}`,
