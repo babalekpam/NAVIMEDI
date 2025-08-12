@@ -8,6 +8,18 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Helper function to check if token is expired
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const currentTime = Math.floor(Date.now() / 1000);
+    return payload.exp < currentTime;
+  } catch (error) {
+    console.warn('Failed to parse token:', error);
+    return true;
+  }
+}
+
 export async function apiRequest(
   url: string,
   options?: {
@@ -25,6 +37,22 @@ export async function apiRequest(
     localStorage.removeItem("auth_user");
     window.location.href = '/login';
     throw new Error('Invalid token - redirecting to login');
+  }
+  
+  // Check if token is expired before making the request
+  if (token && isTokenExpired(token)) {
+    console.warn('Token is expired, clearing and redirecting');
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
+    
+    // Redirect to appropriate login page
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('patient') || currentPath.includes('telemedicine')) {
+      window.location.href = '/patient-login';
+    } else {
+      window.location.href = '/login';
+    }
+    throw new Error('Session expired. Redirecting to login...');
   }
   
   const method = options?.method || 'GET';
@@ -57,6 +85,21 @@ export async function apiRequest(
   if (!contentType || !contentType.includes('application/json')) {
     const text = await res.text();
     if (text.includes('<!DOCTYPE')) {
+      // If we get HTML response and have a token, it's likely expired
+      if (token) {
+        console.warn('Received HTML response with token present - token likely expired');
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("auth_user");
+        
+        // For patient portal users, try to redirect to patient login
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('patient') || currentPath.includes('telemedicine')) {
+          window.location.href = '/patient-login';
+        } else {
+          window.location.href = '/login';
+        }
+        throw new Error('Session expired. Redirecting to login...');
+      }
       throw new Error('Unexpected HTML response - possible routing issue. Please refresh and try again.');
     }
     throw new Error(`Unexpected response type: ${contentType}`);
