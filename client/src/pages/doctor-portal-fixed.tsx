@@ -263,8 +263,11 @@ export default function DoctorPortalFixed() {
   }
 
   // Get appointments for logged in doctor
-  const doctorAppointments = appointments.filter(appt => appt.providerId === loggedInDoctor.id);
-  const todayAppointments = doctorAppointments.filter(appt => {
+  console.log("Logged in doctor ID:", loggedInDoctor.id);
+  console.log("All appointments:", appointments);
+  const doctorAppointments = appointments.filter((appt: SharedAppointment) => appt.providerId === loggedInDoctor.id);
+  console.log("Doctor appointments:", doctorAppointments);
+  const todayAppointments = doctorAppointments.filter((appt: SharedAppointment) => {
     const apptDate = new Date(appt.appointmentDate);
     const today = new Date();
     return apptDate.toDateString() === today.toDateString();
@@ -369,8 +372,7 @@ export default function DoctorPortalFixed() {
             </div>
 
             <div className="grid gap-4">
-              {doctorAppointments.map((appointment) => {
-                const patient = DEMO_PATIENTS[appointment.patientId as keyof typeof DEMO_PATIENTS];
+              {doctorAppointments.map((appointment: SharedAppointment) => {
                 return (
                   <Card key={appointment.id} className="border-l-4 border-l-blue-500">
                     <CardContent className="p-6">
@@ -380,7 +382,7 @@ export default function DoctorPortalFixed() {
                             <User className="h-5 w-5 text-blue-500" />
                             <div>
                               <h3 className="font-semibold text-lg">
-                                {patient?.firstName} {patient?.lastName}
+                                {appointment.patientName}
                               </h3>
                               <p className="text-sm text-gray-600">Patient ID: {appointment.patientId}</p>
                             </div>
@@ -422,7 +424,7 @@ export default function DoctorPortalFixed() {
                             <p className="text-sm"><strong>Type:</strong> {appointment.type}</p>
                             <p className="text-sm"><strong>Reason:</strong> {appointment.reason}</p>
                             <p className="text-sm">
-                              <strong>Booked:</strong> {new Date(appointment.bookedAt).toLocaleString()}
+                              <strong>Booked:</strong> {new Date(appointment.bookedAt || appointment.appointmentDate).toLocaleString()}
                             </p>
                           </div>
                         </div>
