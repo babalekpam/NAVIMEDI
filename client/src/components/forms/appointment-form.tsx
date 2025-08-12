@@ -20,9 +20,19 @@ interface AppointmentFormProps {
 export const AppointmentForm = ({ onSubmit, isLoading = false, patients, providers, hideProviderSelection = false }: AppointmentFormProps) => {
   const { user } = useAuth();
   
+  // Debug logging
+  console.log("=== APPOINTMENT FORM DEBUG ===");
+  console.log("User object:", user);
+  console.log("User role:", user?.role);
+  console.log("hideProviderSelection prop:", hideProviderSelection);
+  
   // Check if user is a doctor (provider) - doctors should not select themselves as providers
   const isDoctor = user?.role === 'doctor' || user?.role === 'provider';
-  const shouldHideProviderSelection = hideProviderSelection || isDoctor;
+  // For now, force hide provider selection to test
+  const shouldHideProviderSelection = true; // Force hide for testing
+  
+  console.log("isDoctor:", isDoctor);
+  console.log("shouldHideProviderSelection:", shouldHideProviderSelection);
   const appointmentFormSchema = insertAppointmentSchema.omit({ tenantId: true }).extend({
     appointmentDate: z.string().min(1, "Appointment date is required")
   });
