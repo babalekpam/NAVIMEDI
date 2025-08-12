@@ -300,21 +300,65 @@ export default function PatientPortalNew() {
     return today.toISOString().split('T')[0];
   };
 
-  if (!user || user.role !== "patient") {
+  // Debug: Show current user info
+  console.log("Current user in patient portal:", user);
+  console.log("Tenant info:", tenant);
+
+  if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md text-center">
           <CardContent className="p-8">
             <User className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Patient Access Required</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Login Required</h2>
             <p className="text-gray-600 mb-6">
-              This portal is exclusively for registered patients. Please log in with your patient credentials.
+              Please log in to access the patient portal.
             </p>
-            <Button onClick={() => window.location.href = "/patient-login"} className="w-full">
-              Go to Patient Login
-            </Button>
+            <div className="space-y-2">
+              <Button onClick={() => window.location.href = "/login"} className="w-full">
+                Staff Login
+              </Button>
+              <Button onClick={() => window.location.href = "/patient-login"} variant="outline" className="w-full">
+                Patient Login
+              </Button>
+            </div>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  // Demo mode: show warning but allow access for testing
+  const [showDemoWarning, setShowDemoWarning] = useState(user.role !== "patient");
+  
+  if (showDemoWarning && user.role !== "patient") {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Card className="w-full max-w-2xl mx-auto">
+            <CardContent className="p-8 text-center">
+              <Activity className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Demo Patient Portal</h2>
+              <p className="text-gray-600 mb-6">
+                You're logged in as <strong>{user.role}</strong> ({user.firstName} {user.lastName}). 
+                This is a demonstration of the patient portal interface. In production, this would be restricted to patient accounts only.
+              </p>
+              <div className="bg-blue-50 p-4 rounded-lg mb-6">
+                <p className="text-sm text-blue-800">
+                  <strong>Current User:</strong> {user.firstName} {user.lastName} ({user.role})<br/>
+                  <strong>Tenant:</strong> {tenant?.name || 'Loading...'}<br/>
+                  <strong>User ID:</strong> {user.id}
+                </p>
+              </div>
+              <Button 
+                onClick={() => setShowDemoWarning(false)} 
+                className="w-full"
+              >
+                Continue to Demo Portal
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
