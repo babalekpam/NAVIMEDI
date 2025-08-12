@@ -464,6 +464,13 @@ export const appointments = pgTable("appointments", {
   vitals: jsonb("vitals"),
   diagnosis: jsonb("diagnosis").default('[]'),
   treatmentPlan: text("treatment_plan"),
+  // Telemedicine fields
+  isTelemedicine: boolean("is_telemedicine").default(false),
+  videoCallLink: text("video_call_link"),
+  preferredDevice: text("preferred_device"), // computer, tablet, smartphone
+  telemedicineNotes: text("telemedicine_notes"),
+  videoCallStarted: timestamp("video_call_started"),
+  videoCallEnded: timestamp("video_call_ended"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });

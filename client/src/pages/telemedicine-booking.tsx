@@ -179,16 +179,51 @@ export default function TelemedicineBooking() {
     }
   };
 
-  const handleBookingSubmit = async () => {
-    try {
-      // In real app, this would submit to API
-      console.log("Booking submitted:", bookingForm);
+  // Add mutation for creating telemedicine appointment
+  const createTelemedicineMutation = useMutation({
+    mutationFn: async (bookingData: TelemedicineBooking) => {
+      // Import apiRequest function from queryClient
+      const { apiRequest } = await import("@/lib/queryClient");
+      
+      // Create appointment with telemedicine-specific data
+      const appointmentData = {
+        patientId: user?.patientId || user?.id, // Use patient ID if available
+        providerId: bookingData.providerId,
+        appointmentDate: new Date(`${bookingData.date}T${bookingData.time}`),
+        duration: 30,
+        type: "telemedicine",
+        status: "scheduled",
+        notes: `Telemedicine consultation. Symptoms: ${bookingData.symptoms}. Urgency: ${bookingData.urgency}. Preferred device: ${bookingData.preferredDevice}. ${bookingData.patientNotes ? 'Patient notes: ' + bookingData.patientNotes : ''}`,
+        chiefComplaint: bookingData.reason,
+        isTelemedicine: true,
+        videoCallLink: `https://navimed-video.com/room/${Date.now()}`, // Generate unique room link
+        preferredDevice: bookingData.preferredDevice,
+        telemedicineNotes: `Urgency: ${bookingData.urgency}. Symptoms: ${bookingData.symptoms}.`
+      };
+      
+      return apiRequest("/api/appointments", {
+        method: "POST",
+        body: appointmentData
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
       setStep(4);
       
       // Show success and redirect after delay
       setTimeout(() => {
         window.location.href = "/patient-portal";
       }, 3000);
+    },
+    onError: (error) => {
+      console.error("Booking failed:", error);
+      alert("Booking failed. Please try again or contact support.");
+    }
+  });
+
+  const handleBookingSubmit = async () => {
+    try {
+      await createTelemedicineMutation.mutateAsync(bookingForm);
     } catch (error) {
       console.error("Booking failed:", error);
     }
@@ -289,7 +324,7 @@ export default function TelemedicineBooking() {
             <Calendar
               mode="single"
               selected={selectedDate}
-              onSelect={setSelectedDate}
+              onSelect={(date) => date && setSelectedDate(date)}
               disabled={(date) => 
                 isBefore(date, startOfToday()) || 
                 isAfter(date, addDays(startOfToday(), 30))
