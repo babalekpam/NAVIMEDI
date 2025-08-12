@@ -12,10 +12,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAuth } from "@/contexts/auth-context";
-import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useToast } from "@/hooks/use-toast";
-// Removed API imports for demo version
 import { 
   Calendar, 
   Clock, 
@@ -129,8 +126,23 @@ const appointmentSchema = z.object({
 type AppointmentFormData = z.infer<typeof appointmentSchema>;
 
 export default function PatientPortalNew() {
-  const { user } = useAuth();
-  const { tenant } = useTenant();
+  // Demo user and tenant data
+  const user = {
+    id: "demo-user",
+    firstName: "Michael",
+    lastName: "Johnson", 
+    role: "patient",
+    tenantId: "demo-tenant"
+  };
+  
+  const tenant = {
+    id: "demo-tenant",
+    name: "Metro General Hospital",
+    type: "hospital",
+    primaryColor: "#10b981",
+    logoUrl: null
+  };
+  
   const { toast } = useToast();
   // Removed queryClient for demo version
   
