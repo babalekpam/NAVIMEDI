@@ -261,8 +261,20 @@ export default function PatientPortalDemo() {
         console.log("Patient:", selectedPatient.firstName, selectedPatient.lastName);
         console.log("Doctor:", selectedDoctor.firstName, selectedDoctor.lastName);
         console.log("Doctor ID:", data.doctorId);
+        console.log("Appointment Data:", {
+          patientId: selectedPatient.id,
+          providerId: data.doctorId,
+          appointmentDate: new Date(data.appointmentDate + 'T' + data.appointmentTime).toISOString(),
+          type: data.type,
+          reason: data.reason,
+          status: "scheduled",
+          priority: data.priority,
+          patientName: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
+          doctorName: `${selectedDoctor.firstName} ${selectedDoctor.lastName}`
+        });
         console.log("All appointments after booking:", SharedAppointmentService.getAllAppointments());
         console.log("Doctor's appointments:", SharedAppointmentService.getAppointmentsForDoctor(data.doctorId));
+        console.log("localStorage content:", localStorage.getItem('shared-appointments'));
         
         // Force refresh to show new appointment
         setRefreshKey(prev => prev + 1);

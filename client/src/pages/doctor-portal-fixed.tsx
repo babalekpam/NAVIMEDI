@@ -284,10 +284,13 @@ export default function DoctorPortalFixed() {
   }
 
   // Get appointments for logged in doctor
+  console.log("=== DOCTOR PORTAL DEBUG ===");
   console.log("Logged in doctor ID:", loggedInDoctor.id);
   console.log("All appointments:", appointments);
+  console.log("localStorage content:", localStorage.getItem('shared-appointments'));
   const doctorAppointments = appointments.filter((appt: SharedAppointment) => appt.providerId === loggedInDoctor.id);
-  console.log("Doctor appointments:", doctorAppointments);
+  console.log("Doctor appointments filtered:", doctorAppointments);
+  console.log("Filtering by providerId:", loggedInDoctor.id);
   const todayAppointments = doctorAppointments.filter((appt: SharedAppointment) => {
     const apptDate = new Date(appt.appointmentDate);
     const today = new Date();

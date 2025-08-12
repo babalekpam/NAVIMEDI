@@ -15,16 +15,21 @@ interface SharedAppointment {
 
 // Initialize appointments from localStorage or use defaults
 const initializeAppointments = (): SharedAppointment[] => {
+  console.log("=== INITIALIZING APPOINTMENTS ===");
+  
   try {
     const stored = localStorage.getItem('shared-appointments');
+    console.log("localStorage content:", stored);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      console.log("Parsed appointments:", parsed);
+      return parsed;
     }
   } catch (error) {
-    console.log("No stored appointments found, using defaults");
+    console.log("Error reading localStorage:", error);
   }
   
-  return [
+  const defaults = [
     {
       id: "appt-demo-1",
       patientId: "patient-1",
@@ -39,7 +44,7 @@ const initializeAppointments = (): SharedAppointment[] => {
       doctorName: "Dr. Michael Smith"
     },
     {
-      id: "appt-demo-2",
+      id: "appt-demo-2", 
       patientId: "patient-2",
       providerId: "2cd7fc68-02a0-4924-b564-0dd1bd7b247b", // Lisa Chen
       appointmentDate: "2024-08-20T14:30:00.000Z",
@@ -52,6 +57,18 @@ const initializeAppointments = (): SharedAppointment[] => {
       doctorName: "Lisa Chen"
     }
   ];
+  
+  console.log("Using default appointments:", defaults);
+  
+  // Save defaults to localStorage
+  try {
+    localStorage.setItem('shared-appointments', JSON.stringify(defaults));
+    console.log("Saved defaults to localStorage");
+  } catch (error) {
+    console.error("Failed to save defaults:", error);
+  }
+  
+  return defaults;
 };
 
 // Global appointments storage with localStorage persistence
@@ -84,18 +101,33 @@ export const SharedAppointmentService = {
 
   // Add new appointment
   addAppointment(appointment: Omit<SharedAppointment, 'id' | 'bookedAt'>): string {
+    console.log("=== ADDING NEW APPOINTMENT ===");
+    console.log("Input appointment data:", appointment);
+    
     const newAppointment: SharedAppointment = {
       ...appointment,
       id: `appt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       bookedAt: new Date().toISOString()
     };
     
+    console.log("Created appointment object:", newAppointment);
+    
     sharedAppointments.push(newAppointment);
+    console.log("All appointments after push:", sharedAppointments);
     
     // Store in localStorage for persistence
     try {
-      localStorage.setItem('shared-appointments', JSON.stringify(sharedAppointments));
-      console.log("Appointment saved to localStorage:", newAppointment);
+      const serialized = JSON.stringify(sharedAppointments);
+      localStorage.setItem('shared-appointments', serialized);
+      console.log("Appointment saved to localStorage");
+      console.log("localStorage now contains:", localStorage.getItem('shared-appointments'));
+      
+      // Verify the save worked
+      const verification = localStorage.getItem('shared-appointments');
+      if (verification) {
+        const parsed = JSON.parse(verification);
+        console.log("Verification - localStorage contains", parsed.length, "appointments");
+      }
     } catch (error) {
       console.error("Failed to save to localStorage:", error);
     }
