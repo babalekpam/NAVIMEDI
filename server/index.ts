@@ -12,41 +12,57 @@ import path from "path";
 
 const app = express();
 
-// ULTIMATE API PROTECTION - FIRST MIDDLEWARE TO RUN
-// This runs before ANYTHING else and completely protects API routes
+// DEFINITIVE API INTERCEPT - HANDLE API ROUTES BEFORE ANYTHING ELSE
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) {
-    // Set JSON headers immediately
+    console.log(`[DEFINITIVE INTERCEPT] Handling API route: ${req.method} ${req.path}`);
+    
+    // Mark this request as API-only - never let it reach Vite
+    res.locals.isApiRoute = true;
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('X-API-Route', 'true');
     
-    // Override response methods to prevent ANY HTML
-    const originalSend = res.send.bind(res);
-    const originalEnd = res.end.bind(res);
+    // Create a flag to track if the route was handled by our API routes
+    res.locals.apiHandled = false;
+    
+    // Override response methods to ensure JSON only
+    const originalSend = res.send;
+    const originalEnd = res.end;
+    const originalJson = res.json;
     
     res.send = function(body) {
       if (typeof body === 'string' && body.includes('<!DOCTYPE')) {
-        console.error(`[ULTIMATE PROTECTION] Blocked HTML for ${req.originalUrl}`);
+        console.error(`[DEFINITIVE BLOCK] Prevented HTML response for ${req.originalUrl}`);
         this.setHeader('Content-Type', 'application/json');
-        return originalSend(JSON.stringify({ 
-          error: 'HTML blocked on API route',
-          path: req.originalUrl 
+        return originalSend.call(this, JSON.stringify({ 
+          error: 'HTML response blocked on API route',
+          path: req.originalUrl,
+          method: req.method
         }));
       }
       this.setHeader('Content-Type', 'application/json');
-      return originalSend(body);
+      res.locals.apiHandled = true;
+      return originalSend.call(this, body);
+    };
+    
+    res.json = function(obj) {
+      res.locals.apiHandled = true;
+      this.setHeader('Content-Type', 'application/json');
+      return originalJson.call(this, obj);
     };
     
     res.end = function(chunk, encoding) {
       if (typeof chunk === 'string' && chunk.includes('<!DOCTYPE')) {
-        console.error(`[ULTIMATE PROTECTION] Blocked HTML end() for ${req.originalUrl}`);
+        console.error(`[DEFINITIVE BLOCK] Prevented HTML end() for ${req.originalUrl}`);
         this.setHeader('Content-Type', 'application/json');
-        return originalEnd(JSON.stringify({ 
+        return originalEnd.call(this, JSON.stringify({ 
           error: 'HTML end() blocked on API route',
           path: req.originalUrl 
         }), encoding);
       }
-      return originalEnd(chunk, encoding);
+      res.locals.apiHandled = true;
+      return originalEnd.call(this, chunk, encoding);
     };
   }
   next();
@@ -374,28 +390,23 @@ async function startServer() {
     next();
   });
 
-  // EMERGENCY: FINAL MIDDLEWARE TO PREVENT VITE FROM SERVING HTML ON API ROUTES
+  // FINAL VITE PROTECTION - Prevent any unhandled API routes from reaching Vite
   app.use((req, res, next) => {
     if (req.path.startsWith('/api/')) {
-      // This is an API route - ensure no HTML is ever served
-      console.log(`[EMERGENCY PROTECTION] Intercepting API route before Vite: ${req.path}`);
+      console.log(`[FINAL VITE PROTECTION] Pre-Vite check for: ${req.path}`);
       
-      // If we reach here and headers aren't sent, it means the API route wasn't handled
-      // Return JSON error instead of letting Vite serve HTML
-      if (!res.headersSent) {
-        // Set a timeout to check if the route gets handled
-        setTimeout(() => {
-          if (!res.headersSent) {
-            console.error(`[EMERGENCY] API route ${req.path} not handled - preventing HTML`);
-            return res.status(404).json({ 
-              error: 'API endpoint not found',
-              path: req.path,
-              method: req.method,
-              timestamp: new Date().toISOString()
-            });
-          }
-        }, 100);
-      }
+      // Set a short timeout to check if our API routes handled this
+      setTimeout(() => {
+        if (res.locals.isApiRoute && !res.locals.apiHandled && !res.headersSent) {
+          console.error(`[FINAL PROTECTION] Unhandled API route - blocking Vite: ${req.path}`);
+          return res.status(404).json({ 
+            error: 'API endpoint not found - blocked before Vite',
+            path: req.path,
+            method: req.method,
+            timestamp: new Date().toISOString()
+          });
+        }
+      }, 50);
     }
     next();
   });
