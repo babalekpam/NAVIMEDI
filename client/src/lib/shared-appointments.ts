@@ -13,39 +13,62 @@ interface SharedAppointment {
   doctorName?: string;
 }
 
-// Global appointments storage (simulating a shared database)
-let sharedAppointments: SharedAppointment[] = [
-  {
-    id: "appt-demo-1",
-    patientId: "patient-1",
-    providerId: "5fe10688-b38e-458e-b38b-bf8a2507b19a", // Dr. Michael Smith
-    appointmentDate: "2024-08-15T10:00:00.000Z",
-    type: "routine",
-    reason: "Annual physical examination",
-    status: "scheduled",
-    priority: "normal",
-    bookedAt: new Date().toISOString(),
-    patientName: "Michael Johnson",
-    doctorName: "Dr. Michael Smith"
-  },
-  {
-    id: "appt-demo-2",
-    patientId: "patient-2",
-    providerId: "2cd7fc68-02a0-4924-b564-0dd1bd7b247b", // Lisa Chen
-    appointmentDate: "2024-08-20T14:30:00.000Z",
-    type: "follow-up",
-    reason: "Family medicine consultation",
-    status: "confirmed",
-    priority: "high",
-    bookedAt: new Date().toISOString(),
-    patientName: "Sarah Williams",
-    doctorName: "Lisa Chen"
+// Initialize appointments from localStorage or use defaults
+const initializeAppointments = (): SharedAppointment[] => {
+  try {
+    const stored = localStorage.getItem('shared-appointments');
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.log("No stored appointments found, using defaults");
   }
-];
+  
+  return [
+    {
+      id: "appt-demo-1",
+      patientId: "patient-1",
+      providerId: "5fe10688-b38e-458e-b38b-bf8a2507b19a", // Dr. Michael Smith
+      appointmentDate: "2024-08-15T10:00:00.000Z",
+      type: "routine",
+      reason: "Annual physical examination",
+      status: "scheduled",
+      priority: "normal",
+      bookedAt: new Date().toISOString(),
+      patientName: "Michael Johnson",
+      doctorName: "Dr. Michael Smith"
+    },
+    {
+      id: "appt-demo-2",
+      patientId: "patient-2",
+      providerId: "2cd7fc68-02a0-4924-b564-0dd1bd7b247b", // Lisa Chen
+      appointmentDate: "2024-08-20T14:30:00.000Z",
+      type: "follow-up",
+      reason: "Family medicine consultation",
+      status: "confirmed",
+      priority: "high",
+      bookedAt: new Date().toISOString(),
+      patientName: "Sarah Williams",
+      doctorName: "Lisa Chen"
+    }
+  ];
+};
+
+// Global appointments storage with localStorage persistence
+let sharedAppointments: SharedAppointment[] = initializeAppointments();
 
 export const SharedAppointmentService = {
   // Get all appointments
   getAllAppointments(): SharedAppointment[] {
+    // Always refresh from localStorage
+    try {
+      const stored = localStorage.getItem('shared-appointments');
+      if (stored) {
+        sharedAppointments = JSON.parse(stored);
+      }
+    } catch (error) {
+      console.log("Error loading from localStorage:", error);
+    }
     return [...sharedAppointments];
   },
 
@@ -68,6 +91,15 @@ export const SharedAppointmentService = {
     };
     
     sharedAppointments.push(newAppointment);
+    
+    // Store in localStorage for persistence
+    try {
+      localStorage.setItem('shared-appointments', JSON.stringify(sharedAppointments));
+      console.log("Appointment saved to localStorage:", newAppointment);
+    } catch (error) {
+      console.error("Failed to save to localStorage:", error);
+    }
+    
     return newAppointment.id;
   },
 
@@ -76,6 +108,15 @@ export const SharedAppointmentService = {
     const appointmentIndex = sharedAppointments.findIndex(appt => appt.id === appointmentId);
     if (appointmentIndex !== -1) {
       sharedAppointments[appointmentIndex].status = newStatus;
+      
+      // Save to localStorage
+      try {
+        localStorage.setItem('shared-appointments', JSON.stringify(sharedAppointments));
+        console.log("Appointment status updated in localStorage:", appointmentId, newStatus);
+      } catch (error) {
+        console.error("Failed to save status update to localStorage:", error);
+      }
+      
       return true;
     }
     return false;

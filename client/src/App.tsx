@@ -277,15 +277,11 @@ function AppContent() {
         <Route path="/patient-portal-new">
           <PatientPortalNew />
         </Route>
-        <Route path="/patient-portal-demo">
-          <PatientPortalDemo />
-        </Route>
+        <Route path="/patient-portal-demo" component={PatientPortalDemo} />
         <Route path="/doctor-portal">
           <DoctorPortal />
         </Route>
-        <Route path="/doctor-portal-fixed">
-          <DoctorPortalFixed />
-        </Route>
+        <Route path="/doctor-portal-fixed" component={DoctorPortalFixed} />
         <Route path="/patient-portal-staff">
           <ProtectedRoute>
             <PatientPortalStaff />

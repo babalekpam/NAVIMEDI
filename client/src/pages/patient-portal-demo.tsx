@@ -243,8 +243,8 @@ export default function PatientPortalDemo() {
       const selectedDoctor = DEMO_DOCTORS.find(doc => doc.id === data.doctorId);
       
       if (selectedDoctor && selectedPatient) {
-        // Add appointment to shared system
-        SharedAppointmentService.addAppointment({
+        // Add appointment to shared system with debug logging
+        const appointmentId = SharedAppointmentService.addAppointment({
           patientId: selectedPatient.id,
           providerId: data.doctorId,
           appointmentDate: new Date(data.appointmentDate + 'T' + data.appointmentTime).toISOString(),
@@ -255,6 +255,14 @@ export default function PatientPortalDemo() {
           patientName: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
           doctorName: `${selectedDoctor.firstName} ${selectedDoctor.lastName}`
         });
+        
+        console.log("=== APPOINTMENT BOOKING DEBUG ===");
+        console.log("New appointment ID:", appointmentId);
+        console.log("Patient:", selectedPatient.firstName, selectedPatient.lastName);
+        console.log("Doctor:", selectedDoctor.firstName, selectedDoctor.lastName);
+        console.log("Doctor ID:", data.doctorId);
+        console.log("All appointments after booking:", SharedAppointmentService.getAllAppointments());
+        console.log("Doctor's appointments:", SharedAppointmentService.getAppointmentsForDoctor(data.doctorId));
         
         // Force refresh to show new appointment
         setRefreshKey(prev => prev + 1);
@@ -267,6 +275,7 @@ export default function PatientPortalDemo() {
       setIsBookingModalOpen(false);
       appointmentForm.reset();
     } catch (error: any) {
+      console.error("Appointment booking error:", error);
       toast({
         title: "Error",
         description: "Failed to book appointment",
