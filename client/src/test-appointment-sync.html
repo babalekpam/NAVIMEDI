@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Appointment Sync Test</title>
+</head>
+<body>
+    <h1>Testing Appointment Synchronization</h1>
+    
+    <h2>Current Appointments in localStorage:</h2>
+    <div id="appointments"></div>
+    
+    <h2>Test Actions:</h2>
+    <button onclick="clearStorage()">Clear All Appointments</button>
+    <button onclick="addTestAppointment()">Add Test Appointment for Dr. Smith</button>
+    <button onclick="viewDoctorAppointments()">View Dr. Smith's Appointments</button>
+    <button onclick="refreshDisplay()">Refresh Display</button>
+    
+    <script>
+        const STORAGE_KEY = 'nav_appointments';
+        const DR_SMITH_ID = '5fe10688-b38e-458e-b38b-bf8a2507b19a';
+        
+        function refreshDisplay() {
+            const appointments = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const div = document.getElementById('appointments');
+            div.innerHTML = `<pre>${JSON.stringify(appointments, null, 2)}</pre>`;
+            console.log('📋 Current appointments:', appointments);
+        }
+        
+        function clearStorage() {
+            localStorage.removeItem(STORAGE_KEY);
+            console.log('✅ Storage cleared');
+            refreshDisplay();
+        }
+        
+        function addTestAppointment() {
+            const appointments = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const newAppointment = {
+                id: `test_${Date.now()}`,
+                patientId: 'patient-2',
+                patientName: 'Sarah Williams',
+                doctorId: DR_SMITH_ID,
+                doctorName: 'Dr. Michael Smith',
+                date: '2025-08-13',
+                time: '14:00',
+                type: 'General Consultation',
+                reason: 'Test appointment for synchronization',
+                status: 'scheduled',
+                createdAt: new Date().toISOString()
+            };
+            
+            appointments.push(newAppointment);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appointments));
+            
+            console.log('✅ Test appointment added:', newAppointment);
+            refreshDisplay();
+        }
+        
+        function viewDoctorAppointments() {
+            const appointments = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const doctorAppointments = appointments.filter(apt => apt.doctorId === DR_SMITH_ID);
+            
+            console.log(`👨‍⚕️ Dr. Smith (${DR_SMITH_ID}) appointments:`, doctorAppointments);
+            alert(`Dr. Smith has ${doctorAppointments.length} appointments`);
+        }
+        
+        // Initial load
+        refreshDisplay();
+    </script>
+</body>
+</html>

@@ -43,6 +43,7 @@ const addAppointment = (appointment: Omit<Appointment, 'id' | 'createdAt'>): str
   };
 
   console.log("🔄 Adding appointment:", newAppointment);
+  console.log("📊 Doctor ID being saved:", newAppointment.doctorId);
   
   const appointments = getAppointments();
   appointments.push(newAppointment);
@@ -51,6 +52,15 @@ const addAppointment = (appointment: Omit<Appointment, 'id' | 'createdAt'>): str
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appointments));
     console.log("✅ Appointment saved successfully");
     console.log(`📊 Total appointments: ${appointments.length}`);
+    console.log("🔍 Saved appointment with doctorId:", newAppointment.doctorId);
+    
+    // Verify immediately after save
+    const verification = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const found = verification.find((apt: Appointment) => apt.id === newAppointment.id);
+    console.log("✅ Verification - appointment exists:", !!found);
+    if (found) {
+      console.log("✅ Verification - doctorId matches:", found.doctorId === newAppointment.doctorId);
+    }
     
     // Dispatch custom event for real-time sync
     window.dispatchEvent(new CustomEvent('appointmentAdded', { 
