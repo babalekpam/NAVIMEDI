@@ -30,7 +30,27 @@ console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
 console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
 console.log('Port:', process.env.PORT || 5000);
+console.log('Process Platform:', process.platform);
+console.log('Node Version:', process.version);
 console.log('====================================');
+
+// Critical environment validation for production
+if (process.env.NODE_ENV === 'production') {
+  const missingVars = [];
+  if (!process.env.DATABASE_URL) missingVars.push('DATABASE_URL');
+  if (!process.env.JWT_SECRET) missingVars.push('JWT_SECRET');
+  
+  if (missingVars.length > 0) {
+    console.error('🚨 CRITICAL: Missing required environment variables for production:');
+    missingVars.forEach(varName => {
+      console.error(`  - ${varName}`);
+    });
+    console.error('Application may not function properly without these variables.');
+    console.error('Please configure these in your deployment platform settings.');
+  } else {
+    console.log('✅ All required environment variables are configured');
+  }
+}
 
 
 
@@ -202,7 +222,10 @@ async function initializePlatform() {
 }
 
 (async () => {
-  const server = await registerRoutes(app);
+  try {
+    console.log('🚀 Starting NaviMED Healthcare Platform...');
+    const server = await registerRoutes(app);
+    console.log('✅ Routes registered successfully');
 
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -241,7 +264,9 @@ async function initializePlatform() {
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
+    console.log('🎉 NaviMED Healthcare Platform is running!');
     log(`serving on port ${port}`);
+    console.log(`🌐 Health check available at: http://localhost:${port}/health`);
     
     // Initialize platform after server is running
     initializePlatform().catch(error => {
@@ -258,4 +283,11 @@ async function initializePlatform() {
     console.error('Uncaught Exception:', error);
     process.exit(1);
   });
+
+  } catch (startupError) {
+    console.error('🚨 FATAL: Application failed to start');
+    console.error('Error:', startupError);
+    console.error('Stack:', startupError.stack);
+    process.exit(1);
+  }
 })();
