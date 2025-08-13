@@ -77,7 +77,8 @@ export default function DoctorCalendar() {
 
   // Redirect to patient login if not authenticated
   if (!authLoading && !user) {
-    localStorage.removeItem("token");
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
     window.location.href = "/patient-login?message=Please log in to book appointments";
     return null;
   }
@@ -310,8 +311,10 @@ export default function DoctorCalendar() {
         chiefComplaint: appointmentData.reason
       };
 
-      const response = await apiRequest("POST", "/api/appointments", requestBody);
-      return response.json();
+      return await apiRequest("/api/appointments", {
+        method: "POST",
+        body: requestBody
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patient/appointments"] });
