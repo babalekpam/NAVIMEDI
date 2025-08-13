@@ -10,8 +10,27 @@ import { trialSuspensionService } from "./trial-suspension-service";
 import { createTestHospital } from "./create-test-hospital";
 
 const app = express();
+
+// Error handling middleware must be early
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error('Global error:', err);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: err.message,
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Basic environment check
+console.log('=== DEPLOYMENT ENVIRONMENT CHECK ===');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
+console.log('Port:', process.env.PORT || 5000);
+console.log('====================================');
 
 
 
@@ -20,12 +39,24 @@ app.use(express.urlencoded({ extended: false }));
 // Multiple health check endpoints for deployment monitoring
 // These must respond immediately without any heavy operations
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    service: 'carnet-healthcare',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
+  try {
+    res.status(200).json({ 
+      status: 'ok', 
+      service: 'carnet-healthcare',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      env: process.env.NODE_ENV || 'development',
+      hasDb: !!process.env.DATABASE_URL,
+      hasJwt: !!process.env.JWT_SECRET
+    });
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(500).json({ 
+      status: 'error', 
+      message: 'Health check failed',
+      error: error.message 
+    });
+  }
 });
 
 app.get('/healthz', (req, res) => {
@@ -162,6 +193,9 @@ async function initializePlatform() {
     platformInitialized = true;
     log("✓ Platform initialization complete");
   } catch (error) {
+    console.error("✗ Platform initialization failed:", error);
+    console.error("This may indicate database connection issues");
+    // Don't throw - allow server to start for health checks
     log("❌ Platform initialization failed: " + error);
     console.error("Platform initialization error:", error);
   }
