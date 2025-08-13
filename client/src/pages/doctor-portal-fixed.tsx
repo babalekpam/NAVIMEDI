@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { AppointmentSync, type Appointment } from "@/lib/appointment-sync";
+import { RealTimeAppointments } from "@/lib/real-time-appointments";
 import { 
   Calendar, 
   Clock, 
@@ -180,12 +180,12 @@ export default function DoctorPortalFixed() {
   const [appointmentPriority, setAppointmentPriority] = useState("normal");
   // Get appointments from sync system with real-time updates
   const [refreshKey, setRefreshKey] = useState(0);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
   
   useEffect(() => {
     const loadAppointments = () => {
       console.log("🔄 Loading doctor appointments...");
-      const allAppointments = AppointmentSync.getAppointments();
+      const allAppointments = RealTimeAppointments.getAppointments();
       setAppointments(allAppointments);
     };
     
@@ -273,7 +273,7 @@ export default function DoctorPortalFixed() {
     const selectedPatient = PATIENTS_ARRAY.find(p => p.id === selectedPatientId);
     if (!selectedPatient || !loggedInDoctor) return;
 
-    const appointmentId = AppointmentSync.addAppointment({
+    const appointmentId = RealTimeAppointments.addAppointment({
       patientId: selectedPatientId,
       patientName: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
       doctorId: loggedInDoctor.id,
@@ -293,7 +293,7 @@ export default function DoctorPortalFixed() {
     console.log("Type:", appointmentType, "| Reason:", appointmentReason);
 
     // Refresh appointments immediately
-    const allAppointments = AppointmentSync.getAppointments();
+    const allAppointments = RealTimeAppointments.getAppointments();
     setAppointments(allAppointments);
     setRefreshKey(prev => prev + 1);
 
@@ -383,11 +383,11 @@ export default function DoctorPortalFixed() {
   console.log("📋 All appointments:", appointments);
   console.log("💾 localStorage content:", localStorage.getItem('nav_appointments'));
   
-  // Filter appointments by doctorId (not providerId)
-  const doctorAppointments = AppointmentSync.getDoctorAppointments(loggedInDoctor.id);
+  // Filter appointments by doctorId using real-time system
+  const doctorAppointments = RealTimeAppointments.getDoctorAppointments(loggedInDoctor.id);
   console.log("🎯 Doctor appointments filtered:", doctorAppointments);
   
-  const todayAppointments = doctorAppointments.filter((appt: Appointment) => {
+  const todayAppointments = doctorAppointments.filter((appt: any) => {
     const apptDate = new Date(appt.date + 'T' + appt.time);
     const today = new Date();
     return apptDate.toDateString() === today.toDateString();

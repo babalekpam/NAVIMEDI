@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { AppointmentSync } from "@/lib/appointment-sync";
+import { RealTimeAppointments } from "@/lib/real-time-appointments";
 import { 
   Calendar, 
   Clock, 
@@ -196,9 +196,9 @@ export default function PatientPortalDemo() {
     },
   });
 
-  // Get real appointments from sync system for selected patient
+  // Get real appointments from real-time system for selected patient
   const getPatientAppointments = (patientId: string) => {
-    return AppointmentSync.getPatientAppointments(patientId);
+    return RealTimeAppointments.getPatientAppointments(patientId);
   };
 
   // Demo prescriptions for selected patient
@@ -263,8 +263,8 @@ export default function PatientPortalDemo() {
       const selectedDoctor = DEMO_DOCTORS.find(doc => doc.id === data.doctorId);
       
       if (selectedDoctor && selectedPatient) {
-        // Add appointment using new sync system
-        const appointmentId = AppointmentSync.addAppointment({
+        // Add appointment using real-time system
+        const appointmentId = RealTimeAppointments.addAppointment({
           patientId: selectedPatient.id,
           patientName: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
           doctorId: data.doctorId,
@@ -297,8 +297,8 @@ export default function PatientPortalDemo() {
         console.log("👤 Patient:", selectedPatient.firstName, selectedPatient.lastName);
         console.log("👨‍⚕️ Doctor:", selectedDoctor.firstName, selectedDoctor.lastName, "ID:", data.doctorId);
         console.log("📅 Date/Time:", data.appointmentDate, data.appointmentTime);
-        console.log("🏥 All appointments:", AppointmentSync.getAppointments());
-        console.log("👨‍⚕️ Doctor's appointments:", AppointmentSync.getDoctorAppointments(data.doctorId));
+        console.log("🏥 All appointments:", RealTimeAppointments.getAppointments());
+        console.log("👨‍⚕️ Doctor's appointments:", RealTimeAppointments.getDoctorAppointments(data.doctorId));
         
         // Force refresh to show new appointment
         setRefreshKey(prev => prev + 1);
