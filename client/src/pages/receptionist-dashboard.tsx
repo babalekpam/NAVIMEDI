@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { UnifiedAppointments, type UnifiedAppointment } from "@/lib/unified-appointments";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -73,6 +74,18 @@ const checkInSchema = z.object({
   insuranceVerified: z.boolean().default(false),
 });
 
+// Add appointment schema for receptionist use
+const appointmentSchema = z.object({
+  patientId: z.string().min(1, 'Patient is required'),
+  doctorId: z.string().min(1, 'Doctor is required'),
+  appointmentDate: z.string().min(1, 'Date is required'),
+  appointmentTime: z.string().min(1, 'Time is required'),
+  type: z.string().min(1, 'Type is required'),
+  reason: z.string().min(1, 'Reason is required'),
+  priority: z.enum(['normal', 'high', 'urgent']).default('normal'),
+  notes: z.string().optional(),
+});
+
 const vitalSignsSchema = z.object({
   systolicBp: z.number().min(60).max(300).optional(),
   diastolicBp: z.number().min(30).max(200).optional(),
@@ -128,8 +141,26 @@ export default function ReceptionistDashboard() {
   const [selectedPatientForInsurance, setSelectedPatientForInsurance] = useState<Patient | null>(null);
   const [showInsuranceDialog, setShowInsuranceDialog] = useState(false);
   const [editingInsurance, setEditingInsurance] = useState<any>(null);
+  
+  // Appointment booking states
+  const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
+  const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
 
   // Forms
+  const appointmentForm = useForm({
+    resolver: zodResolver(appointmentSchema),
+    defaultValues: {
+      patientId: '',
+      doctorId: '',
+      appointmentDate: '',
+      appointmentTime: '',
+      type: '',
+      reason: '',
+      priority: 'normal' as const,
+      notes: '',
+    },
+  });
+
   const patientForm = useForm({
     resolver: zodResolver(patientRegistrationSchema),
     defaultValues: {

@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { RealTimeAppointments } from "@/lib/real-time-appointments";
+import { UnifiedAppointments, type UnifiedAppointment } from "@/lib/unified-appointments";
 import { 
   Calendar, 
   Clock, 
@@ -196,9 +196,9 @@ export default function PatientPortalDemo() {
     },
   });
 
-  // Get real appointments from real-time system for selected patient
+  // Get appointments from unified system for selected patient
   const getPatientAppointments = (patientId: string) => {
-    return RealTimeAppointments.getPatientAppointments(patientId);
+    return UnifiedAppointments.getPatientAppointments(patientId);
   };
 
   // Demo prescriptions for selected patient
@@ -263,17 +263,22 @@ export default function PatientPortalDemo() {
       const selectedDoctor = DEMO_DOCTORS.find(doc => doc.id === data.doctorId);
       
       if (selectedDoctor && selectedPatient) {
-        // Add appointment using real-time system
-        const appointmentId = RealTimeAppointments.addAppointment({
+        // Add appointment using unified system
+        const appointmentId = UnifiedAppointments.createAppointment({
           patientId: selectedPatient.id,
           patientName: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
+          patientEmail: selectedPatient.email,
+          patientPhone: selectedPatient.phone,
           doctorId: data.doctorId,
           doctorName: `${selectedDoctor.firstName} ${selectedDoctor.lastName}`,
+          doctorSpecialization: selectedDoctor.specialization,
           date: data.appointmentDate,
           time: data.appointmentTime,
           type: data.type,
           reason: data.reason,
-          status: "scheduled"
+          status: "scheduled",
+          createdBy: "patient",
+          createdById: selectedPatient.id
         });
         
         console.log("=== APPOINTMENT BOOKING DEBUG ===");
@@ -297,8 +302,8 @@ export default function PatientPortalDemo() {
         console.log("👤 Patient:", selectedPatient.firstName, selectedPatient.lastName);
         console.log("👨‍⚕️ Doctor:", selectedDoctor.firstName, selectedDoctor.lastName, "ID:", data.doctorId);
         console.log("📅 Date/Time:", data.appointmentDate, data.appointmentTime);
-        console.log("🏥 All appointments:", RealTimeAppointments.getAppointments());
-        console.log("👨‍⚕️ Doctor's appointments:", RealTimeAppointments.getDoctorAppointments(data.doctorId));
+        console.log("🏥 All appointments:", UnifiedAppointments.getAppointments());
+        console.log("👨‍⚕️ Doctor's appointments:", UnifiedAppointments.getDoctorAppointments(data.doctorId));
         
         // Force refresh to show new appointment
         setRefreshKey(prev => prev + 1);

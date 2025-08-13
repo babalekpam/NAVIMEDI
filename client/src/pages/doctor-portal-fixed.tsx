@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { RealTimeAppointments } from "@/lib/real-time-appointments";
+import { UnifiedAppointments, type UnifiedAppointment } from "@/lib/unified-appointments";
 import { 
   Calendar, 
   Clock, 
@@ -185,7 +185,7 @@ export default function DoctorPortalFixed() {
   useEffect(() => {
     const loadAppointments = () => {
       console.log("🔄 Loading doctor appointments...");
-      const allAppointments = RealTimeAppointments.getAppointments();
+      const allAppointments = UnifiedAppointments.getAppointments();
       setAppointments(allAppointments);
     };
     
@@ -251,7 +251,13 @@ export default function DoctorPortalFixed() {
     });
   };
 
-  const updateAppointmentStatus = (appointmentId: string, newStatus: string) => {
+  const updateAppointmentStatus = (appointmentId: string, newStatus: 'scheduled' | 'confirmed' | 'cancelled' | 'completed' | 'no-show') => {
+    const success = UnifiedAppointments.updateAppointmentStatus(appointmentId, newStatus);
+    if (success) {
+      // Refresh appointments display
+      const allAppointments = UnifiedAppointments.getAppointments();
+      setAppointments(allAppointments);
+    }
     // For now, just show success - we'll implement status updates later
     toast({
       title: "Status Updated",
@@ -273,16 +279,21 @@ export default function DoctorPortalFixed() {
     const selectedPatient = PATIENTS_ARRAY.find(p => p.id === selectedPatientId);
     if (!selectedPatient || !loggedInDoctor) return;
 
-    const appointmentId = RealTimeAppointments.addAppointment({
+    const appointmentId = UnifiedAppointments.createAppointment({
       patientId: selectedPatientId,
       patientName: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
+      patientEmail: selectedPatient.email,
+      patientPhone: selectedPatient.phone,
       doctorId: loggedInDoctor.id,
       doctorName: `${loggedInDoctor.firstName} ${loggedInDoctor.lastName}`,
+      doctorSpecialization: loggedInDoctor.specialization,
       date: appointmentDate,
       time: appointmentTime,
       type: appointmentType,
       reason: appointmentReason,
-      status: "scheduled"
+      status: "scheduled",
+      createdBy: "doctor",
+      createdById: loggedInDoctor.id
     });
 
     console.log("=== DOCTOR SCHEDULING FOR PATIENT ===");
@@ -293,7 +304,7 @@ export default function DoctorPortalFixed() {
     console.log("Type:", appointmentType, "| Reason:", appointmentReason);
 
     // Refresh appointments immediately
-    const allAppointments = RealTimeAppointments.getAppointments();
+    const allAppointments = UnifiedAppointments.getAppointments();
     setAppointments(allAppointments);
     setRefreshKey(prev => prev + 1);
 
@@ -383,8 +394,8 @@ export default function DoctorPortalFixed() {
   console.log("📋 All appointments:", appointments);
   console.log("💾 localStorage content:", localStorage.getItem('nav_appointments'));
   
-  // Filter appointments by doctorId using real-time system
-  const doctorAppointments = RealTimeAppointments.getDoctorAppointments(loggedInDoctor.id);
+  // Filter appointments by doctorId using unified system
+  const doctorAppointments = UnifiedAppointments.getDoctorAppointments(loggedInDoctor.id);
   console.log("🎯 Doctor appointments filtered:", doctorAppointments);
   
   const todayAppointments = doctorAppointments.filter((appt: any) => {
