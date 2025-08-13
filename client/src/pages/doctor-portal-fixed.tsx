@@ -209,11 +209,24 @@ export default function DoctorPortalFixed() {
   }, [refreshKey]);
 
   const handleLogin = () => {
-    const doctor = DEMO_DOCTORS.find(d => 
-      (d.email === loginEmail || d.email.split('@')[0] === loginEmail) && d.password === loginPassword
-    );
-
+    // Map username to doctor ID for login
+    const usernameToId: { [key: string]: string } = {
+      "dr.smith": "5fe10688-b38e-458e-b38b-bf8a2507b19a",
+      "dr.brown": "9049628e-cd05-4bd6-b08e-ee923c6dec10", 
+      "dr.chen": "2cd7fc68-02a0-4924-b564-0dd1bd7b247b",
+      "dr.garcia": "49591cfd-ddb0-478c-aae9-b307ac138999",
+      "dr.johnson": "720deedd-e634-4fc2-9f52-57b6bd7f52d9",
+      "dr.martinez": "93452ac4-f87e-4227-90f8-df124fe20cb9",
+      "dr.patel": "e7d43e79-4dbf-4114-9065-eea501d6b380",
+      "dr.williams": "0c6ed45a-13ff-4806-8c8e-b59c699e3d03",
+      "dr.wilson": "e6236087-ce86-4c24-9553-9fb8d6b7b960"
+    };
+    
+    const doctorId = usernameToId[loginEmail.toLowerCase()];
+    const doctor = DEMO_DOCTORS.find(d => d.id === doctorId && d.password === loginPassword);
+    
     if (doctor) {
+      console.log(`✅ Doctor login successful: ${doctor.firstName} ${doctor.lastName} (ID: ${doctor.id})`);
       setLoggedInDoctor(doctor);
       toast({
         title: "Login Successful",
@@ -371,9 +384,8 @@ export default function DoctorPortalFixed() {
   console.log("💾 localStorage content:", localStorage.getItem('nav_appointments'));
   
   // Filter appointments by doctorId (not providerId)
-  const doctorAppointments = appointments.filter((appt: Appointment) => appt.doctorId === loggedInDoctor.id);
+  const doctorAppointments = AppointmentSync.getDoctorAppointments(loggedInDoctor.id);
   console.log("🎯 Doctor appointments filtered:", doctorAppointments);
-  console.log("🔍 Filtering by doctorId:", loggedInDoctor.id);
   
   const todayAppointments = doctorAppointments.filter((appt: Appointment) => {
     const apptDate = new Date(appt.date + 'T' + appt.time);
@@ -538,7 +550,7 @@ export default function DoctorPortalFixed() {
                             <p className="text-sm"><strong>Type:</strong> {appointment.type}</p>
                             <p className="text-sm"><strong>Reason:</strong> {appointment.reason}</p>
                             <p className="text-sm">
-                              <strong>Booked:</strong> {new Date(appointment.bookedAt || appointment.appointmentDate).toLocaleString()}
+                              <strong>Booked:</strong> {new Date(appointment.createdAt).toLocaleString()}
                             </p>
                           </div>
                         </div>
@@ -550,11 +562,8 @@ export default function DoctorPortalFixed() {
                             >
                               {appointment.status}
                             </Badge>
-                            <Badge 
-                              variant={appointment.priority === 'urgent' ? 'destructive' : 
-                                     appointment.priority === 'high' ? 'destructive' : 'outline'}
-                            >
-                              {appointment.priority} priority
+                            <Badge variant="outline">
+                              {appointment.status} status
                             </Badge>
                           </div>
                           

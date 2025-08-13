@@ -67,8 +67,15 @@ const addAppointment = (appointment: Omit<Appointment, 'id' | 'createdAt'>): str
 // Get appointments for specific doctor
 const getDoctorAppointments = (doctorId: string): Appointment[] => {
   const appointments = getAppointments();
-  const filtered = appointments.filter(apt => apt.doctorId === doctorId);
-  console.log(`👨‍⚕️ Doctor ${doctorId} appointments:`, filtered);
+  console.log(`🔍 Searching for doctorId: "${doctorId}"`);
+  console.log(`📋 All appointments:`, appointments);
+  
+  const filtered = appointments.filter(apt => {
+    console.log(`⚖️ Comparing "${apt.doctorId}" === "${doctorId}": ${apt.doctorId === doctorId}`);
+    return apt.doctorId === doctorId;
+  });
+  
+  console.log(`👨‍⚕️ Doctor ${doctorId} filtered appointments:`, filtered);
   return filtered;
 };
 
