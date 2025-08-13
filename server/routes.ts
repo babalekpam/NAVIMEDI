@@ -20,6 +20,30 @@ import { resetAllCounters } from "./reset-all-counters";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // DEPLOYMENT HEALTH CHECK - Must be first for Cloud Run
+  app.get('/', (req, res, next) => {
+    const userAgent = req.get('User-Agent') || '';
+    
+    // Only respond with JSON for deployment health check systems
+    if (req.query.health !== undefined || 
+        userAgent.includes('GoogleHC') || 
+        userAgent.includes('kube-probe') || 
+        userAgent.includes('health-check') ||
+        userAgent === '' ||
+        userAgent.includes('curl') ||
+        req.headers['x-forwarded-for'] && !req.get('Accept')?.includes('text/html')) {
+      return res.status(200).json({ 
+        status: 'ok', 
+        service: 'carnet-healthcare',
+        timestamp: new Date().toISOString(),
+        message: 'NaviMED Healthcare Platform - Ready'
+      });
+    }
+    
+    // Let Vite handle HTML requests for frontend (browsers)
+    next();
+  });
+
   // PUBLIC ENDPOINTS (before any middleware)
   
   // Public supplier registration endpoint (outside /api path to avoid middleware)
