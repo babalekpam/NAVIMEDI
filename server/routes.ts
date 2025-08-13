@@ -3047,7 +3047,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/medical-communications", authenticateToken, requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+  app.post("/api/medical-communications", authenticateToken, requireTenant, requireRole(["patient", "physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
       const validatedData = insertMedicalCommunicationSchema.parse({
         ...req.body,
