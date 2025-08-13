@@ -1044,6 +1044,7 @@ Report ID: ${labOrder.id}
                 priority: messageForm.priority,
                 originalLanguage: "en",
                 targetLanguages: ["en"],
+                patientId: user?.userId, // Add patient ID from current user
                 originalContent: {
                   title: messageForm.subject,
                   content: messageForm.message

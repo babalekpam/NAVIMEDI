@@ -3049,10 +3049,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/medical-communications", authenticateToken, requireTenant, requireRole(["patient", "physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
+      // For patient users, find their patient ID if not provided
+      let patientId = req.body.patientId;
+      if (req.user.role === 'patient' && !patientId) {
+        const patient = await storage.getPatientByUserId(req.user.userId, req.user.tenantId);
+        if (patient) {
+          patientId = patient.id;
+        } else {
+          return res.status(400).json({ message: "Patient record not found for user" });
+        }
+      }
+
       const validatedData = insertMedicalCommunicationSchema.parse({
         ...req.body,
         tenantId: req.user.tenantId,
         senderId: req.user.userId,
+        patientId: patientId || req.body.patientId,
       });
 
       const communication = await storage.createMedicalCommunication(validatedData);
