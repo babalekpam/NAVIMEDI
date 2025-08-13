@@ -47,8 +47,15 @@ if (process.env.NODE_ENV === 'production') {
     });
     console.error('Application may not function properly without these variables.');
     console.error('Please configure these in your deployment platform settings.');
+    // Don't exit - let the app start for health checks
   } else {
     console.log('✅ All required environment variables are configured');
+  }
+} else {
+  // Development fallback for JWT_SECRET if not set
+  if (!process.env.JWT_SECRET) {
+    console.log('⚠️ JWT_SECRET not set - using development fallback');
+    process.env.JWT_SECRET = 'development-jwt-secret-change-in-production';
   }
 }
 

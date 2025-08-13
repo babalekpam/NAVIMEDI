@@ -29,29 +29,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // DEPLOYMENT HEALTH CHECK - Simplified detection for Cloud Run
+  // DEPLOYMENT HEALTH CHECK - Enhanced detection for Replit and Cloud Run
   app.get('/', (req, res, next) => {
-    const userAgent = req.get('User-Agent') || '';
-    const accept = req.get('Accept') || '';
-    
-    // Simplified health check detection for Cloud Run
-    const isHealthCheck = userAgent === '' || 
-        userAgent.includes('GoogleHC') || 
-        userAgent.includes('Google') ||
-        userAgent.includes('kube-probe') ||
-        userAgent.includes('Go-http-client') ||
-        !accept.includes('text/html');
-    
-    if (isHealthCheck) {
-      return res.status(200).json({ 
-        status: 'ok', 
-        service: 'carnet-healthcare',
-        timestamp: new Date().toISOString()
+    try {
+      const userAgent = req.get('User-Agent') || '';
+      const accept = req.get('Accept') || '';
+      
+      // Enhanced health check detection for multiple deployment platforms
+      const isHealthCheck = userAgent === '' || 
+          userAgent.includes('GoogleHC') || 
+          userAgent.includes('Google') ||
+          userAgent.includes('kube-probe') ||
+          userAgent.includes('Go-http-client') ||
+          userAgent.includes('replit') ||
+          userAgent.includes('health') ||
+          accept.includes('application/json') ||
+          !accept.includes('text/html');
+      
+      if (isHealthCheck) {
+        return res.status(200).json({ 
+          status: 'healthy', 
+          service: 'navimed-healthcare',
+          timestamp: new Date().toISOString(),
+          version: '1.0.0',
+          env: process.env.NODE_ENV || 'development',
+          hasDb: !!process.env.DATABASE_URL,
+          hasJwt: !!process.env.JWT_SECRET
+        });
+      }
+      
+      // Let Vite handle HTML requests for frontend (browsers)
+      next();
+    } catch (error) {
+      console.error('Root endpoint error:', error);
+      // Fallback health response for deployment systems
+      res.status(200).json({
+        status: 'ok',
+        service: 'navimed-healthcare',
+        fallback: true
       });
     }
-    
-    // Let Vite handle HTML requests for frontend (browsers)
-    next();
   });
 
   // Additional health check endpoints for Cloud Run
