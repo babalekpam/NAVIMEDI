@@ -174,13 +174,21 @@ Report ID: ${labOrder.id}
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: any) => {
-      const response = await apiRequest("POST", "/api/medical-communications", messageData);
-      return response.json();
+      console.log("Sending message with data:", messageData);
+      console.log("Current user:", user);
+      console.log("Auth token exists:", !!localStorage.getItem("auth_token"));
+      
+      return await apiRequest("/api/medical-communications", {
+        method: "POST",
+        body: messageData
+      });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Message sent successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/medical-communications"] });
       setMessageForm({ subject: "", message: "", priority: "normal", type: "general_message" });
       setActiveSection("messages");
+      alert("Message sent successfully!");
     },
     onError: (error) => {
       console.error("Send message error:", error);
