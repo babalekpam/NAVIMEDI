@@ -69,12 +69,12 @@ app.get('/health', (req, res) => {
       hasDb: !!process.env.DATABASE_URL,
       hasJwt: !!process.env.JWT_SECRET
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Health check error:', error);
     res.status(500).json({ 
       status: 'error', 
       message: 'Health check failed',
-      error: error.message 
+      error: error?.message || 'Unknown error'
     });
   }
 });
@@ -284,10 +284,10 @@ async function initializePlatform() {
     process.exit(1);
   });
 
-  } catch (startupError) {
+  } catch (startupError: any) {
     console.error('🚨 FATAL: Application failed to start');
     console.error('Error:', startupError);
-    console.error('Stack:', startupError.stack);
+    console.error('Stack:', startupError?.stack || 'No stack trace available');
     process.exit(1);
   }
 })();
