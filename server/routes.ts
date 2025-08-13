@@ -80,6 +80,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // EMERGENCY DIAGNOSTIC ENDPOINT (for production debugging)
+  app.get('/debug', (req, res) => {
+    try {
+      res.status(200).json({
+        status: 'diagnostic',
+        timestamp: new Date().toISOString(),
+        environment: {
+          NODE_ENV: process.env.NODE_ENV || 'undefined',
+          hasJWT: !!process.env.JWT_SECRET,
+          hasDB: !!process.env.DATABASE_URL,
+          port: process.env.PORT || '5000'
+        },
+        server: {
+          platform: process.platform,
+          nodeVersion: process.version,
+          uptime: process.uptime()
+        }
+      });
+    } catch (error) {
+      res.status(200).json({
+        status: 'error',
+        message: 'Diagnostic endpoint failed',
+        error: error?.toString()
+      });
+    }
+  });
+
   // PUBLIC ENDPOINTS (before any middleware)
   
   // Public supplier registration endpoint (outside /api path to avoid middleware)

@@ -275,10 +275,12 @@ async function initializePlatform() {
     log(`serving on port ${port}`);
     console.log(`🌐 Health check available at: http://localhost:${port}/health`);
     
-    // Initialize platform after server is running
-    initializePlatform().catch(error => {
-      console.error("Platform initialization error:", error);
-    });
+    // Initialize platform after server is running (but don't block startup)
+    setTimeout(() => {
+      initializePlatform().catch(error => {
+        console.error("Platform initialization error:", error);
+      });
+    }, 1000);
   });
 
   // Handle process errors to prevent crashes
