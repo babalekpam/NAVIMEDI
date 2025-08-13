@@ -270,9 +270,8 @@ function AppContent() {
           </ProtectedRoute>
         </Route>
         <Route path="/patient-portal">
-          <ProtectedRoute>
-            <PatientPortal />
-          </ProtectedRoute>
+          {/* Redirect to the new real-time patient portal */}
+          <PatientPortalDemo />
         </Route>
         <Route path="/patient-portal-new">
           <PatientPortalNew />
