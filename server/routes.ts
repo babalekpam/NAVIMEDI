@@ -875,7 +875,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Tenant ID is required for regular users" });
       }
 
-      if (!user || !await bcrypt.compare(password, user.password)) {
+      if (!user || !user.password || !await bcrypt.compare(password, user.password)) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
@@ -904,9 +904,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "user",
         entityId: user.id,
         action: "login",
+        previousData: null,
         newData: { loginTime: new Date() },
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.json({
@@ -1044,7 +1045,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: hashedPassword,
         firstName: supplier.contactPersonName.split(' ')[0] || supplier.contactPersonName,
         lastName: supplier.contactPersonName.split(' ').slice(1).join(' ') || '',
-        role: 'supplier_admin',
+        role: 'super_admin',
         tenantId: supplierTenant.id,
         isActive: true,
         mustChangePassword: false,
@@ -1066,7 +1067,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           sku: `${supplier.organizationSlug}-SAMPLE-001`,
           description: `Sample product from ${supplier.companyName}. This supplier specializes in ${supplier.businessType} with ${supplier.yearsInBusiness} years of experience. Contact them to discuss your specific medical equipment needs.`,
           shortDescription: `Sample product from ${supplier.companyName}`,
-          category: supplier.productCategories?.[0] || "Medical Supplies",
+          category: "medical_devices",
           subcategory: "General",
           brand: supplier.companyName,
           manufacturer: supplier.companyName,
@@ -1094,8 +1095,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         console.log(`[SUPPLIER APPROVAL] Created sample product ${sampleProduct.id} for supplier ${supplier.companyName}`);
-      } catch (productError) {
-        console.log(`[SUPPLIER APPROVAL] Failed to create sample product: ${productError.message}`);
+      } catch (productError: any) {
+        console.log(`[SUPPLIER APPROVAL] Failed to create sample product: ${productError?.message || 'Unknown error'}`);
         // Don't fail the approval if product creation fails
       }
       
@@ -1242,12 +1243,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userData = insertUserSchema.parse(req.body);
       
       // Check if user already exists
-      const existingUser = await storage.getUserByUsername(userData.username, userData.tenantId);
+      const existingUser = await storage.getUserByUsername(userData.username, userData.tenantId || '');
       if (existingUser) {
         return res.status(409).json({ message: "Username already exists" });
       }
 
-      const existingEmail = await storage.getUserByEmail(userData.email, userData.tenantId);
+      const existingEmail = await storage.getUserByEmail(userData.email, userData.tenantId || '');
       if (existingEmail) {
         return res.status(409).json({ message: "Email already exists" });
       }
@@ -1272,10 +1273,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (tenant) {
         // Send welcome email with temporary password
         const welcomeEmailSent = await sendWelcomeEmail({
-          userEmail: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          username: user.username,
+          userEmail: user.email || '',
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
+          username: user.username || '',
           temporaryPassword: temporaryPassword,
           organizationName: tenant.name,
           loginUrl: `${req.protocol}://${req.get('host')}/login`
