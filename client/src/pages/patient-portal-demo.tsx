@@ -704,17 +704,17 @@ export default function PatientPortalDemo() {
                         <div className="flex items-center gap-4 text-sm text-gray-600">
                           <div className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
-                            {new Date(appointment.appointmentDate).toLocaleDateString()}
+                            {new Date(appointment.date + 'T' + appointment.time).toLocaleDateString()}
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
-                            {new Date(appointment.appointmentDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            {new Date(appointment.date + 'T' + appointment.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <Badge variant={appointment.priority === 'high' ? 'destructive' : 'outline'}>
-                          {appointment.priority} priority
+                        <Badge variant={appointment.status === 'confirmed' ? 'default' : 'outline'}>
+                          {appointment.status}
                         </Badge>
                       </div>
                     </div>
