@@ -1470,8 +1470,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`[APPOINTMENT] User ${userId} (${userRole}) attempting to create appointment`);
       
-      // STRICT ROLE-BASED APPOINTMENT SCHEDULING: Only receptionists, nurses, and admin staff
-      const allowedRoles = ["receptionist", "nurse", "tenant_admin", "director", "super_admin"];
+      // STRICT ROLE-BASED APPOINTMENT SCHEDULING: Patients, receptionists, nurses, and admin staff
+      const allowedRoles = ["patient", "receptionist", "nurse", "tenant_admin", "director", "super_admin"];
       
       // Doctors and physicians are explicitly NOT allowed to schedule appointments
       if (userRole === "physician" || userRole === "doctor") {
@@ -1479,13 +1479,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({
           message: "Doctors cannot schedule appointments. Only reception staff can schedule appointments. Please contact reception to schedule patient appointments.",
           error: "ROLE_RESTRICTION_SCHEDULING",
-          allowedRoles: ["receptionist", "nurse", "tenant_admin"],
+          allowedRoles: ["patient", "receptionist", "nurse", "tenant_admin"],
           currentRole: userRole
         });
       } else if (!allowedRoles.includes(userRole)) {
         console.log(`[APPOINTMENT] ❌ User ${userId} (${userRole}) denied - insufficient role`);
         return res.status(403).json({
-          message: "Insufficient permissions to create appointments. Only reception staff can schedule appointments.",
+          message: "Insufficient permissions to create appointments. Only patients and reception staff can schedule appointments.",
           error: "FORBIDDEN",
           allowedRoles: allowedRoles,
           currentRole: userRole
