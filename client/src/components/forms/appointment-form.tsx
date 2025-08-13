@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 
 interface AppointmentFormProps {
@@ -14,25 +13,9 @@ interface AppointmentFormProps {
   isLoading?: boolean;
   patients: Patient[];
   providers: User[];
-  hideProviderSelection?: boolean; // Optional prop to hide provider selection
 }
 
-export const AppointmentForm = ({ onSubmit, isLoading = false, patients, providers, hideProviderSelection = false }: AppointmentFormProps) => {
-  const { user } = useAuth();
-  
-  // Debug logging
-  console.log("=== APPOINTMENT FORM DEBUG ===");
-  console.log("User object:", user);
-  console.log("User role:", user?.role);
-  console.log("hideProviderSelection prop:", hideProviderSelection);
-  
-  // Check if user is a doctor (provider) - doctors should not select themselves as providers
-  const isDoctor = user?.role === 'doctor' || user?.role === 'provider';
-  // For now, force hide provider selection to test
-  const shouldHideProviderSelection = true; // Force hide for testing
-  
-  console.log("isDoctor:", isDoctor);
-  console.log("shouldHideProviderSelection:", shouldHideProviderSelection);
+export const AppointmentForm = ({ onSubmit, isLoading = false, patients, providers }: AppointmentFormProps) => {
   const appointmentFormSchema = insertAppointmentSchema.omit({ tenantId: true }).extend({
     appointmentDate: z.string().min(1, "Appointment date is required")
   });
@@ -41,7 +24,7 @@ export const AppointmentForm = ({ onSubmit, isLoading = false, patients, provide
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
       patientId: "",
-      providerId: shouldHideProviderSelection && user ? user.id : "", // Auto-set provider if doctor
+      providerId: "",
       appointmentDate: "",
       duration: 30,
       type: "",
@@ -63,7 +46,7 @@ export const AppointmentForm = ({ onSubmit, isLoading = false, patients, provide
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className={`grid grid-cols-1 ${shouldHideProviderSelection ? '' : 'md:grid-cols-2'} gap-4`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="patientId"
@@ -89,42 +72,30 @@ export const AppointmentForm = ({ onSubmit, isLoading = false, patients, provide
             )}
           />
 
-          {!shouldHideProviderSelection && (
-            <FormField
-              control={form.control}
-              name="providerId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Provider</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select provider" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {providers.map((provider) => (
-                        <SelectItem key={provider.id} value={provider.id}>
-                          Dr. {provider.firstName} {provider.lastName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-
-          {shouldHideProviderSelection && user && (
-            <div className="flex items-center p-3 border rounded-lg bg-blue-50">
-              <div>
-                <p className="text-sm font-medium text-blue-900">Provider</p>
-                <p className="text-sm text-blue-700">Dr. {user.firstName} {user.lastName}</p>
-                <p className="text-xs text-blue-600">You are scheduling as the provider</p>
-              </div>
-            </div>
-          )}
+          <FormField
+            control={form.control}
+            name="providerId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Provider</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select provider" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {providers.map((provider) => (
+                      <SelectItem key={provider.id} value={provider.id}>
+                        Dr. {provider.firstName} {provider.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

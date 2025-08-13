@@ -236,8 +236,7 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
                             </div>
                             {lab.address && (
                               <div className="text-sm text-muted-foreground">
-                                📍 {typeof lab.address === 'string' ? lab.address : 
-                                     `${lab.address.street || ''} ${lab.address.city || ''}, ${lab.address.state || ''} ${lab.address.zipCode || ''}`.trim()}
+                                📍 {lab.address}
                               </div>
                             )}
                             {lab.phone && (

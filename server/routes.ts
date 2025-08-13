@@ -1123,105 +1123,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PATIENT PORTAL ENDPOINTS (specific for patient users - before tenant middleware)
-  app.get("/api/patient/profile", authenticateToken, async (req, res) => {
-    try {
-      const userId = req.user?.id;
-      const tenantId = req.user?.tenantId;
-      
-      if (req.user?.role !== "patient") {
-        return res.status(403).json({ message: "Patient access required" });
-      }
-      
-      // Get patient profile by user ID
-      const patients = await storage.getPatients(tenantId, { limit: 1000 });
-      const patient = patients.find(p => p.id === userId);
-      
-      if (!patient) {
-        return res.status(404).json({ message: "Patient profile not found" });
-      }
-      
-      res.json(patient);
-    } catch (error) {
-      console.error("Error fetching patient profile:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.get("/api/patient/appointments", authenticateToken, async (req, res) => {
-    try {
-      const userId = req.user?.id;
-      const tenantId = req.user?.tenantId;
-      
-      if (req.user?.role !== "patient") {
-        return res.status(403).json({ message: "Patient access required" });
-      }
-      
-      const appointments = await storage.getAppointments(tenantId, { patientId: userId });
-      res.json(appointments || []);
-    } catch (error) {
-      console.error("Error fetching patient appointments:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.get("/api/patient/prescriptions", authenticateToken, async (req, res) => {
-    try {
-      const userId = req.user?.id;
-      const tenantId = req.user?.tenantId;
-      
-      if (req.user?.role !== "patient") {
-        return res.status(403).json({ message: "Patient access required" });
-      }
-      
-      const prescriptions = await storage.getPrescriptions(tenantId, { patientId: userId });
-      res.json(prescriptions || []);
-    } catch (error) {
-      console.error("Error fetching patient prescriptions:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.get("/api/patient/lab-results", authenticateToken, async (req, res) => {
-    try {
-      const userId = req.user?.id;
-      const tenantId = req.user?.tenantId;
-      
-      if (req.user?.role !== "patient") {
-        return res.status(403).json({ message: "Patient access required" });
-      }
-      
-      const labResults = await storage.getLabResults(tenantId, { patientId: userId });
-      res.json(labResults || []);
-    } catch (error) {
-      console.error("Error fetching patient lab results:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.get("/api/tenant/current", authenticateToken, async (req, res) => {
-    try {
-      const tenantId = req.user?.tenantId;
-      
-      if (!tenantId) {
-        return res.status(400).json({ message: "No tenant associated with user" });
-      }
-      
-      const tenant = await storage.getTenant(tenantId);
-      if (!tenant) {
-        return res.status(404).json({ message: "Tenant not found" });
-      }
-      
-      res.json(tenant);
-    } catch (error) {
-      console.error("Error fetching current tenant:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
   // Apply tenant context middleware to all API routes (except public endpoints)
   app.use("/api", (req, res, next) => {
-    // Skip tenant middleware for public endpoints and patient endpoints
+    // Skip tenant middleware for public endpoints
     const publicEndpoints = [
       "/api/health",
       "/api/platform/stats",
@@ -1234,12 +1138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       "/api/marketplace/quote-requests",
       "/advertisements",
       "/marketplace/products",
-      "/marketplace/quote-requests",
-      "/api/patient/profile",
-      "/api/patient/appointments",
-      "/api/patient/prescriptions",
-      "/api/patient/lab-results",
-      "/api/tenant/current"
+      "/marketplace/quote-requests"
     ];
     
     if (publicEndpoints.includes(req.path)) {

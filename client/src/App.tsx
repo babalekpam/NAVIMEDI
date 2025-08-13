@@ -92,10 +92,6 @@ import HospitalBilling from "@/pages/hospital-billing";
 import PharmacyBilling from "@/pages/pharmacy-billing";
 import MedicationInsuranceClaims from "@/pages/medication-insurance-claims";
 import PatientPortal from "@/pages/patient-portal";
-import PatientPortalNew from "@/pages/patient-portal-new";
-import PatientPortalDemo from "@/pages/patient-portal-demo";
-import DoctorPortal from "@/pages/doctor-portal";
-import DoctorPortalFixed from "@/pages/doctor-portal-fixed";
 import PatientPortalStaff from "@/pages/patient-portal-staff";
 import ChangePasswordPage from "@/pages/change-password";
 import AdminDashboard from "@/pages/admin-dashboard";
@@ -111,7 +107,6 @@ import PharmacyReports from "@/pages/pharmacy-reports";
 import PrescriptionArchives from "@/pages/prescription-archives";
 import PharmacyEmployeeManagement from "@/pages/pharmacy-employee-management";
 import LaboratoryDashboard from "@/pages/laboratory-dashboard";
-import TestUnifiedAppointments from "@/pages/test-unified-appointments";
 
 
 
@@ -271,20 +266,9 @@ function AppContent() {
           </ProtectedRoute>
         </Route>
         <Route path="/patient-portal">
-          {/* Redirect to the new real-time patient portal */}
-          <PatientPortalDemo />
-        </Route>
-        <Route path="/patient-portal-new">
-          <PatientPortalNew />
-        </Route>
-        <Route path="/patient-portal-demo">
-          <PatientPortalDemo />
-        </Route>
-        <Route path="/doctor-portal">
-          <DoctorPortal />
-        </Route>
-        <Route path="/doctor-portal-fixed">
-          <DoctorPortalFixed />
+          <ProtectedRoute>
+            <PatientPortal />
+          </ProtectedRoute>
         </Route>
         <Route path="/patient-portal-staff">
           <ProtectedRoute>
@@ -574,7 +558,6 @@ function AppContent() {
 
         <Route path="/laboratory-registration" component={LaboratoryRegistration} />
         <Route path="/pharmacy-registration" component={PharmacyRegistration} />
-        <Route path="/test-unified-appointments" component={TestUnifiedAppointments} />
         <Route path="/pricing" component={PricingPage} />
         <Route path="/service-pricing-management">
           <ProtectedRoute>
