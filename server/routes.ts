@@ -20,44 +20,8 @@ import { resetAllCounters } from "./reset-all-counters";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // DEPLOYMENT HEALTH CHECK - Must be first for Cloud Run
-  app.get('/', (req, res, next) => {
-    const userAgent = req.get('User-Agent') || '';
-    const accept = req.get('Accept') || '';
-    
-    // Prioritize health checks - respond immediately for deployment systems
-    // Be more aggressive about detecting health check requests
-    const isHealthCheck = req.query.health !== undefined || 
-        userAgent.includes('GoogleHC') || 
-        userAgent.includes('kube-probe') || 
-        userAgent.includes('health-check') ||
-        userAgent.includes('Google-Cloud-Functions') ||
-        userAgent.includes('Cloud-Run') ||
-        userAgent === '' ||
-        userAgent.includes('curl') ||
-        userAgent.includes('Go-http-client') ||
-        userAgent.includes('Wget') ||
-        userAgent.includes('HTTP') ||
-        userAgent.includes('Health') ||
-        userAgent.includes('Probe') ||
-        (!userAgent.includes('Mozilla') && !userAgent.includes('Chrome') && !userAgent.includes('Safari')) ||
-        (!accept.includes('text/html') && !accept.includes('*/*'));
-    
-    if (isHealthCheck) {
-      return res.status(200).json({ 
-        status: 'ok', 
-        service: 'carnet-healthcare',
-        timestamp: new Date().toISOString(),
-        message: 'NaviMED Healthcare Platform - Ready'
-      });
-    }
-    
-    // Let Vite handle HTML requests for frontend (browsers)
-    next();
-  });
-
-  // Additional health check endpoints for Cloud Run - MUST be before middleware
-  app.get('/_health', (req, res) => {
+  // PRIMARY HEALTH CHECK ENDPOINT - Must be first and most reliable
+  app.get('/health', (req, res) => {
     res.status(200).json({ 
       status: 'ok', 
       service: 'carnet-healthcare',
@@ -65,8 +29,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Alternative health check endpoint
-  app.get('/healthcheck', (req, res) => {
+  // DEPLOYMENT HEALTH CHECK - Simplified detection for Cloud Run
+  app.get('/', (req, res, next) => {
+    const userAgent = req.get('User-Agent') || '';
+    const accept = req.get('Accept') || '';
+    
+    // Simplified health check detection for Cloud Run
+    const isHealthCheck = userAgent === '' || 
+        userAgent.includes('GoogleHC') || 
+        userAgent.includes('Google') ||
+        userAgent.includes('kube-probe') ||
+        userAgent.includes('Go-http-client') ||
+        !accept.includes('text/html');
+    
+    if (isHealthCheck) {
+      return res.status(200).json({ 
+        status: 'ok', 
+        service: 'carnet-healthcare',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Let Vite handle HTML requests for frontend (browsers)
+    next();
+  });
+
+  // Additional health check endpoints for Cloud Run
+  app.get('/_health', (req, res) => {
     res.status(200).json({ 
       status: 'ok', 
       service: 'carnet-healthcare',
