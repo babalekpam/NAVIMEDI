@@ -94,6 +94,34 @@ export default function DoctorCalendar() {
     );
   }
 
+  // RESTRICT ACCESS: Only receptionists and authorized staff can access appointment booking
+  if (user && !["receptionist", "nurse", "tenant_admin", "super_admin"].includes(user.role)) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="h-8 w-8 text-red-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Restricted</h2>
+          <p className="text-gray-600 mb-4">
+            Appointment booking is restricted to reception staff only. 
+            {user.role === "patient" && " Patients should contact reception to schedule appointments."}
+            {(user.role === "doctor" || user.role === "physician") && " Doctors should contact reception to schedule patient appointments."}
+          </p>
+          <p className="text-sm text-gray-500 mb-6">
+            Please contact reception staff for appointment scheduling assistance.
+          </p>
+          <Button 
+            onClick={() => window.history.back()} 
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            Go Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // Metro General Hospital doctors - using real database IDs
   const mockDoctors = [
     {

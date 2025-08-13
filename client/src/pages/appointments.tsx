@@ -48,21 +48,27 @@ export default function Appointments() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Check URL parameters to auto-open appointment booking form
+  // Check URL parameters to auto-open appointment booking form (Receptionist only)
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('action') === 'book') {
-      setIsFormOpen(true);
-    }
-    
-    // Check if patient was selected from Quick Actions in medical records
-    const selectedPatientInfo = localStorage.getItem('selectedPatientForAppointment');
-    if (selectedPatientInfo) {
-      setIsFormOpen(true);
-      // Clear the stored patient info after using it
+    // Only allow auto-opening for receptionists and authorized staff
+    if (user?.role === "receptionist" || user?.role === "nurse" || user?.role === "tenant_admin" || user?.role === "super_admin") {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('action') === 'book') {
+        setIsFormOpen(true);
+      }
+      
+      // Check if patient was selected from Quick Actions in medical records
+      const selectedPatientInfo = localStorage.getItem('selectedPatientForAppointment');
+      if (selectedPatientInfo) {
+        setIsFormOpen(true);
+        // Clear the stored patient info after using it
+        localStorage.removeItem('selectedPatientForAppointment');
+      }
+    } else {
+      // Clear any leftover localStorage for unauthorized users
       localStorage.removeItem('selectedPatientForAppointment');
     }
-  }, []);
+  }, [user?.role]);
 
   // Get all appointments if "all" is selected, otherwise filter by date
   const { data: appointments = [], isLoading } = useQuery<Appointment[]>({
@@ -245,25 +251,35 @@ export default function Appointments() {
           <h1 className="text-3xl font-bold text-gray-900">{t('appointments')}</h1>
           <p className="text-gray-600 mt-1">{t('schedule-manage-appointments')}</p>
         </div>
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              {t('schedule-appointment')}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Schedule New Appointment</DialogTitle>
-            </DialogHeader>
-            <AppointmentForm
-              onSubmit={(data) => createAppointmentMutation.mutate(data)}
-              isLoading={createAppointmentMutation.isPending}
-              patients={patients}
-              providers={providers}
-            />
-          </DialogContent>
-        </Dialog>
+{(user?.role === "receptionist" || user?.role === "nurse" || user?.role === "tenant_admin" || user?.role === "super_admin") && (
+          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
+                {t('schedule-appointment')}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Schedule New Appointment</DialogTitle>
+              </DialogHeader>
+              <AppointmentForm
+                onSubmit={(data) => createAppointmentMutation.mutate(data)}
+                isLoading={createAppointmentMutation.isPending}
+                patients={patients}
+                providers={providers}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+        {(user?.role === "doctor" || user?.role === "physician") && (
+          <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+            <p className="text-amber-700 text-sm">
+              <strong>Appointment Scheduling:</strong> Only reception staff can schedule appointments. 
+              Please contact reception to schedule patient appointments.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Filters */}

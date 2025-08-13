@@ -1470,29 +1470,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`[APPOINTMENT] User ${userId} (${userRole}) attempting to create appointment`);
       
-      // Check role permissions for appointment creation
-      const allowedRoles = ["receptionist", "tenant_admin", "director", "super_admin"];
+      // STRICT ROLE-BASED APPOINTMENT SCHEDULING: Only receptionists, nurses, and admin staff
+      const allowedRoles = ["receptionist", "nurse", "tenant_admin", "director", "super_admin"];
       
-      // Doctors and physicians need explicit permission to schedule appointments
+      // Doctors and physicians are explicitly NOT allowed to schedule appointments
       if (userRole === "physician" || userRole === "doctor") {
-        // Check if this user has been given explicit permission to schedule appointments
-        const userPermissions = await storage.getUserPermissions(userId, tenantId);
-        const canScheduleAppointments = userPermissions?.includes("schedule_appointments");
-        
-        if (!canScheduleAppointments) {
-          console.log(`[APPOINTMENT] ❌ Doctor/Physician ${userId} denied - no schedule permission`);
-          return res.status(403).json({
-            message: "Doctors cannot schedule appointments directly. Please contact reception staff or request scheduling permissions from your administrator.",
-            error: "ROLE_RESTRICTION_SCHEDULING",
-            requiredPermission: "schedule_appointments"
-          });
-        }
-        
-        console.log(`[APPOINTMENT] ✅ Doctor/Physician ${userId} allowed - has explicit permission`);
+        console.log(`[APPOINTMENT] ❌ Doctor/Physician ${userId} denied - appointment scheduling restricted to reception staff`);
+        return res.status(403).json({
+          message: "Doctors cannot schedule appointments. Only reception staff can schedule appointments. Please contact reception to schedule patient appointments.",
+          error: "ROLE_RESTRICTION_SCHEDULING",
+          allowedRoles: ["receptionist", "nurse", "tenant_admin"],
+          currentRole: userRole
+        });
       } else if (!allowedRoles.includes(userRole)) {
         console.log(`[APPOINTMENT] ❌ User ${userId} (${userRole}) denied - insufficient role`);
         return res.status(403).json({
-          message: "Insufficient permissions to create appointments",
+          message: "Insufficient permissions to create appointments. Only reception staff can schedule appointments.",
           error: "FORBIDDEN",
           allowedRoles: allowedRoles,
           currentRole: userRole
