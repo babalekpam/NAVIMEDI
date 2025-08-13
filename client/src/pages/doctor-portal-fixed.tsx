@@ -498,7 +498,7 @@ export default function DoctorPortalFixed() {
             </div>
 
             <div className="grid gap-4">
-              {doctorAppointments.map((appointment: Appointment) => {
+              {doctorAppointments.map((appointment: any) => {
                 return (
                   <Card key={appointment.id} className="border-l-4 border-l-blue-500">
                     <CardContent className="p-6">
