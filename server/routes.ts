@@ -75,7 +75,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'annualRevenue', 'username', 'passwordHash', 'termsAccepted'
       ];
       
-      const missingFields = requiredFields.filter(field => !supplierData[field]);
+      const missingFields = requiredFields.filter(field => !supplierData[field as keyof typeof supplierData]);
       if (missingFields.length > 0) {
         return res.status(400).json({ 
           error: 'Missing required fields', 
@@ -185,14 +185,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify password
-      const isValidPassword = await bcrypt.compare(password, user.password);
+      const isValidPassword = await bcrypt.compare(password, user.password || '');
       if (!isValidPassword) {
         console.log(`[SECURITY AUDIT] Login failed - invalid password: ${username}`);  
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       // Get tenant information
-      const tenant = await storage.getTenant(user.tenantId);
+      const tenant = await storage.getTenant(user.tenantId || '');
       if (!tenant) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -203,8 +203,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = jwt.sign(
         { 
           userId: user.id, 
-          tenantId: user.tenantId,
-          role: user.role
+          tenantId: user.tenantId || '',
+          role: user.role,
+          username: user.username || user.email || ''
         },
         JWT_SECRET,
         { expiresIn: '24h' }
@@ -1459,7 +1460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/appointments", authenticateToken, requireTenant, async (req, res) => {
     try {
-      console.log("[DEBUG] Creating appointment - User:", req.user?.role, "User ID:", req.user?.userId, "Tenant:", req.tenant?.id);
+      console.log("[DEBUG] Creating appointment - User:", req.user?.role, "User ID:", req.user?.id, "Tenant:", req.tenant?.id);
       console.log("[DEBUG] Request body:", req.body);
       
       // ROLE-BASED APPOINTMENT SCHEDULING RESTRICTIONS
@@ -2201,7 +2202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const reportData = insertReportSchema.parse({
         ...req.body,
         tenantId: req.tenant.id,
-        generatedBy: req.user.userId,
+        generatedBy: req.user.id,
         status: 'generating'
       });
 
@@ -2210,13 +2211,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create audit log
       await storage.createAuditLog({
         tenantId: req.tenant.id,
-        userId: req.user.userId,
+        userId: req.user.id,
         entityType: "report",
         entityId: report.id,
         action: "create",
         newData: { title: report.title, type: report.type },
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       // In a real implementation, you would trigger async report generation here

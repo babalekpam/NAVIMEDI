@@ -15,6 +15,16 @@ app.use(express.urlencoded({ extended: false }));
 
 
 
+// Root endpoint for Cloud Run health checks - CRITICAL FOR DEPLOYMENT
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    service: 'carnet-healthcare',
+    timestamp: new Date().toISOString(),
+    message: 'NaviMED Healthcare Platform - Ready'
+  });
+});
+
 // Multiple health check endpoints for deployment monitoring
 // These must respond immediately without any heavy operations
 app.get('/health', (req, res) => {
