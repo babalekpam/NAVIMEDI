@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: false }));
 
 
 
-// Root endpoint for deployment health checks - will be overridden by Vite in development
+// Root endpoint for deployment health checks - handled in routes.ts for better control
 
 // Multiple health check endpoints for deployment monitoring
 // These must respond immediately without any heavy operations

@@ -23,15 +23,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // DEPLOYMENT HEALTH CHECK - Must be first for Cloud Run
   app.get('/', (req, res, next) => {
     const userAgent = req.get('User-Agent') || '';
+    const accept = req.get('Accept') || '';
     
-    // Only respond with JSON for deployment health check systems
-    if (req.query.health !== undefined || 
+    // Prioritize health checks - respond immediately for deployment systems
+    // Be more aggressive about detecting health check requests
+    const isHealthCheck = req.query.health !== undefined || 
         userAgent.includes('GoogleHC') || 
         userAgent.includes('kube-probe') || 
         userAgent.includes('health-check') ||
+        userAgent.includes('Google-Cloud-Functions') ||
+        userAgent.includes('Cloud-Run') ||
         userAgent === '' ||
         userAgent.includes('curl') ||
-        req.headers['x-forwarded-for'] && !req.get('Accept')?.includes('text/html')) {
+        userAgent.includes('Go-http-client') ||
+        userAgent.includes('Wget') ||
+        userAgent.includes('HTTP') ||
+        userAgent.includes('Health') ||
+        userAgent.includes('Probe') ||
+        (!userAgent.includes('Mozilla') && !userAgent.includes('Chrome') && !userAgent.includes('Safari')) ||
+        (!accept.includes('text/html') && !accept.includes('*/*'));
+    
+    if (isHealthCheck) {
       return res.status(200).json({ 
         status: 'ok', 
         service: 'carnet-healthcare',
@@ -42,6 +54,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Let Vite handle HTML requests for frontend (browsers)
     next();
+  });
+
+  // Additional health check endpoints for Cloud Run - MUST be before middleware
+  app.get('/_health', (req, res) => {
+    res.status(200).json({ 
+      status: 'ok', 
+      service: 'carnet-healthcare',
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // Alternative health check endpoint
+  app.get('/healthcheck', (req, res) => {
+    res.status(200).json({ 
+      status: 'ok', 
+      service: 'carnet-healthcare',
+      timestamp: new Date().toISOString()
+    });
   });
 
   // PUBLIC ENDPOINTS (before any middleware)

@@ -1,0 +1,80 @@
+Promotion failed
+Your deployment attempt had the following errors:
+Health check is failing at the root endpoint (/) because the deployment system expects a quick JSON response but the app is serving frontend HTML content
+The root endpoint is handling both health checks and frontend routing, causing confusion for Cloud Run health checks
+Health check timeout is occurring because the root endpoint may be taking too long to respond with frontend assets
+Agent suggestions
+app.get('/', (req, res, next) => {
+    const userAgent = req.get('User-Agent') || '';
+    
+    // Only respond with JSON for deployment health check systems
+    if (req.query.health !== undefined || 
+        userAgent.includes('GoogleHC') || 
+        userAgent.includes('kube-probe') || 
+        userAgent.includes('health-check') ||
+        userAgent === '' ||
+        userAgent.includes('curl') ||
+        req.headers['x-forwarded-for'] && !req.get('Accept')?.includes('text/html')) {
+      return res.status(200).json({ 
+        status: 'ok', 
+        service: 'carnet-healthcare',
+        timestamp: new Date().toISOString(),
+        message: 'NaviMED Healthcare Platform - Ready'
+      });
+    }
+    
+    // Let Vite handle HTML requests for frontend (browsers)
+    next();
+  });
+app.get('/', (req, res, next) => {
+    const userAgent = req.get('User-Agent') || '';
+    const accept = req.get('Accept') || '';
+    
+    // Prioritize health checks - respond immediately for deployment systems
+    if (req.query.health !== undefined || 
+        userAgent.includes('GoogleHC') || 
+        userAgent.includes('kube-probe') || 
+        userAgent.includes('health-check') ||
+        userAgent.includes('Google-Cloud-Functions') ||
+        userAgent.includes('Cloud-Run') ||
+        userAgent === '' ||
+        userAgent.includes('curl') ||
+        !accept.includes('text/html')) {
+      return res.status(200).json({ 
+        status: 'ok', 
+        service: 'carnet-healthcare',
+        timestamp: new Date().toISOString(),
+        message: 'NaviMED Healthcare Platform - Ready'
+      });
+    }
+    
+    // Let Vite handle HTML requests for frontend (browsers)
+    next();
+  });
+Health checks are currently sent to the / endpoint by default
+Configure Cloud Run health checks to use /health endpoint instead of / in the deployment configuration
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    service: 'carnet-healthcare',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    service: 'carnet-healthcare',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
+// Ensure health endpoint is also available at root for deployment systems
+app.get('/_health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    service: 'carnet-healthcare',
+    timestamp: new Date().toISOString()
+  });
+});
