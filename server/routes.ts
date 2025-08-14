@@ -23,38 +23,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PRIMARY HEALTH CHECK ENDPOINT - Must be first and most reliable
   app.get('/health', (req, res) => {
     res.status(200).json({ 
-      status: 'ok', 
-      service: 'carnet-healthcare',
-      timestamp: new Date().toISOString()
+      status: 'healthy', 
+      service: 'navimed-healthcare',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      env: process.env.NODE_ENV || 'development',
+      hasDb: !!process.env.DATABASE_URL,
+      hasJwt: !!process.env.JWT_SECRET
     });
   });
 
-  // DEPLOYMENT HEALTH CHECK - Enhanced detection for Replit and Cloud Run
+  // DEPLOYMENT HEALTH CHECK - Simplified for Cloud Run
   app.get('/', (req, res, next) => {
     try {
       const userAgent = req.get('User-Agent') || '';
-      const accept = req.get('Accept') || '';
       
-      // Enhanced health check detection for multiple deployment platforms
+      // Simplified health check detection for deployment systems
       const isHealthCheck = userAgent === '' || 
           userAgent.includes('GoogleHC') || 
-          userAgent.includes('Google') ||
           userAgent.includes('kube-probe') ||
-          userAgent.includes('Go-http-client') ||
-          userAgent.includes('replit') ||
-          userAgent.includes('health') ||
-          accept.includes('application/json') ||
-          !accept.includes('text/html');
+          userAgent.includes('Go-http-client');
       
       if (isHealthCheck) {
         return res.status(200).json({ 
           status: 'healthy', 
           service: 'navimed-healthcare',
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          env: process.env.NODE_ENV || 'development',
-          hasDb: !!process.env.DATABASE_URL,
-          hasJwt: !!process.env.JWT_SECRET
+          timestamp: new Date().toISOString()
         });
       }
       
@@ -62,11 +56,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next();
     } catch (error) {
       console.error('Root endpoint error:', error);
-      // Fallback health response for deployment systems
+      // Always return health response for deployment systems
       res.status(200).json({
         status: 'ok',
-        service: 'navimed-healthcare',
-        fallback: true
+        service: 'navimed-healthcare'
       });
     }
   });
