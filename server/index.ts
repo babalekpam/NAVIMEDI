@@ -61,97 +61,50 @@ if (process.env.NODE_ENV === 'production') {
 
 
 
-// ROOT ENDPOINT - CRITICAL FOR CLOUD RUN DEPLOYMENT SUCCESS
-// Cloud Run sends health checks specifically to root (/) endpoint 
-// This MUST respond with 200 status for deployment to succeed
+// ROOT ENDPOINT - OPTIMIZED FOR BOTH HEALTH CHECKS AND FRONTEND
+// Simplified logic that prioritizes deployment systems while preserving browser functionality
 app.get('/', (req, res, next) => {
   const userAgent = (req.get('User-Agent') || '').toLowerCase();
-  const accept = (req.get('Accept') || '').toLowerCase();
   
-  // Comprehensive Cloud Run health check detection
-  // Prioritize health check responses for successful deployment
+  // Simplified health check detection focusing on most common deployment patterns
   const isHealthChecker = 
-    // Cloud Run and Google health checkers
     userAgent.includes('googlehc') || 
     userAgent.includes('kube-probe') ||
     userAgent.includes('go-http-client') ||
-    userAgent.includes('health') ||
-    userAgent.includes('curl') ||
-    userAgent.includes('gcp') ||
-    userAgent === '' || // Empty user agents are deployment systems
-    // Accept headers from deployment systems
-    (accept.includes('*/*') && !accept.includes('text/html')) ||
-    // Simple requests without referers are usually health checks
-    (!req.get('Referer') && userAgent.length < 50) ||
-    // Explicit health check parameters
-    req.query.health === 'true' ||
-    req.query.healthcheck === 'true';
+    userAgent === '' || 
+    req.query.health === 'true';
 
   if (isHealthChecker) {
-    // Immediate JSON response for Cloud Run deployment success
+    // Fast JSON response for health checkers
     return res.status(200).json({
       status: 'ok',
       service: 'navimed-healthcare',
-      health: 'healthy',
-      timestamp: new Date().toISOString()
+      health: 'healthy'
     });
   }
 
-  // Pass browser requests to Vite frontend middleware
+  // Pass browser requests to frontend
   next();
 });
 
-// ULTRA-FAST HEALTH CHECK ENDPOINTS
-// These must respond immediately with minimal processing for deployment systems
+// SIMPLIFIED HEALTH CHECK ENDPOINTS
+// All endpoints respond immediately with minimal processing
 app.get('/health', (req, res) => {
-  // Immediate response for Cloud Run health checks - no try/catch overhead
-  res.status(200).json({ status: 'ok', health: 'healthy' });
-});
-
-// Backup health endpoint with more details
-app.get('/health-detailed', (req, res) => {
-  try {
-    res.status(200).json({ 
-      status: 'ok', 
-      service: 'carnet-healthcare',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      env: process.env.NODE_ENV || 'development',
-      hasDb: !!process.env.DATABASE_URL,
-      hasJwt: !!process.env.JWT_SECRET
-    });
-  } catch (error: any) {
-    console.error('Health check error:', error);
-    res.status(500).json({ 
-      status: 'error', 
-      message: 'Health check failed',
-      error: error?.message || 'Unknown error'
-    });
-  }
+  res.status(200).json({ status: 'ok', service: 'navimed-healthcare' });
 });
 
 app.get('/healthz', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    service: 'carnet-healthcare',
-    timestamp: new Date().toISOString()
-  });
+  res.status(200).json({ status: 'ok', service: 'navimed-healthcare' });
 });
 
 app.get('/status', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    service: 'carnet-healthcare',
-    timestamp: new Date().toISOString()
-  });
+  res.status(200).json({ status: 'ok', service: 'navimed-healthcare' });
 });
 
-// Simple text responses for deployment systems that expect plain text
 app.get('/ping', (req, res) => {
   res.status(200).send('pong');
 });
 
-// Additional health endpoints commonly used by deployment systems
 app.get('/ready', (req, res) => {
   res.status(200).send('OK');
 });
@@ -161,54 +114,11 @@ app.get('/alive', (req, res) => {
 });
 
 app.get('/liveness', (req, res) => {
-  res.status(200).json({ status: 'ok', alive: true });
+  res.status(200).json({ status: 'ok' });
 });
 
 app.get('/readiness', (req, res) => {
-  res.status(200).json({ status: 'ok', ready: true });
-});
-
-// Explicit deployment health check endpoint
-app.get('/deployment-health', (req, res) => {
-  res.status(200).json({ 
-    status: 'healthy',
-    service: 'carnet-healthcare',
-    deployment: 'ready',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Deployment status validation endpoint
-app.get('/deployment-status', (req, res) => {
-  const status = {
-    environment: process.env.NODE_ENV || 'development',
-    hasDatabase: !!process.env.DATABASE_URL,
-    hasJWT: !!process.env.JWT_SECRET,
-    hasSendGrid: !!process.env.SENDGRID_API_KEY,
-    port: process.env.PORT || 5000,
-    nodeVersion: process.version,
-    platform: process.platform,
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString()
-  };
-  
-  const issues = [];
-  if (!status.hasDatabase) issues.push("Missing DATABASE_URL environment variable");
-  if (!status.hasJWT) issues.push("Missing JWT_SECRET environment variable");
-  if (status.environment !== 'production' && process.env.REPLIT_DEPLOYMENT_ID) {
-    issues.push("NODE_ENV should be 'production' in deployment");
-  }
-  
-  const isHealthy = status.hasDatabase && status.hasJWT;
-  
-  res.status(isHealthy ? 200 : 503).json({
-    ...status,
-    healthy: isHealthy,
-    issues: issues.length > 0 ? issues : undefined,
-    recommendation: issues.length > 0 ? 
-      "Configure missing environment variables in Replit Deployment Secrets" : 
-      "All critical environment variables are configured"
-  });
+  res.status(200).json({ status: 'ok' });
 });
 
 
