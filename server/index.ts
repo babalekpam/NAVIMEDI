@@ -61,65 +61,7 @@ if (process.env.NODE_ENV === 'production') {
 
 
 
-// ROOT ENDPOINT - OPTIMIZED FOR BOTH HEALTH CHECKS AND FRONTEND
-// Simplified logic that prioritizes deployment systems while preserving browser functionality
-app.get('/', (req, res, next) => {
-  const userAgent = (req.get('User-Agent') || '').toLowerCase();
-  
-  // Simplified health check detection focusing on most common deployment patterns
-  const isHealthChecker = 
-    userAgent.includes('googlehc') || 
-    userAgent.includes('kube-probe') ||
-    userAgent.includes('go-http-client') ||
-    userAgent === '' || 
-    req.query.health === 'true';
-
-  if (isHealthChecker) {
-    // Fast JSON response for health checkers
-    return res.status(200).json({
-      status: 'ok',
-      service: 'navimed-healthcare',
-      health: 'healthy'
-    });
-  }
-
-  // Pass browser requests to frontend
-  next();
-});
-
-// SIMPLIFIED HEALTH CHECK ENDPOINTS
-// All endpoints respond immediately with minimal processing
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', service: 'navimed-healthcare' });
-});
-
-app.get('/healthz', (req, res) => {
-  res.status(200).json({ status: 'ok', service: 'navimed-healthcare' });
-});
-
-app.get('/status', (req, res) => {
-  res.status(200).json({ status: 'ok', service: 'navimed-healthcare' });
-});
-
-app.get('/ping', (req, res) => {
-  res.status(200).send('pong');
-});
-
-app.get('/ready', (req, res) => {
-  res.status(200).send('OK');
-});
-
-app.get('/alive', (req, res) => {
-  res.status(200).send('OK');
-});
-
-app.get('/liveness', (req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
-
-app.get('/readiness', (req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
+// Health check endpoints are now defined after route registration for proper priority
 
 
 
@@ -220,6 +162,50 @@ async function initializePlatform() {
     console.log('🚀 Starting NaviMED Healthcare Platform...');
     const server = await registerRoutes(app);
     console.log('✅ Routes registered successfully');
+
+  // CRITICAL: Define health check endpoints AFTER routes but BEFORE Vite setup
+  // This ensures they take precedence over Vite's catch-all route
+  app.get('/', (req, res) => {
+    res.status(200).json({
+      status: 'ok',
+      service: 'navimed-healthcare',
+      health: 'healthy',
+      timestamp: new Date().toISOString(),
+      message: 'Health check endpoint - visit /login to access the application'
+    });
+  });
+
+  app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', service: 'navimed-healthcare' });
+  });
+
+  app.get('/healthz', (req, res) => {
+    res.status(200).json({ status: 'ok', service: 'navimed-healthcare' });
+  });
+
+  app.get('/ping', (req, res) => {
+    res.status(200).send('pong');
+  });
+
+  app.get('/status', (req, res) => {
+    res.status(200).json({ status: 'ok', service: 'navimed-healthcare' });
+  });
+
+  app.get('/ready', (req, res) => {
+    res.status(200).send('OK');
+  });
+
+  app.get('/alive', (req, res) => {
+    res.status(200).send('OK');
+  });
+
+  app.get('/liveness', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+  });
+
+  app.get('/readiness', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+  });
 
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
