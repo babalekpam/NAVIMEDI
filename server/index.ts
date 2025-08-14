@@ -61,40 +61,55 @@ if (process.env.NODE_ENV === 'production') {
 
 
 
-// ROOT ENDPOINT WITH SMART HEALTH CHECK DETECTION
-// Handle both deployment health checks and browser requests at root path
+// ROOT ENDPOINT - CRITICAL FOR CLOUD RUN DEPLOYMENT SUCCESS
+// Cloud Run sends health checks specifically to root (/) endpoint 
+// This MUST respond with 200 status for deployment to succeed
 app.get('/', (req, res, next) => {
-  const userAgent = req.get('User-Agent') || '';
+  const userAgent = (req.get('User-Agent') || '').toLowerCase();
+  const accept = (req.get('Accept') || '').toLowerCase();
   
-  // Detect deployment health checkers by their user agents
-  const isHealthChecker = userAgent.includes('GoogleHC') || 
-                         userAgent.includes('kube-probe') ||
-                         userAgent.includes('Go-http-client') ||
-                         userAgent.includes('GoogleCloudRun') ||
-                         userAgent.includes('curl') ||
-                         userAgent.startsWith('Health Check') ||
-                         !userAgent || // Empty user agents are often health checks
-                         userAgent === 'Health Check' ||
-                         req.query.health === 'true'; // Support query parameter override
+  // Comprehensive Cloud Run health check detection
+  // Prioritize health check responses for successful deployment
+  const isHealthChecker = 
+    // Cloud Run and Google health checkers
+    userAgent.includes('googlehc') || 
+    userAgent.includes('kube-probe') ||
+    userAgent.includes('go-http-client') ||
+    userAgent.includes('health') ||
+    userAgent.includes('curl') ||
+    userAgent.includes('gcp') ||
+    userAgent === '' || // Empty user agents are deployment systems
+    // Accept headers from deployment systems
+    (accept.includes('*/*') && !accept.includes('text/html')) ||
+    // Simple requests without referers are usually health checks
+    (!req.get('Referer') && userAgent.length < 50) ||
+    // Explicit health check parameters
+    req.query.health === 'true' ||
+    req.query.healthcheck === 'true';
 
   if (isHealthChecker) {
-    // Return health check response for deployment systems
+    // Immediate JSON response for Cloud Run deployment success
     return res.status(200).json({
       status: 'ok',
       service: 'navimed-healthcare',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      env: process.env.NODE_ENV || 'development'
+      health: 'healthy',
+      timestamp: new Date().toISOString()
     });
   }
 
-  // For all other requests (browsers), pass control to the next middleware (Vite)
+  // Pass browser requests to Vite frontend middleware
   next();
 });
 
-// Multiple health check endpoints for deployment monitoring
-// These must respond immediately without any heavy operations
+// ULTRA-FAST HEALTH CHECK ENDPOINTS
+// These must respond immediately with minimal processing for deployment systems
 app.get('/health', (req, res) => {
+  // Immediate response for Cloud Run health checks - no try/catch overhead
+  res.status(200).json({ status: 'ok', health: 'healthy' });
+});
+
+// Backup health endpoint with more details
+app.get('/health-detailed', (req, res) => {
   try {
     res.status(200).json({ 
       status: 'ok', 
