@@ -178,6 +178,39 @@ app.get('/deployment-health', (req, res) => {
   });
 });
 
+// Deployment status validation endpoint
+app.get('/deployment-status', (req, res) => {
+  const status = {
+    environment: process.env.NODE_ENV || 'development',
+    hasDatabase: !!process.env.DATABASE_URL,
+    hasJWT: !!process.env.JWT_SECRET,
+    hasSendGrid: !!process.env.SENDGRID_API_KEY,
+    port: process.env.PORT || 5000,
+    nodeVersion: process.version,
+    platform: process.platform,
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  };
+  
+  const issues = [];
+  if (!status.hasDatabase) issues.push("Missing DATABASE_URL environment variable");
+  if (!status.hasJWT) issues.push("Missing JWT_SECRET environment variable");
+  if (status.environment !== 'production' && process.env.REPLIT_DEPLOYMENT_ID) {
+    issues.push("NODE_ENV should be 'production' in deployment");
+  }
+  
+  const isHealthy = status.hasDatabase && status.hasJWT;
+  
+  res.status(isHealthy ? 200 : 503).json({
+    ...status,
+    healthy: isHealthy,
+    issues: issues.length > 0 ? issues : undefined,
+    recommendation: issues.length > 0 ? 
+      "Configure missing environment variables in Replit Deployment Secrets" : 
+      "All critical environment variables are configured"
+  });
+});
+
 
 
 app.use((req, res, next) => {
