@@ -165,7 +165,9 @@ async function initializePlatform() {
 
   // CRITICAL: Define health check endpoints AFTER routes but BEFORE Vite setup
   // This ensures they take precedence over Vite's catch-all route
-  app.get('/', (req, res) => {
+  // NOTE: Root route '/' is handled by Vite to serve the React app
+  
+  app.get('/health', (req, res) => {
     res.status(200).json({
       status: 'ok',
       service: 'navimed-healthcare',
@@ -173,10 +175,6 @@ async function initializePlatform() {
       timestamp: new Date().toISOString(),
       message: 'Health check endpoint - visit /login to access the application'
     });
-  });
-
-  app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok', service: 'navimed-healthcare' });
   });
 
   app.get('/healthz', (req, res) => {
