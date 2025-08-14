@@ -2032,9 +2032,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "insurance_claim",
         entityId: claim.id,
         action: "create",
+        previousData: null,
         newData: claim,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(claim);
@@ -2072,9 +2073,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "insurance_claim",
         entityId: id,
         action: "update",
+        previousData: null,
         newData: updateData,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.json(updatedClaim);
