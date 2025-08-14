@@ -20,38 +20,7 @@ import { resetAllCounters } from "./reset-all-counters";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // DEPLOYMENT HEALTH CHECK - Always respond with 200 for Cloud Run
-  app.get('/', (req, res, next) => {
-    try {
-      const userAgent = req.get('User-Agent') || '';
-      const acceptHeader = req.get('Accept') || '';
-      
-      // Check if this is a health check request or not a browser request
-      const isHealthCheck = userAgent === '' || 
-          userAgent.includes('GoogleHC') || 
-          userAgent.includes('kube-probe') ||
-          userAgent.includes('Go-http-client') ||
-          !acceptHeader.includes('text/html');
-      
-      if (isHealthCheck) {
-        return res.status(200).json({ 
-          status: 'healthy', 
-          service: 'navimed-healthcare',
-          timestamp: new Date().toISOString()
-        });
-      }
-      
-      // Let Vite handle HTML requests for frontend (browsers)
-      next();
-    } catch (error) {
-      console.error('Root endpoint error:', error);
-      // Always return 200 for deployment health checks
-      return res.status(200).json({
-        status: 'ok',
-        service: 'navimed-healthcare'
-      });
-    }
-  });
+  // Root endpoint health check is now handled in server/index.ts BEFORE other routes
 
   // EMERGENCY DIAGNOSTIC ENDPOINT (for production debugging)
   app.get('/debug', (req, res) => {
@@ -6385,45 +6354,35 @@ Report ID: ${report.id}
     }
   });
 
-  // ULTIMATE FALLBACK ROUTE - Guarantees deployment health checks never fail
+  // FALLBACK ROUTE - Only handle unmatched API routes, let Vite handle frontend
   // This must be the absolute last route before server creation
-  app.use('*', (req, res) => {
+  app.use('/api/*', (req, res) => {
+    // Only handle API routes that weren't matched above
+    res.status(404).json({ 
+      message: 'API route not found',
+      path: req.originalUrl 
+    });
+  });
+
+  // Health check fallback for deployment probes ONLY (not root path)
+  app.use(['/health*', '/status*', '/ping*', '/alive*', '/ready*'], (req, res) => {
     const userAgent = req.get('User-Agent') || '';
-    const accept = req.get('Accept') || '';
-    const path = req.originalUrl;
     
-    // Extremely broad detection for deployment probes and health checkers
-    const isLikelyHealthCheck = !userAgent ||
-        userAgent === '' ||
+    // Only respond to actual health check user agents
+    if (!userAgent || 
         userAgent.includes('GoogleHC') || 
         userAgent.includes('kube-probe') ||
         userAgent.includes('Go-http-client') ||
         userAgent.includes('curl') ||
-        userAgent.includes('wget') ||
-        userAgent.includes('python') ||
-        userAgent.includes('node') ||
-        path === '/' || 
-        path.includes('health') ||
-        path.includes('status') ||
-        path.includes('ping') ||
-        path.includes('alive') ||
-        path.includes('ready') ||
-        !accept ||
-        accept === '*/*';
-    
-    if (isLikelyHealthCheck) {
-      // Always return 200 OK for anything that might be a deployment health check
+        userAgent.includes('wget')) {
       return res.status(200).json({ 
         status: 'ok',
         service: 'navimed-healthcare'
       });
     }
     
-    // Only return 404 for obvious frontend/API requests
-    res.status(404).json({ 
-      message: 'Route not found',
-      path: req.originalUrl 
-    });
+    // Otherwise let Vite handle it
+    res.status(404).json({ message: 'Not found' });
   });
 
   const httpServer = createServer(app);

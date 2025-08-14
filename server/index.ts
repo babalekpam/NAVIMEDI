@@ -61,7 +61,8 @@ if (process.env.NODE_ENV === 'production') {
 
 
 
-// Root endpoint for deployment health checks - handled in routes.ts for better control
+// NO ROOT ENDPOINT OVERRIDE - Let Vite handle the root path for browsers
+// Deployment systems should use dedicated health check endpoints
 
 // Multiple health check endpoints for deployment monitoring
 // These must respond immediately without any heavy operations
