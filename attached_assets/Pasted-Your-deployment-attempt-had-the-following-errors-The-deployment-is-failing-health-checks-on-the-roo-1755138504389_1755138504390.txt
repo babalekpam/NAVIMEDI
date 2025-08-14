@@ -1,0 +1,80 @@
+Your deployment attempt had the following errors:
+The deployment is failing health checks on the root endpoint (/) which must respond with a 200 status code.
+The health check logic in server/routes.ts may be too complex and potentially failing for some deployment system requests.
+Cloud Run deployments require the root endpoint (/) to be reliable and respond quickly for health checks.
+Agent suggestions
+  // DEPLOYMENT HEALTH CHECK - Simplified for Cloud Run
+  app.get('/', (req, res, next) => {
+    try {
+      const userAgent = req.get('User-Agent') || '';
+      
+      // Simplified health check detection for deployment systems
+      const isHealthCheck = userAgent === '' || 
+          userAgent.includes('GoogleHC') || 
+          userAgent.includes('kube-probe') ||
+          userAgent.includes('Go-http-client');
+      
+      if (isHealthCheck) {
+        return res.status(200).json({ 
+          status: 'healthy', 
+          service: 'navimed-healthcare',
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      // Let Vite handle HTML requests for frontend (browsers)
+      next();
+    } catch (error) {
+      console.error('Root endpoint error:', error);
+      // Always return health response for deployment systems
+      res.status(200).json({
+        status: 'ok',
+        service: 'navimed-healthcare'
+      });
+    }
+  });
+  // DEPLOYMENT HEALTH CHECK - Always respond with 200 for Cloud Run
+  app.get('/', (req, res, next) => {
+    try {
+      const userAgent = req.get('User-Agent') || '';
+      const acceptHeader = req.get('Accept') || '';
+      
+      // Check if this is a health check request or not a browser request
+      const isHealthCheck = userAgent === '' || 
+          userAgent.includes('GoogleHC') || 
+          userAgent.includes('kube-probe') ||
+          userAgent.includes('Go-http-client') ||
+          !acceptHeader.includes('text/html');
+      
+      if (isHealthCheck) {
+        return res.status(200).json({ 
+          status: 'healthy', 
+          service: 'navimed-healthcare',
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      // Let Vite handle HTML requests for frontend (browsers)
+      next();
+    } catch (error) {
+      console.error('Root endpoint error:', error);
+      // Always return 200 for deployment health checks
+      return res.status(200).json({
+        status: 'ok',
+        service: 'navimed-healthcare'
+      });
+    }
+  });
+  // Let Vite handle HTML requests for frontend (browsers)
+      next();
+  // Let Vite handle HTML requests for frontend (browsers)
+      next();
+    });
+
+  // Fallback health check route for any unhandled requests
+  app.use((req, res, next) => {
+    const userAgent = req.get('User-Agent') || '';
+    if (userAgent === '' || userAgent.includes('GoogleHC') || userAgent.includes('kube-probe')) {
+      return res.status(200).json({ status: 'healthy' });
+    }
+    next();
