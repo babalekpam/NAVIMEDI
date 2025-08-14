@@ -61,8 +61,36 @@ if (process.env.NODE_ENV === 'production') {
 
 
 
-// NO ROOT ENDPOINT OVERRIDE - Let Vite handle the root path for browsers
-// Deployment systems should use dedicated health check endpoints
+// ROOT ENDPOINT WITH SMART HEALTH CHECK DETECTION
+// Handle both deployment health checks and browser requests at root path
+app.get('/', (req, res, next) => {
+  const userAgent = req.get('User-Agent') || '';
+  
+  // Detect deployment health checkers by their user agents
+  const isHealthChecker = userAgent.includes('GoogleHC') || 
+                         userAgent.includes('kube-probe') ||
+                         userAgent.includes('Go-http-client') ||
+                         userAgent.includes('GoogleCloudRun') ||
+                         userAgent.includes('curl') ||
+                         userAgent.startsWith('Health Check') ||
+                         !userAgent || // Empty user agents are often health checks
+                         userAgent === 'Health Check' ||
+                         req.query.health === 'true'; // Support query parameter override
+
+  if (isHealthChecker) {
+    // Return health check response for deployment systems
+    return res.status(200).json({
+      status: 'ok',
+      service: 'navimed-healthcare',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      env: process.env.NODE_ENV || 'development'
+    });
+  }
+
+  // For all other requests (browsers), pass control to the next middleware (Vite)
+  next();
+});
 
 // Multiple health check endpoints for deployment monitoring
 // These must respond immediately without any heavy operations
