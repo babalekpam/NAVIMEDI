@@ -13,6 +13,7 @@ export interface JWTPayload {
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
+    userId: string; // Alias for id
     tenantId: string;
     role: string;
     username: string;
@@ -26,11 +27,11 @@ declare global {
     interface Request {
       user?: {
         id: string;
+        userId: string; // Alias for id
         tenantId: string;
         role: string;
         username: string;
       };
-      userId?: string; // Add userId property
       tenant?: any; // Allow full tenant object from tenant middleware
       tenantId?: string;
     }
@@ -52,11 +53,11 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
     req.user = {
       id: decoded.userId,
+      userId: decoded.userId, // Add userId alias
       tenantId: decoded.tenantId,
       role: decoded.role,
       username: decoded.username
     };
-    req.userId = decoded.userId; // Add this line to fix the missing userId
     req.tenantId = decoded.tenantId;
     
     // Don't override tenant data if it's already set by tenant middleware
