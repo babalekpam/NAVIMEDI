@@ -1,0 +1,71 @@
+1 build failed
+Your deployment attempt had the following errors:
+Health check timeout on root endpoint (/) - deployment system expects immediate JSON response but is not receiving it
+Root endpoint routing logic causing delays or failures in health check responses
+Complex user agent detection or redirect logic interfering with deployment health checks
+Agent suggestions
+app.get('/', (req, res) => {
+  // Check if this is a deployment health check or browser request
+  const userAgent = req.get('User-Agent') || '';
+  const acceptHeader = req.get('Accept') || '';
+  
+  console.log(`Root access: UA="${userAgent}" Accept="${acceptHeader}"`);
+  
+  // Health check patterns for deployment systems - be very specific
+  const isHealthCheck = userAgent.includes('GoogleHC') || 
+                       userAgent.includes('kube-probe') ||
+                       userAgent.includes('Go-http-client') ||
+                       userAgent === '' ||
+                       (acceptHeader === 'application/json') ||
+                       req.query.healthcheck === 'true';
+  
+  if (isHealthCheck) {
+    // Return JSON for deployment health checks
+    res.status(200).json({
+      status: 'ok',
+      service: 'navimed-healthcare',
+      timestamp: new Date().toISOString(),
+      message: 'Health check endpoint. Please visit /login to access the application.'
+    });
+  } else {
+    // Redirect browsers to the login page
+    console.log('Redirecting browser to /login');
+    res.redirect(302, '/login');
+  }
+});
+app.get('/', (req, res) => {
+  // Always return JSON for Cloud Run health checks
+  res.status(200).json({
+    status: 'ok',
+    service: 'navimed-healthcare',
+    timestamp: new Date().toISOString(),
+    message: 'Health check endpoint. Please visit /login to access the application.'
+  });
+});
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+// Health check fallback for deployment probes ONLY (not root path)
+  app.use(['/health*', '/status*', '/ping*', '/alive*', '/ready*'], (req, res) => {
+    const userAgent = req.get('User-Agent') || '';
+    
+    // Only respond to actual health check user agents
+    if (!userAgent || 
+        userAgent.includes('GoogleHC') || 
+        userAgent.includes('kube-probe') ||
+        userAgent.includes('Go-http-client') ||
+        userAgent.includes('curl') ||
+        userAgent.includes('wget')) {
+      return res.status(200).json({ 
+        status: 'ok',
+        service: 'navimed-healthcare'
+      });
+    }
+// Simple health check endpoints
+  app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
+  app.get('/ping', (req, res) => res.status(200).send('pong'));
+  app.get('/status', (req, res) => res.status(200).json({ status: 'ok' }));
+Default health check on / endpoint
+Set custom health check endpoint to /health in deployment configuration
+Routes and middleware registered in mixed order
+Register health check endpoints immediately after creating express app, before any other middleware or routes
