@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { ProtectedRoute } from "@/components/layout/protected-route";
+import Landing from "@/pages/Landing";
 import LandingPage from "@/pages/landing-fixed";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
@@ -117,7 +118,7 @@ function AppContent() {
   return (
     <div className="min-h-screen">
       <Switch>
-        <Route path="/" component={LandingPage} />
+        <Route path="/landing" component={Landing} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={RegisterOrganization} />
         <Route path="/change-password" component={ChangePasswordPage} />
