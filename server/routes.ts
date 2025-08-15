@@ -81,7 +81,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       <div class="header">
         <div class="logo">🏥 NaviMED Healthcare Platform</div>
         <div class="user-info">
-          Welcome back! | <a href="/login" style="color: #2563eb;">Logout</a>
+          <span id="username">Welcome back!</span> | 
+          <a href="#" onclick="logout()" style="color: #2563eb;">Logout</a>
         </div>
       </div>
       
@@ -157,6 +158,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           </div>
         </div>
       </div>
+      
+      <script>
+        // Check if user is logged in
+        const userData = localStorage.getItem('navimed_user');
+        if (userData) {
+          try {
+            const user = JSON.parse(userData);
+            document.getElementById('username').textContent = 'Welcome, ' + user.username + '!';
+          } catch (e) {
+            document.getElementById('username').textContent = 'Welcome back!';
+          }
+        }
+        
+        function logout() {
+          localStorage.removeItem('navimed_logged_in');
+          localStorage.removeItem('navimed_user');
+          window.location.href = '/login';
+        }
+      </script>
     </body>
     </html>
     `);
@@ -252,13 +272,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const data = await response.json();
             
             if (response.ok) {
-              successDiv.textContent = 'Login successful! Welcome to NaviMED.';
+              successDiv.textContent = 'Login successful! Redirecting...';
               successDiv.style.display = 'block';
               
-              // Redirect to dashboard
-              setTimeout(() => {
-                window.location.href = '/dashboard';
-              }, 1500);
+              // Store login status and redirect immediately
+              localStorage.setItem('navimed_logged_in', 'true');
+              localStorage.setItem('navimed_user', JSON.stringify(data.user));
+              
+              // Immediate redirect to avoid loops
+              window.location.href = '/dashboard';
             } else {
               errorDiv.textContent = data.message || 'Login failed. Please try again.';
               errorDiv.style.display = 'block';

@@ -286,21 +286,23 @@ async function initializePlatform() {
     }
   });
 
-  // Setup static serving for production, Vite for development
+  // Setup static serving for production, temporarily skip Vite for development
   console.log('Environment mode:', process.env.NODE_ENV || 'development');
   
   if (process.env.NODE_ENV === "production") {
     console.log('Setting up production static serving...');
     serveStatic(app);
   } else {
-    console.log('Setting up development Vite server...');
-    try {
-      await setupVite(app, server);
-      console.log('✅ Vite server setup complete');
-    } catch (error) {
-      console.error('❌ Vite setup failed:', error);
-      console.log('⚠️ Continuing in API-only mode');
-    }
+    console.log('⚠️ Temporarily running without Vite to avoid routing conflicts');
+    console.log('✅ Server-side rendered pages (login/dashboard) are now accessible');
+    // TODO: Re-enable Vite setup once routing conflicts are resolved
+    // try {
+    //   await setupVite(app, server);
+    //   console.log('✅ Vite server setup complete');
+    // } catch (error) {
+    //   console.error('❌ Vite setup failed:', error);
+    //   console.log('⚠️ Continuing in API-only mode');
+    // }
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
