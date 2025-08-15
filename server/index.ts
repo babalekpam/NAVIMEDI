@@ -33,14 +33,7 @@ app.get('/ping', (req, res) => {
   res.status(200).send('ok');
 });
 
-// CRITICAL: Root endpoint for deployment health checks - MUST respond quickly
-app.get('/', (req, res) => {
-  res.status(200).json({ 
-    service: 'navimed-healthcare',
-    status: 'running',
-    version: '1.0.0'
-  });
-});
+// Root endpoint handled by frontend - health checks use other endpoints
 
 // Additional health endpoints commonly used by deployment systems
 app.get('/ready', (req, res) => {
@@ -200,7 +193,21 @@ async function initializePlatform() {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    // In production, serve built static files
+    const path = await import("path");
+    const fs = await import("fs");
+    const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
+    
+    if (!fs.existsSync(distPath)) {
+      console.error(`Build directory not found: ${distPath}`);
+      console.log("Available directories:", fs.readdirSync(path.resolve(import.meta.dirname, "..")));
+    }
+    
+    app.use(express.static(distPath));
+    // Catch-all handler for SPA routing
+    app.use("*", (_req, res) => {
+      res.sendFile(path.resolve(distPath, "index.html"));
+    });
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
