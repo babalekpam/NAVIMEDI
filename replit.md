@@ -46,6 +46,7 @@ NaviMED is a multi-tenant healthcare platform connecting independent pharmacies 
 - LANDING PAGE CREATED: Built comprehensive landing page showcasing NaviMED features, accessible at /landing with hero section, statistics, feature grid, role-based access information, and clear call-to-action buttons for login and registration
 - HEALTH CHECK TIMEOUT RESOLVED: Fixed deployment failures by removing complex user agent detection logic from root endpoint - now always returns immediate JSON response for reliable Cloud Run health checks while maintaining all functionality
 - SUPPLIER PORTAL & MARKETPLACE 404 ERRORS FIXED: Resolved accessibility issues by adding missing routes to main application routing - supplier portal and marketplace now fully accessible to all users
+- SERVICE UNAVAILABLE DEPLOYMENT FIX: Optimized health check endpoints to prevent "Service Unavailable" errors - defined ultra-fast health check endpoints (/health, /ping, /status, /ready, /alive) before all middleware with no database dependencies for immediate Cloud Run responses
 
 ## System Architecture
 The platform is built on a modern stack for scalability, security, and maintainability, featuring a strong multi-tenant architecture with strict data isolation per organization (hospital, pharmacy, laboratory).

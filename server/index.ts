@@ -11,6 +11,32 @@ import { createTestHospital } from "./create-test-hospital";
 
 const app = express();
 
+// ULTRA-FAST HEALTH CHECK ENDPOINTS - No database, no complex logic
+// These must be defined FIRST for deployment compatibility
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
+});
+
+app.get('/status', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+app.get('/ready', (req, res) => {
+  res.status(200).send('OK');
+});
+
+app.get('/alive', (req, res) => {
+  res.status(200).send('OK');
+});
+
 // CRITICAL: Root health check handler - must be the very first middleware!
 // For deployment compatibility, always return JSON at root
 // Users should access the app via /login or other routes
@@ -225,35 +251,7 @@ async function initializePlatform() {
     const server = await registerRoutes(app);
     console.log('✅ Routes registered successfully');
   
-  app.get('/health', (req, res) => {
-    res.status(200).json({
-      status: 'ok',
-      service: 'navimed-healthcare',
-      health: 'healthy',
-      timestamp: new Date().toISOString()
-    });
-  });
-
-  app.get('/healthz', (req, res) => {
-    res.status(200).json({ status: 'ok', service: 'navimed-healthcare' });
-  });
-
-  app.get('/ping', (req, res) => {
-    res.status(200).send('pong');
-  });
-
-  app.get('/status', (req, res) => {
-    res.status(200).json({ status: 'ok', service: 'navimed-healthcare' });
-  });
-
-  app.get('/ready', (req, res) => {
-    res.status(200).send('OK');
-  });
-
-  app.get('/alive', (req, res) => {
-    res.status(200).send('OK');
-  });
-
+  // Additional health check endpoints with more details
   app.get('/liveness', (req, res) => {
     res.status(200).json({ status: 'ok' });
   });
