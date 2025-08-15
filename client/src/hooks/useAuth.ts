@@ -37,7 +37,7 @@ export function useAuth() {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_user");
     setUser(null);
-    window.location.href = "/login";
+    window.location.href = "/";
   };
 
   return {

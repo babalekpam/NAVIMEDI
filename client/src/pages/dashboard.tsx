@@ -688,14 +688,6 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Appointment Scheduling Notice */}
-      <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 mb-6">
-        <p className="text-amber-700 text-sm">
-          <strong>Appointment Management:</strong> You can view your appointment schedule below. 
-          For appointment scheduling or modifications, please contact reception staff.
-        </p>
-      </div>
-
       {/* Quick Actions */}
       <Card>
         <CardHeader>
@@ -708,7 +700,7 @@ export default function Dashboard() {
               onClick={() => window.location.href = '/appointments'}
             >
               <Calendar className="h-6 w-6" />
-              <span>View Appointments</span>
+              <span>View Schedule</span>
             </Button>
             <Button 
               variant="outline" 
@@ -805,7 +797,7 @@ export default function Dashboard() {
                     className="mt-3"
                     onClick={() => window.location.href = '/appointments'}
                   >
-                    View Appointments
+                    View All Appointments
                   </Button>
                 </div>
               )}

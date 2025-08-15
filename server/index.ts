@@ -1,5 +1,4 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { createServer } from "http";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { db } from "./db";
@@ -7,29 +6,48 @@ import { tenants, users } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
-// import { trialSuspensionService } from "./trial-suspension-service";
-// import { createTestHospital } from "./create-test-hospital";
+import { trialSuspensionService } from "./trial-suspension-service";
+import { createTestHospital } from "./create-test-hospital";
 
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-// ULTRA-FAST HEALTH CHECK ENDPOINTS - No database, no complex logic
-// These must be defined FIRST for deployment compatibility
+
+
+// Multiple health check endpoints for deployment monitoring
+// These must respond immediately without any heavy operations
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
+  res.status(200).json({ 
+    status: 'ok', 
+    service: 'carnet-healthcare',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
 });
 
 app.get('/healthz', (req, res) => {
-  res.status(200).json({ status: 'ok' });
+  res.status(200).json({ 
+    status: 'ok', 
+    service: 'carnet-healthcare',
+    timestamp: new Date().toISOString()
+  });
 });
 
+app.get('/status', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    service: 'carnet-healthcare',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Simple text responses for deployment systems that expect plain text
 app.get('/ping', (req, res) => {
   res.status(200).send('pong');
 });
 
-app.get('/status', (req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
-
+// Additional health endpoints commonly used by deployment systems
 app.get('/ready', (req, res) => {
   res.status(200).send('OK');
 });
@@ -38,110 +56,23 @@ app.get('/alive', (req, res) => {
   res.status(200).send('OK');
 });
 
-// CRITICAL: Root health check handler - must be the very first middleware!
-// For deployment compatibility, always return JSON at root
-// Users should access the app via /login or other routes
-app.get('/', (req, res) => {
-  const userAgent = req.get('User-Agent') || '';
-  const acceptHeader = req.get('Accept') || '';
-  
-  // Check if this is a real browser request (not a deployment health check)
-  const isBrowserRequest = userAgent.includes('Mozilla') || 
-                          userAgent.includes('Chrome') || 
-                          userAgent.includes('Safari') || 
-                          userAgent.includes('Firefox') || 
-                          userAgent.includes('Edge') ||
-                          acceptHeader.includes('text/html');
-  
-  if (isBrowserRequest) {
-    // Redirect real browsers to the login page
-    return res.redirect(302, '/login');
-  }
-  
-  // Return JSON for deployment health checks
-  res.status(200).json({
-    status: 'ok',
-    service: 'navimed-healthcare',
-    timestamp: new Date().toISOString(),
-    message: 'Health check endpoint. Please visit /login to access the application.'
-  });
+app.get('/liveness', (req, res) => {
+  res.status(200).json({ status: 'ok', alive: true });
 });
 
-// Error handling middleware must be early
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error('Global error:', err);
-  res.status(500).json({ 
-    error: 'Internal server error',
-    message: err.message,
+app.get('/readiness', (req, res) => {
+  res.status(200).json({ status: 'ok', ready: true });
+});
+
+// Explicit deployment health check endpoint
+app.get('/deployment-health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    service: 'carnet-healthcare',
+    deployment: 'ready',
     timestamp: new Date().toISOString()
   });
 });
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-// Database availability check for API routes (skip for health checks)
-app.use((req, res, next) => {
-  // Only check database for API routes
-  if (!req.path.startsWith('/api/')) {
-    return next();
-  }
-  
-  // Skip database check for ALL health endpoints
-  if (req.path.includes('/health') || req.path.includes('/status') || req.path.includes('/ping')) {
-    return next();
-  }
-  
-  // Allow server to start without database for health checks
-  if (!db) {
-    console.warn('Database not available for:', req.path);
-    return res.status(503).json({
-      error: 'Service Unavailable',
-      message: 'Database connection not available. Please check deployment configuration.',
-      timestamp: new Date().toISOString()
-    });
-  }
-  next();
-});
-
-// Basic environment check
-console.log('=== DEPLOYMENT ENVIRONMENT CHECK ===');
-console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
-console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
-console.log('Port:', process.env.PORT || 5000);
-console.log('Process Platform:', process.platform);
-console.log('Node Version:', process.version);
-console.log('====================================');
-
-// Critical environment validation for production
-if (process.env.NODE_ENV === 'production') {
-  const missingVars = [];
-  if (!process.env.DATABASE_URL) missingVars.push('DATABASE_URL');
-  if (!process.env.JWT_SECRET) missingVars.push('JWT_SECRET');
-  
-  if (missingVars.length > 0) {
-    console.error('🚨 CRITICAL: Missing required environment variables for production:');
-    missingVars.forEach(varName => {
-      console.error(`  - ${varName}`);
-    });
-    console.error('Application may not function properly without these variables.');
-    console.error('Please configure these in your deployment platform settings.');
-    // Don't exit - let the app start for health checks
-  } else {
-    console.log('✅ All required environment variables are configured');
-  }
-} else {
-  // Development fallback for JWT_SECRET if not set
-  if (!process.env.JWT_SECRET) {
-    console.log('⚠️ JWT_SECRET not set - using development fallback');
-    process.env.JWT_SECRET = 'development-jwt-secret-change-in-production';
-  }
-}
-
-
-
-// Health check endpoints are now defined after route registration for proper priority
 
 
 
@@ -177,96 +108,65 @@ app.use((req, res, next) => {
 
 // Initialize platform asynchronously after server starts
 let platformInitialized = false;
-let initializationPromise: Promise<void> | null = null;
 
 async function initializePlatform() {
-  // Prevent multiple initialization attempts
-  if (initializationPromise) {
-    return initializationPromise;
-  }
-  
-  initializationPromise = (async () => {
-    try {
-      // Check if database is available
-      if (!db) {
-        console.error("❌ Database not available - skipping platform initialization");
-        return;
-      }
-      
-      // Quick check if already initialized
-      const existingTenant = await db.select().from(tenants).where(eq(tenants.subdomain, 'argilette')).limit(1);
-      const existingAdmin = await db.select().from(users).where(eq(users.email, 'abel@argilette.com')).limit(1);
-      
-      let platformTenant;
-      const tenantResult = Array.isArray(existingTenant) ? existingTenant : [];
-      
-      if (tenantResult.length === 0) {
-        const [tenant] = await db.insert(tenants).values({
-          name: "ARGILETTE Platform",
-          type: "hospital",
-          subdomain: "argilette",
-          settings: {
-            isPlatformOwner: true,
-            features: ["super_admin", "tenant_management", "multi_tenant"]
-          },
-          isActive: true
-        }).returning();
-        platformTenant = tenant;
-        console.log("✓ Created platform tenant: ARGILETTE");
-      } else {
-        platformTenant = existingTenant[0];
-        console.log("✓ Platform tenant already exists");
-      }
-
-      if (!existingAdmin || existingAdmin.length === 0) {
-        const hashedPassword = await bcrypt.hash('Serrega1208@', 10);
-        
-        await db.insert(users).values({
-          id: nanoid(),
-          tenantId: platformTenant.id,
-          username: 'abel_admin',
-          email: 'abel@argilette.com',
-          password: hashedPassword,
-          firstName: 'Abel',
-          lastName: 'Platform Admin',
-          role: 'super_admin',
-          isActive: true
-        });
-        
-        console.log("✓ Created super admin user: abel@argilette.com");
-      } else {
-        console.log("✓ Super admin already exists");
-      }
-      
-      platformInitialized = true;
-      console.log("✓ Platform initialization complete");
-    } catch (error) {
-      console.error("✗ Platform initialization failed:", error);
-      // Don't throw - allow server to start for health checks
-      platformInitialized = false;
-      initializationPromise = null; // Allow retry
+  try {
+    // Create platform tenant (ARGILETTE)
+    const existingTenant = await db.select().from(tenants).where(eq(tenants.subdomain, 'argilette')).limit(1);
+    
+    let platformTenant;
+    const tenantResult = Array.isArray(existingTenant) ? existingTenant : [];
+    if (tenantResult.length === 0) {
+      const [tenant] = await db.insert(tenants).values({
+        name: "ARGILETTE Platform",
+        type: "hospital",
+        subdomain: "argilette",
+        settings: {
+          isPlatformOwner: true,
+          features: ["super_admin", "tenant_management", "multi_tenant"]
+        },
+        isActive: true
+      }).returning();
+      platformTenant = tenant;
+      log("✓ Created platform tenant: ARGILETTE");
+    } else {
+      platformTenant = existingTenant[0];
+      log("✓ Platform tenant already exists");
     }
-  })();
-  
-  return initializationPromise;
+
+    // Create super admin user
+    const existingAdmin = await db.select().from(users).where(eq(users.email, 'abel@argilette.com')).limit(1);
+    
+    if (!existingAdmin || existingAdmin.length === 0) {
+      const hashedPassword = await bcrypt.hash('Serrega1208@', 10);
+      
+      await db.insert(users).values({
+        id: nanoid(),
+        tenantId: platformTenant.id,
+        username: 'abel_admin',
+        email: 'abel@argilette.com',
+        password: hashedPassword,
+        firstName: 'Abel',
+        lastName: 'Platform Admin',
+        role: 'super_admin',
+        isActive: true
+      });
+      
+      log("✓ Created super admin user: abel@argilette.com");
+    } else {
+      log("✓ Super admin already exists");
+    }
+    
+    platformInitialized = true;
+    log("✓ Platform initialization complete");
+  } catch (error) {
+    log("❌ Platform initialization failed: " + error);
+    console.error("Platform initialization error:", error);
+  }
 }
 
 (async () => {
-  try {
-    console.log('🚀 Starting NaviMED Healthcare Platform...');
-    
-    // Additional health check endpoints with more details
-    app.get('/liveness', (req, res) => {
-      res.status(200).json({ status: 'ok' });
-    });
-
-    app.get('/readiness', (req, res) => {
-      res.status(200).json({ status: 'ok' });
-    });
-
-    // Register routes (non-blocking)
-    const server = await registerRoutes(app);
-    console.log('✅ Routes registered successfully');
+  const server = await registerRoutes(app);
 
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -286,23 +186,13 @@ async function initializePlatform() {
     }
   });
 
-  // Setup static serving for production, temporarily skip Vite for development
-  console.log('Environment mode:', process.env.NODE_ENV || 'development');
-  
-  if (process.env.NODE_ENV === "production") {
-    console.log('Setting up production static serving...');
-    serveStatic(app);
+  // importantly only setup vite in development and after
+  // setting up all the other routes so the catch-all route
+  // doesn't interfere with the other routes
+  if (app.get("env") === "development") {
+    await setupVite(app, server);
   } else {
-    console.log('⚠️ Temporarily running without Vite to avoid routing conflicts');
-    console.log('✅ Server-side rendered pages (login/dashboard) are now accessible');
-    // TODO: Re-enable Vite setup once routing conflicts are resolved
-    // try {
-    //   await setupVite(app, server);
-    //   console.log('✅ Vite server setup complete');
-    // } catch (error) {
-    //   console.error('❌ Vite setup failed:', error);
-    //   console.log('⚠️ Continuing in API-only mode');
-    // }
+    serveStatic(app);
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
@@ -315,15 +205,11 @@ async function initializePlatform() {
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    console.log('🎉 NaviMED Healthcare Platform is running!');
-    console.log(`serving on port ${port}`);
-    console.log(`🌐 Health check available at: http://localhost:${port}/health`);
+    log(`serving on port ${port}`);
     
-    // Initialize platform after server is running (non-blocking)
-    setImmediate(() => {
-      initializePlatform().catch(error => {
-        console.error("Platform initialization error:", error);
-      });
+    // Initialize platform after server is running
+    initializePlatform().catch(error => {
+      console.error("Platform initialization error:", error);
     });
   });
 
@@ -336,11 +222,4 @@ async function initializePlatform() {
     console.error('Uncaught Exception:', error);
     process.exit(1);
   });
-
-  } catch (startupError: any) {
-    console.error('🚨 FATAL: Application failed to start');
-    console.error('Error:', startupError);
-    console.error('Stack:', startupError?.stack || 'No stack trace available');
-    process.exit(1);
-  }
 })();

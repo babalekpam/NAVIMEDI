@@ -1,9 +1,8 @@
-// Temporarily disabled to resolve dependency conflicts
-// import OpenAI from "openai";
+import OpenAI from "openai";
 import { VitalSigns, Patient, Appointment } from "../shared/schema";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-// const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export interface HealthRecommendation {
   id: string;

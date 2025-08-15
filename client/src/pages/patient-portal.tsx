@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { apiRequest } from "@/lib/queryClient";
 import { 
   Calendar,
+  MessageCircle,
   FileText,
   Pill,
   Activity,
@@ -32,7 +33,8 @@ import {
   Stethoscope,
   BookOpen,
   Search,
-
+  Plus,
+  Send,
   ArrowLeft,
   Target,
   TrendingUp,
@@ -48,6 +50,12 @@ import navimedLogo from "@assets/JPG_1753663321927.jpg";
 export default function PatientPortal() {
   const { user, logout } = useAuth();
   const [activeSection, setActiveSection] = useState("overview");
+  const [messageForm, setMessageForm] = useState({
+    subject: "",
+    message: "",
+    priority: "normal",
+    type: "general_message"
+  });
   const [vitalsForm, setVitalsForm] = useState({
     temperature: "",
     systolic: "",
@@ -139,7 +147,10 @@ Report ID: ${labOrder.id}
     enabled: !!user && user.role === "patient"
   });
 
-
+  const { data: messages, isLoading: messagesLoading } = useQuery({
+    queryKey: ["/api/medical-communications"],
+    enabled: !!user && user.role === "patient"
+  });
 
   const { data: healthData, isLoading: healthLoading } = useQuery({
     queryKey: ["/api/patient/health-tracking"],
@@ -160,7 +171,22 @@ Report ID: ${labOrder.id}
     retry: false,
   });
 
-
+  // Send message mutation
+  const sendMessageMutation = useMutation({
+    mutationFn: async (messageData: any) => {
+      const response = await apiRequest("POST", "/api/medical-communications", messageData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/medical-communications"] });
+      setMessageForm({ subject: "", message: "", priority: "normal", type: "general_message" });
+      setActiveSection("messages");
+    },
+    onError: (error) => {
+      console.error("Send message error:", error);
+      alert(`Failed to send message: ${error?.message || 'An error occurred. Please try again.'}`);
+    }
+  });
 
   const { data: labResults, isLoading: labResultsLoading } = useQuery({
     queryKey: ["/api/patient/lab-results"],
@@ -190,6 +216,7 @@ Report ID: ${labOrder.id}
     { id: "visits", label: "My Visits", icon: Video },
     { id: "directory", label: "Hospital Directory", icon: Users },
     { id: "records", label: "My Records", icon: FileText },
+    { id: "messages", label: "Messages", icon: MessageCircle },
     { id: "results", label: "Test Results", icon: FileText },
     { id: "medications", label: "Medications", icon: Pill },
     { id: "health", label: "Track Health", icon: Heart },
@@ -386,7 +413,7 @@ Report ID: ${labOrder.id}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Button 
               variant="outline" 
               className="h-20 flex-col"
@@ -402,6 +429,14 @@ Report ID: ${labOrder.id}
             >
               <Calendar className="h-6 w-6 mb-2" />
               <span className="text-sm">Schedule Appointment</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col"
+              onClick={() => setActiveSection("messages")}
+            >
+              <MessageCircle className="h-6 w-6 mb-2" />
+              <span className="text-sm">Message Provider</span>
             </Button>
             <Button 
               variant="outline" 
@@ -790,7 +825,91 @@ Report ID: ${labOrder.id}
     </div>
   );
 
+  const renderMessages = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">Messages</h2>
+          <p className="text-gray-600">Secure communication with your care team</p>
+        </div>
+        <Button onClick={() => setActiveSection("compose-message")}>
+          <Plus className="w-4 h-4 mr-2" />
+          New Message
+        </Button>
+      </div>
 
+      {messagesLoading ? (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2">Loading messages...</span>
+            </div>
+          </CardContent>
+        </Card>
+      ) : messages && messages.length > 0 ? (
+        <div className="space-y-4">
+          {messages.map((message: any) => (
+            <Card key={message.id} className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge variant="outline" className="text-xs">
+                        {message.type || 'General'}
+                      </Badge>
+                      <Badge variant={message.priority === 'urgent' ? 'destructive' : 'secondary'} className="text-xs">
+                        {message.priority || 'Normal'}
+                      </Badge>
+                      {!message.readAt && (
+                        <Badge variant="default" className="text-xs">New</Badge>
+                      )}
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2">{message.metadata?.subject || message.subject || 'No Subject'}</h3>
+                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                      {(() => {
+                        // Handle different message content formats
+                        if (message.originalContent) {
+                          try {
+                            const parsed = typeof message.originalContent === 'string' 
+                              ? JSON.parse(message.originalContent) 
+                              : message.originalContent;
+                            return parsed.content || parsed.title || parsed;
+                          } catch {
+                            return message.originalContent;
+                          }
+                        }
+                        return message.message || 'No content';
+                      })()}
+                    </p>
+                    <div className="flex items-center text-sm text-gray-500 gap-4">
+                      <span>From: {message.senderName}</span>
+                      <span>{new Date(message.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="text-center py-12">
+            <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Messages</h3>
+            <p className="text-gray-600 mb-6">
+              You have no messages from your care team at this time
+            </p>
+            <Button onClick={() => setActiveSection("compose-message")}>
+              <Plus className="w-4 h-4 mr-2" />
+              Send Your First Message
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
 
   const renderFindCare = () => (
     <div className="space-y-6">
@@ -836,7 +955,115 @@ Report ID: ${labOrder.id}
     </div>
   );
 
+  const renderComposeMessage = () => (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="outline" onClick={() => setActiveSection("messages")}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Messages
+        </Button>
+        <div>
+          <h2 className="text-2xl font-bold">Compose Message</h2>
+          <p className="text-gray-600">Send a secure message to your care team</p>
+        </div>
+      </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>New Message</CardTitle>
+          <CardDescription>All messages are secure and HIPAA-compliant</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="message-type">Message Type</Label>
+              <Select value={messageForm.type} onValueChange={(value) => setMessageForm(prev => ({ ...prev, type: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select message type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general_message">General Question</SelectItem>
+                  <SelectItem value="prescription_note">Prescription Request</SelectItem>
+                  <SelectItem value="appointment_reminder">Appointment Question</SelectItem>
+                  <SelectItem value="lab_result">Lab Results Question</SelectItem>
+                  <SelectItem value="medical_instruction">Medical Instruction</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="priority">Priority</Label>
+              <Select value={messageForm.priority} onValueChange={(value) => setMessageForm(prev => ({ ...prev, priority: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="subject">Subject</Label>
+            <Input 
+              id="subject"
+              placeholder="Enter message subject"
+              value={messageForm.subject}
+              onChange={(e) => setMessageForm(prev => ({ ...prev, subject: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="message">Message</Label>
+            <Textarea 
+              id="message"
+              placeholder="Type your message here..."
+              className="min-h-[120px]"
+              value={messageForm.message}
+              onChange={(e) => setMessageForm(prev => ({ ...prev, message: e.target.value }))}
+            />
+          </div>
+
+          <div className="flex justify-end gap-4">
+            <Button variant="outline" onClick={() => setActiveSection("messages")}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => sendMessageMutation.mutate({
+                type: messageForm.type,
+                priority: messageForm.priority,
+                originalLanguage: "en",
+                targetLanguages: ["en"],
+                originalContent: {
+                  title: messageForm.subject,
+                  content: messageForm.message
+                },
+                metadata: {
+                  sourceType: "patient_portal",
+                  category: "patient_message"
+                }
+              })}
+              disabled={!messageForm.subject || !messageForm.message || sendMessageMutation.isPending}
+            >
+              {sendMessageMutation.isPending ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Send Message
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 
   const renderHealthTracking = () => (
     <div className="space-y-6">
@@ -1775,7 +2002,10 @@ Report ID: ${labOrder.id}
         return renderDirectory();
       case "records":
         return renderMyRecords();
-
+      case "messages":
+        return renderMessages();
+      case "compose-message":
+        return renderComposeMessage();
       case "results":
         return renderTestResults();
       case "medications":

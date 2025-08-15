@@ -1,5 +1,5 @@
 import React from "react";
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -117,7 +117,7 @@ function AppContent() {
   return (
     <div className="min-h-screen">
       <Switch>
-        <Route path="/landing" component={LandingPage} />
+        <Route path="/" component={LandingPage} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={RegisterOrganization} />
         <Route path="/change-password" component={ChangePasswordPage} />
@@ -717,11 +717,6 @@ function AppContent() {
           </ProtectedRoute>
         </Route>
         
-        {/* Public Marketplace and Supplier Portal */}
-        <Route path="/marketplace" component={MarketplacePage} />
-        <Route path="/supplier-portal" component={SupplierPortal} />
-        <Route path="/supplier-signup" component={SupplierSignupPage} />
-
         {/* Platform Footer Pages */}
         <Route path="/features" component={FeaturesPage} />
         <Route path="/solutions" component={SolutionsPage} />
@@ -791,55 +786,22 @@ function Router() {
       <div className="min-h-screen">
         <Switch>
           {/* Public routes - always accessible */}
-          <Route path="/">
-            <Redirect to="/app" />
-          </Route>
-          <Route path="/app">
-            <LandingPage />
-          </Route>
-          <Route path="/marketplace">
-            <MarketplacePage />
-          </Route>
-          <Route path="/supplier-signup">
-            <SupplierSignupPage />
-          </Route>
-          <Route path="/supplier-portal">
-            <SupplierPortal />
-          </Route>
-          <Route path="/register">
-            <RegisterOrganization />
-          </Route>
-          <Route path="/features">
-            <FeaturesPage />
-          </Route>
-          <Route path="/solutions">
-            <SolutionsPage />
-          </Route>
-          <Route path="/security">
-            <SecurityPage />
-          </Route>
-          <Route path="/contact">
-            <ContactPage />
-          </Route>
-          <Route path="/pricing">
-            <PricingPage />
-          </Route>
-          <Route path="/laboratory-registration">
-            <LaboratoryRegistration />
-          </Route>
-          <Route path="/pharmacy-registration">
-            <PharmacyRegistration />
-          </Route>
+          <Route path="/" component={LandingPage} />
+          <Route path="/marketplace" component={MarketplacePage} />
+          <Route path="/supplier-signup" component={SupplierSignupPage} />
+          <Route path="/supplier-portal" component={SupplierPortal} />
+          <Route path="/register" component={RegisterOrganization} />
+          <Route path="/features" component={FeaturesPage} />
+          <Route path="/solutions" component={SolutionsPage} />
+          <Route path="/security" component={SecurityPage} />
+          <Route path="/contact" component={ContactPage} />
+          <Route path="/pricing" component={PricingPage} />
+          <Route path="/laboratory-registration" component={LaboratoryRegistration} />
+          <Route path="/pharmacy-registration" component={PharmacyRegistration} />
           {/* Supplier routes handled by direct HTML pages */}
-          <Route path="/patient-portal-public">
-            <PatientPortalPublic />
-          </Route>
-          <Route path="/patient-login">
-            <PatientLogin />
-          </Route>
-          <Route path="/login">
-            <Login />
-          </Route>
+          <Route path="/patient-portal-public" component={PatientPortalPublic} />
+          <Route path="/patient-login" component={PatientLogin} />
+          <Route path="/login" component={Login} />
           
           {/* 404 Not Found - should only show for truly unmatched routes */}
           <Route component={NotFound} />
@@ -852,40 +814,12 @@ function Router() {
 }
 
 function App() {
-  // Check for supplier redirect, but only for dashboard/protected routes
+  // IMMEDIATE: Block suppliers before any React rendering
   const userType = localStorage.getItem('userType');
-  const currentPath = window.location.pathname;
-  const authUser = localStorage.getItem('auth_user');
-  
-  // Clear supplier userType if user is logging in with regular auth system
-  if (authUser && userType === 'supplier') {
-    try {
-      const user = JSON.parse(authUser);
-      // If user has a valid auth role that's not supplier-related, clear the userType
-      if (user.role && user.role !== 'supplier') {
-        localStorage.removeItem('userType');
-        console.log('Cleared supplier userType for authenticated user with role:', user.role);
-      }
-    } catch (e) {
-      // If auth_user is corrupted, clear both
-      localStorage.removeItem('userType');
-      localStorage.removeItem('auth_user');
-    }
-  }
-  
-  // Only redirect suppliers if they're trying to access protected routes
-  // AND they don't have a valid auth session (meaning they're only supplier users)
-  const publicRoutes = [
-    '/', '/marketplace', '/supplier-portal', '/supplier-signup', 
-    '/register', '/features', '/solutions', '/security', '/contact', 
-    '/pricing', '/laboratory-registration', '/pharmacy-registration',
-    '/patient-portal-public', '/patient-login', '/login'
-  ];
-  
-  const updatedUserType = localStorage.getItem('userType'); // Get updated value
-  if (updatedUserType === 'supplier' && !authUser && !publicRoutes.includes(currentPath) && !currentPath.startsWith('/supplier-')) {
-    // Only redirect suppliers trying to access protected routes if they don't have regular auth
+  if (userType === 'supplier') {
+    // Force redirect immediately
     window.location.replace('/supplier-dashboard-direct');
+    // Return empty div to prevent React from rendering anything
     return <div style={{display: 'none'}}>Redirecting supplier...</div>;
   }
 

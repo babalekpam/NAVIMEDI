@@ -9,7 +9,7 @@ export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response,
     
     // If user is already authenticated by previous middleware, load full tenant data
     if (req.user && req.user.tenantId) {
-      const tenant = await storage?.getTenant(req.user.tenantId);
+      const tenant = await storage.getTenant(req.user.tenantId);
       console.log("[TENANT DEBUG] Using authenticated user tenant:", req.user.tenantId);
       console.log("[TENANT DEBUG] Loaded tenant from DB (authenticated user):", tenant);
       req.tenant = tenant;
@@ -43,7 +43,7 @@ export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response,
       };
       
       // Load full tenant information from database
-      const tenant = await storage?.getTenant(decoded.tenantId);
+      const tenant = await storage.getTenant(decoded.tenantId);
       console.log("[TENANT DEBUG] Loaded tenant from DB:", tenant);
       req.tenant = tenant;
 
@@ -130,7 +130,7 @@ export const requireSuperAdmin = (req: AuthenticatedRequest, res: Response, next
 };
 
 // Public routes that don't require authentication
-const publicRoutes = ['/health', '/api/health', '/healthz', '/status', '/ping', '/_health', '/healthcheck', '/api/platform/stats', '/api/login', '/api/auth/login', '/api/validate-token', '/api/laboratory-registration', '/api/pharmacy-registration', '/api/tenant/current', '/api/register-organization', '/api/currency/detect', '/api/currencies/african-countries', '/api/advertisements', '/api/marketplace/products', '/api/marketplace/quote-requests', '/advertisements', '/marketplace/products', '/marketplace/quote-requests'];
+const publicRoutes = ['/api/health', '/api/platform/stats', '/api/login', '/api/auth/login', '/api/validate-token', '/api/laboratory-registration', '/api/pharmacy-registration', '/api/tenant/current', '/api/register-organization', '/api/currency/detect', '/api/currencies/african-countries', '/api/advertisements', '/api/marketplace/products', '/api/marketplace/quote-requests', '/advertisements', '/marketplace/products', '/marketplace/quote-requests'];
 
 // Modified tenant context middleware to allow public routes
 export const setTenantContext = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {

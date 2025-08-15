@@ -77,8 +77,7 @@ export default function DoctorCalendar() {
 
   // Redirect to patient login if not authenticated
   if (!authLoading && !user) {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_user");
+    localStorage.removeItem("token");
     window.location.href = "/patient-login?message=Please log in to book appointments";
     return null;
   }
@@ -90,33 +89,6 @@ export default function DoctorCalendar() {
         <div className="text-center">
           <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // RESTRICT ACCESS: Only patients, receptionists and authorized staff can access appointment booking
-  // Doctors should be redirected as they cannot schedule appointments
-  if (user && (user.role === "doctor" || user.role === "physician")) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-6">
-          <div className="bg-amber-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="h-8 w-8 text-amber-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Restricted</h2>
-          <p className="text-gray-600 mb-4">
-            Doctors cannot schedule appointments directly. Please contact reception staff to schedule patient appointments.
-          </p>
-          <p className="text-sm text-gray-500 mb-6">
-            You can view your appointment schedule from the main dashboard.
-          </p>
-          <Button 
-            onClick={() => window.location.href = '/dashboard'} 
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            Go to Dashboard
-          </Button>
         </div>
       </div>
     );
@@ -311,10 +283,8 @@ export default function DoctorCalendar() {
         chiefComplaint: appointmentData.reason
       };
 
-      return await apiRequest("/api/appointments", {
-        method: "POST",
-        body: requestBody
-      });
+      const response = await apiRequest("POST", "/api/appointments", requestBody);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patient/appointments"] });

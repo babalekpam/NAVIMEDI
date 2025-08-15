@@ -130,7 +130,7 @@ export const Sidebar = () => {
             <img src={navimedLogo} alt="NaviMed" className="h-8 w-8 rounded-lg object-contain" />
             <div>
               <h1 className="text-sm font-bold text-blue-600">NAVIMED</h1>
-              <p className="text-xs text-gray-500">{currentTenant?.name || currentTenant?.brandName || 'Platform Admin'}</p>
+              <p className="text-xs text-gray-500">Platform Admin</p>
             </div>
           </div>
           

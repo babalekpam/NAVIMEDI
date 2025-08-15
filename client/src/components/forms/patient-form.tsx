@@ -603,7 +603,7 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="no-preference">No preference</SelectItem>
+                      <SelectItem value="">No preference</SelectItem>
                       {pharmacies.map((pharmacy: any) => (
                         <SelectItem key={pharmacy.id} value={pharmacy.id}>
                           {pharmacy.name}
