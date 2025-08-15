@@ -11,6 +11,16 @@ import { createTestHospital } from "./create-test-hospital";
 
 const app = express();
 
+// CRITICAL: Root health check handler - must be the very first middleware!
+// This ensures deployment health checks get JSON regardless of other middleware
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'navimed-healthcare',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Error handling middleware must be early
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Global error:', err);
@@ -160,20 +170,16 @@ async function initializePlatform() {
 (async () => {
   try {
     console.log('🚀 Starting NaviMED Healthcare Platform...');
+    
     const server = await registerRoutes(app);
     console.log('✅ Routes registered successfully');
-
-  // CRITICAL: Define health check endpoints AFTER routes but BEFORE Vite setup
-  // This ensures they take precedence over Vite's catch-all route
-  // NOTE: Root route '/' is handled by Vite to serve the React app
   
   app.get('/health', (req, res) => {
     res.status(200).json({
       status: 'ok',
       service: 'navimed-healthcare',
       health: 'healthy',
-      timestamp: new Date().toISOString(),
-      message: 'Health check endpoint - visit /login to access the application'
+      timestamp: new Date().toISOString()
     });
   });
 
