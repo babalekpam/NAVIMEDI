@@ -94,22 +94,13 @@ const UserRolesManagement = () => {
   // Create user mutation
   const createUserMutation = useMutation({
     mutationFn: async (userData: UserFormData) => {
-      const response = await fetch('/api/users', {
+      return await apiRequest('/api/users', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+        body: {
           ...userData,
           password: userData.password || 'TempPass123!' // Default temporary password
-        }),
+        }
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to create user');
-      }
-      
-      return await response.json();
     },
     onSuccess: (responseData, formData) => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
@@ -144,19 +135,10 @@ const UserRolesManagement = () => {
   // Update user mutation
   const updateUserMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Employee> }) => {
-      const response = await fetch(`/api/users/${id}`, {
+      return await apiRequest(`/api/users/${id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data),
+        body: data
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update user');
-      }
-      
-      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
