@@ -15,14 +15,33 @@ const app = express();
 // For deployment compatibility, always return JSON at root
 // Users should access the app via /login or other routes
 app.get('/', (req, res) => {
-  // Always return JSON for deployment health checks
-  // This is required by Replit Autoscale deployments
-  res.status(200).json({
-    status: 'ok',
-    service: 'navimed-healthcare',
-    timestamp: new Date().toISOString(),
-    message: 'Health check endpoint. Please visit /login to access the application.'
-  });
+  // Check if this is a deployment health check or browser request
+  const userAgent = req.get('User-Agent') || '';
+  const acceptHeader = req.get('Accept') || '';
+  
+  console.log(`Root access: UA="${userAgent}" Accept="${acceptHeader}"`);
+  
+  // Health check patterns for deployment systems - be very specific
+  const isHealthCheck = userAgent.includes('GoogleHC') || 
+                       userAgent.includes('kube-probe') ||
+                       userAgent.includes('Go-http-client') ||
+                       userAgent === '' ||
+                       (acceptHeader === 'application/json') ||
+                       req.query.healthcheck === 'true';
+  
+  if (isHealthCheck) {
+    // Return JSON for deployment health checks
+    res.status(200).json({
+      status: 'ok',
+      service: 'navimed-healthcare',
+      timestamp: new Date().toISOString(),
+      message: 'Health check endpoint. Please visit /login to access the application.'
+    });
+  } else {
+    // Redirect browsers to the login page
+    console.log('Redirecting browser to /login');
+    res.redirect(302, '/login');
+  }
 });
 
 // Error handling middleware must be early
