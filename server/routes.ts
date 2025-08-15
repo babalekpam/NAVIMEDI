@@ -2,6 +2,166 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Root route - serve welcome page
+  app.get('/', (req, res) => {
+    res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>NaviMED Healthcare Platform</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 40px; background: #f8fafc; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #2563eb; margin-bottom: 20px; }
+        .status { color: #059669; font-weight: 500; }
+        .endpoints { background: #f1f5f9; padding: 20px; border-radius: 6px; margin-top: 20px; }
+        .endpoint { margin: 10px 0; }
+        a { color: #2563eb; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>🏥 NaviMED Healthcare Platform</h1>
+        <p class="status">✅ Application is running successfully!</p>
+        <p>Welcome to the NaviMED Healthcare Platform. The server is operational and ready to serve requests.</p>
+        
+        <div class="endpoints">
+          <h3>Available API Endpoints:</h3>
+          <div class="endpoint">📊 <a href="/api/health">/api/health</a> - Health check</div>
+          <div class="endpoint">🔍 <a href="/debug">/debug</a> - System diagnostics</div>
+          <div class="endpoint">📈 <a href="/api/platform/stats">/api/platform/stats</a> - Platform statistics</div>
+          <div class="endpoint">🧪 <a href="/api/test">/api/test</a> - Test endpoint</div>
+          <div class="endpoint">🔐 POST /api/auth/login - Authentication</div>
+        </div>
+        
+        <p style="margin-top: 30px; color: #64748b; font-size: 14px;">
+          Server Time: ${new Date().toISOString()}<br>
+          Environment: ${process.env.NODE_ENV || 'development'}
+        </p>
+      </div>
+    </body>
+    </html>
+    `);
+  });
+
+  // Login page route
+  app.get('/login', (req, res) => {
+    res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Login - NaviMED Healthcare Platform</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-container { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        .logo { text-align: center; margin-bottom: 30px; }
+        .logo h1 { color: #2563eb; font-size: 28px; margin-bottom: 8px; }
+        .logo p { color: #64748b; font-size: 14px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #374151; font-weight: 500; }
+        input { width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px; transition: border-color 0.2s; }
+        input:focus { outline: none; border-color: #2563eb; }
+        .btn { width: 100%; background: #2563eb; color: white; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn:hover { background: #1d4ed8; }
+        .btn:disabled { background: #9ca3af; cursor: not-allowed; }
+        .error { color: #dc2626; margin-bottom: 15px; padding: 10px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; display: none; }
+        .success { color: #059669; margin-bottom: 15px; padding: 10px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; display: none; }
+        .links { text-align: center; margin-top: 20px; }
+        .links a { color: #2563eb; text-decoration: none; font-size: 14px; }
+        .links a:hover { text-decoration: underline; }
+      </style>
+    </head>
+    <body>
+      <div class="login-container">
+        <div class="logo">
+          <h1>🏥 NaviMED</h1>
+          <p>Healthcare Platform</p>
+        </div>
+        
+        <div id="error" class="error"></div>
+        <div id="success" class="success"></div>
+        
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required placeholder="Enter your username">
+          </div>
+          
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required placeholder="Enter your password">
+          </div>
+          
+          <button type="submit" class="btn" id="loginBtn">Sign In</button>
+        </form>
+        
+        <div class="links">
+          <a href="/">← Back to Home</a> |
+          <a href="/api/health">System Status</a>
+        </div>
+      </div>
+      
+      <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const username = document.getElementById('username').value;
+          const password = document.getElementById('password').value;
+          const btn = document.getElementById('loginBtn');
+          const errorDiv = document.getElementById('error');
+          const successDiv = document.getElementById('success');
+          
+          // Hide previous messages
+          errorDiv.style.display = 'none';
+          successDiv.style.display = 'none';
+          
+          // Show loading state
+          btn.disabled = true;
+          btn.textContent = 'Signing In...';
+          
+          try {
+            const response = await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ username, password })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+              successDiv.textContent = 'Login successful! Welcome to NaviMED.';
+              successDiv.style.display = 'block';
+              
+              // Redirect or show dashboard
+              setTimeout(() => {
+                window.location.href = '/';
+              }, 1500);
+            } else {
+              errorDiv.textContent = data.message || 'Login failed. Please try again.';
+              errorDiv.style.display = 'block';
+            }
+          } catch (error) {
+            errorDiv.textContent = 'Connection error. Please check your internet connection.';
+            errorDiv.style.display = 'block';
+          } finally {
+            btn.disabled = false;
+            btn.textContent = 'Sign In';
+          }
+        });
+      </script>
+    </body>
+    </html>
+    `);
+  });
+
   // Basic health check endpoints
   app.get('/api/health', (req, res) => {
     res.status(200).json({ 
@@ -103,17 +263,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Default handler for unmatched routes
-  app.use((req, res) => {
-    if (req.path.startsWith('/api/')) {
-      res.status(404).json({ 
-        message: 'API route not found',
-        path: req.originalUrl 
-      });
-    } else {
-      // Let other requests pass through
-      res.status(404).json({ message: 'Not found' });
-    }
+  // Only handle 404s for API routes - let Vite handle all other routing
+  // This middleware should be last in API routes
+  app.use('/api', (req, res) => {
+    res.status(404).json({ 
+      message: 'API route not found',
+      path: req.originalUrl 
+    });
   });
 
   const httpServer = createServer(app);

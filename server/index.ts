@@ -291,10 +291,16 @@ async function initializePlatform() {
   
   if (process.env.NODE_ENV === "production") {
     console.log('Setting up production static serving...');
-    // serveStatic(app); // Commented out with Vite
+    serveStatic(app);
   } else {
     console.log('Setting up development Vite server...');
-    // await setupVite(app, server); // Commented out Vite setup
+    try {
+      await setupVite(app, server);
+      console.log('✅ Vite server setup complete');
+    } catch (error) {
+      console.error('❌ Vite setup failed:', error);
+      console.log('⚠️ Continuing in API-only mode');
+    }
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
