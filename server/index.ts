@@ -81,13 +81,14 @@ app.use(express.urlencoded({ extended: false }));
 
 // Database availability check for API routes (skip for health checks)
 app.use('/api/*', (req, res, next) => {
-  // Skip database check for health endpoints
-  if (req.path === '/api/health' || req.path === '/api/status') {
+  // Skip database check for ALL health endpoints
+  if (req.path.includes('/health') || req.path.includes('/status') || req.path.includes('/ping')) {
     return next();
   }
   
-  // Check if database is available
+  // Allow server to start without database for health checks
   if (!db) {
+    console.warn('Database not available for:', req.path);
     return res.status(503).json({
       error: 'Service Unavailable',
       message: 'Database connection not available. Please check deployment configuration.',
@@ -248,17 +249,18 @@ async function initializePlatform() {
   try {
     console.log('🚀 Starting NaviMED Healthcare Platform...');
     
+    // Additional health check endpoints with more details
+    app.get('/liveness', (req, res) => {
+      res.status(200).json({ status: 'ok' });
+    });
+
+    app.get('/readiness', (req, res) => {
+      res.status(200).json({ status: 'ok' });
+    });
+
+    // Register routes (non-blocking)
     const server = await registerRoutes(app);
     console.log('✅ Routes registered successfully');
-  
-  // Additional health check endpoints with more details
-  app.get('/liveness', (req, res) => {
-    res.status(200).json({ status: 'ok' });
-  });
-
-  app.get('/readiness', (req, res) => {
-    res.status(200).json({ status: 'ok' });
-  });
 
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -278,13 +280,15 @@ async function initializePlatform() {
     }
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
+  // Setup static serving for production, Vite for development
+  console.log('Environment mode:', process.env.NODE_ENV || 'development');
+  
+  if (process.env.NODE_ENV === "production") {
+    console.log('Setting up production static serving...');
     serveStatic(app);
+  } else {
+    console.log('Setting up development Vite server...');
+    await setupVite(app, server);
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
