@@ -80,7 +80,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Database availability check for API routes (skip for health checks)
-app.use('/api/*', (req, res, next) => {
+app.use('/api*', (req, res, next) => {
   // Skip database check for ALL health endpoints
   if (req.path.includes('/health') || req.path.includes('/status') || req.path.includes('/ping')) {
     return next();

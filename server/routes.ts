@@ -5999,36 +5999,36 @@ Report ID: ${report.id}
     }
   });
 
-  // Serve private objects (product images)
-  app.get("/objects/:objectPath(*)", async (req, res) => {
-    try {
-      const { ObjectStorageService, ObjectNotFoundError } = await import('./objectStorage');
-      const { ObjectPermission } = await import('./objectAcl');
-      
-      const objectStorageService = new ObjectStorageService();
-      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
-      
-      // For product images, we allow public access since they're marked as public
-      const canAccess = await objectStorageService.canAccessObjectEntity({
-        objectFile,
-        userId: req.userId,
-        requestedPermission: ObjectPermission.READ,
-      });
-      
-      if (!canAccess) {
-        return res.sendStatus(404); // Don't reveal existence of private files
-      }
-      
-      objectStorageService.downloadObject(objectFile, res);
-    } catch (error) {
-      console.error("Error serving object:", error);
-      const { ObjectNotFoundError } = await import('./objectStorage');
-      if (error instanceof ObjectNotFoundError) {
-        return res.sendStatus(404);
-      }
-      return res.sendStatus(500);
-    }
-  });
+  // Serve private objects (product images) - temporarily disabled
+  // app.get("/objects/:objectPath*", async (req, res) => {
+  //   try {
+  //     const { ObjectStorageService, ObjectNotFoundError } = await import('./objectStorage');
+  //     const { ObjectPermission } = await import('./objectAcl');
+  //     
+  //     const objectStorageService = new ObjectStorageService();
+  //     const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+  //     
+  //     // For product images, we allow public access since they're marked as public
+  //     const canAccess = await objectStorageService.canAccessObjectEntity({
+  //       objectFile,
+  //       userId: req.userId,
+  //       requestedPermission: ObjectPermission.READ,
+  //     });
+  //     
+  //     if (!canAccess) {
+  //       return res.sendStatus(404); // Don't reveal existence of private files
+  //     }
+  //     
+  //     objectStorageService.downloadObject(objectFile, res);
+  //   } catch (error) {
+  //     console.error("Error serving object:", error);
+  //     const { ObjectNotFoundError } = await import('./objectStorage');
+  //     if (error instanceof ObjectNotFoundError) {
+  //       return res.sendStatus(404);
+  //     }
+  //     return res.sendStatus(500);
+  //   }
+  // });
 
   // =====================================
   // MARKETPLACE PRODUCT CATALOG ENDPOINTS
@@ -6392,7 +6392,7 @@ Report ID: ${report.id}
 
   // FALLBACK ROUTE - Only handle unmatched API routes, let Vite handle frontend
   // This must be the absolute last route before server creation
-  app.use('/api/*', (req, res) => {
+  app.use('/api*', (req, res) => {
     // Only handle API routes that weren't matched above
     res.status(404).json({ 
       message: 'API route not found',
@@ -6400,7 +6400,8 @@ Report ID: ${report.id}
     });
   });
 
-  // Health check fallback for deployment probes ONLY (not root path)
+  // Health check fallback for deployment probes ONLY (not root path) - temporarily disabled
+  /*
   app.use(['/health*', '/status*', '/ping*', '/alive*', '/ready*'], (req, res) => {
     const userAgent = req.get('User-Agent') || '';
     
@@ -6420,6 +6421,7 @@ Report ID: ${report.id}
     // Otherwise let Vite handle it
     res.status(404).json({ message: 'Not found' });
   });
+  */
 
   const httpServer = createServer(app);
   return httpServer;
