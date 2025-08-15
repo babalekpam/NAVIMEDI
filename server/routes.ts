@@ -47,6 +47,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     `);
   });
 
+  // Dashboard page (after login)
+  app.get('/dashboard', (req, res) => {
+    res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Dashboard - NaviMED Healthcare Platform</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; }
+        .header { background: white; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { color: #2563eb; font-size: 20px; font-weight: 600; }
+        .user-info { color: #64748b; }
+        .main { padding: 24px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+        .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .card h3 { color: #1f2937; margin-bottom: 16px; font-size: 18px; }
+        .card p { color: #64748b; margin-bottom: 16px; }
+        .btn { background: #2563eb; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn:hover { background: #1d4ed8; }
+        .btn-secondary { background: #6b7280; }
+        .btn-secondary:hover { background: #4b5563; }
+        .quick-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .stat-number { font-size: 32px; font-weight: bold; color: #2563eb; }
+        .stat-label { color: #64748b; margin-top: 8px; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="logo">🏥 NaviMED Healthcare Platform</div>
+        <div class="user-info">
+          Welcome back! | <a href="/login" style="color: #2563eb;">Logout</a>
+        </div>
+      </div>
+      
+      <div class="main">
+        <h1 style="margin-bottom: 24px; color: #1f2937;">Dashboard</h1>
+        
+        <div class="quick-stats">
+          <div class="stat-card">
+            <div class="stat-number">24</div>
+            <div class="stat-label">Active Patients</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">8</div>
+            <div class="stat-label">Today's Appointments</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">15</div>
+            <div class="stat-label">Pending Lab Results</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">99.5%</div>
+            <div class="stat-label">System Uptime</div>
+          </div>
+        </div>
+        
+        <div class="dashboard-grid">
+          <div class="card">
+            <h3>👥 Patient Management</h3>
+            <p>View and manage patient records, medical history, and appointments.</p>
+            <a href="/api/health" class="btn">View Patients</a>
+          </div>
+          
+          <div class="card">
+            <h3>📅 Appointments</h3>
+            <p>Schedule, view, and manage patient appointments.</p>
+            <a href="/api/health" class="btn">Manage Appointments</a>
+          </div>
+          
+          <div class="card">
+            <h3>🔬 Lab Results</h3>
+            <p>Review lab results and diagnostic reports.</p>
+            <a href="/api/health" class="btn">View Lab Results</a>
+          </div>
+          
+          <div class="card">
+            <h3>💊 Prescriptions</h3>
+            <p>Manage prescriptions and medication orders.</p>
+            <a href="/api/health" class="btn">View Prescriptions</a>
+          </div>
+          
+          <div class="card">
+            <h3>💰 Billing</h3>
+            <p>Handle billing, insurance claims, and payments.</p>
+            <a href="/api/health" class="btn">Billing System</a>
+          </div>
+          
+          <div class="card">
+            <h3>📊 Reports</h3>
+            <p>Generate and view healthcare analytics and reports.</p>
+            <a href="/api/platform/stats" class="btn">View Reports</a>
+          </div>
+          
+          <div class="card">
+            <h3>⚙️ System Settings</h3>
+            <p>Configure system settings and user management.</p>
+            <a href="/debug" class="btn btn-secondary">System Diagnostics</a>
+          </div>
+          
+          <div class="card">
+            <h3>🏪 Marketplace</h3>
+            <p>Browse and purchase medical supplies and equipment.</p>
+            <a href="/api/health" class="btn">Browse Marketplace</a>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+    `);
+  });
+
   // Login page route
   app.get('/login', (req, res) => {
     res.send(`
@@ -140,9 +255,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               successDiv.textContent = 'Login successful! Welcome to NaviMED.';
               successDiv.style.display = 'block';
               
-              // Redirect or show dashboard
+              // Redirect to dashboard
               setTimeout(() => {
-                window.location.href = '/';
+                window.location.href = '/dashboard';
               }, 1500);
             } else {
               errorDiv.textContent = data.message || 'Login failed. Please try again.';
