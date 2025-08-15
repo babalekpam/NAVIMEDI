@@ -12,7 +12,7 @@ import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { ProtectedRoute } from "@/components/layout/protected-route";
 import Landing from "@/pages/Landing";
-import LandingPage from "@/pages/landing-fixed";
+// import LandingPage from "@/pages/landing-fixed"; // Commented out - using new Landing page
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import RegisterOrganization from "@/pages/register-organization";
