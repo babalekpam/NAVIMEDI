@@ -129,70 +129,78 @@ app.use((req, res, next) => {
 
 // Initialize platform asynchronously after server starts
 let platformInitialized = false;
+let initializationPromise: Promise<void> | null = null;
 
 async function initializePlatform() {
-  try {
-    // Check if database is available
-    if (!db) {
-      console.error("❌ Database not available - skipping platform initialization");
-      return;
-    }
-    
-    // Create platform tenant (ARGILETTE)
-    const existingTenant = await db.select().from(tenants).where(eq(tenants.subdomain, 'argilette')).limit(1);
-    
-    let platformTenant;
-    const tenantResult = Array.isArray(existingTenant) ? existingTenant : [];
-    if (tenantResult.length === 0) {
-      const [tenant] = await db.insert(tenants).values({
-        name: "ARGILETTE Platform",
-        type: "hospital",
-        subdomain: "argilette",
-        settings: {
-          isPlatformOwner: true,
-          features: ["super_admin", "tenant_management", "multi_tenant"]
-        },
-        isActive: true
-      }).returning();
-      platformTenant = tenant;
-      log("✓ Created platform tenant: ARGILETTE");
-    } else {
-      platformTenant = existingTenant[0];
-      log("✓ Platform tenant already exists");
-    }
-
-    // Create super admin user
-    const existingAdmin = await db.select().from(users).where(eq(users.email, 'abel@argilette.com')).limit(1);
-    
-    if (!existingAdmin || existingAdmin.length === 0) {
-      const hashedPassword = await bcrypt.hash('Serrega1208@', 10);
-      
-      await db.insert(users).values({
-        id: nanoid(),
-        tenantId: platformTenant.id,
-        username: 'abel_admin',
-        email: 'abel@argilette.com',
-        password: hashedPassword,
-        firstName: 'Abel',
-        lastName: 'Platform Admin',
-        role: 'super_admin',
-        isActive: true
-      });
-      
-      log("✓ Created super admin user: abel@argilette.com");
-    } else {
-      log("✓ Super admin already exists");
-    }
-    
-    platformInitialized = true;
-    log("✓ Platform initialization complete");
-  } catch (error) {
-    console.error("✗ Platform initialization failed:", error);
-    console.error("This may indicate database connection issues");
-    // Don't throw - allow server to start for health checks
-    log("❌ Platform initialization failed: " + error);
-    console.error("Platform initialization error:", error);
+  // Prevent multiple initialization attempts
+  if (initializationPromise) {
+    return initializationPromise;
   }
+  
+  initializationPromise = (async () => {
+    try {
+      // Check if database is available
+      if (!db) {
+        console.error("❌ Database not available - skipping platform initialization");
+        return;
+      }
+      
+      // Quick check if already initialized
+      const existingTenant = await db.select().from(tenants).where(eq(tenants.subdomain, 'argilette')).limit(1);
+      const existingAdmin = await db.select().from(users).where(eq(users.email, 'abel@argilette.com')).limit(1);
+      
+      let platformTenant;
+      const tenantResult = Array.isArray(existingTenant) ? existingTenant : [];
+      
+      if (tenantResult.length === 0) {
+        const [tenant] = await db.insert(tenants).values({
+          name: "ARGILETTE Platform",
+          type: "hospital",
+          subdomain: "argilette",
+          settings: {
+            isPlatformOwner: true,
+            features: ["super_admin", "tenant_management", "multi_tenant"]
+          },
+          isActive: true
+        }).returning();
+        platformTenant = tenant;
+        log("✓ Created platform tenant: ARGILETTE");
+      } else {
+        platformTenant = existingTenant[0];
+        log("✓ Platform tenant already exists");
+      }
+
+      if (!existingAdmin || existingAdmin.length === 0) {
+        const hashedPassword = await bcrypt.hash('Serrega1208@', 10);
+        
+        await db.insert(users).values({
+          id: nanoid(),
+          tenantId: platformTenant.id,
+          username: 'abel_admin',
+          email: 'abel@argilette.com',
+          password: hashedPassword,
+          firstName: 'Abel',
+          lastName: 'Platform Admin',
+          role: 'super_admin',
+          isActive: true
+        });
+        
+        log("✓ Created super admin user: abel@argilette.com");
+      } else {
+        log("✓ Super admin already exists");
+      }
+      
+      platformInitialized = true;
+      log("✓ Platform initialization complete");
+    } catch (error) {
+      console.error("✗ Platform initialization failed:", error);
+      // Don't throw - allow server to start for health checks
+      platformInitialized = false;
+      initializationPromise = null; // Allow retry
+    }
+  })();
+  
+  return initializationPromise;
 }
 
 (async () => {
@@ -280,12 +288,12 @@ async function initializePlatform() {
     log(`serving on port ${port}`);
     console.log(`🌐 Health check available at: http://localhost:${port}/health`);
     
-    // Initialize platform after server is running (but don't block startup)
-    setTimeout(() => {
+    // Initialize platform after server is running (non-blocking)
+    setImmediate(() => {
       initializePlatform().catch(error => {
         console.error("Platform initialization error:", error);
       });
-    }, 1000);
+    });
   });
 
   // Handle process errors to prevent crashes
