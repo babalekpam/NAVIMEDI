@@ -1170,6 +1170,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Current tenant endpoint (requires authentication)
+  app.get("/api/tenant/current", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user?.tenantId) {
+        return res.status(401).json({ message: "No tenant context found" });
+      }
+      
+      const tenant = await storage.getTenant(req.user.tenantId);
+      if (!tenant) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+      
+      res.json(tenant);
+    } catch (error) {
+      console.error("Get current tenant error:", error);
+      res.status(500).json({ message: "Failed to fetch tenant information" });
+    }
+  });
+
   // Apply tenant context middleware to all API routes (except public endpoints)
   app.use("/api", (req, res, next) => {
     // Skip tenant middleware for public endpoints
@@ -1177,6 +1196,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       "/api/health",
       "/api/platform/stats",
       "/api/tenant/register",
+      "/api/tenant/current", 
       "/api/suppliers/register",
       "/api/auth/login",
       "/api/auth/user",
