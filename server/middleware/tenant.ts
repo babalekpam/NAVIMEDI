@@ -9,7 +9,7 @@ export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response,
     
     // If user is already authenticated by previous middleware, load full tenant data
     if (req.user && req.user.tenantId) {
-      const tenant = await storage.getTenant(req.user.tenantId);
+      const tenant = await storage?.getTenant(req.user.tenantId);
       console.log("[TENANT DEBUG] Using authenticated user tenant:", req.user.tenantId);
       console.log("[TENANT DEBUG] Loaded tenant from DB (authenticated user):", tenant);
       req.tenant = tenant;
@@ -43,7 +43,7 @@ export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response,
       };
       
       // Load full tenant information from database
-      const tenant = await storage.getTenant(decoded.tenantId);
+      const tenant = await storage?.getTenant(decoded.tenantId);
       console.log("[TENANT DEBUG] Loaded tenant from DB:", tenant);
       req.tenant = tenant;
 

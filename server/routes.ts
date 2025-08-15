@@ -19,6 +19,19 @@ import { resetAllCounters } from "./reset-all-counters";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
+// Helper function to ensure storage is available
+function ensureStorage() {
+  if (!storage) {
+    console.warn('⚠️ Storage is not available - some features may not work');
+    // In development, allow server to start even without storage
+    if (process.env.NODE_ENV !== 'production') {
+      return null as any;
+    }
+    throw new Error('Storage is not available - database connection failed');
+  }
+  return storage;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Root endpoint health check is now handled in server/index.ts BEFORE other routes
 
@@ -55,7 +68,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/public/suppliers/register', async (req, res) => {
     try {
       // Check if storage is available
-      if (!storage) {
+      const activeStorage = ensureStorage();
+      if (!activeStorage) {
         return res.status(503).json({ 
           error: 'Service temporarily unavailable',
           message: 'Database connection not available' 
@@ -120,7 +134,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const supplier = await storage.createMedicalSupplier(supplierData);
+      const supplier = await ensureStorage().createMedicalSupplier(supplierData);
       
       res.status(201).json({
         message: 'Supplier registration submitted successfully',
@@ -143,7 +157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Find supplier by email
-      const supplier = await storage.getMedicalSupplierByEmail(contactEmail);
+      const supplier = await ensureStorage().getMedicalSupplierByEmail(contactEmail);
       
       if (!supplier) {
         return res.status(401).json({ error: 'Invalid credentials' });
@@ -210,7 +224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`[SECURITY AUDIT] Login attempt from IP: ${req.ip}`);
 
       // Get all users across tenants for super admin authentication
-      const allUsers = await storage.getAllUsers();
+      const allUsers = await ensureStorage().getAllUsers();
       const user = allUsers.find(u => 
         (u.username === username || u.email === username) &&
         u.isActive
@@ -229,7 +243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get tenant information
-      const tenant = await storage.getTenant(user.tenantId || '');
+      const tenant = await ensureStorage().getTenant(user.tenantId || '');
       if (!tenant) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -282,12 +296,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current user endpoint
   app.get("/api/auth/user", authenticateToken, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.userId);
+      const user = await ensureStorage().getUser(req.user.userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
 
-      const tenant = await storage.getTenant(user.tenantId);
+      const tenant = await ensureStorage().getTenant(user.tenantId);
       
       res.json({
         id: user.id,
@@ -366,8 +380,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public platform statistics endpoint for landing page
   app.get("/api/platform/stats", async (req, res) => {
     try {
-      const totalTenants = await storage.getAllTenants();
-      const totalUsers = await storage.getAllUsers();
+      const totalTenants = await ensureStorage().getAllTenants();
+      const totalUsers = await ensureStorage().getAllUsers();
       
       // Filter out test data and get real statistics
       const activeTenants = totalTenants.filter(t => t.isActive && t.subdomain !== 'argilette').length;
@@ -428,7 +442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if organization already exists
-      const existingTenants = await storage.getAllTenants();
+      const existingTenants = await ensureStorage().getAllTenants();
       const existingTenant = existingTenants.find(t => 
         t.name.toLowerCase() === organizationName.toLowerCase()
       );
@@ -440,7 +454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if admin email already exists
-      const existingUsers = await storage.getAllUsers();
+      const existingUsers = await ensureStorage().getAllUsers();
       const existingUser = existingUsers.find(u => 
         u.email?.toLowerCase() === adminEmail.toLowerCase()
       );
@@ -460,7 +474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .substring(0, 50);
 
       // Create tenant
-      const newTenant = await storage.createTenant({
+      const newTenant = await ensureStorage().createTenant({
         name: organizationName,
         type: organizationType as any,
         subdomain: subdomain,
@@ -480,7 +494,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
       // Create admin user
-      const adminUser = await storage.createUser({
+      const adminUser = await ensureStorage().createUser({
         tenantId: newTenant.id,
         username: adminEmail,
         email: adminEmail,
@@ -542,7 +556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("[MARKETPLACE] Loading products for marketplace");
       
-      const products = await storage.getPublicMarketplaceProducts();
+      const products = await ensureStorage().getPublicMarketplaceProducts();
       
       console.log(`[MARKETPLACE] Found ${products.length} active products`);
       res.json(products);
@@ -590,7 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`[QUOTE REQUEST] New quote request from ${companyName} for ${productName} (Qty: ${qty})`);
 
       // Create quote request record
-      const quoteRequest = await storage.createQuoteRequest({
+      const quoteRequest = await ensureStorage().createQuoteRequest({
         productId,
         productName,
         supplierName,
@@ -696,7 +710,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('[SUPPLIER LOGIN] Attempting login for:', { username, organizationName });
 
       // Find the supplier organization first
-      const suppliers = await storage.getMedicalSuppliers();
+      const suppliers = await ensureStorage().getMedicalSuppliers();
       const supplierOrg = suppliers.find(s => 
         s.companyName.toLowerCase() === organizationName.toLowerCase() ||
         s.organizationSlug === organizationName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')
@@ -779,7 +793,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       // Check storage availability
-      if (!storage) {
+      const activeStorage = ensureStorage();
+      if (!activeStorage) {
         return res.status(503).json({ 
           error: 'Service temporarily unavailable',
           message: 'Database connection not available' 
@@ -798,7 +813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (username === 'abel@argilette.com' || username === 'abel_admin') {
         console.log(`[SECURITY AUDIT] Super admin login attempt from IP: ${req.ip}`);
         // Get all users with this username/email across all tenants
-        const allUsers = await storage.getAllUsers();
+        const allUsers = await ensureStorage().getAllUsers();
         user = allUsers.find(u => 
           (u.email === 'abel@argilette.com' || u.username === 'abel_admin') && 
           u.role === 'super_admin'
@@ -817,7 +832,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // SECURITY: Log tenant lookup attempts for security monitoring
           console.log(`[SECURITY AUDIT] Tenant lookup by name: ${tenantId} from IP: ${req.ip}`);
           // If not a UUID, try to find tenant by name
-          const tenants = await storage.getAllTenants();
+          const tenants = await ensureStorage().getAllTenants();
           const tenant = tenants.find(t => t.name.toLowerCase() === tenantId.toLowerCase());
           if (tenant) {
             actualTenantId = tenant.id;
@@ -828,7 +843,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        user = await storage.getUserByUsername(username, actualTenantId);
+        user = await ensureStorage().getUserByUsername(username, actualTenantId);
       } else {
         return res.status(400).json({ message: "Tenant ID is required for regular users" });
       }
@@ -842,7 +857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update last login
-      await storage.updateUser(user.id, { lastLogin: new Date() });
+      await ensureStorage().updateUser(user.id, { lastLogin: new Date() });
 
       const token = jwt.sign(
         { 
@@ -856,7 +871,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: user.tenantId,
         userId: user.id,
         entityType: "user",
@@ -894,10 +909,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Super admin access required" });
       }
       
-      const tenants = await storage.getAllTenants();
+      const tenants = await ensureStorage().getAllTenants();
       const tenantsWithStats = await Promise.all(tenants.map(async (tenant) => {
-        const users = await storage.getUsersByTenant(tenant.id);
-        const patients = await storage.getPatientsByTenant(tenant.id);
+        const users = await ensureStorage().getUsersByTenant(tenant.id);
+        const patients = await ensureStorage().getPatientsByTenant(tenant.id);
         
         return {
           ...tenant,
@@ -922,8 +937,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Super admin access required" });
       }
       
-      const tenants = await storage.getAllTenants();
-      const allUsers = await storage.getAllUsers();
+      const tenants = await ensureStorage().getAllTenants();
+      const allUsers = await ensureStorage().getAllUsers();
       
       const stats = {
         totalTenants: tenants.length,
@@ -953,7 +968,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Super admin access required" });
       }
       
-      const suppliers = await storage.getAllMedicalSuppliers();
+      const suppliers = await ensureStorage().getAllMedicalSuppliers();
       res.json(suppliers);
     } catch (error) {
       console.error("Error fetching suppliers:", error);
@@ -970,14 +985,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       
       // Update supplier status to approved
-      const supplier = await storage.updateMedicalSupplierStatus(id, 'approved');
+      const supplier = await ensureStorage().updateMedicalSupplierStatus(id, 'approved');
       
       if (!supplier) {
         return res.status(404).json({ message: "Supplier not found" });
       }
       
       // Create a tenant for the approved supplier
-      const supplierTenant = await storage.createTenant({
+      const supplierTenant = await ensureStorage().createTenant({
         name: supplier.companyName,
         type: 'medical_supplier',
         subdomain: supplier.organizationSlug,
@@ -997,7 +1012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create supplier admin user account
       const hashedPassword = await bcrypt.hash(supplier.passwordHash, 12);
-      const supplierUser = await storage.createUser({
+      const supplierUser = await ensureStorage().createUser({
         username: supplier.username,
         email: supplier.contactEmail,
         password: hashedPassword,
@@ -1011,7 +1026,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Update supplier with tenant ID
-      await storage.updateMedicalSupplier(id, {
+      await ensureStorage().updateMedicalSupplier(id, {
         tenantId: supplierTenant.id,
         approvedBy: req.user?.id,
         approvedAt: new Date()
@@ -1019,7 +1034,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create a sample product for the new supplier so they appear in marketplace
       try {
-        const sampleProduct = await storage.createMarketplaceProduct({
+        const sampleProduct = await ensureStorage().createMarketplaceProduct({
           supplierTenantId: supplierTenant.id,
           name: `${supplier.companyName} - Sample Product`,
           sku: `${supplier.organizationSlug}-SAMPLE-001`,
@@ -1081,7 +1096,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { reason } = req.body;
       
-      const supplier = await storage.updateMedicalSupplierStatus(id, 'rejected', reason);
+      const supplier = await ensureStorage().updateMedicalSupplierStatus(id, 'rejected', reason);
       
       // TODO: Send rejection email to supplier with reason
       
@@ -1101,7 +1116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { reason } = req.body;
       
-      const supplier = await storage.updateMedicalSupplierStatus(id, 'suspended', reason);
+      const supplier = await ensureStorage().updateMedicalSupplierStatus(id, 'suspended', reason);
       
       res.json({ message: "Supplier suspended successfully", supplier });
     } catch (error) {
@@ -1118,7 +1133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const { id } = req.params;
       
-      const supplier = await storage.updateMedicalSupplierStatus(id, 'approved');
+      const supplier = await ensureStorage().updateMedicalSupplierStatus(id, 'approved');
       
       res.json({ message: "Supplier activated successfully", supplier });
     } catch (error) {
@@ -1136,7 +1151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { reason } = req.body;
       
-      await storage.updateTenant(id, { 
+      await ensureStorage().updateTenant(id, { 
         isActive: false,
         suspendedAt: new Date(),
         suspensionReason: reason 
@@ -1157,7 +1172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const { id } = req.params;
       
-      await storage.updateTenant(id, { 
+      await ensureStorage().updateTenant(id, { 
         isActive: true,
         suspendedAt: null,
         suspensionReason: null 
@@ -1177,7 +1192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "No tenant context found" });
       }
       
-      const tenant = await storage.getTenant(req.user.tenantId);
+      const tenant = await ensureStorage().getTenant(req.user.tenantId);
       if (!tenant) {
         return res.status(404).json({ message: "Tenant not found" });
       }
@@ -1221,12 +1236,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userData = insertUserSchema.parse(req.body);
       
       // Check if user already exists
-      const existingUser = await storage.getUserByUsername(userData.username, userData.tenantId || '');
+      const existingUser = await ensureStorage().getUserByUsername(userData.username, userData.tenantId || '');
       if (existingUser) {
         return res.status(409).json({ message: "Username already exists" });
       }
 
-      const existingEmail = await storage.getUserByEmail(userData.email, userData.tenantId || '');
+      const existingEmail = await ensureStorage().getUserByEmail(userData.email, userData.tenantId || '');
       if (existingEmail) {
         return res.status(409).json({ message: "Email already exists" });
       }
@@ -1237,7 +1252,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Hash the temporary password for storage
       const hashedPassword = await bcrypt.hash(temporaryPassword, 12);
       
-      const user = await storage.createUser({
+      const user = await ensureStorage().createUser({
         ...userData,
         password: hashedPassword,
         mustChangePassword: true,
@@ -1245,7 +1260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Get tenant information for email
-      const tenant = await storage.getTenant(user.tenantId);
+      const tenant = await ensureStorage().getTenant(user.tenantId);
       
       // Send welcome email with credentials AND registration confirmation
       if (tenant) {
@@ -1280,7 +1295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: user.tenantId,
         userId: user.id,
         entityType: "user",
@@ -1306,7 +1321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Registration error:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+        return res.status(400).json({ message: "Invalid input data", errors: error.issues });
       }
       res.status(500).json({ message: "Internal server error" });
     }
@@ -1331,7 +1346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User profile
   app.get("/api/user/profile", async (req, res) => {
     try {
-      const user = await storage.getUser(req.user!.id);
+      const user = await ensureStorage().getUser(req.user!.id);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -1359,10 +1374,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tenantId = req.tenant!.id;
       
       if (role) {
-        const users = await storage.getUsersByRole(role as string, tenantId);
+        const users = await ensureStorage().getUsersByRole(role as string, tenantId);
         res.json(users);
       } else {
-        const users = await storage.getUsersByTenant(tenantId);
+        const users = await ensureStorage().getUsersByTenant(tenantId);
         res.json(users);
       }
     } catch (error) {
@@ -1374,7 +1389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Tenant management routes
   app.get("/api/tenants", requireRole(["super_admin"]), async (req, res) => {
     try {
-      const tenants = await storage.getAllTenants();
+      const tenants = await ensureStorage().getAllTenants();
       res.json(tenants);
     } catch (error) {
       console.error("Get tenants error:", error);
@@ -1385,10 +1400,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/tenants", requireRole(["super_admin"]), async (req, res) => {
     try {
       const tenantData = insertTenantSchema.parse(req.body);
-      const tenant = await storage.createTenant(tenantData);
+      const tenant = await ensureStorage().createTenant(tenantData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: tenant.id,
         userId: req.user!.id,
         entityType: "tenant",
@@ -1403,7 +1418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Create tenant error:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+        return res.status(400).json({ message: "Invalid input data", errors: error.issues });
       }
       res.status(500).json({ message: "Internal server error" });
     }
@@ -1419,9 +1434,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let patients;
       if (search && typeof search === "string") {
-        patients = await storage.searchPatients(tenantId, search);
+        patients = await ensureStorage().searchPatients(tenantId, search);
       } else {
-        patients = await storage.getPatientsByTenant(tenantId, parseInt(limit as string), parseInt(offset as string));
+        patients = await ensureStorage().getPatientsByTenant(tenantId, parseInt(limit as string), parseInt(offset as string));
       }
 
       res.json(patients);
@@ -1433,7 +1448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/patients/:id", async (req, res) => {
     try {
-      const patient = await storage.getPatient(req.params.id, req.tenant!.id);
+      const patient = await ensureStorage().getPatient(req.params.id, req.tenant!.id);
       if (!patient) {
         return res.status(404).json({ message: "Patient not found" });
       }
@@ -1462,10 +1477,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const patientData = insertPatientSchema.parse(requestData);
 
-      const patient = await storage.createPatient(patientData);
+      const patient = await ensureStorage().createPatient(patientData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.tenant!.id,
         userId: req.user!.id,
         entityType: "patient",
@@ -1480,7 +1495,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Create patient error:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+        return res.status(400).json({ message: "Invalid input data", errors: error.issues });
       }
       res.status(500).json({ message: "Internal server error" });
     }
@@ -1498,9 +1513,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const queryDate = date ? new Date(date as string) : undefined;
 
       if (providerId) {
-        appointments = await storage.getAppointmentsByProvider(providerId as string, tenantId, queryDate);
+        appointments = await ensureStorage().getAppointmentsByProvider(providerId as string, tenantId, queryDate);
       } else {
-        appointments = await storage.getAppointmentsByTenant(tenantId, queryDate);
+        appointments = await ensureStorage().getAppointmentsByTenant(tenantId, queryDate);
       }
 
       res.json(appointments);
@@ -1516,7 +1531,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { providerId } = req.params;
       console.log("[DEBUG] Getting appointments for provider:", providerId);
       
-      const appointments = await storage.getAppointmentsByProvider(providerId, req.tenant!.id);
+      const appointments = await ensureStorage().getAppointmentsByProvider(providerId, req.tenant!.id);
       res.json(appointments);
     } catch (error) {
       console.error("Get provider appointments error:", error);
@@ -1570,10 +1585,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenantId: req.tenant!.id
       });
 
-      const appointment = await storage.createAppointment(appointmentData);
+      const appointment = await ensureStorage().createAppointment(appointmentData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.tenant!.id,
         userId: req.user!.id,
         entityType: "appointment",
@@ -1588,7 +1603,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Create appointment error:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+        return res.status(400).json({ message: "Invalid input data", errors: error.issues });
       }
       res.status(500).json({ message: "Internal server error" });
     }
@@ -1611,7 +1626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Special check for status updates (confirmation/cancellation)
       if (updateData.status && (userRole === "physician" || userRole === "doctor")) {
-        const userPermissions = await storage.getUserPermissions(userId, tenantId);
+        const userPermissions = await ensureStorage().getUserPermissions(userId, tenantId);
         const canConfirmAppointments = userPermissions?.includes("confirm_appointments");
         
         if (!canConfirmAppointments) {
@@ -1639,14 +1654,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.appointmentDate = new Date(updateData.appointmentDate);
       }
 
-      const updatedAppointment = await storage.updateAppointment(id, updateData, req.tenant!.id);
+      const updatedAppointment = await ensureStorage().updateAppointment(id, updateData, req.tenant!.id);
       
       if (!updatedAppointment) {
         return res.status(404).json({ message: "Appointment not found" });
       }
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.tenant!.id,
         userId: req.user!.id,
         entityType: "appointment",
@@ -1661,7 +1676,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Update appointment error:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+        return res.status(400).json({ message: "Invalid input data", errors: error.issues });
       }
       res.status(500).json({ message: "Internal server error" });
     }
@@ -1675,9 +1690,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let prescriptions;
       if (patientId) {
-        prescriptions = await storage.getPrescriptionsByPatient(patientId as string, tenantId);
+        prescriptions = await ensureStorage().getPrescriptionsByPatient(patientId as string, tenantId);
       } else {
-        prescriptions = await storage.getPrescriptionsByTenant(tenantId);
+        prescriptions = await ensureStorage().getPrescriptionsByTenant(tenantId);
       }
 
       res.json(prescriptions);
@@ -1715,11 +1730,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertPrescriptionSchema.parse(prescriptionData);
       console.log("[DEBUG] Data validated successfully:", validatedData);
 
-      const prescription = await storage.createPrescription(validatedData);
+      const prescription = await ensureStorage().createPrescription(validatedData);
       console.log("[DEBUG] Prescription created:", prescription);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.tenant!.id,
         userId: req.user!.id,
         entityType: "prescription",
@@ -1734,8 +1749,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Create prescription error:", error);
       if (error instanceof z.ZodError) {
-        console.error("Validation errors:", error.errors);
-        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+        console.error("Validation errors:", error.issues);
+        return res.status(400).json({ message: "Invalid input data", errors: error.issues });
       }
       res.status(500).json({ message: "Internal server error" });
     }
@@ -1774,7 +1789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.user?.role === 'super_admin' && req.tenant!.type !== 'pharmacy') {
         console.log("[PHARMACY API] 🔧 Super admin oversight access to pharmacy", pharmacyTenantId);
         // Validate the pharmacy tenant exists
-        const targetTenant = await storage.getTenant(pharmacyTenantId);
+        const targetTenant = await ensureStorage().getTenant(pharmacyTenantId);
         if (!targetTenant || targetTenant.type !== 'pharmacy') {
           return res.status(404).json({ message: "Pharmacy tenant not found" });
         }
@@ -1798,7 +1813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(oversightInfo);
       }
       
-      const prescriptions = await storage.getPrescriptionsByPharmacy(pharmacyTenantId);
+      const prescriptions = await ensureStorage().getPrescriptionsByPharmacy(pharmacyTenantId);
       console.log("[PHARMACY API] ✅ Returning prescriptions:", prescriptions.length);
       
       res.json(prescriptions);
@@ -1825,7 +1840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Update prescription status
-      const updatedPrescription = await storage.updatePrescriptionStatus(prescriptionId, status);
+      const updatedPrescription = await ensureStorage().updatePrescriptionStatus(prescriptionId, status);
       
       console.log("[PHARMACY API] ✅ Prescription status updated successfully");
       
@@ -1842,7 +1857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`[PHARMACY API] 📦 GET /api/pharmacy/prescription-archives called`);
       const tenantId = req.tenant!.id;
       
-      const archives = await storage.getPrescriptionArchives(tenantId);
+      const archives = await ensureStorage().getPrescriptionArchives(tenantId);
       console.log(`[PHARMACY API] ✅ Retrieved ${archives.length} archived prescriptions`);
       
       res.json(archives);
@@ -1861,7 +1876,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("[PRESCRIPTION API] 📋 Tenant ID:", tenantId);
       
       // Get prescriptions based on tenant type
-      const allPrescriptions = await storage.getPrescriptionsByTenant(tenantId);
+      const allPrescriptions = await ensureStorage().getPrescriptionsByTenant(tenantId);
       
       console.log("[PRESCRIPTION API] ✅ Found", allPrescriptions.length, "prescriptions");
       
@@ -1889,7 +1904,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Update prescription status
-      const updatedPrescription = await storage.updatePrescriptionStatus(prescriptionId, status);
+      const updatedPrescription = await ensureStorage().updatePrescriptionStatus(prescriptionId, status);
       
       console.log("[PRESCRIPTION API] ✅ Prescription status updated successfully");
       
@@ -1908,11 +1923,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let labOrders;
       if (patientId) {
-        labOrders = await storage.getLabOrdersByPatient(patientId as string, tenantId);
+        labOrders = await ensureStorage().getLabOrdersByPatient(patientId as string, tenantId);
       } else if (pending === "true") {
-        labOrders = await storage.getPendingLabOrders(tenantId);
+        labOrders = await ensureStorage().getPendingLabOrders(tenantId);
       } else {
-        labOrders = await storage.getLabOrdersByTenant(tenantId);
+        labOrders = await ensureStorage().getLabOrdersByTenant(tenantId);
       }
 
       res.json(labOrders);
@@ -1941,10 +1956,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertLabOrderSchema.parse(labOrderData);
 
-      const labOrder = await storage.createLabOrder(validatedData);
+      const labOrder = await ensureStorage().createLabOrder(validatedData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.tenant!.id,
         userId: req.user!.id,
         entityType: "lab_order",
@@ -1959,7 +1974,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Create lab order error:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+        return res.status(400).json({ message: "Invalid input data", errors: error.issues });
       }
       res.status(500).json({ message: "Internal server error" });
     }
@@ -1975,9 +1990,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let claims;
       if (patientId) {
-        claims = await storage.getInsuranceClaimsByPatient(patientId as string, tenantId);
+        claims = await ensureStorage().getInsuranceClaimsByPatient(patientId as string, tenantId);
       } else {
-        claims = await storage.getInsuranceClaimsByTenant(tenantId);
+        claims = await ensureStorage().getInsuranceClaimsByTenant(tenantId);
       }
 
       res.json(claims);
@@ -2001,10 +2016,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenantId: req.tenant!.id
       });
 
-      const claim = await storage.createInsuranceClaim(claimData);
+      const claim = await ensureStorage().createInsuranceClaim(claimData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.tenant!.id,
         userId: req.user!.id,
         entityType: "insurance_claim",
@@ -2020,7 +2035,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Create insurance claim error:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+        return res.status(400).json({ message: "Invalid input data", errors: error.issues });
       }
       if (error.code === '23505' && error.constraint === 'insurance_claims_claim_number_unique') {
         return res.status(400).json({ message: "Claim number already exists. Please use a different claim number." });
@@ -2042,10 +2057,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.processedDate = new Date(updateData.processedDate);
       }
 
-      const updatedClaim = await storage.updateInsuranceClaim(id, updateData, req.tenant!.id);
+      const updatedClaim = await ensureStorage().updateInsuranceClaim(id, updateData, req.tenant!.id);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.tenant!.id,
         userId: req.user!.id,
         entityType: "insurance_claim",
@@ -2067,7 +2082,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Insurance Provider routes
   app.get("/api/insurance-providers", requireTenant, async (req, res) => {
     try {
-      const providers = await storage.getInsuranceProviders(req.tenant!.id);
+      const providers = await ensureStorage().getInsuranceProviders(req.tenant!.id);
       res.json(providers);
     } catch (error) {
       console.error("Get insurance providers error:", error);
@@ -2079,7 +2094,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/patient-insurance/:patientId", requireTenant, async (req, res) => {
     try {
       const { patientId } = req.params;
-      const insuranceList = await storage.getPatientInsurance(patientId, req.tenant!.id);
+      const insuranceList = await ensureStorage().getPatientInsurance(patientId, req.tenant!.id);
       res.json(insuranceList);
     } catch (error) {
       console.error("Get patient insurance error:", error);
@@ -2090,7 +2105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Service Pricing routes
   app.get("/api/service-prices", requireTenant, async (req, res) => {
     try {
-      const servicePrices = await storage.getServicePrices(req.tenant!.id);
+      const servicePrices = await ensureStorage().getServicePrices(req.tenant!.id);
       res.json(servicePrices);
     } catch (error) {
       console.error("Get service prices error:", error);
@@ -2105,7 +2120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenantId: req.tenant!.id
       });
 
-      const servicePrice = await storage.createServicePrice(servicePriceData);
+      const servicePrice = await ensureStorage().createServicePrice(servicePriceData);
       res.json(servicePrice);
     } catch (error) {
       console.error("Create service price error:", error);
@@ -2116,7 +2131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/service-prices/:id", requireTenant, async (req, res) => {
     try {
       const { id } = req.params;
-      const servicePrice = await storage.getServicePrice(id, req.tenant!.id);
+      const servicePrice = await ensureStorage().getServicePrice(id, req.tenant!.id);
       
       if (!servicePrice) {
         return res.status(404).json({ message: "Service price not found" });
@@ -2132,7 +2147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Insurance Plan Coverage routes
   app.get("/api/insurance-plan-coverage", requireTenant, async (req, res) => {
     try {
-      const coverages = await storage.getInsurancePlanCoverages(req.tenant!.id);
+      const coverages = await ensureStorage().getInsurancePlanCoverages(req.tenant!.id);
       res.json(coverages);
     } catch (error) {
       console.error("Get insurance plan coverages error:", error);
@@ -2147,7 +2162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenantId: req.tenant!.id
       });
 
-      const coverage = await storage.createInsurancePlanCoverage(coverageData);
+      const coverage = await ensureStorage().createInsurancePlanCoverage(coverageData);
       res.json(coverage);
     } catch (error) {
       console.error("Create insurance plan coverage error:", error);
@@ -2166,7 +2181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const pricing = await storage.calculateCopayAndInsuranceAmount(
+      const pricing = await ensureStorage().calculateCopayAndInsuranceAmount(
         servicePriceId,
         insuranceProviderId, 
         patientInsuranceId,
@@ -2184,7 +2199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/claim-line-items/:claimId", requireTenant, async (req, res) => {
     try {
       const { claimId } = req.params;
-      const lineItems = await storage.getClaimLineItems(claimId, req.tenant!.id);
+      const lineItems = await ensureStorage().getClaimLineItems(claimId, req.tenant!.id);
       res.json(lineItems);
     } catch (error) {
       console.error("Get claim line items error:", error);
@@ -2199,7 +2214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenantId: req.tenant!.id
       });
 
-      const lineItem = await storage.createClaimLineItem(lineItemData);
+      const lineItem = await ensureStorage().createClaimLineItem(lineItemData);
       res.json(lineItem);
     } catch (error) {
       console.error("Create claim line item error:", error);
@@ -2215,7 +2230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Tenant context required" });
       }
       
-      const metrics = await storage.getDashboardMetrics(tenantId);
+      const metrics = await ensureStorage().getDashboardMetrics(tenantId);
       res.json(metrics);
     } catch (error) {
       console.error("Get dashboard metrics error:", error);
@@ -2227,7 +2242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/audit-logs", requireRole(["tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
     try {
       const { limit = "50", offset = "0" } = req.query;
-      const auditLogs = await storage.getAuditLogs(
+      const auditLogs = await ensureStorage().getAuditLogs(
         req.tenant!.id, 
         parseInt(limit as string), 
         parseInt(offset as string)
@@ -2246,7 +2261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const metrics = await storage.getPlatformMetrics();
+      const metrics = await ensureStorage().getPlatformMetrics();
       res.json(metrics);
     } catch (error) {
       console.error("Platform metrics error:", error);
@@ -2257,7 +2272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reports routes
   app.get("/api/reports", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const reports = await storage.getReportsByTenant(req.tenant.id);
+      const reports = await ensureStorage().getReportsByTenant(req.tenant.id);
       res.json(reports);
     } catch (error) {
       console.error("Reports fetch error:", error);
@@ -2274,10 +2289,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'generating'
       });
 
-      const report = await storage.createReport(reportData);
+      const report = await ensureStorage().createReport(reportData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.tenant.id,
         userId: req.user.id,
         entityType: "report",
@@ -2292,7 +2307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For now, we'll simulate completion
       setTimeout(async () => {
         try {
-          await storage.updateReport(report.id, {
+          await ensureStorage().updateReport(report.id, {
             status: 'completed',
             completedAt: new Date(),
             fileUrl: `/api/reports/${report.id}/download`
@@ -2317,7 +2332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tenantName = req.tenant!.name;
       
       // Get prescriptions routed to this pharmacy from connected hospitals
-      const prescriptions = await storage.getPrescriptionsByPharmacyTenant(pharmacyTenantId);
+      const prescriptions = await ensureStorage().getPrescriptionsByPharmacyTenant(pharmacyTenantId);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
@@ -2387,7 +2402,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get prescriptions sent TO this pharmacy (pharmacyTenantId = this pharmacy's tenant)
-      const prescriptions = await storage.getPrescriptionsByPharmacyTenant(pharmacyTenantId);
+      const prescriptions = await ensureStorage().getPrescriptionsByPharmacyTenant(pharmacyTenantId);
       console.log("[PHARMACY API] ✅ Found prescriptions:", prescriptions.length);
       console.log("[PHARMACY API] ✅ Prescriptions data:", prescriptions);
       
@@ -2481,7 +2496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { reportType, startDate, endDate, format } = req.body;
       
       // Get prescriptions routed to this independent pharmacy
-      const prescriptions = await storage.getPrescriptionsByTenant(tenantId);
+      const prescriptions = await ensureStorage().getPrescriptionsByTenant(tenantId);
       
       const generatePharmacyData = (type: string) => {
         const baseData = {
@@ -2582,7 +2597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify target tenant exists
-      const targetTenant = await storage.getTenant(targetTenantId);
+      const targetTenant = await ensureStorage().getTenant(targetTenantId);
       if (!targetTenant) {
         return res.status(404).json({ message: "Target tenant not found" });
       }
@@ -2599,10 +2614,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
-      const report = await storage.createReport(reportData);
+      const report = await ensureStorage().createReport(reportData);
 
       // Create audit log for both platform and target tenant
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.user.tenantId, // Platform tenant
         userId: req.user.userId,
         entityType: "cross_tenant_report",
@@ -2618,7 +2633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userAgent: req.get("User-Agent")
       });
 
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: targetTenantId, // Target tenant
         userId: req.user.userId,
         entityType: "report",
@@ -2636,7 +2651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Simulate async report generation
       setTimeout(async () => {
         try {
-          await storage.updateReport(report.id, {
+          await ensureStorage().updateReport(report.id, {
             status: 'completed',
             completedAt: new Date(),
             fileUrl: `/api/platform/reports/${report.id}/download`
@@ -2660,15 +2675,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Super admin can view users from any tenant
       if (req.user?.role === 'super_admin') {
-        const users = await storage.getUsersByTenant(tenantId);
+        const users = await ensureStorage().getUsersByTenant(tenantId);
         res.json(users);
       } else if ((req.user?.role === 'tenant_admin' || req.user?.role === 'director') && req.user.tenantId === tenantId) {
         // Tenant admin and director can view users from their own tenant
-        const users = await storage.getUsersByTenant(tenantId);
+        const users = await ensureStorage().getUsersByTenant(tenantId);
         res.json(users);
       } else if (req.user?.tenantId === tenantId) {
         // Regular users can only view users from their own tenant (limited info)
-        const users = await storage.getUsersByTenant(tenantId);
+        const users = await ensureStorage().getUsersByTenant(tenantId);
         res.json(users);
       } else {
         return res.status(403).json({ message: "Access denied. Cannot view users from this organization." });
@@ -2694,7 +2709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateData = req.body;
       
       // Get the user to check permissions
-      const existingUser = await storage.getUser(id);
+      const existingUser = await ensureStorage().getUser(id);
       if (!existingUser) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -2719,10 +2734,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update the user
-      const updatedUser = await storage.updateUser(id, updateData);
+      const updatedUser = await ensureStorage().updateUser(id, updateData);
       
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: existingUser.tenantId,
         userId: req.user!.id,
         entityType: "user",
@@ -2771,7 +2786,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`[SUPER ADMIN] White label settings update for tenant: ${tenantId}`);
       
       // Update tenant white label settings
-      const updatedTenant = await storage.updateTenant(tenantId, {
+      const updatedTenant = await ensureStorage().updateTenant(tenantId, {
         brandName,
         logoUrl,
         primaryColor,
@@ -2786,7 +2801,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.user.tenantId, // Platform tenant
         userId: req.user.id,
         entityType: "white_label_settings",
@@ -2821,12 +2836,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`[SUPER ADMIN] Subscription update for tenant: ${tenantId}`);
       
       // Update tenant subscription
-      const updatedTenant = await storage.updateTenant(tenantId, {
+      const updatedTenant = await ensureStorage().updateTenant(tenantId, {
         subscriptionStatus,
         trialEndDate: trialEndDate ? new Date(trialEndDate) : undefined,
 
         settings: {
-          ...await storage.getTenant(tenantId).then(t => t?.settings || {}),
+          ...await ensureStorage().getTenant(tenantId).then(t => t?.settings || {}),
           features: features || ['unlimited', 'white_label', 'premium_support'],
 
         },
@@ -2838,7 +2853,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.user.tenantId, // Platform tenant
         userId: req.user.id,
         entityType: "subscription",
@@ -2867,11 +2882,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Only super admin can access client management" });
       }
       
-      const tenants = await storage.getAllTenants();
+      const tenants = await ensureStorage().getAllTenants();
       
       // Get enhanced client data with user counts and activity
       const clientsData = await Promise.all(tenants.map(async (tenant) => {
-        const users = await storage.getUsersByTenant(tenant.id);
+        const users = await ensureStorage().getUsersByTenant(tenant.id);
         const activeUsers = users.filter(u => u.isActive).length;
         
         return {
@@ -2918,12 +2933,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if username or email already exists in this tenant
-      const existingUserByUsername = await storage.getUserByUsername(username, targetTenantId);
+      const existingUserByUsername = await ensureStorage().getUserByUsername(username, targetTenantId);
       if (existingUserByUsername) {
         return res.status(400).json({ message: "Username already exists in this organization" });
       }
 
-      const existingUserByEmail = await storage.getUserByEmail(email, targetTenantId);
+      const existingUserByEmail = await ensureStorage().getUserByEmail(email, targetTenantId);
       if (existingUserByEmail) {
         return res.status(400).json({ message: "Email already exists in this organization" });
       }
@@ -2932,7 +2947,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       // Create user
-      const newUser = await storage.createUser({
+      const newUser = await ensureStorage().createUser({
         username,
         email,
         password: hashedPassword,
@@ -2946,7 +2961,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: targetTenantId,
         userId: req.user?.userId || null,
         entityType: "user",
@@ -2990,7 +3005,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied. Super admin role required." });
       }
 
-      const reports = await storage.getAllReports();
+      const reports = await ensureStorage().getAllReports();
       res.json(reports);
     } catch (error) {
       console.error("Platform reports fetch error:", error);
@@ -3002,7 +3017,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/:id/download", authenticateToken, async (req, res) => {
     try {
       const { id } = req.params;
-      const report = await storage.getReport(id, req.tenant?.id || '');
+      const report = await ensureStorage().getReport(id, req.tenant?.id || '');
       
       if (!report) {
         return res.status(404).json({ message: "Report not found" });
@@ -3048,7 +3063,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { id } = req.params;
-      const reports = await storage.getAllReports();
+      const reports = await ensureStorage().getAllReports();
       const report = reports.find(r => r.id === id);
       
       if (!report) {
@@ -3092,7 +3107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Medical Communications routes
   app.get("/api/medical-communications", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const communications = await storage.getMedicalCommunicationsByTenant(req.user.tenantId);
+      const communications = await ensureStorage().getMedicalCommunicationsByTenant(req.user.tenantId);
       res.json(communications);
     } catch (error) {
       console.error("Failed to fetch communications:", error);
@@ -3103,7 +3118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/medical-communications/:id", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { id } = req.params;
-      const communication = await storage.getMedicalCommunication(id, req.user.tenantId);
+      const communication = await ensureStorage().getMedicalCommunication(id, req.user.tenantId);
       
       if (!communication) {
         return res.status(404).json({ message: "Communication not found" });
@@ -3121,7 +3136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For patient users, find their patient ID if not provided
       let patientId = req.body.patientId;
       if (req.user.role === 'patient' && !patientId) {
-        const patient = await storage.getPatientByUserId(req.user.userId, req.user.tenantId);
+        const patient = await ensureStorage().getPatientByUserId(req.user.userId, req.user.tenantId);
         if (patient) {
           patientId = patient.id;
         } else {
@@ -3136,10 +3151,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         patientId: patientId || req.body.patientId,
       });
 
-      const communication = await storage.createMedicalCommunication(validatedData);
+      const communication = await ensureStorage().createMedicalCommunication(validatedData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.user.tenantId,
         userId: req.user.userId,
         entityType: "medical_communication",
@@ -3162,14 +3177,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const updates = req.body;
 
-      const communication = await storage.updateMedicalCommunication(id, updates, req.user.tenantId);
+      const communication = await ensureStorage().updateMedicalCommunication(id, updates, req.user.tenantId);
       
       if (!communication) {
         return res.status(404).json({ message: "Communication not found" });
       }
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.user.tenantId,
         userId: req.user.userId,
         entityType: "medical_communication",
@@ -3191,7 +3206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/communication-translations/:communicationId", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { communicationId } = req.params;
-      const translations = await storage.getCommunicationTranslations(communicationId);
+      const translations = await ensureStorage().getCommunicationTranslations(communicationId);
       res.json(translations);
     } catch (error) {
       console.error("Failed to fetch translations:", error);
@@ -3202,10 +3217,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/communication-translations", authenticateToken, requireTenant, async (req, res) => {
     try {
       const validatedData = insertCommunicationTranslationSchema.parse(req.body);
-      const translation = await storage.createCommunicationTranslation(validatedData);
+      const translation = await ensureStorage().createCommunicationTranslation(validatedData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.user.tenantId,
         userId: req.user.userId,
         entityType: "communication_translation",
@@ -3226,7 +3241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Supported Languages routes
   app.get("/api/supported-languages", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const languages = await storage.getSupportedLanguages(req.user.tenantId);
+      const languages = await ensureStorage().getSupportedLanguages(req.user.tenantId);
       res.json(languages);
     } catch (error) {
       console.error("Failed to fetch languages:", error);
@@ -3241,10 +3256,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenantId: req.user.tenantId,
       });
 
-      const language = await storage.createSupportedLanguage(validatedData);
+      const language = await ensureStorage().createSupportedLanguage(validatedData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.user.tenantId,
         userId: req.user.userId,
         entityType: "supported_language",
@@ -3267,14 +3282,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const updates = req.body;
 
-      const language = await storage.updateSupportedLanguage(id, updates, req.user.tenantId);
+      const language = await ensureStorage().updateSupportedLanguage(id, updates, req.user.tenantId);
       
       if (!language) {
         return res.status(404).json({ message: "Language not found" });
       }
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.user.tenantId,
         userId: req.user.userId,
         entityType: "supported_language",
@@ -3296,7 +3311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/pharmacies", authenticateToken, async (req, res) => {
     try {
       // Get all active pharmacy tenants for prescription routing
-      const pharmacies = await storage.getPharmaciesForPrescriptionRouting();
+      const pharmacies = await ensureStorage().getPharmaciesForPrescriptionRouting();
       res.json(pharmacies);
     } catch (error) {
       console.error("Failed to fetch pharmacies:", error);
@@ -3311,19 +3326,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { preferredPharmacyId, updatedBy, reason, requiresPatientApproval } = req.body;
 
       // Get the patient to verify they belong to this tenant
-      const patient = await storage.getPatient(id, req.user.tenantId);
+      const patient = await ensureStorage().getPatient(id, req.user.tenantId);
       if (!patient) {
         return res.status(404).json({ message: "Patient not found" });
       }
 
       // For now, we'll update the preferred pharmacy directly
       // In a real system, this would create a pending approval request
-      const updatedPatient = await storage.updatePatient(id, {
+      const updatedPatient = await ensureStorage().updatePatient(id, {
         preferredPharmacyId: preferredPharmacyId
       }, req.user.tenantId);
 
       // Create audit log for the pharmacy change
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.user.tenantId,
         userId: req.user.userId,
         entityType: "patient",
@@ -3350,7 +3365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/medical-phrases", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { category } = req.query;
-      const phrases = await storage.getMedicalPhrases(req.user.tenantId, category as string);
+      const phrases = await ensureStorage().getMedicalPhrases(req.user.tenantId, category as string);
       res.json(phrases);
     } catch (error) {
       console.error("Failed to fetch phrases:", error);
@@ -3365,10 +3380,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenantId: req.user.tenantId,
       });
 
-      const phrase = await storage.createMedicalPhrase(validatedData);
+      const phrase = await ensureStorage().createMedicalPhrase(validatedData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.user.tenantId,
         userId: req.user.userId,
         entityType: "medical_phrase",
@@ -3390,7 +3405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/phrase-translations/:phraseId", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { phraseId } = req.params;
-      const translations = await storage.getPhraseTranslations(phraseId);
+      const translations = await ensureStorage().getPhraseTranslations(phraseId);
       res.json(translations);
     } catch (error) {
       console.error("Failed to fetch phrase translations:", error);
@@ -3405,10 +3420,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         translatedBy: req.user.userId,
       });
 
-      const translation = await storage.createPhraseTranslation(validatedData);
+      const translation = await ensureStorage().createPhraseTranslation(validatedData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.user.tenantId,
         userId: req.user.userId,
         entityType: "phrase_translation",
@@ -3429,7 +3444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Laboratory Management Routes
   app.get("/api/laboratories", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const laboratories = await storage.getLaboratoriesByTenant(req.tenantId!);
+      const laboratories = await ensureStorage().getLaboratoriesByTenant(req.tenantId!);
       res.json(laboratories);
     } catch (error) {
       console.error("Error fetching laboratories:", error);
@@ -3439,7 +3454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/laboratories/active", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const laboratories = await storage.getActiveLaboratoriesByTenant(req.tenantId!);
+      const laboratories = await ensureStorage().getActiveLaboratoriesByTenant(req.tenantId!);
       res.json(laboratories);
     } catch (error) {
       console.error("Error fetching active laboratories:", error);
@@ -3454,10 +3469,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenantId: req.tenantId
       });
 
-      const laboratory = await storage.createLaboratory(laboratoryData);
+      const laboratory = await ensureStorage().createLaboratory(laboratoryData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.tenantId!,
         userId: req.userId!,
         entityType: "laboratory",
@@ -3471,7 +3486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(laboratory);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid laboratory data", errors: error.errors });
+        return res.status(400).json({ message: "Invalid laboratory data", errors: error.issues });
       }
       console.error("Error creating laboratory:", error);
       res.status(500).json({ message: "Failed to create laboratory" });
@@ -3481,7 +3496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Lab Results Routes
   app.get("/api/lab-results", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const labResults = await storage.getLabResultsByTenant(req.tenantId!);
+      const labResults = await ensureStorage().getLabResultsByTenant(req.tenantId!);
       res.json(labResults);
     } catch (error) {
       console.error("Error fetching lab results:", error);
@@ -3491,7 +3506,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/lab-results/patient/:patientId", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const labResults = await storage.getLabResultsByPatient(req.params.patientId, req.tenantId!);
+      const labResults = await ensureStorage().getLabResultsByPatient(req.params.patientId, req.tenantId!);
       res.json(labResults);
     } catch (error) {
       console.error("Error fetching patient lab results:", error);
@@ -3501,7 +3516,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/lab-results/order/:labOrderId", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const labResults = await storage.getLabResultsByOrder(req.params.labOrderId, req.tenantId!);
+      const labResults = await ensureStorage().getLabResultsByOrder(req.params.labOrderId, req.tenantId!);
       res.json(labResults);
     } catch (error) {
       console.error("Error fetching lab order results:", error);
@@ -3516,10 +3531,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenantId: req.tenantId
       });
 
-      const labResult = await storage.createLabResult(labResultData);
+      const labResult = await ensureStorage().createLabResult(labResultData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.tenantId!,
         userId: req.userId!,
         entityType: "lab_result",
@@ -3533,7 +3548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(labResult);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid lab result data", errors: error.errors });
+        return res.status(400).json({ message: "Invalid lab result data", errors: error.issues });
       }
       console.error("Error creating lab result:", error);
       res.status(500).json({ message: "Failed to create lab result" });
@@ -3549,10 +3564,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         assignedBy: req.userId
       });
 
-      const assignment = await storage.createLabOrderAssignment(assignmentData);
+      const assignment = await ensureStorage().createLabOrderAssignment(assignmentData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.tenantId!,
         userId: req.userId!,
         entityType: "lab_order_assignment",
@@ -3566,7 +3581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(assignment);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid assignment data", errors: error.errors });
+        return res.status(400).json({ message: "Invalid assignment data", errors: error.issues });
       }
       console.error("Error creating lab order assignment:", error);
       res.status(500).json({ message: "Failed to create lab order assignment" });
@@ -3584,11 +3599,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } = req.body;
 
       // Find laboratory by API key across all tenants
-      const allTenants = await storage.getAllTenants();
+      const allTenants = await ensureStorage().getAllTenants();
       let laboratory;
       
       for (const tenant of allTenants) {
-        const labs = await storage.getLaboratoriesByTenant(tenant.id);
+        const labs = await ensureStorage().getLaboratoriesByTenant(tenant.id);
         laboratory = labs.find(lab => lab.apiKey === laboratoryApiKey);
         if (laboratory) break;
       }
@@ -3618,13 +3633,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           rawData: result.rawData
         });
 
-        await storage.createLabResult(labResultData);
+        await ensureStorage().createLabResult(labResultData);
       }
 
       // Update the lab order assignment status
-      const assignment = await storage.getLabOrderAssignmentByOrder(labOrderId, laboratory.tenantId);
+      const assignment = await ensureStorage().getLabOrderAssignmentByOrder(labOrderId, laboratory.tenantId);
       if (assignment) {
-        await storage.updateLabOrderAssignment(assignment.id, {
+        await ensureStorage().updateLabOrderAssignment(assignment.id, {
           status: 'completed',
           actualCompletionTime: new Date()
         }, laboratory.tenantId);
@@ -3642,12 +3657,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const applicationData = insertLaboratoryApplicationSchema.parse(req.body);
       
-      const application = await storage.createLaboratoryApplication(applicationData);
+      const application = await ensureStorage().createLaboratoryApplication(applicationData);
       
       res.status(201).json(application);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid application data", errors: error.errors });
+        return res.status(400).json({ message: "Invalid application data", errors: error.issues });
       }
       console.error("Error creating laboratory application:", error);
       res.status(500).json({ message: "Failed to create laboratory application" });
@@ -3658,8 +3673,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const status = req.query.status as string;
       const applications = status 
-        ? await storage.getLaboratoryApplicationsByStatus(status)
-        : await storage.getAllLaboratoryApplications();
+        ? await ensureStorage().getLaboratoryApplicationsByStatus(status)
+        : await ensureStorage().getAllLaboratoryApplications();
       res.json(applications);
     } catch (error) {
       console.error("Error fetching laboratory applications:", error);
@@ -3670,7 +3685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/laboratory-applications/:id/approve", authenticateToken, requireRole(["super_admin"]), async (req, res) => {
     try {
       const { reviewNotes } = req.body;
-      const result = await storage.approveLaboratoryApplication(req.params.id, req.userId!, reviewNotes);
+      const result = await ensureStorage().approveLaboratoryApplication(req.params.id, req.userId!, reviewNotes);
       
       if (!result) {
         return res.status(404).json({ message: "Laboratory application not found" });
@@ -3691,7 +3706,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Review notes are required for rejection" });
       }
 
-      const application = await storage.rejectLaboratoryApplication(req.params.id, req.userId!, reviewNotes);
+      const application = await ensureStorage().rejectLaboratoryApplication(req.params.id, req.userId!, reviewNotes);
       
       if (!application) {
         return res.status(404).json({ message: "Laboratory application not found" });
@@ -3707,7 +3722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Vital Signs routes
   app.get("/api/vital-signs", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const vitalSigns = await storage.getVitalSignsByTenant(req.tenantId!);
+      const vitalSigns = await ensureStorage().getVitalSignsByTenant(req.tenantId!);
       res.json(vitalSigns);
     } catch (error) {
       console.error("Error fetching vital signs:", error);
@@ -3717,7 +3732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/vital-signs/patient/:patientId", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const vitalSigns = await storage.getVitalSignsByPatient(req.params.patientId, req.tenantId!);
+      const vitalSigns = await ensureStorage().getVitalSignsByPatient(req.params.patientId, req.tenantId!);
       res.json(vitalSigns);
     } catch (error) {
       console.error("Error fetching patient vital signs:", error);
@@ -3727,7 +3742,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/vital-signs/appointment/:appointmentId", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const vitalSigns = await storage.getVitalSignsByAppointment(req.params.appointmentId, req.tenantId!);
+      const vitalSigns = await ensureStorage().getVitalSignsByAppointment(req.params.appointmentId, req.tenantId!);
       res.json(vitalSigns);
     } catch (error) {
       console.error("Error fetching appointment vital signs:", error);
@@ -3743,10 +3758,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         recordedById: req.user?.id
       });
 
-      const vitalSigns = await storage.createVitalSigns(validatedData);
+      const vitalSigns = await ensureStorage().createVitalSigns(validatedData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         userId: req.user?.id!,
         tenantId: req.tenantId!,
         action: "vital_signs_created",
@@ -3759,7 +3774,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating vital signs:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Validation error", errors: error.issues });
       }
       res.status(500).json({ message: "Failed to create vital signs" });
     }
@@ -3767,14 +3782,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/vital-signs/:id", authenticateToken, requireTenant, requireRole(["super_admin", "tenant_admin", "doctor", "nurse", "receptionist"]), async (req, res) => {
     try {
-      const vitalSigns = await storage.updateVitalSigns(req.params.id, req.body, req.tenantId!);
+      const vitalSigns = await ensureStorage().updateVitalSigns(req.params.id, req.body, req.tenantId!);
       
       if (!vitalSigns) {
         return res.status(404).json({ message: "Vital signs not found" });
       }
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         userId: req.userId!,
         tenantId: req.tenantId!,
         action: "vital_signs_updated",
@@ -3793,7 +3808,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Visit Summary routes
   app.get("/api/visit-summaries", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const visitSummaries = await storage.getVisitSummariesByTenant(req.tenantId!);
+      const visitSummaries = await ensureStorage().getVisitSummariesByTenant(req.tenantId!);
       res.json(visitSummaries);
     } catch (error) {
       console.error("Error fetching visit summaries:", error);
@@ -3803,7 +3818,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/visit-summaries/patient/:patientId", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const visitSummaries = await storage.getVisitSummariesByPatient(req.params.patientId, req.tenantId!);
+      const visitSummaries = await ensureStorage().getVisitSummariesByPatient(req.params.patientId, req.tenantId!);
       res.json(visitSummaries);
     } catch (error) {
       console.error("Error fetching patient visit summaries:", error);
@@ -3813,7 +3828,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/visit-summaries/provider/:providerId", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const visitSummaries = await storage.getVisitSummariesByProvider(req.params.providerId, req.tenantId!);
+      const visitSummaries = await ensureStorage().getVisitSummariesByProvider(req.params.providerId, req.tenantId!);
       res.json(visitSummaries);
     } catch (error) {
       console.error("Error fetching provider visit summaries:", error);
@@ -3823,7 +3838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/visit-summaries/appointment/:appointmentId", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const visitSummary = await storage.getVisitSummaryByAppointment(req.params.appointmentId, req.tenantId!);
+      const visitSummary = await ensureStorage().getVisitSummaryByAppointment(req.params.appointmentId, req.tenantId!);
       res.json(visitSummary);
     } catch (error) {
       console.error("Error fetching appointment visit summary:", error);
@@ -3839,10 +3854,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         providerId: req.userId
       });
 
-      const visitSummary = await storage.createVisitSummary(validatedData);
+      const visitSummary = await ensureStorage().createVisitSummary(validatedData);
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         userId: req.userId!,
         tenantId: req.tenantId!,
         action: "visit_summary_created",
@@ -3855,7 +3870,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating visit summary:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Validation error", errors: error.issues });
       }
       res.status(500).json({ message: "Failed to create visit summary" });
     }
@@ -3863,14 +3878,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/visit-summaries/:id", authenticateToken, requireTenant, requireRole(["super_admin", "tenant_admin", "doctor", "nurse"]), async (req, res) => {
     try {
-      const visitSummary = await storage.updateVisitSummary(req.params.id, req.body, req.tenantId!);
+      const visitSummary = await ensureStorage().updateVisitSummary(req.params.id, req.body, req.tenantId!);
       
       if (!visitSummary) {
         return res.status(404).json({ message: "Visit summary not found" });
       }
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         userId: req.userId!,
         tenantId: req.tenantId!,
         action: "visit_summary_updated",
@@ -3960,7 +3975,7 @@ Report ID: ${report.id}
       const { patientId } = req.params;
       const { tenantId } = req.user;
       
-      const recommendations = await storage.getHealthRecommendationsByPatient(patientId, tenantId);
+      const recommendations = await ensureStorage().getHealthRecommendationsByPatient(patientId, tenantId);
       res.json(recommendations);
     } catch (error) {
       console.error("Error fetching health recommendations:", error);
@@ -3973,7 +3988,7 @@ Report ID: ${report.id}
       const { patientId } = req.params;
       const { tenantId } = req.user;
       
-      const recommendations = await storage.getActiveHealthRecommendationsByPatient(patientId, tenantId);
+      const recommendations = await ensureStorage().getActiveHealthRecommendationsByPatient(patientId, tenantId);
       res.json(recommendations);
     } catch (error) {
       console.error("Error fetching active health recommendations:", error);
@@ -3989,7 +4004,7 @@ Report ID: ${report.id}
         tenantId
       });
       
-      const recommendation = await storage.createHealthRecommendation(validatedData);
+      const recommendation = await ensureStorage().createHealthRecommendation(validatedData);
       res.status(201).json(recommendation);
     } catch (error) {
       console.error("Error creating health recommendation:", error);
@@ -4002,7 +4017,7 @@ Report ID: ${report.id}
       const { id } = req.params;
       const { tenantId, userId } = req.user;
       
-      const recommendation = await storage.acknowledgeHealthRecommendation(id, userId, tenantId);
+      const recommendation = await ensureStorage().acknowledgeHealthRecommendation(id, userId, tenantId);
       if (!recommendation) {
         return res.status(404).json({ message: "Health recommendation not found" });
       }
@@ -4020,7 +4035,7 @@ Report ID: ${report.id}
       const { patientId } = req.params;
       const { tenantId } = req.user;
       
-      const analyses = await storage.getHealthAnalysesByPatient(patientId, tenantId);
+      const analyses = await ensureStorage().getHealthAnalysesByPatient(patientId, tenantId);
       res.json(analyses);
     } catch (error) {
       console.error("Error fetching health analyses:", error);
@@ -4033,7 +4048,7 @@ Report ID: ${report.id}
       const { patientId } = req.params;
       const { tenantId } = req.user;
       
-      const analysis = await storage.getLatestHealthAnalysis(patientId, tenantId);
+      const analysis = await ensureStorage().getLatestHealthAnalysis(patientId, tenantId);
       if (!analysis) {
         return res.status(404).json({ message: "No health analysis found for this patient" });
       }
@@ -4051,17 +4066,17 @@ Report ID: ${report.id}
       const { tenantId, userId } = req.user;
       
       // Get patient data
-      const patient = await storage.getPatient(patientId, tenantId);
+      const patient = await ensureStorage().getPatient(patientId, tenantId);
       if (!patient) {
         return res.status(404).json({ message: "Patient not found" });
       }
       
       // Get vital signs (latest 10 records)
-      const vitalSigns = await storage.getVitalSignsByPatient(patientId, tenantId);
+      const vitalSigns = await ensureStorage().getVitalSignsByPatient(patientId, tenantId);
       const recentVitalSigns = vitalSigns.slice(0, 10);
       
       // Get recent appointments (latest 5)
-      const appointments = await storage.getAppointmentsByPatient(patientId, tenantId);
+      const appointments = await ensureStorage().getAppointmentsByPatient(patientId, tenantId);
       const recentAppointments = appointments.slice(0, 5);
       
       if (recentVitalSigns.length === 0) {
@@ -4078,7 +4093,7 @@ Report ID: ${report.id}
       );
       
       // Save health analysis to database
-      const healthAnalysis = await storage.createHealthAnalysis({
+      const healthAnalysis = await ensureStorage().createHealthAnalysis({
         tenantId,
         patientId,
         overallHealthScore: analysisResult.overallHealthScore,
@@ -4092,7 +4107,7 @@ Report ID: ${report.id}
       // Save individual recommendations
       const savedRecommendations = [];
       for (const rec of analysisResult.recommendations) {
-        const recommendation = await storage.createHealthRecommendation({
+        const recommendation = await ensureStorage().createHealthRecommendation({
           tenantId,
           patientId,
           type: rec.type,
@@ -4107,7 +4122,7 @@ Report ID: ${report.id}
       }
       
       // Log audit trail
-      await storage.logAuditAction(
+      await ensureStorage().logAuditAction(
         tenantId,
         userId,
         'health_analysis',
@@ -4158,12 +4173,12 @@ Report ID: ${report.id}
       // For physicians without admin privileges, only show bills for services they performed
       if (userRole === 'physician' && !hasFullBillingAccess) {
         // Get bills only for appointments where this doctor was the provider
-        const doctorBills = await storage.getHospitalBillsByProvider(userId, tenantId);
+        const doctorBills = await ensureStorage().getHospitalBillsByProvider(userId, tenantId);
         return res.json(doctorBills);
       }
 
       // For users with full access, return all bills
-      const allBills = await storage.getHospitalBills(tenantId);
+      const allBills = await ensureStorage().getHospitalBills(tenantId);
       res.json(allBills);
     } catch (error) {
       console.error("Error fetching hospital bills:", error);
@@ -4179,7 +4194,7 @@ Report ID: ${report.id}
         generatedBy: req.user!.id
       };
 
-      const bill = await storage.createHospitalBill(billData);
+      const bill = await ensureStorage().createHospitalBill(billData);
       res.json(bill);
     } catch (error) {
       console.error("Error creating hospital bill:", error);
@@ -4193,7 +4208,7 @@ Report ID: ${report.id}
       const updateData = req.body;
       const tenantId = req.tenant!.id;
 
-      const updatedBill = await storage.updateHospitalBill(id, updateData, tenantId);
+      const updatedBill = await ensureStorage().updateHospitalBill(id, updateData, tenantId);
       res.json(updatedBill);
     } catch (error) {
       console.error("Error updating hospital bill:", error);
@@ -4218,10 +4233,10 @@ Report ID: ${report.id}
       let analytics;
       if (userRole === 'physician' && !hasFullAnalyticsAccess) {
         // Get analytics only for this doctor's services
-        analytics = await storage.getHospitalAnalyticsByProvider(userId, tenantId);
+        analytics = await ensureStorage().getHospitalAnalyticsByProvider(userId, tenantId);
       } else {
         // Get full analytics for users with access
-        analytics = await storage.getHospitalAnalytics(tenantId);
+        analytics = await ensureStorage().getHospitalAnalytics(tenantId);
       }
 
       res.json(analytics);
@@ -4275,7 +4290,7 @@ Report ID: ${report.id}
       const userId = req.user?.id;
       const tenantId = req.tenant!.id;
 
-      const request = await storage.createPatientAccessRequest({
+      const request = await ensureStorage().createPatientAccessRequest({
         ...req.body,
         requestingPhysicianId: userId,
         tenantId: tenantId
@@ -4297,10 +4312,10 @@ Report ID: ${report.id}
       let requests;
       if (['tenant_admin', 'director', 'super_admin'].includes(userRole || '')) {
         // Admins see all requests
-        requests = await storage.getPatientAccessRequests(tenantId);
+        requests = await ensureStorage().getPatientAccessRequests(tenantId);
       } else if (userRole === 'physician') {
         // Physicians see requests involving them
-        requests = await storage.getPatientAccessRequests(tenantId, userId);
+        requests = await ensureStorage().getPatientAccessRequests(tenantId, userId);
       } else {
         return res.status(403).json({ message: "Access denied to patient access requests" });
       }
@@ -4317,7 +4332,7 @@ Report ID: ${report.id}
       const { id } = req.params;
       const tenantId = req.tenant!.id;
 
-      const updatedRequest = await storage.updatePatientAccessRequest(id, req.body, tenantId);
+      const updatedRequest = await ensureStorage().updatePatientAccessRequest(id, req.body, tenantId);
       if (!updatedRequest) {
         return res.status(404).json({ message: "Access request not found" });
       }
@@ -4334,7 +4349,7 @@ Report ID: ${report.id}
       const tenantId = req.tenant!.id;
       const { patientId, doctorId } = req.query;
 
-      const logs = await storage.getPatientAccessLogs(
+      const logs = await ensureStorage().getPatientAccessLogs(
         tenantId, 
         patientId as string, 
         doctorId as string
@@ -4354,9 +4369,9 @@ Report ID: ${report.id}
       let permissions;
       
       if (role) {
-        permissions = await storage.getRolePermissionsByRole(role as string, req.tenantId!);
+        permissions = await ensureStorage().getRolePermissionsByRole(role as string, req.tenantId!);
       } else {
-        permissions = await storage.getRolePermissions(req.tenantId!);
+        permissions = await ensureStorage().getRolePermissions(req.tenantId!);
       }
       
       res.json(permissions);
@@ -4390,14 +4405,14 @@ Report ID: ${report.id}
       console.log("🔧 [SERVER] Using userId:", userId);
 
       // Check if permission already exists for this role and module
-      const existingPermissions = await storage.getRolePermissionsByRole(role, req.tenantId!);
+      const existingPermissions = await ensureStorage().getRolePermissionsByRole(role, req.tenantId!);
       const existingPermission = existingPermissions.find(p => p.module === module);
 
       let result;
       if (existingPermission) {
         // Update existing permission
         console.log("🔧 [SERVER] Updating existing permission:", existingPermission.id);
-        result = await storage.updateRolePermission(
+        result = await ensureStorage().updateRolePermission(
           existingPermission.id,
           {
             permissions,
@@ -4411,7 +4426,7 @@ Report ID: ${report.id}
         // Create new permission
         console.log("🔧 [SERVER] Creating new permission for user:", userId);
         
-        result = await storage.createRolePermission({
+        result = await ensureStorage().createRolePermission({
           tenantId: req.tenantId!,
           role: role as any,
           module,
@@ -4423,7 +4438,7 @@ Report ID: ${report.id}
       }
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.tenantId!,
         userId: userId,
         entityType: "role_permission",
@@ -4449,14 +4464,14 @@ Report ID: ${report.id}
   app.delete("/api/role-permissions/:id", authenticateToken, requireRole(["tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
     try {
       const { id } = req.params;
-      const deleted = await storage.deleteRolePermission(id, req.tenantId!);
+      const deleted = await ensureStorage().deleteRolePermission(id, req.tenantId!);
       
       if (!deleted) {
         return res.status(404).json({ message: "Role permission not found" });
       }
 
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: req.tenantId!,
         userId: req.userId!,
         entityType: "role_permission",
@@ -4477,7 +4492,7 @@ Report ID: ${report.id}
   // Get departments for a tenant
   app.get('/api/departments', authenticateToken, requireTenant, async (req, res) => {
     try {
-      const departments = await storage.getDepartments(req.tenantId!);
+      const departments = await ensureStorage().getDepartments(req.tenantId!);
       res.json(departments);
     } catch (error) {
       console.error('Error fetching departments:', error);
@@ -4493,7 +4508,7 @@ Report ID: ${report.id}
         tenantId: req.tenantId!
       });
 
-      const department = await storage.createDepartment(validatedData);
+      const department = await ensureStorage().createDepartment(validatedData);
       res.status(201).json(department);
     } catch (error) {
       console.error('Error creating department:', error);
@@ -4507,7 +4522,7 @@ Report ID: ${report.id}
       const { id } = req.params;
       const validatedData = insertDepartmentSchema.partial().parse(req.body);
 
-      const updatedDepartment = await storage.updateDepartment(id, validatedData, req.tenantId!);
+      const updatedDepartment = await ensureStorage().updateDepartment(id, validatedData, req.tenantId!);
       if (!updatedDepartment) {
         return res.status(404).json({ error: 'Department not found' });
       }
@@ -4524,7 +4539,7 @@ Report ID: ${report.id}
     try {
       const { id } = req.params;
 
-      const deleted = await storage.deleteDepartment(id, req.tenantId!);
+      const deleted = await ensureStorage().deleteDepartment(id, req.tenantId!);
       if (!deleted) {
         return res.status(404).json({ error: 'Department not found' });
       }
@@ -4546,7 +4561,7 @@ Report ID: ${report.id}
       }
 
       const tempPassword = generateTemporaryPassword();
-      const tenant = await storage.getTenant(req.tenantId!);
+      const tenant = await ensureStorage().getTenant(req.tenantId!);
       
       const success = await sendWelcomeEmail({
         userEmail: email,
@@ -4578,7 +4593,7 @@ Report ID: ${report.id}
   // Get all advertisements (public - for marketplace viewing)
   app.get('/api/advertisements', async (req, res) => {
     try {
-      const advertisements = await storage.getAllAdvertisements();
+      const advertisements = await ensureStorage().getAllAdvertisements();
       res.json(advertisements);
     } catch (error) {
       console.error('Error fetching advertisements:', error);
@@ -4589,7 +4604,7 @@ Report ID: ${report.id}
   // Get advertisements by tenant (authenticated)
   app.get('/api/advertisements/my', authenticateToken, setTenantContext, async (req, res) => {
     try {
-      const advertisements = await storage.getAdvertisementsByTenant(req.tenantId!);
+      const advertisements = await ensureStorage().getAdvertisementsByTenant(req.tenantId!);
       res.json(advertisements);
     } catch (error) {
       console.error('Error fetching tenant advertisements:', error);
@@ -4604,7 +4619,7 @@ Report ID: ${report.id}
       if (!validationResult.success) {
         return res.status(400).json({ 
           error: 'Invalid advertisement data', 
-          details: validationResult.error.errors 
+          details: validationResult.error.issues 
         });
       }
 
@@ -4615,7 +4630,7 @@ Report ID: ${report.id}
         submittedAt: new Date().toISOString()
       };
 
-      const advertisement = await storage.createAdvertisement(advertisementData);
+      const advertisement = await ensureStorage().createAdvertisement(advertisementData);
       res.status(201).json(advertisement);
     } catch (error) {
       console.error('Error creating advertisement:', error);
@@ -4635,7 +4650,7 @@ Report ID: ${report.id}
       }
 
       const userId = req.user?.id || req.userId;
-      const advertisement = await storage.updateAdvertisementStatus(id, {
+      const advertisement = await ensureStorage().updateAdvertisementStatus(id, {
         status,
         reviewNotes,
         reviewedBy: userId,
@@ -4657,7 +4672,7 @@ Report ID: ${report.id}
   app.delete('/api/advertisements/:id', authenticateToken, setTenantContext, async (req, res) => {
     try {
       const { id } = req.params;
-      const success = await storage.deleteAdvertisement(id, req.tenantId!);
+      const success = await ensureStorage().deleteAdvertisement(id, req.tenantId!);
       
       if (!success) {
         return res.status(404).json({ error: 'Advertisement not found' });
@@ -4687,13 +4702,13 @@ Report ID: ${report.id}
         clickedThrough: !!clickedThrough
       };
 
-      const view = await storage.createAdView(viewData);
+      const view = await ensureStorage().createAdView(viewData);
       
       // Update advertisement impression count
-      await storage.incrementAdvertisementImpressions(id);
+      await ensureStorage().incrementAdvertisementImpressions(id);
       
       if (clickedThrough) {
-        await storage.incrementAdvertisementClicks(id);
+        await ensureStorage().incrementAdvertisementClicks(id);
       }
 
       res.status(201).json(view);
@@ -4717,11 +4732,11 @@ Report ID: ${report.id}
       if (!validationResult.success) {
         return res.status(400).json({ 
           error: 'Invalid inquiry data', 
-          details: validationResult.error.errors 
+          details: validationResult.error.issues 
         });
       }
 
-      const inquiry = await storage.createAdInquiry(validationResult.data);
+      const inquiry = await ensureStorage().createAdInquiry(validationResult.data);
       res.status(201).json(inquiry);
     } catch (error) {
       console.error('Error creating advertisement inquiry:', error);
@@ -4735,12 +4750,12 @@ Report ID: ${report.id}
       const { id } = req.params;
       
       // Verify the advertisement belongs to the current tenant
-      const advertisement = await storage.getAdvertisement(id);
+      const advertisement = await ensureStorage().getAdvertisement(id);
       if (!advertisement || advertisement.tenantId !== req.tenantId) {
         return res.status(404).json({ error: 'Advertisement not found' });
       }
 
-      const inquiries = await storage.getAdInquiries(id);
+      const inquiries = await ensureStorage().getAdInquiries(id);
       res.json(inquiries);
     } catch (error) {
       console.error('Error fetching advertisement inquiries:', error);
@@ -4759,7 +4774,7 @@ Report ID: ${report.id}
       }
 
       // Find the supplier profile by organization name (more secure than email)
-      const suppliers = await storage.getMedicalSuppliers();
+      const suppliers = await ensureStorage().getMedicalSuppliers();
       const supplierProfile = suppliers.find(s => 
         s.organizationSlug === user.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') ||
         s.contactEmail === user.email // Fallback for existing accounts
@@ -4791,7 +4806,7 @@ Report ID: ${report.id}
       }
 
       // First find the supplier by organization name
-      const suppliers = await storage.getMedicalSuppliers();
+      const suppliers = await ensureStorage().getMedicalSuppliers();
       const supplierProfile = suppliers.find(s => 
         s.organizationSlug === user.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') ||
         s.contactEmail === user.email // Fallback for existing accounts
@@ -4802,7 +4817,7 @@ Report ID: ${report.id}
       }
 
       // Get advertisements for this supplier organization
-      const allAdvertisements = await storage.getAllAdvertisements();
+      const allAdvertisements = await ensureStorage().getAllAdvertisements();
       const supplierAds = allAdvertisements.filter(ad => 
         ad.contactEmail === supplierProfile.contactEmail
       );
@@ -6040,7 +6055,7 @@ Report ID: ${report.id}
       const { category, search, status = 'active', page = 1, limit = 20 } = req.query;
       const offset = (Number(page) - 1) * Number(limit);
       
-      const products = await storage.getMarketplaceProducts({
+      const products = await ensureStorage().getMarketplaceProducts({
         category: category as string,
         search: search as string,
         status: status as string,
@@ -6059,14 +6074,14 @@ Report ID: ${report.id}
   app.get("/api/marketplace/products/:id", authenticateToken, async (req, res) => {
     try {
       const { id } = req.params;
-      const product = await storage.getMarketplaceProduct(id);
+      const product = await ensureStorage().getMarketplaceProduct(id);
       
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
       }
       
       // Increment view count
-      await storage.incrementProductViewCount(id);
+      await ensureStorage().incrementProductViewCount(id);
       
       res.json(product);
     } catch (error) {
@@ -6081,7 +6096,7 @@ Report ID: ${report.id}
       const { status } = req.query;
       const supplierTenantId = req.tenant!.id;
       
-      const products = await storage.getSupplierProducts(supplierTenantId, status as string);
+      const products = await ensureStorage().getSupplierProducts(supplierTenantId, status as string);
       res.json(products);
     } catch (error) {
       console.error("Error fetching supplier products:", error);
@@ -6100,11 +6115,11 @@ Report ID: ${report.id}
         status: 'draft' // All new products start as draft
       };
       
-      const product = await storage.createMarketplaceProduct(productData);
+      const product = await ensureStorage().createMarketplaceProduct(productData);
       
       // Create audit log (skip for now since userId format needs fixing)
       try {
-        await storage.createAuditLog({
+        await ensureStorage().createAuditLog({
           tenantId: supplierTenantId,
           userId: req.userId || 'system',
           entityType: "marketplace_product",
@@ -6131,7 +6146,7 @@ Report ID: ${report.id}
       const supplierTenantId = req.tenant!.id;
       const userId = req.userId!;
       
-      const updatedProduct = await storage.updateMarketplaceProduct(id, req.body, supplierTenantId);
+      const updatedProduct = await ensureStorage().updateMarketplaceProduct(id, req.body, supplierTenantId);
       
       if (!updatedProduct) {
         return res.status(404).json({ message: "Product not found or unauthorized" });
@@ -6139,7 +6154,7 @@ Report ID: ${report.id}
       
       // Create audit log (skip for now since userId format needs fixing)
       try {
-        await storage.createAuditLog({
+        await ensureStorage().createAuditLog({
           tenantId: supplierTenantId,
           userId: req.userId || 'system',
           entityType: "marketplace_product",
@@ -6174,14 +6189,14 @@ Report ID: ${report.id}
         ...req.body,
         buyerTenantId,
         buyerUserId,
-        orderNumber: await storage.generateOrderNumber(),
+        orderNumber: await ensureStorage().generateOrderNumber(),
         status: 'pending'
       };
       
-      const order = await storage.createMarketplaceOrder(orderData);
+      const order = await ensureStorage().createMarketplaceOrder(orderData);
       
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId: buyerTenantId,
         userId: buyerUserId,
         entityType: "marketplace_order",
@@ -6206,7 +6221,7 @@ Report ID: ${report.id}
       const { status, page = 1, limit = 20 } = req.query;
       const offset = (Number(page) - 1) * Number(limit);
       
-      const orders = await storage.getBuyerOrders(buyerTenantId, {
+      const orders = await ensureStorage().getBuyerOrders(buyerTenantId, {
         status: status as string,
         limit: Number(limit),
         offset
@@ -6226,7 +6241,7 @@ Report ID: ${report.id}
       const { status, page = 1, limit = 20 } = req.query;
       const offset = (Number(page) - 1) * Number(limit);
       
-      const orders = await storage.getSupplierOrders(supplierTenantId, {
+      const orders = await ensureStorage().getSupplierOrders(supplierTenantId, {
         status: status as string,
         limit: Number(limit),
         offset
@@ -6247,14 +6262,14 @@ Report ID: ${report.id}
       const tenantId = req.tenant!.id;
       const userId = req.userId!;
       
-      const updatedOrder = await storage.updateOrderStatus(id, status, notes, tenantId);
+      const updatedOrder = await ensureStorage().updateOrderStatus(id, status, notes, tenantId);
       
       if (!updatedOrder) {
         return res.status(404).json({ message: "Order not found or unauthorized" });
       }
       
       // Create audit log
-      await storage.createAuditLog({
+      await ensureStorage().createAuditLog({
         tenantId,
         userId,
         entityType: "marketplace_order",
@@ -6284,7 +6299,7 @@ Report ID: ${report.id}
       const reviewerUserId = req.userId!;
       
       // Verify purchaser has bought this product
-      const hasPurchased = await storage.hasUserPurchasedProduct(reviewerUserId, productId);
+      const hasPurchased = await ensureStorage().hasUserPurchasedProduct(reviewerUserId, productId);
       
       if (!hasPurchased) {
         return res.status(403).json({ message: "You can only review products you have purchased" });
@@ -6299,7 +6314,7 @@ Report ID: ${report.id}
         isApproved: false // Reviews need moderation
       };
       
-      const review = await storage.createProductReview(reviewData);
+      const review = await ensureStorage().createProductReview(reviewData);
       res.status(201).json(review);
     } catch (error) {
       console.error("Error creating review:", error);
@@ -6314,7 +6329,7 @@ Report ID: ${report.id}
       const { page = 1, limit = 10 } = req.query;
       const offset = (Number(page) - 1) * Number(limit);
       
-      const reviews = await storage.getProductReviews(productId, {
+      const reviews = await ensureStorage().getProductReviews(productId, {
         limit: Number(limit),
         offset,
         approvedOnly: true

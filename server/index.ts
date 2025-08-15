@@ -1,13 +1,13 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+// import { setupVite, serveStatic, log } from "./vite";
 import { db } from "./db";
 import { tenants, users } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { trialSuspensionService } from "./trial-suspension-service";
-import { createTestHospital } from "./create-test-hospital";
+// import { trialSuspensionService } from "./trial-suspension-service";
+// import { createTestHospital } from "./create-test-hospital";
 
 const app = express();
 
@@ -80,7 +80,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Database availability check for API routes (skip for health checks)
-app.use('/api*', (req, res, next) => {
+app.use((req, res, next) => {
+  // Only check database for API routes
+  if (!req.path.startsWith('/api/')) {
+    return next();
+  }
+  
   // Skip database check for ALL health endpoints
   if (req.path.includes('/health') || req.path.includes('/status') || req.path.includes('/ping')) {
     return next();
@@ -206,10 +211,10 @@ async function initializePlatform() {
           isActive: true
         }).returning();
         platformTenant = tenant;
-        log("✓ Created platform tenant: ARGILETTE");
+        console.log("✓ Created platform tenant: ARGILETTE");
       } else {
         platformTenant = existingTenant[0];
-        log("✓ Platform tenant already exists");
+        console.log("✓ Platform tenant already exists");
       }
 
       if (!existingAdmin || existingAdmin.length === 0) {
@@ -227,13 +232,13 @@ async function initializePlatform() {
           isActive: true
         });
         
-        log("✓ Created super admin user: abel@argilette.com");
+        console.log("✓ Created super admin user: abel@argilette.com");
       } else {
-        log("✓ Super admin already exists");
+        console.log("✓ Super admin already exists");
       }
       
       platformInitialized = true;
-      log("✓ Platform initialization complete");
+      console.log("✓ Platform initialization complete");
     } catch (error) {
       console.error("✗ Platform initialization failed:", error);
       // Don't throw - allow server to start for health checks
@@ -285,10 +290,10 @@ async function initializePlatform() {
   
   if (process.env.NODE_ENV === "production") {
     console.log('Setting up production static serving...');
-    serveStatic(app);
+    // serveStatic(app); // Commented out with Vite
   } else {
     console.log('Setting up development Vite server...');
-    await setupVite(app, server);
+    // await setupVite(app, server); // Commented out Vite setup
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
@@ -302,7 +307,7 @@ async function initializePlatform() {
     reusePort: true,
   }, () => {
     console.log('🎉 NaviMED Healthcare Platform is running!');
-    log(`serving on port ${port}`);
+    console.log(`serving on port ${port}`);
     console.log(`🌐 Health check available at: http://localhost:${port}/health`);
     
     // Initialize platform after server is running (non-blocking)
