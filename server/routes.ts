@@ -2777,18 +2777,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName,
         role: role as any, // Cast to UserRole type
         tenantId: targetTenantId,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        isActive: true
       });
 
       // Create audit log
       await storage.createAuditLog({
         tenantId: targetTenantId,
-        userId: req.user?.userId || null,
+        userId: req.user?.id || null,
         entityType: "user",
         entityId: newUser.id,
         action: "create",
+        previousData: null,
         newData: { 
           username, 
           email, 
