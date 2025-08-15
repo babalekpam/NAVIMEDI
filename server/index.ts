@@ -208,28 +208,29 @@ async function initializePlatform() {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  // CRITICAL: Proper server listening for deployment
+  server.listen(port, '0.0.0.0', () => {
+    console.log(`Server running on port ${port}`);
     log(`serving on port ${port}`);
     
     // Initialize platform in background - don't block server startup
     setTimeout(() => {
       initializePlatform().catch(error => {
         console.error("Platform initialization error:", error);
+        // Continue running even if initialization fails
       });
-    }, 100); // Small delay to ensure server is fully ready
+    }, 100);
   });
 
-  // Handle process errors to prevent crashes
+  // Handle process errors gracefully - do NOT exit in production
   process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // Log but continue running in production
   });
 
   process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
-    process.exit(1);
+    // DO NOT call process.exit() - keep server running
+    console.log('Server continuing to run despite error');
   });
 })();
