@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
+import { createServer } from "http";
 import { registerRoutes } from "./routes";
-// import { setupVite, serveStatic, log } from "./vite";
+import { setupVite, serveStatic, log } from "./vite";
 import { db } from "./db";
 import { tenants, users } from "@shared/schema";
 import bcrypt from "bcrypt";
