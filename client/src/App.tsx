@@ -717,6 +717,11 @@ function AppContent() {
           </ProtectedRoute>
         </Route>
         
+        {/* Public Marketplace and Supplier Portal */}
+        <Route path="/marketplace" component={MarketplacePage} />
+        <Route path="/supplier-portal" component={SupplierPortal} />
+        <Route path="/supplier-signup" component={SupplierSignupPage} />
+
         {/* Platform Footer Pages */}
         <Route path="/features" component={FeaturesPage} />
         <Route path="/solutions" component={SolutionsPage} />
