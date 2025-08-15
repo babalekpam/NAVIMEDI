@@ -108,10 +108,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   resetAllCounters()
     .then(() => {
       console.log("🎉 Counter reset completed successfully!");
-      process.exit(0);
+      // DO NOT call process.exit() - keep server running for deployment
     })
     .catch((error) => {
       console.error("💥 Counter reset failed:", error);
-      process.exit(1);
+      // DO NOT call process.exit() - keep server running for deployment
     });
 }
