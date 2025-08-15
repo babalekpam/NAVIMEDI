@@ -54,6 +54,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public supplier registration endpoint (outside /api path to avoid middleware)
   app.post('/public/suppliers/register', async (req, res) => {
     try {
+      // Check if storage is available
+      if (!storage) {
+        return res.status(503).json({ 
+          error: 'Service temporarily unavailable',
+          message: 'Database connection not available' 
+        });
+      }
+      
       console.log('Registration request body:', req.body);
       
       // Validate username and password

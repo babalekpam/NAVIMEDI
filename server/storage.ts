@@ -5276,4 +5276,24 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// Create storage instance only if database is available
+// This prevents the server from crashing in production if database is not configured
+let storage: DatabaseStorage | null = null;
+
+try {
+  if (db) {
+    storage = new DatabaseStorage();
+  } else {
+    console.error("⚠️ Storage not initialized - database connection unavailable");
+  }
+} catch (error) {
+  console.error("⚠️ Failed to initialize storage:", error);
+  // In production, allow server to start for health checks
+  if (process.env.NODE_ENV === 'production') {
+    storage = null;
+  } else {
+    throw error;
+  }
+}
+
+export { storage };

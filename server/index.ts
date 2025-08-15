@@ -34,6 +34,24 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Database availability check for API routes (skip for health checks)
+app.use('/api/*', (req, res, next) => {
+  // Skip database check for health endpoints
+  if (req.path === '/api/health' || req.path === '/api/status') {
+    return next();
+  }
+  
+  // Check if database is available
+  if (!db) {
+    return res.status(503).json({
+      error: 'Service Unavailable',
+      message: 'Database connection not available. Please check deployment configuration.',
+      timestamp: new Date().toISOString()
+    });
+  }
+  next();
+});
+
 // Basic environment check
 console.log('=== DEPLOYMENT ENVIRONMENT CHECK ===');
 console.log('NODE_ENV:', process.env.NODE_ENV);
@@ -110,6 +128,12 @@ let platformInitialized = false;
 
 async function initializePlatform() {
   try {
+    // Check if database is available
+    if (!db) {
+      console.error("❌ Database not available - skipping platform initialization");
+      return;
+    }
+    
     // Create platform tenant (ARGILETTE)
     const existingTenant = await db.select().from(tenants).where(eq(tenants.subdomain, 'argilette')).limit(1);
     
