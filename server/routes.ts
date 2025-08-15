@@ -778,6 +778,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes (before tenant middleware)
   app.post("/api/auth/login", async (req, res) => {
     try {
+      // Check storage availability
+      if (!storage) {
+        return res.status(503).json({ 
+          error: 'Service temporarily unavailable',
+          message: 'Database connection not available' 
+        });
+      }
+      
       const { username, password, tenantId } = req.body;
       
       if (!username || !password) {
