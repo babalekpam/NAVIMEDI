@@ -33,14 +33,7 @@ app.get('/ping', (req, res) => {
   res.status(200).send('ok');
 });
 
-// Simple root endpoint for basic deployment checks
-app.get('/', (req, res) => {
-  res.status(200).json({ 
-    service: 'navimed-healthcare',
-    status: 'running',
-    version: '1.0.0'
-  });
-});
+// Root endpoint will be handled by frontend via Vite middleware
 
 // Additional health endpoints commonly used by deployment systems
 app.get('/ready', (req, res) => {
