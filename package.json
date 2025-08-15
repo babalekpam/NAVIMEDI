@@ -11,9 +11,37 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.1",
+    "@replit/vite-plugin-cartographer": "^0.2.8",
+    "@replit/vite-plugin-runtime-error-modal": "^0.0.3",
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/memoizee": "^0.4.12",
     "@types/node": "^24.2.1",
+    "@types/qrcode": "^1.5.5",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.21",
+    "bcrypt": "^6.0.0",
+    "drizzle-kit": "^0.31.4",
+    "drizzle-orm": "^0.44.4",
+    "drizzle-zod": "^0.8.3",
+    "esbuild": "^0.25.9",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "memoizee": "^0.4.17",
+    "nanoid": "^5.1.5",
+    "postcss": "^8.5.6",
+    "qrcode": "^1.5.4",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "stripe": "^18.4.0",
+    "tailwindcss": "^4.1.12",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2",
-    "vite": "^5.4.19"
+    "vite": "^5.4.19",
+    "ws": "^8.18.3",
+    "zod": "^4.0.17"
   }
 }
