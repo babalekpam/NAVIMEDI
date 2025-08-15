@@ -738,107 +738,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication routes (before tenant middleware)
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      const { username, password, tenantId } = req.body;
-      
-      if (!username || !password) {
-        return res.status(400).json({ message: "Username and password are required" });
-      }
-
-      let user;
-      
-      // SECURITY: Super admin login with enhanced security logging
-      if (username === 'abel@argilette.com' || username === 'abel_admin') {
-        console.log(`[SECURITY AUDIT] Super admin login attempt from IP: ${req.ip}`);
-        // Get all users with this username/email across all tenants
-        const allUsers = await storage.getAllUsers();
-        user = allUsers.find(u => 
-          (u.email === 'abel@argilette.com' || u.username === 'abel_admin') && 
-          u.role === 'super_admin'
-        );
-        if (user) {
-          console.log(`[SECURITY AUDIT] Super admin login successful: ${user.username}`);
-        }
-      } else if (tenantId) {
-        // Regular tenant user login - support both tenant UUID and tenant name
-        let actualTenantId = tenantId;
-        
-        // Check if tenantId is a UUID pattern or tenant name
-        const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-        
-        if (!uuidPattern.test(tenantId)) {
-          // SECURITY: Log tenant lookup attempts for security monitoring
-          console.log(`[SECURITY AUDIT] Tenant lookup by name: ${tenantId} from IP: ${req.ip}`);
-          // If not a UUID, try to find tenant by name
-          const tenants = await storage.getAllTenants();
-          const tenant = tenants.find(t => t.name.toLowerCase() === tenantId.toLowerCase());
-          if (tenant) {
-            actualTenantId = tenant.id;
-            console.log(`[SECURITY AUDIT] Tenant found: ${tenant.name} (${tenant.id})`);
-          } else {
-            console.log(`[SECURITY WARNING] Unknown tenant lookup attempt: ${tenantId}`);
-            return res.status(400).json({ message: "Organization not found" });
-          }
-        }
-        
-        user = await storage.getUserByUsername(username, actualTenantId);
-      } else {
-        return res.status(400).json({ message: "Tenant ID is required for regular users" });
-      }
-
-      if (!user || !await bcrypt.compare(password, user.password)) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      if (!user.isActive) {
-        return res.status(401).json({ message: "Account is disabled" });
-      }
-
-      // Update last login
-      await storage.updateUser(user.id, { lastLogin: new Date() });
-
-      const token = jwt.sign(
-        { 
-          userId: user.id, 
-          tenantId: user.tenantId, 
-          role: user.role,
-          username: user.username 
-        },
-        JWT_SECRET,
-        { expiresIn: "8h" }
-      );
-
-      // Create audit log
-      await storage.createAuditLog({
-        tenantId: user.tenantId,
-        userId: user.id,
-        entityType: "user",
-        entityId: user.id,
-        action: "login",
-        newData: { loginTime: new Date() },
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
-      });
-
-      res.json({
-        token,
-        user: {
-          id: user.id,
-          userId: user.id, // Add userId for compatibility
-          username: user.username,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-          tenantId: user.tenantId
-        }
-      });
-    } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
 
   // Super Admin Platform Management Routes (before tenant middleware)
   app.get("/api/admin/tenants", authenticateToken, async (req, res) => {
@@ -5926,7 +5825,7 @@ Report ID: ${report.id}
   });
 
   // Serve private objects (product images)
-  app.get("/objects/:objectPath(*)", async (req, res) => {
+  app.get("/objects/*", async (req, res) => {
     try {
       const { ObjectStorageService, ObjectNotFoundError } = await import('./objectStorage');
       const { ObjectPermission } = await import('./objectAcl');

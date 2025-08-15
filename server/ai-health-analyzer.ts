@@ -1,8 +1,4 @@
-import OpenAI from "openai";
 import { VitalSigns, Patient, Appointment } from "../shared/schema";
-
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export interface HealthRecommendation {
   id: string;
@@ -66,7 +62,7 @@ export class AIHealthAnalyzer {
       // return this.processAnalysisResult(analysisResult);
     } catch (error) {
       console.error("AI Health Analysis Error:", error);
-      throw new Error(`Failed to generate health recommendations: ${error.message}`);
+      throw new Error(`Failed to generate health recommendations: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -90,7 +86,7 @@ export class AIHealthAnalyzer {
       const latestVitals = vitalSigns[0]; // Most recent
       
       // Blood pressure analysis
-      if (latestVitals.systolic > 140 || latestVitals.diastolic > 90) {
+      if ((latestVitals.systolicBp && latestVitals.systolicBp > 140) || (latestVitals.diastolicBp && latestVitals.diastolicBp > 90)) {
         healthScore -= 15;
         riskFactors.push("Elevated blood pressure readings indicating hypertension risk");
         recommendations.push({
@@ -111,7 +107,7 @@ export class AIHealthAnalyzer {
           createdAt: new Date()
         });
         trends.concerning.push("Blood pressure trending above normal range");
-      } else if (latestVitals.systolic >= 120 && latestVitals.systolic < 130) {
+      } else if (latestVitals.systolicBp && latestVitals.systolicBp >= 120 && latestVitals.systolicBp < 130) {
         trends.stable.push("Blood pressure in elevated but manageable range");
         recommendations.push({
           id: `rec-bp-prev-${Date.now()}`,
@@ -135,7 +131,7 @@ export class AIHealthAnalyzer {
       }
 
       // Heart rate analysis
-      if (latestVitals.heartRate > 100) {
+      if (latestVitals.heartRate && latestVitals.heartRate > 100) {
         healthScore -= 8;
         riskFactors.push("Elevated resting heart rate suggesting cardiovascular stress");
         trends.concerning.push("Resting heart rate above normal range");
@@ -155,13 +151,13 @@ export class AIHealthAnalyzer {
           followUpRequired: true,
           createdAt: new Date()
         });
-      } else if (latestVitals.heartRate >= 60 && latestVitals.heartRate <= 80) {
+      } else if (latestVitals.heartRate && latestVitals.heartRate >= 60 && latestVitals.heartRate <= 80) {
         trends.stable.push("Heart rate within excellent range");
         healthScore += 3;
       }
 
       // Temperature analysis
-      if (latestVitals.temperature > 100.4) {
+      if (latestVitals.temperature && parseFloat(latestVitals.temperature) > 100.4) {
         healthScore -= 10;
         recommendations.push({
           id: `rec-fever-${Date.now()}`,
@@ -183,7 +179,7 @@ export class AIHealthAnalyzer {
       }
 
       // Oxygen saturation
-      if (latestVitals.oxygenSaturation < 95) {
+      if (latestVitals.oxygenSaturation && latestVitals.oxygenSaturation < 95) {
         healthScore -= 20;
         riskFactors.push("Low oxygen saturation indicating respiratory compromise");
         recommendations.push({
@@ -203,7 +199,7 @@ export class AIHealthAnalyzer {
           createdAt: new Date()
         });
         trends.concerning.push("Oxygen saturation below normal");
-      } else if (latestVitals.oxygenSaturation >= 98) {
+      } else if (latestVitals.oxygenSaturation && latestVitals.oxygenSaturation >= 98) {
         trends.stable.push("Oxygen saturation excellent");
       }
     }
