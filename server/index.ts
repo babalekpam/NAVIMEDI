@@ -15,7 +15,23 @@ const app = express();
 // For deployment compatibility, always return JSON at root
 // Users should access the app via /login or other routes
 app.get('/', (req, res) => {
-  // Always return JSON for deployment health checks - no complex logic
+  const userAgent = req.get('User-Agent') || '';
+  const acceptHeader = req.get('Accept') || '';
+  
+  // Check if this is a real browser request (not a deployment health check)
+  const isBrowserRequest = userAgent.includes('Mozilla') || 
+                          userAgent.includes('Chrome') || 
+                          userAgent.includes('Safari') || 
+                          userAgent.includes('Firefox') || 
+                          userAgent.includes('Edge') ||
+                          acceptHeader.includes('text/html');
+  
+  if (isBrowserRequest) {
+    // Redirect real browsers to the login page
+    return res.redirect(302, '/login');
+  }
+  
+  // Return JSON for deployment health checks
   res.status(200).json({
     status: 'ok',
     service: 'navimed-healthcare',
