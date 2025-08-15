@@ -15,36 +15,31 @@ app.use(express.urlencoded({ extended: false }));
 
 
 
-// Multiple health check endpoints for deployment monitoring
-// These must respond immediately without any heavy operations
+// CRITICAL: Ultra-fast health check endpoints for deployment
+// These MUST respond in <100ms with zero dependencies
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    service: 'carnet-healthcare',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
+  res.status(200).json({ status: 'ok' });
 });
 
 app.get('/healthz', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    service: 'carnet-healthcare',
-    timestamp: new Date().toISOString()
-  });
+  res.status(200).json({ status: 'ok' });
 });
 
 app.get('/status', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    service: 'carnet-healthcare',
-    timestamp: new Date().toISOString()
-  });
+  res.status(200).json({ status: 'ok' });
 });
 
-// Simple text responses for deployment systems that expect plain text
 app.get('/ping', (req, res) => {
-  res.status(200).send('pong');
+  res.status(200).send('ok');
+});
+
+// Simple root endpoint for basic deployment checks
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    service: 'navimed-healthcare',
+    status: 'running',
+    version: '1.0.0'
+  });
 });
 
 // Additional health endpoints commonly used by deployment systems
@@ -111,6 +106,9 @@ let platformInitialized = false;
 
 async function initializePlatform() {
   try {
+    // Wait a moment for database to be fully ready
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
     // Create platform tenant (ARGILETTE)
     const existingTenant = await db.select().from(tenants).where(eq(tenants.subdomain, 'argilette')).limit(1);
     
@@ -162,6 +160,16 @@ async function initializePlatform() {
   } catch (error) {
     log("❌ Platform initialization failed: " + error);
     console.error("Platform initialization error:", error);
+    
+    // Retry initialization after delay in production
+    if (process.env.NODE_ENV === 'production') {
+      setTimeout(() => {
+        log("🔄 Retrying platform initialization...");
+        initializePlatform().catch(retryError => {
+          console.error("Platform initialization retry failed:", retryError);
+        });
+      }, 10000); // Retry after 10 seconds
+    }
   }
 }
 
@@ -207,10 +215,12 @@ async function initializePlatform() {
   }, () => {
     log(`serving on port ${port}`);
     
-    // Initialize platform after server is running
-    initializePlatform().catch(error => {
-      console.error("Platform initialization error:", error);
-    });
+    // Initialize platform in background - don't block server startup
+    setTimeout(() => {
+      initializePlatform().catch(error => {
+        console.error("Platform initialization error:", error);
+      });
+    }, 100); // Small delay to ensure server is fully ready
   });
 
   // Handle process errors to prevent crashes
