@@ -12,29 +12,16 @@ import { createTestHospital } from "./create-test-hospital";
 const app = express();
 
 // CRITICAL: Root health check handler - must be the very first middleware!
-// This ensures deployment health checks get JSON regardless of other middleware
+// For deployment compatibility, always return JSON at root
+// Users should access the app via /login or other routes
 app.get('/', (req, res) => {
-  const acceptHeader = req.headers.accept || '';
-  const userAgent = req.headers['user-agent'] || '';
-  
-  // Check if this is a browser request
-  const isBrowser = 
-    (acceptHeader.includes('text/html') || acceptHeader.includes('*/*')) &&
-    (userAgent.includes('Mozilla') || userAgent.includes('Chrome') || userAgent.includes('Safari')) &&
-    !userAgent.includes('GoogleHC') && 
-    !userAgent.includes('kube-probe') &&
-    !userAgent.includes('curl');
-  
-  // If it's a browser request, redirect to login
-  if (isBrowser) {
-    return res.redirect('/login');
-  }
-  
-  // Otherwise return JSON for health checks (deployment systems, curl, APIs, etc.)
+  // Always return JSON for deployment health checks
+  // This is required by Replit Autoscale deployments
   res.status(200).json({
     status: 'ok',
     service: 'navimed-healthcare',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    message: 'Health check endpoint. Please visit /login to access the application.'
   });
 });
 
