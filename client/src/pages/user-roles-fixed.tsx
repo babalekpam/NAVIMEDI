@@ -112,8 +112,10 @@ export default function UserRoles() {
 
   const createUserMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
-      const response = await apiRequest("POST", "/api/users", data);
-      return response.json();
+      return await apiRequest("/api/users", {
+        method: "POST",
+        body: data
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
@@ -135,8 +137,10 @@ export default function UserRoles() {
 
   const updateUserMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<UserFormData> }) => {
-      const response = await apiRequest("PATCH", `/api/users/${id}`, data);
-      return response.json();
+      return await apiRequest(`/api/users/${id}`, {
+        method: "PATCH",
+        body: data
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
