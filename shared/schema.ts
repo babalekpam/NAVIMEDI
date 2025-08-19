@@ -1,4 +1,4 @@
-import { sql, relations } from "drizzle-orm";
+import { sql, relations, type InferSelectModel, type InferInsertModel } from "drizzle-orm";
 import { pgTable, text, varchar, uuid, timestamp, boolean, integer, decimal, jsonb, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -358,7 +358,9 @@ export const sessions = pgTable(
     sess: jsonb("sess").notNull(),
     expire: timestamp("expire").notNull(),
   },
-  (table) => [index("IDX_session_expire").on(table.expire)],
+  (table) => ({
+    expireIdx: index("IDX_session_expire").on(table.expire),
+  }),
 );
 
 // Core Tables

@@ -8,6 +8,7 @@ export interface JWTPayload {
   tenantId: string;
   role: string;
   username: string;
+  exp?: number;
 }
 
 export interface AuthenticatedRequest extends Request {
@@ -50,23 +51,36 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    
+    // Check if token is expired
+    const now = Math.floor(Date.now() / 1000);
+    if (decoded.exp && decoded.exp < now) {
+      console.error("Token expired at:", new Date(decoded.exp * 1000));
+      return res.status(401).json({ message: "Token expired", code: "TOKEN_EXPIRED" });
+    }
+    
     req.user = {
       id: decoded.userId,
       tenantId: decoded.tenantId,
       role: decoded.role,
       username: decoded.username
     };
-    req.userId = decoded.userId; // Add this line to fix the missing userId
+    req.userId = decoded.userId;
     req.tenantId = decoded.tenantId;
-    
-    // Don't override tenant data if it's already set by tenant middleware
-    // The tenant middleware should have already loaded the full tenant object
     
     // Token validated successfully
     next();
   } catch (error) {
-    console.error("Token verification error:", error);
-    return res.status(403).json({ message: "Invalid or expired token" });
+    if (error.name === 'TokenExpiredError') {
+      console.error("JWT Token expired:", error.expiredAt);
+      return res.status(401).json({ message: "Token expired", code: "TOKEN_EXPIRED", expiredAt: error.expiredAt });
+    } else if (error.name === 'JsonWebTokenError') {
+      console.error("Invalid JWT token:", error.message);
+      return res.status(401).json({ message: "Invalid token", code: "TOKEN_INVALID" });
+    } else {
+      console.error("Token verification error:", error);
+      return res.status(401).json({ message: "Authentication failed", code: "AUTH_ERROR" });
+    }
   }
 };
 
