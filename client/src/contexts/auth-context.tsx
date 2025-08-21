@@ -41,19 +41,41 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Helper function to check if token is expired
+  const isTokenExpired = (token: string): boolean => {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Date.now() / 1000;
+      return payload.exp && payload.exp < currentTime;
+    } catch {
+      return true; // Invalid token format
+    }
+  };
+
   useEffect(() => {
     const storedToken = localStorage.getItem("auth_token");
     const storedUser = localStorage.getItem("auth_user");
 
-    // Validate token format before using it
+    // Validate token format and expiration before using it
     if (storedToken && storedUser && 
         storedToken !== 'undefined' && 
         storedToken !== 'null' && 
         storedToken.length > 10) {
+      
+      // Check if token is expired
+      if (isTokenExpired(storedToken)) {
+        console.warn('Token is expired, clearing auth data');
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("auth_user");
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         const parsedUser = JSON.parse(storedUser);
         setToken(storedToken);
         setUser(parsedUser);
+        console.log('Successfully restored auth state for user:', parsedUser.username);
       } catch (error) {
         console.warn('Failed to parse stored user data, clearing auth:', error);
         localStorage.removeItem("auth_token");

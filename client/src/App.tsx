@@ -768,17 +768,24 @@ function AppContent() {
 }
 
 function Router() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, token } = useAuth();
 
+  // Better loading state with platform branding
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-emerald-600"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto"></div>
+          <h3 className="mt-4 text-lg font-semibold text-gray-700">NaviMED Healthcare Platform</h3>
+          <p className="mt-2 text-gray-500">Loading your dashboard...</p>
         </div>
       </div>
     );
+  }
+
+  // Log authentication state for debugging
+  if (!user && !token) {
+    console.log('No authentication found, displaying public routes');
   }
 
   if (!user) {
@@ -798,6 +805,13 @@ function Router() {
           <Route path="/pricing" component={PricingPage} />
           <Route path="/laboratory-registration" component={LaboratoryRegistration} />
           <Route path="/pharmacy-registration" component={PharmacyRegistration} />
+          {/* Support and documentation pages */}
+          <Route path="/support/documentation" component={Documentation} />
+          <Route path="/support/help-center" component={HelpCenter} />
+          <Route path="/support/contact" component={Contact} />
+          <Route path="/support/status" component={Status} />
+          <Route path="/integrations" component={Integrations} />
+          <Route path="/api-docs" component={ApiDocsPage} />
           {/* Supplier routes handled by direct HTML pages */}
           <Route path="/patient-portal-public" component={PatientPortalPublic} />
           <Route path="/patient-login" component={PatientLogin} />
@@ -810,6 +824,8 @@ function Router() {
     );
   }
 
+  // User is authenticated, show the protected app content
+  console.log('User authenticated, showing app content for:', user.username);
   return <AppContent />;
 }
 
