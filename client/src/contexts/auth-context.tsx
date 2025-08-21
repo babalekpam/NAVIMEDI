@@ -121,30 +121,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setToken(data.token);
     setUser(data.user);
     
-    // Add a small delay to ensure state is set before redirect
-    setTimeout(() => {
-      // Check if user needs to change temporary password
-      if (data.user.mustChangePassword || data.user.isTemporaryPassword) {
-        window.location.href = '/change-password';
-      } else if (data.user.role === 'patient') {
-        window.location.href = '/patient-portal';
-      } else if (data.user.role === 'super_admin') {
-        // Super admin gets their own dashboard with platform oversight
-        console.log('Redirecting super admin to dashboard');
-        window.location.href = '/super-admin-dashboard';
-      } else if (data.user.role === 'tenant_admin' || data.user.role === 'director') {
-        // Redirect tenant admins to unified admin dashboard
-        window.location.href = '/admin-dashboard';
-      } else if (data.user.role === 'lab_technician') {
-        window.location.href = '/laboratory-dashboard';
-      } else if (data.user.role === 'pharmacist') {
-        window.location.href = '/pharmacy-dashboard';
-      } else if (data.user.role === 'receptionist') {
-        window.location.href = '/receptionist-dashboard';
-      } else {
-        window.location.href = '/dashboard';
-      }
-    }, 100);
+    // Store redirect path for Router component to handle
+    let redirectPath = '/dashboard';
+    
+    if (data.user.mustChangePassword || data.user.isTemporaryPassword) {
+      redirectPath = '/change-password';
+    } else if (data.user.role === 'patient') {
+      redirectPath = '/patient-portal';
+    } else if (data.user.role === 'super_admin') {
+      console.log('Setting redirect for super admin to dashboard');
+      redirectPath = '/super-admin-dashboard';
+    } else if (data.user.role === 'tenant_admin' || data.user.role === 'director') {
+      redirectPath = '/admin-dashboard';
+    } else if (data.user.role === 'lab_technician') {
+      redirectPath = '/laboratory-dashboard';
+    } else if (data.user.role === 'pharmacist') {
+      redirectPath = '/pharmacy-dashboard';
+    } else if (data.user.role === 'receptionist') {
+      redirectPath = '/receptionist-dashboard';
+    }
+    
+    console.log('Login successful, storing redirect path:', redirectPath);
+    localStorage.setItem('post_login_redirect', redirectPath);
   };
 
   const logout = () => {
@@ -152,6 +150,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setToken(null);
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_user");
+    localStorage.removeItem("post_login_redirect");
+    console.log('User logged out, clearing auth state and redirects');
   };
 
   return (

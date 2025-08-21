@@ -1,5 +1,5 @@
 import React from "react";
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -769,6 +769,7 @@ function AppContent() {
 
 function Router() {
   const { user, isLoading, token } = useAuth();
+  const [location] = useLocation();
 
   // Better loading state with platform branding
   if (isLoading) {
@@ -822,6 +823,14 @@ function Router() {
         </Switch>
       </div>
     );
+  }
+
+  // Check for post-login redirect
+  const redirectPath = localStorage.getItem('post_login_redirect');
+  if (redirectPath && redirectPath !== location) {
+    localStorage.removeItem('post_login_redirect');
+    console.log('Handling post-login redirect to:', redirectPath);
+    return <Redirect to={redirectPath} />;
   }
 
   // User is authenticated, show the protected app content

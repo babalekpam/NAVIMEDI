@@ -7,6 +7,7 @@ import { Calendar, Users, Pill, TestTube, DollarSign, AlertTriangle, CheckCircle
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useTranslation } from "@/contexts/translation-context";
+import { useLocation } from "wouter";
 import PharmacyDashboardEnhancedV2 from "@/pages/pharmacy-dashboard-enhanced-v2";
 
 interface DashboardMetrics {
@@ -38,6 +39,7 @@ export default function Dashboard() {
   const { tenant } = useTenant();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const isSuperAdmin = user?.role === 'super_admin';
 
@@ -116,7 +118,7 @@ export default function Dashboard() {
 
   // Redirect super admin to their dedicated dashboard
   if (isSuperAdmin) {
-    window.location.href = '/super-admin-dashboard';
+    setLocation('/super-admin-dashboard');
     return (
       <div className="p-6">
         <div className="text-center">Redirecting to Super Admin Dashboard...</div>
@@ -444,7 +446,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Button 
               className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => window.location.href = '/patients'}
+              onClick={() => setLocation('/patients')}
             >
               <Users className="h-6 w-6" />
               <span>Patient Management</span>
@@ -452,7 +454,7 @@ export default function Dashboard() {
             <Button 
               variant="outline" 
               className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => window.location.href = '/appointments'}
+              onClick={() => setLocation('/appointments')}
             >
               <Calendar className="h-6 w-6" />
               <span>Appointments</span>
@@ -460,7 +462,7 @@ export default function Dashboard() {
             <Button 
               variant="outline" 
               className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => window.location.href = '/lab-orders'}
+              onClick={() => setLocation('/lab-orders')}
             >
               <TestTube className="h-6 w-6" />
               <span>Laboratory</span>
@@ -468,7 +470,7 @@ export default function Dashboard() {
             <Button 
               variant="outline" 
               className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => window.location.href = '/prescriptions'}
+              onClick={() => setLocation('/prescriptions')}
             >
               <Pill className="h-6 w-6" />
               <span>Prescriptions</span>
@@ -531,7 +533,7 @@ export default function Dashboard() {
                   <Button 
                     variant="outline" 
                     className="mt-3"
-                    onClick={() => window.location.href = '/appointments'}
+                    onClick={() => setLocation('/appointments')}
                   >
                     Schedule New Appointment
                   </Button>
@@ -575,7 +577,7 @@ export default function Dashboard() {
                   <Button 
                     variant="outline" 
                     className="mt-3"
-                    onClick={() => window.location.href = '/lab-orders'}
+                    onClick={() => setLocation('/lab-orders')}
                   >
                     View All Lab Orders
                   </Button>
@@ -697,7 +699,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Button 
               className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => window.location.href = '/appointments'}
+              onClick={() => setLocation('/appointments')}
             >
               <Calendar className="h-6 w-6" />
               <span>View Schedule</span>
@@ -705,7 +707,7 @@ export default function Dashboard() {
             <Button 
               variant="outline" 
               className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => window.location.href = '/patients'}
+              onClick={() => setLocation('/patients')}
             >
               <Users className="h-6 w-6" />
               <span>Patient List</span>
@@ -713,7 +715,7 @@ export default function Dashboard() {
             <Button 
               variant="outline" 
               className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => window.location.href = '/prescriptions'}
+              onClick={() => setLocation('/prescriptions')}
             >
               <Pill className="h-6 w-6" />
               <span>Prescriptions</span>
@@ -721,7 +723,7 @@ export default function Dashboard() {
             <Button 
               variant="outline" 
               className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => window.location.href = '/lab-orders'}
+              onClick={() => setLocation('/lab-orders')}
             >
               <TestTube className="h-6 w-6" />
               <span>Lab Orders</span>
@@ -795,7 +797,7 @@ export default function Dashboard() {
                     variant="outline" 
                     size="sm" 
                     className="mt-3"
-                    onClick={() => window.location.href = '/appointments'}
+                    onClick={() => setLocation('/appointments')}
                   >
                     View All Appointments
                   </Button>
@@ -1586,7 +1588,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Button 
               className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => window.location.href = '/patients'}
+              onClick={() => setLocation('/patients')}
             >
               <Users className="h-6 w-6" />
               <span>Patient Management</span>
@@ -1594,7 +1596,7 @@ export default function Dashboard() {
             <Button 
               variant="outline" 
               className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => window.location.href = '/appointments'}
+              onClick={() => setLocation('/appointments')}
             >
               <Calendar className="h-6 w-6" />
               <span>Appointments</span>
@@ -1602,7 +1604,7 @@ export default function Dashboard() {
             <Button 
               variant="outline" 
               className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => window.location.href = '/lab-orders'}
+              onClick={() => setLocation('/lab-orders')}
             >
               <TestTube className="h-6 w-6" />
               <span>Laboratory</span>
@@ -1610,7 +1612,7 @@ export default function Dashboard() {
             <Button 
               variant="outline" 
               className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => window.location.href = '/prescriptions'}
+              onClick={() => setLocation('/prescriptions')}
             >
               <Pill className="h-6 w-6" />
               <span>Prescriptions</span>
@@ -1723,7 +1725,7 @@ export default function Dashboard() {
                   <Button 
                     variant="outline" 
                     className="mt-3"
-                    onClick={() => window.location.href = '/lab-orders'}
+                    onClick={() => setLocation('/lab-orders')}
                   >
                     View All Lab Orders
                   </Button>
