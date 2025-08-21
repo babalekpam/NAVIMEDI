@@ -37,7 +37,9 @@ export function useAuth() {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_user");
     setUser(null);
-    window.location.href = "/";
+    console.log('User logged out from useAuth hook');
+    // Force a page reload to ensure clean state after logout
+    window.location.replace("/");
   };
 
   return {

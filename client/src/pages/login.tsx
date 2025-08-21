@@ -47,25 +47,33 @@ export default function Login() {
       
       console.log('Login page - user role:', response.user.role);
       
-      // Role-based redirection matching auth context logic
+      // Role-based redirection using client-side routing
+      let redirectPath = '/dashboard';
+      
       if (response.user.mustChangePassword || response.user.isTemporaryPassword) {
-        window.location.href = '/change-password';
+        redirectPath = '/change-password';
       } else if (response.user.role === 'patient') {
-        window.location.href = '/patient-portal';
+        redirectPath = '/patient-portal';
       } else if (response.user.role === 'super_admin') {
         console.log('Redirecting super admin to super-admin-dashboard');
-        window.location.href = '/super-admin-dashboard';
+        redirectPath = '/super-admin-dashboard';
       } else if (response.user.role === 'tenant_admin' || response.user.role === 'director') {
-        window.location.href = '/admin-dashboard';
+        redirectPath = '/admin-dashboard';
       } else if (response.user.role === 'lab_technician') {
-        window.location.href = '/laboratory-dashboard';
+        redirectPath = '/laboratory-dashboard';
       } else if (response.user.role === 'pharmacist') {
-        window.location.href = '/pharmacy-dashboard';
+        redirectPath = '/pharmacy-dashboard';
       } else if (response.user.role === 'receptionist') {
-        window.location.href = '/receptionist-dashboard';
-      } else {
-        window.location.href = '/dashboard';
+        redirectPath = '/receptionist-dashboard';
       }
+      
+      console.log('Login successful, navigating to:', redirectPath);
+      
+      // Use a small delay to ensure localStorage is updated before navigation
+      setTimeout(() => {
+        setLocation(redirectPath);
+        window.location.reload(); // Force a single reload to ensure auth context is updated
+      }, 100);
     } catch (err: any) {
       setError(err.message || "Login failed");
     } finally {

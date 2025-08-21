@@ -27,8 +27,9 @@ export const Header = () => {
   const [notifications, setNotifications] = useState([]);
 
   const handleLogout = () => {
+    console.log('Logout initiated from header');
     logout();
-    // No need to setLocation since logout() already redirects to "/"
+    // logout() function handles the redirect
   };
 
   const dismissNotification = (notificationId: number) => {
