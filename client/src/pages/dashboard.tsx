@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useTranslation } from "@/contexts/translation-context";
 import { useLocation } from "wouter";
+import { usePermissions } from "@/hooks/usePermissions";
 import PharmacyDashboardEnhancedV2 from "@/pages/pharmacy-dashboard-enhanced-v2";
 import HospitalUserRoleManagement from "@/components/hospital/HospitalUserRoleManagement";
 import AdminPermissionsManager from "@/components/admin/AdminPermissionsManager";
@@ -42,6 +43,7 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const { hasPermission, canAccessModule, getModulePermissions } = usePermissions();
 
   const isSuperAdmin = user?.role === 'super_admin';
 
@@ -1754,40 +1756,288 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Admin Controls Section - Only for Tenant Admin and Super Admin */}
-      {(user?.role === 'tenant_admin' || user?.role === 'super_admin') && (
+      {/* Admin Controls Section - Permission-Based Access */}
+      {hasPermission('dashboard', 'view_admin') && (
         <>
-          {/* Admin Permissions Management */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Shield className="h-5 w-5 mr-2 text-red-600" />
-                Admin Permissions Control
-              </CardTitle>
-              <CardDescription>
-                Define exactly what each admin can see and do in the application. Control access to modules, features, and operations.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AdminPermissionsManager />
-            </CardContent>
-          </Card>
+          {/* Admin Permissions Management - Only if user can modify roles */}
+          {hasPermission('roles', 'modify') && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Shield className="h-5 w-5 mr-2 text-red-600" />
+                  Admin Permissions Control
+                </CardTitle>
+                <CardDescription>
+                  Define exactly what each admin can see and do in the application. Control access to modules, features, and operations.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AdminPermissionsManager />
+              </CardContent>
+            </Card>
+          )}
 
-          {/* Staff Role Management */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <UserCheck className="h-5 w-5 mr-2 text-blue-600" />
-                Staff Role Management
-              </CardTitle>
-              <CardDescription>
-                Assign and manage roles for hospital staff based on your administrative privileges
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <HospitalUserRoleManagement />
-            </CardContent>
-          </Card>
+          {/* Staff Role Management - Only if user can assign roles */}
+          {hasPermission('roles', 'assign') && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <UserCheck className="h-5 w-5 mr-2 text-blue-600" />
+                  Staff Role Management
+                </CardTitle>
+                <CardDescription>
+                  Assign and manage roles for hospital staff based on your administrative privileges
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <HospitalUserRoleManagement />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Users Management - Only if user has user permissions */}
+          {canAccessModule('users') && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-green-600" />
+                  User Management
+                </CardTitle>
+                <CardDescription>
+                  Manage hospital staff, view user information, and control access.
+                  Permissions: {getModulePermissions('users').join(', ')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {hasPermission('users', 'view') && (
+                    <Button variant="outline" onClick={() => setLocation('/users')}>
+                      <Users className="h-4 w-4 mr-2" />
+                      View Users
+                    </Button>
+                  )}
+                  {hasPermission('users', 'create') && (
+                    <Button variant="outline" onClick={() => setLocation('/users/create')}>
+                      <Users className="h-4 w-4 mr-2" />
+                      Add New User
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Patients Management - Based on patient permissions */}
+          {canAccessModule('patients') && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-blue-600" />
+                  Patient Management
+                </CardTitle>
+                <CardDescription>
+                  Access patient records and information.
+                  Permissions: {getModulePermissions('patients').join(', ')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {hasPermission('patients', 'view') && (
+                    <Button variant="outline" onClick={() => setLocation('/patients')}>
+                      <Users className="h-4 w-4 mr-2" />
+                      View Patients
+                    </Button>
+                  )}
+                  {hasPermission('patients', 'search') && (
+                    <Button variant="outline" onClick={() => setLocation('/patients/search')}>
+                      <Users className="h-4 w-4 mr-2" />
+                      Search Patients
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Appointments Management */}
+          {canAccessModule('appointments') && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Calendar className="h-5 w-5 mr-2 text-purple-600" />
+                  Appointments Management
+                </CardTitle>
+                <CardDescription>
+                  Manage patient appointments and scheduling.
+                  Permissions: {getModulePermissions('appointments').join(', ')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {hasPermission('appointments', 'view') && (
+                    <Button variant="outline" onClick={() => setLocation('/appointments')}>
+                      <Calendar className="h-4 w-4 mr-2" />
+                      View Appointments
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Billing Management */}
+          {canAccessModule('billing') && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <DollarSign className="h-5 w-5 mr-2 text-green-600" />
+                  Billing Management
+                </CardTitle>
+                <CardDescription>
+                  Manage billing, claims, and financial operations.
+                  Permissions: {getModulePermissions('billing').join(', ')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {hasPermission('billing', 'view') && (
+                    <Button variant="outline" onClick={() => setLocation('/billing')}>
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      View Billing
+                    </Button>
+                  )}
+                  {hasPermission('billing', 'manage') && (
+                    <Button variant="outline" onClick={() => setLocation('/billing/manage')}>
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Manage Claims
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Service Price Management */}
+          {canAccessModule('service_price') && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <DollarSign className="h-5 w-5 mr-2 text-orange-600" />
+                  Service Price Management
+                </CardTitle>
+                <CardDescription>
+                  Manage service pricing and rates.
+                  Permissions: {getModulePermissions('service_price').join(', ')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {hasPermission('service_price', 'view') && (
+                    <Button variant="outline" onClick={() => setLocation('/service-prices')}>
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      View Prices
+                    </Button>
+                  )}
+                  {hasPermission('service_price', 'manage') && (
+                    <Button variant="outline" onClick={() => setLocation('/service-prices/manage')}>
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Manage Prices
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Reports Management */}
+          {canAccessModule('reports') && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <FileText className="h-5 w-5 mr-2 text-indigo-600" />
+                  Reports & Analytics
+                </CardTitle>
+                <CardDescription>
+                  Generate and view system reports.
+                  Permissions: {getModulePermissions('reports').join(', ')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {hasPermission('reports', 'view') && (
+                    <Button variant="outline" onClick={() => setLocation('/reports')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Reports
+                    </Button>
+                  )}
+                  {hasPermission('reports', 'generate') && (
+                    <Button variant="outline" onClick={() => setLocation('/reports/generate')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Generate Reports
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Audit Logs */}
+          {canAccessModule('audit_logs') && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Database className="h-5 w-5 mr-2 text-gray-600" />
+                  Audit Logs
+                </CardTitle>
+                <CardDescription>
+                  View system activity and security logs.
+                  Permissions: {getModulePermissions('audit_logs').join(', ')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {hasPermission('audit_logs', 'view') && (
+                    <Button variant="outline" onClick={() => setLocation('/audit-logs')}>
+                      <Database className="h-4 w-4 mr-2" />
+                      View Audit Logs
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Tenant Settings */}
+          {canAccessModule('tenant_settings') && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Building2 className="h-5 w-5 mr-2 text-teal-600" />
+                  System Settings
+                </CardTitle>
+                <CardDescription>
+                  Configure hospital settings and preferences.
+                  Permissions: {getModulePermissions('tenant_settings').join(', ')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {hasPermission('tenant_settings', 'view') && (
+                    <Button variant="outline" onClick={() => setLocation('/settings')}>
+                      <Building2 className="h-4 w-4 mr-2" />
+                      View Settings
+                    </Button>
+                  )}
+                  {hasPermission('tenant_settings', 'update') && (
+                    <Button variant="outline" onClick={() => setLocation('/settings/configure')}>
+                      <Building2 className="h-4 w-4 mr-2" />
+                      Configure Settings
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>

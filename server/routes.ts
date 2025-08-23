@@ -4297,6 +4297,84 @@ Report ID: ${report.id}
     }
   });
 
+  // Initialize default TENANT ADMIN permissions
+  app.post("/api/role-permissions/initialize-tenant-admin", authenticateToken, requireRole(["super_admin", "tenant_admin"]), requireTenant, async (req, res) => {
+    try {
+      console.log("🚀 [INIT] Initializing TENANT ADMIN permissions for tenant:", req.tenantId);
+      
+      const userId = req.userId || req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      // Define the exact permissions the user specified for TENANT ADMIN
+      const tenantAdminPermissions = {
+        patients: ["view", "search"],
+        appointments: ["view"],
+        users: ["view", "create", "update", "deactivate"],
+        roles: ["assign", "modify"],
+        tenant_settings: ["view", "update"],
+        audit_logs: ["view"],
+        reports: ["view", "generate"],
+        billing: ["view", "manage"],
+        service_price: ["view", "manage"],
+        dashboard: ["view_admin"]
+      };
+
+      const results = [];
+      for (const [module, permissions] of Object.entries(tenantAdminPermissions)) {
+        // Check if permission already exists
+        const existing = await storage.getRolePermissionByRoleAndModule("tenant_admin", module, req.tenantId!);
+        
+        if (existing) {
+          // Update existing
+          const updated = await storage.updateRolePermission(
+            existing.id,
+            {
+              permissions,
+              updatedBy: userId,
+              updatedAt: new Date()
+            },
+            req.tenantId!
+          );
+          results.push(updated);
+        } else {
+          // Create new
+          const created = await storage.createRolePermission({
+            tenantId: req.tenantId!,
+            role: "tenant_admin",
+            module,
+            permissions,
+            createdBy: userId,
+            isActive: true
+          });
+          results.push(created);
+        }
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenantId!,
+        userId: userId,
+        entityType: "role_permission",
+        entityId: "tenant_admin",
+        action: "initialize",
+        newData: { role: "tenant_admin", permissions: tenantAdminPermissions },
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      console.log("🚀 [INIT] Successfully initialized", results.length, "permissions");
+      res.json({ 
+        message: "TENANT ADMIN permissions initialized successfully",
+        permissions: results
+      });
+    } catch (error) {
+      console.error("🚀 [INIT] Error initializing permissions:", error);
+      res.status(500).json({ message: "Failed to initialize permissions" });
+    }
+  });
+
   // Delete/reset role permissions for a specific role
   app.delete("/api/role-permissions/:role", authenticateToken, requireRole(["tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
     try {
