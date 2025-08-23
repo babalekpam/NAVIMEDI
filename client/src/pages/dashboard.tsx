@@ -9,6 +9,7 @@ import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useTranslation } from "@/contexts/translation-context";
 import { useLocation } from "wouter";
 import PharmacyDashboardEnhancedV2 from "@/pages/pharmacy-dashboard-enhanced-v2";
+import HospitalUserRoleManagement from "@/components/hospital/HospitalUserRoleManagement";
 
 interface DashboardMetrics {
   todayAppointments: number;
@@ -1751,6 +1752,22 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Role Management Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <UserCheck className="h-5 w-5 mr-2 text-blue-600" />
+            Staff Role Management
+          </CardTitle>
+          <CardDescription>
+            Assign and manage roles for hospital staff based on your administrative privileges
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <HospitalUserRoleManagement />
+        </CardContent>
+      </Card>
     </div>
   );
   };
