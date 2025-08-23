@@ -202,24 +202,30 @@ const AdminPermissionsManager = () => {
 
   // Initialize editing permissions when role changes
   useEffect(() => {
-    if (currentPermissions && selectedRole) {
-      const rolePermissions: Record<string, string[]> = {};
-      
-      // Initialize all modules with empty permissions
-      Object.keys(moduleDefinitions).forEach(module => {
-        rolePermissions[module] = [];
-      });
+    console.log("🔄 [INIT] Initializing permissions for role:", selectedRole);
+    console.log("🔄 [INIT] Current permissions data:", currentPermissions);
+    
+    const rolePermissions: Record<string, string[]> = {};
+    
+    // Initialize all modules with empty permissions
+    Object.keys(moduleDefinitions).forEach(module => {
+      rolePermissions[module] = [];
+    });
 
-      // Fill in existing permissions
+    // Fill in existing permissions if any
+    if (currentPermissions && Array.isArray(currentPermissions)) {
       currentPermissions
         .filter((p: Permission) => p.role === selectedRole && p.isActive)
         .forEach((p: Permission) => {
-          rolePermissions[p.module] = p.permissions || [];
+          if (rolePermissions[p.module]) {
+            rolePermissions[p.module] = p.permissions || [];
+          }
         });
-
-      setEditingPermissions(rolePermissions);
-      setHasChanges(false);
     }
+
+    console.log("🔄 [INIT] Final permissions state:", rolePermissions);
+    setEditingPermissions(rolePermissions);
+    setHasChanges(false);
   }, [currentPermissions, selectedRole]);
 
   // Save permissions mutation
@@ -441,10 +447,18 @@ const AdminPermissionsManager = () => {
                 Configure detailed permissions for this role across all application modules
               </div>
               <div className="flex space-x-2">
+                {hasChanges && (
+                  <div className="bg-yellow-100 px-3 py-1 rounded-md text-yellow-800 text-sm">
+                    {Object.values(editingPermissions).reduce((acc, perms) => acc + perms.length, 0)} permissions enabled
+                  </div>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleResetPermissions}
+                  onClick={() => {
+                    console.log("🗑️ [RESET] Reset button clicked");
+                    handleResetPermissions();
+                  }}
                   disabled={resetPermissionsMutation.isPending}
                   data-testid="button-reset-permissions"
                 >
@@ -452,7 +466,10 @@ const AdminPermissionsManager = () => {
                   Reset All
                 </Button>
                 <Button
-                  onClick={handleSavePermissions}
+                  onClick={() => {
+                    console.log("💾 [SAVE] Save button clicked, current state:", editingPermissions);
+                    handleSavePermissions();
+                  }}
                   disabled={!hasChanges || savePermissionsMutation.isPending}
                   data-testid="button-save-permissions"
                 >
@@ -499,19 +516,27 @@ const AdminPermissionsManager = () => {
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {module.permissions.map((permission) => {
                         const isEnabled = modulePermissions.includes(permission);
+                        console.log(`🔧 [RENDER] ${moduleKey}.${permission}:`, isEnabled, "from array:", modulePermissions);
+                        
                         return (
                           <div key={permission} className="flex items-center space-x-3">
                             <Switch
                               id={`${moduleKey}-${permission}`}
                               checked={isEnabled}
-                              onCheckedChange={(checked) => 
-                                handlePermissionToggle(moduleKey, permission, checked)
-                              }
+                              onCheckedChange={(checked) => {
+                                console.log(`🖱️ [CLICK] Switch clicked: ${moduleKey}.${permission} -> ${checked}`);
+                                handlePermissionToggle(moduleKey, permission, checked);
+                              }}
                               data-testid={`switch-${moduleKey}-${permission}`}
                             />
                             <Label 
                               htmlFor={`${moduleKey}-${permission}`}
                               className="text-sm font-medium cursor-pointer"
+                              onClick={() => {
+                                console.log(`🖱️ [LABEL] Label clicked: ${moduleKey}.${permission}`);
+                                const newState = !isEnabled;
+                                handlePermissionToggle(moduleKey, permission, newState);
+                              }}
                             >
                               {permissionLabels[permission as keyof typeof permissionLabels] || permission}
                             </Label>
