@@ -2254,7 +2254,7 @@ export default function Dashboard() {
   
   // For tenant_admin and other hospital roles, show the hospital dashboard with role-based access
   if (tenant?.type === 'hospital') {
-    return renderHospitalAdminDashboard();
+    return renderTenantAdminDashboard();
   }
   
   // Default dashboard for other roles
