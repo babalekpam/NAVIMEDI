@@ -193,7 +193,9 @@ const AdminPermissionsManager = () => {
         }
       });
       if (!response.ok) throw new Error('Failed to fetch permissions');
-      return response.json();
+      const data = await response.json();
+      console.log("🔍 [PERMISSIONS] Fetched permissions:", data);
+      return data;
     },
     enabled: !!selectedRole && !!tenant
   });
@@ -223,31 +225,45 @@ const AdminPermissionsManager = () => {
   // Save permissions mutation
   const savePermissionsMutation = useMutation({
     mutationFn: async (permissions: Record<string, string[]>) => {
+      console.log("💾 [SAVE] Saving permissions:", permissions);
       const results = [];
       for (const [module, modulePermissions] of Object.entries(permissions)) {
         if (modulePermissions.length > 0) {
-          const result = await apiRequest("/api/role-permissions", {
-            method: "POST",
-            body: JSON.stringify({
-              role: selectedRole,
-              module,
-              permissions: modulePermissions
-            })
-          });
-          results.push(result);
+          console.log(`💾 [SAVE] Saving ${module}:`, modulePermissions);
+          try {
+            const result = await apiRequest("/api/role-permissions", {
+              method: "POST",
+              body: JSON.stringify({
+                role: selectedRole,
+                module,
+                permissions: modulePermissions
+              })
+            });
+            console.log(`✅ [SAVE] Saved ${module} successfully:`, result);
+            results.push(result);
+          } catch (error) {
+            console.error(`❌ [SAVE] Error saving ${module}:`, error);
+            throw error;
+          }
+        } else {
+          console.log(`⏭️ [SAVE] Skipping ${module} - no permissions`);
         }
       }
+      console.log("💾 [SAVE] All results:", results);
       return results;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("🎉 [SAVE] Save completed successfully:", data);
       toast({
         title: "Permissions Saved",
         description: `Permissions for ${roleDefinitions[selectedRole as keyof typeof roleDefinitions].name} have been updated successfully.`
       });
       setHasChanges(false);
       queryClient.invalidateQueries({ queryKey: ["/api/role-permissions"] });
+      refetch();
     },
     onError: (error: any) => {
+      console.error("💥 [SAVE] Save failed:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to save permissions",
@@ -285,6 +301,8 @@ const AdminPermissionsManager = () => {
   });
 
   const handlePermissionToggle = (module: string, permission: string, enabled: boolean) => {
+    console.log("🔧 [TOGGLE] Module:", module, "Permission:", permission, "Enabled:", enabled);
+    
     setEditingPermissions(prev => {
       const newPermissions = { ...prev };
       if (!newPermissions[module]) {
@@ -299,6 +317,7 @@ const AdminPermissionsManager = () => {
         newPermissions[module] = newPermissions[module].filter(p => p !== permission);
       }
       
+      console.log("🔧 [TOGGLE] Updated permissions:", newPermissions);
       setHasChanges(true);
       return newPermissions;
     });

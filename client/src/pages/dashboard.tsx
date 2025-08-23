@@ -1755,17 +1755,7 @@ export default function Dashboard() {
       </div>
 
       {/* Admin Controls Section - Only for Tenant Admin and Super Admin */}
-      {true && (
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            DEBUG: Current user role: <strong>{user?.role || 'undefined'}</strong>
-          </p>
-          <p className="text-sm text-blue-600">
-            Original condition: user?.role === 'tenant_admin' || user?.role === 'super_admin'
-          </p>
-        </div>
-      )}
-      {true && (
+      {(user?.role === 'tenant_admin' || user?.role === 'super_admin') && (
         <>
           {/* Admin Permissions Management */}
           <Card>
