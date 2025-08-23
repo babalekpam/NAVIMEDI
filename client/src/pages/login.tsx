@@ -69,11 +69,8 @@ export default function Login() {
       
       console.log('Login successful, navigating to:', redirectPath);
       
-      // Use a small delay to ensure localStorage is updated before navigation
-      setTimeout(() => {
-        setLocation(redirectPath);
-        window.location.reload(); // Force a single reload to ensure auth context is updated
-      }, 100);
+      // Navigate directly without reload to prevent 404 flash
+      setLocation(redirectPath);
     } catch (err: any) {
       setError(err.message || "Login failed");
     } finally {
