@@ -202,9 +202,6 @@ const AdminPermissionsManager = () => {
 
   // Initialize editing permissions when role changes
   useEffect(() => {
-    console.log("🔄 [INIT] Initializing permissions for role:", selectedRole);
-    console.log("🔄 [INIT] Current permissions data:", currentPermissions);
-    
     const rolePermissions: Record<string, string[]> = {};
     
     // Initialize all modules with empty permissions
@@ -223,7 +220,6 @@ const AdminPermissionsManager = () => {
         });
     }
 
-    console.log("🔄 [INIT] Final permissions state:", rolePermissions);
     setEditingPermissions(rolePermissions);
     setHasChanges(false);
   }, [currentPermissions, selectedRole]);
@@ -307,8 +303,6 @@ const AdminPermissionsManager = () => {
   });
 
   const handlePermissionToggle = (module: string, permission: string, enabled: boolean) => {
-    console.log("🔧 [TOGGLE] Module:", module, "Permission:", permission, "Enabled:", enabled);
-    
     setEditingPermissions(prev => {
       const newPermissions = { ...prev };
       if (!newPermissions[module]) {
@@ -323,7 +317,6 @@ const AdminPermissionsManager = () => {
         newPermissions[module] = newPermissions[module].filter(p => p !== permission);
       }
       
-      console.log("🔧 [TOGGLE] Updated permissions:", newPermissions);
       setHasChanges(true);
       return newPermissions;
     });
@@ -452,6 +445,44 @@ const AdminPermissionsManager = () => {
                     {Object.values(editingPermissions).reduce((acc, perms) => acc + perms.length, 0)} permissions enabled
                   </div>
                 )}
+                
+                {/* Initialize TENANT ADMIN permissions */}
+                {selectedRole === 'tenant_admin' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-800"
+                    onClick={async () => {
+                      try {
+                        const response = await fetch("/api/role-permissions/initialize-tenant-admin", {
+                          method: "POST",
+                          headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                          }
+                        });
+                        if (response.ok) {
+                          toast({
+                            title: "TENANT ADMIN Permissions Initialized",
+                            description: "Standard permissions have been set up according to your requirements."
+                          });
+                          refetch();
+                        } else {
+                          throw new Error('Failed to initialize permissions');
+                        }
+                      } catch (error: any) {
+                        toast({
+                          title: "Error",
+                          description: error.message || "Failed to initialize permissions",
+                          variant: "destructive"
+                        });
+                      }
+                    }}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Initialize Standard Permissions
+                  </Button>
+                )}
+                
                 <Button
                   variant="outline"
                   size="sm"
@@ -516,7 +547,6 @@ const AdminPermissionsManager = () => {
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {module.permissions.map((permission) => {
                         const isEnabled = modulePermissions.includes(permission);
-                        console.log(`🔧 [RENDER] ${moduleKey}.${permission}:`, isEnabled, "from array:", modulePermissions);
                         
                         return (
                           <div key={permission} className="flex items-center space-x-3">
@@ -524,7 +554,6 @@ const AdminPermissionsManager = () => {
                               id={`${moduleKey}-${permission}`}
                               checked={isEnabled}
                               onCheckedChange={(checked) => {
-                                console.log(`🖱️ [CLICK] Switch clicked: ${moduleKey}.${permission} -> ${checked}`);
                                 handlePermissionToggle(moduleKey, permission, checked);
                               }}
                               data-testid={`switch-${moduleKey}-${permission}`}
@@ -533,7 +562,6 @@ const AdminPermissionsManager = () => {
                               htmlFor={`${moduleKey}-${permission}`}
                               className="text-sm font-medium cursor-pointer"
                               onClick={() => {
-                                console.log(`🖱️ [LABEL] Label clicked: ${moduleKey}.${permission}`);
                                 const newState = !isEnabled;
                                 handlePermissionToggle(moduleKey, permission, newState);
                               }}

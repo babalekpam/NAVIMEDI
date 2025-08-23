@@ -2244,5 +2244,19 @@ export default function Dashboard() {
   );
 
   // Return the appropriate dashboard based on user role
-  return renderRoleSpecificDashboard();
+  if (user.role === 'super_admin') {
+    return renderSuperAdminDashboard();
+  }
+  
+  if (user.role === 'pharmacist') {
+    return <PharmacyDashboardEnhancedV2 />;
+  }
+  
+  // For tenant_admin and other hospital roles, show the hospital dashboard with role-based access
+  if (tenant?.type === 'hospital') {
+    return renderHospitalAdminDashboard();
+  }
+  
+  // Default dashboard for other roles
+  return renderDefaultDashboard();
 }
