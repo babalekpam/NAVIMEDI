@@ -4,5 +4,5 @@ Allow: /
 # Allow Google to crawl verification files
 Allow: /google*.html
 
-# Sitemap
-Sitemap: https://navimed.replit.app/sitemap.xml
+# Sitemap (relative URL)
+Sitemap: /sitemap.xml
