@@ -4,5 +4,5 @@ Allow: /
 # Allow Google to crawl verification files
 Allow: /google*.html
 
-# Sitemap (relative URL)
-Sitemap: /sitemap.xml
+# Sitemap
+Sitemap: https://navimedi.com/sitemap.xml
