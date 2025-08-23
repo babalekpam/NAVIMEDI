@@ -381,6 +381,10 @@ const AdminPermissionsManager = () => {
                 <SelectContent>
                   {Object.entries(roleDefinitions).map(([roleKey, role]) => {
                     const Icon = role.icon;
+                    // Ensure roleKey is never empty
+                    if (!roleKey || roleKey.trim() === '') {
+                      return null;
+                    }
                     return (
                       <SelectItem key={roleKey} value={roleKey}>
                         <div className="flex items-center">
