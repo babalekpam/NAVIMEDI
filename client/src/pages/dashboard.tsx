@@ -10,6 +10,7 @@ import { useTranslation } from "@/contexts/translation-context";
 import { useLocation } from "wouter";
 import PharmacyDashboardEnhancedV2 from "@/pages/pharmacy-dashboard-enhanced-v2";
 import HospitalUserRoleManagement from "@/components/hospital/HospitalUserRoleManagement";
+import AdminPermissionsManager from "@/components/admin/AdminPermissionsManager";
 
 interface DashboardMetrics {
   todayAppointments: number;
@@ -1753,21 +1754,42 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Role Management Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <UserCheck className="h-5 w-5 mr-2 text-blue-600" />
-            Staff Role Management
-          </CardTitle>
-          <CardDescription>
-            Assign and manage roles for hospital staff based on your administrative privileges
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <HospitalUserRoleManagement />
-        </CardContent>
-      </Card>
+      {/* Admin Controls Section - Only for Tenant Admin and Super Admin */}
+      {(user?.role === 'tenant_admin' || user?.role === 'super_admin') && (
+        <>
+          {/* Admin Permissions Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Shield className="h-5 w-5 mr-2 text-red-600" />
+                Admin Permissions Control
+              </CardTitle>
+              <CardDescription>
+                Define exactly what each admin can see and do in the application. Control access to modules, features, and operations.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AdminPermissionsManager />
+            </CardContent>
+          </Card>
+
+          {/* Staff Role Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <UserCheck className="h-5 w-5 mr-2 text-blue-600" />
+                Staff Role Management
+              </CardTitle>
+              <CardDescription>
+                Assign and manage roles for hospital staff based on your administrative privileges
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <HospitalUserRoleManagement />
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
   };

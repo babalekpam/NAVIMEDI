@@ -490,6 +490,7 @@ export interface IStorage {
   createRolePermission(permission: InsertRolePermission): Promise<RolePermission>;
   updateRolePermission(id: string, updates: Partial<RolePermission>, tenantId: string): Promise<RolePermission | undefined>;
   deleteRolePermission(id: string, tenantId: string): Promise<boolean>;
+  deleteRolePermissionsByRole(role: string, tenantId: string): Promise<number>;
   getRolePermissionByRoleAndModule(role: string, module: string, tenantId: string): Promise<RolePermission | undefined>;
 
   // Patient Billing operations
@@ -3150,6 +3151,14 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(rolePermissions.id, id), eq(rolePermissions.tenantId, tenantId)))
       .returning();
     return !!deleted;
+  }
+
+  async deleteRolePermissionsByRole(role: string, tenantId: string): Promise<number> {
+    const result = await db.update(rolePermissions)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(and(eq(rolePermissions.role, role), eq(rolePermissions.tenantId, tenantId)))
+      .returning();
+    return result.length;
   }
 
   async getRolePermissionByRoleAndModule(role: string, module: string, tenantId: string): Promise<RolePermission | undefined> {

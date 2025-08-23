@@ -4297,6 +4297,46 @@ Report ID: ${report.id}
     }
   });
 
+  // Delete/reset role permissions for a specific role
+  app.delete("/api/role-permissions/:role", authenticateToken, requireRole(["tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
+    try {
+      const { role } = req.params;
+      console.log("🔧 [SERVER] Role permissions DELETE request for role:", role);
+      
+      if (!role) {
+        return res.status(400).json({ message: "Role parameter is required" });
+      }
+
+      // Delete all permissions for this role in this tenant
+      const deletedCount = await storage.deleteRolePermissionsByRole(role, req.tenantId!);
+      console.log("🔧 [SERVER] Deleted permissions count:", deletedCount);
+
+      // Create audit log
+      const userId = req.userId || req.user?.id;
+      if (userId) {
+        await storage.createAuditLog({
+          tenantId: req.tenantId!,
+          userId: userId,
+          entityType: "role_permission",
+          entityId: role,
+          action: "reset",
+          previousData: { role, action: "reset_all_permissions" },
+          ipAddress: req.ip,
+          userAgent: req.get("User-Agent")
+        });
+      }
+
+      res.json({ 
+        message: "Role permissions reset successfully",
+        role,
+        deletedCount
+      });
+    } catch (error) {
+      console.error("🔧 [SERVER] Error resetting role permissions:", error);
+      res.status(500).json({ message: "Failed to reset role permissions" });
+    }
+  });
+
   // ==== DEPARTMENT MANAGEMENT ====
   // Get departments for a tenant
   app.get('/api/departments', authenticateToken, requireTenant, async (req, res) => {
