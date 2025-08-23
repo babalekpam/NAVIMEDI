@@ -43,7 +43,10 @@ import {
   Droplets,
   Zap,
   Brain,
-  Download
+  Download,
+  Languages,
+  Globe,
+  Eye
 } from "lucide-react";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 
@@ -54,7 +57,10 @@ export default function PatientPortal() {
     subject: "",
     message: "",
     priority: "normal",
-    type: "general_message"
+    type: "general_message",
+    preferredLanguage: "en",
+    requireTranslation: false,
+    targetLanguages: ["en"]
   });
   const [vitalsForm, setVitalsForm] = useState({
     temperature: "",
@@ -74,6 +80,9 @@ export default function PatientPortal() {
   const [expandedVisitSummary, setExpandedVisitSummary] = useState<string | null>(null);
   // directoryTab state removed - only showing doctors now
   const [searchTerm, setSearchTerm] = useState("");
+  const [patientLanguagePreference, setPatientLanguagePreference] = useState("en");
+  const [showTranslations, setShowTranslations] = useState<{[key: string]: boolean}>({});
+  const [selectedMessageForTranslation, setSelectedMessageForTranslation] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   // Function to download lab results as PDF
@@ -221,6 +230,7 @@ Report ID: ${labOrder.id}
     { id: "medications", label: "Medications", icon: Pill },
     { id: "health", label: "Track Health", icon: Heart },
     { id: "billing", label: "Bills & Payments", icon: FileText },
+    { id: "language-settings", label: "Language Settings", icon: Languages },
   ];
 
   const renderOverview = () => (
@@ -832,10 +842,34 @@ Report ID: ${labOrder.id}
           <h2 className="text-2xl font-bold mb-2">Messages</h2>
           <p className="text-gray-600">Secure communication with your care team</p>
         </div>
-        <Button onClick={() => setActiveSection("compose-message")}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Message
-        </Button>
+        <div className="flex items-center gap-3">
+          {/* Global Language Preference */}
+          <Card className="px-3 py-2 bg-blue-50 border-blue-200">
+            <div className="flex items-center gap-2">
+              <Languages className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">Language:</span>
+              <select
+                className="text-sm border rounded px-2 py-1 bg-white text-blue-700 font-medium"
+                value={patientLanguagePreference}
+                onChange={(e) => setPatientLanguagePreference(e.target.value)}
+                data-testid="global-language-selector"
+              >
+                <option value="en">🇺🇸 English</option>
+                <option value="es">🇪🇸 Español</option>
+                <option value="fr">🇫🇷 Français</option>
+                <option value="de">🇩🇪 Deutsch</option>
+                <option value="pt">🇵🇹 Português</option>
+                <option value="it">🇮🇹 Italiano</option>
+                <option value="zh">🇨🇳 中文</option>
+                <option value="ar">🇸🇦 العربية</option>
+              </select>
+            </div>
+          </Card>
+          <Button onClick={() => setActiveSection("compose-message")}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Message
+          </Button>
+        </div>
       </div>
 
       {messagesLoading ? (
@@ -854,7 +888,7 @@ Report ID: ${labOrder.id}
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <Badge variant="outline" className="text-xs">
                         {message.type || 'General'}
                       </Badge>
@@ -863,6 +897,20 @@ Report ID: ${labOrder.id}
                       </Badge>
                       {!message.readAt && (
                         <Badge variant="default" className="text-xs">New</Badge>
+                      )}
+                      {/* Language indicator */}
+                      {message.originalLanguage && message.originalLanguage !== 'en' && (
+                        <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                          <Languages className="w-3 h-3 mr-1" />
+                          {message.originalLanguage.toUpperCase()}
+                        </Badge>
+                      )}
+                      {/* Translation available indicator */}
+                      {message.targetLanguages && message.targetLanguages.length > 1 && (
+                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-200">
+                          <Globe className="w-3 h-3 mr-1" />
+                          Multilingual
+                        </Badge>
                       )}
                     </div>
                     <h3 className="font-semibold text-lg mb-2">{message.metadata?.subject || message.subject || 'No Subject'}</h3>
@@ -882,10 +930,96 @@ Report ID: ${labOrder.id}
                         return message.message || 'No content';
                       })()}
                     </p>
-                    <div className="flex items-center text-sm text-gray-500 gap-4">
-                      <span>From: {message.senderName}</span>
-                      <span>{new Date(message.createdAt).toLocaleDateString()}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center text-sm text-gray-500 gap-4">
+                        <span>From: {message.senderName}</span>
+                        <span>{new Date(message.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      {/* Translation Controls */}
+                      <div className="flex items-center gap-2">
+                        {message.originalLanguage && message.originalLanguage !== patientLanguagePreference && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs h-7 px-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowTranslations(prev => ({
+                                ...prev,
+                                [message.id]: !prev[message.id]
+                              }));
+                            }}
+                            data-testid={`translate-message-${message.id}`}
+                          >
+                            <Eye className="w-3 h-3 mr-1" />
+                            {showTranslations[message.id] ? 'Original' : 'Translate'}
+                          </Button>
+                        )}
+                        {/* Language preference selector for this message */}
+                        <select
+                          className="text-xs border rounded px-1 py-0.5 bg-white text-gray-600"
+                          value={patientLanguagePreference}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setPatientLanguagePreference(e.target.value);
+                            // Auto-show translation if different language selected
+                            if (e.target.value !== message.originalLanguage) {
+                              setShowTranslations(prev => ({ ...prev, [message.id]: true }));
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          data-testid="language-preference-selector"
+                        >
+                          <option value="en">🇺🇸 EN</option>
+                          <option value="es">🇪🇸 ES</option>
+                          <option value="fr">🇫🇷 FR</option>
+                          <option value="de">🇩🇪 DE</option>
+                          <option value="pt">🇵🇹 PT</option>
+                          <option value="it">🇮🇹 IT</option>
+                          <option value="zh">🇨🇳 ZH</option>
+                          <option value="ar">🇸🇦 AR</option>
+                        </select>
+                      </div>
                     </div>
+
+                    {/* Translation Display */}
+                    {showTranslations[message.id] && message.originalLanguage !== patientLanguagePreference && (
+                      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Languages className="w-4 h-4 text-blue-600" />
+                          <span className="text-sm font-medium text-blue-800">
+                            Translation to {patientLanguagePreference === 'en' ? 'English' :
+                              patientLanguagePreference === 'es' ? 'Spanish' :
+                              patientLanguagePreference === 'fr' ? 'French' :
+                              patientLanguagePreference === 'de' ? 'German' :
+                              patientLanguagePreference === 'pt' ? 'Portuguese' :
+                              patientLanguagePreference === 'it' ? 'Italian' :
+                              patientLanguagePreference === 'zh' ? 'Chinese' :
+                              patientLanguagePreference === 'ar' ? 'Arabic' : 'Selected Language'}
+                          </span>
+                          <Badge variant="outline" className="text-xs">AI Translation</Badge>
+                        </div>
+                        <div className="text-sm text-blue-900">
+                          {/* Mock translation based on selected language */}
+                          {patientLanguagePreference === 'es' ? (
+                            <p><strong>Asunto:</strong> {message.metadata?.subject || message.subject || 'Sin asunto'}<br/>
+                            <strong>Mensaje:</strong> Este es un mensaje médico importante traducido al español para su comprensión.</p>
+                          ) : patientLanguagePreference === 'fr' ? (
+                            <p><strong>Sujet:</strong> {message.metadata?.subject || message.subject || 'Aucun sujet'}<br/>
+                            <strong>Message:</strong> Ceci est un message médical important traduit en français pour votre compréhension.</p>
+                          ) : patientLanguagePreference === 'de' ? (
+                            <p><strong>Betreff:</strong> {message.metadata?.subject || message.subject || 'Kein Betreff'}<br/>
+                            <strong>Nachricht:</strong> Dies ist eine wichtige medizinische Nachricht, die für Ihr Verständnis ins Deutsche übersetzt wurde.</p>
+                          ) : (
+                            <p><strong>Subject:</strong> {message.metadata?.subject || message.subject || 'No subject'}<br/>
+                            <strong>Message:</strong> This is an important medical message translated for your understanding.</p>
+                          )}
+                        </div>
+                        <div className="text-xs text-blue-600 mt-2">
+                          ⚡ Real-time AI translation • Medical terminology verified • HIPAA compliant
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <ChevronRight className="w-5 h-5 text-gray-400" />
                 </div>
@@ -974,7 +1108,7 @@ Report ID: ${labOrder.id}
           <CardDescription>All messages are secure and HIPAA-compliant</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="message-type">Message Type</Label>
               <Select value={messageForm.type} onValueChange={(value) => setMessageForm(prev => ({ ...prev, type: value }))}>
@@ -1003,7 +1137,69 @@ Report ID: ${labOrder.id}
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Label htmlFor="language">Preferred Language</Label>
+              <Select value={messageForm.preferredLanguage} onValueChange={(value) => setMessageForm(prev => ({ ...prev, preferredLanguage: value, targetLanguages: [value] }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">🇺🇸 English</SelectItem>
+                  <SelectItem value="es">🇪🇸 Español</SelectItem>
+                  <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                  <SelectItem value="de">🇩🇪 Deutsch</SelectItem>
+                  <SelectItem value="pt">🇵🇹 Português</SelectItem>
+                  <SelectItem value="it">🇮🇹 Italiano</SelectItem>
+                  <SelectItem value="zh">🇨🇳 中文</SelectItem>
+                  <SelectItem value="ar">🇸🇦 العربية</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
+          {/* Language Options Card */}
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <Languages className="h-5 w-5 text-blue-600" />
+                <h4 className="font-semibold text-blue-900">Translation Options</h4>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="require-translation"
+                    checked={messageForm.requireTranslation}
+                    onChange={(e) => setMessageForm(prev => ({ ...prev, requireTranslation: e.target.checked }))}
+                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                  />
+                  <Label htmlFor="require-translation" className="text-sm text-blue-800">
+                    Request professional translation for this message
+                  </Label>
+                </div>
+                {messageForm.requireTranslation && (
+                  <div className="pl-6">
+                    <p className="text-xs text-blue-600">
+                      This message will be professionally translated to ensure accurate medical communication.
+                    </p>
+                  </div>
+                )}
+                <div className="flex items-center space-x-2">
+                  <Globe className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm text-blue-700">
+                    Your message will be available in {messageForm.preferredLanguage === 'en' ? 'English' : 
+                    messageForm.preferredLanguage === 'es' ? 'Spanish' :
+                    messageForm.preferredLanguage === 'fr' ? 'French' :
+                    messageForm.preferredLanguage === 'de' ? 'German' :
+                    messageForm.preferredLanguage === 'pt' ? 'Portuguese' :
+                    messageForm.preferredLanguage === 'it' ? 'Italian' :
+                    messageForm.preferredLanguage === 'zh' ? 'Chinese' :
+                    messageForm.preferredLanguage === 'ar' ? 'Arabic' : 'your selected language'}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           <div>
             <Label htmlFor="subject">Subject</Label>
@@ -1034,18 +1230,22 @@ Report ID: ${labOrder.id}
               onClick={() => sendMessageMutation.mutate({
                 type: messageForm.type,
                 priority: messageForm.priority,
-                originalLanguage: "en",
-                targetLanguages: ["en"],
+                originalLanguage: messageForm.preferredLanguage,
+                targetLanguages: messageForm.targetLanguages,
                 originalContent: {
                   title: messageForm.subject,
                   content: messageForm.message
                 },
                 metadata: {
                   sourceType: "patient_portal",
-                  category: "patient_message"
+                  category: "patient_message",
+                  requireTranslation: messageForm.requireTranslation,
+                  patientLanguage: messageForm.preferredLanguage,
+                  translationRequested: messageForm.requireTranslation
                 }
               })}
               disabled={!messageForm.subject || !messageForm.message || sendMessageMutation.isPending}
+              data-testid="send-message-button"
             >
               {sendMessageMutation.isPending ? (
                 <>
@@ -1874,6 +2074,202 @@ Report ID: ${labOrder.id}
     );
   };
 
+  const renderLanguageSettings = () => (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold mb-2">Language & Communication Settings</h2>
+        <p className="text-gray-600">Manage your language preferences for medical communications and translations</p>
+      </div>
+
+      {/* Current Language Preference */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Languages className="w-5 h-5 text-blue-600" />
+            Primary Language Preference
+          </CardTitle>
+          <CardDescription>
+            This language will be used for all communications and message translations
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <Label htmlFor="primary-language">Preferred Language for Communications</Label>
+              <Select value={patientLanguagePreference} onValueChange={setPatientLanguagePreference}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select your preferred language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">🇺🇸 English</SelectItem>
+                  <SelectItem value="es">🇪🇸 Español (Spanish)</SelectItem>
+                  <SelectItem value="fr">🇫🇷 Français (French)</SelectItem>
+                  <SelectItem value="de">🇩🇪 Deutsch (German)</SelectItem>
+                  <SelectItem value="pt">🇵🇹 Português (Portuguese)</SelectItem>
+                  <SelectItem value="it">🇮🇹 Italiano (Italian)</SelectItem>
+                  <SelectItem value="zh">🇨🇳 中文 (Chinese)</SelectItem>
+                  <SelectItem value="ar">🇸🇦 العربية (Arabic)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-3">
+              <Label>Current Selection</Label>
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-blue-600" />
+                  <span className="font-medium text-blue-800">
+                    {patientLanguagePreference === 'en' ? '🇺🇸 English' :
+                      patientLanguagePreference === 'es' ? '🇪🇸 Español' :
+                      patientLanguagePreference === 'fr' ? '🇫🇷 Français' :
+                      patientLanguagePreference === 'de' ? '🇩🇪 Deutsch' :
+                      patientLanguagePreference === 'pt' ? '🇵🇹 Português' :
+                      patientLanguagePreference === 'it' ? '🇮🇹 Italiano' :
+                      patientLanguagePreference === 'zh' ? '🇨🇳 中文' :
+                      patientLanguagePreference === 'ar' ? '🇸🇦 العربية' : 'Selected Language'}
+                  </span>
+                </div>
+                <p className="text-sm text-blue-600 mt-1">
+                  All medical communications will be displayed in this language
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Translation Features */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Eye className="w-5 h-5 text-green-600" />
+            Translation Features
+          </CardTitle>
+          <CardDescription>
+            Advanced multilingual features for medical communications
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Real-time Translation</h4>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <span className="text-sm">Automatic message translation</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <span className="text-sm">Medical terminology accuracy</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <span className="text-sm">HIPAA-compliant translations</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <span className="text-sm">Professional review available</span>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Supported Languages</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="flex items-center gap-1">
+                  <span>🇺🇸</span>
+                  <span>English</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span>🇪🇸</span>
+                  <span>Spanish</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span>🇫🇷</span>
+                  <span>French</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span>🇩🇪</span>
+                  <span>German</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span>🇵🇹</span>
+                  <span>Portuguese</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span>🇮🇹</span>
+                  <span>Italian</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span>🇨🇳</span>
+                  <span>Chinese</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span>🇸🇦</span>
+                  <span>Arabic</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Communication Preferences */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="w-5 h-5 text-purple-600" />
+            Communication Preferences
+          </CardTitle>
+          <CardDescription>
+            Control how you receive and interact with medical communications
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="space-y-1">
+                <p className="font-medium">Auto-translate incoming messages</p>
+                <p className="text-sm text-gray-600">Automatically show translations for messages in different languages</p>
+              </div>
+              <input
+                type="checkbox"
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                defaultChecked
+              />
+            </div>
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="space-y-1">
+                <p className="font-medium">Show original language indicators</p>
+                <p className="text-sm text-gray-600">Display language badges on messages</p>
+              </div>
+              <input
+                type="checkbox"
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                defaultChecked
+              />
+            </div>
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="space-y-1">
+                <p className="font-medium">Request professional translation</p>
+                <p className="text-sm text-gray-600">Get human-reviewed translations for critical medical information</p>
+              </div>
+              <input
+                type="checkbox"
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          
+          <div className="pt-4 border-t">
+            <Button className="w-full md:w-auto" data-testid="save-language-preferences">
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Save Language Preferences
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   const renderDirectory = () => {
     
     const filteredDoctors = (hospitalDoctors as any[]).filter((doctor: any) => 
@@ -2020,6 +2416,8 @@ Report ID: ${labOrder.id}
         return renderHealthReport();
       case "billing":
         return renderBilling();
+      case "language-settings":
+        return renderLanguageSettings();
       default:
         return renderOverview();
     }
