@@ -130,19 +130,45 @@ export const requireSuperAdmin = (req: AuthenticatedRequest, res: Response, next
 };
 
 // Public routes that don't require authentication
-const publicRoutes = ['/api/health', '/api/platform/stats', '/api/login', '/api/auth/login', '/api/validate-token', '/api/laboratory-registration', '/api/pharmacy-registration', '/api/tenant/current', '/api/register-organization', '/api/currency/detect', '/api/currencies/african-countries', '/api/advertisements', '/api/marketplace/products', '/api/marketplace/quote-requests', '/advertisements', '/marketplace/products', '/marketplace/quote-requests'];
+const publicRoutes = [
+  // Main website routes - publicly accessible for SEO
+  '/', '/about', '/pricing', '/contact', '/features', '/security', '/terms', '/privacy',
+  // Static assets and verification files
+  '/robots.txt', '/sitemap.xml', '/favicon.ico', 
+  '/google*.html', '/google2ae759b1998ec13b.html',
+  // API routes
+  '/api/health', '/api/platform/stats', '/api/login', '/api/auth/login', '/api/validate-token', 
+  '/api/laboratory-registration', '/api/pharmacy-registration', '/api/tenant/current', 
+  '/api/register-organization', '/api/currency/detect', '/api/currencies/african-countries', 
+  '/api/advertisements', '/api/marketplace/products', '/api/marketplace/quote-requests', 
+  '/advertisements', '/marketplace/products', '/marketplace/quote-requests'
+];
 
 // Modified tenant context middleware to allow public routes
 export const setTenantContext = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   // Skip authentication for public routes
   const isPublicRoute = publicRoutes.some(route => {
+    // Handle special patterns
+    if (route.includes('*') || route.includes('google*.html')) {
+      if (route === '/google*.html') {
+        return req.path.startsWith('/google') && req.path.endsWith('.html');
+      }
+      return req.path.startsWith(route.replace('*', ''));
+    }
+    
+    // Handle dynamic routes and special cases
     if (route.includes(':') || req.path.includes('/currency/detect/') || req.path.includes('/currencies/african-countries')) {
       return req.path.startsWith(route) || req.path.includes('/currency/detect/') || req.path.includes('/currencies/african-countries');
     }
+    
+    // Exact match for regular routes
     return req.path === route;
   });
   
-  if (isPublicRoute) {
+  // Also allow static file extensions and common paths
+  const isStaticFile = /\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|html)$/.test(req.path);
+  
+  if (isPublicRoute || isStaticFile) {
     return next();
   }
   
