@@ -364,7 +364,7 @@ export default function Dashboard() {
     );
   }
 
-  // Tenant Admin Dashboard (defined early to avoid hoisting issues)
+  // Role-Based Permission Dashboard (replaces old static content)
   const renderTenantAdminDashboard = () => {
     const handleRefresh = async () => {
       try {
@@ -385,13 +385,13 @@ export default function Dashboard() {
       <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Hospital Admin Dashboard</h1>
-          <p className="text-gray-600 mt-1">Welcome back, {user.firstName}. Complete hospital management and oversight for {tenant?.name}.</p>
+          <h1 className="text-3xl font-bold text-gray-900">Role-Based Admin Dashboard</h1>
+          <p className="text-gray-600 mt-1">Welcome back, {user.firstName}. Sections shown based on your role permissions for {tenant?.name}.</p>
         </div>
         <div className="flex items-center space-x-3">
-          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-            <Building2 className="h-3 w-3 mr-1" />
-            {tenant?.type === 'hospital' ? 'Hospital Admin' : 'Organization Admin'}
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            <Shield className="h-3 w-3 mr-1" />
+            {user.role?.toUpperCase().replace('_', ' ')}
           </Badge>
           <Button 
             variant="outline" 
@@ -405,99 +405,22 @@ export default function Dashboard() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Today's Appointments</p>
-                <p className="text-3xl font-bold text-gray-900">{metrics?.todayAppointments || 0}</p>
-                <p className="text-xs text-blue-600 mt-1">All departments</p>
-              </div>
-              <Calendar className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Pending Lab Results</p>
-                <p className="text-3xl font-bold text-gray-900">{metrics?.pendingLabResults || 0}</p>
-                <p className="text-xs text-purple-600 mt-1">Awaiting review</p>
-              </div>
-              <TestTube className="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Active Prescriptions</p>
-                <p className="text-3xl font-bold text-gray-900">{metrics?.activePrescriptions || 0}</p>
-                <p className="text-xs text-green-600 mt-1">Current patients</p>
-              </div>
-              <Pill className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Monthly Claims</p>
-                <p className="text-3xl font-bold text-gray-900">${metrics?.monthlyClaimsTotal || 0}</p>
-                <p className="text-xs text-green-600 mt-1">Insurance revenue</p>
-              </div>
-              <DollarSign className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Role-Based Dashboard - Sections appear only based on user permissions */}
+      <div className="text-center py-8 border-2 border-dashed border-green-300 bg-green-50 rounded-lg mb-6">
+        <Shield className="h-12 w-12 mx-auto mb-4 text-green-500" />
+        <h3 className="text-xl font-semibold text-green-900 mb-2">🔐 Permission-Based Dashboard Active</h3>
+        <p className="text-green-700 mb-4">Only sections you have permission to access will appear below.</p>
+        <div className="flex justify-center space-x-4">
+          <Badge className="bg-green-100 text-green-800 border-green-200 px-3 py-1">
+            Current Role: {user.role?.toUpperCase().replace('_', ' ')}
+          </Badge>
+          <Badge className="bg-blue-100 text-blue-800 border-blue-200 px-3 py-1">
+            Organization: {tenant?.name}
+          </Badge>
+        </div>
       </div>
 
-      {/* Quick Actions for Hospital Admin */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Hospital Management Actions</CardTitle>
-          <CardDescription>Quick access to key hospital administration functions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button 
-              className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => setLocation('/patients')}
-            >
-              <Users className="h-6 w-6" />
-              <span>Patient Management</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => setLocation('/appointments')}
-            >
-              <Calendar className="h-6 w-6" />
-              <span>Appointments</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => setLocation('/lab-orders')}
-            >
-              <TestTube className="h-6 w-6" />
-              <span>Laboratory</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => setLocation('/prescriptions')}
-            >
-              <Pill className="h-6 w-6" />
-              <span>Prescriptions</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+
 
       {/* Hospital Overview Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1547,99 +1470,22 @@ export default function Dashboard() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Today's Appointments</p>
-                <p className="text-3xl font-bold text-gray-900">{metrics?.todayAppointments || 0}</p>
-                <p className="text-xs text-blue-600 mt-1">All departments</p>
-              </div>
-              <Calendar className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Pending Lab Results</p>
-                <p className="text-3xl font-bold text-gray-900">{metrics?.pendingLabResults || 0}</p>
-                <p className="text-xs text-purple-600 mt-1">Awaiting review</p>
-              </div>
-              <TestTube className="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Active Prescriptions</p>
-                <p className="text-3xl font-bold text-gray-900">{metrics?.activePrescriptions || 0}</p>
-                <p className="text-xs text-green-600 mt-1">Current patients</p>
-              </div>
-              <Pill className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Monthly Claims</p>
-                <p className="text-3xl font-bold text-gray-900">${metrics?.monthlyClaimsTotal || 0}</p>
-                <p className="text-xs text-green-600 mt-1">Insurance revenue</p>
-              </div>
-              <DollarSign className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Role-Based Dashboard - Sections appear only based on user permissions */}
+      <div className="text-center py-8 border-2 border-dashed border-green-300 bg-green-50 rounded-lg mb-6">
+        <Shield className="h-12 w-12 mx-auto mb-4 text-green-500" />
+        <h3 className="text-xl font-semibold text-green-900 mb-2">🔐 Permission-Based Dashboard Active</h3>
+        <p className="text-green-700 mb-4">Only sections you have permission to access will appear below.</p>
+        <div className="flex justify-center space-x-4">
+          <Badge className="bg-green-100 text-green-800 border-green-200 px-3 py-1">
+            Current Role: {user.role?.toUpperCase().replace('_', ' ')}
+          </Badge>
+          <Badge className="bg-blue-100 text-blue-800 border-blue-200 px-3 py-1">
+            Organization: {tenant?.name}
+          </Badge>
+        </div>
       </div>
 
-      {/* Quick Actions for Hospital Admin */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Hospital Management Actions</CardTitle>
-          <CardDescription>Quick access to key hospital administration functions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button 
-              className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => setLocation('/patients')}
-            >
-              <Users className="h-6 w-6" />
-              <span>Patient Management</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => setLocation('/appointments')}
-            >
-              <Calendar className="h-6 w-6" />
-              <span>Appointments</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => setLocation('/lab-orders')}
-            >
-              <TestTube className="h-6 w-6" />
-              <span>Laboratory</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-24 flex flex-col items-center justify-center space-y-2"
-              onClick={() => setLocation('/prescriptions')}
-            >
-              <Pill className="h-6 w-6" />
-              <span>Prescriptions</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+
 
       {/* Hospital Overview Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
