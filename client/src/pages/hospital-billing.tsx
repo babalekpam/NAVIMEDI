@@ -324,7 +324,13 @@ export default function HospitalBilling() {
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => refetchBills()}
+                  onClick={async () => {
+                    await Promise.all([
+                      refetchBills(),
+                      queryClient.invalidateQueries({ queryKey: ["/api/hospital-bills"] }),
+                      queryClient.invalidateQueries({ queryKey: ["/api/billing"] })
+                    ]);
+                  }}
                   disabled={billsLoading}
                 >
                   <RefreshCw className={`h-4 w-4 mr-2 ${billsLoading ? 'animate-spin' : ''}`} />

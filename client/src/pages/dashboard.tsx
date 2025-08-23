@@ -53,7 +53,7 @@ export default function Dashboard() {
     isSuperAdmin,
     isPhysician: user?.role === 'physician',
     isPharmacist: user?.role === 'pharmacist',
-    queryEnabled: !!user && !!tenant && user?.role === 'physician' && !!(user?.id || user?.userId)
+    queryEnabled: !!user && !!tenant && user?.role === 'physician' && !!user?.id
   });
 
   // All hooks must be called before any conditional returns
@@ -84,8 +84,8 @@ export default function Dashboard() {
 
   // Get doctor's specific appointments if user is a physician - more targeted
   const { data: doctorAppointments = [], isLoading: doctorAppointmentsLoading } = useQuery({
-    queryKey: ["/api/appointments/provider", user?.id || user?.userId],
-    enabled: !!user && !!tenant && user?.role === 'physician' && !!(user?.id || user?.userId),
+    queryKey: ["/api/appointments/provider", user?.id],
+    enabled: !!user && !!tenant && user?.role === 'physician' && !!user?.id,
     staleTime: 2 * 60 * 1000, // 2 minutes for doctor appointments
   });
 
@@ -361,8 +361,24 @@ export default function Dashboard() {
   }
 
   // Tenant Admin Dashboard (defined early to avoid hoisting issues)
-  const renderTenantAdminDashboard = () => (
-    <div className="space-y-6">
+  const renderTenantAdminDashboard = () => {
+    const handleRefresh = async () => {
+      try {
+        await Promise.all([
+          refetchMetrics(),
+          queryClient.invalidateQueries({ queryKey: ["/api/dashboard/metrics"] }),
+          queryClient.invalidateQueries({ queryKey: ["/api/appointments"] }),
+          queryClient.invalidateQueries({ queryKey: ["/api/lab-orders"] }),
+          queryClient.invalidateQueries({ queryKey: ["/api/patients"] }),
+          queryClient.invalidateQueries({ queryKey: ["/api/vital-signs"] })
+        ]);
+      } catch (error) {
+        console.error('Error refreshing dashboard:', error);
+      }
+    };
+
+    return (
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Hospital Admin Dashboard</h1>
@@ -376,7 +392,7 @@ export default function Dashboard() {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => refetchMetrics()}
+            onClick={handleRefresh}
             disabled={metricsLoading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${metricsLoading ? 'animate-spin' : ''}`} />
@@ -1518,7 +1534,7 @@ export default function Dashboard() {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => refetchMetrics()}
+            onClick={handleRefresh}
             disabled={metricsLoading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${metricsLoading ? 'animate-spin' : ''}`} />
@@ -1737,6 +1753,7 @@ export default function Dashboard() {
       </div>
     </div>
   );
+  };
 
   // Default dashboard for roles not specifically handled
   const renderDefaultDashboard = () => (
@@ -1754,7 +1771,7 @@ export default function Dashboard() {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => refetchMetrics()}
+            onClick={handleRefresh}
             disabled={metricsLoading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${metricsLoading ? 'animate-spin' : ''}`} />
