@@ -475,18 +475,42 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
                   name="customInsuranceProvider"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Insurance Provider Name</FormLabel>
+                      <FormLabel className="text-red-600">Insurance Provider Name *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter insurance provider name manually" {...field} />
+                        <Input 
+                          placeholder="Enter exact insurance provider name (e.g., Blue Cross Blue Shield of Texas)" 
+                          {...field} 
+                          className="border-red-200 focus:border-red-400"
+                        />
                       </FormControl>
-                      <FormDescription>
-                        Enter the exact name of the insurance provider
+                      <FormDescription className="text-red-600">
+                        Required: Enter the exact name as shown on the insurance card
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               )}
+
+              <FormField
+                control={form.control}
+                name="manualInsuranceProvider"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Alternative: Direct Insurance Provider Entry</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Or enter insurance provider name directly here" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Use this field if you prefer to type the insurance provider name directly
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
