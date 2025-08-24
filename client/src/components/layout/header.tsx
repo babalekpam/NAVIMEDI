@@ -42,7 +42,7 @@ export const Header = () => {
 
   if (!user) return null;
 
-  const userInitials = `${user.firstName[0]}${user.lastName[0]}`;
+  const userInitials = `${user.firstName?.[0] || 'U'}${user.lastName?.[0] || 'N'}`;
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
@@ -54,7 +54,22 @@ export const Header = () => {
               <img src={navimedLogo} alt="NaviMed" className="h-10 w-10 rounded-lg object-contain" />
               <div>
                 <h1 className="text-xl font-bold text-blue-600">NAVIMED</h1>
-                <p className="text-xs text-gray-500">{tenant?.name || 'Loading...'}</p>
+                <p className="text-xs text-gray-500">
+                  {tenant?.name || 'Loading...'} 
+                  {tenant?.type && tenant.type !== 'platform' && (
+                    <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                      {tenant.type === 'hospital' && 'Hospital'}
+                      {tenant.type === 'pharmacy' && 'Pharmacy'}  
+                      {tenant.type === 'laboratory' && 'Laboratory'}
+                      {tenant.type === 'clinic' && 'Clinic'}
+                    </span>
+                  )}
+                  {tenant?.type === 'platform' && (
+                    <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
+                      Platform Admin
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
           </div>

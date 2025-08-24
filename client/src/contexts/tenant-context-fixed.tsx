@@ -66,12 +66,18 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
           // NO DEFAULT HOSPITAL FALLBACK - Each tenant must be independent
           // Use the actual tenant ID from the authenticated user to maintain isolation
           let tenantName = 'Unknown Organization';
-          let tenantType: 'hospital' | 'pharmacy' | 'laboratory' = 'hospital';
+          let tenantType: 'hospital' | 'pharmacy' | 'laboratory' | 'platform' = 'hospital';
           let subdomain = 'unknown';
           let features = ['basic'];
           
           // Map known tenant IDs to their proper configurations
           const tenantMappings = {
+            '15b85353-0985-4fec-bd4d-7bc236e190cd': {
+              name: 'ARGILETTE Platform',
+              type: 'platform' as const,
+              subdomain: 'argilette',
+              features: ['super_admin', 'tenant_management', 'multi_tenant', 'white_label']
+            },
             '9ed7c3a3-cc12-414d-bc7e-7d0c1a3cf6e9': {
               name: 'Independent Community Pharmacy',
               type: 'pharmacy' as const,
