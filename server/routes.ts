@@ -3624,7 +3624,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Visit Summary routes
   app.get("/api/visit-summaries", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const visitSummaries = await storage.getVisitSummariesByTenant(req.tenantId!);
+      const visitSummaries = await storage.getVisitSummariesByTenant(req.tenant!.id);
       res.json(visitSummaries);
     } catch (error) {
       console.error("Error fetching visit summaries:", error);
@@ -3634,7 +3634,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/visit-summaries/patient/:patientId", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const visitSummaries = await storage.getVisitSummariesByPatient(req.params.patientId, req.tenantId!);
+      const visitSummaries = await storage.getVisitSummariesByPatient(req.params.patientId, req.tenant!.id);
       res.json(visitSummaries);
     } catch (error) {
       console.error("Error fetching patient visit summaries:", error);
@@ -3644,7 +3644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/visit-summaries/provider/:providerId", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const visitSummaries = await storage.getVisitSummariesByProvider(req.params.providerId, req.tenantId!);
+      const visitSummaries = await storage.getVisitSummariesByProvider(req.params.providerId, req.tenant!.id);
       res.json(visitSummaries);
     } catch (error) {
       console.error("Error fetching provider visit summaries:", error);
@@ -3654,7 +3654,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/visit-summaries/appointment/:appointmentId", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const visitSummary = await storage.getVisitSummaryByAppointment(req.params.appointmentId, req.tenantId!);
+      const visitSummary = await storage.getVisitSummaryByAppointment(req.params.appointmentId, req.tenant!.id);
       res.json(visitSummary);
     } catch (error) {
       console.error("Error fetching appointment visit summary:", error);
@@ -3666,16 +3666,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertVisitSummarySchema.parse({
         ...req.body,
-        tenantId: req.tenantId,
-        providerId: req.userId
+        tenantId: req.tenant!.id,
+        providerId: req.user!.id
       });
 
       const visitSummary = await storage.createVisitSummary(validatedData);
 
       // Create audit log
       await storage.createAuditLog({
-        userId: req.userId!,
-        tenantId: req.tenantId!,
+        userId: req.user!.id,
+        tenantId: req.tenant!.id,
         action: "visit_summary_created",
         resourceType: "visit_summary",
         resourceId: visitSummary.id,
@@ -3694,7 +3694,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/visit-summaries/:id", authenticateToken, requireTenant, requireRole(["super_admin", "tenant_admin", "doctor", "nurse"]), async (req, res) => {
     try {
-      const visitSummary = await storage.updateVisitSummary(req.params.id, req.body, req.tenantId!);
+      const visitSummary = await storage.updateVisitSummary(req.params.id, req.body, req.tenant!.id);
       
       if (!visitSummary) {
         return res.status(404).json({ message: "Visit summary not found" });
@@ -3702,8 +3702,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create audit log
       await storage.createAuditLog({
-        userId: req.userId!,
-        tenantId: req.tenantId!,
+        userId: req.user!.id,
+        tenantId: req.tenant!.id,
         action: "visit_summary_updated",
         resourceType: "visit_summary",
         resourceId: visitSummary.id,
