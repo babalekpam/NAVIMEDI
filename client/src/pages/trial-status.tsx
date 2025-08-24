@@ -15,7 +15,6 @@ import {
   RefreshCw 
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { useTenant } from "@/contexts/tenant-context";
 
 interface TrialStatus {
   id: string;
@@ -36,25 +35,30 @@ interface TrialStatus {
 
 export default function TrialStatusPage() {
   const { user } = useAuth();
-  const { tenant } = useTenant();
   const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
+  // Fetch current tenant information to check subscription status
+  const { data: currentTenant } = useQuery({
+    queryKey: ['/api/tenant/current'],
+    enabled: !!user
+  });
+
   // Redirect non-trial accounts away from trial status page
   React.useEffect(() => {
-    if (tenant && tenant.subscriptionStatus !== 'trial') {
+    if (currentTenant && currentTenant.subscriptionStatus !== 'trial') {
       setLocation('/dashboard');
     }
-  }, [tenant, setLocation]);
+  }, [currentTenant, setLocation]);
 
   // Don't render anything for non-trial accounts
-  if (tenant && tenant.subscriptionStatus !== 'trial') {
+  if (currentTenant && currentTenant.subscriptionStatus !== 'trial') {
     return null;
   }
 
   const { data: trialStatus, isLoading, error } = useQuery<TrialStatus>({
     queryKey: ['/api/trial/status'],
-    enabled: !!user && tenant?.subscriptionStatus === 'trial'
+    enabled: !!user && currentTenant?.subscriptionStatus === 'trial'
   });
 
   const extendTrialMutation = useMutation({
