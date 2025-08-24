@@ -69,8 +69,11 @@ export default function SuperAdminClientManagement() {
 
   const updateWhiteLabelMutation = useMutation({
     mutationFn: async (data: { tenantId: string; settings: any }) => {
-      const response = await apiRequest('PATCH', `/api/tenants/${data.tenantId}/white-label`, data.settings);
-      return response.json();
+      const response = await apiRequest(`/api/tenants/${data.tenantId}/white-label`, {
+        method: 'PATCH',
+        body: data.settings
+      });
+      return response;
     },
     onSuccess: () => {
       toast({
@@ -90,8 +93,11 @@ export default function SuperAdminClientManagement() {
 
   const updateSubscriptionMutation = useMutation({
     mutationFn: async (data: { tenantId: string; subscription: any }) => {
-      const response = await apiRequest('PATCH', `/api/tenants/${data.tenantId}/subscription`, data.subscription);
-      return response.json();
+      const response = await apiRequest(`/api/tenants/${data.tenantId}/subscription`, {
+        method: 'PATCH',
+        body: data.subscription
+      });
+      return response;
     },
     onSuccess: () => {
       toast({
