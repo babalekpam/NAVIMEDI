@@ -229,14 +229,16 @@ export default function Patients() {
                       >
                         View EHR
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-teal-600 hover:text-teal-700"
-                        onClick={() => handleScheduleAppointment(patient)}
-                      >
-                        Schedule
-                      </Button>
+                      {(user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director" || user.role === "super_admin") && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-teal-600 hover:text-teal-700"
+                          onClick={() => handleScheduleAppointment(patient)}
+                        >
+                          Schedule
+                        </Button>
+                      )}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">
@@ -248,10 +250,12 @@ export default function Patients() {
                             <FileText className="h-4 w-4 mr-2" />
                             View EHR
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleScheduleAppointment(patient)}>
-                            <Calendar className="h-4 w-4 mr-2" />
-                            Schedule Appointment
-                          </DropdownMenuItem>
+                          {(user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director" || user.role === "super_admin") && (
+                            <DropdownMenuItem onClick={() => handleScheduleAppointment(patient)}>
+                              <Calendar className="h-4 w-4 mr-2" />
+                              Schedule Appointment
+                            </DropdownMenuItem>
+                          )}
                           {(user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director" || user.role === "super_admin") && (
                             <>
                               <DropdownMenuSeparator />

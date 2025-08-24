@@ -245,13 +245,14 @@ export default function Appointments() {
           <h1 className="text-3xl font-bold text-gray-900">{t('appointments')}</h1>
           <p className="text-gray-600 mt-1">{t('schedule-manage-appointments')}</p>
         </div>
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              {t('schedule-appointment')}
-            </Button>
-          </DialogTrigger>
+        {(user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director" || user.role === "super_admin") && (
+          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
+                {t('schedule-appointment')}
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Schedule New Appointment</DialogTitle>
@@ -264,6 +265,7 @@ export default function Appointments() {
             />
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       {/* Filters */}
@@ -351,13 +353,15 @@ export default function Appointments() {
               <p className="text-gray-600 mb-4">
                 No appointments scheduled for the selected date and filters.
               </p>
-              <Button
-                onClick={() => setIsFormOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Schedule Appointment
-              </Button>
+              {(user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director" || user.role === "super_admin") && (
+                <Button
+                  onClick={() => setIsFormOpen(true)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Schedule Appointment
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-0">
