@@ -142,8 +142,8 @@ export default function PrescriptionsPage() {
   
   // Apply search and status filters to active prescriptions
   const filteredPrescriptions = activePrescriptions.filter((prescription) => {
-    const matchesSearch = prescription.medication.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         prescription.patientName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (prescription.medicationName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (prescription.patientName || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || prescription.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
