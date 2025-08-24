@@ -52,7 +52,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  useEffect(() => {
+  // Function to check and load auth state
+  const checkAuthState = () => {
     const storedToken = localStorage.getItem("auth_token");
     const storedUser = localStorage.getItem("auth_user");
 
@@ -67,6 +68,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.warn('Token is expired, clearing auth data');
         localStorage.removeItem("auth_token");
         localStorage.removeItem("auth_user");
+        setToken(null);
+        setUser(null);
         setIsLoading(false);
         return;
       }
@@ -80,14 +83,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.warn('Failed to parse stored user data, clearing auth:', error);
         localStorage.removeItem("auth_token");
         localStorage.removeItem("auth_user");
+        setToken(null);
+        setUser(null);
       }
     } else if (storedToken) {
       // Clear corrupted tokens
       console.warn('Clearing corrupted auth data');
       localStorage.removeItem("auth_token");
       localStorage.removeItem("auth_user");
+      setToken(null);
+      setUser(null);
+    } else {
+      setToken(null);
+      setUser(null);
     }
     setIsLoading(false);
+  };
+
+  useEffect(() => {
+    checkAuthState();
+    
+    // Listen for storage events to react to login changes immediately
+    const handleStorageChange = () => {
+      console.log('Storage event detected, re-checking auth state');
+      checkAuthState();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const login = async (username: string, password: string, tenantId: string) => {
