@@ -84,7 +84,6 @@ const CATEGORIES = [
   { value: "maintenance_services", label: "Maintenance Services", icon: Wrench },
   { value: "insurance_services", label: "Insurance Services", icon: Shield },
   { value: "facility_management", label: "Facility Management", icon: Home },
-  { value: "telemedicine_solutions", label: "Telemedicine Solutions", icon: Monitor }
 ];
 
 const STATUS_COLORS = {

@@ -54,7 +54,6 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "supplier-management", label: "Supplier Management", icon: Building2, path: "/supplier-management", roles: ["super_admin"] },
   { id: "counter-reset", label: "Counter Reset", icon: RotateCcw, path: "/admin/counter-reset", roles: ["super_admin"] },
   { id: "advertisements", label: "Advertisement Marketplace", icon: Megaphone, path: "/advertisements", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director", "pharmacist", "lab_technician", "super_admin"] },
-  { id: "telemedicine-booking", label: "Telemedicine Booking", icon: Video, path: "/telemedicine-booking", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
   { id: "register-patient", label: t("register-patient"), icon: UserPlus, path: "/patients?action=register", roles: ["receptionist", "tenant_admin", "director"] },
   { id: "book-appointment", label: t("book-appointment"), icon: CalendarPlus, path: "/appointments?action=book", roles: ["receptionist", "tenant_admin", "director"] },
   { id: "patients", label: t("patients"), icon: Users, path: "/patients", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
@@ -306,7 +305,7 @@ export const Sidebar = () => {
       return true;
     }
     // Include core clinical items - exclude laboratory-specific items for non-laboratory tenants
-    const clinicalItemIds = ["dashboard", "patient-portal", "telemedicine-booking", "register-patient", "book-appointment", "patients", "patient-medical-records", "patient-messages", "consultation-history", "appointments", "prescriptions", "lab-orders", "lab-results", "health-recommendations", "medical-communications", "patient-access-management"];
+    const clinicalItemIds = ["dashboard", "patient-portal", "register-patient", "book-appointment", "patients", "patient-medical-records", "patient-messages", "consultation-history", "appointments", "prescriptions", "lab-orders", "lab-results", "health-recommendations", "medical-communications", "patient-access-management"];
     // For laboratory tenants, exclude prescription-related items and medical communications
     if (currentTenant?.type === "laboratory") {
       const labClinicalIds = ["dashboard", "patients", "lab-records", "lab-orders", "lab-results"];

@@ -222,7 +222,6 @@ Report ID: ${labOrder.id}
   const menuItems = [
     { id: "overview", label: "Overview", icon: Activity },
     { id: "find-care", label: "Find Care", icon: Search },
-    { id: "visits", label: "My Visits", icon: Video },
     { id: "directory", label: "Hospital Directory", icon: Users },
     { id: "records", label: "My Records", icon: FileText },
     { id: "messages", label: "Messages", icon: MessageCircle },
@@ -427,10 +426,10 @@ Report ID: ${labOrder.id}
             <Button 
               variant="outline" 
               className="h-20 flex-col"
-              onClick={() => setActiveSection("visits")}
+              onClick={() => setActiveSection("find-care")}
             >
-              <Video className="h-6 w-6 mb-2" />
-              <span className="text-sm">Book Video Visit</span>
+              <Calendar className="h-6 w-6 mb-2" />
+              <span className="text-sm">Book Appointment</span>
             </Button>
             <Button 
               variant="outline" 
@@ -510,7 +509,7 @@ Report ID: ${labOrder.id}
                 </div>
                 <Badge>Confirmed</Badge>
               </div>
-              <Button variant="outline" className="w-full" onClick={() => setActiveSection("visits")}>
+              <Button variant="outline" className="w-full" onClick={() => setActiveSection("find-care")}>
                 Schedule New Appointment
               </Button>
             </div>
@@ -808,32 +807,6 @@ Report ID: ${labOrder.id}
     </div>
   );
 
-  const renderVisits = () => (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Video Visits & Telemedicine</CardTitle>
-          <CardDescription>Schedule and manage your virtual appointments</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <Video className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Ready for Your Video Visit?</h3>
-            <p className="text-gray-600 mb-6">
-              Connect with your healthcare providers from the comfort of your home
-            </p>
-            <Button 
-              onClick={() => window.location.href = "/telemedicine-booking"}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Video className="w-4 h-4 mr-2" />
-              Schedule Video Visit
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
 
   const renderMessages = () => (
     <div className="space-y-6">
@@ -1053,16 +1026,6 @@ Report ID: ${labOrder.id}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <Video className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-            <h3 className="font-bold mb-2">Video Visits</h3>
-            <p className="text-sm text-gray-600 mb-4">Connect with providers from home</p>
-            <Button className="w-full" onClick={() => window.location.href = "/telemedicine-booking"}>
-              Book Video Visit
-            </Button>
-          </CardContent>
-        </Card>
 
         <Card className="cursor-pointer hover:shadow-lg transition-shadow">
           <CardContent className="p-6 text-center">
@@ -2392,8 +2355,6 @@ Report ID: ${labOrder.id}
         return renderOverview();
       case "find-care":
         return renderFindCare();
-      case "visits":
-        return renderVisits();
       case "directory":
         return renderDirectory();
       case "records":

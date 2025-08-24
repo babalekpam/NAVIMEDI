@@ -96,7 +96,6 @@ import PatientPortalStaff from "@/pages/patient-portal-staff";
 import ChangePasswordPage from "@/pages/change-password";
 import AdminDashboard from "@/pages/admin-dashboard";
 import PatientPortalPublic from "@/pages/patient-portal-public";
-import TelemedicineBooking from "@/pages/telemedicine-booking";
 import PatientLogin from "@/pages/patient-login";
 import DoctorCalendar from "@/pages/doctor-calendar";
 import Achievements from "@/pages/achievements";
@@ -290,11 +289,6 @@ function AppContent() {
         </Route>
         <Route path="/patient-portal-public">
           <PatientPortalPublic />
-        </Route>
-        <Route path="/telemedicine-booking">
-          <ProtectedRoute>
-            <TelemedicineBooking />
-          </ProtectedRoute>
         </Route>
         <Route path="/doctor-calendar">
           <ProtectedRoute>
