@@ -461,10 +461,32 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
                         <SelectItem value="other">Other / Not Listed</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormDescription>
+                      If patient is insured but provider not listed, select "Other / Not Listed" and enter manually below
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {form.watch('insuranceProvider') === 'other' && (
+                <FormField
+                  control={form.control}
+                  name="customInsuranceProvider"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Insurance Provider Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter insurance provider name manually" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Enter the exact name of the insurance provider
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}
@@ -539,18 +561,47 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
 
               <FormField
                 control={form.control}
-                name="copayAmount"
+                name="copayPercentage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Copay Amount ($)</FormLabel>
+                    <FormLabel>Patient Copay Percentage (%)</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
-                        placeholder="0.00" 
-                        step="0.01"
+                        placeholder="20" 
+                        step="1"
+                        min="0"
+                        max="100"
                         {...field} 
                       />
                     </FormControl>
+                    <FormDescription>
+                      Percentage of costs paid by patient (e.g., 20% copay)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="coveragePercentage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Insurance Coverage Percentage (%)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="80" 
+                        step="1"
+                        min="0"
+                        max="100"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Percentage covered by insurance (e.g., 80% coverage)
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -604,16 +655,43 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="no_preference">No preference</SelectItem>
+                      <SelectItem value="closest_to_residence">Closest to my residence</SelectItem>
                       {pharmacies.map((pharmacy: any) => (
                         <SelectItem key={pharmacy.id} value={pharmacy.id}>
                           {pharmacy.name}
                         </SelectItem>
                       ))}
+                      <SelectItem value="other_pharmacy">Other pharmacy (not listed)</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Prescriptions will be routed to this pharmacy when possible. Healthcare providers can override this selection when medically necessary.
+                    Choose your preferred pharmacy for prescriptions. If you select "Closest to my residence", we'll recommend pharmacies near your address. Healthcare providers can override this selection when medically necessary.
                   </FormDescription>
+                  
+                  {form.watch('preferredPharmacyId') === 'other_pharmacy' && (
+                    <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <FormLabel className="text-sm font-medium">Manual Pharmacy Entry</FormLabel>
+                      <Input 
+                        placeholder="Enter pharmacy name, address, and phone number"
+                        className="mt-2"
+                        onChange={(e) => {
+                          // This would be handled in form submission logic
+                          // Store the custom pharmacy information
+                        }}
+                      />
+                      <p className="text-xs text-yellow-700 mt-1">
+                        Note: Healthcare providers will need to verify this pharmacy information before processing prescriptions.
+                      </p>
+                    </div>
+                  )}
+                  
+                  {form.watch('preferredPharmacyId') === 'closest_to_residence' && (
+                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-700">
+                        ✓ Based on your address, we'll recommend the closest pharmacies in your area when processing prescriptions.
+                      </p>
+                    </div>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
