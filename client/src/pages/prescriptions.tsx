@@ -51,17 +51,17 @@ export default function PrescriptionsPage() {
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
   const [isProcessingModalOpen, setIsProcessingModalOpen] = useState(false);
 
-  // Fetch prescriptions using same endpoint as pharmacy dashboard
+  // Fetch prescriptions for current tenant (hospital or pharmacy)
   const { data: prescriptions = [], isLoading } = useQuery<Prescription[]>({
-    queryKey: ['/api/pharmacy/prescriptions', tenant?.id],
-    enabled: !!tenant?.id && tenant?.type === 'pharmacy',
+    queryKey: ['/api/prescriptions', tenant?.id],
+    enabled: !!tenant?.id,
   });
 
-  // Status update mutation using pharmacy API
+  // Status update mutation using general API
   const statusUpdateMutation = useMutation({
     mutationFn: async ({ prescriptionId, status }: { prescriptionId: string; status: string }) => {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`/api/pharmacy/prescriptions/${prescriptionId}/process`, {
+      const response = await fetch(`/api/prescriptions/${prescriptionId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
