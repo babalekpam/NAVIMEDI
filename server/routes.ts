@@ -1539,7 +1539,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/prescriptions", requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
+  app.post("/api/prescriptions", authenticateToken, requireTenant, requireRole(["physician", "doctor", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
       console.log("[DEBUG] POST /api/prescriptions called with body:", req.body);
       console.log("[DEBUG] Tenant:", req.tenant?.id);

@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useTranslation } from "@/contexts/translation-context";
 import { useToast } from "@/hooks/use-toast";
+import { PrescriptionForm } from "@/components/forms/prescription-form";
 import { Activity, Users, DollarSign, Package, Clock, AlertTriangle, CheckCircle, XCircle, Search, FileText, Download, Pill, Plus } from 'lucide-react';
 
 interface Prescription {
@@ -50,10 +51,17 @@ export default function PrescriptionsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
   const [isProcessingModalOpen, setIsProcessingModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Fetch prescriptions for current tenant (hospital or pharmacy)
   const { data: prescriptions = [], isLoading } = useQuery<Prescription[]>({
-    queryKey: ['/api/prescriptions', tenant?.id],
+    queryKey: ['/api/prescriptions'],
+    enabled: !!tenant?.id,
+  });
+
+  // Fetch patients for prescription creation
+  const { data: patients = [] } = useQuery({
+    queryKey: ['/api/patients'],
     enabled: !!tenant?.id,
   });
 
@@ -77,7 +85,7 @@ export default function PrescriptionsPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/pharmacy/prescriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] });
       toast({
         title: "Success",
         description: "Prescription status updated successfully",
@@ -88,6 +96,42 @@ export default function PrescriptionsPage() {
       toast({
         title: "Error",
         description: "Failed to update prescription status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Create prescription mutation
+  const createPrescriptionMutation = useMutation({
+    mutationFn: async (prescriptionData: any) => {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/prescriptions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(prescriptionData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create prescription');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] });
+      toast({
+        title: "Success",
+        description: "Prescription created successfully",
+      });
+      setIsCreateModalOpen(false);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create prescription",
         variant: "destructive",
       });
     },
@@ -157,10 +201,12 @@ export default function PrescriptionsPage() {
             Manage and track prescriptions across the healthcare network
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Prescription
-        </Button>
+        {(user?.role === 'tenant_admin' || user?.role === 'doctor' || user?.role === 'physician' || user?.role === 'super_admin') && (
+          <Button onClick={() => setIsCreateModalOpen(true)} data-testid="button-create-prescription">
+            <Plus className="mr-2 h-4 w-4" />
+            New Prescription
+          </Button>
+        )}
       </div>
 
       {/* Metrics Cards */}
@@ -445,6 +491,23 @@ export default function PrescriptionsPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Prescription Modal */}
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Prescription</DialogTitle>
+            <DialogDescription>
+              Fill out the prescription details below. All fields marked with * are required.
+            </DialogDescription>
+          </DialogHeader>
+          <PrescriptionForm
+            onSubmit={(data) => createPrescriptionMutation.mutate(data)}
+            isLoading={createPrescriptionMutation.isPending}
+            patients={patients}
+          />
         </DialogContent>
       </Dialog>
     </div>
