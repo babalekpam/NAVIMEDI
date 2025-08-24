@@ -295,21 +295,16 @@ export default function UserRoles() {
 
   const createUserMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
-      const response = await apiRequest("POST", "/api/users", data);
-      
-      if (!response.ok) {
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const error = await response.json();
-          throw new Error(error.message || "Failed to create user");
-        } else {
-          const errorText = await response.text();
-          console.error("HTML Error Response:", errorText);
-          throw new Error("Authentication failed. Please refresh and try again.");
-        }
+      try {
+        const response = await apiRequest("/api/users", {
+          method: "POST",
+          body: data
+        });
+        return response;
+      } catch (error: any) {
+        // apiRequest already handles error parsing and throws meaningful errors
+        throw new Error(error.message || "Failed to create user");
       }
-      
-      return response.json();
     },
     onSuccess: (responseData, formData) => {
       queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
@@ -344,21 +339,16 @@ export default function UserRoles() {
   const updateUserMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<UserFormData> }) => {
       console.log("Updating user:", id, "with data:", data);
-      const response = await apiRequest("PATCH", `/api/users/${id}`, data);
-      
-      if (!response.ok) {
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const error = await response.json();
-          throw new Error(error.message || "Failed to update user");
-        } else {
-          const errorText = await response.text();
-          console.error("HTML Error Response:", errorText);
-          throw new Error("Authentication failed. Please refresh and try again.");
-        }
+      try {
+        const response = await apiRequest(`/api/users/${id}`, {
+          method: "PATCH",
+          body: data
+        });
+        return response;
+      } catch (error: any) {
+        // apiRequest already handles error parsing and throws meaningful errors
+        throw new Error(error.message || "Failed to update user");
       }
-      
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
@@ -447,41 +437,21 @@ export default function UserRoles() {
         console.log("🔧 Processing module:", module, "with permissions:", permissions);
         
         try {
-          const response = await apiRequest("POST", "/api/role-permissions", {
-            role,
-            module,
-            permissions
+          const result = await apiRequest("/api/role-permissions", {
+            method: "POST",
+            body: {
+              role,
+              module,
+              permissions
+            }
           });
           
-          console.log("🔧 Response status:", response.status);
-          
-          if (!response.ok) {
-            const contentType = response.headers.get("content-type");
-            console.log("🔧 Error content type:", contentType);
-            
-            if (contentType && contentType.includes("application/json")) {
-              const error = await response.json();
-              console.error("🔧 JSON Error:", error);
-              throw new Error(error.message || "Failed to save permissions");
-            } else {
-              const errorText = await response.text();
-              console.error("🔧 HTML Error Response:", errorText.substring(0, 200));
-              
-              if (errorText.includes("<!DOCTYPE") || errorText.includes("<html")) {
-                throw new Error("Session expired - please refresh and try again");
-              }
-              
-              throw new Error("Failed to save permissions - server error");
-            }
-          }
-          
-          const result = await response.json();
           console.log("🔧 Success result for module", module, ":", result);
           return result;
           
-        } catch (error) {
+        } catch (error: any) {
           console.error("🔧 Error processing module", module, ":", error);
-          throw error;
+          throw new Error(error.message || "Failed to save permissions");
         }
       });
 
