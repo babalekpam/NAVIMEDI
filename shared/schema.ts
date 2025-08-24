@@ -721,20 +721,43 @@ export const insuranceClaims = pgTable("insurance_claims", {
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   patientId: uuid("patient_id").references(() => patients.id).notNull(),
   appointmentId: uuid("appointment_id").references(() => appointments.id),
+  visitSummaryId: uuid("visit_summary_id").references(() => visitSummaries.id),
   patientInsuranceId: uuid("patient_insurance_id").references(() => patientInsurance.id),
+  providerId: uuid("provider_id").references(() => users.id).notNull(), // Doctor who created the claim
+  medicalSpecialty: medicalSpecialtyEnum("medical_specialty"),
   claimNumber: text("claim_number").unique().notNull(),
-  procedureCodes: jsonb("procedure_codes").default('[]'),
-  diagnosisCodes: jsonb("diagnosis_codes").default('[]'),
+  
+  // Enhanced Medical Coding
+  primaryDiagnosisCode: text("primary_diagnosis_code"), // Primary ICD-10 code
+  primaryDiagnosisDescription: text("primary_diagnosis_description"),
+  secondaryDiagnosisCodes: jsonb("secondary_diagnosis_codes").default('[]'), // Additional ICD-10 codes
+  procedureCodes: jsonb("procedure_codes").default('[]'), // CPT codes with descriptions
+  diagnosisCodes: jsonb("diagnosis_codes").default('[]'), // Legacy field for backward compatibility
+  
+  // Clinical Information
+  clinicalFindings: text("clinical_findings"),
+  treatmentProvided: text("treatment_provided"),
+  durationOfTreatment: text("duration_of_treatment"),
+  medicalNecessity: text("medical_necessity"),
+  
+  // Financial Information
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   totalPatientCopay: decimal("total_patient_copay", { precision: 10, scale: 2 }).default('0').notNull(),
   totalInsuranceAmount: decimal("total_insurance_amount", { precision: 10, scale: 2 }).default('0').notNull(),
   approvedAmount: decimal("approved_amount", { precision: 10, scale: 2 }),
   paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }),
+  
+  // Claim Processing
   status: claimStatusEnum("status").default('draft'),
   submittedDate: timestamp("submitted_date"),
   processedDate: timestamp("processed_date"),
   paidDate: timestamp("paid_date"),
+  rejectionReason: text("rejection_reason"),
+  
+  // Documentation
   notes: text("notes"),
+  attachments: jsonb("attachments").default('[]'), // Supporting documents
+  
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
@@ -2688,8 +2711,43 @@ export const insertPatientInsuranceSchema = createInsertSchema(patientInsurance)
 export const insertInsuranceClaimSchema = createInsertSchema(insuranceClaims).omit({
   id: true,
   createdAt: true,
-  updatedAt: true
+  updatedAt: true,
+  claimNumber: true // Auto-generated
+}).extend({
+  secondaryDiagnosisCodes: z.array(z.object({
+    code: z.string(),
+    description: z.string()
+  })).default([]),
+  procedureCodes: z.array(z.object({
+    code: z.string(),
+    description: z.string(),
+    amount: z.number().min(0)
+  })).min(1, "At least one procedure is required"),
+  totalAmount: z.number().min(0, "Total amount must be positive"),
+  totalPatientCopay: z.number().min(0, "Patient copay must be non-negative"),
+  totalInsuranceAmount: z.number().min(0, "Insurance amount must be non-negative")
 });
+
+// Enhanced claim form schema for frontend
+export const claimFormSchema = z.object({
+  primaryDiagnosisCode: z.string().min(1, "Primary diagnosis code is required"),
+  primaryDiagnosisDescription: z.string().min(1, "Primary diagnosis description is required"),
+  secondaryDiagnosisCodes: z.array(z.object({
+    code: z.string(),
+    description: z.string()
+  })).default([]),
+  procedureCodes: z.array(z.object({
+    code: z.string(),
+    description: z.string(),
+    amount: z.number().min(0)
+  })).min(1, "At least one procedure is required"),
+  clinicalFindings: z.string().min(1, "Clinical findings are required"),
+  treatmentProvided: z.string().min(1, "Treatment provided is required"),
+  durationOfTreatment: z.string().optional(),
+  medicalNecessity: z.string().min(1, "Medical necessity justification is required"),
+  notes: z.string().optional()
+});
+export type ClaimFormData = z.infer<typeof claimFormSchema>;
 
 export const insertServicePriceSchema = createInsertSchema(servicePrices).omit({
   id: true,

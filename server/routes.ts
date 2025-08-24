@@ -6276,6 +6276,192 @@ Report ID: ${report.id}
     }
   });
 
+  // Insurance Claims Management Routes
+  app.get("/api/insurance-claims", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const claims = await storage.getInsuranceClaimsByTenant(req.tenant!.id);
+      res.json(claims);
+    } catch (error) {
+      console.error("Error fetching insurance claims:", error);
+      res.status(500).json({ message: "Failed to fetch insurance claims" });
+    }
+  });
+
+  app.get("/api/insurance-claims/appointment/:appointmentId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      const claims = await storage.getInsuranceClaimsByAppointment(appointmentId, req.tenant!.id);
+      res.json(claims);
+    } catch (error) {
+      console.error("Error fetching appointment claims:", error);
+      res.status(500).json({ message: "Failed to fetch appointment claims" });
+    }
+  });
+
+  app.get("/api/insurance-claims/patient/:patientId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const claims = await storage.getInsuranceClaimsByPatient(patientId, req.tenant!.id);
+      res.json(claims);
+    } catch (error) {
+      console.error("Error fetching patient claims:", error);
+      res.status(500).json({ message: "Failed to fetch patient claims" });
+    }
+  });
+
+  app.post("/api/insurance-claims", authenticateToken, requireTenant, requireRole(["doctor", "physician", "tenant_admin", "director"]), async (req, res) => {
+    try {
+      const { nanoid } = await import('nanoid');
+      
+      // Generate unique claim number
+      const claimNumber = `CLM-${Date.now()}-${nanoid(8)}`;
+      
+      // Calculate totals from procedures
+      const totalAmount = req.body.procedureCodes?.reduce((sum: number, proc: any) => sum + (proc.amount || 0), 0) || 0;
+      
+      // Calculate insurance amounts based on patient insurance
+      let totalInsuranceAmount = 0;
+      let totalPatientCopay = totalAmount;
+      
+      if (req.body.patientInsuranceId) {
+        const patientInsurance = await storage.getPatientInsurance(req.body.patientInsuranceId, req.tenant!.id);
+        if (patientInsurance) {
+          const coveragePercentage = patientInsurance.coveragePercentage || 0;
+          totalInsuranceAmount = totalAmount * (coveragePercentage / 100);
+          totalPatientCopay = Math.max(totalAmount - totalInsuranceAmount, patientInsurance.copayAmount || 0);
+        }
+      }
+      
+      const claimData = insertInsuranceClaimSchema.parse({
+        ...req.body,
+        tenantId: req.tenant!.id,
+        providerId: req.user!.id,
+        claimNumber,
+        totalAmount: totalAmount.toString(),
+        totalPatientCopay: totalPatientCopay.toString(),
+        totalInsuranceAmount: totalInsuranceAmount.toString(),
+        status: 'draft'
+      });
+
+      const claim = await storage.createInsuranceClaim(claimData);
+      
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenant!.id,
+        userId: req.user!.id,
+        entityType: "insurance_claim",
+        entityId: claim.id,
+        action: "create",
+        newData: claim,
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      res.status(201).json(claim);
+    } catch (error) {
+      console.error("Error creating insurance claim:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create insurance claim" });
+    }
+  });
+
+  app.patch("/api/insurance-claims/:id", authenticateToken, requireTenant, requireRole(["doctor", "physician", "tenant_admin", "director", "billing_staff"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Recalculate totals if procedures are updated
+      if (req.body.procedureCodes) {
+        const totalAmount = req.body.procedureCodes.reduce((sum: number, proc: any) => sum + (proc.amount || 0), 0);
+        req.body.totalAmount = totalAmount.toString();
+        
+        // Recalculate insurance amounts if needed
+        if (req.body.patientInsuranceId) {
+          const patientInsurance = await storage.getPatientInsurance(req.body.patientInsuranceId, req.tenant!.id);
+          if (patientInsurance) {
+            const coveragePercentage = patientInsurance.coveragePercentage || 0;
+            const totalInsuranceAmount = totalAmount * (coveragePercentage / 100);
+            const totalPatientCopay = Math.max(totalAmount - totalInsuranceAmount, patientInsurance.copayAmount || 0);
+            req.body.totalInsuranceAmount = totalInsuranceAmount.toString();
+            req.body.totalPatientCopay = totalPatientCopay.toString();
+          }
+        }
+      }
+      
+      const updatedClaim = await storage.updateInsuranceClaim(id, req.body, req.tenant!.id);
+      
+      if (!updatedClaim) {
+        return res.status(404).json({ message: "Insurance claim not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenant!.id,
+        userId: req.user!.id,
+        entityType: "insurance_claim",
+        entityId: updatedClaim.id,
+        action: "update",
+        newData: updatedClaim,
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      res.json(updatedClaim);
+    } catch (error) {
+      console.error("Error updating insurance claim:", error);
+      res.status(500).json({ message: "Failed to update insurance claim" });
+    }
+  });
+
+  app.post("/api/insurance-claims/:id/submit", authenticateToken, requireTenant, requireRole(["doctor", "physician", "tenant_admin", "director", "billing_staff"]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const updatedClaim = await storage.updateInsuranceClaim(id, {
+        status: 'submitted',
+        submittedDate: new Date()
+      }, req.tenant!.id);
+      
+      if (!updatedClaim) {
+        return res.status(404).json({ message: "Insurance claim not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenant!.id,
+        userId: req.user!.id,
+        entityType: "insurance_claim",
+        entityId: updatedClaim.id,
+        action: "submit",
+        newData: { status: 'submitted', submittedDate: updatedClaim.submittedDate },
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      res.json(updatedClaim);
+    } catch (error) {
+      console.error("Error submitting insurance claim:", error);
+      res.status(500).json({ message: "Failed to submit insurance claim" });
+    }
+  });
+
+  app.get("/api/insurance-claims/:id", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const claim = await storage.getInsuranceClaim(id, req.tenant!.id);
+      
+      if (!claim) {
+        return res.status(404).json({ message: "Insurance claim not found" });
+      }
+
+      res.json(claim);
+    } catch (error) {
+      console.error("Error fetching insurance claim:", error);
+      res.status(500).json({ message: "Failed to fetch insurance claim" });
+    }
+  });
+
   // Counter Reset API - Super Admin Only
   app.post("/api/admin/reset-counters", authenticateToken, async (req, res) => {
     try {
