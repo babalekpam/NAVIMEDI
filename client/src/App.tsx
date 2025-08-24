@@ -816,7 +816,6 @@ function Router() {
           {/* Supplier routes handled by direct HTML pages */}
           <Route path="/patient-portal-public" component={PatientPortalPublic} />
           <Route path="/patient-login" component={PatientLogin} />
-          <Route path="/login" component={Login} />
           
           {/* 404 Not Found - should only show for truly unmatched routes */}
           <Route component={NotFound} />
