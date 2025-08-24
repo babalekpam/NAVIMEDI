@@ -2029,6 +2029,31 @@ export default function Dashboard() {
     return <PharmacyDashboardEnhancedV2 />;
   }
   
-  // Use the existing renderRoleSpecificDashboard function for other roles
-  return renderRoleSpecificDashboard();
+  // Handle other roles directly
+  switch (user.role) {
+    case 'physician':
+      return renderPhysicianDashboard();
+    case 'nurse':
+      return renderNurseDashboard();
+    case 'lab_technician':
+      return renderLabTechnicianDashboard();
+    case 'receptionist':
+      return renderReceptionistDashboard();
+    case 'billing_staff':
+      return renderBillingStaffDashboard();
+    case 'insurance_manager':
+      return renderInsuranceManagerDashboard();
+    case 'patient':
+      return renderPatientDashboard();
+    case 'tenant_admin':
+    case 'director':
+      return renderTenantAdminDashboard();
+    default:
+      return (
+        <div className="space-y-6">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600">Welcome back, {user.firstName}.</p>
+        </div>
+      );
+  }
 }
