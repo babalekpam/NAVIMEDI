@@ -2029,22 +2029,124 @@ export default function Dashboard() {
     return <PharmacyDashboardEnhancedV2 />;
   }
   
-  // Handle other roles directly
+  // Handle other roles directly with inline JSX
   switch (user.role) {
     case 'physician':
-      return renderPhysicianDashboard();
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Physician Dashboard</h1>
+              <p className="text-gray-600 mt-1">
+                Welcome back, Dr. {user.lastName}. Your clinical overview for today.
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Badge className="bg-blue-100 text-blue-800">
+                <Stethoscope className="h-3 w-3 mr-1" />
+                On Duty
+              </Badge>
+            </div>
+          </div>
+
+          {/* Physician Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Today's Appointments</p>
+                    <p className="text-3xl font-bold text-gray-900">12</p>
+                    <p className="text-xs text-blue-600 mt-1">3 urgent cases</p>
+                  </div>
+                  <Calendar className="h-8 w-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Active Patients</p>
+                    <p className="text-3xl font-bold text-gray-900">247</p>
+                    <p className="text-xs text-green-600 mt-1">8 new this week</p>
+                  </div>
+                  <Users className="h-8 w-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Lab Results</p>
+                    <p className="text-3xl font-bold text-gray-900">18</p>
+                    <p className="text-xs text-purple-600 mt-1">5 pending review</p>
+                  </div>
+                  <TestTube className="h-8 w-8 text-purple-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Prescriptions</p>
+                    <p className="text-3xl font-bold text-gray-900">34</p>
+                    <p className="text-xs text-orange-600 mt-1">Active prescriptions</p>
+                  </div>
+                  <Pill className="h-8 w-8 text-orange-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      );
     case 'nurse':
-      return renderNurseDashboard();
+      return (
+        <div className="space-y-6">
+          <h1 className="text-3xl font-bold text-gray-900">Nurse Dashboard</h1>
+          <p className="text-gray-600">Welcome back, {user.firstName}. Patient care and nursing operations.</p>
+        </div>
+      );
     case 'lab_technician':
-      return renderLabTechnicianDashboard();
+      return (
+        <div className="space-y-6">
+          <h1 className="text-3xl font-bold text-gray-900">Lab Technician Dashboard</h1>
+          <p className="text-gray-600">Welcome back, {user.firstName}. Laboratory testing and results management.</p>
+        </div>
+      );
     case 'receptionist':
-      return renderReceptionistDashboard();
+      return (
+        <div className="space-y-6">
+          <h1 className="text-3xl font-bold text-gray-900">Reception Dashboard</h1>
+          <p className="text-gray-600">Welcome back, {user.firstName}. Patient registration and appointment scheduling.</p>
+        </div>
+      );
     case 'billing_staff':
-      return renderBillingStaffDashboard();
+      return (
+        <div className="space-y-6">
+          <h1 className="text-3xl font-bold text-gray-900">Billing Dashboard</h1>
+          <p className="text-gray-600">Welcome back, {user.firstName}. Financial operations and insurance claims.</p>
+        </div>
+      );
     case 'insurance_manager':
-      return renderInsuranceManagerDashboard();
+      return (
+        <div className="space-y-6">
+          <h1 className="text-3xl font-bold text-gray-900">Insurance Management Dashboard</h1>
+          <p className="text-gray-600">Welcome back, {user.firstName}. Claims processing and coverage management.</p>
+        </div>
+      );
     case 'patient':
-      return renderPatientDashboard();
+      return (
+        <div className="space-y-6">
+          <h1 className="text-3xl font-bold text-gray-900">Patient Portal</h1>
+          <p className="text-gray-600">Welcome back, {user.firstName}. Your health information and appointments.</p>
+        </div>
+      );
     case 'tenant_admin':
     case 'director':
       return renderTenantAdminDashboard();
