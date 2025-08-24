@@ -3674,14 +3674,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create audit log
       await storage.createAuditLog({
-        userId: req.user!.id,
         tenantId: req.tenant!.id,
-        action: "visit_summary_created",
+        userId: req.user!.id,
         entityType: "visit_summary",
         entityId: visitSummary.id,
+        action: "visit_summary_created",
+        previousData: null,
         newData: visitSummary,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.status(201).json(visitSummary);
@@ -3704,14 +3705,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create audit log
       await storage.createAuditLog({
-        userId: req.user!.id,
         tenantId: req.tenant!.id,
-        action: "visit_summary_updated",
+        userId: req.user!.id,
         entityType: "visit_summary",
         entityId: visitSummary.id,
+        action: "visit_summary_updated",
+        previousData: null,
         newData: visitSummary,
-        ipAddress: req.ip,
-        userAgent: req.get("User-Agent")
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
       });
 
       res.json(visitSummary);
