@@ -2019,49 +2019,6 @@ export default function Dashboard() {
     );
   };
 
-  // Lab Technician Dashboard
-  const renderLabTechnicianDashboard = () => (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Lab Technician Dashboard</h1>
-      <p className="text-gray-600">Welcome back, {user.firstName}. Your laboratory operations overview for today.</p>
-    </div>
-  );
-
-  // Simplified dashboards for other roles
-  const renderReceptionistDashboard = () => (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Reception Dashboard</h1>
-      <p className="text-gray-600">Welcome back, {user.firstName}. Patient registration and appointment management.</p>
-    </div>
-  );
-
-  const renderBillingStaffDashboard = () => (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Billing Dashboard</h1>
-      <p className="text-gray-600">Welcome back, {user.firstName}. Financial operations and insurance claims.</p>
-    </div>
-  );
-
-  const renderInsuranceManagerDashboard = () => (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Insurance Management Dashboard</h1>
-      <p className="text-gray-600">Welcome back, {user.firstName}. Claims processing and coverage management.</p>
-    </div>
-  );
-
-  const renderPatientDashboard = () => (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Patient Portal</h1>
-      <p className="text-gray-600">Welcome back, {user.firstName}. Your health information and appointments.</p>
-    </div>
-  );
-
-  const renderDefaultDashboard = () => (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-      <p className="text-gray-600">Welcome back, {user.firstName}.</p>
-    </div>
-  );
 
   // Return the appropriate dashboard based on user role
   if (user.role === 'super_admin') {
