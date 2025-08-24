@@ -2021,5 +2021,39 @@ export default function Dashboard() {
 
 
   // Return the appropriate dashboard based on user role
-  return renderRoleSpecificDashboard();
+  if (user.role === 'super_admin') {
+    return renderSuperAdminDashboard();
+  }
+  
+  if (user.role === 'pharmacist') {
+    return <PharmacyDashboardEnhancedV2 />;
+  }
+  
+  // Return dashboard based on user role
+  switch (user.role) {
+    case 'physician':
+      return renderPhysicianDashboard();
+    case 'nurse':
+      return renderNurseDashboard();
+    case 'lab_technician':
+      return renderLabTechnicianDashboard();
+    case 'receptionist':
+      return renderReceptionistDashboard();
+    case 'billing_staff':
+      return renderBillingStaffDashboard();
+    case 'insurance_manager':
+      return renderInsuranceManagerDashboard();
+    case 'patient':
+      return renderPatientDashboard();
+    case 'tenant_admin':
+    case 'director':
+      return renderTenantAdminDashboard();
+    default:
+      return (
+        <div className="space-y-6">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600">Welcome back, {user.firstName}.</p>
+        </div>
+      );
+  }
 }
