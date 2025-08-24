@@ -69,11 +69,23 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescr
   useEffect(() => {
     if (selectedPatientId && !isEditing) {
       const selectedPatient = patients.find(p => p.id === selectedPatientId);
+      console.log("[DEBUG] Selected patient:", selectedPatient);
+      console.log("[DEBUG] Patient preferred pharmacy ID:", selectedPatient?.preferredPharmacyId);
+      console.log("[DEBUG] Available pharmacies:", pharmacies);
+      
       if (selectedPatient?.preferredPharmacyId) {
-        form.setValue("pharmacyTenantId", selectedPatient.preferredPharmacyId);
+        // Check if the preferred pharmacy exists in our pharmacy list
+        const preferredPharmacyExists = pharmacies.find(p => p.id === selectedPatient.preferredPharmacyId);
+        console.log("[DEBUG] Preferred pharmacy exists:", preferredPharmacyExists);
+        
+        if (preferredPharmacyExists) {
+          form.setValue("pharmacyTenantId", selectedPatient.preferredPharmacyId);
+        } else {
+          console.log("[DEBUG] Patient's preferred pharmacy not found in tenant list, keeping dropdown empty");
+        }
       }
     }
-  }, [selectedPatientId, patients, form, isEditing]);
+  }, [selectedPatientId, patients, form, isEditing, pharmacies]);
 
   const handleSubmit = (data: any) => {
     console.log("[DEBUG] Form handleSubmit called");
