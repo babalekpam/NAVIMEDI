@@ -324,10 +324,14 @@ export const Sidebar = () => {
   const adminItems = filteredItems.filter(item => {
     // For laboratory tenants, exclude white-label settings and advanced features
     if (currentTenant?.type === "laboratory") {
-      const labAdminIds = ["reports", "trial-status", "user-roles", "audit-logs"];
+      const labAdminIds = ["reports", "user-roles", "audit-logs"].concat(
+        currentTenant?.subscriptionStatus === 'trial' ? ["trial-status"] : []
+      );
       return labAdminIds.includes(item.id);
     }
-    const adminItemIds = ["reports", "white-label-settings", "offline-mode", "trial-status", "tenant-management", "admin-dashboard", "user-roles", "audit-logs"];
+    const adminItemIds = ["reports", "white-label-settings", "offline-mode", "tenant-management", "admin-dashboard", "user-roles", "audit-logs"].concat(
+      currentTenant?.subscriptionStatus === 'trial' ? ["trial-status"] : []
+    );
     return adminItemIds.includes(item.id);
   });
 
