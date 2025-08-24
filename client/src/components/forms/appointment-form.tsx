@@ -16,8 +16,16 @@ interface AppointmentFormProps {
 }
 
 export const AppointmentForm = ({ onSubmit, isLoading = false, patients, providers }: AppointmentFormProps) => {
-  const appointmentFormSchema = insertAppointmentSchema.omit({ tenantId: true }).extend({
-    appointmentDate: z.string().min(1, "Appointment date is required")
+  // Define appointment form schema manually to avoid Zod issues
+  const appointmentFormSchema = z.object({
+    patientId: z.string().min(1, "Patient is required"),
+    providerId: z.string().min(1, "Provider is required"),
+    appointmentDate: z.string().min(1, "Appointment date is required"),
+    duration: z.string().optional(),
+    type: z.string().min(1, "Appointment type is required"),
+    status: z.string().optional(),
+    notes: z.string().optional(),
+    chiefComplaint: z.string().optional()
   });
 
   const form = useForm({
@@ -26,20 +34,23 @@ export const AppointmentForm = ({ onSubmit, isLoading = false, patients, provide
       patientId: "",
       providerId: "",
       appointmentDate: "",
-      duration: 30,
+      duration: "30",
       type: "",
-      status: "scheduled" as const,
+      status: "scheduled",
       notes: "",
       chiefComplaint: "",
     }
   });
 
   const handleSubmit = (data: any) => {
-    // Convert string to Date object for database
+    // Convert string to Date object for database and duration to number
     const appointmentDate = new Date(data.appointmentDate);
+    const duration = data.duration ? parseInt(data.duration) : 30;
+    
     onSubmit({
       ...data,
       appointmentDate,
+      duration,
     });
   };
 
