@@ -19,12 +19,20 @@ import { TenantSwitcher } from "@/components/tenant/tenant-switcher";
 import { LanguageSelector } from "@/components/language-selector";
 import { useState } from "react";
 
+interface Notification {
+  id: number;
+  type: 'info' | 'warning' | 'error';
+  message: string;
+  time: string;
+  urgent?: boolean;
+}
+
 export const Header = () => {
   const { user, logout } = useAuth();
   const { tenant } = useTenant();
   const [, setLocation] = useLocation();
   const { t } = useTranslation();
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const handleLogout = () => {
     console.log('Logout initiated from header');
@@ -33,7 +41,7 @@ export const Header = () => {
   };
 
   const dismissNotification = (notificationId: number) => {
-    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    setNotifications(prev => prev.filter((n: Notification) => n.id !== notificationId));
   };
 
   const clearAllNotifications = () => {
