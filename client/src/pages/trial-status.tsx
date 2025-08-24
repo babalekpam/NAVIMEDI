@@ -14,7 +14,8 @@ import {
   CreditCard,
   RefreshCw 
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { useTenant } from "@/contexts/tenant-context";
 
 interface TrialStatus {
   id: string;
@@ -35,11 +36,25 @@ interface TrialStatus {
 
 export default function TrialStatusPage() {
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
+
+  // Redirect non-trial accounts away from trial status page
+  React.useEffect(() => {
+    if (tenant && tenant.subscriptionStatus !== 'trial') {
+      setLocation('/dashboard');
+    }
+  }, [tenant, setLocation]);
+
+  // Don't render anything for non-trial accounts
+  if (tenant && tenant.subscriptionStatus !== 'trial') {
+    return null;
+  }
 
   const { data: trialStatus, isLoading, error } = useQuery<TrialStatus>({
     queryKey: ['/api/trial/status'],
-    enabled: !!user
+    enabled: !!user && tenant?.subscriptionStatus === 'trial'
   });
 
   const extendTrialMutation = useMutation({
