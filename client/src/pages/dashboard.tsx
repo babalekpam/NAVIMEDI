@@ -2072,8 +2072,36 @@ export default function Dashboard() {
     return <PharmacyDashboardEnhancedV2 />;
   }
   
-  // For tenant_admin and other hospital roles, show the hospital dashboard with role-based access
-  if (tenant?.type === 'hospital') {
+  if (user.role === 'physician') {
+    return renderPhysicianDashboard();
+  }
+  
+  if (user.role === 'nurse') {
+    return renderNurseDashboard();
+  }
+  
+  if (user.role === 'lab_technician') {
+    return renderLabTechnicianDashboard();
+  }
+  
+  if (user.role === 'receptionist') {
+    return renderReceptionistDashboard();
+  }
+  
+  if (user.role === 'billing_staff') {
+    return renderBillingStaffDashboard();
+  }
+  
+  if (user.role === 'insurance_manager') {
+    return renderInsuranceManagerDashboard();
+  }
+  
+  if (user.role === 'patient') {
+    return renderPatientDashboard();
+  }
+  
+  // For tenant_admin and director roles, show the admin dashboard
+  if (user.role === 'tenant_admin' || user.role === 'director') {
     return renderTenantAdminDashboard();
   }
   
