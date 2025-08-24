@@ -90,7 +90,6 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   // Advanced Features (White Label & Enterprise)
   { id: "white-label-settings", label: t("white-label-settings"), icon: Settings, path: "/white-label-settings", roles: ["tenant_admin", "director", "super_admin"] },
   { id: "offline-mode", label: t("offline-mode"), icon: WifiOff, path: "/offline-mode", roles: ["tenant_admin", "director", "super_admin"] },
-  { id: "trial-status", label: t("trial-status"), icon: Clock, path: "/trial-status", roles: ["super_admin", "tenant_admin", "director", "physician", "nurse", "pharmacist", "lab_technician", "receptionist", "billing_staff", "insurance_manager"] },
   
   // Platform Administration Section (only for super admins)
   { id: "tenant-management", label: t("tenant-management"), icon: Building, path: "/tenant-management", roles: ["super_admin"] },
@@ -110,10 +109,6 @@ export const Sidebar = () => {
 
   const sidebarItems = getSidebarItems(t);
   const filteredItems = sidebarItems.filter(item => {
-    // Only show trial-status when account is actually in trial
-    if (item.id === "trial-status") {
-      return item.roles.includes(user.role) && currentTenant?.subscriptionStatus === 'trial';
-    }
     return item.roles.includes(user.role);
   });
 
@@ -122,7 +117,7 @@ export const Sidebar = () => {
   // For super admin, show platform management and enterprise features
   if (user.role === "super_admin") {
     const platformItems = filteredItems.filter(item => 
-      ["super-admin-dashboard", "tenant-management", "client-management", "user-roles", "audit-logs", "reports", "white-label-settings", "offline-mode", "advertisements", "trial-status"].includes(item.id)
+      ["super-admin-dashboard", "tenant-management", "client-management", "user-roles", "audit-logs", "reports", "white-label-settings", "offline-mode", "advertisements"].includes(item.id)
     );
     
     return (
@@ -324,14 +319,10 @@ export const Sidebar = () => {
   const adminItems = filteredItems.filter(item => {
     // For laboratory tenants, exclude white-label settings and advanced features
     if (currentTenant?.type === "laboratory") {
-      const labAdminIds = ["reports", "user-roles", "audit-logs"].concat(
-        currentTenant?.subscriptionStatus === 'trial' ? ["trial-status"] : []
-      );
+      const labAdminIds = ["reports", "user-roles", "audit-logs"];
       return labAdminIds.includes(item.id);
     }
-    const adminItemIds = ["reports", "white-label-settings", "offline-mode", "tenant-management", "admin-dashboard", "user-roles", "audit-logs"].concat(
-      currentTenant?.subscriptionStatus === 'trial' ? ["trial-status"] : []
-    );
+    const adminItemIds = ["reports", "white-label-settings", "offline-mode", "tenant-management", "admin-dashboard", "user-roles", "audit-logs"];
     return adminItemIds.includes(item.id);
   });
 
