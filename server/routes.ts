@@ -1289,7 +1289,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Convert dateOfBirth string to Date if it's a string
         dateOfBirth: typeof req.body.dateOfBirth === 'string' 
           ? new Date(req.body.dateOfBirth) 
-          : req.body.dateOfBirth
+          : req.body.dateOfBirth,
+        // Handle preferredPharmacyId - only allow UUIDs, set to null for special values
+        preferredPharmacyId: req.body.preferredPharmacyId && 
+                           req.body.preferredPharmacyId !== 'no_preference' && 
+                           req.body.preferredPharmacyId !== 'closest_to_residence' && 
+                           req.body.preferredPharmacyId !== 'other_pharmacy' 
+                           ? req.body.preferredPharmacyId 
+                           : null
       };
 
       const patientData = insertPatientSchema.parse(requestData);

@@ -95,18 +95,29 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
   });
 
   const handleSubmit = (data: any) => {
-    // Prepare insurance information
-    const insuranceData = (data.insuranceProvider || data.policyNumber) ? {
-      provider: data.insuranceProvider,
+    // Prepare insurance information with enhanced fields
+    const insuranceData = (data.insuranceProvider || data.policyNumber || data.manualInsuranceProvider) ? {
+      provider: data.insuranceProvider === 'other' ? data.customInsuranceProvider : data.insuranceProvider,
+      manualProvider: data.manualInsuranceProvider,
       policyNumber: data.policyNumber,
       groupNumber: data.groupNumber,
       subscriberName: data.subscriberName,
       subscriberRelationship: data.subscriberRelationship,
-      copayAmount: data.copayAmount ? parseFloat(data.copayAmount) : undefined,
+      copayPercentage: data.copayPercentage ? parseFloat(data.copayPercentage) : undefined,
+      coveragePercentage: data.coveragePercentage ? parseFloat(data.coveragePercentage) : undefined,
       deductibleAmount: data.deductibleAmount ? parseFloat(data.deductibleAmount) : undefined,
       isPrimary: true,
       isActive: true
     } : undefined;
+
+    // Handle pharmacy selection - only pass UUID values
+    let preferredPharmacyId = undefined;
+    if (data.preferredPharmacyId && 
+        data.preferredPharmacyId !== 'no_preference' && 
+        data.preferredPharmacyId !== 'closest_to_residence' && 
+        data.preferredPharmacyId !== 'other_pharmacy') {
+      preferredPharmacyId = data.preferredPharmacyId;
+    }
 
     const patientData = {
       firstName: data.firstName,
@@ -121,7 +132,7 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
       allergies: allergies,
       medications: medications,
       insuranceInfo: insuranceData,
-      preferredPharmacyId: data.preferredPharmacyId || undefined
+      preferredPharmacyId: preferredPharmacyId
     };
     onSubmit(patientData);
   };
