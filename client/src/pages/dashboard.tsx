@@ -2029,47 +2029,5 @@ export default function Dashboard() {
   );
 
   // Return the appropriate dashboard based on user role
-  if (user.role === 'super_admin') {
-    return renderSuperAdminDashboard();
-  }
-  
-  if (user.role === 'pharmacist') {
-    return <PharmacyDashboardEnhancedV2 />;
-  }
-  
-  if (user.role === 'physician') {
-    return renderPhysicianDashboard();
-  }
-  
-  if (user.role === 'nurse') {
-    return renderNurseDashboard();
-  }
-  
-  if (user.role === 'lab_technician') {
-    return renderLabTechnicianDashboard();
-  }
-  
-  if (user.role === 'receptionist') {
-    return renderReceptionistDashboard();
-  }
-  
-  if (user.role === 'billing_staff') {
-    return renderBillingStaffDashboard();
-  }
-  
-  if (user.role === 'insurance_manager') {
-    return renderInsuranceManagerDashboard();
-  }
-  
-  if (user.role === 'patient') {
-    return renderPatientDashboard();
-  }
-  
-  // For tenant_admin and director roles, show the admin dashboard
-  if (user.role === 'tenant_admin' || user.role === 'director') {
-    return renderTenantAdminDashboard();
-  }
-  
-  // Default dashboard for other roles
-  return renderDefaultDashboard();
+  return renderRoleSpecificDashboard();
 }
