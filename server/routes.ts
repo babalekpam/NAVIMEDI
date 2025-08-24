@@ -3677,9 +3677,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user!.id,
         tenantId: req.tenant!.id,
         action: "visit_summary_created",
-        resourceType: "visit_summary",
-        resourceId: visitSummary.id,
-        details: { patientId: visitSummary.patientId, appointmentId: visitSummary.appointmentId }
+        entityType: "visit_summary",
+        entityId: visitSummary.id,
+        newData: visitSummary,
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
       });
 
       res.status(201).json(visitSummary);
@@ -3705,9 +3707,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user!.id,
         tenantId: req.tenant!.id,
         action: "visit_summary_updated",
-        resourceType: "visit_summary",
-        resourceId: visitSummary.id,
-        details: { changes: req.body }
+        entityType: "visit_summary",
+        entityId: visitSummary.id,
+        newData: visitSummary,
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
       });
 
       res.json(visitSummary);
