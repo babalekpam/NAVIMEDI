@@ -522,6 +522,8 @@ export default function Dashboard() {
 
   // Role-specific dashboards for healthcare professionals
   const renderRoleSpecificDashboard = () => {
+    if (!user) return renderDefaultDashboard();
+    
     switch (user.role) {
       case 'physician':
         return renderPhysicianDashboard();
