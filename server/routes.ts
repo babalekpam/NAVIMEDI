@@ -1276,7 +1276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/patients", requireRole(["physician", "nurse", "receptionist", "tenant_admin", "director"]), async (req, res) => {
+  app.post("/api/patients", requireRole(["receptionist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
       // Generate MRN automatically
       const mrn = `MRN${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;

@@ -92,8 +92,8 @@ export default function Patients() {
           <h1 className="text-3xl font-bold text-gray-900">{t('patients')}</h1>
           <p className="text-gray-600 mt-1">{t('manage-patient-records')}</p>
         </div>
-        {/* Only show Add Patient button for non-pharmacy users */}
-        {!(user.role === "tenant_admin" && tenant?.type === "pharmacy") && user.role !== "pharmacist" && (
+        {/* Only show Add Patient button for receptionists and admins */}
+        {(user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director" || user.role === "super_admin") && (
           <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700">
@@ -162,10 +162,15 @@ export default function Patients() {
                   : t('get-started-add-first-patient')
                 }
               </p>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
-                {t('add-patient')}
-              </Button>
+              {(user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director" || user.role === "super_admin") && (
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => setIsFormOpen(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('add-patient')}
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-0">
@@ -247,7 +252,7 @@ export default function Patients() {
                             <Calendar className="h-4 w-4 mr-2" />
                             Schedule Appointment
                           </DropdownMenuItem>
-                          {(user.role === "physician" || user.role === "nurse" || user.role === "tenant_admin") && (
+                          {(user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director" || user.role === "super_admin") && (
                             <>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => {
