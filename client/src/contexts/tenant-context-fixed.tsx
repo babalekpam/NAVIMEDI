@@ -65,7 +65,7 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
           
           // NO DEFAULT HOSPITAL FALLBACK - Each tenant must be independent
           // Use the actual tenant ID from the authenticated user to maintain isolation
-          let tenantName = 'Unknown Organization';
+          let tenantName = 'Loading...';
           let tenantType: 'hospital' | 'pharmacy' | 'laboratory' | 'platform' = 'hospital';
           let subdomain = 'unknown';
           let features = ['basic'];
@@ -77,6 +77,18 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
               type: 'platform' as const,
               subdomain: 'argilette',
               features: ['super_admin', 'tenant_management', 'multi_tenant', 'white_label']
+            },
+            'ad97f863-d247-4b1c-af94-e8bedfb98acc': {
+              name: 'SAINT PAUL',
+              type: 'hospital' as const,
+              subdomain: 'saint-paul',
+              features: ['unlimited', 'white_label', 'premium_support', 'api_access', 'advanced_analytics']
+            },
+            'ff8f6f72-7398-4398-8c0e-9de4802f73dd': {
+              name: 'General Hospital',
+              type: 'hospital' as const,
+              subdomain: 'general-hospital',
+              features: ['ehr', 'lab', 'billing']
             },
             '9ed7c3a3-cc12-414d-bc7e-7d0c1a3cf6e9': {
               name: 'Independent Community Pharmacy',
