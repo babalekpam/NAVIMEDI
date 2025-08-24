@@ -795,6 +795,7 @@ function Router() {
         <Switch>
           {/* Public routes - always accessible */}
           <Route path="/" component={LandingPage} />
+          <Route path="/login" component={Login} />
           <Route path="/marketplace" component={MarketplacePage} />
           <Route path="/supplier-signup" component={SupplierSignupPage} />
           <Route path="/supplier-portal" component={SupplierPortal} />
