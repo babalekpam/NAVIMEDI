@@ -109,16 +109,20 @@ export const Sidebar = () => {
   if (!user) return null;
 
   const sidebarItems = getSidebarItems(t);
-  const filteredItems = sidebarItems.filter(item => 
-    item.roles.includes(user.role)
-  );
+  const filteredItems = sidebarItems.filter(item => {
+    // Only show trial-status when account is actually in trial
+    if (item.id === "trial-status") {
+      return item.roles.includes(user.role) && currentTenant?.subscriptionStatus === 'trial';
+    }
+    return item.roles.includes(user.role);
+  });
 
 
 
   // For super admin, show platform management and enterprise features
   if (user.role === "super_admin") {
     const platformItems = filteredItems.filter(item => 
-      ["super-admin-dashboard", "tenant-management", "client-management", "user-roles", "audit-logs", "reports", "white-label-settings", "offline-mode", "advertisements"].includes(item.id)
+      ["super-admin-dashboard", "tenant-management", "client-management", "user-roles", "audit-logs", "reports", "white-label-settings", "offline-mode", "advertisements", "trial-status"].includes(item.id)
     );
     
     return (
