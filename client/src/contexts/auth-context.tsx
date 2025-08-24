@@ -158,7 +158,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.log('Setting redirect for super admin to dashboard');
       redirectPath = '/super-admin-dashboard';
     } else if (data.user.role === 'tenant_admin' || data.user.role === 'director') {
-      redirectPath = '/admin-dashboard';
+      // Check tenant type for pharmacy admins
+      if (data.tenant?.type === 'pharmacy') {
+        redirectPath = '/pharmacy-dashboard';
+      } else {
+        redirectPath = '/admin-dashboard';
+      }
     } else if (data.user.role === 'lab_technician') {
       redirectPath = '/laboratory-dashboard';
     } else if (data.user.role === 'pharmacist') {

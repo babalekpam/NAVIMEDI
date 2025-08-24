@@ -543,7 +543,12 @@ export default function Dashboard() {
         return renderPatientDashboard();
       case 'tenant_admin':
       case 'director':
-        return renderTenantAdminDashboard();
+        // Check tenant type for pharmacy admins
+        if (tenant?.type === 'pharmacy') {
+          return renderPharmacistDashboard();
+        } else {
+          return renderTenantAdminDashboard();
+        }
       default:
         return renderDefaultDashboard();
     }
@@ -2151,7 +2156,12 @@ export default function Dashboard() {
       );
     case 'tenant_admin':
     case 'director':
-      return renderTenantAdminDashboard();
+      // Check tenant type for pharmacy admins
+      if (tenant?.type === 'pharmacy') {
+        return renderPharmacistDashboard();
+      } else {
+        return renderTenantAdminDashboard();
+      }
     default:
       return (
         <div className="space-y-6">
