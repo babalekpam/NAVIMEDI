@@ -137,23 +137,21 @@ export default function Appointments() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, notes }: { id: string; status: string; notes?: string }) => {
-      const response = await apiRequest("PATCH", `/api/appointments/${id}`, {
-        status,
-        notes: notes || undefined
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        
+      try {
+        return await apiRequest(`/api/appointments/${id}`, {
+          method: "PATCH",
+          body: {
+            status,
+            notes: notes || undefined
+          }
+        });
+      } catch (error: any) {
         // Handle role restriction errors for appointment confirmation
-        if (errorData.error === "ROLE_RESTRICTION_CONFIRMATION") {
+        if (error.message.includes("ROLE_RESTRICTION_CONFIRMATION")) {
           throw new Error("You don't have permission to confirm appointments. Please contact reception staff or request confirmation permissions from your administrator.");
         }
-        
-        throw new Error(errorData.message || "Failed to update appointment");
+        throw error;
       }
-      
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
