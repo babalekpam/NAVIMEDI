@@ -552,15 +552,15 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Physician Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('physician-dashboard')}</h1>
           <p className="text-gray-600 mt-1">
-            Welcome back, Dr. {user.lastName}. Your clinical overview for today.
+            {t('welcome-back-dr').replace('{name}', user?.lastName || '')}
           </p>
         </div>
         <div className="flex items-center space-x-3">
           <Badge className="bg-blue-100 text-blue-800">
             <Stethoscope className="h-3 w-3 mr-1" />
-            On Duty
+            {t('on-duty')}
           </Badge>
         </div>
       </div>
@@ -571,9 +571,9 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Today's Appointments</p>
+                <p className="text-sm font-medium text-gray-600">{t('todays-appointments')}</p>
                 <p className="text-3xl font-bold text-gray-900">12</p>
-                <p className="text-xs text-blue-600 mt-1">3 urgent cases</p>
+                <p className="text-xs text-blue-600 mt-1">{t('urgent-cases').replace('{count}', '3')}</p>
               </div>
               <Calendar className="h-8 w-8 text-blue-600" />
             </div>
@@ -584,9 +584,9 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active Patients</p>
+                <p className="text-sm font-medium text-gray-600">{t('active-patients')}</p>
                 <p className="text-3xl font-bold text-gray-900">247</p>
-                <p className="text-xs text-green-600 mt-1">8 new this week</p>
+                <p className="text-xs text-green-600 mt-1">{t('new-this-week').replace('{count}', '8')}</p>
               </div>
               <Users className="h-8 w-8 text-green-600" />
             </div>
@@ -597,9 +597,9 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pending Reviews</p>
+                <p className="text-sm font-medium text-gray-600">{t('pending-review').replace('{count}', '8')}</p>
                 <p className="text-3xl font-bold text-gray-900">8</p>
-                <p className="text-xs text-orange-600 mt-1">Lab results & reports</p>
+                <p className="text-xs text-orange-600 mt-1">{t('lab-results')}</p>
               </div>
               <FileText className="h-8 w-8 text-orange-600" />
             </div>
@@ -610,9 +610,9 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Prescriptions</p>
+                <p className="text-sm font-medium text-gray-600">{t('prescriptions')}</p>
                 <p className="text-3xl font-bold text-gray-900">23</p>
-                <p className="text-xs text-purple-600 mt-1">Written today</p>
+                <p className="text-xs text-purple-600 mt-1">{t('written-today')}</p>
               </div>
               <Pill className="h-8 w-8 text-purple-600" />
             </div>
@@ -623,7 +623,7 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle>{t('quick-actions')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -632,7 +632,7 @@ export default function Dashboard() {
               onClick={() => setLocation('/appointments')}
             >
               <Calendar className="h-6 w-6" />
-              <span>View Schedule</span>
+              <span>{t('view-schedule')}</span>
             </Button>
             <Button 
               variant="outline" 
@@ -640,7 +640,7 @@ export default function Dashboard() {
               onClick={() => setLocation('/patients')}
             >
               <Users className="h-6 w-6" />
-              <span>Patient List</span>
+              <span>{t('patient-list')}</span>
             </Button>
             <Button 
               variant="outline" 
@@ -648,7 +648,7 @@ export default function Dashboard() {
               onClick={() => setLocation('/prescriptions')}
             >
               <Pill className="h-6 w-6" />
-              <span>Prescriptions</span>
+              <span>{t('prescriptions')}</span>
             </Button>
             <Button 
               variant="outline" 
@@ -656,7 +656,7 @@ export default function Dashboard() {
               onClick={() => setLocation('/lab-orders')}
             >
               <TestTube className="h-6 w-6" />
-              <span>Lab Orders</span>
+              <span>{t('lab-orders-short')}</span>
             </Button>
           </div>
         </CardContent>
@@ -774,9 +774,9 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Nurse Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('nurse-dashboard')}</h1>
           <p className="text-gray-600 mt-1">
-            Welcome back, {user.firstName}. Your patient care overview for today.
+            {t('welcome-back-clinical').replace('{name}', user?.firstName || '')}
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -1205,8 +1205,8 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Reception Dashboard</h1>
-          <p className="text-gray-600 mt-1">Welcome back, {user.firstName}. Patient registration and appointment management.</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('reception-dashboard')}</h1>
+          <p className="text-gray-600 mt-1">{t('welcome-back-clinical').replace('{name}', user?.firstName || '')}</p>
         </div>
       </div>
       
@@ -1248,7 +1248,7 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Waiting Room</p>
+                <p className="text-sm font-medium text-gray-600">{t('waiting-room')}</p>
                 <p className="text-3xl font-bold text-gray-900">5</p>
               </div>
               <Clock className="h-8 w-8 text-orange-600" />
@@ -1263,8 +1263,8 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Billing Dashboard</h1>
-          <p className="text-gray-600 mt-1">Welcome back, {user.firstName}. Financial operations and insurance claims.</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('billing-dashboard')}</h1>
+          <p className="text-gray-600 mt-1">{t('welcome-back-clinical').replace('{name}', user?.firstName || '')}</p>
         </div>
       </div>
       
@@ -1273,7 +1273,7 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pending Claims</p>
+                <p className="text-sm font-medium text-gray-600">{t('pending-claims')}</p>
                 <p className="text-3xl font-bold text-gray-900">23</p>
               </div>
               <FileText className="h-8 w-8 text-orange-600" />
@@ -1284,7 +1284,7 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Today's Revenue</p>
+                <p className="text-sm font-medium text-gray-600">{t('todays-revenue')}</p>
                 <p className="text-3xl font-bold text-gray-900">$8,450</p>
               </div>
               <DollarSign className="h-8 w-8 text-green-600" />
@@ -1295,7 +1295,7 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Outstanding Balance</p>
+                <p className="text-sm font-medium text-gray-600">{t('outstanding-balance')}</p>
                 <p className="text-3xl font-bold text-gray-900">$12,340</p>
               </div>
               <AlertTriangle className="h-8 w-8 text-red-600" />
@@ -1306,7 +1306,7 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Processed Claims</p>
+                <p className="text-sm font-medium text-gray-600">{t('processed-claims')}</p>
                 <p className="text-3xl font-bold text-gray-900">156</p>
               </div>
               <CheckCircle className="h-8 w-8 text-blue-600" />
@@ -1422,7 +1422,7 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Outstanding Balance</p>
+                <p className="text-sm font-medium text-gray-600">{t('outstanding-balance')}</p>
                 <p className="text-3xl font-bold text-gray-900">$245</p>
               </div>
               <DollarSign className="h-8 w-8 text-orange-600" />
