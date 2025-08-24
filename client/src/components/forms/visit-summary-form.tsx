@@ -107,7 +107,7 @@ export function VisitSummaryForm({
   // Fetch vital signs data if vitalSignsId is provided
   const { data: vitalSigns } = useQuery({
     queryKey: ["/api/vital-signs", vitalSignsId],
-    queryFn: () => vitalSignsId ? apiRequest("GET", `/api/vital-signs/appointment/${appointmentId}`) : null,
+    queryFn: () => vitalSignsId ? apiRequest(`/api/vital-signs/appointment/${appointmentId}`) : null,
     enabled: !!vitalSignsId,
   });
 
@@ -143,7 +143,10 @@ export function VisitSummaryForm({
         vitalSignsId: data.vitalSignsId || null, // Convert empty string to null
         returnVisitTimeframe: data.returnVisitTimeframe || null, // Handle empty timeframe
       };
-      return apiRequest("POST", "/api/visit-summaries", cleanedData);
+      return apiRequest("/api/visit-summaries", {
+        method: "POST",
+        body: cleanedData
+      });
     },
     onSuccess: (response) => {
       console.log("Visit summary created successfully:", response);
@@ -179,7 +182,10 @@ export function VisitSummaryForm({
         vitalSignsId: data.vitalSignsId || null, // Convert empty string to null
         returnVisitTimeframe: data.returnVisitTimeframe || null, // Handle empty timeframe
       };
-      return apiRequest("PATCH", `/api/visit-summaries/${existingVisitSummary?.id}`, cleanedData);
+      return apiRequest(`/api/visit-summaries/${existingVisitSummary?.id}`, {
+        method: "PATCH",
+        body: cleanedData
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/visit-summaries"] });
