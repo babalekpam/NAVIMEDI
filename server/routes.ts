@@ -3578,10 +3578,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/vital-signs", authenticateToken, requireTenant, requireRole(["super_admin", "tenant_admin", "doctor", "nurse", "receptionist"]), async (req, res) => {
     try {
+      console.log("[VITAL SIGNS DEBUG] req.user:", req.user);
+      console.log("[VITAL SIGNS DEBUG] req.user?.id:", req.user?.id);
+      console.log("[VITAL SIGNS DEBUG] req.userId:", req.userId);
+      
       const validatedData = insertVitalSignsSchema.parse({
         ...req.body,
         tenantId: req.tenantId,
-        recordedBy: req.user?.id
+        recordedBy: req.user?.id || req.userId
       });
 
       const vitalSigns = await storage.createVitalSigns(validatedData);
