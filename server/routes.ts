@@ -6763,12 +6763,17 @@ Report ID: ${report.id}
       console.log("[CHECK-IN DEBUG] Tenant ID:", req.tenant!.id);
       console.log("[CHECK-IN DEBUG] User ID:", req.user!.id);
 
-      const validatedData = insertPatientCheckInSchema.parse({
+      // Prepare data with all required fields
+      const checkInData = {
         ...req.body,
         tenantId: req.tenant!.id,
         checkedInBy: req.user!.id,
         checkInTime: new Date()
-      });
+      };
+      
+      console.log("[CHECK-IN DEBUG] Data before validation:", checkInData);
+
+      const validatedData = insertPatientCheckInSchema.parse(checkInData);
       
       console.log("[CHECK-IN DEBUG] Validated data:", validatedData);
 
