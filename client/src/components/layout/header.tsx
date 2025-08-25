@@ -117,8 +117,64 @@ export const Header = () => {
               <>
                 {/* Receptionists use sidebar navigation exclusively */}
               </>
+            ) : tenant?.type === "pharmacy" || user.role === "pharmacist" ? (
+              // Pharmacy Navigation
+              <>
+                <button 
+                  onClick={() => setLocation("/prescriptions")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  💊 Prescriptions
+                </button>
+                <button 
+                  onClick={() => setLocation("/pharmacy-inventory")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  📦 Inventory
+                </button>
+                <button 
+                  onClick={() => setLocation("/customer-accounts")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  👤 Customers
+                </button>
+                <button 
+                  onClick={() => setLocation("/clinical-services")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  💉 Clinical Services
+                </button>
+                <button 
+                  onClick={() => setLocation("/pharmacy-billing")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  💳 Billing
+                </button>
+              </>
+            ) : tenant?.type === "laboratory" || user.role === "lab_technician" ? (
+              // Laboratory Navigation
+              <>
+                <button 
+                  onClick={() => setLocation("/lab-orders")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  {t('lab-orders')}
+                </button>
+                <button 
+                  onClick={() => setLocation("/lab-results")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  {t('lab-results')}
+                </button>
+                <button 
+                  onClick={() => setLocation("/laboratory-billing")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  {t('billing')}
+                </button>
+              </>
             ) : (
-              // Clinical/Tenant User Navigation
+              // Hospital/Clinical Navigation
               <>
                 <button 
                   onClick={() => setLocation("/patients")}
@@ -126,33 +182,24 @@ export const Header = () => {
                 >
                   {t('patients')}
                 </button>
-                {/* Show appointments for all except pharmacy and laboratory tenant users */}
-                {!(user.role === "tenant_admin" && (tenant?.type === "pharmacy" || tenant?.type === "laboratory")) && user.role !== "pharmacist" && user.role !== "lab_technician" && (
-                  <button 
-                    onClick={() => setLocation("/appointments")}
-                    className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
-                  >
-                    {t('appointments')}
-                  </button>
-                )}
-                {/* Prescriptions - hidden for laboratory users completely */}
-                {tenant?.type !== "laboratory" && user.role !== "lab_technician" && (
-                  <button 
-                    onClick={() => setLocation("/prescriptions")}
-                    className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
-                  >
-                    {t('prescriptions')}
-                  </button>
-                )}
-                {/* Lab Orders - hidden for pharmacy users */}
-                {!(user.role === "tenant_admin" && tenant?.type === "pharmacy") && user.role !== "pharmacist" && (
-                  <button 
-                    onClick={() => setLocation("/lab-orders")}
-                    className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
-                  >
-                    {t('lab-orders')}
-                  </button>
-                )}
+                <button 
+                  onClick={() => setLocation("/appointments")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  {t('appointments')}
+                </button>
+                <button 
+                  onClick={() => setLocation("/prescriptions")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  {t('prescriptions')}
+                </button>
+                <button 
+                  onClick={() => setLocation("/lab-orders")}
+                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                >
+                  {t('lab-orders')}
+                </button>
                 <button 
                   onClick={() => setLocation("/billing")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
