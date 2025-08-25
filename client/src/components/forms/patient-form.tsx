@@ -49,6 +49,10 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
     email: z.string().optional(),
     address: z.string().optional(),
     emergencyContact: z.string().optional(),
+    // Medical Information (arrays handled separately)
+    medicalHistory: z.array(z.string()).optional(),
+    allergies: z.array(z.string()).optional(),
+    medications: z.array(z.string()).optional(),
     // Insurance Information
     insuranceProvider: z.string().optional(),
     customInsuranceProvider: z.string().optional(),
@@ -59,6 +63,7 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
     subscriberRelationship: z.string().optional(),
     copayPercentage: z.string().optional(),
     coveragePercentage: z.string().optional(),
+    copayAmount: z.string().optional(),
     deductibleAmount: z.string().optional(),
     // Preferred pharmacy
     preferredPharmacyId: z.string().optional()
