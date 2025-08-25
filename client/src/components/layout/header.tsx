@@ -67,10 +67,12 @@ export const Header = () => {
                   {tenant?.name || 'Loading...'} 
                   {tenant?.type && tenant.type !== 'platform' && (
                     <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                      {tenant.type === 'hospital' && 'Hospital'}
-                      {tenant.type === 'pharmacy' && 'Pharmacy'}  
-                      {tenant.type === 'laboratory' && 'Laboratory'}
-                      {tenant.type === 'clinic' && 'Clinic'}
+                      {tenant.type === 'hospital' ? 'Hospital' : ''}
+                      {tenant.type === 'pharmacy' ? 'Pharmacy' : ''}  
+                      {tenant.type === 'laboratory' ? 'Laboratory' : ''}
+                      {tenant.type === 'clinic' ? 'Clinic' : ''}
+                      {tenant.type === 'insurance_provider' ? 'Insurance' : ''}
+                      {tenant.type === 'medical_supplier' ? 'Supplier' : ''}
                     </span>
                   )}
                   {tenant?.type === 'platform' && (
