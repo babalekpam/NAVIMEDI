@@ -113,6 +113,12 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
               type: 'pharmacy' as const,
               subdomain: 'deo',
               features: ['pharmacy', 'billing', 'inventory', 'prescriptions']
+            },
+            'c50f0d33-bbd5-4a47-a390-6e83dd5c7057': {
+              name: 'LABSAFE',
+              type: 'laboratory' as const,
+              subdomain: 'labsafe',
+              features: ['sample_management', 'test_management', 'results_reporting', 'analytics_insights', 'quality_control', 'inventory_management']
             }
           };
           
