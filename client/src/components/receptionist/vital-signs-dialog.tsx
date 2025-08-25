@@ -20,8 +20,8 @@ export default function VitalSignsDialog({ form, onSubmit, isLoading, patient }:
   const { t } = useTranslation();
 
   return (
-    <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-      <DialogHeader>
+    <DialogContent className="max-w-5xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogHeader className="flex-shrink-0">
         <DialogTitle>{t('record-vital-signs')}</DialogTitle>
         <DialogDescription>
           {patient && `${t('patient')}: ${patient.firstName} ${patient.lastName}`}
@@ -29,8 +29,9 @@ export default function VitalSignsDialog({ form, onSubmit, isLoading, patient }:
       </DialogHeader>
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {/* Blood Pressure */}
             <Card>
               <CardHeader className="pb-3">
@@ -437,28 +438,29 @@ export default function VitalSignsDialog({ form, onSubmit, isLoading, patient }:
                 />
               </CardContent>
             </Card>
+            </div>
+
+            {/* Notes */}
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('notes')} ({t('optional')})</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      {...field} 
+                      placeholder={t('enter-any-additional-notes')}
+                      rows={2}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
-          {/* Notes */}
-          <FormField
-            control={form.control}
-            name="notes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('notes')} ({t('optional')})</FormLabel>
-                <FormControl>
-                  <Textarea 
-                    {...field} 
-                    placeholder={t('enter-any-additional-notes')}
-                    rows={3}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end space-x-2 flex-shrink-0 pt-4 border-t">
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('save-vital-signs')}
