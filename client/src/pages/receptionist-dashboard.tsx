@@ -213,21 +213,58 @@ export default function ReceptionistDashboard() {
   const [isRegistering, setIsRegistering] = useState(false);
 
   const checkInPatientMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/patient-check-ins', data),
+    mutationFn: (data: any) => apiRequest('/api/patient-check-ins', {
+      method: 'POST',
+      body: data,
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/patient-check-ins/today'] });
       queryClient.invalidateQueries({ queryKey: ['/api/patient-check-ins/waiting'] });
       setIsCheckInDialogOpen(false);
       checkInForm.reset();
+      
+      // Success toast notification
+      toast({
+        title: "Patient Checked In Successfully!",
+        description: "Patient has been checked in and is now waiting.",
+        variant: "default",
+      });
+    },
+    onError: (error) => {
+      console.error('Check-in failed:', error);
+      toast({
+        title: "Check-in Failed",
+        description: "Failed to check in patient. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
   const recordVitalsMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/vital-signs', data),
+    mutationFn: (data: any) => apiRequest('/api/vital-signs', {
+      method: 'POST',
+      body: data,
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/patient-check-ins/today'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/patient-check-ins/waiting'] });
       setIsVitalsDialogOpen(false);
       vitalSignsForm.reset();
+      
+      // Success toast notification
+      toast({
+        title: "Vital Signs Recorded Successfully!",
+        description: "Patient vital signs have been saved.",
+        variant: "default",
+      });
+    },
+    onError: (error) => {
+      console.error('Vital signs recording failed:', error);
+      toast({
+        title: "Recording Failed",
+        description: "Failed to record vital signs. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -308,6 +345,7 @@ export default function ReceptionistDashboard() {
       // Transform the form data to match the backend expected format
       const vitalSignsData = {
         patientId: selectedCheckIn.patientId,
+        checkInId: selectedCheckIn.id,
         appointmentId: selectedCheckIn.appointmentId || null,
         systolicBp: data.systolicBp,
         diastolicBp: data.diastolicBp,
@@ -317,25 +355,19 @@ export default function ReceptionistDashboard() {
         respiratoryRate: data.respiratoryRate,
         oxygenSaturation: data.oxygenSaturation,
         weight: data.weight,
+        weightUnit: data.weightUnit || 'lbs',
         height: data.height,
+        heightUnit: data.heightUnit || 'inches',
+        bloodType: data.bloodType,
         painLevel: data.painLevel,
         glucoseLevel: data.glucoseLevel,
+        allergies: data.allergies,
+        currentMedications: data.currentMedications,
         notes: data.notes
       };
       
-      // Call vital signs API with check-in ID for proper linking
-      apiRequest('POST', '/api/vital-signs', {
-        ...vitalSignsData,
-        checkInId: selectedCheckIn.id
-      }).then(() => {
-        queryClient.invalidateQueries({ queryKey: ['/api/vital-signs'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/patient-check-ins/today'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/patient-check-ins/waiting'] });
-        setIsVitalsDialogOpen(false);
-        vitalSignsForm.reset();
-      }).catch((error) => {
-        console.error('Error recording vital signs:', error);
-      });
+      // Use the mutation for consistent error handling and notifications
+      recordVitalsMutation.mutate(vitalSignsData);
     }
   };
 
