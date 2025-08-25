@@ -16,14 +16,15 @@ const simplePatientSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
-  gender: z.string().min(1, "Gender is required"),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  email: z.string().email("Invalid email format").or(z.literal("")),
+  gender: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email("Invalid email format").optional().or(z.literal("")),
 });
 
 export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) => {
   const form = useForm({
     resolver: zodResolver(simplePatientSchema),
+    mode: "onChange",
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -170,6 +171,7 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
         <div className="mt-4 p-4 bg-red-100 text-red-800 text-xs">
           <p>Debug: Form valid = {form.formState.isValid ? 'YES' : 'NO'}</p>
           <p>Errors: {Object.keys(form.formState.errors).length} errors</p>
+          <p>Form values: {JSON.stringify(form.getValues(), null, 2)}</p>
           {Object.keys(form.formState.errors).length > 0 && (
             <pre>{JSON.stringify(form.formState.errors, null, 2)}</pre>
           )}
