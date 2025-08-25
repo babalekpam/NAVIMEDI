@@ -292,42 +292,28 @@ export const Sidebar = () => {
     
     // Analytics & Insights
     const analyticsItems = [
-      { id: "analytics-dashboard", label: "📈 Analytics & Insights", icon: TrendingUp, path: "/lab/analytics", roles: ["lab_technician", "tenant_admin", "director"] },
-      { id: "quality-control", label: "🎯 Quality Control", icon: Target, path: "/lab/quality-control", roles: ["lab_technician", "tenant_admin", "director"] }
+      { id: "analytics-dashboard", label: "📈 Analytics & Insights", icon: TrendingUp, path: "/lab/analytics", roles: ["lab_technician", "tenant_admin", "director"] }
     ];
     
     // Resource Management
     const resourceItems = [
       { id: "inventory-management", label: "🏪 Inventory Management", icon: Package, path: "/lab/inventory", roles: ["lab_technician", "tenant_admin", "director"] },
-      { id: "staff-scheduling", label: "👥 Staff & Scheduling", icon: Users, path: "/lab/staff-scheduling", roles: ["tenant_admin", "director"] },
-      { id: "equipment-management", label: "🔧 Equipment Management", icon: Wrench, path: "/lab/equipment", roles: ["lab_technician", "tenant_admin", "director"] }
+      { id: "staff-management", label: "👥 Staff Management", icon: Users, path: "/user-roles", roles: ["tenant_admin", "director"] }
     ];
     
     // Patient & Client Services
     const clientServicesItems = [
-      { id: "patient-management", label: "👤 Patient Management", icon: Users, path: "/lab/patients", roles: ["lab_technician", "tenant_admin", "director"] },
-      { id: "client-portal", label: "🏥 Client Portal", icon: Building2, path: "/lab/client-portal", roles: ["lab_technician", "tenant_admin", "director"] }
+      { id: "patient-management", label: "👤 Patient Management", icon: Users, path: "/patients", roles: ["lab_technician", "tenant_admin", "director"] },
+      { id: "lab-orders", label: "🧪 Lab Orders", icon: TestTube, path: "/lab-orders", roles: ["lab_technician", "tenant_admin", "director"] }
     ];
     
     // Compliance & Administration
     const complianceItems = [
-      { id: "regulatory-compliance", label: "📋 Regulatory Compliance", icon: Shield, path: "/lab/compliance", roles: ["tenant_admin", "director"] },
       { id: "financial-management", label: "💰 Financial Management", icon: DollarSign, path: "/laboratory-billing", roles: ["tenant_admin", "director"] },
-      { id: "system-administration", label: "⚙️ System Administration", icon: Settings, path: "/lab/administration", roles: ["tenant_admin", "director"] }
+      { id: "system-administration", label: "⚙️ System Administration", icon: Settings, path: "/admin-dashboard", roles: ["tenant_admin", "director"] },
+      { id: "reports", label: "📊 Reports", icon: FileText, path: "/reports", roles: ["tenant_admin", "director"] }
     ];
     
-    // Specialized Laboratory Features
-    const specializedItems = [
-      { id: "research-labs", label: "🔬 Research Labs", icon: Microscope, path: "/lab/research", roles: ["lab_technician", "tenant_admin", "director"] },
-      { id: "clinical-labs", label: "🩸 Clinical Labs", icon: Heart, path: "/lab/clinical", roles: ["lab_technician", "tenant_admin", "director"] },
-      { id: "industrial-labs", label: "🏭 Industrial Labs", icon: Factory, path: "/lab/industrial", roles: ["lab_technician", "tenant_admin", "director"] }
-    ];
-    
-    // Modern Digital Features
-    const digitalItems = [
-      { id: "mobile-integration", label: "📱 Mobile Integration", icon: Smartphone, path: "/lab/mobile", roles: ["lab_technician", "tenant_admin", "director"] },
-      { id: "automation-ai", label: "🤖 Automation & AI", icon: Brain, path: "/lab/automation", roles: ["lab_technician", "tenant_admin", "director"] }
-    ];
     
     return (
       <aside className="w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto">
@@ -477,59 +463,6 @@ export const Sidebar = () => {
               })}
             </div>
             
-            {/* Specialized Features */}
-            <div className="mb-6">
-              <h3 className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-3">
-                Specialized Labs
-              </h3>
-              {specializedItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location === item.path;
-                
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setLocation(item.path)}
-                    className={cn(
-                      "w-full flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-colors",
-                      isActive
-                        ? "text-indigo-600 bg-indigo-50"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    )}
-                  >
-                    <Icon className={cn("mr-2 h-3 w-3", isActive ? "text-indigo-600" : "text-gray-400")} />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-            
-            {/* Digital Features */}
-            <div className="mb-6">
-              <h3 className="text-xs font-semibold text-cyan-600 uppercase tracking-wider mb-3">
-                Digital Features
-              </h3>
-              {digitalItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location === item.path;
-                
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setLocation(item.path)}
-                    className={cn(
-                      "w-full flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-colors",
-                      isActive
-                        ? "text-cyan-600 bg-cyan-50"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    )}
-                  >
-                    <Icon className={cn("mr-2 h-3 w-3", isActive ? "text-cyan-600" : "text-gray-400")} />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
           </nav>
         </div>
       </aside>
