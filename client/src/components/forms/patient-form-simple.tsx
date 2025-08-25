@@ -36,7 +36,12 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
   });
 
   const handleSubmit = (data: any) => {
-    onSubmit(data);
+    console.log('Form submitting with data:', data);
+    try {
+      onSubmit(data);
+    } catch (error) {
+      console.error('Error during form submission:', error);
+    }
   };
 
   return (

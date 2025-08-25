@@ -250,16 +250,22 @@ export default function ReceptionistDashboard() {
 
   // Handlers
   const handlePatientRegistration = async (data: any) => {
+    console.log('Starting patient registration with data:', data);
     setIsRegistering(true);
     try {
       // Create patient only (no vital signs during registration)
-      await apiRequest('POST', '/api/patients', data);
+      const response = await apiRequest("/api/patients", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
       
+      console.log('Patient registration successful:', response);
       queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
       setIsRegisterDialogOpen(false);
       
     } catch (error) {
       console.error('Error registering patient:', error);
+      alert('Failed to register patient. Please check the console for details.');
     } finally {
       setIsRegistering(false);
     }
