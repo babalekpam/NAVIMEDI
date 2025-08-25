@@ -50,6 +50,15 @@ export const Header = () => {
 
   if (!user) return null;
 
+  // Debug logging for header navigation logic
+  console.log('[HEADER DEBUG] User role:', user.role);
+  console.log('[HEADER DEBUG] Tenant type:', tenant?.type);
+  console.log('[HEADER DEBUG] Tenant name:', tenant?.name);
+  console.log('[HEADER DEBUG] Should show pharmacy nav:', 
+    tenant?.type === "pharmacy" || user.role === "pharmacist" || 
+    ((user.role === "tenant_admin" || user.role === "director") && tenant?.type === "pharmacy")
+  );
+
   const userInitials = `${user.firstName?.[0] || 'U'}${user.lastName?.[0] || 'N'}`;
 
   return (
@@ -117,7 +126,7 @@ export const Header = () => {
               <>
                 {/* Receptionists use sidebar navigation exclusively */}
               </>
-            ) : tenant?.type === "pharmacy" || user.role === "pharmacist" ? (
+            ) : tenant?.type === "pharmacy" || user.role === "pharmacist" || ((user.role === "tenant_admin" || user.role === "director") && tenant?.type === "pharmacy") ? (
               // Pharmacy Navigation
               <>
                 <button 
