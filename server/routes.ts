@@ -6848,6 +6848,51 @@ Report ID: ${report.id}
     }
   });
 
+  // Hospital Patient Insurance routes
+  app.get("/api/hospital-patient-insurance/:patientId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const insurance = await storage.getHospitalPatientInsuranceByPatientId(patientId, req.tenantId!);
+      res.json(insurance);
+    } catch (error) {
+      console.error("Error fetching hospital patient insurance:", error);
+      res.status(500).json({ message: "Failed to fetch insurance information" });
+    }
+  });
+
+  app.post("/api/hospital-patient-insurance", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const insuranceData = {
+        ...req.body,
+        tenantId: req.tenantId,
+      };
+      
+      const insurance = await storage.createHospitalPatientInsurance(insuranceData);
+      res.status(201).json(insurance);
+    } catch (error) {
+      console.error("Error creating hospital patient insurance:", error);
+      res.status(500).json({ message: "Failed to create insurance information" });
+    }
+  });
+
+  app.patch("/api/hospital-patient-insurance/:id", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = { ...req.body };
+      
+      const insurance = await storage.updateHospitalPatientInsurance(id, updateData);
+      
+      if (!insurance) {
+        return res.status(404).json({ message: "Insurance information not found" });
+      }
+      
+      res.json(insurance);
+    } catch (error) {
+      console.error("Error updating hospital patient insurance:", error);
+      res.status(500).json({ message: "Failed to update insurance information" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
