@@ -36,6 +36,7 @@ import {
   Truck,
   Phone,
   Smartphone,
+  Globe,
   // Laboratory Management Icons
   Microscope,
   FlaskConical,
