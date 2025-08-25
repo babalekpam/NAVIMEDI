@@ -285,12 +285,12 @@ export default function ReceptionistDashboard() {
       if (editingInsurance) {
         return apiRequest(`/api/hospital-patient-insurance/${editingInsurance.id}`, {
           method: "PATCH",
-          body: JSON.stringify(data),
+          body: data,
         });
       } else {
         return apiRequest("/api/hospital-patient-insurance", {
           method: "POST",
-          body: JSON.stringify(data),
+          body: data,
         });
       }
     },
@@ -300,9 +300,21 @@ export default function ReceptionistDashboard() {
       });
       setShowInsuranceDialog(false);
       setEditingInsurance(null);
+      
+      // Success toast notification
+      toast({
+        title: "Insurance Saved Successfully!",
+        description: "Patient insurance information has been updated.",
+        variant: "default",
+      });
     },
     onError: (error: any) => {
       console.error("Failed to save insurance information:", error);
+      toast({
+        title: "Insurance Save Failed",
+        description: `Failed to save insurance information: ${error.message || 'Please try again.'}`,
+        variant: "destructive",
+      });
     },
   });
 
