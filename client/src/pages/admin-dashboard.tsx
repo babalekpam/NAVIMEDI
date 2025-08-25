@@ -26,8 +26,17 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
   const [currentTab, setCurrentTab] = useState(activeTab);
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
 
+  // Debug logging
+  console.log('Admin Dashboard Debug:', {
+    userRole: user?.role,
+    tenantType: tenant?.type,
+    tenantName: tenant?.name,
+    userEmail: user?.email
+  });
+
   // For pharmacy admins, show pharmacy dashboard directly
   if (user && tenant && tenant.type === 'pharmacy' && (user.role === 'tenant_admin' || user.role === 'director')) {
+    console.log('Rendering pharmacy dashboard for pharmacy admin');
     return <PharmacyDashboardWorking />;
   }
 
