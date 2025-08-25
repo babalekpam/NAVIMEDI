@@ -45,7 +45,7 @@ export default function VitalSignsDialog({ form, onSubmit, isLoading, patient }:
                   name="systolicBp"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('systolic')} (mmHg)</FormLabel>
+                      <FormLabel>{t('systolic')} * (mmHg)</FormLabel>
                       <FormControl>
                         <Input 
                           {...field} 
@@ -63,7 +63,7 @@ export default function VitalSignsDialog({ form, onSubmit, isLoading, patient }:
                   name="diastolicBp"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('diastolic')} (mmHg)</FormLabel>
+                      <FormLabel>{t('diastolic')} * (mmHg)</FormLabel>
                       <FormControl>
                         <Input 
                           {...field} 
@@ -93,7 +93,7 @@ export default function VitalSignsDialog({ form, onSubmit, isLoading, patient }:
                   name="heartRate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('heart-rate')} (bpm)</FormLabel>
+                      <FormLabel>{t('heart-rate')} * (bpm)</FormLabel>
                       <FormControl>
                         <Input 
                           {...field} 
@@ -111,7 +111,7 @@ export default function VitalSignsDialog({ form, onSubmit, isLoading, patient }:
                   name="oxygenSaturation"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('oxygen-saturation')} (%)</FormLabel>
+                      <FormLabel>{t('oxygen-saturation')} * (%)</FormLabel>
                       <FormControl>
                         <Input 
                           {...field} 
@@ -182,7 +182,7 @@ export default function VitalSignsDialog({ form, onSubmit, isLoading, patient }:
                   name="respiratoryRate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('respiratory-rate')} (per min)</FormLabel>
+                      <FormLabel>{t('respiratory-rate')} * (per min)</FormLabel>
                       <FormControl>
                         <Input 
                           {...field} 
@@ -213,7 +213,7 @@ export default function VitalSignsDialog({ form, onSubmit, isLoading, patient }:
                     name="weight"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel>{t('weight')}</FormLabel>
+                        <FormLabel>{t('weight')} *</FormLabel>
                         <FormControl>
                           <Input 
                             {...field} 
@@ -266,7 +266,7 @@ export default function VitalSignsDialog({ form, onSubmit, isLoading, patient }:
                     name="height"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel>{t('height')}</FormLabel>
+                        <FormLabel>{t('height')} *</FormLabel>
                         <FormControl>
                           <Input 
                             {...field} 

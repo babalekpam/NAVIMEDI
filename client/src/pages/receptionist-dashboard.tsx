@@ -75,20 +75,27 @@ const checkInSchema = z.object({
 });
 
 const vitalSignsSchema = z.object({
-  systolicBp: z.number().min(60).max(300).optional(),
-  diastolicBp: z.number().min(30).max(200).optional(),
-  heartRate: z.number().min(30).max(250).optional(),
-  temperature: z.number().min(90).max(115).optional(),
+  // Required Vital Signs - Essential measurements
+  systolicBp: z.number().min(60, "Systolic BP must be at least 60").max(300, "Systolic BP cannot exceed 300"),
+  diastolicBp: z.number().min(30, "Diastolic BP must be at least 30").max(200, "Diastolic BP cannot exceed 200"),
+  heartRate: z.number().min(30, "Heart rate must be at least 30").max(250, "Heart rate cannot exceed 250"),
+  temperature: z.number().min(90, "Temperature seems too low").max(115, "Temperature seems too high"),
   temperatureUnit: z.enum(['F', 'C']).default('F'),
-  respiratoryRate: z.number().min(8).max(60).optional(),
-  oxygenSaturation: z.number().min(70).max(100).optional(),
-  weight: z.number().min(1).max(1000).optional(),
+  oxygenSaturation: z.number().min(70, "O2 saturation must be at least 70%").max(100, "O2 saturation cannot exceed 100%"),
+  weight: z.number().min(1, "Weight is required").max(1000, "Weight cannot exceed 1000"),
   weightUnit: z.enum(['lbs', 'kg']).default('lbs'),
-  height: z.number().min(12).max(96).optional(),
+  height: z.number().min(12, "Height is required").max(96, "Height cannot exceed 96 inches"),
   heightUnit: z.enum(['inches', 'cm']).default('inches'),
-  painLevel: z.number().min(0).max(10).optional(),
+  // Additional Important Measurements
+  respiratoryRate: z.number().min(8, "Respiratory rate must be at least 8").max(60, "Respiratory rate cannot exceed 60"),
+  painLevel: z.number().min(0).max(10, "Pain level must be 0-10"),
   glucoseLevel: z.number().min(50).max(500).optional(),
+  // BMI auto-calculated
+  bmi: z.number().optional(),
+  // Additional Clinical Notes
   notes: z.string().optional(),
+  allergies: z.string().optional(),
+  currentMedications: z.string().optional(),
 });
 
 

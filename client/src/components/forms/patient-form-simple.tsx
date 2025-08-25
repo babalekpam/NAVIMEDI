@@ -11,14 +11,27 @@ interface PatientFormProps {
   isLoading?: boolean;
 }
 
-// Simple working schema without conflicts
+// Patient registration schema with required insurance
 const simplePatientSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
-  gender: z.string().optional(),
-  phone: z.string().optional(),
-  email: z.string().email("Invalid email format").optional().or(z.literal("")),
+  gender: z.string().min(1, "Gender is required"),
+  phone: z.string().min(10, "Phone number is required (10+ digits)"),
+  email: z.string().email("Valid email is required"),
+  // Required Insurance Information
+  insuranceProvider: z.string().min(1, "Insurance provider is required"),
+  policyNumber: z.string().min(1, "Policy number is required"),
+  groupNumber: z.string().optional(),
+  // Address Information
+  address: z.string().min(1, "Address is required"),
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(1, "State is required"),
+  zipCode: z.string().min(5, "ZIP code is required"),
+  // Emergency Contact
+  emergencyContactName: z.string().min(1, "Emergency contact name is required"),
+  emergencyContactPhone: z.string().min(10, "Emergency contact phone is required"),
+  emergencyContactRelation: z.string().min(1, "Emergency contact relationship is required"),
 });
 
 export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) => {
@@ -32,16 +45,21 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
       gender: "",
       phone: "",
       email: "",
+      insuranceProvider: "",
+      policyNumber: "",
+      groupNumber: "",
+      address: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      emergencyContactName: "",
+      emergencyContactPhone: "",
+      emergencyContactRelation: "",
     }
   });
 
   const handleSubmit = (data: any) => {
-    console.log('Form submitting with data:', data);
-    try {
-      onSubmit(data);
-    } catch (error) {
-      console.error('Error during form submission:', error);
-    }
+    onSubmit(data);
   };
 
   return (
@@ -123,7 +141,7 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Phone Number</FormLabel>
+                <FormLabel>Phone Number *</FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="1234567890" 
@@ -145,7 +163,7 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email Address</FormLabel>
+                <FormLabel>Email Address *</FormLabel>
                 <FormControl>
                   <Input type="email" placeholder="patient@example.com" {...field} />
                 </FormControl>
@@ -153,6 +171,179 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
               </FormItem>
             )}
           />
+        </div>
+
+        {/* Address Information */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-800">Address Information</h3>
+          <div className="grid grid-cols-1 gap-4">
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Street Address *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="123 Main Street" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="City" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="state"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>State *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="State" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="zipCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>ZIP Code *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="12345" {...field} maxLength={5} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Insurance Information */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-800">Insurance Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="insuranceProvider"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Insurance Provider *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Blue Cross Blue Shield" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="policyNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Policy Number *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Policy #" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <FormField
+            control={form.control}
+            name="groupNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Group Number (Optional)</FormLabel>
+                <FormControl>
+                  <Input placeholder="Group #" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Emergency Contact */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-800">Emergency Contact</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="emergencyContactName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contact Name *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="John Doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="emergencyContactPhone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contact Phone *</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="1234567890" 
+                      {...field} 
+                      maxLength={10}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        field.onChange(value);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="emergencyContactRelation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Relationship *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Relationship" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="spouse">Spouse</SelectItem>
+                      <SelectItem value="parent">Parent</SelectItem>
+                      <SelectItem value="child">Child</SelectItem>
+                      <SelectItem value="sibling">Sibling</SelectItem>
+                      <SelectItem value="friend">Friend</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         <div className="flex justify-end pt-4">
