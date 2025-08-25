@@ -34,6 +34,12 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
     userEmail: user?.email
   });
 
+  // Force pharmacy dashboard for DEO admin
+  if (user?.email === 'admin@deopharmacy.com') {
+    console.log('DEO admin detected - showing pharmacy dashboard');
+    return <PharmacyDashboardWorking />;
+  }
+
   // For pharmacy admins, show pharmacy dashboard directly
   if (user && tenant && tenant.type === 'pharmacy' && (user.role === 'tenant_admin' || user.role === 'director')) {
     console.log('Rendering pharmacy dashboard for pharmacy admin');
