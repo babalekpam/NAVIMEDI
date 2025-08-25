@@ -86,16 +86,17 @@ const vitalSignsSchema = z.object({
   weightUnit: z.enum(['lbs', 'kg']).default('lbs'),
   height: z.number().min(12, "Height is required").max(96, "Height cannot exceed 96 inches"),
   heightUnit: z.enum(['inches', 'cm']).default('inches'),
-  // Additional Important Measurements
   respiratoryRate: z.number().min(8, "Respiratory rate must be at least 8").max(60, "Respiratory rate cannot exceed 60"),
+  // Required Blood Type and Pain Assessment
+  bloodType: z.string().min(1, "Blood type is required"),
   painLevel: z.number().min(0).max(10, "Pain level must be 0-10"),
+  // Additional Important Measurements
   glucoseLevel: z.number().min(50).max(500).optional(),
-  // BMI auto-calculated
   bmi: z.number().optional(),
-  // Additional Clinical Notes
-  notes: z.string().optional(),
+  // Medical History
   allergies: z.string().optional(),
   currentMedications: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 

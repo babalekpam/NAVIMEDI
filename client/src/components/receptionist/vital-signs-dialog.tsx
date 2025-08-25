@@ -304,25 +304,96 @@ export default function VitalSignsDialog({ form, onSubmit, isLoading, patient }:
               </CardContent>
             </Card>
 
-            {/* Pain & Glucose */}
+            {/* Blood Type & Pain Assessment */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm">{t('additional-measurements')}</CardTitle>
+                <CardTitle className="text-sm flex items-center">
+                  <Activity className="h-4 w-4 mr-2 text-red-600" />
+                  Blood Type & Pain Assessment
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="bloodType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Blood Type/Group *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select blood type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="A+">A+ (A Positive)</SelectItem>
+                          <SelectItem value="A-">A- (A Negative)</SelectItem>
+                          <SelectItem value="B+">B+ (B Positive)</SelectItem>
+                          <SelectItem value="B-">B- (B Negative)</SelectItem>
+                          <SelectItem value="AB+">AB+ (AB Positive)</SelectItem>
+                          <SelectItem value="AB-">AB- (AB Negative)</SelectItem>
+                          <SelectItem value="O+">O+ (O Positive)</SelectItem>
+                          <SelectItem value="O-">O- (O Negative)</SelectItem>
+                          <SelectItem value="Unknown">Unknown</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="painLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('pain-level')} (0-10)</FormLabel>
+                      <FormLabel>Pain Level * (0-10 Scale)</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select pain level" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="0">0 - No Pain</SelectItem>
+                          <SelectItem value="1">1 - Minimal</SelectItem>
+                          <SelectItem value="2">2 - Mild</SelectItem>
+                          <SelectItem value="3">3 - Mild</SelectItem>
+                          <SelectItem value="4">4 - Moderate</SelectItem>
+                          <SelectItem value="5">5 - Moderate</SelectItem>
+                          <SelectItem value="6">6 - Moderate</SelectItem>
+                          <SelectItem value="7">7 - Severe</SelectItem>
+                          <SelectItem value="8">8 - Severe</SelectItem>
+                          <SelectItem value="9">9 - Very Severe</SelectItem>
+                          <SelectItem value="10">10 - Worst Possible</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Additional Clinical Information */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center">
+                  <Activity className="h-4 w-4 mr-2 text-yellow-500" />
+                  Additional Medical Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="glucoseLevel"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Blood Glucose Level (mg/dL)</FormLabel>
                       <FormControl>
                         <Input 
                           {...field} 
                           type="number" 
-                          min="0" 
-                          max="10"
-                          placeholder="0"
+                          placeholder="100"
                           onChange={(e) => field.onChange(Number(e.target.value) || undefined)}
                         />
                       </FormControl>
@@ -332,16 +403,32 @@ export default function VitalSignsDialog({ form, onSubmit, isLoading, patient }:
                 />
                 <FormField
                   control={form.control}
-                  name="glucoseLevel"
+                  name="allergies"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('glucose-level')} (mg/dL)</FormLabel>
+                      <FormLabel>Known Allergies</FormLabel>
                       <FormControl>
-                        <Input 
+                        <Textarea 
                           {...field} 
-                          type="number" 
-                          placeholder="100"
-                          onChange={(e) => field.onChange(Number(e.target.value) || undefined)}
+                          placeholder="List any known allergies (medications, food, environmental)"
+                          className="min-h-[60px]"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="currentMedications"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Current Medications</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          placeholder="List all current medications and dosages"
+                          className="min-h-[60px]"
                         />
                       </FormControl>
                       <FormMessage />
