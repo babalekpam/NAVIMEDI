@@ -3,13 +3,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, Pill, TestTube, DollarSign, AlertTriangle, CheckCircle, Clock, RefreshCw, Building2, Activity, TrendingUp, Database, Stethoscope, Heart, UserCheck, Package, Shield, ShieldCheck, FileText } from "lucide-react";
+import { Calendar, Users, Pill, TestTube, DollarSign, AlertTriangle, CheckCircle, Clock, RefreshCw, Building2, Activity, TrendingUp, Database, Stethoscope, Heart, UserCheck, Package, Shield, ShieldCheck, FileText, UserPlus, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useTranslation } from "@/contexts/translation-context";
 import { useLocation } from "wouter";
 import { usePermissions } from "@/hooks/usePermissions";
-import PharmacyDashboardEnhancedV2 from "@/pages/pharmacy-dashboard-enhanced-v2";
 import HospitalUserRoleManagement from "@/components/hospital/HospitalUserRoleManagement";
 import AdminPermissionsManager from "@/components/admin/AdminPermissionsManager";
 
@@ -930,23 +929,14 @@ export default function Dashboard() {
     console.log('[DASHBOARD] ✅ Tenant ID:', tenant?.id);
     console.log('[DASHBOARD] ✅ User ID:', user?.id);
     
-    // Force render the enhanced pharmacy dashboard
-    return (
-      <div>
-        <div style={{background: 'red', color: 'white', padding: '10px', marginBottom: '20px'}}>
-          🚨 ENHANCED PHARMACY DASHBOARD LOADING 🚨
-        </div>
-        <PharmacyDashboardEnhancedV2 />
-      </div>
-    );
-    
+    // Force render the pharmacy dashboard
     return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Pharmacist Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900">🏥 DEO Pharmacy Dashboard</h1>
           <p className="text-gray-600 mt-1">
-            Welcome back, {user.firstName}. Your pharmacy operations overview for today.
+            Welcome back, {user?.firstName}. Your pharmacy operations overview for today.
           </p>
         </div>
         <div className="flex items-center space-x-3">
