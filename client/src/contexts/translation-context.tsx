@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/useAuth';
 
 // Clean translation dictionary with complete coverage for all languages
 const translations = {
@@ -616,6 +618,7 @@ interface TranslationContextType {
   setLanguage: (language: string) => void;
   t: (key: string) => string;
   isTranslating: boolean;
+  isSyncing: boolean;
 }
 
 const TranslationContext = createContext<TranslationContextType | undefined>(undefined);
@@ -633,6 +636,8 @@ interface TranslationProviderProps {
 }
 
 export const TranslationProvider = ({ children }: TranslationProviderProps) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [currentLanguage, setCurrentLanguage] = useState<string>(() => {
     // Initialize with saved language if available
     const savedLanguage = localStorage.getItem('selectedLanguage');
@@ -640,16 +645,68 @@ export const TranslationProvider = ({ children }: TranslationProviderProps) => {
   });
   const [isTranslating, setIsTranslating] = useState(false);
 
+  // Fetch user language preference from server
+  const { data: serverLanguageData, isLoading: isLoadingServerLanguage } = useQuery({
+    queryKey: ['/api/user/language-preference'],
+    enabled: !!user, // Only fetch if user is authenticated
+    retry: false, // Don't retry on failure - fallback to localStorage
+    staleTime: 1000 * 60 * 60, // Consider data fresh for 1 hour
+  });
+
+  // Mutation to update language preference on server
+  const updateLanguagePreferenceMutation = useMutation({
+    mutationFn: async (languagePreference: string) => {
+      const response = await fetch('/api/user/language-preference', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ languagePreference }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update language preference');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      console.log(`[LANGUAGE_SYNC] ✅ Server updated: ${data.languagePreference} at ${data.syncedAt}`);
+      // Invalidate and refetch user language preference
+      queryClient.invalidateQueries({ queryKey: ['/api/user/language-preference'] });
+    },
+    onError: (error) => {
+      console.error('[LANGUAGE_SYNC] ❌ Server update failed:', error);
+      // Continue with localStorage only for offline scenarios
+    }
+  });
+
+  // Sync server language preference with local state when available
+  useEffect(() => {
+    if (serverLanguageData?.languagePreference && !isLoadingServerLanguage) {
+      const serverLanguage = serverLanguageData.languagePreference;
+      if (serverLanguage !== currentLanguage) {
+        console.log(`[LANGUAGE_SYNC] 📥 Syncing from server: ${serverLanguage}`);
+        setCurrentLanguage(serverLanguage);
+        localStorage.setItem('selectedLanguage', serverLanguage);
+      }
+    }
+  }, [serverLanguageData, isLoadingServerLanguage, currentLanguage]);
+
   const setLanguage = (language: string) => {
     if (language === currentLanguage) {
       return;
     }
     
     setIsTranslating(true);
-    localStorage.setItem('selectedLanguage', language);
     
-    // Immediate update without timeout to prevent reversion
+    // Update localStorage immediately
+    localStorage.setItem('selectedLanguage', language);
     setCurrentLanguage(language);
+    
+    // Sync to server if user is authenticated
+    if (user) {
+      console.log(`[LANGUAGE_SYNC] 📤 Syncing to server: ${language}`);
+      updateLanguagePreferenceMutation.mutate(language);
+    }
     
     setTimeout(() => {
       setIsTranslating(false);
@@ -672,7 +729,8 @@ export const TranslationProvider = ({ children }: TranslationProviderProps) => {
       currentLanguage,
       setLanguage,
       t,
-      isTranslating
+      isTranslating,
+      isSyncing: updateLanguagePreferenceMutation.isPending
     }}>
       {children}
     </TranslationContext.Provider>

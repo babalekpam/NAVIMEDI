@@ -159,6 +159,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User Language Preference routes
+  app.get("/api/user/language-preference", authenticateToken, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = await storage.getUserById(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ 
+        languagePreference: user.languagePreference || 'en',
+        syncedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Get language preference error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/user/language-preference", authenticateToken, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { languagePreference } = req.body;
+
+      // Validate language preference
+      const validLanguages = ['en', 'es', 'fr', 'de', 'pt', 'it', 'zh', 'ar'];
+      if (!validLanguages.includes(languagePreference)) {
+        return res.status(400).json({ message: "Invalid language preference" });
+      }
+
+      const updatedUser = await storage.updateUser(userId, { languagePreference });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      console.log(`[LANGUAGE_SYNC] 🌐 User ${userId} language preference updated to: ${languagePreference}`);
+
+      res.json({ 
+        languagePreference: updatedUser.languagePreference,
+        syncedAt: new Date().toISOString(),
+        message: "Language preference updated successfully"
+      });
+    } catch (error) {
+      console.error("Update language preference error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // JWT Authentication routes only - no Replit Auth
   
   // Standard JWT login endpoint

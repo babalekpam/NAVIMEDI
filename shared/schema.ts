@@ -419,6 +419,7 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").default(true),
   isTemporaryPassword: boolean("is_temporary_password").default(false),
   mustChangePassword: boolean("must_change_password").default(false),
+  languagePreference: text("language_preference").default("en"),
   lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)

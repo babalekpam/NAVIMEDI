@@ -98,7 +98,7 @@ export default function ProfileSettingsPage() {
   const { user, refreshUser } = useAuth();
   const { tenant } = useTenant();
   const { toast } = useToast();
-  const { setLanguage: setTranslationLanguage, currentLanguage } = useTranslation();
+  const { setLanguage: setTranslationLanguage, currentLanguage, isTranslating, isSyncing } = useTranslation();
   
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -1170,22 +1170,77 @@ export default function ProfileSettingsPage() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="language">Language</Label>
+                      <div className="flex items-center justify-between mb-2">
+                        <Label htmlFor="language" className="flex items-center gap-2">
+                          <Globe className="h-4 w-4" />
+                          Language Preference
+                        </Label>
+                        {isTranslating && (
+                          <div className="flex items-center gap-1 text-sm text-blue-600">
+                            <RefreshCw className="h-3 w-3 animate-spin" />
+                            Syncing...
+                          </div>
+                        )}
+                        {isSyncing && (
+                          <div className="flex items-center gap-1 text-sm text-green-600">
+                            <CheckCircle className="h-3 w-3" />
+                            Synced
+                          </div>
+                        )}
+                      </div>
                       <Select
                         value={preferences.language}
                         onValueChange={(value) => handlePreferenceChange('language', value)}
+                        disabled={isTranslating || isSyncing}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="en">English</SelectItem>
-                          <SelectItem value="es">Español</SelectItem>
-                          <SelectItem value="fr">Français</SelectItem>
-                          <SelectItem value="de">Deutsch</SelectItem>
-                          <SelectItem value="pt">Português</SelectItem>
+                          <SelectItem value="en">
+                            <div className="flex items-center gap-2">
+                              <span>🇺🇸</span>
+                              <span>English</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="es">
+                            <div className="flex items-center gap-2">
+                              <span>🇪🇸</span>
+                              <span>Español</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="fr">
+                            <div className="flex items-center gap-2">
+                              <span>🇫🇷</span>
+                              <span>Français</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="de">
+                            <div className="flex items-center gap-2">
+                              <span>🇩🇪</span>
+                              <span>Deutsch</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="pt">
+                            <div className="flex items-center gap-2">
+                              <span>🇵🇹</span>
+                              <span>Português</span>
+                            </div>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
+                      <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                        <div className="flex items-start gap-2">
+                          <Globe className="h-4 w-4 text-blue-600 mt-0.5" />
+                          <div className="text-sm text-blue-800">
+                            <p className="font-medium">One-Click Language Sync</p>
+                            <p className="text-blue-600 mt-1">
+                              Your language preference automatically syncs across all your devices and sessions. 
+                              Changes take effect immediately and persist everywhere you're logged in.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     <div>
