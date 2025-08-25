@@ -30,6 +30,11 @@ import UserRoles from "@/pages/user-roles";
 import Reports from "@/pages/reports";
 import MedicalCommunications from "@/pages/medical-communications";
 import LaboratoryRegistration from "@/pages/laboratory-registration";
+import LabSampleManagement from "@/pages/lab-sample-management";
+import LabTestManagement from "@/pages/lab-test-management";
+import LabResultsReporting from "@/pages/lab-results-reporting";
+import LabAnalyticsDashboard from "@/pages/lab-analytics-dashboard";
+import LabInventoryManagement from "@/pages/lab-inventory-management";
 import HealthRecommendations from "@/pages/health-recommendations";
 // import PharmacyDashboardEnhanced from "@/pages/pharmacy-dashboard-enhanced";
 import PharmacyDashboardSimple from "@/pages/pharmacy-dashboard-simple";
@@ -564,6 +569,78 @@ function AppContent() {
         </Route>
 
         <Route path="/laboratory-registration" component={LaboratoryRegistration} />
+        
+        {/* LABSAFE Laboratory Features */}
+        <Route path="/lab/sample-management">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto">
+                  <LabSampleManagement />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        
+        <Route path="/lab/test-management">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto">
+                  <LabTestManagement />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        
+        <Route path="/lab/results-reporting">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto">
+                  <LabResultsReporting />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        
+        <Route path="/lab/analytics">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto">
+                  <LabAnalyticsDashboard />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        
+        <Route path="/lab/inventory">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto">
+                  <LabInventoryManagement />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        
         <Route path="/pharmacy-registration" component={PharmacyRegistration} />
         <Route path="/pricing" component={PricingPage} />
         <Route path="/service-pricing-management">

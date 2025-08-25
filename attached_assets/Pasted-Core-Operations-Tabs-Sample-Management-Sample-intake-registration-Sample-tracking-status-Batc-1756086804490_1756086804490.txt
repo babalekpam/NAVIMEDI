@@ -1,0 +1,121 @@
+Core Operations Tabs
+📋 Sample Management
+Sample intake & registration
+Sample tracking & status
+Batch processing
+Chain of custody
+Sample storage locations
+🧪 Test Management
+Active tests in progress
+Test queue & scheduling
+Test protocols & methods
+Quality control results
+Test validation status
+📊 Results & Reporting
+Pending results
+Completed reports
+Result approval workflow
+Report distribution
+Statistical analysis
+Workflow & Analytics Tabs
+⏱️ Dashboard Overview
+Real-time lab status
+Daily/weekly metrics
+Key performance indicators
+Alert notifications
+System health monitors
+📈 Analytics & Insights
+Testing volume trends
+Turnaround time analysis
+Productivity metrics
+Cost analysis
+Performance benchmarks
+🎯 Quality Control
+QC sample tracking
+Proficiency testing
+Method validation
+Calibration schedules
+Compliance monitoring
+Resource Management Tabs
+🏪 Inventory Management
+Reagent levels & expiration
+Equipment maintenance
+Supply ordering
+Vendor management
+Cost tracking
+👥 Staff & Scheduling
+Staff assignments
+Workload distribution
+Training records
+Certification tracking
+Shift scheduling
+🔧 Equipment Management
+Instrument status
+Maintenance schedules
+Calibration records
+Equipment utilization
+Troubleshooting logs
+Patient & Client Services
+👤 Patient Management
+Patient demographics
+Test history
+Critical results
+Communication logs
+Insurance verification
+🏥 Client Portal
+Client test orders
+Result delivery
+Billing information
+Service agreements
+Communication center
+Compliance & Administration
+📋 Regulatory Compliance
+Audit trails
+Regulatory reporting
+Accreditation status
+Document control
+Policy management
+💰 Financial Management
+Revenue tracking
+Cost per test
+Insurance processing
+Billing status
+Financial reports
+⚙️ System Administration
+User management
+Security settings
+Data backup status
+System integration
+Configuration management
+Specialized Laboratory Tabs
+🔬 Research Labs
+Experiment tracking
+Research protocols
+Data collection
+Publication management
+Grant tracking
+🩸 Clinical Labs
+Critical values alerts
+Reference ranges
+Test interpretations
+Physician notifications
+Stat test priorities
+🏭 Industrial Labs
+Environmental monitoring
+Product testing
+Compliance testing
+Certificate generation
+Customer specifications
+Modern Digital Features
+📱 Mobile Integration
+Mobile result access
+Field sample collection
+Remote monitoring
+Push notifications
+Offline capabilities
+🤖 Automation & AI
+Automated workflows
+Predictive analytics
+Smart scheduling
+Error detection
+Machine learning insights

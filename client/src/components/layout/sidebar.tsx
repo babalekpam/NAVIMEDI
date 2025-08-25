@@ -35,7 +35,91 @@ import {
   Heart,
   Truck,
   Phone,
-  Smartphone
+  Smartphone,
+  // Laboratory Management Icons
+  Microscope,
+  FlaskConical,
+  Beaker,
+  Gauge,
+  Activity,
+  TrendingUp,
+  Target,
+  AlertTriangle,
+  Calendar as CalendarIcon,
+  ClipboardCheck,
+  Wrench,
+  Cog,
+  Database,
+  Monitor,
+  Wifi,
+  Bell,
+  Search,
+  Filter,
+  Download,
+  Upload,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  BookOpen,
+  GraduationCap,
+  MapPin,
+  Thermometer,
+  Zap,
+  Layers,
+  Grid,
+  List,
+  BarChart2,
+  PieChart,
+  LineChart,
+  Clipboard,
+  FileBarChart,
+  Factory,
+  Leaf,
+  FlaskRound,
+  ScanLine,
+  QrCode,
+  Star,
+  Award,
+  Medal,
+  ChevronRight,
+  ChevronDown,
+  MoreHorizontal,
+  MoreVertical,
+  Eye,
+  EyeOff,
+  Lock,
+  Unlock,
+  Key,
+  UserX,
+  UserCog,
+  Users2,
+  PersonStanding,
+  ShieldCheck,
+  AlertOctagon,
+  CheckSquare,
+  Square,
+  SquareCheck,
+  Calendar as CalendarDays,
+  CalendarClock,
+  CalendarCheck,
+  Clock3,
+  Clock9,
+  Hourglass,
+  PlayCircle,
+  PauseCircle,
+  StopCircle,
+  RotateCw,
+  Repeat,
+  Shuffle,
+  SkipForward,
+  SkipBack,
+  FastForward,
+  Rewind,
+  Volume2,
+  VolumeX,
+  Bluetooth,
+  Radio,
+  Headphones
 } from "lucide-react";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 import { Button } from "@/components/ui/button";
@@ -195,21 +279,55 @@ export const Sidebar = () => {
   // Check if user is in a laboratory tenant
   const isLaboratoryTenant = currentTenant?.type === "laboratory";
   
-  // For laboratory users - show only laboratory-specific items
+  // For laboratory users - show comprehensive laboratory management features
   if (user.role === "lab_technician" || (user.role === "tenant_admin" && isLaboratoryTenant)) {
     
-    const laboratoryItems = filteredItems.filter(item => 
-      ["dashboard", "lab-records", "lab-orders", "lab-results", "post-lab-results", "achievements", "reports", "advertisements"].includes(item.id)
-    );
+    // Core Operations
+    const coreOperationsItems = [
+      { id: "lab-dashboard", label: "📊 Dashboard Overview", icon: BarChart3, path: "/dashboard", roles: ["lab_technician", "tenant_admin", "director"] },
+      { id: "sample-management", label: "📋 Sample Management", icon: TestTube, path: "/lab/sample-management", roles: ["lab_technician", "tenant_admin", "director"] },
+      { id: "test-management", label: "🧪 Test Management", icon: FlaskConical, path: "/lab/test-management", roles: ["lab_technician", "tenant_admin", "director"] },
+      { id: "results-reporting", label: "📊 Results & Reporting", icon: FileBarChart, path: "/lab/results-reporting", roles: ["lab_technician", "tenant_admin", "director"] }
+    ];
     
-    // Add laboratory billing as a special item for lab tenants
-    laboratoryItems.push({
-      id: "laboratory-billing",
-      label: "Lab Insurance Claims",
-      icon: Receipt,
-      path: "/laboratory-billing",
-      roles: ["lab_technician", "tenant_admin", "director"]
-    });
+    // Analytics & Insights
+    const analyticsItems = [
+      { id: "analytics-dashboard", label: "📈 Analytics & Insights", icon: TrendingUp, path: "/lab/analytics", roles: ["lab_technician", "tenant_admin", "director"] },
+      { id: "quality-control", label: "🎯 Quality Control", icon: Target, path: "/lab/quality-control", roles: ["lab_technician", "tenant_admin", "director"] }
+    ];
+    
+    // Resource Management
+    const resourceItems = [
+      { id: "inventory-management", label: "🏪 Inventory Management", icon: Package, path: "/lab/inventory", roles: ["lab_technician", "tenant_admin", "director"] },
+      { id: "staff-scheduling", label: "👥 Staff & Scheduling", icon: Users, path: "/lab/staff-scheduling", roles: ["tenant_admin", "director"] },
+      { id: "equipment-management", label: "🔧 Equipment Management", icon: Wrench, path: "/lab/equipment", roles: ["lab_technician", "tenant_admin", "director"] }
+    ];
+    
+    // Patient & Client Services
+    const clientServicesItems = [
+      { id: "patient-management", label: "👤 Patient Management", icon: Users, path: "/lab/patients", roles: ["lab_technician", "tenant_admin", "director"] },
+      { id: "client-portal", label: "🏥 Client Portal", icon: Building2, path: "/lab/client-portal", roles: ["lab_technician", "tenant_admin", "director"] }
+    ];
+    
+    // Compliance & Administration
+    const complianceItems = [
+      { id: "regulatory-compliance", label: "📋 Regulatory Compliance", icon: Shield, path: "/lab/compliance", roles: ["tenant_admin", "director"] },
+      { id: "financial-management", label: "💰 Financial Management", icon: DollarSign, path: "/laboratory-billing", roles: ["tenant_admin", "director"] },
+      { id: "system-administration", label: "⚙️ System Administration", icon: Settings, path: "/lab/administration", roles: ["tenant_admin", "director"] }
+    ];
+    
+    // Specialized Laboratory Features
+    const specializedItems = [
+      { id: "research-labs", label: "🔬 Research Labs", icon: Microscope, path: "/lab/research", roles: ["lab_technician", "tenant_admin", "director"] },
+      { id: "clinical-labs", label: "🩸 Clinical Labs", icon: Heart, path: "/lab/clinical", roles: ["lab_technician", "tenant_admin", "director"] },
+      { id: "industrial-labs", label: "🏭 Industrial Labs", icon: Factory, path: "/lab/industrial", roles: ["lab_technician", "tenant_admin", "director"] }
+    ];
+    
+    // Modern Digital Features
+    const digitalItems = [
+      { id: "mobile-integration", label: "📱 Mobile Integration", icon: Smartphone, path: "/lab/mobile", roles: ["lab_technician", "tenant_admin", "director"] },
+      { id: "automation-ai", label: "🤖 Automation & AI", icon: Brain, path: "/lab/automation", roles: ["lab_technician", "tenant_admin", "director"] }
+    ];
     
     return (
       <aside className="w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto">
@@ -218,17 +336,18 @@ export const Sidebar = () => {
           <div className="flex items-center space-x-3 mb-8 pb-4 border-b border-gray-200">
             <img src={navimedLogo} alt="NaviMed" className="h-8 w-8 rounded-lg object-contain" />
             <div>
-              <h1 className="text-sm font-bold text-blue-600">NAVIMED</h1>
+              <h1 className="text-sm font-bold text-purple-600">LABSAFE</h1>
               <p className="text-xs text-gray-500">{currentTenant?.name || 'Laboratory'}</p>
             </div>
           </div>
           
           <nav className="space-y-2">
+            {/* Core Operations */}
             <div className="mb-6">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                Laboratory Operations
+              <h3 className="text-xs font-semibold text-purple-600 uppercase tracking-wider mb-3">
+                Core Operations
               </h3>
-              {laboratoryItems.map((item) => {
+              {coreOperationsItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location === item.path;
                 
@@ -237,13 +356,175 @@ export const Sidebar = () => {
                     key={item.id}
                     onClick={() => setLocation(item.path)}
                     className={cn(
-                      "w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+                      "w-full flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-colors",
+                      isActive
+                        ? "text-purple-600 bg-purple-50"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    )}
+                  >
+                    <Icon className={cn("mr-2 h-3 w-3", isActive ? "text-purple-600" : "text-gray-400")} />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+            
+            {/* Analytics & Insights */}
+            <div className="mb-6">
+              <h3 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-3">
+                Analytics & Quality
+              </h3>
+              {analyticsItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.path;
+                
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setLocation(item.path)}
+                    className={cn(
+                      "w-full flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-colors",
                       isActive
                         ? "text-blue-600 bg-blue-50"
                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                     )}
                   >
-                    <Icon className={cn("mr-3 h-4 w-4", isActive ? "text-blue-600" : "text-gray-400")} />
+                    <Icon className={cn("mr-2 h-3 w-3", isActive ? "text-blue-600" : "text-gray-400")} />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+            
+            {/* Resource Management */}
+            <div className="mb-6">
+              <h3 className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-3">
+                Resource Management
+              </h3>
+              {resourceItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.path;
+                
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setLocation(item.path)}
+                    className={cn(
+                      "w-full flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-colors",
+                      isActive
+                        ? "text-green-600 bg-green-50"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    )}
+                  >
+                    <Icon className={cn("mr-2 h-3 w-3", isActive ? "text-green-600" : "text-gray-400")} />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+            
+            {/* Client Services */}
+            <div className="mb-6">
+              <h3 className="text-xs font-semibold text-orange-600 uppercase tracking-wider mb-3">
+                Client Services
+              </h3>
+              {clientServicesItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.path;
+                
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setLocation(item.path)}
+                    className={cn(
+                      "w-full flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-colors",
+                      isActive
+                        ? "text-orange-600 bg-orange-50"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    )}
+                  >
+                    <Icon className={cn("mr-2 h-3 w-3", isActive ? "text-orange-600" : "text-gray-400")} />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+            
+            {/* Compliance & Administration */}
+            <div className="mb-6">
+              <h3 className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-3">
+                Compliance & Admin
+              </h3>
+              {complianceItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.path;
+                
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setLocation(item.path)}
+                    className={cn(
+                      "w-full flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-colors",
+                      isActive
+                        ? "text-red-600 bg-red-50"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    )}
+                  >
+                    <Icon className={cn("mr-2 h-3 w-3", isActive ? "text-red-600" : "text-gray-400")} />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+            
+            {/* Specialized Features */}
+            <div className="mb-6">
+              <h3 className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-3">
+                Specialized Labs
+              </h3>
+              {specializedItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.path;
+                
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setLocation(item.path)}
+                    className={cn(
+                      "w-full flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-colors",
+                      isActive
+                        ? "text-indigo-600 bg-indigo-50"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    )}
+                  >
+                    <Icon className={cn("mr-2 h-3 w-3", isActive ? "text-indigo-600" : "text-gray-400")} />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+            
+            {/* Digital Features */}
+            <div className="mb-6">
+              <h3 className="text-xs font-semibold text-cyan-600 uppercase tracking-wider mb-3">
+                Digital Features
+              </h3>
+              {digitalItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.path;
+                
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setLocation(item.path)}
+                    className={cn(
+                      "w-full flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-colors",
+                      isActive
+                        ? "text-cyan-600 bg-cyan-50"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    )}
+                  >
+                    <Icon className={cn("mr-2 h-3 w-3", isActive ? "text-cyan-600" : "text-gray-400")} />
                     {item.label}
                   </button>
                 );
