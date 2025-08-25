@@ -54,10 +54,17 @@ export const Header = () => {
   console.log('[HEADER DEBUG] User role:', user.role);
   console.log('[HEADER DEBUG] Tenant type:', tenant?.type);
   console.log('[HEADER DEBUG] Tenant name:', tenant?.name);
+  console.log('[HEADER DEBUG] User tenant ID:', user.tenantId);
   console.log('[HEADER DEBUG] Should show pharmacy nav:', 
     tenant?.type === "pharmacy" || user.role === "pharmacist" || 
     ((user.role === "tenant_admin" || user.role === "director") && tenant?.type === "pharmacy")
   );
+  
+  // Force check for DEO pharmacy specifically
+  const isPharmacyUser = tenant?.type === "pharmacy" || user.role === "pharmacist" || 
+    ((user.role === "tenant_admin" || user.role === "director") && tenant?.type === "pharmacy") ||
+    user.tenantId === "c0bdce16-06c2-4b54-a5e6-24ba214af49d"; // DEO Pharmacy ID
+  console.log('[HEADER DEBUG] Final pharmacy check:', isPharmacyUser);
 
   const userInitials = `${user.firstName?.[0] || 'U'}${user.lastName?.[0] || 'N'}`;
 
@@ -126,7 +133,7 @@ export const Header = () => {
               <>
                 {/* Receptionists use sidebar navigation exclusively */}
               </>
-            ) : tenant?.type === "pharmacy" || user.role === "pharmacist" || ((user.role === "tenant_admin" || user.role === "director") && tenant?.type === "pharmacy") ? (
+            ) : tenant?.type === "pharmacy" || user.role === "pharmacist" || ((user.role === "tenant_admin" || user.role === "director") && tenant?.type === "pharmacy") || user.tenantId === "c0bdce16-06c2-4b54-a5e6-24ba214af49d" ? (
               // Pharmacy Navigation
               <>
                 <button 
