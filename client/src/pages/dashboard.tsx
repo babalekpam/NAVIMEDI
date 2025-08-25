@@ -2158,7 +2158,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">🏥 DEO Pharmacy Dashboard</h1>
-                <p className="text-gray-600 mt-1">Welcome back, {user?.firstName}. Your pharmacy operations overview.</p>
+                <p className="text-gray-600 mt-1">Welcome back, {user?.firstName}. Your complete pharmacy management center.</p>
               </div>
               <div className="flex items-center space-x-3">
                 <Badge className="bg-purple-100 text-purple-800">
@@ -2167,6 +2167,8 @@ export default function Dashboard() {
                 </Badge>
               </div>
             </div>
+            
+            {/* Pharmacy Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -2200,14 +2202,298 @@ export default function Dashboard() {
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Inventory Alerts</CardTitle>
-                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Delivery Orders</CardTitle>
+                  <Package className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">3</div>
-                  <p className="text-xs text-muted-foreground">Low stock items</p>
+                  <div className="text-2xl font-bold">7</div>
+                  <p className="text-xs text-muted-foreground">2 in transit</p>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Comprehensive Pharmacy Service Tabs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              
+              {/* Core Service Tabs */}
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Pill className="h-5 w-5 text-purple-600" />
+                    💊 Prescriptions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <RefreshCw className="h-3 w-3 mr-2" />
+                    Prescription refills
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Plus className="h-3 w-3 mr-2" />
+                    New prescription transfers
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <FileText className="h-3 w-3 mr-2" />
+                    Prescription history
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Clock className="h-3 w-3 mr-2" />
+                    Auto-refill management
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <TrendingUp className="h-3 w-3 mr-2" />
+                    Prescription tracking
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Heart className="h-5 w-5 text-red-500" />
+                    🛒 Health & Wellness
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Shield className="h-3 w-3 mr-2" />
+                    Health & wellness products
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <User className="h-3 w-3 mr-2" />
+                    Personal care items
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Activity className="h-3 w-3 mr-2" />
+                    Vitamins & supplements
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Package className="h-3 w-3 mr-2" />
+                    Medical supplies
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Smartphone className="h-5 w-5 text-blue-600" />
+                    📱 Digital Services
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Smartphone className="h-3 w-3 mr-2" />
+                    Mobile app download
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <AlertCircle className="h-3 w-3 mr-2" />
+                    Text notifications
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Mail className="h-3 w-3 mr-2" />
+                    Email reminders
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Database className="h-3 w-3 mr-2" />
+                    Digital prescription management
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Stethoscope className="h-3 w-3 mr-2" />
+                    Telehealth consultations
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Healthcare Support Tabs */}
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-green-600" />
+                    💉 Clinical Services
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Shield className="h-3 w-3 mr-2" />
+                    Immunizations & vaccines
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <CheckCircle className="h-3 w-3 mr-2" />
+                    Health screenings
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Pill className="h-3 w-3 mr-2" />
+                    Medication therapy management
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Heart className="h-3 w-3 mr-2" />
+                    Blood pressure monitoring
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Activity className="h-3 w-3 mr-2" />
+                    Diabetes care
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-green-600" />
+                    💰 Insurance & Savings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <ShieldCheck className="h-3 w-3 mr-2" />
+                    Insurance verification
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Pill className="h-3 w-3 mr-2" />
+                    Generic alternatives
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <TrendingUp className="h-3 w-3 mr-2" />
+                    Discount programs
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Shield className="h-3 w-3 mr-2" />
+                    Prescription assistance programs
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <DollarSign className="h-3 w-3 mr-2" />
+                    Price comparison tools
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Customer Experience Tabs */}
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-blue-600" />
+                    📍 Store Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Building2 className="h-3 w-3 mr-2" />
+                    Store locations & hours
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Clock className="h-3 w-3 mr-2" />
+                    Pharmacy hours
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Phone className="h-3 w-3 mr-2" />
+                    Contact information
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <MapPin className="h-3 w-3 mr-2" />
+                    Directions & parking
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <TrendingUp className="h-3 w-3 mr-2" />
+                    Drive-thru services
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <UserCheck className="h-5 w-5 text-purple-600" />
+                    👤 My Account
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <User className="h-3 w-3 mr-2" />
+                    Personal profile
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Users className="h-3 w-3 mr-2" />
+                    Family member management
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Shield className="h-3 w-3 mr-2" />
+                    Insurance information
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <FileText className="h-3 w-3 mr-2" />
+                    Order history
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <DollarSign className="h-3 w-3 mr-2" />
+                    Saved payment methods
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Phone className="h-5 w-5 text-green-600" />
+                    📞 Support
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Phone className="h-3 w-3 mr-2" />
+                    Live chat with pharmacist
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <FileText className="h-3 w-3 mr-2" />
+                    FAQ section
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Mail className="h-3 w-3 mr-2" />
+                    Contact forms
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Stethoscope className="h-3 w-3 mr-2" />
+                    Medication education
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <AlertTriangle className="h-3 w-3 mr-2" />
+                    Drug interaction checker
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Additional Modern Features */}
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Package className="h-5 w-5 text-orange-600" />
+                    🚚 Delivery & Pickup
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Clock className="h-3 w-3 mr-2" />
+                    Same-day delivery
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Package className="h-3 w-3 mr-2" />
+                    Curbside pickup
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <Calendar className="h-3 w-3 mr-2" />
+                    Scheduled delivery
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <AlertCircle className="h-3 w-3 mr-2" />
+                    Pickup notifications
+                  </Button>
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                    <TrendingUp className="h-3 w-3 mr-2" />
+                    Delivery tracking
+                  </Button>
+                </CardContent>
+              </Card>
+
             </div>
           </div>
         );
