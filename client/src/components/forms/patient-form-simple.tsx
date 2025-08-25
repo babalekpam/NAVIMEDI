@@ -16,9 +16,9 @@ const simplePatientSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
-  gender: z.string().optional(),
-  phone: z.string().optional(),
-  email: z.string().optional(),
+  gender: z.string().min(1, "Gender is required"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  email: z.string().email("Invalid email format").or(z.literal("")),
 });
 
 export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) => {
@@ -35,6 +35,15 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
   });
 
   const handleSubmit = (data: any) => {
+    // Validate required fields
+    console.log('Form submitted with data:', data);
+    console.log('Form errors:', form.formState.errors);
+    
+    if (!data.firstName || !data.lastName || !data.dateOfBirth) {
+      console.error('Validation failed - missing required fields');
+      return;
+    }
+    
     const patientData = {
       firstName: data.firstName,
       lastName: data.lastName,
@@ -158,7 +167,11 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
         </div>
 
         <div className="flex justify-end pt-4">
-          <Button type="submit" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            disabled={isLoading}
+            data-testid="button-register-patient"
+          >
             {isLoading ? "Registering..." : "Register Patient"}
           </Button>
         </div>
