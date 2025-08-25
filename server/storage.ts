@@ -2,6 +2,7 @@ import {
   tenants, 
   users, 
   patients, 
+  crossTenantPatients,
   appointments, 
   prescriptions, 
   labOrders, 
@@ -84,6 +85,8 @@ import {
   type UpsertUser,
   type Patient,
   type InsertPatient,
+  type CrossTenantPatient,
+  type InsertCrossTenantPatient,
   type Appointment,
   type InsertAppointment,
   type Prescription,
@@ -202,6 +205,8 @@ export interface IStorage {
   getPatient(id: string, tenantId: string): Promise<Patient | undefined>;
   getPatientById(id: string, accessContext?: { type: 'pharmacy_billing' | 'lab_results', tenantId: string }): Promise<Patient | undefined>;
   getPatientByMRN(mrn: string, tenantId: string): Promise<Patient | undefined>;
+  getPatientByTenantPatientId(tenantPatientId: string, tenantId: string): Promise<Patient | undefined>;
+  getNextPatientNumber(tenantId: string): Promise<number>;
   createPatient(patient: InsertPatient): Promise<Patient>;
   updatePatient(id: string, updates: Partial<Patient>, tenantId: string): Promise<Patient | undefined>;
   getPatientsByTenant(tenantId: string, limit?: number, offset?: number): Promise<Patient[]>;
@@ -209,6 +214,11 @@ export interface IStorage {
   getAllPatients(limit?: number, offset?: number): Promise<Patient[]>; // SECURITY: Deprecated - throws error
   searchPatientsGlobal(query: string): Promise<Patient[]>; // SECURITY: Deprecated - throws error
   getPatientsWithPrescriptionsForPharmacy(pharmacyTenantId: string, search?: string): Promise<Patient[]>;
+  
+  // Cross-tenant patient sharing for healthcare networks
+  sharePatientWithTenant(originalPatientId: string, originalTenantId: string, targetTenantId: string, sharedByUserId: string, shareReason: string, shareType: string): Promise<CrossTenantPatient>;
+  findSharedPatient(tenantPatientId: string, tenantId: string): Promise<Patient | undefined>;
+  getSharedPatientsForTenant(tenantId: string): Promise<CrossTenantPatient[]>;
 
   // Appointment management
   getAppointment(id: string, tenantId: string): Promise<Appointment | undefined>;
@@ -826,6 +836,19 @@ export class DatabaseStorage implements IStorage {
     return patient || undefined;
   }
 
+  async getPatientByTenantPatientId(tenantPatientId: string, tenantId: string): Promise<Patient | undefined> {
+    const [patient] = await db.select().from(patients).where(
+      and(eq(patients.tenantPatientId, tenantPatientId), eq(patients.tenantId, tenantId))
+    );
+    return patient || undefined;
+  }
+
+  async getNextPatientNumber(tenantId: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(patients)
+      .where(eq(patients.tenantId, tenantId));
+    return (result[0]?.count || 0) + 1;
+  }
+
   async createPatient(insertPatient: InsertPatient): Promise<Patient> {
     const [patient] = await db.insert(patients).values(insertPatient).returning();
     return patient;
@@ -1092,6 +1115,75 @@ export class DatabaseStorage implements IStorage {
       vitalSigns: patientVitalSigns,
       visitSummaries: patientVisitSummaries
     };
+  }
+
+  // Cross-tenant patient sharing for healthcare networks
+  async sharePatientWithTenant(
+    originalPatientId: string,
+    originalTenantId: string,
+    targetTenantId: string,
+    sharedByUserId: string,
+    shareReason: string,
+    shareType: string
+  ): Promise<CrossTenantPatient> {
+    // First get the original patient
+    const originalPatient = await this.getPatient(originalPatientId, originalTenantId);
+    if (!originalPatient) {
+      throw new Error("Original patient not found");
+    }
+
+    const shareData: InsertCrossTenantPatient = {
+      originalPatientId,
+      originalTenantId,
+      sharedWithTenantId: targetTenantId,
+      tenantPatientId: originalPatient.tenantPatientId,
+      sharedByUserId,
+      shareReason,
+      shareType,
+      accessLevel: 'read_only',
+      isActive: true
+    };
+
+    const [sharedPatient] = await db.insert(crossTenantPatients).values(shareData).returning();
+    return sharedPatient;
+  }
+
+  async findSharedPatient(tenantPatientId: string, tenantId: string): Promise<Patient | undefined> {
+    // First check if this patient exists directly in the current tenant
+    const directPatient = await this.getPatientByTenantPatientId(tenantPatientId, tenantId);
+    if (directPatient) {
+      return directPatient;
+    }
+
+    // Check if this patient is shared with this tenant
+    const [sharedRecord] = await db.select()
+      .from(crossTenantPatients)
+      .where(
+        and(
+          eq(crossTenantPatients.tenantPatientId, tenantPatientId),
+          eq(crossTenantPatients.sharedWithTenantId, tenantId),
+          eq(crossTenantPatients.isActive, true)
+        )
+      );
+
+    if (sharedRecord) {
+      // Return the original patient data
+      return await this.getPatient(sharedRecord.originalPatientId, sharedRecord.originalTenantId);
+    }
+
+    return undefined;
+  }
+
+  async getSharedPatientsForTenant(tenantId: string): Promise<CrossTenantPatient[]> {
+    return await db.select()
+      .from(crossTenantPatients)
+      .where(
+        and(
+          eq(crossTenantPatients.sharedWithTenantId, tenantId),
+          eq(crossTenantPatients.isActive, true)
+        )
+      )
+      .orderBy(desc(crossTenantPatients.createdAt));
   }
 
   // Appointment management

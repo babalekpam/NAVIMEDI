@@ -1314,6 +1314,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Medical records endpoint - must come before generic /:id route
+  // Lookup patient by tenant-specific ID (cross-network compatible)
+  app.get("/api/patients/lookup/:tenantPatientId", requireRole(["physician", "nurse", "pharmacist", "lab_technician", "receptionist", "tenant_admin", "director"]), async (req, res) => {
+    try {
+      const { tenantPatientId } = req.params;
+      const tenantId = req.tenant!.id;
+      
+      console.log(`[PATIENT LOOKUP] Searching for patient ID: ${tenantPatientId} in tenant: ${tenantId}`);
+      
+      // Use the new cross-tenant patient lookup
+      const patient = await storage.findSharedPatient(tenantPatientId, tenantId);
+      
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found or not accessible" });
+      }
+      
+      console.log(`[PATIENT LOOKUP] Found patient: ${patient.firstName} ${patient.lastName} (${patient.tenantPatientId})`);
+      res.json(patient);
+    } catch (error: any) {
+      console.error("Error looking up patient:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.get("/api/patients/medical-records", async (req, res) => {
     try {
       const tenantId = req.tenant!.id;
@@ -1392,13 +1415,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/patients", requireRole(["receptionist", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
-      // Generate MRN automatically
+      const tenantId = req.tenant!.id;
+      const tenant = req.tenant!;
+      
+      // Generate tenant-specific patient ID (unique within hospital/clinic)
+      const tenantPrefix = tenant.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X');
+      const patientCounter = await storage.getNextPatientNumber(tenantId);
+      const tenantPatientId = `${tenantPrefix}-${patientCounter.toString().padStart(6, '0')}`;
+      
+      // Generate MRN automatically (keeping existing format for compatibility)
       const mrn = `MRN${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
       
       // Prepare patient data with proper date conversion
       const requestData = {
         ...req.body,
-        tenantId: req.tenant!.id,
+        tenantId: tenantId,
+        tenantPatientId: tenantPatientId,
         mrn: mrn,
         // Convert dateOfBirth string to Date if it's a string
         dateOfBirth: typeof req.body.dateOfBirth === 'string' 

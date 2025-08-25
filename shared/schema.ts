@@ -1,5 +1,5 @@
 import { sql, relations, type InferSelectModel, type InferInsertModel } from "drizzle-orm";
-import { pgTable, text, varchar, uuid, timestamp, boolean, integer, decimal, jsonb, pgEnum, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, uuid, timestamp, boolean, integer, decimal, jsonb, pgEnum, index, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { nanoid } from "nanoid";
@@ -429,6 +429,8 @@ export const patients = pgTable("patients", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   mrn: text("mrn").notNull(),
+  // Tenant-specific patient ID (unique within each hospital/clinic)
+  tenantPatientId: text("tenant_patient_id").notNull(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   dateOfBirth: timestamp("date_of_birth").notNull(),
@@ -446,7 +448,35 @@ export const patients = pgTable("patients", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
-});
+}, (table) => ({
+  // Ensure tenant-specific patient ID is unique within each tenant
+  uniqueTenantPatientId: unique().on(table.tenantId, table.tenantPatientId),
+  // Ensure MRN is unique within each tenant
+  uniqueTenantMrn: unique().on(table.tenantId, table.mrn)
+}));
+
+// Cross-tenant patient sharing for healthcare networks
+export const crossTenantPatients = pgTable("cross_tenant_patients", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  originalPatientId: uuid("original_patient_id").references(() => patients.id).notNull(),
+  originalTenantId: uuid("original_tenant_id").references(() => tenants.id).notNull(), // Hospital/Clinic
+  sharedWithTenantId: uuid("shared_with_tenant_id").references(() => tenants.id).notNull(), // Lab/Pharmacy
+  tenantPatientId: text("tenant_patient_id").notNull(), // Same as original patient's tenant_patient_id
+  sharedByUserId: uuid("shared_by_user_id").references(() => users.id).notNull(),
+  shareReason: text("share_reason"), // "lab_order", "prescription_fulfillment", etc.
+  shareType: text("share_type").notNull(), // "temporary", "permanent", "visit_specific"
+  accessLevel: text("access_level").default('read_only'), // "read_only", "read_write", "full_access"
+  expiresAt: timestamp("expires_at"), // For temporary sharing
+  isActive: boolean("is_active").default(true),
+  shareMetadata: jsonb("share_metadata"), // Additional sharing context
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  // Ensure one sharing record per patient per target tenant
+  uniquePatientSharing: unique().on(table.originalPatientId, table.sharedWithTenantId),
+  // Index for quick lookup by tenant patient ID
+  tenantPatientIdIndex: index().on(table.sharedWithTenantId, table.tenantPatientId)
+}));
 
 export const appointments = pgTable("appointments", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -2668,6 +2698,13 @@ export const insertUserSchema = createInsertSchema(users).omit({
 
 export const insertPatientSchema = createInsertSchema(patients).omit({
   id: true,
+  tenantPatientId: true, // Auto-generated per tenant
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertCrossTenantPatientSchema = createInsertSchema(crossTenantPatients).omit({
+  id: true,
   createdAt: true,
   updatedAt: true
 });
@@ -2924,6 +2961,9 @@ export type UpsertUser = typeof users.$inferInsert;
 
 export type Patient = typeof patients.$inferSelect;
 export type InsertPatient = z.infer<typeof insertPatientSchema>;
+
+export type CrossTenantPatient = typeof crossTenantPatients.$inferSelect;
+export type InsertCrossTenantPatient = z.infer<typeof insertCrossTenantPatientSchema>;
 
 export type Appointment = typeof appointments.$inferSelect;
 export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
