@@ -44,7 +44,18 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
-  return res.json();
+  
+  // Debug the response
+  const responseText = await res.text();
+  console.log('API Response text:', responseText.substring(0, 200));
+  
+  try {
+    return JSON.parse(responseText);
+  } catch (error) {
+    console.error('JSON Parse Error:', error);
+    console.error('Response was:', responseText.substring(0, 500));
+    throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}`);
+  }
 }
 
 // Legacy function for backward compatibility
