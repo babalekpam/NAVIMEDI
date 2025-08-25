@@ -213,11 +213,22 @@ export default function ReceptionistDashboard() {
   const [isRegistering, setIsRegistering] = useState(false);
 
   const checkInPatientMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/patient-check-ins', {
-      method: 'POST',
-      body: data,
-    }),
-    onSuccess: () => {
+    mutationFn: async (data: any) => {
+      console.log('Check-in mutation starting with data:', data);
+      try {
+        const response = await apiRequest('/api/patient-check-ins', {
+          method: 'POST',
+          body: data,
+        });
+        console.log('Check-in API response:', response);
+        return response;
+      } catch (error) {
+        console.error('Check-in API error:', error);
+        throw error;
+      }
+    },
+    onSuccess: (response) => {
+      console.log('Check-in mutation success:', response);
       queryClient.invalidateQueries({ queryKey: ['/api/patient-check-ins/today'] });
       queryClient.invalidateQueries({ queryKey: ['/api/patient-check-ins/waiting'] });
       setIsCheckInDialogOpen(false);
@@ -231,10 +242,10 @@ export default function ReceptionistDashboard() {
       });
     },
     onError: (error) => {
-      console.error('Check-in failed:', error);
+      console.error('Check-in mutation failed:', error);
       toast({
         title: "Check-in Failed",
-        description: "Failed to check in patient. Please try again.",
+        description: `Failed to check in patient: ${error.message || 'Please try again.'}`,
         variant: "destructive",
       });
     },
