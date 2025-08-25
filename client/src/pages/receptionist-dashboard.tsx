@@ -36,6 +36,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from '@/contexts/translation-context';
+import { useToast } from '@/hooks/use-toast';
 import OverviewCards from '@/components/receptionist/overview-cards';
 import PatientRegistrationDialog from '@/components/receptionist/patient-registration-dialog';
 import VitalSignsDialog from '@/components/receptionist/vital-signs-dialog';
@@ -116,6 +117,7 @@ type CheckIn = {
 
 export default function ReceptionistDashboard() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -256,16 +258,29 @@ export default function ReceptionistDashboard() {
       // Create patient only (no vital signs during registration)
       const response = await apiRequest("/api/patients", {
         method: "POST",
-        body: JSON.stringify(data),
+        body: data, // apiRequest handles JSON.stringify automatically
       });
       
       console.log('Patient registration successful:', response);
       queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
       setIsRegisterDialogOpen(false);
       
+      // Success toast notification
+      toast({
+        title: "Patient Registered Successfully!",
+        description: `${data.firstName} ${data.lastName} has been added to the system.`,
+        variant: "default",
+      });
+      
     } catch (error) {
       console.error('Error registering patient:', error);
-      alert('Failed to register patient. Please check the console for details.');
+      
+      // Error toast notification
+      toast({
+        title: "Registration Failed",
+        description: "Failed to register patient. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsRegistering(false);
     }
