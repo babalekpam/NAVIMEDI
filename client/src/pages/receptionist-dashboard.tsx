@@ -310,9 +310,21 @@ export default function ReceptionistDashboard() {
     },
     onError: (error: any) => {
       console.error("Failed to save insurance information:", error);
+      
+      let errorMessage = error.message || 'Please try again.';
+      
+      // Handle authentication errors
+      if (error.message?.includes('401') || error.message?.includes('Authentication failed')) {
+        errorMessage = 'Your session has expired. Please log in again.';
+        // Redirect to login after a short delay
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      }
+      
       toast({
         title: "Insurance Save Failed",
-        description: `Failed to save insurance information: ${error.message || 'Please try again.'}`,
+        description: `Failed to save insurance information: ${errorMessage}`,
         variant: "destructive",
       });
     },

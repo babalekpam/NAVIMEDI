@@ -3,8 +3,36 @@ import { offlineStorage } from "./offline-storage";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    const contentType = res.headers.get('content-type');
+    let errorMessage = res.statusText;
+    
+    try {
+      if (contentType?.includes('application/json')) {
+        const errorData = await res.json();
+        errorMessage = errorData.message || errorData.error || res.statusText;
+      } else {
+        const text = await res.text();
+        // If it's HTML (like an error page), extract a meaningful message
+        if (text.includes('<!DOCTYPE') || text.includes('<html>')) {
+          errorMessage = 'Server returned an error page. Please check your connection and try again.';
+        } else {
+          errorMessage = text || res.statusText;
+        }
+      }
+    } catch (parseError) {
+      console.warn('Failed to parse error response:', parseError);
+      errorMessage = res.statusText;
+    }
+    
+    // Handle authentication errors specifically
+    if (res.status === 401) {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
+      errorMessage = 'Authentication failed. Please log in again.';
+      // Don't redirect immediately, let the component handle it
+    }
+    
+    throw new Error(`${res.status}: ${errorMessage}`);
   }
 }
 
