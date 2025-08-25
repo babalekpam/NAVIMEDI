@@ -110,7 +110,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   // Platform Administration Section (only for super admins)
   { id: "tenant-management", label: t("tenant-management"), icon: Building, path: "/tenant-management", roles: ["super_admin"] },
   { id: "client-management", label: "Client Management", icon: Building2, path: "/admin/clients", roles: ["super_admin"] },
-  { id: "admin-dashboard", label: "Administration", icon: UserCheck, path: "/admin-dashboard", roles: ["tenant_admin", "director"] },
+  { id: "admin-dashboard", label: "Administration", icon: UserCheck, path: "/user-roles", roles: ["tenant_admin", "director"] },
   { id: "user-roles", label: t("user-roles"), icon: UserCheck, path: "/user-roles", roles: ["tenant_admin", "director", "super_admin"] },
   { id: "audit-logs", label: t("audit-logs"), icon: Shield, path: "/audit-logs", roles: ["tenant_admin", "director", "super_admin"] },
 ];
@@ -257,8 +257,6 @@ export const Sidebar = () => {
 
   // For pharmacy users - show only pharmacy-specific items
   if (user.role === "pharmacist" || ((user.role === "tenant_admin" || user.role === "director") && isPharmacyTenant)) {
-    console.log('[SIDEBAR] ✅ Pharmacy user detected - directing to enhanced dashboard');
-    console.log('[SIDEBAR] ✅ User role:', user.role, 'Tenant type:', currentTenant?.type);
     
     const pharmacyItems = filteredItems.filter(item => 
       ["pharmacy-dashboard", "prescription-management", "prescription-refills", "prescription-transfers", "pharmacy-inventory", "health-wellness", "insurance-verification", "delivery-pickup", "customer-accounts", "pharmacy-support", "digital-services", "prescription-archives", "pharmacy-patient-management", "pharmacy-employee-management", "pharmacy-billing", "pharmacy-insurance-claims", "admin-dashboard", "advertisements"].includes(item.id)
