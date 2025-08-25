@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 
 interface PatientFormProps {
@@ -11,7 +12,7 @@ interface PatientFormProps {
   isLoading?: boolean;
 }
 
-// Patient registration schema with required insurance
+// Patient registration schema with required insurance and doctor assignment
 const simplePatientSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -19,6 +20,8 @@ const simplePatientSchema = z.object({
   gender: z.string().min(1, "Gender is required"),
   phone: z.string().min(10, "Phone number is required (10+ digits)"),
   email: z.string().email("Valid email is required"),
+  // Doctor Assignment (required)
+  primaryPhysicianId: z.string().min(1, "Assigned doctor is required"),
   // Required Insurance Information
   insuranceProvider: z.string().min(1, "Insurance provider is required"),
   policyNumber: z.string().min(1, "Policy number is required"),
@@ -35,6 +38,12 @@ const simplePatientSchema = z.object({
 });
 
 export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) => {
+  // Fetch available physicians for assignment
+  const { data: availablePhysicians = [] } = useQuery({
+    queryKey: ["/api/patients/available-physicians"],
+    enabled: true,
+  });
+
   const form = useForm({
     resolver: zodResolver(simplePatientSchema),
     mode: "onChange",
@@ -45,6 +54,7 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
       gender: "",
       phone: "",
       email: "",
+      primaryPhysicianId: "",
       insuranceProvider: "",
       policyNumber: "",
       groupNumber: "",
@@ -167,6 +177,35 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
                 <FormControl>
                   <Input type="email" placeholder="patient@example.com" {...field} />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Doctor Assignment */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-800">Doctor Assignment</h3>
+          <FormField
+            control={form.control}
+            name="primaryPhysicianId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Assigned Doctor *</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a doctor for this patient" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {availablePhysicians.map((physician: any) => (
+                      <SelectItem key={physician.id} value={physician.id}>
+                        Dr. {physician.firstName} {physician.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

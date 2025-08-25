@@ -1493,9 +1493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tenant = req.tenant!;
       
       // Generate tenant-specific patient ID (unique within hospital/clinic)
-      const tenantPrefix = tenant.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X');
-      const patientCounter = await storage.getNextPatientNumber(tenantId);
-      const tenantPatientId = `${tenantPrefix}-${patientCounter.toString().padStart(6, '0')}`;
+      const tenantPatientId = await storage.generateTenantPatientId(tenantId);
       
       // Generate MRN automatically (keeping existing format for compatibility)
       const mrn = `MRN${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
