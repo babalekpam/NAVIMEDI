@@ -36,12 +36,6 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
   });
 
   const handleSubmit = (data: any) => {
-    console.log('=== FORM SUBMISSION DEBUG ===');
-    console.log('Form data:', data);
-    console.log('Form errors:', form.formState.errors);
-    console.log('Form is valid:', form.formState.isValid);
-    console.log('==============================');
-    
     onSubmit(data);
   };
 
@@ -161,20 +155,9 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
             type="submit" 
             disabled={isLoading}
             data-testid="button-register-patient"
-            onClick={() => console.log('Button clicked! Form errors:', form.formState.errors)}
           >
             {isLoading ? "Registering..." : "Register Patient"}
           </Button>
-        </div>
-        
-        {/* Debug section - remove later */}
-        <div className="mt-4 p-4 bg-red-100 text-red-800 text-xs">
-          <p>Debug: Form valid = {form.formState.isValid ? 'YES' : 'NO'}</p>
-          <p>Errors: {Object.keys(form.formState.errors).length} errors</p>
-          <p>Form values: {JSON.stringify(form.getValues(), null, 2)}</p>
-          {Object.keys(form.formState.errors).length > 0 && (
-            <pre>{JSON.stringify(form.formState.errors, null, 2)}</pre>
-          )}
         </div>
       </form>
     </Form>
