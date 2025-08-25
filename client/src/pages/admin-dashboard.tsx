@@ -7,6 +7,8 @@ import { UserPlus, Users, Stethoscope, Heart, FlaskConical, UserCheck, DollarSig
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useTranslation } from "@/contexts/translation-context";
+import { useLocation } from "wouter";
+import { useEffect } from "react";
 import UserRoles from "@/pages/user-roles";
 import UserRolesManagement from "@/components/pharmacy/UserRolesManagement";
 import { DepartmentManagement } from "@/components/dashboard/department-management";
@@ -19,8 +21,17 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
   const { user } = useAuth();
   const { tenant } = useTenant();
   const { t } = useTranslation();
+  const [, setLocation] = useLocation();
   const [currentTab, setCurrentTab] = useState(activeTab);
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
+
+  // Redirect pharmacy admins to pharmacy dashboard
+  useEffect(() => {
+    if (user && tenant && tenant.type === 'pharmacy' && (user.role === 'tenant_admin' || user.role === 'director')) {
+      console.log('Redirecting pharmacy admin to pharmacy dashboard');
+      setLocation('/pharmacy-dashboard');
+    }
+  }, [user, tenant, setLocation]);
 
   if (!user || user.role !== 'tenant_admin') {
     return (
