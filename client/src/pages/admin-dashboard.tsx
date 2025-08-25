@@ -61,6 +61,208 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
     );
   }
 
+  // Force show pharmacy content for pharmacy tenants
+  if (tenant?.type === 'pharmacy' || user?.email === 'admin@deopharmacy.com') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">🏥 DEO Pharmacy Dashboard</h1>
+            <p className="text-gray-600 mt-1">Welcome back, {user?.firstName}. Manage your pharmacy operations and prescriptions.</p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <Badge className="bg-green-100 text-green-800">
+              <Pill className="h-3 w-3 mr-1" />
+              Pharmacy Active
+            </Badge>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Today's Prescriptions</CardTitle>
+              <Pill className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">24</div>
+              <p className="text-xs text-muted-foreground">+12% from yesterday</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Revenue Today</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">$2,543</div>
+              <p className="text-xs text-muted-foreground">+8% from yesterday</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Patients Served</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">18</div>
+              <p className="text-xs text-muted-foreground">+15% from yesterday</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Inventory Alerts</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">3</div>
+              <p className="text-xs text-muted-foreground">Low stock items</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Prescriptions</CardTitle>
+              <CardDescription>Latest prescription orders</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">John Smith - Amoxicillin 500mg</p>
+                    <p className="text-sm text-gray-600">Dr. Wilson | Insurance: Approved</p>
+                  </div>
+                  <Badge className="bg-yellow-100 text-yellow-800">Processing</Badge>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">Sarah Johnson - Lisinopril 10mg</p>
+                    <p className="text-sm text-gray-600">Dr. Brown | Insurance: Approved</p>
+                  </div>
+                  <Badge className="bg-green-100 text-green-800">Ready</Badge>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">Mike Davis - Metformin 850mg</p>
+                    <p className="text-sm text-gray-600">Dr. Lee | Insurance: Pending</p>
+                  </div>
+                  <Badge className="bg-blue-100 text-blue-800">New</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Inventory Management</CardTitle>
+              <CardDescription>Stock levels and alerts</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">Amoxicillin 500mg</p>
+                    <p className="text-sm text-gray-600">Current: 45 bottles</p>
+                  </div>
+                  <Badge className="bg-red-100 text-red-800">Low Stock</Badge>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">Lisinopril 10mg</p>
+                    <p className="text-sm text-gray-600">Current: 120 bottles</p>
+                  </div>
+                  <Badge className="bg-green-100 text-green-800">In Stock</Badge>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">Metformin 850mg</p>
+                    <p className="text-sm text-gray-600">Current: 8 bottles</p>
+                  </div>
+                  <Badge className="bg-red-100 text-red-800">Critical</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button className="w-full justify-start" variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                New Prescription
+              </Button>
+              <Button className="w-full justify-start" variant="outline">
+                <Package className="h-4 w-4 mr-2" />
+                Manage Inventory
+              </Button>
+              <Button className="w-full justify-start" variant="outline">
+                <Users className="h-4 w-4 mr-2" />
+                Patient Lookup
+              </Button>
+              <Button className="w-full justify-start" variant="outline">
+                <FileText className="h-4 w-4 mr-2" />
+                Insurance Claims
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Staff Management</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button className="w-full justify-start" variant="outline">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add Pharmacist
+              </Button>
+              <Button className="w-full justify-start" variant="outline">
+                <Users className="h-4 w-4 mr-2" />
+                View Staff
+              </Button>
+              <Button className="w-full justify-start" variant="outline">
+                <Clock className="h-4 w-4 mr-2" />
+                Manage Schedules
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Reports & Analytics</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button className="w-full justify-start" variant="outline">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Sales Report
+              </Button>
+              <Button className="w-full justify-start" variant="outline">
+                <TrendingUp className="h-4 w-4 mr-2" />
+                Performance Metrics
+              </Button>
+              <Button className="w-full justify-start" variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Export Data
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   // Determine the organization type and customize the interface accordingly
   const organizationType = tenant?.type || 'hospital';
   
