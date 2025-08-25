@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import UserRoles from "@/pages/user-roles";
 import UserRolesManagement from "@/components/pharmacy/UserRolesManagement";
 import { DepartmentManagement } from "@/components/dashboard/department-management";
+import PharmacyDashboardWorking from "@/pages/pharmacy-dashboard-enhanced-v2";
 
 interface AdminDashboardProps {
   activeTab?: string;
@@ -25,20 +26,10 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
   const [currentTab, setCurrentTab] = useState(activeTab);
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
 
-  // Redirect pharmacy admins to pharmacy dashboard
-  useEffect(() => {
-    console.log('AdminDashboard - Checking redirect:', {
-      user: user?.email,
-      userRole: user?.role,
-      tenant: tenant?.name,
-      tenantType: tenant?.type
-    });
-    
-    if (user && tenant && tenant.type === 'pharmacy' && (user.role === 'tenant_admin' || user.role === 'director')) {
-      console.log('Redirecting pharmacy admin to pharmacy dashboard');
-      window.location.href = '/pharmacy-dashboard';
-    }
-  }, [user, tenant]);
+  // For pharmacy admins, show pharmacy dashboard directly
+  if (user && tenant && tenant.type === 'pharmacy' && (user.role === 'tenant_admin' || user.role === 'director')) {
+    return <PharmacyDashboardWorking />;
+  }
 
   if (!user || user.role !== 'tenant_admin') {
     return (
