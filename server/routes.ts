@@ -1306,7 +1306,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         patients = await storage.getPatientsByTenant(tenantId, parseInt(limit as string), parseInt(offset as string));
       }
 
-      res.json(patients);
+      // Return basic patient data only for fast loading
+      const basicPatients = patients.map(patient => ({
+        id: patient.id,
+        tenantPatientId: patient.tenantPatientId,
+        firstName: patient.firstName,
+        lastName: patient.lastName,
+        dateOfBirth: patient.dateOfBirth,
+        gender: patient.gender,
+        phone: patient.phone,
+        email: patient.email,
+        mrn: patient.mrn,
+        isActive: patient.isActive,
+        createdAt: patient.createdAt,
+        updatedAt: patient.updatedAt
+      }));
+
+      res.json(basicPatients);
     } catch (error) {
       console.error("Get patients error:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -1337,66 +1353,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Optimized medical records endpoint - loads data on demand
   app.get("/api/patients/medical-records", async (req, res) => {
     try {
       const tenantId = req.tenant!.id;
-      console.log(`[MEDICAL RECORDS] Fetching medical records for tenant: ${tenantId}`);
+      console.log(`[MEDICAL RECORDS] Fetching basic patient list for tenant: ${tenantId}`);
       
-      // Get all patients with extended medical record information
+      // Get basic patient information only (fast query)
       const patients = await storage.getPatientsByTenant(tenantId);
       
-      // Enhance each patient with medical record data
-      const patientsWithRecords = await Promise.all(patients.map(async (patient) => {
-        try {
-          // Get appointments for this patient
-          const appointments = await storage.getAppointmentsByPatient(patient.id, tenantId);
-          
-          // Get prescriptions for this patient
-          const prescriptions = await storage.getPrescriptionsByPatient(patient.id, tenantId);
-          
-          // Get lab orders for this patient
-          const labOrders = await storage.getLabOrdersByPatient(patient.id, tenantId);
-          
-          // Get vital signs for this patient
-          const vitalSigns = await storage.getVitalSignsByPatient(patient.id, tenantId);
-          
-          // Calculate summary data
-          const lastVisit = appointments.length > 0 
-            ? appointments.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date
-            : null;
-          
-          const upcomingAppointments = appointments.filter(apt => 
-            new Date(apt.date) > new Date() && apt.status !== 'cancelled'
-          ).length;
-          
-          return {
-            ...patient,
-            appointments,
-            prescriptions,
-            labOrders,
-            vitalSigns,
-            lastVisit,
-            upcomingAppointments
-          };
-        } catch (error) {
-          console.error(`Error fetching records for patient ${patient.id}:`, error);
-          return {
-            ...patient,
-            appointments: [],
-            prescriptions: [],
-            labOrders: [],
-            vitalSigns: [],
-            lastVisit: null,
-            upcomingAppointments: 0
-          };
-        }
+      // Return lightweight patient data with basic info
+      const basicPatientsWithSummary = patients.map(patient => ({
+        id: patient.id,
+        tenantPatientId: patient.tenantPatientId,
+        firstName: patient.firstName,
+        lastName: patient.lastName,
+        dateOfBirth: patient.dateOfBirth,
+        gender: patient.gender,
+        phone: patient.phone,
+        email: patient.email,
+        mrn: patient.mrn,
+        isActive: patient.isActive,
+        createdAt: patient.createdAt,
+        updatedAt: patient.updatedAt,
+        // Placeholder for summary data - loaded on demand
+        appointments: [],
+        prescriptions: [],
+        labOrders: [],
+        vitalSigns: [],
+        lastVisit: null,
+        upcomingAppointments: 0
       }));
       
-      console.log(`[MEDICAL RECORDS] Successfully fetched ${patientsWithRecords.length} patient records`);
-      res.json(patientsWithRecords);
+      console.log(`[MEDICAL RECORDS] Successfully fetched ${basicPatientsWithSummary.length} patient records (basic)`);
+      res.json(basicPatientsWithSummary);
     } catch (error) {
       console.error("Get patients medical records error:", error);
       res.status(500).json({ message: "Failed to fetch patient medical records" });
+    }
+  });
+
+  // Individual patient medical record details (loaded on demand)
+  app.get("/api/patients/:id/medical-details", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.tenant!.id;
+      
+      console.log(`[MEDICAL DETAILS] Fetching detailed records for patient: ${id}`);
+      
+      // Get patient details
+      const patient = await storage.getPatient(id, tenantId);
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      // Get all medical data for this specific patient
+      const [appointments, prescriptions, labOrders, vitalSigns] = await Promise.all([
+        storage.getAppointmentsByPatient(id, tenantId),
+        storage.getPrescriptionsByPatient(id, tenantId),
+        storage.getLabOrdersByPatient(id, tenantId),
+        storage.getVitalSignsByPatient(id, tenantId)
+      ]);
+      
+      // Calculate summary data
+      const lastVisit = appointments.length > 0 
+        ? appointments.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date
+        : null;
+      
+      const upcomingAppointments = appointments.filter(apt => 
+        new Date(apt.date) > new Date() && apt.status !== 'cancelled'
+      ).length;
+      
+      const detailedPatient = {
+        ...patient,
+        appointments,
+        prescriptions,
+        labOrders,
+        vitalSigns,
+        lastVisit,
+        upcomingAppointments
+      };
+      
+      console.log(`[MEDICAL DETAILS] Successfully fetched detailed records for patient: ${id}`);
+      res.json(detailedPatient);
+    } catch (error) {
+      console.error("Get patient medical details error:", error);
+      res.status(500).json({ message: "Failed to fetch patient medical details" });
     }
   });
 
