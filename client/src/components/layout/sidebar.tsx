@@ -81,8 +81,6 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "prescription-transfers", label: "Prescription Transfers", icon: ArrowLeftRight, path: "/prescription-transfers", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "pharmacy-inventory", label: "📦 Inventory", icon: Package, path: "/pharmacy-inventory", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "health-wellness", label: "🛒 Health & Wellness", icon: Heart, path: "/health-wellness", roles: ["pharmacist", "tenant_admin", "director"] },
-  { id: "clinical-services", label: "💉 Clinical Services", icon: Stethoscope, path: "/clinical-services", roles: ["pharmacist", "tenant_admin", "director"] },
-  { id: "immunizations", label: "Immunizations & Vaccines", icon: Shield, path: "/immunizations", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "insurance-verification", label: "💰 Insurance & Savings", icon: DollarSign, path: "/insurance-verification", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "delivery-pickup", label: "🚚 Delivery & Pickup", icon: Truck, path: "/delivery-pickup", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "customer-accounts", label: "👤 Customer Accounts", icon: Users, path: "/customer-accounts", roles: ["pharmacist", "tenant_admin", "director"] },
@@ -263,7 +261,7 @@ export const Sidebar = () => {
     console.log('[SIDEBAR] ✅ User role:', user.role, 'Tenant type:', currentTenant?.type);
     
     const pharmacyItems = filteredItems.filter(item => 
-      ["pharmacy-dashboard", "prescription-management", "prescription-refills", "prescription-transfers", "pharmacy-inventory", "health-wellness", "clinical-services", "immunizations", "insurance-verification", "delivery-pickup", "customer-accounts", "pharmacy-support", "digital-services", "prescription-archives", "pharmacy-patient-management", "pharmacy-employee-management", "pharmacy-billing", "pharmacy-insurance-claims", "admin-dashboard", "advertisements"].includes(item.id)
+      ["pharmacy-dashboard", "prescription-management", "prescription-refills", "prescription-transfers", "pharmacy-inventory", "health-wellness", "insurance-verification", "delivery-pickup", "customer-accounts", "pharmacy-support", "digital-services", "prescription-archives", "pharmacy-patient-management", "pharmacy-employee-management", "pharmacy-billing", "pharmacy-insurance-claims", "admin-dashboard", "advertisements"].includes(item.id)
     );
     
     return (
