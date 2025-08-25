@@ -198,10 +198,14 @@ export default function PrescriptionsPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Prescription Management</h1>
           <p className="text-gray-600 mt-1">
-            Manage and track prescriptions across the healthcare network
+            {tenant?.type === 'pharmacy' 
+              ? 'Receive and process prescriptions from hospitals and doctors'
+              : 'Manage and track prescriptions across the healthcare network'
+            }
           </p>
         </div>
-        {(user?.role === 'tenant_admin' || user?.role === 'doctor' || user?.role === 'physician' || user?.role === 'super_admin') && (
+        {/* Only doctors/physicians from hospitals can create prescriptions - pharmacies receive prescriptions */}
+        {(user?.role === 'doctor' || user?.role === 'physician' || (user?.role === 'super_admin' && tenant?.type !== 'pharmacy')) && tenant?.type !== 'pharmacy' && (
           <Button onClick={() => setIsCreateModalOpen(true)} data-testid="button-create-prescription">
             <Plus className="mr-2 h-4 w-4" />
             New Prescription
