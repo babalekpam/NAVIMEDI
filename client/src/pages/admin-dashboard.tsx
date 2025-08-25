@@ -27,11 +27,18 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
 
   // Redirect pharmacy admins to pharmacy dashboard
   useEffect(() => {
+    console.log('AdminDashboard - Checking redirect:', {
+      user: user?.email,
+      userRole: user?.role,
+      tenant: tenant?.name,
+      tenantType: tenant?.type
+    });
+    
     if (user && tenant && tenant.type === 'pharmacy' && (user.role === 'tenant_admin' || user.role === 'director')) {
       console.log('Redirecting pharmacy admin to pharmacy dashboard');
-      setLocation('/pharmacy-dashboard');
+      window.location.href = '/pharmacy-dashboard';
     }
-  }, [user, tenant, setLocation]);
+  }, [user, tenant]);
 
   if (!user || user.role !== 'tenant_admin') {
     return (
