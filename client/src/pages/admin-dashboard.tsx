@@ -12,7 +12,6 @@ import { useEffect } from "react";
 import UserRoles from "@/pages/user-roles";
 import UserRolesManagement from "@/components/pharmacy/UserRolesManagement";
 import { DepartmentManagement } from "@/components/dashboard/department-management";
-import PharmacyDashboardWorking from "@/pages/pharmacy-dashboard-enhanced-v2";
 
 interface AdminDashboardProps {
   activeTab?: string;
@@ -34,17 +33,21 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
     userEmail: user?.email
   });
 
-  // Force pharmacy dashboard for DEO admin
-  if (user?.email === 'admin@deopharmacy.com') {
-    console.log('DEO admin detected - showing pharmacy dashboard');
-    return <PharmacyDashboardWorking />;
-  }
+  // Force redirect to pharmacy dashboard for DEO admin
+  useEffect(() => {
+    if (user?.email === 'admin@deopharmacy.com') {
+      console.log('DEO admin detected - redirecting to pharmacy dashboard');
+      window.location.href = '/pharmacy-dashboard';
+    }
+  }, [user]);
 
-  // For pharmacy admins, show pharmacy dashboard directly
-  if (user && tenant && tenant.type === 'pharmacy' && (user.role === 'tenant_admin' || user.role === 'director')) {
-    console.log('Rendering pharmacy dashboard for pharmacy admin');
-    return <PharmacyDashboardWorking />;
-  }
+  // For pharmacy admins, redirect to pharmacy dashboard
+  useEffect(() => {
+    if (user && tenant && tenant.type === 'pharmacy' && (user.role === 'tenant_admin' || user.role === 'director')) {
+      console.log('Pharmacy admin detected - redirecting to pharmacy dashboard');
+      window.location.href = '/pharmacy-dashboard';
+    }
+  }, [user, tenant]);
 
   if (!user || user.role !== 'tenant_admin') {
     return (
