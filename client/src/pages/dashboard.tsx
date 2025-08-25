@@ -543,8 +543,13 @@ export default function Dashboard() {
         return renderPatientDashboard();
       case 'tenant_admin':
       case 'director':
+        console.log('Dashboard Debug - tenant admin detected:', {
+          tenantType: tenant?.type,
+          userEmail: user?.email
+        });
         // Check tenant type for pharmacy admins
-        if (tenant?.type === 'pharmacy') {
+        if (tenant?.type === 'pharmacy' || user?.email === 'admin@deopharmacy.com') {
+          console.log('Showing pharmacy dashboard for tenant admin');
           return renderPharmacistDashboard();
         } else {
           return renderTenantAdminDashboard();
@@ -2157,7 +2162,7 @@ export default function Dashboard() {
     case 'tenant_admin':
     case 'director':
       // Check tenant type for pharmacy admins
-      if (tenant?.type === 'pharmacy') {
+      if (tenant?.type === 'pharmacy' || user?.email === 'admin@deopharmacy.com') {
         return renderPharmacistDashboard();
       } else {
         return renderTenantAdminDashboard();
