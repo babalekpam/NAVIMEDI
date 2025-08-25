@@ -2153,7 +2153,64 @@ export default function Dashboard() {
     case 'director':
       // Check tenant type for pharmacy admins
       if (tenant?.type === 'pharmacy' || user?.email === 'admin@deopharmacy.com') {
-        return renderPharmacistDashboard();
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">🏥 DEO Pharmacy Dashboard</h1>
+                <p className="text-gray-600 mt-1">Welcome back, {user?.firstName}. Your pharmacy operations overview.</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Badge className="bg-purple-100 text-purple-800">
+                  <Pill className="h-3 w-3 mr-1" />
+                  Pharmacy Active
+                </Badge>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Today's Prescriptions</CardTitle>
+                  <Pill className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">24</div>
+                  <p className="text-xs text-muted-foreground">+12% from yesterday</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Revenue Today</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">$2,543</div>
+                  <p className="text-xs text-muted-foreground">+8% from yesterday</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Patients Served</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">18</div>
+                  <p className="text-xs text-muted-foreground">Today's count</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Inventory Alerts</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">3</div>
+                  <p className="text-xs text-muted-foreground">Low stock items</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        );
       } else {
         return renderTenantAdminDashboard();
       }
