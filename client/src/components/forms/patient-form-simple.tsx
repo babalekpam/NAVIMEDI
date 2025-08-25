@@ -35,24 +35,13 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
   });
 
   const handleSubmit = (data: any) => {
-    // Validate required fields
-    console.log('Form submitted with data:', data);
+    console.log('=== FORM SUBMISSION DEBUG ===');
+    console.log('Form data:', data);
     console.log('Form errors:', form.formState.errors);
+    console.log('Form is valid:', form.formState.isValid);
+    console.log('==============================');
     
-    if (!data.firstName || !data.lastName || !data.dateOfBirth) {
-      console.error('Validation failed - missing required fields');
-      return;
-    }
-    
-    const patientData = {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      dateOfBirth: data.dateOfBirth,
-      gender: data.gender || undefined,
-      phone: data.phone || undefined,
-      email: data.email || undefined,
-    };
-    onSubmit(patientData);
+    onSubmit(data);
   };
 
   return (
@@ -171,9 +160,19 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
             type="submit" 
             disabled={isLoading}
             data-testid="button-register-patient"
+            onClick={() => console.log('Button clicked! Form errors:', form.formState.errors)}
           >
             {isLoading ? "Registering..." : "Register Patient"}
           </Button>
+        </div>
+        
+        {/* Debug section - remove later */}
+        <div className="mt-4 p-4 bg-red-100 text-red-800 text-xs">
+          <p>Debug: Form valid = {form.formState.isValid ? 'YES' : 'NO'}</p>
+          <p>Errors: {Object.keys(form.formState.errors).length} errors</p>
+          {Object.keys(form.formState.errors).length > 0 && (
+            <pre>{JSON.stringify(form.formState.errors, null, 2)}</pre>
+          )}
         </div>
       </form>
     </Form>
