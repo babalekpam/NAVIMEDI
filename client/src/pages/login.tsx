@@ -58,7 +58,14 @@ export default function Login() {
         console.log('Redirecting super admin to super-admin-dashboard');
         redirectPath = '/super-admin-dashboard';
       } else if (response.user.role === 'tenant_admin' || response.user.role === 'director') {
-        redirectPath = '/admin-dashboard';
+        // Check tenant type for tenant admins
+        if (response.tenant && response.tenant.type === 'laboratory') {
+          redirectPath = '/laboratory-dashboard';
+        } else if (response.tenant && response.tenant.type === 'pharmacy') {
+          redirectPath = '/pharmacy-dashboard';
+        } else {
+          redirectPath = '/admin-dashboard';
+        }
       } else if (response.user.role === 'lab_technician') {
         redirectPath = '/laboratory-dashboard';
       } else if (response.user.role === 'pharmacist') {
