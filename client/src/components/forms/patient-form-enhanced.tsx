@@ -83,6 +83,10 @@ export const PatientForm = ({ onSubmit, isLoading = false, department = '', incl
     gender: z.string().optional(),
     phone: z.string().optional(),
     email: z.string().optional(),
+    // Medical Information Arrays
+    medicalHistory: z.array(z.string()).optional(),
+    allergies: z.array(z.string()).optional(),
+    medications: z.array(z.string()).optional(),
     // Vital Signs (optional)
     bloodPressureSystolic: z.string().optional(),
     bloodPressureDiastolic: z.string().optional(),
