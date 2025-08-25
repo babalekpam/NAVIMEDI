@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Users, Stethoscope, Heart, FlaskConical, UserCheck, DollarSign, ShieldCheck, Building2, Activity, Pill, TestTube, Plus, Settings } from "lucide-react";
+import { UserPlus, Users, Stethoscope, Heart, FlaskConical, UserCheck, DollarSign, ShieldCheck, Building2, Activity, Pill, TestTube, Plus, Settings, AlertTriangle, Package, FileText, Clock, BarChart3, TrendingUp, Download } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useTranslation } from "@/contexts/translation-context";
@@ -62,7 +62,14 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
   }
 
   // Force show pharmacy content for pharmacy tenants
+  console.log('Checking pharmacy condition:', {
+    tenantType: tenant?.type,
+    userEmail: user?.email,
+    shouldShowPharmacy: tenant?.type === 'pharmacy' || user?.email === 'admin@deopharmacy.com'
+  });
+  
   if (tenant?.type === 'pharmacy' || user?.email === 'admin@deopharmacy.com') {
+    console.log('RENDERING PHARMACY DASHBOARD!');
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
