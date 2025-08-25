@@ -16,7 +16,7 @@ import { useTenant } from "@/contexts/tenant-context-fixed";
 import { useTranslation } from "@/contexts/translation-context";
 import { useToast } from "@/hooks/use-toast";
 import { PrescriptionForm } from "@/components/forms/prescription-form";
-import { Activity, Users, DollarSign, Package, Clock, AlertTriangle, CheckCircle, XCircle, Search, FileText, Download, Pill, Plus } from 'lucide-react';
+import { Activity, Users, DollarSign, Package, Clock, AlertTriangle, CheckCircle, XCircle, Search, FileText, Download, Pill, Plus, RefreshCw, ArrowLeftRight } from 'lucide-react';
 
 interface Prescription {
   id: string;
@@ -52,6 +52,7 @@ export default function PrescriptionsPage() {
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
   const [isProcessingModalOpen, setIsProcessingModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("active"); // For prescription tabs
 
   // Fetch prescriptions for current tenant (hospital or pharmacy)
   const { data: prescriptions = [], isLoading } = useQuery<Prescription[]>({
@@ -142,7 +143,7 @@ export default function PrescriptionsPage() {
   
   // Apply search and status filters to active prescriptions
   const filteredPrescriptions = activePrescriptions.filter((prescription) => {
-    const matchesSearch = (prescription.medicationName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = (prescription.medication || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (prescription.patientName || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || prescription.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -274,46 +275,64 @@ export default function PrescriptionsPage() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Prescription Search & Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Label htmlFor="search">Search Prescriptions</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="search"
-                  placeholder="Search by medication or patient name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+      {/* Prescription Management Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="active" className="flex items-center gap-2">
+            <Pill className="h-4 w-4" />
+            Active Prescriptions
+          </TabsTrigger>
+          <TabsTrigger value="refills" className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Prescription Refills
+          </TabsTrigger>
+          <TabsTrigger value="transfers" className="flex items-center gap-2">
+            <ArrowLeftRight className="h-4 w-4" />
+            Prescription Transfers
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="active" className="space-y-6">
+          {/* Filters */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Prescription Search & Filters</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="search">Search Prescriptions</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="search"
+                      placeholder="Search by medication or patient name..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="w-48">
+                  <Label htmlFor="status-filter">Filter by Status</Label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="prescribed">Prescribed</SelectItem>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="processing">Processing</SelectItem>
+                      <SelectItem value="ready">Ready</SelectItem>
+                      <SelectItem value="dispensed">Dispensed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
-            <div className="w-48">
-              <Label htmlFor="status-filter">Filter by Status</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="prescribed">Prescribed</SelectItem>
-                  <SelectItem value="new">New</SelectItem>
-                  <SelectItem value="processing">Processing</SelectItem>
-                  <SelectItem value="ready">Ready</SelectItem>
-                  <SelectItem value="dispensed">Dispensed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
       {/* Prescriptions Table */}
       <Card>
@@ -514,6 +533,50 @@ export default function PrescriptionsPage() {
           />
         </DialogContent>
       </Dialog>
+        </TabsContent>
+
+        <TabsContent value="refills" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <RefreshCw className="h-5 w-5" />
+                Prescription Refills
+              </CardTitle>
+              <CardDescription>
+                Manage prescription refill requests from patients
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-gray-500">
+                <RefreshCw className="mx-auto h-8 w-8 mb-2" />
+                <p>No refill requests at this time</p>
+                <p className="text-sm">Refill requests will appear here when patients request them</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="transfers" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ArrowLeftRight className="h-5 w-5" />
+                Prescription Transfers
+              </CardTitle>
+              <CardDescription>
+                Handle prescription transfers between pharmacies
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-gray-500">
+                <ArrowLeftRight className="mx-auto h-8 w-8 mb-2" />
+                <p>No transfer requests at this time</p>
+                <p className="text-sm">Prescription transfer requests will appear here</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

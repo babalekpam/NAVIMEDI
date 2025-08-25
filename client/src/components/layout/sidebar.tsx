@@ -160,9 +160,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   
   // Pharmacy Section - Comprehensive Navigation for Pharmacy Tenants
   { id: "pharmacy-dashboard", label: "Dashboard", icon: BarChart3, path: "/dashboard", roles: ["pharmacist", "tenant_admin", "director"] },
-  { id: "prescription-management", label: "💊 Prescriptions", icon: Pill, path: "/prescriptions", roles: ["pharmacist", "tenant_admin", "director"] },
-  { id: "prescription-refills", label: "Prescription Refills", icon: RefreshCw, path: "/prescriptions", roles: ["pharmacist", "tenant_admin", "director"] },
-  { id: "prescription-transfers", label: "Prescription Transfers", icon: ArrowLeftRight, path: "/prescriptions", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "prescription-management", label: "💊 Prescription Management", icon: Pill, path: "/prescriptions", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "pharmacy-inventory", label: "📦 Inventory", icon: Package, path: "/pharmacy-inventory", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "health-wellness", label: "🛒 Health & Wellness", icon: Heart, path: "/pharmacy-inventory", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "insurance-verification", label: "💰 Insurance & Savings", icon: DollarSign, path: "/pharmacy-pos", roles: ["pharmacist", "tenant_admin", "director"] },
