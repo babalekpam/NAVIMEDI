@@ -138,25 +138,25 @@ export const Header = () => {
               <>
                 <button 
                   onClick={() => setLocation("/prescriptions")}
-                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                  className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
                 >
                   💊 Prescriptions
                 </button>
                 <button 
                   onClick={() => setLocation("/pharmacy-inventory")}
-                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                  className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
                 >
                   📦 Inventory
                 </button>
                 <button 
                   onClick={() => setLocation("/customer-accounts")}
-                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                  className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
                 >
                   👤 Customers
                 </button>
                 <button 
                   onClick={() => setLocation("/pharmacy-billing")}
-                  className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
+                  className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
                 >
                   💳 Billing
                 </button>
