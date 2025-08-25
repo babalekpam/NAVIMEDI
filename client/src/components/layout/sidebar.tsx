@@ -279,6 +279,12 @@ export const Sidebar = () => {
   // Check if user is in a laboratory tenant
   const isLaboratoryTenant = currentTenant?.type === "laboratory";
   
+  // Debug logging for tenant detection
+  console.log('[SIDEBAR DEBUG] Current tenant:', currentTenant);
+  console.log('[SIDEBAR DEBUG] User role:', user.role);
+  console.log('[SIDEBAR DEBUG] Is laboratory tenant:', isLaboratoryTenant);
+  console.log('[SIDEBAR DEBUG] Should show lab nav:', user.role === "lab_technician" || (user.role === "tenant_admin" && isLaboratoryTenant));
+  
   // For laboratory users - show comprehensive laboratory management features
   if (user.role === "lab_technician" || (user.role === "tenant_admin" && isLaboratoryTenant)) {
     
