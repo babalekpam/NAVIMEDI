@@ -29,7 +29,13 @@ import {
   Package,
   ShoppingCart,
   Megaphone,
-  RotateCcw
+  RotateCcw,
+  RefreshCw,
+  ArrowLeftRight,
+  Heart,
+  Truck,
+  Phone,
+  Smartphone
 } from "lucide-react";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 import { Button } from "@/components/ui/button";
@@ -68,8 +74,20 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "post-lab-results", label: "Post Lab Results", icon: Plus, path: "/post-lab-results", roles: ["lab_technician", "tenant_admin", "director"] },
   { id: "achievements", label: "Laboratory Achievements", icon: Trophy, path: "/achievements", roles: ["lab_technician", "tenant_admin", "director"] },
   
-  // Pharmacy Section - Simplified Navigation
-  { id: "pharmacy-dashboard", label: "Dashboard", icon: BarChart3, path: "/dashboard", roles: ["pharmacist"] },
+  // Pharmacy Section - Comprehensive Navigation for Pharmacy Tenants
+  { id: "pharmacy-dashboard", label: "Dashboard", icon: BarChart3, path: "/dashboard", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "prescription-management", label: "💊 Prescriptions", icon: Pill, path: "/prescriptions", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "prescription-refills", label: "Prescription Refills", icon: RefreshCw, path: "/prescription-refills", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "prescription-transfers", label: "Prescription Transfers", icon: ArrowLeftRight, path: "/prescription-transfers", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "pharmacy-inventory", label: "📦 Inventory", icon: Package, path: "/pharmacy-inventory", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "health-wellness", label: "🛒 Health & Wellness", icon: Heart, path: "/health-wellness", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "clinical-services", label: "💉 Clinical Services", icon: Stethoscope, path: "/clinical-services", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "immunizations", label: "Immunizations & Vaccines", icon: Shield, path: "/immunizations", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "insurance-verification", label: "💰 Insurance & Savings", icon: DollarSign, path: "/insurance-verification", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "delivery-pickup", label: "🚚 Delivery & Pickup", icon: Truck, path: "/delivery-pickup", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "customer-accounts", label: "👤 Customer Accounts", icon: Users, path: "/customer-accounts", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "pharmacy-support", label: "📞 Support & Chat", icon: Phone, path: "/pharmacy-support", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "digital-services", label: "📱 Digital Services", icon: Smartphone, path: "/digital-services", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "prescription-archives", label: "Prescription Archives", icon: Archive, path: "/prescription-archives", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "pharmacy-patient-management", label: "Patient Management", icon: Users, path: "/pharmacy-patient-management", roles: ["pharmacist", "billing_staff", "tenant_admin", "director"] },
   { id: "pharmacy-employee-management", label: "Employee Management", icon: UserCheck, path: "/pharmacy-employee-management", roles: ["tenant_admin", "director"] },
@@ -170,8 +188,10 @@ export const Sidebar = () => {
 
   // Check if this is a pharmacy tenant by checking tenant ID and name
   const isPharmacyTenant = user.tenantId === "9ed7c3a3-cc12-414d-bc7e-7d0c1a3cf6e9" || // Working Test Pharmacy
+                          user.tenantId === "c0bdce16-06c2-4b54-a5e6-24ba214af49d" || // DEO Pharmacy
                           currentTenant?.name?.toLowerCase().includes('pharmacy') || 
                           currentTenant?.name?.toLowerCase().includes('rx') || 
+                          currentTenant?.name?.toLowerCase().includes('deo') ||
                           currentTenant?.type === "pharmacy";
 
   // Check if user is in a laboratory tenant
@@ -238,12 +258,12 @@ export const Sidebar = () => {
   }
 
   // For pharmacy users - show only pharmacy-specific items
-  if (user.role === "pharmacist" || (user.role === "tenant_admin" && isPharmacyTenant)) {
+  if (user.role === "pharmacist" || ((user.role === "tenant_admin" || user.role === "director") && isPharmacyTenant)) {
     console.log('[SIDEBAR] ✅ Pharmacy user detected - directing to enhanced dashboard');
     console.log('[SIDEBAR] ✅ User role:', user.role, 'Tenant type:', currentTenant?.type);
     
     const pharmacyItems = filteredItems.filter(item => 
-      ["pharmacy-dashboard", "prescription-archives", "pharmacy-patient-management", "pharmacy-employee-management", "pharmacy-billing", "pharmacy-insurance-claims", "admin-dashboard", "advertisements"].includes(item.id)
+      ["pharmacy-dashboard", "prescription-management", "prescription-refills", "prescription-transfers", "pharmacy-inventory", "health-wellness", "clinical-services", "immunizations", "insurance-verification", "delivery-pickup", "customer-accounts", "pharmacy-support", "digital-services", "prescription-archives", "pharmacy-patient-management", "pharmacy-employee-management", "pharmacy-billing", "pharmacy-insurance-claims", "admin-dashboard", "advertisements"].includes(item.id)
     );
     
     return (
