@@ -6766,6 +6766,7 @@ Report ID: ${report.id}
       const validatedData = insertPatientCheckInSchema.parse({
         ...req.body,
         tenantId: req.tenant!.id,
+        checkedInBy: req.user!.id,
         checkInTime: new Date()
       });
       
