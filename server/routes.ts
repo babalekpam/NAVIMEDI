@@ -1313,6 +1313,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Medical records endpoint - must come before generic /:id route
+  app.get("/api/patients/medical-records", async (req, res) => {
+    try {
+      const tenantId = req.tenant!.id;
+      console.log(`[MEDICAL RECORDS] Fetching medical records for tenant: ${tenantId}`);
+      
+      // Get all patients with extended medical record information
+      const patients = await storage.getPatientsByTenant(tenantId);
+      
+      // Enhance each patient with medical record data
+      const patientsWithRecords = await Promise.all(patients.map(async (patient) => {
+        try {
+          // Get appointments for this patient
+          const appointments = await storage.getAppointmentsByPatient(patient.id, tenantId);
+          
+          // Get prescriptions for this patient
+          const prescriptions = await storage.getPrescriptionsByPatient(patient.id, tenantId);
+          
+          // Get lab orders for this patient
+          const labOrders = await storage.getLabOrdersByPatient(patient.id, tenantId);
+          
+          // Get vital signs for this patient
+          const vitalSigns = await storage.getVitalSignsByPatient(patient.id, tenantId);
+          
+          // Calculate summary data
+          const lastVisit = appointments.length > 0 
+            ? appointments.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date
+            : null;
+          
+          const upcomingAppointments = appointments.filter(apt => 
+            new Date(apt.date) > new Date() && apt.status !== 'cancelled'
+          ).length;
+          
+          return {
+            ...patient,
+            appointments,
+            prescriptions,
+            labOrders,
+            vitalSigns,
+            lastVisit,
+            upcomingAppointments
+          };
+        } catch (error) {
+          console.error(`Error fetching records for patient ${patient.id}:`, error);
+          return {
+            ...patient,
+            appointments: [],
+            prescriptions: [],
+            labOrders: [],
+            vitalSigns: [],
+            lastVisit: null,
+            upcomingAppointments: 0
+          };
+        }
+      }));
+      
+      console.log(`[MEDICAL RECORDS] Successfully fetched ${patientsWithRecords.length} patient records`);
+      res.json(patientsWithRecords);
+    } catch (error) {
+      console.error("Get patients medical records error:", error);
+      res.status(500).json({ message: "Failed to fetch patient medical records" });
+    }
+  });
+
   app.get("/api/patients/:id", async (req, res) => {
     try {
       const patient = await storage.getPatient(req.params.id, req.tenant!.id);
