@@ -57,6 +57,8 @@ import {
   marketplaceOrderItems,
   productReviews,
   quoteRequests,
+  currencies,
+  exchangeRates,
   type Advertisement,
   type InsertAdvertisement,
   type AdView,
@@ -5281,6 +5283,283 @@ export class DatabaseStorage implements IStorage {
           updatedAt: sql`CURRENT_TIMESTAMP`
         })
         .where(eq(marketplaceProducts.id, productId));
+    }
+  }
+
+  // ============================================
+  // COMPREHENSIVE CURRENCY MANAGEMENT METHODS
+  // ============================================
+
+  // Get all available currencies
+  async getAllCurrencies() {
+    try {
+      return await db.select()
+        .from(currencies)
+        .where(eq(currencies.isActive, true))
+        .orderBy(currencies.name);
+    } catch (error) {
+      console.error("Error getting all currencies:", error);
+      return [];
+    }
+  }
+
+  // Get African currencies specifically
+  async getAfricanCurrencies() {
+    try {
+      return await db.select()
+        .from(currencies)
+        .where(
+          and(
+            eq(currencies.region, "Africa"),
+            eq(currencies.isActive, true)
+          )
+        )
+        .orderBy(currencies.name);
+    } catch (error) {
+      console.error("Error getting African currencies:", error);
+      return [];
+    }
+  }
+
+  // Get tenant's currencies with full information
+  async getTenantCurrencies(tenantId: string) {
+    try {
+      const [tenant] = await db.select()
+        .from(tenants)
+        .where(eq(tenants.id, tenantId));
+
+      if (!tenant) {
+        throw new Error("Tenant not found");
+      }
+
+      const supportedCurrencies = tenant.supportedCurrencies as string[] || ['USD'];
+      
+      const currencyInfo = await db.select()
+        .from(currencies)
+        .where(
+          and(
+            inArray(currencies.code, supportedCurrencies as any),
+            eq(currencies.isActive, true)
+          )
+        );
+
+      return {
+        baseCurrency: tenant.baseCurrency || 'USD',
+        supportedCurrencies: currencyInfo
+      };
+    } catch (error) {
+      console.error("Error getting tenant currencies:", error);
+      return {
+        baseCurrency: 'USD',
+        supportedCurrencies: []
+      };
+    }
+  }
+
+  // Update tenant's currency settings
+  async updateTenantCurrencySettings(tenantId: string, settings: {
+    baseCurrency: string;
+    supportedCurrencies: string[];
+  }) {
+    try {
+      await db.update(tenants)
+        .set({
+          baseCurrency: settings.baseCurrency as any,
+          supportedCurrencies: settings.supportedCurrencies as any,
+          updatedAt: sql`CURRENT_TIMESTAMP`
+        })
+        .where(eq(tenants.id, tenantId));
+        
+      return true;
+    } catch (error) {
+      console.error("Error updating tenant currency settings:", error);
+      throw error;
+    }
+  }
+
+  // Get exchange rates for currencies
+  async getExchangeRates(baseCurrency: string, targetCurrencies: string[]) {
+    try {
+      const rates: Record<string, number> = {};
+      
+      for (const target of targetCurrencies) {
+        if (target === baseCurrency) {
+          rates[target] = 1;
+          continue;
+        }
+
+        // Try to get direct exchange rate
+        const [directRate] = await db.select()
+          .from(exchangeRates)
+          .where(
+            and(
+              eq(exchangeRates.baseCurrency, baseCurrency as any),
+              eq(exchangeRates.targetCurrency, target as any),
+              eq(exchangeRates.isActive, true)
+            )
+          )
+          .orderBy(desc(exchangeRates.validFrom))
+          .limit(1);
+
+        if (directRate) {
+          rates[target] = parseFloat(directRate.rate);
+        } else {
+          // Fallback: convert through USD
+          const [fromUsd] = await db.select()
+            .from(currencies)
+            .where(eq(currencies.code, baseCurrency as any));
+          
+          const [toUsd] = await db.select()
+            .from(currencies)
+            .where(eq(currencies.code, target as any));
+
+          if (fromUsd && toUsd) {
+            const fromRate = parseFloat(fromUsd.exchangeRateToUSD);
+            const toRate = parseFloat(toUsd.exchangeRateToUSD);
+            rates[target] = toRate / fromRate;
+          } else {
+            rates[target] = 1; // Fallback
+          }
+        }
+      }
+
+      return rates;
+    } catch (error) {
+      console.error("Error getting exchange rates:", error);
+      return {};
+    }
+  }
+
+  // Get currency information for multiple currencies
+  async getCurrencyInfo(currencyCodes: string[]) {
+    try {
+      const currencyList = await db.select()
+        .from(currencies)
+        .where(
+          and(
+            inArray(currencies.code, currencyCodes as any),
+            eq(currencies.isActive, true)
+          )
+        );
+
+      const currencyMap: Record<string, any> = {};
+      currencyList.forEach(currency => {
+        currencyMap[currency.code] = {
+          code: currency.code,
+          name: currency.name,
+          symbol: currency.symbol,
+          decimalPlaces: currency.decimalPlaces || 2,
+          region: currency.region || '',
+          country: currency.country || ''
+        };
+      });
+
+      return currencyMap;
+    } catch (error) {
+      console.error("Error getting currency info:", error);
+      return {};
+    }
+  }
+
+  // Format currency using existing currency-utils
+  async formatCurrency(amount: string | number, currencyCode: string): Promise<string> {
+    try {
+      const { formatCurrency } = await import('./currency-utils.js');
+      return await formatCurrency(amount, currencyCode);
+    } catch (error) {
+      console.error("Error formatting currency:", error);
+      const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+      return `${currencyCode} ${numAmount.toFixed(2)}`;
+    }
+  }
+
+  // Convert currency using existing currency-utils
+  async convertCurrency(amount: number, fromCurrency: string, toCurrency: string) {
+    try {
+      const { convertCurrency } = await import('./currency-utils.js');
+      return await convertCurrency(amount, fromCurrency, toCurrency);
+    } catch (error) {
+      console.error("Error converting currency:", error);
+      return null;
+    }
+  }
+
+  // Get currency by country code
+  async getCurrencyByCountry(countryCode: string): Promise<string> {
+    try {
+      const countryToCurrency: Record<string, string> = {
+        'US': 'USD', 'USA': 'USD', 'UNITED STATES': 'USD',
+        'GB': 'GBP', 'UK': 'GBP', 'UNITED KINGDOM': 'GBP',
+        'CA': 'CAD', 'CANADA': 'CAD',
+        'AU': 'AUD', 'AUSTRALIA': 'AUD',
+        'JP': 'JPY', 'JAPAN': 'JPY',
+        'CH': 'CHF', 'SWITZERLAND': 'CHF',
+        'CN': 'CNY', 'CHINA': 'CNY',
+        'EU': 'EUR', 'EUROZONE': 'EUR',
+        
+        // African Countries
+        'NG': 'NGN', 'NIGERIA': 'NGN',
+        'ZA': 'ZAR', 'SOUTH AFRICA': 'ZAR',
+        'KE': 'KES', 'KENYA': 'KES',
+        'GH': 'GHS', 'GHANA': 'GHS',
+        'EG': 'EGP', 'EGYPT': 'EGP',
+        'MA': 'MAD', 'MOROCCO': 'MAD',
+        'TN': 'TND', 'TUNISIA': 'TND',
+        'DZ': 'DZD', 'ALGERIA': 'DZD',
+        'AO': 'AOA', 'ANGOLA': 'AOA',
+        'ET': 'ETB', 'ETHIOPIA': 'ETB',
+        'TZ': 'TZS', 'TANZANIA': 'TZS',
+        'UG': 'UGX', 'UGANDA': 'UGX',
+        'RW': 'RWF', 'RWANDA': 'RWF',
+        'BW': 'BWP', 'BOTSWANA': 'BWP',
+        'MU': 'MUR', 'MAURITIUS': 'MUR',
+        'MZ': 'MZN', 'MOZAMBIQUE': 'MZN',
+        'ZM': 'ZMW', 'ZAMBIA': 'ZMW',
+        'MW': 'MWK', 'MALAWI': 'MWK',
+        'SN': 'XOF', 'SENEGAL': 'XOF',
+        'CI': 'XOF', 'IVORY COAST': 'XOF',
+        'CM': 'XAF', 'CAMEROON': 'XAF',
+        'GA': 'XAF', 'GABON': 'XAF',
+        'LY': 'LYD', 'LIBYA': 'LYD',
+        'SD': 'SDG', 'SUDAN': 'SDG',
+        'SS': 'SSP', 'SOUTH SUDAN': 'SSP'
+      };
+
+      const upperCountryCode = countryCode.toUpperCase();
+      return countryToCurrency[upperCountryCode] || 'USD';
+    } catch (error) {
+      console.error("Error getting currency by country:", error);
+      return 'USD';
+    }
+  }
+
+  // Get currency by address (basic implementation)
+  async getCurrencyByAddress(address: string): Promise<string> {
+    try {
+      const { getCurrencyByAddress } = await import('./currency-utils.js');
+      return await getCurrencyByAddress(address);
+    } catch (error) {
+      console.error("Error getting currency by address:", error);
+      // Basic fallback - check for country names in address
+      const upperAddress = address.toUpperCase();
+      
+      if (upperAddress.includes('NIGERIA') || upperAddress.includes('NG')) return 'NGN';
+      if (upperAddress.includes('SOUTH AFRICA') || upperAddress.includes('ZA')) return 'ZAR';
+      if (upperAddress.includes('KENYA') || upperAddress.includes('KE')) return 'KES';
+      if (upperAddress.includes('GHANA') || upperAddress.includes('GH')) return 'GHS';
+      if (upperAddress.includes('EGYPT') || upperAddress.includes('EG')) return 'EGP';
+      if (upperAddress.includes('MOROCCO') || upperAddress.includes('MA')) return 'MAD';
+      if (upperAddress.includes('TUNISIA') || upperAddress.includes('TN')) return 'TND';
+      if (upperAddress.includes('ALGERIA') || upperAddress.includes('DZ')) return 'DZD';
+      if (upperAddress.includes('ETHIOPIA') || upperAddress.includes('ET')) return 'ETB';
+      if (upperAddress.includes('TANZANIA') || upperAddress.includes('TZ')) return 'TZS';
+      if (upperAddress.includes('UGANDA') || upperAddress.includes('UG')) return 'UGX';
+      if (upperAddress.includes('USA') || upperAddress.includes('UNITED STATES')) return 'USD';
+      if (upperAddress.includes('UK') || upperAddress.includes('UNITED KINGDOM')) return 'GBP';
+      if (upperAddress.includes('CANADA')) return 'CAD';
+      if (upperAddress.includes('AUSTRALIA')) return 'AUD';
+      
+      return 'USD';
     }
   }
 }

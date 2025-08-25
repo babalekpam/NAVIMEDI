@@ -182,6 +182,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "billing", label: t("billing"), icon: DollarSign, path: "/billing", roles: ["billing_staff", "receptionist", "physician", "tenant_admin", "director"] },
   { id: "hospital-billing", label: "Hospital Billing", icon: DollarSign, path: "/hospital-billing", roles: ["billing_staff", "receptionist", "physician", "tenant_admin", "director"] },
   { id: "laboratory-billing", label: "Laboratory Billing", icon: DollarSign, path: "/laboratory-billing", roles: ["lab_technician", "tenant_admin", "director"] },
+  { id: "currency-management", label: "Multi-Currency Management", icon: Globe, path: "/currency-management", roles: ["tenant_admin", "director", "super_admin"] },
   { id: "service-prices", label: t("service-prices"), icon: ClipboardList, path: "/service-pricing-management", roles: ["tenant_admin", "director"] },
   { id: "reports", label: t("reports"), icon: BarChart3, path: "/reports", roles: ["physician", "nurse", "lab_technician", "billing_staff", "tenant_admin", "director", "super_admin"] },
   

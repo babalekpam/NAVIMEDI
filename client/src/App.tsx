@@ -55,6 +55,7 @@ import ConsultationHistory from "@/pages/consultation-history";
 import Advertisements from "@/pages/advertisements";
 import MarketplacePage from "@/pages/marketplace";
 import SupplierSignupPage from "@/pages/supplier-signup";
+import { CurrencyManagementPage } from "@/pages/currency-management";
 import SupplierPortal from "@/pages/supplier-portal";
 import AdminCounterReset from "@/pages/admin-counter-reset";
 // Supplier system moved to pure HTML to prevent conflicts
@@ -651,6 +652,19 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <ServicePricingManagement />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/currency-management">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <CurrencyManagementPage />
                 </main>
               </div>
             </div>

@@ -6541,6 +6541,183 @@ Report ID: ${report.id}
     }
   });
 
+  // ============================================
+  // CURRENCY MANAGEMENT ENDPOINTS
+  // ============================================
+
+  // Get all available currencies
+  app.get("/api/currencies", async (req, res) => {
+    try {
+      const currencies = await storage.getAllCurrencies();
+      res.json(currencies);
+    } catch (error) {
+      console.error("Get currencies error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get African currencies specifically
+  app.get("/api/currencies/african", async (req, res) => {
+    try {
+      const currencies = await storage.getAfricanCurrencies();
+      res.json(currencies);
+    } catch (error) {
+      console.error("Get African currencies error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get tenant's currency settings
+  app.get("/api/tenant/currency-settings", requireTenant, async (req, res) => {
+    try {
+      const settings = {
+        baseCurrency: req.tenant!.baseCurrency || 'USD',
+        supportedCurrencies: req.tenant!.supportedCurrencies || ['USD']
+      };
+      res.json(settings);
+    } catch (error) {
+      console.error("Get tenant currency settings error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get tenant currencies with full info
+  app.get("/api/tenant/currencies", requireTenant, async (req, res) => {
+    try {
+      const tenantCurrencies = await storage.getTenantCurrencies(req.tenant!.id);
+      res.json(tenantCurrencies);
+    } catch (error) {
+      console.error("Get tenant currencies error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Update tenant's currency settings
+  app.put("/api/tenant/currency-settings", requireRole(["tenant_admin", "director"]), async (req, res) => {
+    try {
+      const { baseCurrency, supportedCurrencies } = req.body;
+      
+      if (!baseCurrency || !Array.isArray(supportedCurrencies)) {
+        return res.status(400).json({ 
+          message: "baseCurrency and supportedCurrencies array are required" 
+        });
+      }
+
+      // Ensure base currency is in supported currencies
+      const finalSupportedCurrencies = supportedCurrencies.includes(baseCurrency) 
+        ? supportedCurrencies 
+        : [baseCurrency, ...supportedCurrencies];
+
+      await storage.updateTenantCurrencySettings(req.tenant!.id, {
+        baseCurrency,
+        supportedCurrencies: finalSupportedCurrencies
+      });
+
+      res.json({ 
+        message: "Currency settings updated successfully",
+        baseCurrency,
+        supportedCurrencies: finalSupportedCurrencies
+      });
+    } catch (error) {
+      console.error("Update currency settings error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get exchange rates
+  app.get("/api/currency/exchange-rates", async (req, res) => {
+    try {
+      const { base, targets } = req.query;
+      const baseCurrency = (base as string) || 'USD';
+      const targetCurrencies = targets ? (targets as string).split(',') : ['USD'];
+      
+      const rates = await storage.getExchangeRates(baseCurrency, targetCurrencies);
+      res.json(rates);
+    } catch (error) {
+      console.error("Get exchange rates error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get currency information
+  app.get("/api/currency/info", async (req, res) => {
+    try {
+      const { codes } = req.query;
+      const currencyCodes = codes ? (codes as string).split(',') : ['USD'];
+      
+      const currencyInfo = await storage.getCurrencyInfo(currencyCodes);
+      res.json(currencyInfo);
+    } catch (error) {
+      console.error("Get currency info error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Format currency amount
+  app.post("/api/currencies/format", async (req, res) => {
+    try {
+      const { amount, currencyCode } = req.body;
+      
+      if (amount === undefined || !currencyCode) {
+        return res.status(400).json({ 
+          message: "amount and currencyCode are required" 
+        });
+      }
+
+      const formatted = await storage.formatCurrency(amount, currencyCode);
+      res.json({ formatted });
+    } catch (error) {
+      console.error("Format currency error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Convert currency
+  app.post("/api/currencies/convert", async (req, res) => {
+    try {
+      const { amount, fromCurrency, toCurrency } = req.body;
+      
+      if (!amount || !fromCurrency || !toCurrency) {
+        return res.status(400).json({ 
+          message: "amount, fromCurrency, and toCurrency are required" 
+        });
+      }
+
+      const conversion = await storage.convertCurrency(amount, fromCurrency, toCurrency);
+      
+      if (!conversion) {
+        return res.status(400).json({ 
+          message: "Currency conversion not available for the requested currencies" 
+        });
+      }
+
+      res.json(conversion);
+    } catch (error) {
+      console.error("Convert currency error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Auto-detect currency based on location/country
+  app.get("/api/currency/detect", async (req, res) => {
+    try {
+      const { country, address } = req.query;
+      
+      let detectedCurrency = 'USD'; // Default fallback
+      
+      if (country) {
+        detectedCurrency = await storage.getCurrencyByCountry(country as string);
+      } else if (address) {
+        detectedCurrency = await storage.getCurrencyByAddress(address as string);
+      }
+      
+      res.json({ currency: detectedCurrency });
+    } catch (error) {
+      console.error("Currency detection error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
