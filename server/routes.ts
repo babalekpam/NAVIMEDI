@@ -1298,12 +1298,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { limit = "50", offset = "0", search } = req.query;
       const tenantId = req.tenant!.id;
+      const userRole = req.user!.role;
+      const userId = req.user!.id;
 
       let patients;
-      if (search && typeof search === "string") {
-        patients = await storage.searchPatients(tenantId, search);
+      
+      // Role-based patient access control
+      if (userRole === "physician") {
+        // Doctors only see their assigned patients
+        if (search && typeof search === "string") {
+          patients = await storage.searchAssignedPatients(userId, tenantId, search);
+        } else {
+          patients = await storage.getPatientsByPhysician(userId, tenantId, parseInt(limit as string), parseInt(offset as string));
+        }
+      } else if (["receptionist", "nurse", "tenant_admin", "director"].includes(userRole)) {
+        // Reception, nurses, and admins see all patients in their tenant
+        if (search && typeof search === "string") {
+          patients = await storage.searchPatients(tenantId, search);
+        } else {
+          patients = await storage.getPatientsByTenant(tenantId, parseInt(limit as string), parseInt(offset as string));
+        }
       } else {
-        patients = await storage.getPatientsByTenant(tenantId, parseInt(limit as string), parseInt(offset as string));
+        return res.status(403).json({ message: "Access denied: Insufficient permissions to view patients" });
       }
 
       // Return basic patient data only for fast loading
@@ -1317,11 +1333,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phone: patient.phone,
         email: patient.email,
         mrn: patient.mrn,
+        primaryPhysicianId: patient.primaryPhysicianId,
         isActive: patient.isActive,
         createdAt: patient.createdAt,
         updatedAt: patient.updatedAt
       }));
 
+      console.log(`[PATIENTS] User ${userRole} (${userId}) accessed ${basicPatients.length} patients`);
       res.json(basicPatients);
     } catch (error) {
       console.error("Get patients error:", error);
@@ -1353,14 +1371,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Optimized medical records endpoint - loads data on demand
+  // Optimized medical records endpoint - loads data on demand with role-based access
   app.get("/api/patients/medical-records", async (req, res) => {
     try {
       const tenantId = req.tenant!.id;
-      console.log(`[MEDICAL RECORDS] Fetching basic patient list for tenant: ${tenantId}`);
+      const userRole = req.user!.role;
+      const userId = req.user!.id;
       
-      // Get basic patient information only (fast query)
-      const patients = await storage.getPatientsByTenant(tenantId);
+      console.log(`[MEDICAL RECORDS] Fetching patient list for ${userRole} (${userId}) in tenant: ${tenantId}`);
+      
+      let patients;
+      
+      // Role-based patient access control
+      if (userRole === "physician") {
+        // Doctors only see their assigned patients
+        patients = await storage.getPatientsByPhysician(userId, tenantId);
+      } else if (["receptionist", "nurse", "tenant_admin", "director"].includes(userRole)) {
+        // Reception, nurses, and admins see all patients in their tenant
+        patients = await storage.getPatientsByTenant(tenantId);
+      } else {
+        return res.status(403).json({ message: "Access denied: Insufficient permissions to view patient medical records" });
+      }
       
       // Return lightweight patient data with basic info
       const basicPatientsWithSummary = patients.map(patient => ({
@@ -1373,6 +1404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phone: patient.phone,
         email: patient.email,
         mrn: patient.mrn,
+        primaryPhysicianId: patient.primaryPhysicianId,
         isActive: patient.isActive,
         createdAt: patient.createdAt,
         updatedAt: patient.updatedAt,
@@ -1385,7 +1417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         upcomingAppointments: 0
       }));
       
-      console.log(`[MEDICAL RECORDS] Successfully fetched ${basicPatientsWithSummary.length} patient records (basic)`);
+      console.log(`[MEDICAL RECORDS] Successfully fetched ${basicPatientsWithSummary.length} patient records for ${userRole}`);
       res.json(basicPatientsWithSummary);
     } catch (error) {
       console.error("Get patients medical records error:", error);
@@ -1510,6 +1542,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Patient Assignment Routes (for receptionists to assign patients to doctors)
+  
+  // Get available physicians for patient assignment
+  app.get("/api/patients/available-physicians", requireRole(["receptionist", "nurse", "tenant_admin", "director"]), async (req, res) => {
+    try {
+      const tenantId = req.tenant!.id;
+      const physicians = await storage.getUsersByRole(tenantId, "physician");
+      
+      // Return simplified physician data for assignment dropdown
+      const availablePhysicians = physicians.map(physician => ({
+        id: physician.id,
+        firstName: physician.firstName,
+        lastName: physician.lastName,
+        email: physician.email,
+        isActive: physician.isActive
+      }));
+
+      res.json(availablePhysicians);
+    } catch (error) {
+      console.error("Get available physicians error:", error);
+      res.status(500).json({ message: "Failed to fetch available physicians" });
+    }
+  });
+
+  // Assign patient to physician
+  app.post("/api/patients/:patientId/assign", requireRole(["receptionist", "nurse", "tenant_admin", "director"]), async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const { physicianId } = req.body;
+      const tenantId = req.tenant!.id;
+      const assignedBy = req.user!.id;
+
+      // Validate patient exists and belongs to tenant
+      const patient = await storage.getPatient(patientId, tenantId);
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      // Validate physician exists and belongs to tenant
+      const physician = await storage.getUser(physicianId, tenantId);
+      if (!physician || physician.role !== "physician") {
+        return res.status(404).json({ message: "Physician not found" });
+      }
+
+      // Update patient's primary physician
+      const updatedPatient = await storage.updatePatient(patientId, tenantId, {
+        primaryPhysicianId: physicianId,
+        updatedAt: new Date()
+      });
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: tenantId,
+        userId: assignedBy,
+        entityType: "patient",
+        entityId: patientId,
+        action: "assign_physician",
+        newData: { physicianId, physicianName: `${physician.firstName} ${physician.lastName}` },
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent")
+      });
+
+      console.log(`[PATIENT ASSIGNMENT] Patient ${patient.tenantPatientId} assigned to Dr. ${physician.firstName} ${physician.lastName} by ${req.user!.role}`);
+
+      res.json({
+        message: "Patient successfully assigned to physician",
+        patient: updatedPatient,
+        physician: {
+          id: physician.id,
+          firstName: physician.firstName,
+          lastName: physician.lastName
+        }
+      });
+    } catch (error) {
+      console.error("Assign patient to physician error:", error);
+      res.status(500).json({ message: "Failed to assign patient to physician" });
+    }
+  });
+
+  // Get patient assignment history
+  app.get("/api/patients/:patientId/assignment-history", requireRole(["physician", "nurse", "receptionist", "tenant_admin", "director"]), async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const tenantId = req.tenant!.id;
+
+      // Get audit logs for physician assignments
+      const assignmentHistory = await storage.getAuditLogsByEntity("patient", patientId, tenantId);
+      
+      // Filter for assignment-related actions
+      const assignments = assignmentHistory.filter(log => 
+        log.action === "assign_physician" || log.action === "create"
+      );
+
+      res.json(assignments);
+    } catch (error) {
+      console.error("Get patient assignment history error:", error);
+      res.status(500).json({ message: "Failed to fetch assignment history" });
     }
   });
 

@@ -882,6 +882,36 @@ export class DatabaseStorage implements IStorage {
     );
   }
 
+  // Get patients assigned to a specific physician
+  async getPatientsByPhysician(physicianId: string, tenantId: string, limit?: number, offset?: number): Promise<Patient[]> {
+    const query = db.select().from(patients).where(
+      and(
+        eq(patients.tenantId, tenantId),
+        eq(patients.primaryPhysicianId, physicianId),
+        eq(patients.isActive, true)
+      )
+    ).orderBy(desc(patients.createdAt));
+
+    if (limit !== undefined && offset !== undefined) {
+      return await query.limit(limit).offset(offset);
+    }
+    return await query;
+  }
+
+  // Search within a physician's assigned patients
+  async searchAssignedPatients(physicianId: string, tenantId: string, query: string): Promise<Patient[]> {
+    return await db.select().from(patients).where(
+      and(
+        eq(patients.tenantId, tenantId),
+        eq(patients.primaryPhysicianId, physicianId),
+        eq(patients.isActive, true),
+        sql`(LOWER(${patients.firstName}) LIKE LOWER('%' || ${query} || '%') OR 
+             LOWER(${patients.lastName}) LIKE LOWER('%' || ${query} || '%') OR 
+             ${patients.mrn} LIKE '%' || ${query} || '%')`
+      )
+    ).orderBy(desc(patients.createdAt));
+  }
+
   async getAllPatients(limit = 50, offset = 0): Promise<Patient[]> {
     // SECURITY: This function violates tenant isolation - should be removed or restricted
     console.error("[SECURITY VIOLATION] getAllPatients called without tenant filtering");
