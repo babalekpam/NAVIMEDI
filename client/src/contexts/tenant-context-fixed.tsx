@@ -107,6 +107,12 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
               type: 'hospital' as const,
               subdomain: 'metro-general',
               features: ['ehr', 'lab', 'billing']
+            },
+            'c0bdce16-06c2-4b54-a5e6-24ba214af49d': {
+              name: 'DEO',
+              type: 'pharmacy' as const,
+              subdomain: 'deo',
+              features: ['pharmacy', 'billing', 'inventory', 'prescriptions']
             }
           };
           

@@ -64,22 +64,17 @@ export const Header = () => {
               <div>
                 <h1 className="text-xl font-bold text-blue-600">NAVIMED</h1>
                 <p className="text-xs text-gray-500">
-                  {tenant?.name || 'Loading...'} 
-                  {tenant?.type && tenant.type !== 'platform' && (
-                    <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                      {tenant.type === 'hospital' ? 'Hospital' : ''}
-                      {tenant.type === 'pharmacy' ? 'Pharmacy' : ''}  
-                      {tenant.type === 'laboratory' ? 'Laboratory' : ''}
-                      {tenant.type === 'clinic' ? 'Clinic' : ''}
-                      {tenant.type === 'insurance_provider' ? 'Insurance' : ''}
-                      {tenant.type === 'medical_supplier' ? 'Supplier' : ''}
-                    </span>
-                  )}
-                  {tenant?.type === 'platform' && (
-                    <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
-                      Platform Admin
-                    </span>
-                  )}
+                  {tenant?.name || 'Loading...'}{' '}
+                  <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                    {tenant?.type === 'hospital' && 'Hospital'}
+                    {tenant?.type === 'pharmacy' && 'Pharmacy'}
+                    {tenant?.type === 'laboratory' && 'Laboratory'}
+                    {tenant?.type === 'clinic' && 'Clinic'}
+                    {tenant?.type === 'insurance_provider' && 'Insurance'}
+                    {tenant?.type === 'medical_supplier' && 'Supplier'}
+                    {tenant?.type === 'platform' && 'Platform Admin'}
+                    {!tenant?.type && 'Loading...'}
+                  </span>
                 </p>
               </div>
             </div>
