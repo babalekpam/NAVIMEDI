@@ -2,7 +2,7 @@ import React from 'react';
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTranslation } from '@/contexts/translation-context';
-import { PatientForm } from '@/components/forms/patient-form-enhanced';
+import { PatientForm } from '@/components/forms/patient-form-simple';
 import { useTenant } from '@/hooks/use-tenant';
 
 interface PatientRegistrationDialogProps {
@@ -34,8 +34,6 @@ export default function PatientRegistrationDialog({ onSubmit, isLoading, departm
         <PatientForm 
           onSubmit={onSubmit}
           isLoading={isLoading}
-          department={department}
-          includeVitalSigns={false}
         />
       </ScrollArea>
     </DialogContent>
