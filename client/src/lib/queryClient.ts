@@ -44,6 +44,7 @@ export async function apiRequest(
     headers?: Record<string, string>;
   }
 ): Promise<any> {
+  console.log(`[API REQUEST] ${options?.method || 'GET'} ${url}`);
   const token = localStorage.getItem("auth_token");
   
   // Clear corrupted tokens
@@ -64,6 +65,9 @@ export async function apiRequest(
     ...(options?.headers || {}),
   };
 
+  console.log(`[API REQUEST] Making fetch to ${url} with method ${method}`);
+  console.log(`[API REQUEST] Headers:`, headers);
+  
   const res = await fetch(url, {
     method,
     headers,
@@ -71,8 +75,52 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  await throwIfResNotOk(res);
-  return res.json();
+  console.log(`[API REQUEST] Response status: ${res.status}`);
+  console.log(`[API REQUEST] Response headers:`, Object.fromEntries(res.headers.entries()));
+  
+  const responseText = await res.text();
+  console.log(`[API REQUEST] Response text (first 200 chars):`, responseText.substring(0, 200));
+  
+  if (!res.ok) {
+    console.error(`[API REQUEST] Request failed with status ${res.status}`);
+    const contentType = res.headers.get('content-type');
+    let errorMessage = res.statusText;
+    
+    try {
+      if (contentType?.includes('application/json')) {
+        const errorData = JSON.parse(responseText);
+        errorMessage = errorData.message || errorData.error || res.statusText;
+      } else {
+        // If it's HTML (like an error page), extract a meaningful message
+        if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
+          errorMessage = 'Server returned an error page. Please check your connection and try again.';
+        } else {
+          errorMessage = responseText || res.statusText;
+        }
+      }
+    } catch (parseError) {
+      console.warn('Failed to parse error response:', parseError);
+      errorMessage = res.statusText;
+    }
+    
+    // Handle authentication errors specifically
+    if (res.status === 401) {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
+      errorMessage = 'Authentication failed. Please log in again.';
+    }
+    
+    throw new Error(`${res.status}: ${errorMessage}`);
+  }
+  
+  // Try to parse as JSON
+  try {
+    return JSON.parse(responseText);
+  } catch (parseError) {
+    console.error(`[API REQUEST] Failed to parse JSON response:`, parseError);
+    console.error(`[API REQUEST] Raw response:`, responseText);
+    throw new Error(`Failed to parse JSON response: ${parseError.message}`);
+  }
 }
 
 // Legacy function for backward compatibility
