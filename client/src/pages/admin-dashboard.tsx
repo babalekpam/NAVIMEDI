@@ -33,29 +33,17 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
     userEmail: user?.email
   });
 
-  // Force redirect to pharmacy dashboard for DEO admin
-  useEffect(() => {
-    if (user?.email === 'admin@deopharmacy.com') {
-      console.log('DEO admin detected - redirecting to pharmacy dashboard');
-      window.location.href = '/pharmacy-dashboard';
-    }
-  }, [user]);
+  // Removed automatic redirects - let users choose their dashboard
 
-  // For pharmacy admins, redirect to pharmacy dashboard
-  useEffect(() => {
-    if (user && tenant && tenant.type === 'pharmacy' && (user.role === 'tenant_admin' || user.role === 'director')) {
-      console.log('Pharmacy admin detected - redirecting to pharmacy dashboard');
-      window.location.href = '/pharmacy-dashboard';
-    }
-  }, [user, tenant]);
-
-  if (!user || user.role !== 'tenant_admin') {
+  // Allow access for admin roles
+  const allowedRoles = ['tenant_admin', 'director', 'super_admin'];
+  if (!user || !allowedRoles.includes(user.role)) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <ShieldCheck className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Admin Access Required</h2>
-          <p className="text-gray-600">Only tenant administrators can access this page.</p>
+          <p className="text-gray-600">Only administrators can access this page.</p>
         </div>
       </div>
     );
