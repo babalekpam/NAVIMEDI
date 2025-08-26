@@ -2174,7 +2174,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const claimData = insertInsuranceClaimSchema.parse({
         ...requestData,
-        tenantId: req.tenant!.id
+        tenantId: req.tenant!.id,
+        claimNumber: requestData.claimNumber, // Ensure claim number is included
+        providerId: req.user!.id // Ensure provider ID is included
       });
 
       const claim = await storage.createInsuranceClaim(claimData);
