@@ -206,7 +206,7 @@ export default function PrescriptionsPage() {
           </p>
         </div>
         {/* Only doctors/physicians from hospitals can create prescriptions - pharmacies receive prescriptions */}
-        {(user?.role === 'doctor' || user?.role === 'physician' || (user?.role === 'super_admin' && tenant?.type !== 'pharmacy')) && tenant?.type !== 'pharmacy' && (
+        {(user?.role === 'doctor' || user?.role === 'physician' || user?.role === 'nurse' || user?.role === 'tenant_admin' || user?.role === 'director' || (user?.role === 'super_admin' && tenant?.type !== 'pharmacy')) && tenant?.type !== 'pharmacy' && (
           <Button onClick={() => setIsCreateModalOpen(true)} data-testid="button-create-prescription">
             <Plus className="mr-2 h-4 w-4" />
             New Prescription
