@@ -401,23 +401,7 @@ export default function PatientMedicalRecords() {
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <Button
-                          onClick={() => {
-                            // Store patient info in localStorage for the appointment page
-                            localStorage.setItem('selectedPatientForAppointment', JSON.stringify({
-                              id: selectedPatient.id,
-                              name: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
-                              mrn: selectedPatient.mrn
-                            }));
-                            // Navigate to appointments page
-                            window.location.href = '/appointments';
-                          }}
-                          className="flex flex-col items-center p-4 h-auto"
-                          variant="outline"
-                        >
-                          <Calendar className="h-6 w-6 mb-2 text-blue-500" />
-                          <span className="text-sm">Schedule Appointment</span>
-                        </Button>
+{/* Appointment scheduling removed - handled by reception staff */}
                         
                         <Button
                           onClick={() => {

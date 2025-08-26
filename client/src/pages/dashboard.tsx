@@ -459,13 +459,7 @@ export default function Dashboard() {
                 <div className="text-center py-8 text-gray-500">
                   <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                   <p>No appointments scheduled for today</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-3"
-                    onClick={() => setLocation('/appointments')}
-                  >
-                    Schedule New Appointment
-                  </Button>
+                  {/* Appointment scheduling removed - handled by reception staff */}
                 </div>
               )}
             </div>
@@ -1517,9 +1511,9 @@ export default function Dashboard() {
                   <Button 
                     variant="outline" 
                     className="mt-3"
-                    onClick={() => window.location.href = '/appointments?action=book'}
+                    onClick={() => setLocation('/appointments')}
                   >
-                    Schedule New Appointment
+                    View Schedule
                   </Button>
                 </div>
               )}
