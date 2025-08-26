@@ -124,15 +124,15 @@ export default function LabOrders() {
         for (const order of data.orders) {
           const labOrderData = {
             patientId: data.patientId,
-            labTenantId: data.laboratoryId, // Map laboratoryId to labTenantId
+            labTenantId: data.laboratoryId,
             testName: order.testName,
-            testCode: order.testCode || undefined,
-            instructions: order.instructions || data.generalInstructions || undefined,
+            testCode: order.testCode || '',
+            instructions: order.instructions || data.generalInstructions || '',
             priority: order.priority || 'routine',
-            status: 'ordered',
-            orderedDate: new Date().toISOString(),
+            // Remove status and orderedDate - let server handle these
           };
           
+          console.log("Sending lab order:", labOrderData);
           const result = await apiRequest("POST", "/api/lab-orders", labOrderData);
           results.push(result);
         }

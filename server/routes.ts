@@ -2108,25 +2108,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/lab-orders", authenticateToken, requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
-      console.log("[LAB ORDER POST] ✅ Request received successfully");
-      console.log("[LAB ORDER POST] User ID:", req.user?.id);
-      console.log("[LAB ORDER POST] User Role:", req.user?.role);
-      console.log("[LAB ORDER POST] Tenant ID:", req.tenant?.id);
-      console.log("[LAB ORDER POST] Body:", JSON.stringify(req.body, null, 2));
-      
-      // Convert string dates to Date objects and prepare data
-      const requestData = { ...req.body };
-      if (requestData.orderedDate && typeof requestData.orderedDate === 'string') {
-        requestData.orderedDate = new Date(requestData.orderedDate);
-      }
+      console.log("[LAB ORDER POST] ✅ Request received");
+      console.log("[LAB ORDER POST] Body:", req.body);
       
       const labOrderData = {
-        ...requestData,
         tenantId: req.tenant!.id,
         providerId: req.user!.id,
-        orderedDate: requestData.orderedDate || new Date(),
-        appointmentId: requestData.appointmentId || null,
-        labTenantId: requestData.labTenantId || null
+        patientId: req.body.patientId,
+        testName: req.body.testName,
+        testCode: req.body.testCode || null,
+        instructions: req.body.instructions || null,
+        priority: req.body.priority || 'routine',
+        status: 'ordered',
+        orderedDate: new Date(),
+        appointmentId: req.body.appointmentId || null,
+        labTenantId: req.body.labTenantId || null
       };
 
       const validatedData = insertLabOrderSchema.parse(labOrderData);

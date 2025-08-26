@@ -110,45 +110,31 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
   }, [form]);
 
   const handleSubmit = (data: any) => {
-    // Validate required fields
+    console.log("Form submission data:", data);
+    
+    // Basic validation with user feedback
     if (!data.patientId) {
-      alert("Please select a patient");
+      form.setError("patientId", { message: "Please select a patient" });
       return;
     }
     if (!data.laboratoryId) {
-      alert("Please select a laboratory");
+      form.setError("laboratoryId", { message: "Please select a laboratory" });
       return;
     }
-    if (!data.orders || data.orders.length === 0) {
-      alert("Please add at least one test");
+    if (!data.orders || data.orders.length === 0 || !data.orders[0]?.testName) {
+      form.setError("orders.0.testName", { message: "Please select at least one test" });
       return;
     }
 
-    // Check each order for required fields
-    for (let i = 0; i < data.orders.length; i++) {
-      const order = data.orders[i];
-      if (!order.testName) {
-        alert(`Please select a test name for test ${i + 1}`);
-        return;
-      }
-    }
-
-    // Transform data to create multiple lab orders with laboratory assignment
-    const labOrders = data.orders.map((order: any) => ({
-      patientId: data.patientId,
-      testName: order.testName,
-      testCode: order.testCode || "",
-      instructions: `${order.instructions || ""} ${data.generalInstructions || ""}`.trim(),
-      priority: order.priority || "routine",
-      status: "ordered"
-    }));
-    
+    // Transform and submit
     const submitData = { 
-      orders: labOrders, 
+      orders: data.orders, 
+      patientId: data.patientId,
       laboratoryId: data.laboratoryId,
-      assignmentNotes: data.generalInstructions 
+      generalInstructions: data.generalInstructions 
     };
     
+    console.log("Submitting lab order:", submitData);
     onSubmit(submitData);
   };
 
