@@ -138,6 +138,14 @@ export default function ReceptionistDashboard() {
   const [selectedPatientForInsurance, setSelectedPatientForInsurance] = useState<Patient | null>(null);
   const [showInsuranceDialog, setShowInsuranceDialog] = useState(false);
   const [editingInsurance, setEditingInsurance] = useState<any>(null);
+  
+  // Appointment booking state
+  const [selectedAppointmentDate, setSelectedAppointmentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
+  const [appointmentPatient, setAppointmentPatient] = useState<Patient | null>(null);
+  const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
+  const [appointmentReason, setAppointmentReason] = useState('');
 
   // Forms
   const patientForm = useForm({
@@ -201,6 +209,11 @@ export default function ReceptionistDashboard() {
 
   const { data: recentPatients = [], isLoading: loadingPatients } = useQuery({
     queryKey: ['/api/patients'],
+  });
+
+  // Fetch available physicians for appointment booking
+  const { data: availablePhysicians = [], isLoading: loadingPhysicians } = useQuery({
+    queryKey: ['/api/available-physicians'],
   });
 
   // Query for insurance info for selected patient
@@ -329,6 +342,77 @@ export default function ReceptionistDashboard() {
       });
     },
   });
+
+  // Appointment booking mutation
+  const createAppointmentMutation = useMutation({
+    mutationFn: async (appointmentData: any) => {
+      const response = await apiRequest('/api/appointments', {
+        method: 'POST',
+        body: appointmentData,
+      });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments/date'] });
+      setIsAppointmentDialogOpen(false);
+      toast({
+        title: "Appointment Scheduled Successfully!",
+        description: "The appointment has been scheduled and patient notified.",
+        variant: "default",
+      });
+      // Reset form
+      setSelectedDoctor(null);
+      setSelectedTimeSlot('');
+      setAppointmentPatient(null);
+      setAppointmentReason('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Appointment Scheduling Failed",
+        description: error.message || "Failed to schedule appointment. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Generate available time slots for a doctor on a specific date
+  const generateTimeSlots = (date: string) => {
+    const slots = [];
+    const selectedDate = new Date(date);
+    const today = new Date();
+    const isToday = selectedDate.toDateString() === today.toDateString();
+    const currentHour = today.getHours();
+    
+    // Generate slots from 8 AM to 6 PM (18:00)
+    for (let hour = 8; hour < 18; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        // Skip past times for today
+        if (isToday && hour <= currentHour) {
+          continue;
+        }
+        
+        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        
+        // Check if this slot is already booked
+        const isBooked = todayAppointments.some((apt: any) => {
+          const aptDate = new Date(apt.appointmentDate);
+          const aptTime = aptDate.getHours() + ':' + aptDate.getMinutes().toString().padStart(2, '0');
+          return aptDate.toDateString() === selectedDate.toDateString() && 
+                 aptTime === timeString && 
+                 apt.providerId === selectedDoctor?.id;
+        });
+        
+        slots.push({
+          time: timeString,
+          available: !isBooked,
+          label: hour < 12 ? `${timeString} AM` : `${timeString} PM`
+        });
+      }
+    }
+    
+    return slots;
+  };
 
   // Handlers
   const handlePatientRegistration = async (data: any) => {
@@ -496,12 +580,13 @@ export default function ReceptionistDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">{t('overview')}</TabsTrigger>
           <TabsTrigger value="check-in">{t('patient-checkin')}</TabsTrigger>
           <TabsTrigger value="waiting">{t('waiting-room')}</TabsTrigger>
           <TabsTrigger value="vitals">{t('vital-signs')}</TabsTrigger>
           <TabsTrigger value="patients">{t('patient-search')}</TabsTrigger>
+          <TabsTrigger value="appointments">Appointments</TabsTrigger>
           <TabsTrigger value="insurance">Insurance</TabsTrigger>
         </TabsList>
 
@@ -894,6 +979,144 @@ export default function ReceptionistDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="appointments" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Calendar className="h-5 w-5 mr-2" />
+                Appointment Booking
+              </CardTitle>
+              <CardDescription>Schedule appointments with doctor availability</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Date and Doctor Selection */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Select Date</label>
+                  <input
+                    type="date"
+                    value={selectedAppointmentDate}
+                    onChange={(e) => setSelectedAppointmentDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Select Doctor</label>
+                  <select
+                    value={selectedDoctor?.id || ''}
+                    onChange={(e) => {
+                      const doctor = availablePhysicians.find((d: any) => d.id === e.target.value);
+                      setSelectedDoctor(doctor);
+                      setSelectedTimeSlot(''); // Reset time slot when doctor changes
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Choose a doctor...</option>
+                    {availablePhysicians.map((doctor: any) => (
+                      <option key={doctor.id} value={doctor.id}>
+                        Dr. {doctor.firstName} {doctor.lastName} - {doctor.specialization || 'General Medicine'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Doctor Availability - Time Slots */}
+              {selectedDoctor && (
+                <div>
+                  <label className="block text-sm font-medium mb-3">Available Time Slots for Dr. {selectedDoctor.firstName} {selectedDoctor.lastName}</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                    {generateTimeSlots(selectedAppointmentDate).map((slot) => (
+                      <Button
+                        key={slot.time}
+                        variant={selectedTimeSlot === slot.time ? "default" : "outline"}
+                        size="sm"
+                        disabled={!slot.available}
+                        onClick={() => setSelectedTimeSlot(slot.time)}
+                        className={`text-xs ${!slot.available ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {slot.label}
+                        {!slot.available && (
+                          <span className="ml-1 text-red-500">✕</span>
+                        )}
+                      </Button>
+                    ))}
+                  </div>
+                  {generateTimeSlots(selectedAppointmentDate).filter(s => s.available).length === 0 && (
+                    <p className="text-center text-gray-500 mt-4 py-4">
+                      No available time slots for this date. Please select another date.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Schedule Appointment Button */}
+              {selectedDoctor && selectedTimeSlot && (
+                <div className="border-t pt-4">
+                  <Button
+                    onClick={() => setIsAppointmentDialogOpen(true)}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    size="lg"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Schedule Appointment for {selectedAppointmentDate} at {selectedTimeSlot}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Today's Appointments Overview */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Clock className="h-5 w-5 mr-2" />
+                Today's Appointments ({todayAppointments.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {todayAppointments.length > 0 ? (
+                  todayAppointments.slice(0, 5).map((appointment: any) => (
+                    <div key={appointment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <Calendar className="h-5 w-5 text-gray-500" />
+                        <div>
+                          <p className="font-medium">
+                            {new Date(appointment.appointmentDate).toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Patient ID: {appointment.patientId?.slice(-8)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">Dr. {appointment.provider?.firstName || 'Provider'}</p>
+                        <Badge variant={
+                          appointment.status === 'scheduled' ? 'secondary' :
+                          appointment.status === 'confirmed' ? 'default' :
+                          appointment.status === 'in_progress' ? 'destructive' : 'outline'
+                        }>
+                          {appointment.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">No appointments scheduled for today</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Dialogs */}
@@ -1070,6 +1293,95 @@ export default function ReceptionistDashboard() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Appointment Booking Dialog */}
+      <Dialog open={isAppointmentDialogOpen} onOpenChange={setIsAppointmentDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Schedule New Appointment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Patient Selection */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Select Patient</label>
+              <select
+                value={appointmentPatient?.id || ''}
+                onChange={(e) => {
+                  const patient = recentPatients.find((p: Patient) => p.id === e.target.value);
+                  setAppointmentPatient(patient);
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Choose a patient...</option>
+                {recentPatients.map((patient: Patient) => (
+                  <option key={patient.id} value={patient.id}>
+                    {patient.firstName} {patient.lastName} - MRN: {patient.mrn}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Appointment Details */}
+            <div className="bg-gray-50 p-3 rounded-md">
+              <h4 className="font-medium text-sm mb-2">Appointment Summary</h4>
+              <div className="space-y-1 text-sm">
+                <p><strong>Date:</strong> {new Date(selectedAppointmentDate).toLocaleDateString()}</p>
+                <p><strong>Time:</strong> {selectedTimeSlot}</p>
+                <p><strong>Doctor:</strong> Dr. {selectedDoctor?.firstName} {selectedDoctor?.lastName}</p>
+                <p><strong>Patient:</strong> {appointmentPatient?.firstName} {appointmentPatient?.lastName}</p>
+              </div>
+            </div>
+
+            {/* Reason for Visit */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Reason for Visit</label>
+              <textarea
+                value={appointmentReason}
+                onChange={(e) => setAppointmentReason(e.target.value)}
+                placeholder="Brief description of the visit purpose..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={3}
+                required
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsAppointmentDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (appointmentPatient && appointmentReason.trim()) {
+                    const appointmentDateTime = new Date(selectedAppointmentDate);
+                    const [hours, minutes] = selectedTimeSlot.split(':');
+                    appointmentDateTime.setHours(parseInt(hours), parseInt(minutes));
+
+                    createAppointmentMutation.mutate({
+                      patientId: appointmentPatient.id,
+                      providerId: selectedDoctor.id,
+                      appointmentDate: appointmentDateTime.toISOString(),
+                      duration: 30,
+                      type: 'consultation',
+                      status: 'scheduled',
+                      notes: appointmentReason,
+                      chiefComplaint: appointmentReason
+                    });
+                  }
+                }}
+                disabled={!appointmentPatient || !appointmentReason.trim() || createAppointmentMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {createAppointmentMutation.isPending ? 'Scheduling...' : 'Schedule Appointment'}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
