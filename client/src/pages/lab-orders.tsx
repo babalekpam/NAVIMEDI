@@ -134,15 +134,13 @@ export default function LabOrders() {
           };
           
           console.log("Sending individual lab order:", labOrderData);
-          const response = await apiRequest("POST", "/api/lab-orders", labOrderData);
-          const result = await response.json();
+          const result = await apiRequest("POST", "/api/lab-orders", labOrderData);
           results.push(result);
         }
         return results;
       } else {
         // Single order fallback
-        const response = await apiRequest("POST", "/api/lab-orders", data);
-        return response.json();
+        return await apiRequest("POST", "/api/lab-orders", data);
       }
     },
     onSuccess: (result) => {
@@ -202,8 +200,7 @@ export default function LabOrders() {
       
       console.log("Completing lab order with data:", labResultData);
       
-      const response = await apiRequest("POST", "/api/lab-results", labResultData);
-      return response.json();
+      return await apiRequest("POST", "/api/lab-results", labResultData);
     },
     onSuccess: (result) => {
       console.log("Lab order completed successfully:", result);
