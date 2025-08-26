@@ -2746,29 +2746,43 @@ export const insertPatientInsuranceSchema = createInsertSchema(patientInsurance)
   updatedAt: true
 });
 
-export const insertInsuranceClaimSchema = createInsertSchema(insuranceClaims).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  claimNumber: true, // Auto-generated
-  secondaryDiagnosisCodes: true, // Will redefine this
-  procedureCodes: true, // Will redefine this
-  totalAmount: true, // Will redefine this  
-  totalPatientCopay: true, // Will redefine this
-  totalInsuranceAmount: true // Will redefine this
-}).extend({
+// Simple working schema for insurance claims
+export const insertInsuranceClaimSchema = z.object({
+  tenantId: z.string().uuid(),
+  patientId: z.string().uuid(),
+  patientInsuranceId: z.string().uuid().nullable().optional(),
+  providerId: z.string().uuid().optional(),
+  medicalSpecialty: z.string().nullable().optional(),
+  appointmentId: z.string().uuid().nullable().optional(),
+  visitSummaryId: z.string().uuid().nullable().optional(),
+  primaryDiagnosisCode: z.string().nullable().optional(),
+  primaryDiagnosisDescription: z.string().nullable().optional(),
   secondaryDiagnosisCodes: z.array(z.object({
     code: z.string(),
     description: z.string()
-  })).optional().default([]),
+  })).default([]),
   procedureCodes: z.array(z.object({
     code: z.string(),
     description: z.string(),
     amount: z.number().min(0)
-  })).optional().default([]),
-  totalAmount: z.string().transform((val) => parseFloat(val)).refine((val) => val >= 0, "Total amount must be positive"),
-  totalPatientCopay: z.string().transform((val) => parseFloat(val)).refine((val) => val >= 0, "Patient copay must be non-negative"),
-  totalInsuranceAmount: z.string().transform((val) => parseFloat(val)).refine((val) => val >= 0, "Insurance amount must be non-negative")
+  })).default([]),
+  diagnosisCodes: z.array(z.string()).default([]),
+  clinicalFindings: z.string().nullable().optional(),
+  treatmentProvided: z.string().nullable().optional(),
+  durationOfTreatment: z.string().nullable().optional(),
+  medicalNecessity: z.string().nullable().optional(),
+  totalAmount: z.string(),
+  totalPatientCopay: z.string().default('0'),
+  totalInsuranceAmount: z.string().default('0'),
+  approvedAmount: z.string().nullable().optional(),
+  paidAmount: z.string().nullable().optional(),
+  status: z.enum(['draft', 'submitted', 'processing', 'approved', 'denied', 'paid']).default('draft'),
+  submittedDate: z.date().nullable().optional(),
+  processedDate: z.date().nullable().optional(),
+  paidDate: z.date().nullable().optional(),
+  rejectionReason: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  attachments: z.array(z.any()).default([])
 });
 
 // Enhanced claim form schema for frontend
