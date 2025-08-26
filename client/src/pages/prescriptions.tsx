@@ -444,13 +444,65 @@ export default function PrescriptionsPage() {
               {(selectedPrescription.status === 'received' || selectedPrescription.status === 'processing') && (
                 <div className="space-y-4 border-t pt-4">
                   <div className="grid grid-cols-1 gap-4">
-                    <div>
-                      <Label htmlFor="insurance-provider">Insurance Provider</Label>
-                      <Input
-                        id="insurance-provider"
-                        placeholder="e.g., Blue Cross Blue Shield"
-                        defaultValue={selectedPrescription.insuranceProvider || ''}
-                      />
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="insurance-provider-select">Insurance Provider</Label>
+                        <Select
+                          defaultValue={selectedPrescription.insuranceProvider === 'Aetna' || 
+                                     selectedPrescription.insuranceProvider === 'Blue Cross Blue Shield' ||
+                                     selectedPrescription.insuranceProvider === 'Cigna' ||
+                                     selectedPrescription.insuranceProvider === 'UnitedHealthcare' ||
+                                     selectedPrescription.insuranceProvider === 'Humana' ||
+                                     selectedPrescription.insuranceProvider === 'Kaiser Permanente' ? 
+                                     selectedPrescription.insuranceProvider : 'other'}
+                          onValueChange={(value) => {
+                            const customField = document.getElementById('custom-insurance-field') as HTMLElement;
+                            if (customField) {
+                              customField.style.display = value === 'other' ? 'block' : 'none';
+                            }
+                            
+                            // If a predefined option is selected, clear the custom field
+                            if (value !== 'other') {
+                              const customInput = document.getElementById('custom-insurance-provider') as HTMLInputElement;
+                              if (customInput) {
+                                customInput.value = value;
+                              }
+                            }
+                          }}
+                        >
+                          <SelectTrigger id="insurance-provider-select">
+                            <SelectValue placeholder="Select insurance provider" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Aetna">Aetna</SelectItem>
+                            <SelectItem value="Blue Cross Blue Shield">Blue Cross Blue Shield</SelectItem>
+                            <SelectItem value="Cigna">Cigna</SelectItem>
+                            <SelectItem value="UnitedHealthcare">UnitedHealthcare</SelectItem>
+                            <SelectItem value="Humana">Humana</SelectItem>
+                            <SelectItem value="Kaiser Permanente">Kaiser Permanente</SelectItem>
+                            <SelectItem value="Medicare">Medicare</SelectItem>
+                            <SelectItem value="Medicaid">Medicaid</SelectItem>
+                            <SelectItem value="other">Other (Enter custom provider)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {/* Custom insurance provider field - shows when "other" is selected */}
+                      <div id="custom-insurance-field" style={{ 
+                        display: (selectedPrescription.insuranceProvider && 
+                                 !['Aetna', 'Blue Cross Blue Shield', 'Cigna', 'UnitedHealthcare', 'Humana', 'Kaiser Permanente', 'Medicare', 'Medicaid'].includes(selectedPrescription.insuranceProvider)) ? 'block' : 'none' 
+                      }}>
+                        <Label htmlFor="custom-insurance-provider" className="text-blue-600">Custom Insurance Provider *</Label>
+                        <Input
+                          id="custom-insurance-provider"
+                          placeholder="Enter exact insurance provider name (e.g., State Farm, TRICARE)"
+                          defaultValue={selectedPrescription.insuranceProvider || ''}
+                          className="border-blue-200 focus:border-blue-400"
+                        />
+                        <p className="text-sm text-blue-600 mt-1">
+                          Please enter the exact name as shown on the insurance card
+                        </p>
+                      </div>
                     </div>
                     <InsuranceCoverageCalculator
                       initialValues={{
