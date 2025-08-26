@@ -2163,7 +2163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/insurance-claims", requireRole(["billing_staff", "physician", "tenant_admin", "director"]), async (req, res) => {
+  app.post("/api/insurance-claims", requireRole(["billing_staff", "physician", "tenant_admin", "director", "receptionist"]), async (req, res) => {
     try {
       const requestData = { ...req.body };
       
@@ -2204,7 +2204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/insurance-claims/:id", requireRole(["billing_staff", "physician", "tenant_admin", "director"]), async (req, res) => {
+  app.patch("/api/insurance-claims/:id", requireRole(["billing_staff", "physician", "tenant_admin", "director", "receptionist"]), async (req, res) => {
     try {
       const { id } = req.params;
       const updateData = { ...req.body };
