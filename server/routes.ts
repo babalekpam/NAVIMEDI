@@ -1574,16 +1574,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dateOfBirth: typeof req.body.dateOfBirth === 'string' 
           ? new Date(req.body.dateOfBirth) 
           : req.body.dateOfBirth,
-        // Handle preferredPharmacyId - only allow UUIDs, set to null for special values
-        preferredPharmacyId: req.body.preferredPharmacyId && 
-                           req.body.preferredPharmacyId !== 'no_preference' && 
-                           req.body.preferredPharmacyId !== 'closest_to_residence' && 
-                           req.body.preferredPharmacyId !== 'other_pharmacy' 
-                           ? req.body.preferredPharmacyId 
-                           : null
+        // Handle preferredPharmacyId - validate it exists in database first
+        preferredPharmacyId: null // Set to null for now, will validate after parsing
       };
 
-      const patientData = insertPatientSchema.parse(requestData);
+      let patientData = insertPatientSchema.parse(requestData);
+
+      // Validate preferred pharmacy ID if provided
+      if (req.body.preferredPharmacyId && 
+          req.body.preferredPharmacyId !== 'no_preference' && 
+          req.body.preferredPharmacyId !== 'closest_to_residence' && 
+          req.body.preferredPharmacyId !== 'other_pharmacy') {
+        try {
+          // Check if pharmacy exists in database
+          const pharmacy = await storage.getPharmacy(req.body.preferredPharmacyId);
+          if (pharmacy) {
+            patientData.preferredPharmacyId = req.body.preferredPharmacyId;
+          }
+        } catch (error) {
+          console.log('Pharmacy validation failed, setting to null:', error.message);
+          // If pharmacy doesn't exist, just set to null (don't fail registration)
+        }
+      }
 
       const patient = await storage.createPatient(patientData);
 
