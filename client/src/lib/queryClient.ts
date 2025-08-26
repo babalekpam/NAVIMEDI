@@ -44,10 +44,7 @@ export async function apiRequest(
     headers?: Record<string, string>;
   }
 ): Promise<any> {
-  console.log(`[DEBUG] API Request: ${options?.method || 'GET'} ${url}`);
   const token = localStorage.getItem("auth_token");
-  console.log(`[DEBUG] Auth token exists:`, !!token);
-  console.log(`[DEBUG] Auth token length:`, token?.length || 0);
   
   // Clear corrupted tokens
   if (token && (token === 'undefined' || token === 'null' || token.length < 10)) {
@@ -67,11 +64,6 @@ export async function apiRequest(
     ...(options?.headers || {}),
   };
 
-  console.log(`[DEBUG] Request headers:`, headers);
-  if (data) {
-    console.log(`[DEBUG] Request body:`, JSON.stringify(data).substring(0, 200));
-  }
-  
   const res = await fetch(url, {
     method,
     headers,
@@ -79,11 +71,7 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  console.log(`[DEBUG] Response status:`, res.status);
-  console.log(`[DEBUG] Response headers:`, Object.fromEntries(res.headers.entries()));
-  
   const responseText = await res.text();
-  console.log(`[DEBUG] Response text (first 300 chars):`, responseText.substring(0, 300));
   
   if (!res.ok) {
     const contentType = res.headers.get('content-type');

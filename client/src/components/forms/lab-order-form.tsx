@@ -58,9 +58,7 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
     queryKey: ["/api/laboratories/active"],
   });
 
-  console.log("Laboratories data:", laboratories);
-  console.log("Laboratories loading:", labsLoading);
-  console.log("Laboratories error:", labsError);
+  // Debug logging removed for performance
 
   // Check for pre-selected patient from Quick Actions
   const getDefaultPatientId = () => {
@@ -112,22 +110,16 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
   }, [form]);
 
   const handleSubmit = (data: any) => {
-    console.log("=== LAB ORDER FORM SUBMISSION ===");
-    console.log("Raw form data:", JSON.stringify(data, null, 2));
-    
     // Validate required fields
     if (!data.patientId) {
-      console.error("❌ Missing patientId");
       alert("Please select a patient");
       return;
     }
     if (!data.laboratoryId) {
-      console.error("❌ Missing laboratoryId");
       alert("Please select a laboratory");
       return;
     }
     if (!data.orders || data.orders.length === 0) {
-      console.error("❌ Missing orders");
       alert("Please add at least one test");
       return;
     }
@@ -136,34 +128,26 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
     for (let i = 0; i < data.orders.length; i++) {
       const order = data.orders[i];
       if (!order.testName) {
-        console.error(`❌ Missing testName for order ${i + 1}`);
         alert(`Please select a test name for test ${i + 1}`);
         return;
       }
     }
 
     // Transform data to create multiple lab orders with laboratory assignment
-    const labOrders = data.orders.map((order: any, index: number) => {
-      const transformedOrder = {
-        patientId: data.patientId,
-        testName: order.testName,
-        testCode: order.testCode || "",
-        instructions: `${order.instructions || ""} ${data.generalInstructions || ""}`.trim(),
-        priority: order.priority || "routine",
-        status: "ordered"
-      };
-      console.log(`Transformed order ${index + 1}:`, transformedOrder);
-      return transformedOrder;
-    });
+    const labOrders = data.orders.map((order: any) => ({
+      patientId: data.patientId,
+      testName: order.testName,
+      testCode: order.testCode || "",
+      instructions: `${order.instructions || ""} ${data.generalInstructions || ""}`.trim(),
+      priority: order.priority || "routine",
+      status: "ordered"
+    }));
     
     const submitData = { 
       orders: labOrders, 
       laboratoryId: data.laboratoryId,
       assignmentNotes: data.generalInstructions 
     };
-    
-    console.log("✅ Final submission data:", JSON.stringify(submitData, null, 2));
-    console.log("=== END FORM SUBMISSION ===");
     
     onSubmit(submitData);
   };
