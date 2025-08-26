@@ -1539,6 +1539,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                            : null
       };
 
+      // Debug: Log the request data to see what's being sent
+      console.log("[PATIENT REGISTRATION] Request data:", JSON.stringify(requestData, null, 2));
+      
       const patientData = insertPatientSchema.parse(requestData);
 
       const patient = await storage.createPatient(patientData);

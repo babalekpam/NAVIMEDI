@@ -1,3 +1,4 @@
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -63,7 +64,7 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
       gender: "",
       phone: "",
       email: "",
-      primaryPhysicianId: singleDoctor?.id || "", // Auto-assign if only one doctor
+      primaryPhysicianId: "", // Will be set when physician data loads
       insuranceProvider: "",
       policyNumber: "",
       groupNumber: "",
@@ -77,7 +78,26 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
     }
   });
 
+  // Auto-assign physician when single doctor is available
+  React.useEffect(() => {
+    if (singleDoctor && singleDoctor.id) {
+      console.log("[AUTO-ASSIGN] Setting physician ID:", singleDoctor.id);
+      form.setValue("primaryPhysicianId", singleDoctor.id);
+    }
+  }, [singleDoctor, form]);
+
   const handleSubmit = (data: any) => {
+    // Debug: Log form data being submitted
+    console.log("[FORM SUBMIT] Form data:", data);
+    console.log("[FORM SUBMIT] Single doctor:", singleDoctor);
+    console.log("[FORM SUBMIT] Available physicians:", availablePhysicians);
+    
+    // Ensure primaryPhysicianId is set for single doctor auto-assignment
+    if (singleDoctor && !data.primaryPhysicianId) {
+      data.primaryPhysicianId = singleDoctor.id;
+    }
+    
+    console.log("[FORM SUBMIT] Final data with doctor ID:", data);
     onSubmit(data);
   };
 
