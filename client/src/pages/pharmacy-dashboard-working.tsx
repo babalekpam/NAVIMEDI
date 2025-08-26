@@ -42,8 +42,8 @@ export default function PharmacyDashboardWorking() {
 
   // Fetch pharmacy prescriptions
   const { data: prescriptions, isLoading, error } = useQuery({
-    queryKey: ['/api/pharmacy/prescriptions', tenant?.id],
-    enabled: !!tenant?.id
+    queryKey: ['/api/pharmacy/prescriptions'],
+    enabled: !!tenant?.id && tenant?.type === 'pharmacy'
   });
 
   console.log('[PHARMACY WORKING] 📊 Prescriptions data:', prescriptions);
@@ -76,6 +76,7 @@ export default function PharmacyDashboardWorking() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/pharmacy/prescriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] }); // Also refresh hospital view
       toast({ title: "Success", description: "Prescription status updated successfully" });
       setIsProcessingModalOpen(false);
     },
