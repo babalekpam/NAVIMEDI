@@ -2108,10 +2108,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/lab-orders", authenticateToken, requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
-      console.log("[LAB ORDER POST] Request received");
-      console.log("[LAB ORDER POST] User:", req.user);
-      console.log("[LAB ORDER POST] Tenant:", req.tenant);
-      console.log("[LAB ORDER POST] Body:", req.body);
+      console.log("[LAB ORDER POST] ✅ Request received successfully");
+      console.log("[LAB ORDER POST] User ID:", req.user?.id);
+      console.log("[LAB ORDER POST] User Role:", req.user?.role);
+      console.log("[LAB ORDER POST] Tenant ID:", req.tenant?.id);
+      console.log("[LAB ORDER POST] Body:", JSON.stringify(req.body, null, 2));
       
       // Convert string dates to Date objects and prepare data
       const requestData = { ...req.body };

@@ -64,6 +64,13 @@ export async function apiRequest(
     ...(options?.headers || {}),
   };
 
+  console.log(`[DEBUG LAB ORDER] Making request to: ${url}`);
+  console.log(`[DEBUG LAB ORDER] Method: ${method}`);
+  console.log(`[DEBUG LAB ORDER] Headers:`, headers);
+  if (data && url.includes('lab-orders')) {
+    console.log(`[DEBUG LAB ORDER] Request body:`, JSON.stringify(data, null, 2));
+  }
+
   const res = await fetch(url, {
     method,
     headers,
@@ -71,7 +78,14 @@ export async function apiRequest(
     credentials: "include",
   });
 
+  console.log(`[DEBUG LAB ORDER] Response status: ${res.status}`);
+  console.log(`[DEBUG LAB ORDER] Response headers:`, Object.fromEntries(res.headers.entries()));
+  
   const responseText = await res.text();
+  
+  if (url.includes('lab-orders')) {
+    console.log(`[DEBUG LAB ORDER] Response text (first 500 chars):`, responseText.substring(0, 500));
+  }
   
   if (!res.ok) {
     const contentType = res.headers.get('content-type');
