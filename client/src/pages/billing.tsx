@@ -117,12 +117,17 @@ export default function Billing() {
   });
 
   // Use specialized billing patients endpoint that includes cross-tenant patients for pharmacies
-  const { data: patients = [] } = useQuery<Patient[]>({
+  const { data: patients = [], isLoading: isLoadingPatients } = useQuery<Patient[]>({
     queryKey: ["/api/billing/patients"],
     enabled: !!user && !!tenant,
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Don't cache the results (gcTime is the new name for cacheTime in TanStack Query v5)
   });
+
+  // Debug patients data
+  console.log('[PATIENTS-DEBUG] Patients data:', patients);
+  console.log('[PATIENTS-DEBUG] Loading patients:', isLoadingPatients);
+  console.log('[PATIENTS-DEBUG] Patient count:', patients.length);
 
   const { data: servicePrices = [] } = useQuery<ServicePrice[]>({
     queryKey: ["/api/service-prices"],
@@ -579,11 +584,17 @@ export default function Billing() {
                         <SelectValue placeholder="Select patient" />
                       </SelectTrigger>
                       <SelectContent>
-                        {patients.map((patient) => (
-                          <SelectItem key={patient.id} value={patient.id}>
-                            {patient.firstName} {patient.lastName} ({patient.mrn})
-                          </SelectItem>
-                        ))}
+                        {isLoadingPatients ? (
+                          <SelectItem value="" disabled>Loading patients...</SelectItem>
+                        ) : patients.length > 0 ? (
+                          patients.map((patient) => (
+                            <SelectItem key={patient.id} value={patient.id}>
+                              {patient.firstName} {patient.lastName} ({patient.mrn})
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>No patients found</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
