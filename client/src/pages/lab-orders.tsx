@@ -114,33 +114,47 @@ export default function LabOrders() {
 
   const createLabOrderMutation = useMutation({
     mutationFn: async (data: any) => {
-      const { apiRequest } = await import("@/lib/queryClient");
+      console.log("Creating lab order with data:", data);
       
-      console.log("Sending lab order data to API:", data);
-      
-      // Handle multiple orders - send each separately
-      if (data.orders && Array.isArray(data.orders)) {
-        const results = [];
-        for (const order of data.orders) {
-          const labOrderData = {
-            patientId: data.patientId,
-            labTenantId: data.laboratoryId,
-            testName: order.testName,
-            testCode: order.testCode || '',
-            instructions: order.instructions || data.generalInstructions || '',
-            priority: order.priority || 'routine',
-            // Remove status and orderedDate - let server handle these
-          };
-          
-          console.log("Sending lab order:", labOrderData);
-          const result = await apiRequest("POST", "/api/lab-orders", labOrderData);
-          results.push(result);
-        }
-        return results;
-      } else {
-        // Single order fallback
-        return await apiRequest("POST", "/api/lab-orders", data);
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        throw new Error("No authentication token found");
       }
+
+      // Create a single lab order (simplified)
+      const order = data.orders[0]; // Use first order for now
+      const labOrderData = {
+        patientId: data.patientId,
+        labTenantId: data.laboratoryId,
+        testName: order.testName,
+        testCode: order.testCode || '',
+        instructions: order.instructions || '',
+        priority: order.priority || 'routine',
+      };
+
+      console.log("Sending to server:", labOrderData);
+
+      const response = await fetch("/api/lab-orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(labOrderData),
+        credentials: "include",
+      });
+
+      console.log("Response status:", response.status);
+      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+
+      const responseText = await response.text();
+      console.log("Response text:", responseText.substring(0, 300));
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${responseText.substring(0, 100)}`);
+      }
+
+      return JSON.parse(responseText);
     },
     onSuccess: (result) => {
       console.log("Lab order(s) created successfully:", result);
