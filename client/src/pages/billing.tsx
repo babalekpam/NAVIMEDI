@@ -18,6 +18,33 @@ import { apiRequest } from "@/lib/queryClient";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 
+// Helper functions for medical code descriptions
+function getICD10Description(code: string): string {
+  const icd10Codes: Record<string, string> = {
+    'I10': 'Essential hypertension',
+    'E11.9': 'Type 2 diabetes mellitus without complications',
+    'E78.5': 'Hyperlipidemia, unspecified',
+    'M79.3': 'Panniculitis, unspecified',
+    'Z00.00': 'Encounter for general adult medical examination without abnormal findings',
+    'F32.9': 'Major depressive disorder, single episode, unspecified',
+    'J44.1': 'Chronic obstructive pulmonary disease with acute exacerbation'
+  };
+  return icd10Codes[code] || `${code} - Medical condition`;
+}
+
+function getCPTDescription(code: string): string {
+  const cptCodes: Record<string, string> = {
+    '99213': 'Office consultation, established patient, 20-29 minutes',
+    '99214': 'Office consultation, established patient, 30-39 minutes', 
+    '99215': 'Office consultation, established patient, 40-54 minutes',
+    '36415': 'Collection of venous blood by venipuncture',
+    '80053': 'Comprehensive metabolic panel',
+    '85025': 'Complete blood count with differential',
+    '93000': 'Electrocardiogram, routine ECG with 12 leads'
+  };
+  return cptCodes[code] || `${code} - Medical procedure`;
+}
+
 const statusColors = {
   draft: "bg-gray-100 text-gray-800",
   submitted: "bg-blue-100 text-blue-800",
@@ -433,7 +460,14 @@ export default function Billing() {
         patientInsuranceId: formData.patientInsuranceId, // Always use patient's actual insurance
         claimNumber,
         diagnosisCodes: formData.diagnosisCodes.split(',').map(code => code.trim()).filter(Boolean),
-        procedureCodes: formData.procedureCodes.split(',').map(code => code.trim()).filter(Boolean),
+        secondaryDiagnosisCodes: formData.diagnosisCodes.split(',').map(code => code.trim()).filter(Boolean).map(code => ({
+          code: code,
+          description: getICD10Description(code)
+        })),
+        procedureCodes: formData.procedureCodes.split(',').map(code => code.trim()).filter(Boolean).map(code => ({
+          code: code,
+          description: getCPTDescription(code)
+        })),
         totalAmount: totalAmount.toString(),
         totalPatientCopay: totalPatientCopay.toString(),
         totalInsuranceAmount: totalInsuranceAmount.toString(),
