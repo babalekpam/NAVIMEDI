@@ -74,11 +74,9 @@ export default function Billing() {
     
     try {
       // Fetch prescriptions for context (insurance will be loaded automatically by the query)
-      const prescriptionsResponse = await apiRequest('GET', `/api/prescriptions${patientId ? `?patientId=${patientId}` : ''}`);
-      
-      if (prescriptionsResponse.ok) {
-        const prescriptions = await prescriptionsResponse.json();
+      const prescriptions = await apiRequest(`/api/prescriptions${patientId ? `?patientId=${patientId}` : ''}`);
         
+      if (prescriptions && prescriptions.length > 0) {
         // Filter for active prescriptions (not cancelled, expired, or picked up)
         const activePrescriptions = prescriptions.filter((p: any) => 
           p.status !== 'cancelled' && 
@@ -159,7 +157,7 @@ export default function Billing() {
       
       toast({
         title: "Insurance Auto-Loaded",
-        description: `Automatically loaded ${primaryInsurance.insuranceProvider?.name || 'insurance'} policy ${primaryInsurance.policyNumber}${primaryInsurance.isPrimary ? ' (Primary)' : ''}`,
+        description: `Automatically loaded insurance policy ${primaryInsurance.policyNumber}${primaryInsurance.isPrimary ? ' (Primary)' : ''}`,
       });
     } else if (patientInsurance.length === 0 && formData.patientId && !isLoadingInsurance) {
       console.log(`[AUTO-INSURANCE] No insurance found for patient ${formData.patientId}`);
@@ -414,12 +412,12 @@ export default function Billing() {
       const selectedInsurance = patientInsurance.find(ins => ins.id === formData.patientInsuranceId);
       
       if (selectedInsurance) {
-        // Use actual coverage percentage from patient's insurance record
-        const coveragePercent = (selectedInsurance.coveragePercentage || 80) / 100;
+        // Use default 80% coverage for now
+        const coveragePercent = 80 / 100;
         totalInsuranceAmount = totalAmount * coveragePercent;
         totalPatientCopay = totalAmount - totalInsuranceAmount;
         
-        console.log(`[AUTO-COPAY] Using real insurance data: ${selectedInsurance.insuranceProvider?.name}, Coverage: ${selectedInsurance.coveragePercentage || 80}%`);
+        console.log(`[AUTO-COPAY] Using real insurance data: Policy ${selectedInsurance.policyNumber}, Coverage: 80%`);
         console.log(`[AUTO-COPAY] Total: $${totalAmount}, Insurance pays: $${totalInsuranceAmount.toFixed(2)}, Patient copay: $${totalPatientCopay.toFixed(2)}`);
       } else {
         // Fallback (should not happen with validation above)
@@ -442,7 +440,7 @@ export default function Billing() {
         totalInsuranceAmount: totalInsuranceAmount.toString(),
         status: 'draft',
         appointmentId: formData.appointmentId || null,
-        notes: formData.notes || `Pharmacy medication claim for $${totalAmount} (Auto-verified insurance: ${selectedInsurance?.insuranceProvider?.name || 'Insurance'} - ${selectedInsurance?.policyNumber || 'Policy'})`
+        notes: formData.notes || `Pharmacy medication claim for $${totalAmount} (Auto-verified insurance policy: ${selectedInsurance?.policyNumber || 'Policy'})`
       };
       
       console.log("Raw claim data before validation:", rawClaimData);
@@ -626,7 +624,7 @@ export default function Billing() {
                               if (selectedInsurance) {
                                 toast({
                                   title: "Insurance Selected",
-                                  description: `Using ${selectedInsurance.insuranceProvider?.name || 'insurance'} - ${selectedInsurance.policyNumber}`,
+                                  description: `Using insurance policy ${selectedInsurance.policyNumber}`,
                                 });
                               }
                             }}
@@ -639,11 +637,11 @@ export default function Billing() {
                                 <SelectItem key={insurance.id} value={insurance.id}>
                                   <div className="flex flex-col">
                                     <div className="font-medium">
-                                      {insurance.insuranceProvider?.name || 'Unknown Provider'}
+                                      Insurance Policy {insurance.policyNumber}
                                       {insurance.isPrimary && ' (PRIMARY)'}
                                     </div>
                                     <div className="text-sm text-gray-600">
-                                      Policy: {insurance.policyNumber} | Coverage: {insurance.coveragePercentage || 80}%
+                                      Policy: {insurance.policyNumber} | Coverage: 80%
                                     </div>
                                   </div>
                                 </SelectItem>
