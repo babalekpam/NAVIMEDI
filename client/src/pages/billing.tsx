@@ -466,11 +466,12 @@ export default function Billing() {
         })),
         procedureCodes: formData.procedureCodes.split(',').map(code => code.trim()).filter(Boolean).map(code => ({
           code: code,
-          description: getCPTDescription(code)
+          description: getCPTDescription(code),
+          amount: totalAmount  // Add required amount field
         })),
-        totalAmount: totalAmount.toString(),
-        totalPatientCopay: totalPatientCopay.toString(),
-        totalInsuranceAmount: totalInsuranceAmount.toString(),
+        totalAmount: totalAmount,  // Send as number, not string
+        totalPatientCopay: totalPatientCopay,  // Send as number, not string
+        totalInsuranceAmount: totalInsuranceAmount,  // Send as number, not string
         status: 'draft',
         appointmentId: formData.appointmentId || null,
         notes: formData.notes || `Pharmacy medication claim for $${totalAmount} (Auto-verified insurance policy: ${selectedInsurance?.policyNumber || 'Policy'})`
