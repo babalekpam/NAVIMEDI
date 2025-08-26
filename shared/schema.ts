@@ -2750,17 +2750,19 @@ export const insertInsuranceClaimSchema = createInsertSchema(insuranceClaims).om
   id: true,
   createdAt: true,
   updatedAt: true,
-  claimNumber: true // Auto-generated
+  claimNumber: true, // Auto-generated
+  secondaryDiagnosisCodes: true, // Will redefine this
+  procedureCodes: true // Will redefine this
 }).extend({
   secondaryDiagnosisCodes: z.array(z.object({
     code: z.string(),
     description: z.string()
-  })).default([]),
+  })).optional().default([]),
   procedureCodes: z.array(z.object({
     code: z.string(),
     description: z.string(),
     amount: z.number().min(0)
-  })).min(1, "At least one procedure is required"),
+  })).optional().default([]),
   totalAmount: z.number().min(0, "Total amount must be positive"),
   totalPatientCopay: z.number().min(0, "Patient copay must be non-negative"),
   totalInsuranceAmount: z.number().min(0, "Insurance amount must be non-negative")
