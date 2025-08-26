@@ -175,8 +175,8 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes - much better than Infinity
+      refetchOnWindowFocus: true,
+      staleTime: 0, // Always fetch fresh data on every request
       gcTime: 10 * 60 * 1000, // 10 minutes cache time
       retry: (failureCount, error) => {
         // Don't retry on 401/403 errors
