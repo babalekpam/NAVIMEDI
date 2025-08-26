@@ -2108,8 +2108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/lab-orders", authenticateToken, requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
-      console.log("[LAB ORDER POST] ✅ Request received");
-      console.log("[LAB ORDER POST] Body:", req.body);
+      // Lab order creation endpoint
       
       const labOrderData = {
         tenantId: req.tenant!.id,

@@ -110,8 +110,6 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
   }, [form]);
 
   const handleSubmit = (data: any) => {
-    console.log("Form submission data:", data);
-    
     // Basic validation with user feedback
     if (!data.patientId) {
       form.setError("patientId", { message: "Please select a patient" });
@@ -134,7 +132,6 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
       generalInstructions: data.generalInstructions 
     };
     
-    console.log("Submitting lab order:", submitData);
     onSubmit(submitData);
   };
 
