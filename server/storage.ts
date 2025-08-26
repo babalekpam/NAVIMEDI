@@ -365,6 +365,7 @@ export interface IStorage {
   updateLaboratory(id: string, updates: Partial<Laboratory>, tenantId: string): Promise<Laboratory | undefined>;
   getLaboratoriesByTenant(tenantId: string): Promise<Laboratory[]>;
   getActiveLaboratoriesByTenant(tenantId: string): Promise<Laboratory[]>;
+  getActiveLaboratoryTenants(): Promise<any[]>;
 
   // Lab Results Management
   getLabResult(id: string, tenantId: string): Promise<LabResult | undefined>;
@@ -2424,6 +2425,20 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(laboratories).where(
       and(eq(laboratories.tenantId, tenantId), eq(laboratories.isActive, true))
     ).orderBy(laboratories.name);
+  }
+
+  async getActiveLaboratoryTenants(): Promise<any[]> {
+    // Get all active tenants that are laboratories
+    return await db.select({
+      id: tenants.id,
+      name: tenants.name,
+      type: tenants.type,
+      subdomain: tenants.subdomain,
+      isActive: tenants.isActive,
+      organizationType: tenants.organizationType
+    }).from(tenants).where(
+      and(eq(tenants.type, 'laboratory'), eq(tenants.isActive, true))
+    ).orderBy(tenants.name);
   }
 
   // Lab Results Management

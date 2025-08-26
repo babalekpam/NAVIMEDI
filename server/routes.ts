@@ -3610,7 +3610,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/laboratories/active", authenticateToken, requireTenant, async (req, res) => {
     try {
-      const laboratories = await storage.getActiveLaboratoriesByTenant(req.tenantId!);
+      // Get all active laboratory tenants (not labs within current tenant)
+      const laboratories = await storage.getActiveLaboratoryTenants();
       res.json(laboratories);
     } catch (error) {
       console.error("Error fetching active laboratories:", error);
