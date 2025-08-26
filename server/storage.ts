@@ -849,6 +849,28 @@ export class DatabaseStorage implements IStorage {
     return (result[0]?.count || 0) + 1;
   }
 
+  async generateTenantPatientId(tenantId: string): Promise<string> {
+    try {
+      // Get tenant to extract name for prefix
+      const tenant = await this.getTenant(tenantId);
+      if (!tenant) {
+        throw new Error(`Tenant not found: ${tenantId}`);
+      }
+      
+      // Generate tenant prefix from first 3 characters of name, uppercase, replace non-letters with 'X'
+      const tenantPrefix = tenant.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X');
+      
+      // Get next patient counter for this tenant
+      const patientCounter = await this.getNextPatientNumber(tenantId);
+      
+      // Return formatted patient ID: PREFIX-000001
+      return `${tenantPrefix}-${patientCounter.toString().padStart(6, '0')}`;
+    } catch (error) {
+      console.error("Error generating tenant patient ID:", error);
+      throw error;
+    }
+  }
+
   async createPatient(insertPatient: InsertPatient): Promise<Patient> {
     const [patient] = await db.insert(patients).values(insertPatient).returning();
     return patient;
