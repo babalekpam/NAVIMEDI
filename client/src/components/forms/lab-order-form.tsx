@@ -157,7 +157,7 @@ export const LabOrderForm = ({ onSubmit, isLoading = false, patients }: LabOrder
     });
     
     const submitData = { 
-      labOrders, 
+      orders: labOrders, 
       laboratoryId: data.laboratoryId,
       assignmentNotes: data.generalInstructions 
     };

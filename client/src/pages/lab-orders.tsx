@@ -133,20 +133,8 @@ export default function LabOrders() {
             orderedDate: new Date().toISOString(),
           };
           
-          console.log("Sending individual lab order:", labOrderData);
-          console.log("Making POST request to /api/lab-orders");
-          console.log("Auth token exists:", !!localStorage.getItem("auth_token"));
-          console.log("Request URL: POST /api/lab-orders");
-          
-          try {
-            const result = await apiRequest("POST", "/api/lab-orders", labOrderData);
-            console.log("SUCCESS: Received result:", result);
-            results.push(result);
-          } catch (error) {
-            console.error("ERROR in apiRequest:", error);
-            console.error("Error message:", error.message);
-            throw error;
-          }
+          const result = await apiRequest("POST", "/api/lab-orders", labOrderData);
+          results.push(result);
         }
         return results;
       } else {

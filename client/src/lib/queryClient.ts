@@ -44,7 +44,6 @@ export async function apiRequest(
     headers?: Record<string, string>;
   }
 ): Promise<any> {
-  console.log(`[API REQUEST] ${options?.method || 'GET'} ${url}`);
   const token = localStorage.getItem("auth_token");
   
   // Clear corrupted tokens
@@ -65,9 +64,6 @@ export async function apiRequest(
     ...(options?.headers || {}),
   };
 
-  console.log(`[API REQUEST] Making fetch to ${url} with method ${method}`);
-  console.log(`[API REQUEST] Headers:`, headers);
-  
   const res = await fetch(url, {
     method,
     headers,
@@ -75,14 +71,9 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  console.log(`[API REQUEST] Response status: ${res.status}`);
-  console.log(`[API REQUEST] Response headers:`, Object.fromEntries(res.headers.entries()));
-  
   const responseText = await res.text();
-  console.log(`[API REQUEST] Response text (first 200 chars):`, responseText.substring(0, 200));
   
   if (!res.ok) {
-    console.error(`[API REQUEST] Request failed with status ${res.status}`);
     const contentType = res.headers.get('content-type');
     let errorMessage = res.statusText;
     
@@ -117,8 +108,6 @@ export async function apiRequest(
   try {
     return JSON.parse(responseText);
   } catch (parseError) {
-    console.error(`[API REQUEST] Failed to parse JSON response:`, parseError);
-    console.error(`[API REQUEST] Raw response:`, responseText);
     throw new Error(`Failed to parse JSON response: ${parseError.message}`);
   }
 }
