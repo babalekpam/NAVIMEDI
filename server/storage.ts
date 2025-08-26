@@ -1404,34 +1404,66 @@ export class DatabaseStorage implements IStorage {
   async getPrescriptionsByPharmacy(pharmacyTenantId: string): Promise<any[]> {
     console.log(`[PHARMACY API] 🔍 Getting prescriptions for pharmacy: ${pharmacyTenantId}`);
     
-    // First, let's check if there are any prescriptions with this pharmacy ID
-    const allPrescriptionsForPharmacy = await db
+    // Join with patients and users tables to get actual names
+    const prescriptionsWithNames = await db
       .select({
         id: prescriptions.id,
         medicationName: prescriptions.medicationName,
+        dosage: prescriptions.dosage,
+        frequency: prescriptions.frequency,
+        quantity: prescriptions.quantity,
+        instructions: prescriptions.instructions,
+        status: prescriptions.status,
+        prescribedDate: prescriptions.prescribedDate,
+        expiryDate: prescriptions.expiryDate,
         pharmacyTenantId: prescriptions.pharmacyTenantId,
-        status: prescriptions.status
+        patientId: prescriptions.patientId,
+        providerId: prescriptions.providerId,
+        // Patient information
+        patientFirstName: patients.firstName,
+        patientLastName: patients.lastName,
+        patientMrn: patients.mrn,
+        // Provider/Doctor information
+        providerFirstName: users.firstName,
+        providerLastName: users.lastName,
+        providerRole: users.role
       })
       .from(prescriptions)
-      .where(eq(prescriptions.pharmacyTenantId, pharmacyTenantId));
+      .leftJoin(patients, eq(prescriptions.patientId, patients.id))
+      .leftJoin(users, eq(prescriptions.providerId, users.id))
+      .where(eq(prescriptions.pharmacyTenantId, pharmacyTenantId))
+      .orderBy(desc(prescriptions.prescribedDate));
     
-    console.log(`[PHARMACY API] ✅ Direct query found ${allPrescriptionsForPharmacy.length} prescriptions:`, 
-      allPrescriptionsForPharmacy.map(p => ({ medication: p.medicationName, status: p.status })));
+    console.log(`[PHARMACY API] ✅ Found ${prescriptionsWithNames.length} prescriptions with patient/doctor names`);
     
-    // Return simple format for enhanced dashboard
-    const simplifiedPrescriptions = allPrescriptionsForPharmacy.map(p => ({
+    // Return formatted data with actual names
+    const formattedPrescriptions = prescriptionsWithNames.map(p => ({
       id: p.id,
-      patientName: `Patient for ${p.medicationName}`, // Temporary for demo
-      medication: `${p.medicationName}`,
-      status: p.status === 'prescribed' ? 'new' : p.status === 'dispensed' ? 'ready' : 'processing',
+      patientName: `${p.patientFirstName || 'Unknown'} ${p.patientLastName || 'Patient'}`,
+      patientMrn: p.patientMrn,
+      medication: p.medicationName,
+      dosage: p.dosage,
+      frequency: p.frequency,
+      quantity: p.quantity,
+      instructions: p.instructions,
+      prescribingDoctor: `Dr. ${p.providerFirstName || 'Unknown'} ${p.providerLastName || 'Provider'}`,
+      doctorRole: p.providerRole,
+      status: p.status === 'prescribed' ? 'new' : p.status === 'dispensed' ? 'ready' : p.status,
+      prescribedDate: p.prescribedDate,
+      expiryDate: p.expiryDate,
       waitTime: Math.floor(Math.random() * 20), // Demo wait time
       priority: 'normal',
       insuranceStatus: 'approved'
     }));
     
-    console.log(`[PHARMACY API] 📋 Returning ${simplifiedPrescriptions.length} simplified prescriptions for dashboard`);
+    console.log(`[PHARMACY API] 📋 Returning ${formattedPrescriptions.length} formatted prescriptions:`, 
+      formattedPrescriptions.map(p => ({ 
+        patient: p.patientName, 
+        doctor: p.prescribingDoctor, 
+        medication: p.medication 
+      })));
     
-    return simplifiedPrescriptions;
+    return formattedPrescriptions;
   }
 
   async updatePrescriptionStatus(prescriptionId: string, newStatus: string): Promise<any> {
