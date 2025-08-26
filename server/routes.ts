@@ -2108,6 +2108,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/lab-orders", authenticateToken, requireTenant, requireRole(["physician", "nurse", "tenant_admin", "director", "super_admin"]), async (req, res) => {
     try {
+      console.log("[LAB ORDER POST] Request received");
+      console.log("[LAB ORDER POST] User:", req.user);
+      console.log("[LAB ORDER POST] Tenant:", req.tenant);
+      console.log("[LAB ORDER POST] Body:", req.body);
+      
       // Convert string dates to Date objects and prepare data
       const requestData = { ...req.body };
       if (requestData.orderedDate && typeof requestData.orderedDate === 'string') {
