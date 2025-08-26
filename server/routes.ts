@@ -1474,6 +1474,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Move available-physicians route BEFORE the generic :id route
+  app.get("/api/patients/available-physicians", requireRole(["receptionist", "nurse", "tenant_admin", "director"]), async (req, res) => {
+    try {
+      const tenantId = req.tenant!.id;
+      const physicians = await storage.getUsersByRole("physician", tenantId);
+      
+      // Return simplified physician data for assignment dropdown
+      const availablePhysicians = physicians.map(physician => ({
+        id: physician.id,
+        firstName: physician.firstName,
+        lastName: physician.lastName,
+        email: physician.email,
+        isActive: physician.isActive
+      }));
+
+      res.json(availablePhysicians);
+    } catch (error) {
+      console.error("Get available physicians error:", error);
+      res.status(500).json({ message: "Failed to fetch available physicians" });
+    }
+  });
+
   app.get("/api/patients/:id", async (req, res) => {
     try {
       const patient = await storage.getPatient(req.params.id, req.tenant!.id);
@@ -1546,26 +1568,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Patient Assignment Routes (for receptionists to assign patients to doctors)
   
   // Get available physicians for patient assignment
-  app.get("/api/patients/available-physicians", requireRole(["receptionist", "nurse", "tenant_admin", "director"]), async (req, res) => {
-    try {
-      const tenantId = req.tenant!.id;
-      const physicians = await storage.getUsersByRole(tenantId, "physician");
-      
-      // Return simplified physician data for assignment dropdown
-      const availablePhysicians = physicians.map(physician => ({
-        id: physician.id,
-        firstName: physician.firstName,
-        lastName: physician.lastName,
-        email: physician.email,
-        isActive: physician.isActive
-      }));
-
-      res.json(availablePhysicians);
-    } catch (error) {
-      console.error("Get available physicians error:", error);
-      res.status(500).json({ message: "Failed to fetch available physicians" });
-    }
-  });
 
   // Assign patient to physician
   app.post("/api/patients/:patientId/assign", requireRole(["receptionist", "nurse", "tenant_admin", "director"]), async (req, res) => {
