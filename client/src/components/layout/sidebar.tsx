@@ -181,7 +181,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "patient-access-management", label: "Patient Access Management", icon: Shield, path: "/patient-access-management", roles: ["physician", "tenant_admin", "director", "super_admin"] },
   
   // Operations Section (only for tenant users - excluding pharmacy users)
-  { id: "billing", label: t("billing"), icon: DollarSign, path: "/billing", roles: ["billing_staff", "receptionist", "physician", "tenant_admin", "director"] },
+  { id: "billing", label: t("billing"), icon: DollarSign, path: "/billing", roles: ["billing_staff", "receptionist", "physician", "tenant_admin", "director", "super_admin"] },
   { id: "hospital-billing", label: "Hospital Billing", icon: DollarSign, path: "/hospital-billing", roles: ["billing_staff", "receptionist", "physician", "tenant_admin", "director"] },
   { id: "laboratory-billing", label: "Laboratory Billing", icon: DollarSign, path: "/laboratory-billing", roles: ["lab_technician", "tenant_admin", "director"] },
   { id: "currency-management", label: "Multi-Currency Management", icon: Globe, path: "/currency-management", roles: ["tenant_admin", "director", "super_admin"] },
@@ -218,7 +218,7 @@ export const Sidebar = () => {
   // For super admin, show platform management and enterprise features
   if (user.role === "super_admin") {
     const platformItems = filteredItems.filter(item => 
-      ["super-admin-dashboard", "tenant-management", "client-management", "user-roles", "audit-logs", "reports", "white-label-settings", "offline-mode", "advertisements", "medical-codes"].includes(item.id)
+      ["super-admin-dashboard", "tenant-management", "client-management", "user-roles", "audit-logs", "reports", "white-label-settings", "offline-mode", "advertisements", "medical-codes", "billing"].includes(item.id)
     );
     
     return (
