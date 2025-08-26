@@ -2752,7 +2752,10 @@ export const insertInsuranceClaimSchema = createInsertSchema(insuranceClaims).om
   updatedAt: true,
   claimNumber: true, // Auto-generated
   secondaryDiagnosisCodes: true, // Will redefine this
-  procedureCodes: true // Will redefine this
+  procedureCodes: true, // Will redefine this
+  totalAmount: true, // Will redefine this  
+  totalPatientCopay: true, // Will redefine this
+  totalInsuranceAmount: true // Will redefine this
 }).extend({
   secondaryDiagnosisCodes: z.array(z.object({
     code: z.string(),
@@ -2763,9 +2766,9 @@ export const insertInsuranceClaimSchema = createInsertSchema(insuranceClaims).om
     description: z.string(),
     amount: z.number().min(0)
   })).optional().default([]),
-  totalAmount: z.number().min(0, "Total amount must be positive"),
-  totalPatientCopay: z.number().min(0, "Patient copay must be non-negative"),
-  totalInsuranceAmount: z.number().min(0, "Insurance amount must be non-negative")
+  totalAmount: z.string().transform((val) => parseFloat(val)).refine((val) => val >= 0, "Total amount must be positive"),
+  totalPatientCopay: z.string().transform((val) => parseFloat(val)).refine((val) => val >= 0, "Patient copay must be non-negative"),
+  totalInsuranceAmount: z.string().transform((val) => parseFloat(val)).refine((val) => val >= 0, "Insurance amount must be non-negative")
 });
 
 // Enhanced claim form schema for frontend

@@ -469,9 +469,9 @@ export default function Billing() {
           description: getCPTDescription(code),
           amount: totalAmount  // Add required amount field
         })),
-        totalAmount: totalAmount,  // Send as number, not string
-        totalPatientCopay: totalPatientCopay,  // Send as number, not string
-        totalInsuranceAmount: totalInsuranceAmount,  // Send as number, not string
+        totalAmount: totalAmount.toString(),  // Send as string for decimal field
+        totalPatientCopay: totalPatientCopay.toString(),  // Send as string for decimal field
+        totalInsuranceAmount: totalInsuranceAmount.toString(),  // Send as string for decimal field
         status: 'draft',
         appointmentId: formData.appointmentId || null,
         notes: formData.notes || `Pharmacy medication claim for $${totalAmount} (Auto-verified insurance policy: ${selectedInsurance?.policyNumber || 'Policy'})`
