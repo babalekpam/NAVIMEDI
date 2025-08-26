@@ -1514,11 +1514,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tenantId = req.tenant!.id;
       const tenant = req.tenant!;
       
-      // Generate tenant-specific patient ID (unique within hospital/clinic)
-      const tenantPatientId = await storage.generateTenantPatientId(tenantId);
-      
-      // Generate MRN automatically (keeping existing format for compatibility)
+      // Generate MRN as the permanent patient identifier (unique per hospital forever)
       const mrn = `MRN${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      
+      // Optional: Generate simple display ID for reception use (can be derived from MRN)
+      const tenantPatientId = await storage.generateTenantPatientId(tenantId);
       
       // Prepare patient data with proper date conversion
       const requestData = {
