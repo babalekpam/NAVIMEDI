@@ -1305,12 +1305,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let patients;
       
       // Role-based patient access control
-      if (userRole === "physician") {
-        // Doctors only see their assigned patients
+      if (userRole === "physician" || userRole === "doctor") {
+        // For prescription writing, doctors can see all patients in the hospital
+        // For regular patient management, they see only assigned patients
         if (search && typeof search === "string") {
-          patients = await storage.searchAssignedPatients(userId, tenantId, search);
+          patients = await storage.searchPatients(tenantId, search);
         } else {
-          patients = await storage.getPatientsByPhysician(userId, tenantId, parseInt(limit as string), parseInt(offset as string));
+          patients = await storage.getPatientsByTenant(tenantId, parseInt(limit as string), parseInt(offset as string));
         }
       } else if (["receptionist", "nurse", "tenant_admin", "director"].includes(userRole)) {
         // Reception, nurses, and admins see all patients in their tenant
