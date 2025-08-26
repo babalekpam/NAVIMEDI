@@ -133,7 +133,7 @@ export function VisitSummaryForm({
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: VisitSummaryFormData) => {
+    mutationFn: async (data: VisitSummaryFormData) => {
       console.log("Submitting visit summary:", data);
       // Clean up empty string fields that should be null for UUID validation
       const cleanedData = {
@@ -143,10 +143,25 @@ export function VisitSummaryForm({
         vitalSignsId: data.vitalSignsId || null, // Convert empty string to null
         returnVisitTimeframe: data.returnVisitTimeframe || null, // Handle empty timeframe
       };
-      return apiRequest("/api/visit-summaries", {
+      
+      // Create visit summary
+      const visitSummary = await apiRequest("/api/visit-summaries", {
         method: "POST",
         body: cleanedData
       });
+      
+      // If consultation is finalized, mark appointment as completed
+      if (data.status === "finalized" && appointmentId) {
+        await apiRequest(`/api/appointments/${appointmentId}`, {
+          method: "PATCH",
+          body: { 
+            status: "completed",
+            notes: "Consultation completed by physician"
+          }
+        });
+      }
+      
+      return visitSummary;
     },
     onSuccess: (response) => {
       console.log("Visit summary created successfully:", response);
@@ -173,7 +188,7 @@ export function VisitSummaryForm({
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: VisitSummaryFormData) => {
+    mutationFn: async (data: VisitSummaryFormData) => {
       // Clean up empty string fields that should be null for UUID validation
       const cleanedData = {
         ...data,
@@ -182,17 +197,33 @@ export function VisitSummaryForm({
         vitalSignsId: data.vitalSignsId || null, // Convert empty string to null
         returnVisitTimeframe: data.returnVisitTimeframe || null, // Handle empty timeframe
       };
-      return apiRequest(`/api/visit-summaries/${existingVisitSummary?.id}`, {
+      
+      // Update visit summary
+      const updatedVisitSummary = await apiRequest(`/api/visit-summaries/${existingVisitSummary?.id}`, {
         method: "PATCH",
         body: cleanedData
       });
+      
+      // If consultation is finalized, mark appointment as completed
+      if (data.status === "finalized" && appointmentId) {
+        await apiRequest(`/api/appointments/${appointmentId}`, {
+          method: "PATCH",
+          body: { 
+            status: "completed",
+            notes: "Consultation completed by physician"
+          }
+        });
+      }
+      
+      return updatedVisitSummary;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/visit-summaries"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      const currentStatus = form.getValues("status");
       toast({
         title: "Success",
-        description: "Visit summary updated successfully",
+        description: currentStatus === "finalized" ? "Consultation completed and appointment marked as finished!" : "Visit summary updated successfully",
       });
       onClose();
     },

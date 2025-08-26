@@ -1775,21 +1775,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Doctors should NOT confirm appointments themselves - only receptionists unless explicitly allowed
       const allowedRoles = ["receptionist", "tenant_admin", "director", "super_admin"];
       
-      // Special check for status updates (confirmation/cancellation)
+      // Special check for status updates - allow physicians to mark consultations as completed
       if (updateData.status && (userRole === "physician" || userRole === "doctor")) {
-        const userPermissions = await storage.getUserPermissions(userId, tenantId);
-        const canConfirmAppointments = userPermissions?.includes("confirm_appointments");
-        
-        if (!canConfirmAppointments) {
-          console.log(`[APPOINTMENT] ❌ Doctor/Physician ${userId} denied appointment confirmation`);
-          return res.status(403).json({
-            message: "Doctors cannot confirm or modify appointment status. Please contact reception staff or request confirmation permissions from your administrator.",
-            error: "ROLE_RESTRICTION_CONFIRMATION",
-            requiredPermission: "confirm_appointments"
-          });
+        // Allow physicians to mark appointments as completed (after consultation)
+        if (updateData.status === "completed" || updateData.status === "finished") {
+          console.log(`[APPOINTMENT] ✅ Physician ${userId} allowed to mark consultation as completed`);
+        } else {
+          // For other status changes, check permissions
+          const userPermissions = await storage.getUserPermissions(userId, tenantId);
+          const canConfirmAppointments = userPermissions?.includes("confirm_appointments");
+          
+          if (!canConfirmAppointments) {
+            console.log(`[APPOINTMENT] ❌ Doctor/Physician ${userId} denied appointment status change to ${updateData.status}`);
+            return res.status(403).json({
+              message: "Doctors can only mark consultations as completed. For other appointment changes, contact reception staff.",
+              error: "ROLE_RESTRICTION_CONFIRMATION",
+              requiredPermission: "confirm_appointments"
+            });
+          }
+          
+          console.log(`[APPOINTMENT] ✅ Doctor/Physician ${userId} allowed to update status - has explicit permission`);
         }
-        
-        console.log(`[APPOINTMENT] ✅ Doctor/Physician ${userId} allowed to confirm - has explicit permission`);
       } else if (!allowedRoles.includes(userRole) && (userRole !== "physician" && userRole !== "doctor")) {
         console.log(`[APPOINTMENT] ❌ User ${userId} (${userRole}) denied - insufficient role`);
         return res.status(403).json({

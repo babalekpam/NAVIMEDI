@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, Clock, Plus, Search, Filter, MoreHorizontal, Eye, Edit, Phone, Mail, User as UserIcon, Activity, FileText, Trash2, Copy, Share } from "lucide-react";
+import { Calendar, Clock, Plus, Search, Filter, MoreHorizontal, Eye, Edit, Phone, Mail, User as UserIcon, Activity, FileText, Trash2, Copy, Share, CheckCircle } from "lucide-react";
 import { Appointment, Patient, User, VitalSigns } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context-fixed";
@@ -448,21 +448,44 @@ export default function Appointments() {
                         </Button>
                       )}
                       {(user?.role === "doctor" || user?.role === "physician" || user?.role === "nurse" || user?.role === "tenant_admin" || user?.role === "super_admin") && (
-                        <Button 
-                          variant={appointment.status === "checked_in" || appointment.status === "in_progress" ? "default" : "ghost"}
-                          size="sm" 
-                          className={appointment.status === "checked_in" || appointment.status === "in_progress" 
-                            ? "bg-purple-600 hover:bg-purple-700 text-white" 
-                            : "text-purple-600 hover:text-purple-700"
-                          }
-                          onClick={() => handleVisitSummary(appointment)}
-                        >
-                          <FileText className="h-4 w-4 mr-1" />
-                          {appointment.status === "checked_in" || appointment.status === "in_progress" 
-                            ? "Complete Consultation" 
-                            : "Visit Summary"
-                          }
-                        </Button>
+                        <div className="flex items-center space-x-2">
+                          <Button 
+                            variant={appointment.status === "checked_in" || appointment.status === "in_progress" ? "default" : "ghost"}
+                            size="sm" 
+                            className={appointment.status === "checked_in" || appointment.status === "in_progress" 
+                              ? "bg-purple-600 hover:bg-purple-700 text-white" 
+                              : "text-purple-600 hover:text-purple-700"
+                            }
+                            onClick={() => handleVisitSummary(appointment)}
+                          >
+                            <FileText className="h-4 w-4 mr-1" />
+                            {appointment.status === "checked_in" || appointment.status === "in_progress" 
+                              ? "Complete Consultation" 
+                              : "Visit Summary"
+                            }
+                          </Button>
+                          
+                          {/* Quick Complete Button for Physicians */}
+                          {(user?.role === "physician" || user?.role === "doctor") && 
+                           (appointment.status === "checked_in" || appointment.status === "in_progress") && (
+                            <Button 
+                              variant="outline"
+                              size="sm" 
+                              className="text-green-600 hover:text-green-700 border-green-600 hover:border-green-700"
+                              onClick={() => {
+                                updateStatusMutation.mutate({
+                                  appointmentId: appointment.id,
+                                  status: "completed",
+                                  notes: "Consultation completed by physician"
+                                });
+                              }}
+                              disabled={updateStatusMutation.isPending}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Mark Completed
+                            </Button>
+                          )}
+                        </div>
                       )}
                       <Button 
                         variant="ghost" 
