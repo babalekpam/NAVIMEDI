@@ -180,12 +180,14 @@ export default function Billing() {
       const selectedInsurance = patientInsurance.find(pi => pi.id === patientInsuranceId);
       if (!selectedInsurance) throw new Error("Patient insurance not found");
 
-      const response = await apiRequest("POST", "/api/calculate-pricing", {
-        servicePriceId,
-        insuranceProviderId: selectedInsurance.insuranceProviderId,
-        patientInsuranceId
+      return await apiRequest("/api/calculate-pricing", {
+        method: "POST",
+        body: {
+          servicePriceId,
+          insuranceProviderId: selectedInsurance.insuranceProviderId,
+          patientInsuranceId
+        }
       });
-      return response.json();
     },
     onSuccess: (data) => {
       setCalculatedPricing(data);
@@ -203,14 +205,10 @@ export default function Billing() {
     mutationFn: async (claimData: any) => {
       console.log("Creating claim with data:", claimData);
       try {
-        const response = await apiRequest("POST", "/api/insurance-claims", claimData);
-        console.log("Response status:", response.status);
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Error response:", errorText);
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-        const result = await response.json();
+        const result = await apiRequest("/api/insurance-claims", {
+          method: "POST",
+          body: claimData
+        });
         console.log("Success result:", result);
         return result;
       } catch (error) {
@@ -243,18 +241,16 @@ export default function Billing() {
 
         console.log("Auto-generating receipt with data:", receiptData);
         
-        const receiptResponse = await apiRequest("POST", "/api/receipts", receiptData);
-        if (receiptResponse.ok) {
-          const receipt = await receiptResponse.json();
-          console.log("Receipt auto-generated:", receipt);
-          
-          toast({
-            title: "Claim Created & Receipt Generated",
-            description: `Insurance claim created successfully. Patient receipt generated for copay amount: $${patientCopay.toFixed(2)}`,
-          });
-        } else {
-          throw new Error("Failed to generate receipt");
-        }
+        const receipt = await apiRequest("/api/receipts", {
+          method: "POST",
+          body: receiptData
+        });
+        console.log("Receipt auto-generated:", receipt);
+        
+        toast({
+          title: "Claim Created & Receipt Generated",
+          description: `Insurance claim created successfully. Patient receipt generated for copay amount: $${patientCopay.toFixed(2)}`,
+        });
       } catch (receiptError) {
         console.error("Receipt generation failed:", receiptError);
         toast({
@@ -327,11 +323,13 @@ export default function Billing() {
 
   const submitClaimMutation = useMutation({
     mutationFn: async (claimId: string) => {
-      const response = await apiRequest("PATCH", `/api/insurance-claims/${claimId}`, {
-        status: 'submitted',
-        submittedDate: new Date().toISOString()
+      return await apiRequest(`/api/insurance-claims/${claimId}`, {
+        method: "PATCH",
+        body: {
+          status: 'submitted',
+          submittedDate: new Date().toISOString()
+        }
       });
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/insurance-claims"] });
@@ -1023,7 +1021,7 @@ export default function Billing() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => {
                               // Copy claim details to clipboard
-                              const claimText = `Claim: ${claim.claimNumber}\nPatient: ${getPatientName(claim.patientId)}\nTotal Amount: $${claim.totalAmount}\nStatus: ${claim.status}\nSubmitted: ${new Date(claim.createdAt).toLocaleDateString()}`;
+                              const claimText = `Claim: ${claim.claimNumber}\nPatient: ${getPatientName(claim.patientId)}\nTotal Amount: $${claim.totalAmount}\nStatus: ${claim.status}\nSubmitted: ${claim.createdAt ? new Date(claim.createdAt).toLocaleDateString() : 'N/A'}`;
                               navigator.clipboard.writeText(claimText);
                             }}>
                               <Copy className="h-4 w-4 mr-2" />
