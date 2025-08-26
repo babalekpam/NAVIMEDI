@@ -363,12 +363,71 @@ export const sessions = pgTable(
   }),
 );
 
+// Countries/Regions table for global medical code isolation
+export const countries = pgTable("countries", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: varchar("code", { length: 3 }).unique().notNull(), // ISO 3166-1 alpha-3 (USA, CAN, GBR, DEU, etc.)
+  name: varchar("name", { length: 255 }).notNull(), // United States, Canada, United Kingdom, Germany
+  region: varchar("region", { length: 100 }), // North America, Europe, Asia-Pacific
+  isActive: boolean("is_active").default(true).notNull(),
+  
+  // Medical coding standards used in this country
+  cptCodeSystem: varchar("cpt_code_system", { length: 50 }).default('CPT-4'), // CPT-4, SNOMED-CT, etc.
+  icd10CodeSystem: varchar("icd10_code_system", { length: 50 }).default('ICD-10'), // ICD-10, ICD-11, etc.
+  pharmaceuticalCodeSystem: varchar("pharmaceutical_code_system", { length: 50 }).default('NDC'), // NDC, ATC, DIN, etc.
+  
+  // Currency and formatting
+  currencyCode: varchar("currency_code", { length: 3 }).default('USD'), // USD, CAD, EUR, GBP
+  dateFormat: varchar("date_format", { length: 20 }).default('MM/DD/YYYY'),
+  timeZone: varchar("time_zone", { length: 50 }).default('America/New_York'),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Country-specific medical codes (CPT codes)
+export const countryMedicalCodes = pgTable("country_medical_codes", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  countryId: uuid("country_id").references(() => countries.id).notNull(),
+  codeType: varchar("code_type", { length: 20 }).notNull(), // 'CPT', 'ICD10', 'PHARMACEUTICAL'
+  code: varchar("code", { length: 50 }).notNull(),
+  description: text("description").notNull(),
+  category: varchar("category", { length: 100 }), // Specialty or category
+  amount: decimal("amount", { precision: 10, scale: 2 }), // Standard pricing if applicable
+  isActive: boolean("is_active").default(true).notNull(),
+  
+  // Source tracking
+  source: varchar("source", { length: 50 }), // 'manual', 'csv_upload', 'api_import'
+  uploadedBy: uuid("uploaded_by"), // User who added this code
+  uploadedAt: timestamp("uploaded_at").default(sql`CURRENT_TIMESTAMP`),
+  
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+// Medical code uploads tracking
+export const medicalCodeUploads = pgTable("medical_code_uploads", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  countryId: uuid("country_id").references(() => countries.id).notNull(),
+  fileName: varchar("file_name", { length: 255 }).notNull(),
+  fileSize: integer("file_size"), // in bytes
+  recordsProcessed: integer("records_processed").default(0),
+  recordsImported: integer("records_imported").default(0),
+  recordsSkipped: integer("records_skipped").default(0),
+  errors: jsonb("errors").default('[]'), // Array of error messages
+  status: varchar("status", { length: 20 }).default('processing'), // processing, completed, failed
+  uploadedBy: uuid("uploaded_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  completedAt: timestamp("completed_at")
+});
+
 // Core Tables
 export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   type: tenantTypeEnum("type").notNull(),
   subdomain: text("subdomain").unique().notNull(),
+  countryId: uuid("country_id").references(() => countries.id), // Country association
   settings: jsonb("settings").default('{}'),
   isActive: boolean("is_active").default(true),
   // Multi-tenant relationships
@@ -1994,6 +2053,10 @@ export const departmentsRelations = relations(departments, ({ one }) => ({
 
 // Relations
 export const tenantsRelations = relations(tenants, ({ one, many }) => ({
+  country: one(countries, {
+    fields: [tenants.countryId],
+    references: [countries.id]
+  }),
   users: many(users),
   patients: many(patients),
   appointments: many(appointments),
@@ -3653,6 +3716,35 @@ export const adInquiriesRelations = relations(adInquiries, ({ one }) => ({
   })
 }));
 
+// Country and Medical Codes Relations
+export const countriesRelations = relations(countries, ({ many }) => ({
+  tenants: many(tenants),
+  medicalCodes: many(countryMedicalCodes),
+  codeUploads: many(medicalCodeUploads)
+}));
+
+export const countryMedicalCodesRelations = relations(countryMedicalCodes, ({ one }) => ({
+  country: one(countries, {
+    fields: [countryMedicalCodes.countryId],
+    references: [countries.id]
+  }),
+  uploadedByUser: one(users, {
+    fields: [countryMedicalCodes.uploadedBy],
+    references: [users.id]
+  })
+}));
+
+export const medicalCodeUploadsRelations = relations(medicalCodeUploads, ({ one }) => ({
+  country: one(countries, {
+    fields: [medicalCodeUploads.countryId],
+    references: [countries.id]
+  }),
+  uploadedByUser: one(users, {
+    fields: [medicalCodeUploads.uploadedBy],
+    references: [users.id]
+  })
+}));
+
 // Advertisement Schema and Types
 export const insertAdvertisementSchema = createInsertSchema(advertisements).omit({
   id: true,
@@ -3679,6 +3771,41 @@ export const insertAdInquirySchema = createInsertSchema(adInquiries).omit({
   createdAt: true,
   updatedAt: true
 });
+
+// Country and Medical Codes Insert Schemas
+export const insertCountrySchema = createInsertSchema(countries).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertCountryMedicalCodeSchema = createInsertSchema(countryMedicalCodes).omit({
+  id: true,
+  uploadedAt: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertMedicalCodeUploadSchema = createInsertSchema(medicalCodeUploads).omit({
+  id: true,
+  recordsProcessed: true,
+  recordsImported: true,
+  recordsSkipped: true,
+  errors: true,
+  status: true,
+  createdAt: true,
+  completedAt: true
+});
+
+// Types for new tables
+export type Country = typeof countries.$inferSelect;
+export type InsertCountry = z.infer<typeof insertCountrySchema>;
+
+export type CountryMedicalCode = typeof countryMedicalCodes.$inferSelect;
+export type InsertCountryMedicalCode = z.infer<typeof insertCountryMedicalCodeSchema>;
+
+export type MedicalCodeUpload = typeof medicalCodeUploads.$inferSelect;
+export type InsertMedicalCodeUpload = z.infer<typeof insertMedicalCodeUploadSchema>;
 
 // Medical Suppliers Insert Schema
 export const insertMedicalSupplierSchema = createInsertSchema(medicalSuppliers).omit({

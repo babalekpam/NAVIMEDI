@@ -53,6 +53,7 @@ import {
   Database,
   Monitor,
   Wifi,
+  Clipboard,
   Bell,
   Search,
   Filter,
@@ -72,7 +73,6 @@ import {
   BarChart2,
   PieChart,
   LineChart,
-  Clipboard,
   FileBarChart,
   Factory,
   Leaf,
@@ -144,6 +144,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "super-admin-dashboard", label: t("dashboard"), icon: BarChart3, path: "/super-admin-dashboard", roles: ["super_admin"] },
   { id: "supplier-management", label: "Supplier Management", icon: Building2, path: "/supplier-management", roles: ["super_admin"] },
   { id: "counter-reset", label: "Counter Reset", icon: RotateCcw, path: "/admin/counter-reset", roles: ["super_admin"] },
+  { id: "medical-codes", label: "Medical Codes", icon: Clipboard, path: "/admin-medical-codes", roles: ["super_admin"] },
   { id: "advertisements", label: "Advertisement Marketplace", icon: Megaphone, path: "/advertisements", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director", "pharmacist", "lab_technician", "super_admin"] },
   { id: "register-patient", label: t("register-patient"), icon: UserPlus, path: "/patients?action=register", roles: ["receptionist", "tenant_admin", "director"] },
   { id: "book-appointment", label: t("book-appointment"), icon: CalendarPlus, path: "/appointments?action=book", roles: ["receptionist", "tenant_admin", "director"] },
@@ -217,7 +218,7 @@ export const Sidebar = () => {
   // For super admin, show platform management and enterprise features
   if (user.role === "super_admin") {
     const platformItems = filteredItems.filter(item => 
-      ["super-admin-dashboard", "tenant-management", "client-management", "user-roles", "audit-logs", "reports", "white-label-settings", "offline-mode", "advertisements"].includes(item.id)
+      ["super-admin-dashboard", "tenant-management", "client-management", "user-roles", "audit-logs", "reports", "white-label-settings", "offline-mode", "advertisements", "medical-codes"].includes(item.id)
     );
     
     return (

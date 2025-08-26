@@ -60,6 +60,9 @@ import {
   quoteRequests,
   currencies,
   exchangeRates,
+  countries,
+  countryMedicalCodes,
+  medicalCodeUploads,
   type Advertisement,
   type InsertAdvertisement,
   type AdView,
@@ -5705,6 +5708,120 @@ export class DatabaseStorage implements IStorage {
       
       return 'USD';
     }
+  }
+  // ===== MEDICAL CODES MANAGEMENT METHODS =====
+  
+  // Countries
+  async getAllCountries(): Promise<any[]> {
+    const result = await db.select().from(countries).where(eq(countries.isActive, true));
+    return result;
+  }
+
+  async createCountry(countryData: any): Promise<any> {
+    const [country] = await db.insert(countries).values(countryData).returning();
+    return country;
+  }
+
+  async updateCountry(id: string, countryData: any): Promise<any> {
+    const [country] = await db.update(countries)
+      .set({ ...countryData, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(countries.id, id))
+      .returning();
+    return country;
+  }
+
+  async getCountryById(id: string): Promise<any> {
+    const [country] = await db.select().from(countries).where(eq(countries.id, id));
+    return country;
+  }
+
+  // Medical Codes
+  async getMedicalCodes(filters: { countryId?: string; codeType?: string; search?: string }): Promise<any[]> {
+    let query = db.select().from(countryMedicalCodes).where(eq(countryMedicalCodes.isActive, true));
+
+    if (filters.countryId) {
+      query = query.where(eq(countryMedicalCodes.countryId, filters.countryId));
+    }
+
+    if (filters.codeType) {
+      query = query.where(eq(countryMedicalCodes.codeType, filters.codeType));
+    }
+
+    if (filters.search) {
+      query = query.where(
+        or(
+          ilike(countryMedicalCodes.code, `%${filters.search}%`),
+          ilike(countryMedicalCodes.description, `%${filters.search}%`)
+        )
+      );
+    }
+
+    const result = await query.orderBy(countryMedicalCodes.code);
+    return result;
+  }
+
+  async createMedicalCode(codeData: any): Promise<any> {
+    const [medicalCode] = await db.insert(countryMedicalCodes).values(codeData).returning();
+    return medicalCode;
+  }
+
+  async updateMedicalCode(id: string, codeData: any): Promise<any> {
+    const [medicalCode] = await db.update(countryMedicalCodes)
+      .set({ ...codeData, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(countryMedicalCodes.id, id))
+      .returning();
+    return medicalCode;
+  }
+
+  async deleteMedicalCode(id: string): Promise<void> {
+    await db.update(countryMedicalCodes)
+      .set({ isActive: false, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(countryMedicalCodes.id, id));
+  }
+
+  async getMedicalCodesByCountry(countryId: string, filters: { codeType?: string; search?: string }): Promise<any[]> {
+    let query = db.select().from(countryMedicalCodes)
+      .where(and(
+        eq(countryMedicalCodes.countryId, countryId),
+        eq(countryMedicalCodes.isActive, true)
+      ));
+
+    if (filters.codeType) {
+      query = query.where(eq(countryMedicalCodes.codeType, filters.codeType));
+    }
+
+    if (filters.search) {
+      query = query.where(
+        or(
+          ilike(countryMedicalCodes.code, `%${filters.search}%`),
+          ilike(countryMedicalCodes.description, `%${filters.search}%`)
+        )
+      );
+    }
+
+    const result = await query.orderBy(countryMedicalCodes.code).limit(50);
+    return result;
+  }
+
+  // Medical Code Uploads
+  async createMedicalCodeUpload(uploadData: any): Promise<any> {
+    const [upload] = await db.insert(medicalCodeUploads).values(uploadData).returning();
+    return upload;
+  }
+
+  async getMedicalCodeUploads(): Promise<any[]> {
+    const result = await db.select().from(medicalCodeUploads)
+      .orderBy(desc(medicalCodeUploads.createdAt))
+      .limit(50);
+    return result;
+  }
+
+  async updateMedicalCodeUpload(id: string, updateData: any): Promise<any> {
+    const [upload] = await db.update(medicalCodeUploads)
+      .set(updateData)
+      .where(eq(medicalCodeUploads.id, id))
+      .returning();
+    return upload;
   }
 }
 

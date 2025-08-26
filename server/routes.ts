@@ -7215,6 +7215,191 @@ Report ID: ${report.id}
     }
   });
 
+  // ===== ADMIN MEDICAL CODES MANAGEMENT API =====
+  
+  // Countries CRUD
+  app.get('/api/admin/countries', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const result = await storage.getAllCountries();
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching countries:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/admin/countries', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      // Basic validation
+      const countryData = {
+        code: req.body.code?.toUpperCase(),
+        name: req.body.name,
+        region: req.body.region || null,
+        cptCodeSystem: req.body.cptCodeSystem || 'CPT-4',
+        icd10CodeSystem: req.body.icd10CodeSystem || 'ICD-10',
+        pharmaceuticalCodeSystem: req.body.pharmaceuticalCodeSystem || 'NDC',
+        currencyCode: req.body.currencyCode || 'USD',
+        dateFormat: req.body.dateFormat || 'MM/DD/YYYY',
+        timeZone: req.body.timeZone || 'America/New_York'
+      };
+
+      const country = await storage.createCountry(countryData);
+      res.status(201).json(country);
+    } catch (error) {
+      console.error('Error creating country:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.put('/api/admin/countries/:id', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const countryData = {
+        code: req.body.code?.toUpperCase(),
+        name: req.body.name,
+        region: req.body.region || null,
+        cptCodeSystem: req.body.cptCodeSystem,
+        icd10CodeSystem: req.body.icd10CodeSystem,
+        pharmaceuticalCodeSystem: req.body.pharmaceuticalCodeSystem,
+        currencyCode: req.body.currencyCode,
+        dateFormat: req.body.dateFormat,
+        timeZone: req.body.timeZone
+      };
+
+      const country = await storage.updateCountry(req.params.id, countryData);
+      res.json(country);
+    } catch (error) {
+      console.error('Error updating country:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Medical Codes CRUD
+  app.get('/api/admin/medical-codes', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const filters = {
+        countryId: req.query.countryId as string,
+        codeType: req.query.codeType as string,
+        search: req.query.search as string
+      };
+      
+      const codes = await storage.getMedicalCodes(filters);
+      res.json(codes);
+    } catch (error) {
+      console.error('Error fetching medical codes:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/admin/medical-codes', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const codeData = {
+        countryId: req.body.countryId,
+        codeType: req.body.codeType,
+        code: req.body.code,
+        description: req.body.description,
+        category: req.body.category || null,
+        amount: req.body.amount || null,
+        source: 'manual',
+        uploadedBy: req.user.id
+      };
+
+      const medicalCode = await storage.createMedicalCode(codeData);
+      res.status(201).json(medicalCode);
+    } catch (error) {
+      console.error('Error creating medical code:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.put('/api/admin/medical-codes/:id', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const codeData = {
+        countryId: req.body.countryId,
+        codeType: req.body.codeType,
+        code: req.body.code,
+        description: req.body.description,
+        category: req.body.category || null,
+        amount: req.body.amount || null
+      };
+
+      const medicalCode = await storage.updateMedicalCode(req.params.id, codeData);
+      res.json(medicalCode);
+    } catch (error) {
+      console.error('Error updating medical code:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.delete('/api/admin/medical-codes/:id', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      await storage.deleteMedicalCode(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting medical code:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // CSV Upload for Medical Codes
+  app.post('/api/admin/medical-codes/upload', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      // Note: In a real implementation, you'd use multer or similar for file handling
+      // For now, we'll simulate the upload process
+      
+      const uploadData = {
+        countryId: req.body.countryId,
+        fileName: req.body.fileName || 'manual_upload.csv',
+        uploadedBy: req.user.id
+      };
+
+      const upload = await storage.createMedicalCodeUpload(uploadData);
+      
+      // Process the CSV file here (simulate for now)
+      // In reality, you'd parse the CSV and import the codes
+      
+      res.status(201).json({ 
+        message: 'Upload started successfully',
+        uploadId: upload.id 
+      });
+    } catch (error) {
+      console.error('Error uploading medical codes:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Upload History
+  app.get('/api/admin/medical-code-uploads', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const uploads = await storage.getMedicalCodeUploads();
+      res.json(uploads);
+    } catch (error) {
+      console.error('Error fetching upload history:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Country-specific medical code lookup (for tenants)
+  app.get('/api/medical-codes/lookup', authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { codeType, search } = req.query;
+      const tenant = req.tenant;
+      
+      if (!tenant.countryId) {
+        return res.status(400).json({ error: 'Tenant country not configured' });
+      }
+
+      const codes = await storage.getMedicalCodesByCountry(tenant.countryId, {
+        codeType: codeType as string,
+        search: search as string
+      });
+      
+      res.json(codes);
+    } catch (error) {
+      console.error('Error looking up medical codes:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
