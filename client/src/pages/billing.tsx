@@ -93,8 +93,8 @@ export default function Billing() {
             ...prev,
             totalAmount: latestPrescription.total_cost?.toString() || latestPrescription.totalCost?.toString() || prev.totalAmount,
             notes: `${latestPrescription.medicationName || latestPrescription.medication_name} - ${latestPrescription.dosage} (${latestPrescription.quantity} units, prescribed by ${latestPrescription.providerName || latestPrescription.provider_name || 'Hospital'})`,
-            procedureCodes: latestPrescription.ndc || "",
-            diagnosisCodes: latestPrescription.diagnosisCodes || latestPrescription.diagnosis_codes || ""
+            procedureCodes: latestPrescription.ndc_code || latestPrescription.ndc || "",
+            diagnosisCodes: latestPrescription.diagnosis_codes || latestPrescription.diagnosisCodes || ""
           }));
           
           console.log("[PRESCRIPTION-DATA] Auto-populated prescription data:", latestPrescription);
@@ -124,10 +124,6 @@ export default function Billing() {
     gcTime: 0, // Don't cache the results (gcTime is the new name for cacheTime in TanStack Query v5)
   });
 
-  // Debug patients data
-  console.log('[PATIENTS-DEBUG] Patients data:', patients);
-  console.log('[PATIENTS-DEBUG] Loading patients:', isLoadingPatients);
-  console.log('[PATIENTS-DEBUG] Patient count:', patients.length);
 
   const { data: servicePrices = [] } = useQuery<ServicePrice[]>({
     queryKey: ["/api/service-prices"],
