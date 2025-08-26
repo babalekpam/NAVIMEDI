@@ -1293,6 +1293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Patient management routes - require tenant context
   app.use("/api/patients", requireTenant);
+  app.use("/api/billing/patients", requireTenant);
 
   app.get("/api/patients", async (req, res) => {
     try {
@@ -1344,6 +1345,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get patients error:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Billing Patients endpoint - for billing and claim creation purposes
+  app.get("/api/billing/patients", async (req, res) => {
+    try {
+      const tenantId = req.tenant!.id;
+      const userRole = req.user!.role;
+      const userId = req.user!.id;
+      
+      console.log(`[BILLING PATIENTS] Fetching patients for billing - ${userRole} (${userId}) in tenant: ${tenantId}`);
+      
+      let patients;
+      
+      // Role-based access control for billing - similar to regular patients but focused on billing needs
+      if (userRole === "physician") {
+        // Doctors can bill for their assigned patients
+        patients = await storage.getPatientsByPhysician(userId, tenantId);
+      } else if (["billing_staff", "pharmacist", "receptionist", "nurse", "tenant_admin", "director"].includes(userRole)) {
+        // Billing staff, pharmacists, reception, nurses, and admins see all patients for billing purposes
+        patients = await storage.getPatientsByTenant(tenantId);
+      } else {
+        return res.status(403).json({ message: "Access denied: Insufficient permissions to access billing patient data" });
+      }
+      
+      // Return patient data formatted for billing purposes
+      const billingPatients = patients.map(patient => ({
+        id: patient.id,
+        firstName: patient.firstName,
+        lastName: patient.lastName,
+        mrn: patient.mrn,
+        tenantPatientId: patient.tenantPatientId,
+        dateOfBirth: patient.dateOfBirth,
+        phone: patient.phone,
+        email: patient.email,
+        isActive: patient.isActive
+      }));
+      
+      console.log(`[BILLING PATIENTS] Successfully fetched ${billingPatients.length} patients for billing purposes`);
+      res.json(billingPatients);
+    } catch (error) {
+      console.error("Get billing patients error:", error);
+      res.status(500).json({ message: "Failed to fetch billing patients" });
     }
   });
 
