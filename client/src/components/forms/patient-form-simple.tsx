@@ -12,16 +12,18 @@ interface PatientFormProps {
   isLoading?: boolean;
 }
 
-// Patient registration schema with required insurance and doctor assignment
-const simplePatientSchema = z.object({
+// Patient registration schema with required insurance and conditional doctor assignment
+const createSimplePatientSchema = (hasMultipleDoctors: boolean) => z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
   gender: z.string().min(1, "Gender is required"),
   phone: z.string().min(10, "Phone number is required (10+ digits)"),
   email: z.string().email("Valid email is required"),
-  // Doctor Assignment (required)
-  primaryPhysicianId: z.string().min(1, "Assigned doctor is required"),
+  // Doctor Assignment (required only when multiple doctors available)
+  primaryPhysicianId: hasMultipleDoctors 
+    ? z.string().min(1, "Please select a doctor for this patient")
+    : z.string().optional(),
   // Required Insurance Information
   insuranceProvider: z.string().min(1, "Insurance provider is required"),
   policyNumber: z.string().min(1, "Policy number is required"),
@@ -44,6 +46,13 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
     enabled: true,
   });
 
+  // Determine if there are multiple doctors
+  const hasMultipleDoctors = availablePhysicians.length > 1;
+  const singleDoctor = availablePhysicians.length === 1 ? availablePhysicians[0] : null;
+
+  // Create schema based on number of doctors
+  const simplePatientSchema = createSimplePatientSchema(hasMultipleDoctors);
+
   const form = useForm({
     resolver: zodResolver(simplePatientSchema),
     mode: "onChange",
@@ -54,7 +63,7 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
       gender: "",
       phone: "",
       email: "",
-      primaryPhysicianId: "",
+      primaryPhysicianId: singleDoctor?.id || "", // Auto-assign if only one doctor
       insuranceProvider: "",
       policyNumber: "",
       groupNumber: "",
@@ -186,30 +195,60 @@ export const PatientForm = ({ onSubmit, isLoading = false }: PatientFormProps) =
         {/* Doctor Assignment */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-800">Doctor Assignment</h3>
-          <FormField
-            control={form.control}
-            name="primaryPhysicianId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Assigned Doctor *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a doctor for this patient" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {availablePhysicians.map((physician: any) => (
-                      <SelectItem key={physician.id} value={physician.id}>
-                        Dr. {physician.firstName} {physician.lastName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          
+          {/* Show different UI based on number of doctors */}
+          {singleDoctor ? (
+            // Single doctor - auto-assigned (read-only display)
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <div>
+                  <p className="text-sm font-medium text-blue-800">
+                    Automatically assigned to:
+                  </p>
+                  <p className="text-lg font-semibold text-blue-900">
+                    Dr. {singleDoctor.firstName} {singleDoctor.lastName}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : hasMultipleDoctors ? (
+            // Multiple doctors - show selection dropdown
+            <FormField
+              control={form.control}
+              name="primaryPhysicianId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assigned Doctor *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a doctor for this patient" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {availablePhysicians.map((physician: any) => (
+                        <SelectItem key={physician.id} value={physician.id}>
+                          Dr. {physician.firstName} {physician.lastName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ) : (
+            // No doctors available - show warning
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                <p className="text-sm font-medium text-amber-800">
+                  No physicians available for assignment. Please contact the administrator.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Address Information */}
