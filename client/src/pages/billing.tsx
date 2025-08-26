@@ -585,7 +585,7 @@ export default function Billing() {
                       </SelectTrigger>
                       <SelectContent>
                         {isLoadingPatients ? (
-                          <SelectItem value="" disabled>Loading patients...</SelectItem>
+                          <SelectItem value="loading" disabled>Loading patients...</SelectItem>
                         ) : patients.length > 0 ? (
                           patients.map((patient) => (
                             <SelectItem key={patient.id} value={patient.id}>
@@ -593,7 +593,7 @@ export default function Billing() {
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="" disabled>No patients found</SelectItem>
+                          <SelectItem value="no-patients" disabled>No patients found</SelectItem>
                         )}
                       </SelectContent>
                     </Select>
