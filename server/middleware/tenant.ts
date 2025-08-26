@@ -5,13 +5,9 @@ import { storage } from '../storage';
 
 export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    console.log("[TENANT DEBUG] Path:", req.path, "User from auth:", !!req.user);
-    
     // If user is already authenticated by previous middleware, load full tenant data
     if (req.user && req.user.tenantId) {
       const tenant = await storage.getTenant(req.user.tenantId);
-      console.log("[TENANT DEBUG] Using authenticated user tenant:", req.user.tenantId);
-      console.log("[TENANT DEBUG] Loaded tenant from DB (authenticated user):", tenant);
       req.tenant = tenant;
       req.tenantId = req.user.tenantId;
       return next();
@@ -21,7 +17,6 @@ export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response,
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log("[TENANT DEBUG] No bearer token");
       return res.status(401).json({ message: 'Authorization token required' });
     }
     
@@ -44,7 +39,6 @@ export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response,
       
       // Load full tenant information from database
       const tenant = await storage.getTenant(decoded.tenantId);
-      console.log("[TENANT DEBUG] Loaded tenant from DB:", tenant);
       req.tenant = tenant;
 
       // SECURITY: Super admin strict isolation - platform management only

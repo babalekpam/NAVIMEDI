@@ -86,25 +86,16 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
 
 export const requireRole = (allowedRoles: string[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    console.log("[ROLE CHECK] Path:", req.path, "User:", req.user?.role, "Tenant type:", req.tenant?.type, "Full tenant:", JSON.stringify(req.tenant));
-    
     if (!req.user) {
-      console.log("[ROLE CHECK] No user found - authentication required");
       return res.status(401).json({ message: "Authentication required" });
     }
 
     // Special check: Receptionists are only allowed in hospital/clinic tenants
-    // Since tenant data isn't properly loaded yet, skip this check for now
-    // TODO: Fix tenant data loading in middleware chain
     if (req.user.role === "receptionist" && req.tenant?.type && req.tenant?.type !== "hospital" && req.tenant?.type !== "clinic") {
-      console.log("[ROLE CHECK] Receptionist blocked - tenant type:", req.tenant?.type, "tenant name:", req.tenant?.name);
       return res.status(403).json({ message: "Receptionist role is only available for hospitals and clinics" });
     }
 
-    console.log("[ROLE CHECK] User role:", req.user.role, "Allowed roles:", allowedRoles);
-
     if (!allowedRoles.includes(req.user.role)) {
-      console.log("[ROLE CHECK] Permission DENIED for role:", req.user.role, "Required:", allowedRoles);
       return res.status(403).json({ 
         message: "Insufficient permissions",
         required: allowedRoles,
@@ -112,7 +103,6 @@ export const requireRole = (allowedRoles: string[]) => {
       });
     }
 
-    console.log("[ROLE CHECK] Permission GRANTED for role:", req.user.role);
     next();
   };
 };

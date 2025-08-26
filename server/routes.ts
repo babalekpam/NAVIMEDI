@@ -1355,7 +1355,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRole = req.user!.role;
       const userId = req.user!.id;
       
-      console.log(`[BILLING PATIENTS] Fetching patients for billing - ${userRole} (${userId}) in tenant: ${tenantId}`);
       
       let patients;
       
@@ -1398,7 +1397,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { tenantPatientId } = req.params;
       const tenantId = req.tenant!.id;
       
-      console.log(`[PATIENT LOOKUP] Searching for patient ID: ${tenantPatientId} in tenant: ${tenantId}`);
       
       // Use the new cross-tenant patient lookup
       const patient = await storage.findSharedPatient(tenantPatientId, tenantId);
@@ -1407,7 +1405,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Patient not found or not accessible" });
       }
       
-      console.log(`[PATIENT LOOKUP] Found patient: ${patient.firstName} ${patient.lastName} (${patient.tenantPatientId})`);
       res.json(patient);
     } catch (error: any) {
       console.error("Error looking up patient:", error);
@@ -1422,7 +1419,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRole = req.user!.role;
       const userId = req.user!.id;
       
-      console.log(`[MEDICAL RECORDS] Fetching patient list for ${userRole} (${userId}) in tenant: ${tenantId}`);
       
       let patients;
       
@@ -1592,7 +1588,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             patientData.preferredPharmacyId = req.body.preferredPharmacyId;
           }
         } catch (error) {
-          console.log('Pharmacy validation failed, setting to null:', error.message);
+          // Pharmacy validation failed, setting to null
           // If pharmacy doesn't exist, just set to null (don't fail registration)
         }
       }
@@ -1741,7 +1737,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/appointments", authenticateToken, requireTenant, async (req, res) => {
     try {
-      console.log("[DEBUG] Creating appointment - User:", req.user?.role, "User ID:", req.user?.userId, "Tenant:", req.tenant?.id);
       console.log("[DEBUG] Request body:", req.body);
       
       // ROLE-BASED APPOINTMENT SCHEDULING RESTRICTIONS
