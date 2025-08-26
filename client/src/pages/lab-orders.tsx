@@ -118,19 +118,52 @@ export default function LabOrders() {
       
       console.log("Sending lab order data to API:", data);
       
-      // Send the complete data structure to the backend
-      const response = await apiRequest("POST", "/api/lab-orders", data);
-      return response.json();
+      // Handle multiple orders - send each separately
+      if (data.orders && Array.isArray(data.orders)) {
+        const results = [];
+        for (const order of data.orders) {
+          const labOrderData = {
+            patientId: data.patientId,
+            labTenantId: data.laboratoryId, // Map laboratoryId to labTenantId
+            testName: order.testName,
+            testCode: order.testCode || undefined,
+            instructions: order.instructions || data.generalInstructions || undefined,
+            priority: order.priority || 'routine',
+            status: 'ordered',
+            orderedDate: new Date().toISOString(),
+          };
+          
+          console.log("Sending individual lab order:", labOrderData);
+          const response = await apiRequest("POST", "/api/lab-orders", labOrderData);
+          const result = await response.json();
+          results.push(result);
+        }
+        return results;
+      } else {
+        // Single order fallback
+        const response = await apiRequest("POST", "/api/lab-orders", data);
+        return response.json();
+      }
     },
     onSuccess: (result) => {
-      console.log("Lab order created successfully:", result);
+      console.log("Lab order(s) created successfully:", result);
       queryClient.invalidateQueries({ queryKey: ["/api/lab-orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/lab-order-assignments"] });
       setIsFormOpen(false);
+      toast({
+        title: "Success",
+        description: Array.isArray(result) 
+          ? `${result.length} lab order(s) created successfully` 
+          : "Lab order created successfully",
+      });
     },
     onError: (error: any) => {
       console.error("Lab order creation failed:", error);
-      alert(`Lab order failed: ${error.message || 'Unknown error'}`);
+      toast({
+        title: "Error",
+        description: `Lab order failed: ${error.message || 'Unknown error'}`,
+        variant: "destructive",
+      });
     }
   });
 
