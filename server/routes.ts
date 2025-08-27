@@ -2571,43 +2571,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(oversightData);
       }
       
-      // Get prescriptions sent TO this pharmacy (pharmacyTenantId = this pharmacy's tenant)
-      const prescriptions = await storage.getPrescriptionsByPharmacyTenant(pharmacyTenantId);
-      console.log("[PHARMACY API] ✅ Found prescriptions:", prescriptions.length);
-      console.log("[PHARMACY API] ✅ Prescriptions data:", prescriptions);
+      // Get prescriptions with patient names, doctor names, and insurance data
+      const prescriptions = await storage.getPrescriptionsByPharmacy(pharmacyTenantId);
+      console.log("[PHARMACY API] ✅ Found prescriptions with names and insurance:", prescriptions.length);
+      console.log("[PHARMACY API] ✅ Sample prescription data:", prescriptions[0]);
       
-      // Transform prescriptions to match frontend interface
-      const transformedPrescriptions = prescriptions.map(p => ({
-        id: p.id,
-        patientName: `Patient ${p.id.slice(0, 8)}`, // We'll get patient names separately
-        medication: p.medicationName || p.medication_name || 'Unknown',
-        status: p.status,
-        waitTime: 0,
-        priority: 'normal' as const,
-        insuranceStatus: p.insuranceCopay ? 'approved' as const : 'pending' as const
-      }));
-      
-      // Transform to show hospital connection for independent pharmacy
-      const formattedPrescriptions = prescriptions.map(p => ({
-        id: p.id,
-        patientName: p.patientName || 'Patient Name',
-        medication: p.medicationName,
-        dosage: p.dosage,
-        frequency: p.frequency,
-        quantity: p.quantity,
-        status: p.status || 'new',
-        waitTime: Math.floor(Math.random() * 30),
-        priority: p.priority || 'normal',
-        insuranceStatus: p.insuranceStatus || 'pending',
-        sourceHospital: 'Metro General Hospital', // Hospital that routed this prescription
-        routedVia: 'NaviMED Platform',
-        pharmacyId: pharmacyTenantId,
-        prescribedDate: p.prescribedDate,
-        instructions: p.instructions
-      }));
-      
-      console.log("[PHARMACY API] Returning formatted prescriptions:", formattedPrescriptions.length);
-      res.json(formattedPrescriptions);
+      console.log("[PHARMACY API] 📋 Returning formatted prescriptions:", prescriptions.length);
+      res.json(prescriptions);
     } catch (error) {
       console.error("Get pharmacy prescriptions error:", error);
       res.status(500).json({ message: "Failed to fetch pharmacy prescriptions" });
