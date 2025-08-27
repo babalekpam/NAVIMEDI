@@ -1404,35 +1404,59 @@ export class DatabaseStorage implements IStorage {
   async getPrescriptionsByPharmacy(pharmacyTenantId: string): Promise<any[]> {
     console.log(`[PHARMACY API] 🔍 Getting prescriptions for pharmacy: ${pharmacyTenantId}`);
     
-    // Use direct SQL execution with proper parameter handling
-    const prescriptionsWithNames = await db.execute(sql`
+    // Get prescriptions first, then lookup patient and doctor names separately
+    const prescriptionsResult = await db.execute(sql`
       SELECT 
-        p.id,
-        p.medication_name,
-        p.dosage,
-        p.frequency,
-        p.quantity,
-        p.instructions,
-        p.status,
-        p.prescribed_date,
-        p.expiry_date,
-        p.pharmacy_tenant_id,
-        p.patient_id,
-        p.provider_id,
-        pat.first_name as patient_first_name,
-        pat.last_name as patient_last_name,
-        pat.mrn as patient_mrn,
-        pat.email as patient_email,
-        pat.phone as patient_phone,
-        u.first_name as provider_first_name,
-        u.last_name as provider_last_name,
-        u.role as provider_role
-      FROM prescriptions p
-      LEFT JOIN patients pat ON p.patient_id = pat.id
-      LEFT JOIN users u ON p.provider_id = u.id
-      WHERE p.pharmacy_tenant_id = ${pharmacyTenantId}::uuid
-      ORDER BY p.prescribed_date DESC
+        id,
+        medication_name,
+        dosage,
+        frequency,
+        quantity,
+        instructions,
+        status,
+        prescribed_date,
+        expiry_date,
+        pharmacy_tenant_id,
+        patient_id,
+        provider_id
+      FROM prescriptions 
+      WHERE pharmacy_tenant_id = ${pharmacyTenantId}::uuid
+      ORDER BY prescribed_date DESC
     `);
+    
+    const prescriptionsWithNames = [];
+    
+    // For each prescription, get patient and doctor details separately
+    for (const prescription of prescriptionsResult) {
+      // Get patient info
+      const patientResult = await db.execute(sql`
+        SELECT first_name, last_name, mrn, email, phone 
+        FROM patients 
+        WHERE id = ${prescription.patient_id}::uuid
+      `);
+      
+      // Get doctor info (users.id is varchar, so cast prescription.provider_id to text)
+      const doctorResult = await db.execute(sql`
+        SELECT first_name, last_name, role 
+        FROM users 
+        WHERE id = ${prescription.provider_id}::text
+      `);
+      
+      const patient = patientResult[0] || {};
+      const doctor = doctorResult[0] || {};
+      
+      prescriptionsWithNames.push({
+        ...prescription,
+        patient_first_name: patient.first_name,
+        patient_last_name: patient.last_name,
+        patient_mrn: patient.mrn,
+        patient_email: patient.email,
+        patient_phone: patient.phone,
+        provider_first_name: doctor.first_name,
+        provider_last_name: doctor.last_name,
+        provider_role: doctor.role
+      });
+    }
     
     console.log(`[PHARMACY API] ✅ Found ${prescriptionsWithNames.length} prescriptions with patient/doctor names`);
     
