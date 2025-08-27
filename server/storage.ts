@@ -1404,62 +1404,62 @@ export class DatabaseStorage implements IStorage {
   async getPrescriptionsByPharmacy(pharmacyTenantId: string): Promise<any[]> {
     console.log(`[PHARMACY API] 🔍 Getting prescriptions for pharmacy: ${pharmacyTenantId}`);
     
-    // First, get prescriptions with patient and doctor names (without insurance for now)
-    const prescriptionsWithNames = await db
-      .select({
-        id: prescriptions.id,
-        medicationName: prescriptions.medicationName,
-        dosage: prescriptions.dosage,
-        frequency: prescriptions.frequency,
-        quantity: prescriptions.quantity,
-        instructions: prescriptions.instructions,
-        status: prescriptions.status,
-        prescribedDate: prescriptions.prescribedDate,
-        expiryDate: prescriptions.expiryDate,
-        pharmacyTenantId: prescriptions.pharmacyTenantId,
-        patientId: prescriptions.patientId,
-        providerId: prescriptions.providerId,
-        // Patient information
-        patientFirstName: patients.firstName,
-        patientLastName: patients.lastName,
-        patientMrn: patients.mrn,
-        patientEmail: patients.email,
-        patientPhone: patients.phone,
-        // Provider/Doctor information
-        providerFirstName: users.firstName,
-        providerLastName: users.lastName,
-        providerRole: users.role
-      })
-      .from(prescriptions)
-      .leftJoin(patients, eq(prescriptions.patientId, patients.id))
-      .leftJoin(users, eq(prescriptions.providerId, users.id))
-      .where(eq(prescriptions.pharmacyTenantId, pharmacyTenantId))
-      .orderBy(desc(prescriptions.prescribedDate));
+    // Use raw SQL to avoid UUID type casting issues
+    const rawQuery = `
+      SELECT 
+        p.id,
+        p.medication_name,
+        p.dosage,
+        p.frequency,
+        p.quantity,
+        p.instructions,
+        p.status,
+        p.prescribed_date,
+        p.expiry_date,
+        p.pharmacy_tenant_id,
+        p.patient_id,
+        p.provider_id,
+        pat.first_name as patient_first_name,
+        pat.last_name as patient_last_name,
+        pat.mrn as patient_mrn,
+        pat.email as patient_email,
+        pat.phone as patient_phone,
+        u.first_name as provider_first_name,
+        u.last_name as provider_last_name,
+        u.role as provider_role
+      FROM prescriptions p
+      LEFT JOIN patients pat ON p.patient_id = pat.id
+      LEFT JOIN users u ON p.provider_id = u.id
+      WHERE p.pharmacy_tenant_id = $1::uuid
+      ORDER BY p.prescribed_date DESC
+    `;
+    
+    const prescriptionsWithNames = await db.execute(sql.raw(rawQuery, [pharmacyTenantId]));
     
     console.log(`[PHARMACY API] ✅ Found ${prescriptionsWithNames.length} prescriptions with patient/doctor names`);
     
     // Return formatted data with actual names
-    const formattedPrescriptions = prescriptionsWithNames.map(p => ({
+    const formattedPrescriptions = prescriptionsWithNames.map((p: any) => ({
       id: p.id,
-      patientName: p.patientFirstName && p.patientLastName ? 
-        `${p.patientFirstName} ${p.patientLastName}` : 
-        `Patient ${p.patientId}`,
-      patientMrn: p.patientMrn,
-      medication: p.medicationName,
+      patientName: p.patient_first_name && p.patient_last_name ? 
+        `${p.patient_first_name} ${p.patient_last_name}` : 
+        `Patient ${p.patient_id}`,
+      patientMrn: p.patient_mrn,
+      medication: p.medication_name,
       dosage: p.dosage,
       frequency: p.frequency,
       quantity: p.quantity,
       instructions: p.instructions,
-      prescribingDoctor: p.providerFirstName && p.providerLastName ? 
-        `Dr. ${p.providerFirstName} ${p.providerLastName}` : 
-        `Provider ${p.providerId}`,
-      doctorRole: p.providerRole,
+      prescribingDoctor: p.provider_first_name && p.provider_last_name ? 
+        `Dr. ${p.provider_first_name} ${p.provider_last_name}` : 
+        `Provider ${p.provider_id}`,
+      doctorRole: p.provider_role,
       status: p.status === 'prescribed' ? 'new' : p.status === 'dispensed' ? 'ready' : p.status,
-      prescribedDate: p.prescribedDate,
-      expiryDate: p.expiryDate,
+      prescribedDate: p.prescribed_date,
+      expiryDate: p.expiry_date,
       // Patient contact information
-      patientEmail: p.patientEmail,
-      patientPhone: p.patientPhone,
+      patientEmail: p.patient_email,
+      patientPhone: p.patient_phone,
       // Insurance information (we'll add this back separately)
       insuranceProvider: 'Pending Insurance Lookup',
       policyNumber: 'N/A',
