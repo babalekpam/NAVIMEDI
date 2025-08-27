@@ -1404,8 +1404,8 @@ export class DatabaseStorage implements IStorage {
   async getPrescriptionsByPharmacy(pharmacyTenantId: string): Promise<any[]> {
     console.log(`[PHARMACY API] 🔍 Getting prescriptions for pharmacy: ${pharmacyTenantId}`);
     
-    // Use raw SQL to avoid UUID type casting issues
-    const rawQuery = `
+    // Use direct SQL execution with proper parameter handling
+    const prescriptionsWithNames = await db.execute(sql`
       SELECT 
         p.id,
         p.medication_name,
@@ -1430,11 +1430,9 @@ export class DatabaseStorage implements IStorage {
       FROM prescriptions p
       LEFT JOIN patients pat ON p.patient_id = pat.id
       LEFT JOIN users u ON p.provider_id = u.id
-      WHERE p.pharmacy_tenant_id = $1::uuid
+      WHERE p.pharmacy_tenant_id = ${pharmacyTenantId}::uuid
       ORDER BY p.prescribed_date DESC
-    `;
-    
-    const prescriptionsWithNames = await db.execute(sql.raw(rawQuery, [pharmacyTenantId]));
+    `);
     
     console.log(`[PHARMACY API] ✅ Found ${prescriptionsWithNames.length} prescriptions with patient/doctor names`);
     
