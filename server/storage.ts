@@ -1404,7 +1404,7 @@ export class DatabaseStorage implements IStorage {
   async getPrescriptionsByPharmacy(pharmacyTenantId: string): Promise<any[]> {
     console.log(`[PHARMACY API] 🔍 Getting prescriptions for pharmacy: ${pharmacyTenantId}`);
     
-    // Join with patients and users tables to get actual names
+    // Join with patients, users, and patient_insurance tables to get all information
     const prescriptionsWithNames = await db
       .select({
         id: prescriptions.id,
@@ -1423,14 +1423,26 @@ export class DatabaseStorage implements IStorage {
         patientFirstName: patients.firstName,
         patientLastName: patients.lastName,
         patientMrn: patients.mrn,
+        patientEmail: patients.email,
+        patientPhone: patients.phone,
         // Provider/Doctor information
         providerFirstName: users.firstName,
         providerLastName: users.lastName,
-        providerRole: users.role
+        providerRole: users.role,
+        // Insurance information
+        insuranceProviderName: insuranceProviders.name,
+        policyNumber: patientInsurance.policyNumber,
+        copayAmount: patientInsurance.copayAmount,
+        deductibleAmount: patientInsurance.deductibleAmount
       })
       .from(prescriptions)
       .leftJoin(patients, eq(prescriptions.patientId, patients.id))
       .leftJoin(users, eq(prescriptions.providerId, users.id))
+      .leftJoin(patientInsurance, and(
+        eq(patientInsurance.patientId, prescriptions.patientId),
+        eq(patientInsurance.isPrimary, true)
+      ))
+      .leftJoin(insuranceProviders, eq(patientInsurance.insuranceProviderId, insuranceProviders.id))
       .where(eq(prescriptions.pharmacyTenantId, pharmacyTenantId))
       .orderBy(desc(prescriptions.prescribedDate));
     
@@ -1439,21 +1451,33 @@ export class DatabaseStorage implements IStorage {
     // Return formatted data with actual names
     const formattedPrescriptions = prescriptionsWithNames.map(p => ({
       id: p.id,
-      patientName: `${p.patientFirstName || 'Unknown'} ${p.patientLastName || 'Patient'}`,
+      patientName: p.patientFirstName && p.patientLastName ? 
+        `${p.patientFirstName} ${p.patientLastName}` : 
+        `Patient ${p.patientId}`,
       patientMrn: p.patientMrn,
       medication: p.medicationName,
       dosage: p.dosage,
       frequency: p.frequency,
       quantity: p.quantity,
       instructions: p.instructions,
-      prescribingDoctor: `Dr. ${p.providerFirstName || 'Unknown'} ${p.providerLastName || 'Provider'}`,
+      prescribingDoctor: p.providerFirstName && p.providerLastName ? 
+        `Dr. ${p.providerFirstName} ${p.providerLastName}` : 
+        `Provider ${p.providerId}`,
       doctorRole: p.providerRole,
       status: p.status === 'prescribed' ? 'new' : p.status === 'dispensed' ? 'ready' : p.status,
       prescribedDate: p.prescribedDate,
       expiryDate: p.expiryDate,
+      // Patient contact information
+      patientEmail: p.patientEmail,
+      patientPhone: p.patientPhone,
+      // Insurance information
+      insuranceProvider: p.insuranceProviderName || 'No Insurance',
+      policyNumber: p.policyNumber || 'N/A',
+      copayAmount: p.copayAmount || 0,
+      deductibleAmount: p.deductibleAmount || 0,
       waitTime: Math.floor(Math.random() * 20), // Demo wait time
       priority: 'normal',
-      insuranceStatus: 'approved'
+      insuranceStatus: p.insuranceProviderName ? 'verified' : 'pending'
     }));
     
     console.log(`[PHARMACY API] 📋 Returning ${formattedPrescriptions.length} formatted prescriptions:`, 
