@@ -1404,7 +1404,7 @@ export class DatabaseStorage implements IStorage {
   async getPrescriptionsByPharmacy(pharmacyTenantId: string): Promise<any[]> {
     console.log(`[PHARMACY API] 🔍 Getting prescriptions for pharmacy: ${pharmacyTenantId}`);
     
-    // Join with patients, users, and patient_insurance tables to get all information
+    // First, get prescriptions with patient and doctor names (without insurance for now)
     const prescriptionsWithNames = await db
       .select({
         id: prescriptions.id,
@@ -1428,21 +1428,11 @@ export class DatabaseStorage implements IStorage {
         // Provider/Doctor information
         providerFirstName: users.firstName,
         providerLastName: users.lastName,
-        providerRole: users.role,
-        // Insurance information
-        insuranceProviderName: insuranceProviders.name,
-        policyNumber: patientInsurance.policyNumber,
-        copayAmount: patientInsurance.copayAmount,
-        deductibleAmount: patientInsurance.deductibleAmount
+        providerRole: users.role
       })
       .from(prescriptions)
       .leftJoin(patients, eq(prescriptions.patientId, patients.id))
       .leftJoin(users, eq(prescriptions.providerId, users.id))
-      .leftJoin(patientInsurance, and(
-        eq(patientInsurance.patientId, prescriptions.patientId),
-        eq(patientInsurance.isPrimary, true)
-      ))
-      .leftJoin(insuranceProviders, eq(patientInsurance.insuranceProviderId, insuranceProviders.id))
       .where(eq(prescriptions.pharmacyTenantId, pharmacyTenantId))
       .orderBy(desc(prescriptions.prescribedDate));
     
@@ -1470,14 +1460,14 @@ export class DatabaseStorage implements IStorage {
       // Patient contact information
       patientEmail: p.patientEmail,
       patientPhone: p.patientPhone,
-      // Insurance information
-      insuranceProvider: p.insuranceProviderName || 'No Insurance',
-      policyNumber: p.policyNumber || 'N/A',
-      copayAmount: p.copayAmount || 0,
-      deductibleAmount: p.deductibleAmount || 0,
+      // Insurance information (we'll add this back separately)
+      insuranceProvider: 'Pending Insurance Lookup',
+      policyNumber: 'N/A',
+      copayAmount: 0,
+      deductibleAmount: 0,
       waitTime: Math.floor(Math.random() * 20), // Demo wait time
       priority: 'normal',
-      insuranceStatus: p.insuranceProviderName ? 'verified' : 'pending'
+      insuranceStatus: 'pending'
     }));
     
     console.log(`[PHARMACY API] 📋 Returning ${formattedPrescriptions.length} formatted prescriptions:`, 
