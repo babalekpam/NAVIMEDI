@@ -1433,7 +1433,7 @@ export class DatabaseStorage implements IStorage {
       .from(prescriptions)
       .leftJoin(patients, eq(prescriptions.patientId, patients.id))
       .leftJoin(users, eq(prescriptions.providerId, users.id))
-      .where(eq(prescriptions.pharmacyTenantId, pharmacyTenantId))
+      .where(eq(prescriptions.pharmacyTenantId, sql`${pharmacyTenantId}::uuid`))
       .orderBy(desc(prescriptions.prescribedDate));
     
     console.log(`[PHARMACY API] ✅ Found ${prescriptionsWithNames.length} prescriptions with patient/doctor names`);
