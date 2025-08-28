@@ -1121,10 +1121,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
             alert('Printing prescription label for RX-' + id.slice(0,8));
         }
 
-        function processPrescription(id) {
-            if (confirm('Process this prescription?')) {
-                alert('Prescription processed successfully!');
-                loadPrescriptions(); // Refresh data
+        function processPrescription(prescriptionId) {
+            const prescription = prescriptionsData.find(p => p.id === prescriptionId);
+            if (!prescription) {
+                alert('Prescription not found');
+                return;
+            }
+            
+            const statusOptions = ['new', 'processing', 'ready', 'dispensed'];
+            const currentIndex = statusOptions.indexOf(prescription.status);
+            const nextStatus = statusOptions[Math.min(currentIndex + 1, statusOptions.length - 1)];
+            
+            // Check if this is a refill prescription
+            const isRefill = prescription.refills > 0 && (prescription.previousFillDate || prescription.isRefill);
+            
+            let requestBody = { status: nextStatus };
+            
+            // If dispensing and it's a refill, include refill information
+            if (nextStatus === 'dispensed') {
+                requestBody.isRefill = isRefill;
+                if (isRefill) {
+                    requestBody.remainingRefills = prescription.refills;
+                    console.log('Processing refill for prescription:', prescriptionId, 'Remaining refills:', prescription.refills);
+                } else {
+                    console.log('Processing new prescription:', prescriptionId);
+                }
+            }
+            
+            if (confirm('Process this prescription? Status will change to: ' + nextStatus + (isRefill && nextStatus === 'dispensed' ? ' (REFILL)' : ''))) {
+                // Update prescription status
+                fetch('/api/pharmacy/prescriptions/' + prescriptionId + '/process', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + authToken
+                    },
+                    body: JSON.stringify(requestBody)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const message = isRefill && nextStatus === 'dispensed' ? 
+                        'Refill dispensed successfully! Remaining refills: ' + (prescription.refills - 1) :
+                        'Prescription status updated to: ' + nextStatus;
+                    alert(message);
+                    loadPrescriptions(); // Refresh data
+                })
+                .catch(error => {
+                    console.error('Error updating prescription:', error);
+                    alert('Failed to update prescription status');
+                });
             }
         }
 
@@ -3265,8 +3310,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid status" });
       }
       
-      // Update prescription status
-      const updatedPrescription = await storage.updatePrescriptionStatus(prescriptionId, status);
+      // Handle refill logic correctly
+      let updateData = { status };
+      
+      if (req.body.isRefill && status === 'dispensed') {
+        // When dispensing a refill, decrease remaining refills
+        const currentPrescription = await storage.getPrescription(prescriptionId);
+        updateData.refills = Math.max((currentPrescription?.refills || 0) - 1, 0);
+        updateData.previousFillDate = new Date().toISOString();
+        updateData.isRefill = true;
+        console.log("[PHARMACY API] 🔄 Processing refill - remaining refills:", updateData.refills);
+      } else if (status === 'dispensed' && !req.body.isRefill) {
+        // First-time dispensing
+        updateData.filledDate = new Date().toISOString();
+        updateData.isRefill = false;
+        console.log("[PHARMACY API] 🔄 Processing new prescription");
+      }
+      
+      // Update prescription with enhanced data
+      const updatedPrescription = await storage.updatePrescriptionStatus(prescriptionId, status, updateData);
       
       console.log("[PHARMACY API] ✅ Prescription status updated successfully");
       
@@ -4080,10 +4142,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       factors.insuranceVerified = true;
     }
     
-    // Refill vs new prescription
-    if (prescription.refills > 0) {
+    // Refill prescriptions (patients coming back for existing prescriptions)
+    // Check if this is a refill by looking at prescription history or refill status
+    if (prescription.isRefill || (prescription.refills > 0 && prescription.previousFillDate)) {
       urgencyScore += 15;
       factors.refillPrescription = true;
+    } else if (prescription.refills === 0) {
+      // New prescription (no refills remaining or first-time prescription)
+      urgencyScore += 5;
+      factors.newPrescription = true;
     }
     
     // Quantity urgency (larger quantities might need more time)
