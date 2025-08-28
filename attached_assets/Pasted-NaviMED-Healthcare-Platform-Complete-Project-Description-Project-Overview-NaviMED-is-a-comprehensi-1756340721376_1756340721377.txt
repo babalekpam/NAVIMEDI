@@ -1,0 +1,142 @@
+NaviMED Healthcare Platform - Complete Project Description
+Project Overview
+NaviMED is a comprehensive multi-tenant healthcare management platform that connects independent pharmacies with hospitals to streamline prescription management, facilitate insurance claims, manage patient records, and enhance communication across healthcare providers. The platform serves as a centralized hub for healthcare operations with strict data isolation between organizations.
+
+Core Architecture
+Technology Stack
+Frontend: React with TypeScript, Tailwind CSS for responsive design
+Backend: Node.js with Express.js, TypeScript for type safety
+Database: PostgreSQL with Drizzle ORM for data management
+Authentication: JWT-based authentication with Role-Based Access Control (RBAC)
+Deployment: Replit cloud platform with automated workflows
+Multi-Tenant Architecture
+Enterprise-grade isolation: Complete data separation between organizations
+Tenant types: Hospitals, Pharmacies, Laboratories, Platform Administration
+Cross-tenant interactions: Controlled data sharing for prescriptions and lab orders
+White-label capabilities: Custom branding for each organization
+User Roles and Access Control
+Hospital Roles
+Hospital Admin: Full organizational management, department creation, staff assignments
+Doctor/Physician: Patient management, prescription creation, medical records
+Nurse: Patient care coordination, vital signs monitoring
+Staff: General administrative tasks
+Pharmacy Roles
+Pharmacy Admin: Store operations, inventory management, staff oversight
+Pharmacist: Prescription processing, insurance verification, dispensing
+Pharmacy Technician: Prescription preparation, inventory support
+Laboratory Roles
+Lab Director: Laboratory operations, staff management, equipment oversight
+Lab Technician: Sample processing, test execution, results entry
+Pathologist: Results interpretation, diagnostic reporting
+Platform Administration
+Super Admin: Global platform oversight, tenant management, white-label settings
+Support Staff: User assistance, technical support
+Core Functionality
+Prescription Management Workflow
+Prescription Creation: Doctors create prescriptions with medication details
+Pharmacy Routing: Prescriptions sent to patient-selected pharmacies
+Insurance Verification: Automatic copay calculation and coverage verification
+Processing Stages: New → Insurance Verification → Processing → Ready → Dispensed
+Real-time Updates: Status tracking throughout the entire workflow
+Receipt Generation: Professional dispensing receipts with all details
+Patient Management
+Comprehensive Records: Demographics, medical history, insurance information
+Cross-tenant Synchronization: Secure patient data sharing between providers
+Multi-doctor Access: Controlled access requests for patient data sharing
+Patient Portal: Appointment booking, prescription history, telemedicine integration
+Inventory and Supply Chain
+Advanced Inventory Management: Real-time stock tracking, automated reordering
+Supplier Integration: Comprehensive supplier approval and marketplace system
+Quote Request System: Competitive pricing for medical supplies
+Cost Optimization: Dynamic pricing and bulk purchase coordination
+Insurance and Billing
+Automated Claims Processing: Electronic submission to insurance providers
+Copay Calculation: Real-time insurance verification and cost estimation
+Multiple Payment Methods: Comprehensive billing and payment processing
+Financial Reporting: Detailed analytics and revenue tracking
+Laboratory Integration
+Lab Order Management: Seamless ordering from hospitals to laboratories
+Results Processing: Digital result entry and interpretation
+Quality Assurance: Sample tracking and quality control measures
+Performance Analytics: Lab efficiency metrics and achievement tracking
+Database Architecture
+Core Tables
+Tenants: Organization information and configuration
+Users: User accounts with role-based permissions
+Patients: Comprehensive patient demographics and medical information
+Prescriptions: Medication orders with routing and status tracking
+Appointments: Scheduling and medical encounter management
+Lab Orders/Results: Laboratory test management and reporting
+Insurance: Provider information and coverage details
+Inventory: Stock management and supplier relationships
+Cross-Tenant Tables
+Patient Sharing: Controlled patient data access between organizations
+Prescription Routing: Hospital-to-pharmacy prescription flow
+Lab Assignments: Test routing between hospitals and laboratories
+Frontend Components
+Dashboard Systems
+Hospital Dashboard: Patient census, appointment scheduling, department metrics
+Pharmacy Dashboard: Prescription queue, inventory alerts, sales analytics
+Laboratory Dashboard: Test backlog, equipment status, quality metrics
+Platform Dashboard: System-wide statistics and tenant management
+Form Components
+Patient Registration: Comprehensive demographic and insurance capture
+Prescription Forms: Medication ordering with dosage and instruction details
+Insurance Verification: Real-time coverage validation and copay calculation
+Inventory Management: Stock entry, reordering, and supplier management
+Communication Tools
+Medical Messaging: Secure doctor-patient communication
+Alert Systems: Real-time notifications for critical events
+Reporting Interface: Customizable reports with multiple export formats
+Backend Services
+API Endpoints
+Authentication Services: Login, token management, role verification
+Tenant Management: Organization setup, configuration, user management
+Prescription APIs: Creation, routing, status updates, dispensing
+Patient APIs: Registration, record management, cross-tenant sharing
+Inventory APIs: Stock management, supplier integration, ordering
+Billing APIs: Insurance processing, payment handling, financial reporting
+Integration Services
+Insurance Provider Integration: Real-time verification and claims processing
+Supplier Marketplace: Product catalog, pricing, quote management
+Email Services: Automated notifications and welcome communications
+Payment Processing: Multiple payment gateway support
+Advanced Features
+Multi-language Support
+Complete Translation System: English, Spanish, French, German support
+Dynamic Language Switching: Real-time interface language changes
+Localized Medical Terminology: Region-specific medical coding standards
+Offline Capabilities
+Data Synchronization: Offline mode for critical operations
+Automatic Sync: Seamless data reconciliation when connectivity returns
+Priority Queuing: Critical data prioritization during sync
+Analytics and Reporting
+Real-time Dashboards: Live metrics and performance indicators
+Custom Report Builder: Flexible reporting with multiple export formats
+Predictive Analytics: Inventory forecasting and demand planning
+Compliance Reporting: Regulatory requirement tracking and reporting
+Security Features
+End-to-end Encryption: All data transmission and storage encryption
+Audit Logging: Comprehensive activity tracking and compliance monitoring
+Access Control: Granular permissions with role-based restrictions
+Data Isolation: Complete tenant separation with controlled sharing
+Mobile Responsiveness
+Responsive Design: Full functionality across all device types
+Touch-optimized Interface: Mobile-friendly navigation and forms
+Progressive Web App: App-like experience on mobile devices
+Current System Status
+Recent Enhancements
+Fixed Database Architecture: Resolved UUID compatibility issues between tables
+Completed Prescription Workflow: Full end-to-end prescription processing
+Enhanced Authentication: Robust JWT implementation with proper token handling
+Optimized Query Performance: Improved database queries for faster response times
+Supplier Management: Complete supplier approval and marketplace integration
+Email Integration: Professional welcome emails and notifications
+Active Features
+Real-time Prescription Tracking: Live status updates throughout processing
+Cross-tenant Patient Sharing: Secure data access between healthcare providers
+Comprehensive Inventory Management: Stock tracking with automated reordering
+Insurance Verification: Automatic copay calculation and coverage validation
+Multi-role Dashboard: Customized interfaces for each user type
+Professional Receipt Generation: Detailed dispensing documentation
+The NaviMED platform represents a complete healthcare ecosystem designed to improve efficiency, enhance patient care, and ensure compliance across all healthcare provider types while maintaining the highest standards of data security and privacy.
