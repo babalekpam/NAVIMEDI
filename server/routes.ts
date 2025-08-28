@@ -114,8 +114,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         /* Main Content Styles */
         .main-content {
-            grid-column: 2;
+            margin-left: 250px;
             padding: 1.5rem 2rem;
+            min-height: 100vh;
         }
         
         .header {
@@ -343,7 +344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             .main-content {
-                grid-column: 1;
+                margin-left: 0;
             }
             
             .dashboard-cards {
