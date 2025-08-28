@@ -40,10 +40,12 @@ export default function PharmacyDashboardWorking() {
   console.log('[PHARMACY WORKING] 👤 User:', user?.role);
   console.log('[PHARMACY WORKING] 🏢 Tenant:', tenant?.name, tenant?.type);
 
-  // Fetch pharmacy prescriptions
+  // Fetch pharmacy prescriptions with better error handling
   const { data: prescriptions, isLoading, error } = useQuery({
     queryKey: ['/api/pharmacy/prescriptions'],
-    enabled: !!tenant?.id && tenant?.type === 'pharmacy'
+    enabled: !!tenant?.id && tenant?.type === 'pharmacy' && !!user,
+    retry: 3,
+    refetchOnWindowFocus: false
   });
 
   console.log('[PHARMACY WORKING] 📊 Prescriptions data:', prescriptions);

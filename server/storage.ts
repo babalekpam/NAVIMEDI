@@ -1426,8 +1426,11 @@ export class DatabaseStorage implements IStorage {
     
     const prescriptionsWithNames = [];
     
+    // Check if prescriptionsResult is an array, if not use rows property
+    const prescriptionsList = Array.isArray(prescriptionsResult) ? prescriptionsResult : prescriptionsResult.rows || [];
+    
     // For each prescription, get patient and doctor details separately
-    for (const prescription of prescriptionsResult) {
+    for (const prescription of prescriptionsList) {
       // Get patient info
       const patientResult = await db.execute(sql`
         SELECT first_name, last_name, mrn, email, phone 
