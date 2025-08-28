@@ -41,6 +41,7 @@ import PharmacyDashboardSimple from "@/pages/pharmacy-dashboard-simple";
 
 import PharmacyDashboardWorking from "@/pages/pharmacy-dashboard-working";
 import PharmacyDashboardSimpleFixed from "@/pages/pharmacy-dashboard-simple-fixed";
+import PharmacyRedirect from "@/components/pharmacy/PharmacyRedirect";
 import PharmacyRegistration from "@/pages/pharmacy-registration";
 import { PharmacyInventoryManager } from "@/components/pharmacy/PharmacyInventoryManager";
 import { PharmacyPrescriptionManager } from "@/components/pharmacy/PharmacyPrescriptionManager";
@@ -141,7 +142,7 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
-        <Route path="/pharmacy-dashboard" component={PharmacyDashboardSimpleFixed} />
+        <Route path="/pharmacy-dashboard" component={PharmacyRedirect} />
         <Route path="/pharmacy" component={PharmacyDashboardSimpleFixed} />
         <Route path="/patients">
           <ProtectedRoute>
