@@ -65,7 +65,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         /* Sidebar Styles */
         .sidebar {
-            background: var(--dark);
+            background: #3b82f6;
             color: white;
             padding: 1.5rem 1rem;
             position: fixed;
