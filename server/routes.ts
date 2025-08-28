@@ -20,6 +20,245 @@ import { resetAllCounters } from "./reset-all-counters";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // PHARMACY DASHBOARD API ENDPOINT
+  app.get('/api/pharmacy-dashboard', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEO Pharmacy Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen p-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900">🏥 DEO Pharmacy Dashboard</h1>
+                <p class="text-gray-600">Manage prescriptions and pharmacy operations</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total Prescriptions</p>
+                            <p class="text-2xl font-bold" id="total-prescriptions">-</p>
+                        </div>
+                        <div class="text-blue-500">📦</div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">New Prescriptions</p>
+                            <p class="text-2xl font-bold text-blue-600" id="new-prescriptions">-</p>
+                        </div>
+                        <div class="text-blue-500">🕒</div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Processing</p>
+                            <p class="text-2xl font-bold text-yellow-600" id="processing-prescriptions">-</p>
+                        </div>
+                        <div class="text-yellow-500">⚡</div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Ready for Pickup</p>
+                            <p class="text-2xl font-bold text-green-600" id="ready-prescriptions">-</p>
+                        </div>
+                        <div class="text-green-500">✅</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="auth-section" class="bg-white p-6 rounded-lg shadow mb-8">
+                <h2 class="text-xl font-bold mb-4">🔐 Pharmacy Login</h2>
+                <div class="max-w-md">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="email" value="admin@deopharmacy.com" 
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="password" value="password"
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button onclick="login()" class="w-full bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 font-medium">
+                        🚀 Login to Pharmacy Dashboard
+                    </button>
+                </div>
+            </div>
+
+            <div id="prescriptions-section" class="bg-white rounded-lg shadow" style="display: none;">
+                <div class="p-6 border-b">
+                    <h2 class="text-xl font-bold">💊 Recent Prescriptions</h2>
+                    <p class="text-gray-600">Manage and process pharmacy prescriptions</p>
+                </div>
+                <div class="p-6">
+                    <div id="loading" class="text-center">
+                        <div class="loading-spinner"></div>
+                        <p class="text-gray-600">Loading prescriptions...</p>
+                    </div>
+                    <div id="prescriptions-list" style="display: none;"></div>
+                    <div id="error-message" style="display: none;" class="text-center text-red-600"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('auth_token');
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: email, password: password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.token) {
+                    authToken = data.token;
+                    localStorage.setItem('auth_token', authToken);
+                    
+                    document.getElementById('auth-section').style.display = 'none';
+                    document.getElementById('prescriptions-section').style.display = 'block';
+                    
+                    loadPrescriptions();
+                } else {
+                    alert('Login failed: ' + (data.error || 'Invalid credentials'));
+                }
+            } catch (error) {
+                alert('Login error: ' + error.message);
+            }
+        }
+
+        async function loadPrescriptions() {
+            if (!authToken) {
+                document.getElementById('auth-section').style.display = 'block';
+                document.getElementById('prescriptions-section').style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/pharmacy/prescriptions', {
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const prescriptions = await response.json();
+                    displayPrescriptions(prescriptions);
+                    updateStats(prescriptions);
+                } else {
+                    throw new Error('Failed to fetch prescriptions - Status: ' + response.status);
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error-message').style.display = 'block';
+                document.getElementById('error-message').textContent = 'Error loading prescriptions: ' + error.message;
+            }
+        }
+
+        function updateStats(prescriptions) {
+            const total = prescriptions.length;
+            const newCount = prescriptions.filter(p => p.status === 'new').length;
+            const processing = prescriptions.filter(p => p.status === 'processing').length;
+            const ready = prescriptions.filter(p => p.status === 'ready').length;
+
+            document.getElementById('total-prescriptions').textContent = total;
+            document.getElementById('new-prescriptions').textContent = newCount;
+            document.getElementById('processing-prescriptions').textContent = processing;
+            document.getElementById('ready-prescriptions').textContent = ready;
+        }
+
+        function displayPrescriptions(prescriptions) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('prescriptions-list').style.display = 'block';
+
+            const listContainer = document.getElementById('prescriptions-list');
+            
+            if (prescriptions.length === 0) {
+                listContainer.innerHTML = '<div class="text-center py-8"><div class="text-4xl mb-4">📦</div><p class="text-gray-500">No prescriptions found</p></div>';
+                return;
+            }
+
+            const prescriptionsHTML = prescriptions.map(prescription => {
+                const statusColors = {
+                    'new': 'bg-blue-500', 'processing': 'bg-yellow-500', 
+                    'ready': 'bg-green-500', 'filled': 'bg-gray-500', 'dispensed': 'bg-gray-600'
+                };
+                
+                const statusColor = statusColors[prescription.status] || 'bg-blue-500';
+                const date = new Date(prescription.prescribedDate).toLocaleDateString();
+                
+                return \`<div class="border rounded-lg p-4 mb-4 hover:bg-gray-50">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-4 mb-2">
+                                <h3 class="font-semibold text-lg">💊 \${prescription.medication}</h3>
+                                <span class="\${statusColor} text-white px-3 py-1 rounded-full text-sm font-medium">
+                                    \${prescription.status.toUpperCase()}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                                <div><span class="font-medium">👤 Patient:</span> \${prescription.patientName}</div>
+                                <div><span class="font-medium">💊 Dosage:</span> \${prescription.dosage}</div>
+                                <div><span class="font-medium">👨‍⚕️ Doctor:</span> \${prescription.prescribingDoctor}</div>
+                                <div><span class="font-medium">📅 Date:</span> \${date}</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">📋 Details</button>
+                            \${prescription.status === 'new' ? '<button class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">⚡ Process</button>' : ''}
+                        </div>
+                    </div>
+                </div>\`;
+            }).join('');
+
+            listContainer.innerHTML = prescriptionsHTML;
+        }
+
+        if (authToken) {
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('prescriptions-section').style.display = 'block';
+            loadPrescriptions();
+        }
+    </script>
+</body>
+</html>`);
+  });
+
   // PUBLIC ENDPOINTS (before any middleware)
   
   // Public supplier registration endpoint (outside /api path to avoid middleware)
