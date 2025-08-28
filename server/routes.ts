@@ -28,98 +28,576 @@ export async function registerRoutes(app: Express): Promise<Server> {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DEO Pharmacy Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>NaviMED Pharmacy - EHR Integration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #10b981;
+            --accent: #8b5cf6;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f1f5f9;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            background: var(--dark);
+            color: white;
+            padding: 1.5rem 1rem;
+            position: fixed;
+            width: 250px;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .logo i {
+            font-size: 2rem;
+            color: var(--secondary);
+        }
+        
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-item i {
+            font-size: 1.2rem;
+        }
+        
+        /* Main Content Styles */
+        .main-content {
+            grid-column: 2;
+            padding: 1.5rem 2rem;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-light);
+        }
+        
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            width: 300px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-bar input {
+            border: none;
+            outline: none;
+            padding: 0.5rem;
+            width: 100%;
+            font-size: 1rem;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .avatar {
             width: 40px;
             height: 40px;
-            animation: spin 2s linear infinite;
-            margin: 20px auto;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        
+        /* Dashboard Cards */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+        
+        .bg-primary { background-color: rgba(37, 99, 235, 0.1); color: var(--primary); }
+        .bg-success { background-color: rgba(16, 185, 129, 0.1); color: var(--secondary); }
+        .bg-warning { background-color: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .bg-danger { background-color: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        
+        .stat-info h3 {
+            font-size: 1.8rem;
+            margin-bottom: 0.2rem;
+        }
+        
+        .stat-info p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        
+        /* Main Content Sections */
+        .content-section {
+            margin-bottom: 2rem;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        /* Tables */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-light);
+        }
+        
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .status {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-ready { background-color: rgba(16, 185, 129, 0.1); color: var(--secondary); }
+        .status-pending { background-color: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .status-processing { background-color: rgba(37, 99, 235, 0.1); color: var(--primary); }
+        .status-new { background-color: rgba(139, 92, 246, 0.1); color: var(--accent); }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--gray);
+            font-size: 1.1rem;
+            margin-right: 0.5rem;
+            transition: color 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            color: var(--primary);
+        }
+        
+        /* Login Section */
+        .login-section {
+            max-width: 400px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .main-content {
+                grid-column: 1;
+            }
+            
+            .dashboard-cards {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .search-bar {
+                width: 100%;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <div class="min-h-screen p-6">
-        <div class="max-w-7xl mx-auto">
-            <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-900">🏥 DEO Pharmacy Dashboard</h1>
-                <p class="text-gray-600">Manage prescriptions and pharmacy operations</p>
+<body>
+    <div id="login-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+        <div class="login-section">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <i class="fas fa-prescription" style="font-size: 3rem; color: var(--secondary);"></i>
+                <h1 style="margin-top: 0.5rem; color: var(--dark);">NaviMED Pharmacy</h1>
+                <p style="color: var(--gray);">Healthcare Management Platform</p>
             </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" class="form-control" value="admin@deopharmacy.com" placeholder="Enter your email">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" value="password" placeholder="Enter your password">
+            </div>
+            
+            <button onclick="login()" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                <i class="fas fa-sign-in-alt"></i> Login to Pharmacy
+            </button>
+        </div>
+    </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-600">Total Prescriptions</p>
-                            <p class="text-2xl font-bold" id="total-prescriptions">-</p>
-                        </div>
-                        <div class="text-blue-500">📦</div>
-                    </div>
+    <div class="container" id="main-app" style="display: none;">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-prescription"></i>
+                <h1>NaviMED</h1>
+            </div>
+            
+            <div class="nav-item active" onclick="showSection('dashboard')">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </div>
+            
+            <div class="nav-item" onclick="showSection('prescriptions')">
+                <i class="fas fa-prescription-bottle"></i>
+                <span>Prescriptions</span>
+            </div>
+            
+            <div class="nav-item" onclick="showSection('inventory')">
+                <i class="fas fa-capsules"></i>
+                <span>Inventory</span>
+            </div>
+            
+            <div class="nav-item" onclick="showSection('patients')">
+                <i class="fas fa-users"></i>
+                <span>Patients</span>
+            </div>
+            
+            <div class="nav-item" onclick="showSection('suppliers')">
+                <i class="fas fa-pills"></i>
+                <span>Suppliers</span>
+            </div>
+            
+            <div class="nav-item" onclick="showSection('billing')">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>Billing</span>
+            </div>
+            
+            <div class="nav-item" onclick="showSection('reports')">
+                <i class="fas fa-chart-bar"></i>
+                <span>Reports</span>
+            </div>
+            
+            <div class="nav-item" onclick="showSection('integration')">
+                <i class="fas fa-plug"></i>
+                <span>EHR Integration</span>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search patients, medications, prescriptions...">
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-600">New Prescriptions</p>
-                            <p class="text-2xl font-bold text-blue-600" id="new-prescriptions">-</p>
-                        </div>
-                        <div class="text-blue-500">🕒</div>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-600">Processing</p>
-                            <p class="text-2xl font-bold text-yellow-600" id="processing-prescriptions">-</p>
-                        </div>
-                        <div class="text-yellow-500">⚡</div>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-600">Ready for Pickup</p>
-                            <p class="text-2xl font-bold text-green-600" id="ready-prescriptions">-</p>
-                        </div>
-                        <div class="text-green-500">✅</div>
+                
+                <div class="user-profile">
+                    <div class="avatar">DA</div>
+                    <div>
+                        <div class="user-name">DEO Admin</div>
+                        <div class="user-role" style="font-size: 0.8rem; color: var(--gray);">Pharmacist</div>
                     </div>
                 </div>
             </div>
-
-            <div id="auth-section" class="bg-white p-6 rounded-lg shadow mb-8">
-                <h2 class="text-xl font-bold mb-4">🔐 Pharmacy Login</h2>
-                <div class="max-w-md">
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                        <input type="email" id="email" value="admin@deopharmacy.com" 
-                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="content-section">
+                <!-- Dashboard Cards -->
+                <div class="dashboard-cards">
+                    <div class="card stat-card">
+                        <div class="stat-icon bg-primary">
+                            <i class="fas fa-prescription-bottle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="new-prescriptions">0</h3>
+                            <p>New Prescriptions</p>
+                        </div>
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                        <input type="password" id="password" value="password"
-                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    
+                    <div class="card stat-card">
+                        <div class="stat-icon bg-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="ready-prescriptions">0</h3>
+                            <p>Ready for Pickup</p>
+                        </div>
                     </div>
-                    <button onclick="login()" class="w-full bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 font-medium">
-                        🚀 Login to Pharmacy Dashboard
-                    </button>
+                    
+                    <div class="card stat-card">
+                        <div class="stat-icon bg-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="processing-prescriptions">0</h3>
+                            <p>Processing</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card stat-card">
+                        <div class="stat-icon bg-danger">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-prescriptions">0</h3>
+                            <p>Total Prescriptions</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Prescriptions -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Recent Prescriptions</h2>
+                        <button class="btn btn-primary" onclick="showSection('prescriptions')">View All</button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="prescriptions-table">
+                            <thead>
+                                <tr>
+                                    <th>Rx Number</th>
+                                    <th>Patient</th>
+                                    <th>Medication</th>
+                                    <th>Physician</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prescriptions-tbody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 2rem;">
+                                        <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; color: var(--gray);"></i>
+                                        <p style="margin-top: 0.5rem; color: var(--gray);">Loading prescriptions...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-
-            <div id="prescriptions-section" class="space-y-6" style="display: none;">
-                <!-- Content will be replaced based on user requirements -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h2 class="text-xl font-bold mb-4">📋 Pharmacy Dashboard Content</h2>
-                    <p class="text-gray-600">Ready for your custom pharmacy interface...</p>
-                    <div id="custom-pharmacy-content">
-                        <!-- User will specify what goes here -->
-                    </div>
+            
+            <!-- Other sections will be populated based on navigation -->
+            <div id="prescriptions-section" class="content-section" style="display: none;">
+                <h2 class="section-title">All Prescriptions</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rx Number</th>
+                                <th>Patient</th>
+                                <th>Medication</th>
+                                <th>Dosage</th>
+                                <th>Quantity</th>
+                                <th>Physician</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-prescriptions-tbody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="inventory-section" class="content-section" style="display: none;">
+                <h2 class="section-title">Inventory Management</h2>
+                <div class="card">
+                    <p>Inventory management system coming soon...</p>
+                </div>
+            </div>
+            
+            <div id="patients-section" class="content-section" style="display: none;">
+                <h2 class="section-title">Patient Management</h2>
+                <div class="card">
+                    <p>Patient management system coming soon...</p>
+                </div>
+            </div>
+            
+            <div id="suppliers-section" class="content-section" style="display: none;">
+                <h2 class="section-title">Supplier Management</h2>
+                <div class="card">
+                    <p>Supplier management system coming soon...</p>
+                </div>
+            </div>
+            
+            <div id="billing-section" class="content-section" style="display: none;">
+                <h2 class="section-title">Billing & Insurance</h2>
+                <div class="card">
+                    <p>Billing management system coming soon...</p>
+                </div>
+            </div>
+            
+            <div id="reports-section" class="content-section" style="display: none;">
+                <h2 class="section-title">Reports & Analytics</h2>
+                <div class="card">
+                    <p>Reporting system coming soon...</p>
+                </div>
+            </div>
+            
+            <div id="integration-section" class="content-section" style="display: none;">
+                <h2 class="section-title">EHR Integration</h2>
+                <div class="card">
+                    <p>EHR integration settings coming soon...</p>
                 </div>
             </div>
         </div>
@@ -127,6 +605,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     <script>
         let authToken = localStorage.getItem('auth_token');
+        let prescriptionsData = [];
 
         async function login() {
             const email = document.getElementById('email').value;
@@ -145,8 +624,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     authToken = data.token;
                     localStorage.setItem('auth_token', authToken);
                     
-                    document.getElementById('auth-section').style.display = 'none';
-                    document.getElementById('prescriptions-section').style.display = 'block';
+                    document.getElementById('login-overlay').style.display = 'none';
+                    document.getElementById('main-app').style.display = 'block';
                     
                     loadPrescriptions();
                 } else {
@@ -158,12 +637,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         async function loadPrescriptions() {
-            if (!authToken) {
-                document.getElementById('auth-section').style.display = 'block';
-                document.getElementById('prescriptions-section').style.display = 'none';
-                return;
-            }
-
             try {
                 const response = await fetch('/api/pharmacy/prescriptions', {
                     headers: {
@@ -173,17 +646,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 });
 
                 if (response.ok) {
-                    const prescriptions = await response.json();
-                    displayPrescriptions(prescriptions);
-                    updateStats(prescriptions);
+                    prescriptionsData = await response.json();
+                    updateStats(prescriptionsData);
+                    displayRecentPrescriptions(prescriptionsData);
+                    displayAllPrescriptions(prescriptionsData);
                 } else {
-                    throw new Error('Failed to fetch prescriptions - Status: ' + response.status);
+                    throw new Error('Failed to fetch prescriptions');
                 }
             } catch (error) {
-                const customContent = document.getElementById('custom-pharmacy-content');
-                if (customContent) {
-                    customContent.innerHTML = '<p class="text-red-600">Error loading data: ' + error.message + '</p>';
-                }
+                console.error('Error loading prescriptions:', error);
+                document.getElementById('prescriptions-tbody').innerHTML = 
+                    '<tr><td colspan="6" style="text-align: center; color: var(--danger);">Error loading prescriptions</td></tr>';
             }
         }
 
@@ -199,17 +672,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
             document.getElementById('ready-prescriptions').textContent = ready;
         }
 
-        function displayPrescriptions(prescriptions) {
-            // Basic display function - will be customized based on user requirements
-            const customContent = document.getElementById('custom-pharmacy-content');
-            if (customContent) {
-                customContent.innerHTML = '<p class="text-gray-500">Prescription data available for custom implementation...</p>';
+        function displayRecentPrescriptions(prescriptions) {
+            const tbody = document.getElementById('prescriptions-tbody');
+            const recent = prescriptions.slice(0, 5);
+            
+            if (recent.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No prescriptions found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = recent.map(prescription => {
+                const patientName = prescription.patientName.includes('Patient') ? 
+                    'Patient ' + prescription.patientName.split(' ')[1].slice(0,8) : 
+                    prescription.patientName;
+                const doctorName = prescription.prescribingDoctor.includes('Provider') ? 
+                    'Dr. ' + prescription.prescribingDoctor.split(' ')[1].slice(0,8) : 
+                    prescription.prescribingDoctor;
+                
+                return \`<tr>
+                    <td>RX-\${prescription.id.slice(0,8)}</td>
+                    <td>\${patientName}</td>
+                    <td>\${prescription.medication}</td>
+                    <td>\${doctorName}</td>
+                    <td><span class="status status-\${prescription.status}">\${prescription.status.charAt(0).toUpperCase() + prescription.status.slice(1)}</span></td>
+                    <td>
+                        <button class="action-btn" onclick="viewPrescription('\${prescription.id}')"><i class="fas fa-eye"></i></button>
+                        <button class="action-btn" onclick="printPrescription('\${prescription.id}')"><i class="fas fa-print"></i></button>
+                    </td>
+                </tr>\`;
+            }).join('');
+        }
+
+        function displayAllPrescriptions(prescriptions) {
+            const tbody = document.getElementById('all-prescriptions-tbody');
+            
+            tbody.innerHTML = prescriptions.map(prescription => {
+                const patientName = prescription.patientName.includes('Patient') ? 
+                    'Patient ' + prescription.patientName.split(' ')[1].slice(0,8) : 
+                    prescription.patientName;
+                const doctorName = prescription.prescribingDoctor.includes('Provider') ? 
+                    'Dr. ' + prescription.prescribingDoctor.split(' ')[1].slice(0,8) : 
+                    prescription.prescribingDoctor;
+                
+                return \`<tr>
+                    <td>RX-\${prescription.id.slice(0,8)}</td>
+                    <td>\${patientName}</td>
+                    <td>\${prescription.medication}</td>
+                    <td>\${prescription.dosage}</td>
+                    <td>\${prescription.quantity}</td>
+                    <td>\${doctorName}</td>
+                    <td><span class="status status-\${prescription.status}">\${prescription.status.charAt(0).toUpperCase() + prescription.status.slice(1)}</span></td>
+                    <td>
+                        <button class="action-btn" onclick="viewPrescription('\${prescription.id}')"><i class="fas fa-eye"></i></button>
+                        <button class="action-btn" onclick="printPrescription('\${prescription.id}')"><i class="fas fa-print"></i></button>
+                        <button class="action-btn" onclick="processPrescription('\${prescription.id}')"><i class="fas fa-edit"></i></button>
+                    </td>
+                </tr>\`;
+            }).join('');
+        }
+
+        function showSection(sectionName) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => section.style.display = 'none');
+            
+            // Remove active class from all nav items
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+            
+            // Show selected section
+            document.getElementById(sectionName + '-section').style.display = 'block';
+            
+            // Add active class to selected nav item
+            event.target.closest('.nav-item').classList.add('active');
+        }
+
+        function viewPrescription(id) {
+            const prescription = prescriptionsData.find(p => p.id === id);
+            if (prescription) {
+                alert('Prescription Details:\\n\\nMedication: ' + prescription.medication + '\\nDosage: ' + prescription.dosage + '\\nQuantity: ' + prescription.quantity + '\\nStatus: ' + prescription.status);
             }
         }
 
+        function printPrescription(id) {
+            alert('Printing prescription label for RX-' + id.slice(0,8));
+        }
+
+        function processPrescription(id) {
+            if (confirm('Process this prescription?')) {
+                alert('Prescription processed successfully!');
+                loadPrescriptions(); // Refresh data
+            }
+        }
+
+        // Auto-login if token exists
         if (authToken) {
-            document.getElementById('auth-section').style.display = 'none';
-            document.getElementById('prescriptions-section').style.display = 'block';
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
             loadPrescriptions();
         }
     </script>
