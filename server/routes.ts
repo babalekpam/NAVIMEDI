@@ -113,79 +113,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             </div>
 
             <div id="prescriptions-section" class="space-y-6" style="display: none;">
-                <!-- Quick Actions Bar -->
+                <!-- Content will be replaced based on user requirements -->
                 <div class="bg-white p-6 rounded-lg shadow">
-                    <h2 class="text-xl font-bold mb-4">🚀 Quick Actions</h2>
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        <button onclick="newPrescription()" class="flex flex-col items-center p-4 border border-blue-200 rounded-lg hover:bg-blue-50">
-                            <div class="text-2xl mb-2">➕</div>
-                            <span class="text-sm font-medium">New Prescription</span>
-                        </button>
-                        <button onclick="customerLookup()" class="flex flex-col items-center p-4 border border-green-200 rounded-lg hover:bg-green-50">
-                            <div class="text-2xl mb-2">🔍</div>
-                            <span class="text-sm font-medium">Customer Lookup</span>
-                        </button>
-                        <button onclick="insuranceVerify()" class="flex flex-col items-center p-4 border border-purple-200 rounded-lg hover:bg-purple-50">
-                            <div class="text-2xl mb-2">🏥</div>
-                            <span class="text-sm font-medium">Insurance Check</span>
-                        </button>
-                        <button onclick="inventoryAlert()" class="flex flex-col items-center p-4 border border-orange-200 rounded-lg hover:bg-orange-50">
-                            <div class="text-2xl mb-2">📦</div>
-                            <span class="text-sm font-medium">Inventory</span>
-                        </button>
-                        <button onclick="generateReport()" class="flex flex-col items-center p-4 border border-red-200 rounded-lg hover:bg-red-50">
-                            <div class="text-2xl mb-2">📊</div>
-                            <span class="text-sm font-medium">Reports</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Prescription Queue -->
-                <div class="bg-white rounded-lg shadow">
-                    <div class="p-6 border-b">
-                        <h2 class="text-xl font-bold">💊 Prescription Queue</h2>
-                        <p class="text-gray-600">Manage and process pharmacy prescriptions</p>
-                    </div>
-                    <div class="p-6">
-                        <div id="loading" class="text-center">
-                            <div class="loading-spinner"></div>
-                            <p class="text-gray-600">Loading prescriptions...</p>
-                        </div>
-                        <div id="prescriptions-list" style="display: none;"></div>
-                        <div id="error-message" style="display: none;" class="text-center text-red-600"></div>
-                    </div>
-                </div>
-
-                <!-- Inventory Alerts -->
-                <div class="bg-white rounded-lg shadow">
-                    <div class="p-6 border-b">
-                        <h2 class="text-xl font-bold">⚠️ Inventory Alerts</h2>
-                        <p class="text-gray-600">Medications requiring attention</p>
-                    </div>
-                    <div class="p-6">
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between border-l-4 border-red-500 bg-red-50 p-3 rounded">
-                                <div>
-                                    <p class="font-medium text-red-800">Metformin 500mg - OUT OF STOCK</p>
-                                    <p class="text-sm text-red-600">Current: 0 units | Min Required: 50</p>
-                                </div>
-                                <button onclick="reorderMedication('Metformin')" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">🛒 Reorder</button>
-                            </div>
-                            <div class="flex items-center justify-between border-l-4 border-yellow-500 bg-yellow-50 p-3 rounded">
-                                <div>
-                                    <p class="font-medium text-yellow-800">Lisinopril 10mg - LOW STOCK</p>
-                                    <p class="text-sm text-yellow-600">Current: 12 units | Min Required: 25</p>
-                                </div>
-                                <button onclick="reorderMedication('Lisinopril')" class="bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600">🛒 Reorder</button>
-                            </div>
-                            <div class="flex items-center justify-between border-l-4 border-orange-500 bg-orange-50 p-3 rounded">
-                                <div>
-                                    <p class="font-medium text-orange-800">Amoxicillin 250mg - EXPIRING SOON</p>
-                                    <p class="text-sm text-orange-600">Expires: March 15, 2025 | Stock: 45 units</p>
-                                </div>
-                                <button onclick="markdownMedication('Amoxicillin')" class="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600">💸 Markdown</button>
-                            </div>
-                        </div>
+                    <h2 class="text-xl font-bold mb-4">📋 Pharmacy Dashboard Content</h2>
+                    <p class="text-gray-600">Ready for your custom pharmacy interface...</p>
+                    <div id="custom-pharmacy-content">
+                        <!-- User will specify what goes here -->
                     </div>
                 </div>
             </div>
@@ -247,9 +180,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     throw new Error('Failed to fetch prescriptions - Status: ' + response.status);
                 }
             } catch (error) {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('error-message').style.display = 'block';
-                document.getElementById('error-message').textContent = 'Error loading prescriptions: ' + error.message;
+                const customContent = document.getElementById('custom-pharmacy-content');
+                if (customContent) {
+                    customContent.innerHTML = '<p class="text-red-600">Error loading data: ' + error.message + '</p>';
+                }
             }
         }
 
@@ -266,166 +200,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         function displayPrescriptions(prescriptions) {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('prescriptions-list').style.display = 'block';
-
-            const listContainer = document.getElementById('prescriptions-list');
-            
-            if (prescriptions.length === 0) {
-                listContainer.innerHTML = '<div class="text-center py-8"><div class="text-4xl mb-4">📦</div><p class="text-gray-500">No prescriptions found</p></div>';
-                return;
-            }
-
-            const prescriptionsHTML = prescriptions.map(prescription => {
-                const statusColors = {
-                    'new': 'bg-blue-500', 'processing': 'bg-yellow-500', 
-                    'ready': 'bg-green-500', 'filled': 'bg-gray-500', 'dispensed': 'bg-gray-600'
-                };
-                
-                const statusColor = statusColors[prescription.status] || 'bg-blue-500';
-                const date = new Date(prescription.prescribedDate).toLocaleDateString();
-                
-                // Clean up patient and doctor names
-                const patientName = prescription.patientName.includes('Patient') ? 
-                    'John Doe (ID: ' + prescription.patientName.split(' ')[1].slice(0,8) + '...)' : 
-                    prescription.patientName;
-                const doctorName = prescription.prescribingDoctor.includes('Provider') ? 
-                    'Dr. Smith (ID: ' + prescription.prescribingDoctor.split(' ')[1].slice(0,8) + '...)' : 
-                    prescription.prescribingDoctor;
-                
-                return \`<div class="border rounded-lg p-4 mb-4 hover:bg-gray-50">
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-4 mb-2">
-                                <h3 class="font-semibold text-lg">💊 \${prescription.medication}</h3>
-                                <span class="\${statusColor} text-white px-3 py-1 rounded-full text-sm font-medium">
-                                    \${prescription.status.toUpperCase()}
-                                </span>
-                                <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
-                                    Wait: \${prescription.waitTime || 0} min
-                                </span>
-                            </div>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-2">
-                                <div><span class="font-medium">👤 Patient:</span> \${patientName}</div>
-                                <div><span class="font-medium">💊 Dosage:</span> \${prescription.dosage} \${prescription.frequency}</div>
-                                <div><span class="font-medium">👨‍⚕️ Doctor:</span> \${doctorName}</div>
-                                <div><span class="font-medium">📅 Date:</span> \${date}</div>
-                            </div>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
-                                <div><span class="font-medium">🏥 Insurance:</span> \${prescription.insuranceProvider}</div>
-                                <div><span class="font-medium">💰 Copay:</span> $\${prescription.copayAmount}</div>
-                                <div><span class="font-medium">📦 Qty:</span> \${prescription.quantity} units</div>
-                                <div><span class="font-medium">⚠️ Priority:</span> \${prescription.priority.toUpperCase()}</div>
-                            </div>
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <button onclick="viewDetails('\${prescription.id}')" class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">📋 Details</button>
-                            \${prescription.status === 'new' ? '<button onclick="processRx(\\'' + prescription.id + '\\')" class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">⚡ Process</button>' : ''}
-                            \${prescription.status === 'ready' ? '<button onclick="dispenseRx(\\'' + prescription.id + '\\')" class="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">✅ Dispense</button>' : ''}
-                            <button onclick="printLabel('\${prescription.id}')" class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600">🖨️ Label</button>
-                        </div>
-                    </div>
-                </div>\`;
-            }).join('');
-
-            listContainer.innerHTML = prescriptionsHTML;
-        }
-
-        function viewDetails(prescriptionId) {
-            alert('📋 Prescription Details\\n\\nID: ' + prescriptionId + '\\n\\nThis would show:\\n• Full patient information\\n• Insurance verification status\\n• Drug interaction checks\\n• Prescription notes\\n• Refill history');
-        }
-
-        function processRx(prescriptionId) {
-            if (confirm('⚡ Process Prescription?\\n\\nThis will:\\n1. Verify insurance coverage\\n2. Check drug interactions\\n3. Prepare medication\\n4. Update status to READY\\n\\nContinue?')) {
-                alert('✅ Prescription Processing Started!\\n\\n🔄 Steps:\\n1. ✅ Insurance verified\\n2. ✅ No drug interactions found\\n3. ✅ Medication prepared\\n4. ✅ Status updated to READY\\n\\n📞 Patient notification sent!');
-                loadPrescriptions(); // Refresh list
-            }
-        }
-
-        function dispenseRx(prescriptionId) {
-            if (confirm('✅ Dispense Prescription?\\n\\nThis will:\\n• Mark as DISPENSED\\n• Print receipt\\n• Update inventory\\n• Send pickup notification\\n\\nContinue?')) {
-                alert('🎉 PRESCRIPTION DISPENSED!\\n\\n📋 Receipt: RX-' + Date.now() + '\\n🖨️ Label printed\\n📧 Patient notified\\n📊 Inventory updated\\n\\n✅ Transaction complete!');
-                loadPrescriptions(); // Refresh list
-            }
-        }
-
-        function printLabel(prescriptionId) {
-            alert('🖨️ PRINTING PRESCRIPTION LABEL\\n\\n📋 Label: RX-' + prescriptionId.slice(0,8) + '\\n🖨️ Sent to pharmacy printer\\n📦 Bottle label generated\\n\\n✅ Ready for medication preparation!');
-        }
-
-        // Quick Action Functions
-        function newPrescription() {
-            alert('➕ NEW PRESCRIPTION ENTRY\\n\\nThis would open:\\n• Patient selection form\\n• Medication entry\\n• Dosage and frequency\\n• Insurance verification\\n• Doctor authorization\\n\\n🚀 Feature coming soon!');
-        }
-
-        function customerLookup() {
-            const customerName = prompt('🔍 CUSTOMER LOOKUP\\n\\nEnter patient name or phone number:');
-            if (customerName) {
-                alert('👤 CUSTOMER FOUND!\\n\\nName: ' + customerName + '\\nPhone: (555) 123-4567\\nInsurance: Blue Cross Blue Shield\\nLast Visit: 2 days ago\\nActive Prescriptions: 3\\n\\n📋 View full profile?');
-            }
-        }
-
-        function insuranceVerify() {
-            alert('🏥 INSURANCE VERIFICATION\\n\\n✅ Real-time verification available:\\n• Blue Cross Blue Shield: Active\\n• Aetna: Active\\n• Medicare: Active\\n• Medicaid: Active\\n\\n🔄 Average verification time: 30 seconds');
-        }
-
-        function inventoryAlert() {
-            alert('📦 INVENTORY STATUS\\n\\n⚠️ Alerts:\\n• 3 out of stock items\\n• 5 low stock items\\n• 8 expiring within 30 days\\n\\n📊 Total inventory value: $847,392\\n🛒 Pending orders: $23,847');
-        }
-
-        function generateReport() {
-            if (confirm('📊 GENERATE PHARMACY REPORT\\n\\nAvailable reports:\\n• Daily Sales Summary\\n• Prescription Analytics\\n• Inventory Status\\n• Insurance Claims\\n\\nGenerate daily summary now?')) {
-                // Create mock report data
-                const reportData = \`Daily Pharmacy Report - \${new Date().toLocaleDateString()}
-                
-PRESCRIPTION SUMMARY:
-- Total Prescriptions: 47
-- New Prescriptions: 12
-- Refills: 35
-- Insurance Claims: 38
-- Cash Payments: 9
-
-REVENUE SUMMARY:
-- Total Revenue: $2,847.50
-- Insurance Payments: $2,203.75
-- Patient Copays: $643.75
-- Average Per Prescription: $60.59
-
-TOP MEDICATIONS:
-1. Metformin - 8 prescriptions
-2. Lisinopril - 6 prescriptions  
-3. Atorvastatin - 5 prescriptions
-4. Amlodipine - 4 prescriptions
-5. Omeprazole - 3 prescriptions
-
-INVENTORY ALERTS:
-- Low Stock Items: 5
-- Out of Stock: 2
-- Expiring Soon: 8
-                \`;
-                
-                // Download report
-                const element = document.createElement('a');
-                element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(reportData));
-                element.setAttribute('download', 'pharmacy_daily_report_' + new Date().toISOString().slice(0,10) + '.txt');
-                element.style.display = 'none';
-                document.body.appendChild(element);
-                element.click();
-                document.body.removeChild(element);
-                
-                alert('📊 REPORT GENERATED!\\n\\n✅ Daily report downloaded successfully\\n📁 File: pharmacy_daily_report.txt\\n📧 Report also sent to manager email\\n\\n🔄 Auto-reports enabled for daily/weekly/monthly');
-            }
-        }
-
-        function reorderMedication(medication) {
-            if (confirm('🛒 REORDER MEDICATION\\n\\nMedication: ' + medication + '\\nSuggested Order: 100 units\\nEstimated Cost: $245.00\\nSupplier: PharmaCorp\\nDelivery: 2-3 business days\\n\\nPlace order now?')) {
-                alert('✅ ORDER PLACED!\\n\\n📦 Order #: PO-' + Date.now() + '\\n💊 Medication: ' + medication + '\\n📊 Quantity: 100 units\\n💰 Total: $245.00\\n🚚 Expected Delivery: ' + new Date(Date.now() + 3*24*60*60*1000).toLocaleDateString() + '\\n\\n📧 Confirmation email sent!');
-            }
-        }
-
-        function markdownMedication(medication) {
-            if (confirm('💸 MARKDOWN MEDICATION\\n\\nMedication: ' + medication + '\\nCurrent Price: $15.99\\nMarkdown Price: $9.99 (37% off)\\nExpiring: March 15, 2025\\n\\nApply markdown pricing?')) {
-                alert('✅ MARKDOWN APPLIED!\\n\\n💊 Medication: ' + medication + '\\n💰 New Price: $9.99\\n📅 Valid until: March 14, 2025\\n🏷️ Discount labels printed\\n\\n📢 Staff notification sent!');
+            // Basic display function - will be customized based on user requirements
+            const customContent = document.getElementById('custom-pharmacy-content');
+            if (customContent) {
+                customContent.innerHTML = '<p class="text-gray-500">Prescription data available for custom implementation...</p>';
             }
         }
 
