@@ -215,6 +215,15 @@ export const accessRequestStatusEnum = pgEnum("access_request_status", [
   "expired"
 ]);
 
+// Pharmacy workflow stages
+export const workflowStageEnum = pgEnum("workflow_stage", [
+  "queue", // Waiting in queue
+  "verification", // Insurance verification
+  "processing", // Being processed
+  "ready", // Ready for pickup
+  "completed" // Dispensed/completed
+]);
+
 export const serviceTypeEnum = pgEnum("service_type", [
   "procedure",
   "consultation", 
@@ -587,6 +596,15 @@ export const prescriptions = pgTable("prescriptions", {
   routedFromHospital: uuid("routed_from_hospital").references(() => tenants.id), // Original hospital
   patientSelectedPharmacy: boolean("patient_selected_pharmacy").default(false),
   routingNotes: text("routing_notes"),
+  // Workflow optimization fields
+  priority: priorityLevelEnum("priority").default('normal'),
+  urgencyScore: integer("urgency_score").default(50), // 0-100 calculated priority score
+  estimatedWaitTime: integer("estimated_wait_time").default(0), // minutes
+  assignedStaffId: uuid("assigned_staff_id").references(() => users.id), // Assigned pharmacist
+  workflowStage: text("workflow_stage").default('queue'), // queue, verification, processing, ready
+  lastStatusUpdate: timestamp("last_status_update").default(sql`CURRENT_TIMESTAMP`),
+  patientWaitingSince: timestamp("patient_waiting_since"),
+  priorityFactors: jsonb("priority_factors"), // JSON object with priority calculation details
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });

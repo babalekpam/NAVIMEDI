@@ -3719,14 +3719,156 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get prescriptions with patient names, doctor names, and insurance data
       const prescriptions = await storage.getPrescriptionsByPharmacy(pharmacyTenantId);
-      console.log("[PHARMACY API] ✅ Found prescriptions with names and insurance:", prescriptions.length);
-      console.log("[PHARMACY API] ✅ Sample prescription data:", prescriptions[0]);
       
-      console.log("[PHARMACY API] 📋 Returning formatted prescriptions:", prescriptions.length);
-      res.json(prescriptions);
+      // Calculate priority and add workflow optimization data
+      const optimizedPrescriptions = prescriptions.map(prescription => {
+        const priorityData = calculatePrescriptionPriority(prescription);
+        return {
+          ...prescription,
+          urgencyScore: priorityData.urgencyScore,
+          priority: priorityData.priority,
+          priorityFactors: priorityData.priorityFactors,
+          workflowStage: prescription.workflowStage || getWorkflowStageFromStatus(prescription.status),
+          estimatedWaitTime: calculateEstimatedWaitTime(prescription),
+          taskPriority: priorityData.urgencyScore > 70 ? 'high' : priorityData.urgencyScore > 40 ? 'normal' : 'low',
+          lastStatusUpdate: prescription.lastStatusUpdate || prescription.updatedAt || prescription.prescribedDate
+        };
+      });
+      
+      // Sort by priority score (highest first) for real-time task prioritization
+      optimizedPrescriptions.sort((a, b) => b.urgencyScore - a.urgencyScore);
+      
+      console.log("[PHARMACY API] ✅ Found prescriptions with names and insurance:", optimizedPrescriptions.length);
+      console.log("[PHARMACY API] 🚀 WORKFLOW OPTIMIZATION: Priority scores:", optimizedPrescriptions.map(p => ({ 
+        medication: p.medicationName, 
+        score: p.urgencyScore, 
+        priority: p.priority,
+        stage: p.workflowStage,
+        waitTime: p.estimatedWaitTime
+      })));
+      
+      console.log("[PHARMACY API] 📋 Returning optimized prescriptions:", optimizedPrescriptions.length);
+      res.json(optimizedPrescriptions);
     } catch (error) {
       console.error("Get pharmacy prescriptions error:", error);
       res.status(500).json({ message: "Failed to fetch pharmacy prescriptions" });
+    }
+  });
+
+  // Real-time pharmacy workflow optimization endpoint
+  app.get("/api/pharmacy/workflow-queue", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const pharmacyTenantId = req.tenant!.id;
+      console.log("[WORKFLOW] 🔄 Real-time workflow queue requested for pharmacy:", pharmacyTenantId);
+      
+      if (req.tenant!.type !== 'pharmacy' && req.user?.role !== 'super_admin') {
+        return res.status(403).json({ 
+          message: "Access denied: This endpoint is only for pharmacy tenants" 
+        });
+      }
+      
+      // Get all active prescriptions
+      const prescriptions = await storage.getPrescriptionsByPharmacy(pharmacyTenantId);
+      
+      // Filter for active workflow stages (not completed)
+      const activePrescriptions = prescriptions.filter(p => 
+        !['dispensed', 'picked_up', 'cancelled'].includes(p.status)
+      );
+      
+      // Calculate priorities and organize by workflow stage
+      const workflowQueue = activePrescriptions.map(prescription => {
+        const priorityData = calculatePrescriptionPriority(prescription);
+        const workflowStage = getWorkflowStageFromStatus(prescription.status);
+        
+        return {
+          id: prescription.id,
+          medicationName: prescription.medicationName,
+          patientName: prescription.patientName,
+          dosage: prescription.dosage,
+          quantity: prescription.quantity,
+          status: prescription.status,
+          workflowStage,
+          urgencyScore: priorityData.urgencyScore,
+          priority: priorityData.priority,
+          priorityFactors: priorityData.priorityFactors,
+          estimatedWaitTime: calculateEstimatedWaitTime(prescription),
+          prescribedDate: prescription.prescribedDate,
+          assignedStaffId: prescription.assignedStaffId,
+          insuranceStatus: prescription.insuranceStatus || 'pending',
+          lastStatusUpdate: prescription.lastStatusUpdate || prescription.updatedAt || prescription.prescribedDate
+        };
+      });
+      
+      // Sort by urgency score (highest priority first)
+      workflowQueue.sort((a, b) => b.urgencyScore - a.urgencyScore);
+      
+      // Group by workflow stage for better organization
+      const queueByStage = {
+        queue: workflowQueue.filter(p => p.workflowStage === 'queue'),
+        verification: workflowQueue.filter(p => p.workflowStage === 'verification'),
+        processing: workflowQueue.filter(p => p.workflowStage === 'processing'),
+        ready: workflowQueue.filter(p => p.workflowStage === 'ready')
+      };
+      
+      // Calculate workflow metrics
+      const metrics = {
+        totalActive: workflowQueue.length,
+        highPriority: workflowQueue.filter(p => p.urgencyScore > 70).length,
+        averageWaitTime: Math.round(workflowQueue.reduce((sum, p) => sum + p.estimatedWaitTime, 0) / workflowQueue.length || 0),
+        stageDistribution: {
+          queue: queueByStage.queue.length,
+          verification: queueByStage.verification.length,
+          processing: queueByStage.processing.length,
+          ready: queueByStage.ready.length
+        }
+      };
+      
+      console.log("[WORKFLOW] 📊 Queue metrics:", metrics);
+      console.log("[WORKFLOW] 🚨 High priority items:", workflowQueue.filter(p => p.urgencyScore > 70).map(p => p.medicationName));
+      
+      res.json({
+        queue: workflowQueue,
+        queueByStage,
+        metrics,
+        lastUpdated: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Workflow queue error:", error);
+      res.status(500).json({ message: "Failed to get workflow queue" });
+    }
+  });
+
+  // Update prescription workflow stage and priority
+  app.patch("/api/pharmacy/workflow/:prescriptionId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const { prescriptionId } = req.params;
+      const { workflowStage, assignedStaffId, notes } = req.body;
+      
+      console.log("[WORKFLOW] 🔄 Updating prescription workflow:", prescriptionId, "to stage:", workflowStage);
+      
+      // Update prescription workflow data
+      const updated = await storage.updatePrescriptionWorkflow(prescriptionId, {
+        workflowStage,
+        assignedStaffId,
+        lastStatusUpdate: new Date().toISOString(),
+        pharmacyNotes: notes
+      });
+      
+      // Recalculate priority after update
+      const priorityData = calculatePrescriptionPriority(updated);
+      
+      res.json({
+        success: true,
+        prescription: {
+          ...updated,
+          urgencyScore: priorityData.urgencyScore,
+          priority: priorityData.priority,
+          priorityFactors: priorityData.priorityFactors
+        }
+      });
+    } catch (error) {
+      console.error("Workflow update error:", error);
+      res.status(500).json({ message: "Failed to update workflow" });
     }
   });
 
@@ -3824,7 +3966,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Hospital-to-Pharmacy Prescription Routing Endpoint
+  // Pharmacy Workflow Optimization Functions
+  function calculatePrescriptionPriority(prescription: any) {
+    let urgencyScore = 50; // Base score
+    const factors: any = {};
+    
+    // Time-based urgency (how long has it been waiting)
+    if (prescription.prescribedDate) {
+      const now = new Date();
+      const prescribed = new Date(prescription.prescribedDate);
+      const hoursWaiting = (now.getTime() - prescribed.getTime()) / (1000 * 60 * 60);
+      
+      if (hoursWaiting > 48) {
+        urgencyScore += 30;
+        factors.longWaitTime = true;
+      } else if (hoursWaiting > 24) {
+        urgencyScore += 20;
+        factors.moderateWaitTime = true;
+      } else if (hoursWaiting > 8) {
+        urgencyScore += 10;
+        factors.normalWaitTime = true;
+      }
+    }
+    
+    // Medication urgency classification
+    const urgentMedications = ['insulin', 'epinephrine', 'nitroglycerin', 'albuterol', 'prednisone', 'antibiotics'];
+    const medicationName = prescription.medicationName?.toLowerCase() || '';
+    
+    if (urgentMedications.some(med => medicationName.includes(med))) {
+      urgencyScore += 25;
+      factors.urgentMedication = true;
+    }
+    
+    // Patient age considerations (if available)
+    if (prescription.patientAge) {
+      if (prescription.patientAge > 65 || prescription.patientAge < 18) {
+        urgencyScore += 15;
+        factors.vulnerablePopulation = true;
+      }
+    }
+    
+    // Insurance status
+    if (prescription.insuranceStatus === 'pending') {
+      urgencyScore += 10;
+      factors.insurancePending = true;
+    } else if (prescription.insuranceStatus === 'verified') {
+      urgencyScore += 5;
+      factors.insuranceVerified = true;
+    }
+    
+    // Refill vs new prescription
+    if (prescription.refills > 0) {
+      urgencyScore += 15;
+      factors.refillPrescription = true;
+    }
+    
+    // Quantity urgency (larger quantities might need more time)
+    if (prescription.quantity > 90) {
+      urgencyScore -= 5;
+      factors.largeQuantity = true;
+    }
+    
+    // Cap urgency score
+    urgencyScore = Math.min(100, Math.max(0, urgencyScore));
+    
+    return {
+      urgencyScore,
+      priority: urgencyScore > 80 ? 'emergency' : urgencyScore > 65 ? 'urgent' : urgencyScore > 45 ? 'high' : urgencyScore > 25 ? 'normal' : 'low',
+      priorityFactors: factors
+    };
+  }
+  
+  function getWorkflowStageFromStatus(status: string) {
+    const stageMap: any = {
+      'prescribed': 'queue',
+      'sent_to_pharmacy': 'queue', 
+      'received': 'verification',
+      'insurance_verified': 'processing',
+      'processing': 'processing',
+      'ready': 'ready',
+      'dispensed': 'completed',
+      'picked_up': 'completed'
+    };
+    return stageMap[status] || 'queue';
+  }
+  
+  function calculateEstimatedWaitTime(prescription: any) {
+    const status = prescription.status;
+    const baseWaitTimes: any = {
+      'queue': 15,
+      'verification': 20,
+      'processing': 30,
+      'ready': 5,
+      'completed': 0
+    };
+    
+    const stage = getWorkflowStageFromStatus(status);
+    let waitTime = baseWaitTimes[stage] || 15;
+    
+    // Adjust based on complexity
+    if (prescription.quantity > 90) waitTime += 10;
+    if (prescription.insuranceStatus === 'pending') waitTime += 15;
+    if (!prescription.insuranceProvider || prescription.insuranceProvider === 'Pending Insurance Lookup') waitTime += 10;
+    
+    return waitTime;
+  }
+
+// Hospital-to-Pharmacy Prescription Routing Endpoint
   // Hospital prescription receiving endpoint for pharmacies
   app.post("/api/pharmacy/receive-prescription", async (req, res) => {
     try {
