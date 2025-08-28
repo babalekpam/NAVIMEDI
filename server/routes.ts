@@ -28,7 +28,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NaviMED Pharmacy - EHR Integration</title>
+    <title>NaviMED Pharmacy Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -436,10 +436,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 <span>Reports</span>
             </div>
             
-            <div class="nav-item" onclick="showSection('integration')">
-                <i class="fas fa-plug"></i>
-                <span>EHR Integration</span>
-            </div>
         </div>
         
         <!-- Main Content -->
@@ -927,89 +923,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 </div>
             </div>
             
-            <div id="integration-section" class="content-section" style="display: none;">
-                <h2 class="section-title">EHR Integration</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value" id="connected-providers">23</div>
-                        <div class="stat-label">Connected Providers</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="integration-uptime">99.8%</div>
-                        <div class="stat-label">Integration Uptime</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="daily-syncs">1,247</div>
-                        <div class="stat-label">Daily Data Syncs</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="sync-errors">0</div>
-                        <div class="stat-label">Sync Errors Today</div>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <h3>EHR Connections</h3>
-                        <button class="btn btn-primary" onclick="addEHRConnection()">
-                            <i class="fas fa-plus"></i> Add Connection
-                        </button>
-                    </div>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Provider</th>
-                                    <th>EHR System</th>
-                                    <th>Connection Type</th>
-                                    <th>Last Sync</th>
-                                    <th>Status</th>
-                                    <th>Prescriptions/Day</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ehr-tbody">
-                                <tr>
-                                    <td>City General Hospital</td>
-                                    <td>Epic MyChart</td>
-                                    <td>HL7 FHIR</td>
-                                    <td>2025-08-28 01:15 AM</td>
-                                    <td><span class="status status-success">Connected</span></td>
-                                    <td>47</td>
-                                    <td>
-                                        <button class="action-btn" onclick="testConnection('epic')"><i class="fas fa-wifi"></i></button>
-                                        <button class="action-btn" onclick="configureEHR('epic')"><i class="fas fa-cog"></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Metro Family Practice</td>
-                                    <td>Cerner PowerChart</td>
-                                    <td>Direct API</td>
-                                    <td>2025-08-28 01:12 AM</td>
-                                    <td><span class="status status-success">Connected</span></td>
-                                    <td>23</td>
-                                    <td>
-                                        <button class="action-btn" onclick="testConnection('cerner')"><i class="fas fa-wifi"></i></button>
-                                        <button class="action-btn" onclick="configureEHR('cerner')"><i class="fas fa-cog"></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Downtown Clinic</td>
-                                    <td>athenahealth</td>
-                                    <td>RESTful API</td>
-                                    <td>2025-08-28 01:08 AM</td>
-                                    <td><span class="status status-warning">Delayed</span></td>
-                                    <td>15</td>
-                                    <td>
-                                        <button class="action-btn" onclick="testConnection('athena')"><i class="fas fa-wifi"></i></button>
-                                        <button class="action-btn" onclick="configureEHR('athena')"><i class="fas fa-cog"></i></button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -1241,17 +1154,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             alert('Generate ' + reportType + ' report - would create comprehensive ' + reportType + ' analytics');
         }
 
-        function addEHRConnection() {
-            alert('Add EHR Connection - would open EHR integration wizard');
-        }
-
-        function testConnection(ehrSystem) {
-            alert('Testing connection to ' + ehrSystem + ' - would verify EHR connectivity');
-        }
-
-        function configureEHR(ehrSystem) {
-            alert('Configure ' + ehrSystem + ' - would open EHR settings panel');
-        }
 
         // Auto-login if token exists
         if (authToken) {
