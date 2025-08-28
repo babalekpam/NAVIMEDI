@@ -1,0 +1,811 @@
+jsx
+// File: package.json
+{
+  "name": "navimed-healthcare-platform",
+  "version": "1.0.0",
+  "description": "A comprehensive multi-tenant healthcare management platform",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "nodemon server/index.js",
+    "client": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "install-all": "npm install && cd client && npm install"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "dotenv": "^16.3.1",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "pg": "^8.11.3",
+    "drizzle-orm": "^0.28.6",
+    "nodemailer": "^6.9.7",
+    "joi": "^17.9.2",
+    "express-rate-limit": "^6.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "concurrently": "^8.2.1"
+  }
+}
+typescript
+// File: server/src/database/schema.ts
+import { pgTable, uuid, varchar, text, timestamp, boolean, integer, json, decimal, foreignKey, index } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+
+// Tenants table for multi-tenancy
+export const tenants = pgTable('tenants', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 255 }).notNull(),
+  type: varchar('type', { length: 50 }).notNull(), // 'hospital', 'pharmacy', 'laboratory'
+  subdomain: varchar('subdomain', { length: 100 }).notNull().unique(),
+  config: json('config'), // White-label configuration
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Users table with role-based access control
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  password: varchar('password', { length: 255 }).notNull(),
+  firstName: varchar('first_name', { length: 100 }).notNull(),
+  lastName: varchar('last_name', { length: 100 }).notNull(),
+  role: varchar('role', { length: 50 }).notNull(), // 'admin', 'doctor', 'pharmacist', etc.
+  isActive: boolean('is_active').default(true),
+  lastLogin: timestamp('last_login'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => {
+  return {
+    tenantIdx: index('users_tenant_idx').on(table.tenantId),
+    emailIdx: index('users_email_idx').on(table.email),
+  };
+});
+
+// Patients table
+export const patients = pgTable('patients', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  firstName: varchar('first_name', { length: 100 }).notNull(),
+  lastName: varchar('last_name', { length: 100 }).notNull(),
+  dateOfBirth: timestamp('date_of_birth').notNull(),
+  gender: varchar('gender', { length: 20 }).notNull(),
+  phone: varchar('phone', { length: 20 }),
+  email: varchar('email', { length: 255 }),
+  address: json('address'),
+  emergencyContact: json('emergency_contact'),
+  medicalHistory: json('medical_history'),
+  insuranceInfo: json('insurance_info'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => {
+  return {
+    tenantIdx: index('patients_tenant_idx').on(table.tenantId),
+  };
+});
+
+// Prescriptions table
+export const prescriptions = pgTable('prescriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  patientId: uuid('patient_id').notNull().references(() => patients.id),
+  doctorId: uuid('doctor_id').notNull().references(() => users.id),
+  pharmacyId: uuid('pharmacy_id').references(() => tenants.id), // Target pharmacy
+  medication: varchar('medication', { length: 255 }).notNull(),
+  dosage: varchar('dosage', { length: 100 }).notNull(),
+  quantity: integer('quantity').notNull(),
+  instructions: text('instructions'),
+  status: varchar('status', { length: 50 }).default('new'), // new, insurance_verification, processing, ready, dispensed
+  insuranceStatus: varchar('insurance_status', { length: 50 }),
+  copay: decimal('copay', { precision: 10, scale: 2 }),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => {
+  return {
+    tenantIdx: index('prescriptions_tenant_idx').on(table.tenantId),
+    statusIdx: index('prescriptions_status_idx').on(table.status),
+  };
+});
+
+// Define relations
+export const tenantsRelations = relations(tenants, ({ many }) => ({
+  users: many(users),
+  patients: many(patients),
+  prescriptions: many(prescriptions),
+}));
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [users.tenantId],
+    references: [tenants.id]
+  }),
+  prescriptions: many(prescriptions),
+}));
+
+export const patientsRelations = relations(patients, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [patients.tenantId],
+    references: [tenants.id]
+  }),
+  prescriptions: many(prescriptions),
+}));
+
+export const prescriptionsRelations = relations(prescriptions, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [prescriptions.tenantId],
+    references: [tenants.id]
+  }),
+  patient: one(patients, {
+    fields: [prescriptions.patientId],
+    references: [patients.id]
+  }),
+  doctor: one(users, {
+    fields: [prescriptions.doctorId],
+    references: [users.id]
+  }),
+  pharmacy: one(tenants, {
+    fields: [prescriptions.pharmacyId],
+    references: [tenants.id]
+  }),
+}));
+typescript
+// File: server/src/middleware/auth.ts
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import { db } from '../database';
+import { users } from '../database/schema';
+import { eq } from 'drizzle-orm';
+
+export interface AuthenticatedRequest extends Request {
+  user?: any;
+  tenant?: any;
+}
+
+export const authenticateToken = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  try {
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const user = await db.select().from(users).where(eq(users.id, decoded.userId));
+    
+    if (!user.length || !user[0].isActive) {
+      return res.status(403).json({ error: 'Invalid or inactive user' });
+    }
+
+    req.user = user[0];
+    next();
+  } catch (error) {
+    return res.status(403).json({ error: 'Invalid token' });
+  }
+};
+
+export const requireRole = (roles: string[]) => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+    next();
+  };
+};
+typescript
+// File: server/src/routes/prescriptions.ts
+import express from 'express';
+import { db } from '../database';
+import { prescriptions, patients } from '../database/schema';
+import { eq, and, desc } from 'drizzle-orm';
+import { authenticateToken, requireRole, AuthenticatedRequest } from '../middleware/auth';
+
+const router = express.Router();
+
+// Get all prescriptions for the current tenant
+router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const allPrescriptions = await db
+      .select()
+      .from(prescriptions)
+      .where(eq(prescriptions.tenantId, tenantId))
+      .orderBy(desc(prescriptions.createdAt));
+
+    res.json(allPrescriptions);
+  } catch (error) {
+    console.error('Error fetching prescriptions:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get a specific prescription
+router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const tenantId = req.user.tenantId;
+    
+    const prescription = await db
+      .select()
+      .from(prescriptions)
+      .where(and(
+        eq(prescriptions.id, id),
+        eq(prescriptions.tenantId, tenantId)
+      ));
+
+    if (!prescription.length) {
+      return res.status(404).json({ error: 'Prescription not found' });
+    }
+
+    res.json(prescription[0]);
+  } catch (error) {
+    console.error('Error fetching prescription:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create a new prescription (doctors only)
+router.post('/', authenticateToken, requireRole(['doctor', 'physician']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { patientId, medication, dosage, quantity, instructions, pharmacyId } = req.body;
+    const tenantId = req.user.tenantId;
+    const doctorId = req.user.id;
+
+    // Verify patient belongs to the same tenant
+    const patient = await db
+      .select()
+      .from(patients)
+      .where(and(
+        eq(patients.id, patientId),
+        eq(patients.tenantId, tenantId)
+      ));
+
+    if (!patient.length) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    const newPrescription = await db
+      .insert(prescriptions)
+      .values({
+        tenantId,
+        patientId,
+        doctorId,
+        pharmacyId,
+        medication,
+        dosage,
+        quantity,
+        instructions,
+        status: 'new'
+      })
+      .returning();
+
+    res.status(201).json(newPrescription[0]);
+  } catch (error) {
+    console.error('Error creating prescription:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update prescription status (pharmacy roles)
+router.patch('/:id/status', authenticateToken, requireRole(['pharmacist', 'pharmacy_technician']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const tenantId = req.user.tenantId;
+
+    const validStatuses = ['new', 'insurance_verification', 'processing', 'ready', 'dispensed'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    const updatedPrescription = await db
+      .update(prescriptions)
+      .set({ status, updatedAt: new Date() })
+      .where(and(
+        eq(prescriptions.id, id),
+        eq(prescriptions.tenantId, tenantId)
+      ))
+      .returning();
+
+    if (!updatedPrescription.length) {
+      return res.status(404).json({ error: 'Prescription not found' });
+    }
+
+    res.json(updatedPrescription[0]);
+  } catch (error) {
+    console.error('Error updating prescription status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+export default router;
+typescript
+// File: server/src/routes/auth.ts
+import express from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { db } from '../database';
+import { users, tenants } from '../database/schema';
+import { eq } from 'drizzle-orm';
+
+const router = express.Router();
+
+// Login endpoint
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Find user with tenant information
+    const userWithTenant = await db
+      .select({
+        user: users,
+        tenant: tenants
+      })
+      .from(users)
+      .where(eq(users.email, email))
+      .leftJoin(tenants, eq(users.tenantId, tenants.id));
+
+    if (!userWithTenant.length) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const { user, tenant } = userWithTenant[0];
+
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(401).json({ error: 'Account is deactivated' });
+    }
+
+    // Check if tenant is active
+    if (!tenant.isActive) {
+      return res.status(401).json({ error: 'Organization account is deactivated' });
+    }
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        tenantId: user.tenantId,
+        role: user.role 
+      },
+      process.env.JWT_SECRET!,
+      { expiresIn: '24h' }
+    );
+
+    // Update last login
+    await db
+      .update(users)
+      .set({ lastLogin: new Date() })
+      .where(eq(users.id, user.id));
+
+    // Return user info without password
+    const { password: _, ...userWithoutPassword } = user;
+
+    res.json({
+      token,
+      user: userWithoutPassword,
+      tenant
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Tenant-based registration (simplified for demo)
+router.post('/register', async (req, res) => {
+  // Implementation would include tenant creation, user creation, etc.
+  // This would be a more complex endpoint in a real implementation
+  res.status(501).json({ error: 'Registration not implemented in demo' });
+});
+
+export default router;
+typescript
+// File: server/src/database/index.ts
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+import * as schema from './schema';
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+export const db = drizzle(pool, { schema });
+typescript
+// File: server/index.ts
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import dotenv from 'dotenv';
+
+// Import routes
+import authRoutes from './src/routes/auth';
+import prescriptionRoutes from './src/routes/prescriptions';
+import patientRoutes from './src/routes/patients';
+
+// Load environment variables
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Security middleware
+app.use(helmet());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use(limiter);
+
+// CORS configuration
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true
+}));
+
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/prescriptions', prescriptionRoutes);
+app.use('/api/patients', patientRoutes);
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Error handling middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Endpoint not found' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+typescript
+// File: client/src/components/Dashboard.tsx
+import React from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import HospitalDashboard from './dashboards/HospitalDashboard';
+import PharmacyDashboard from './dashboards/PharmacyDashboard';
+import LaboratoryDashboard from './dashboards/LaboratoryDashboard';
+
+const Dashboard: React.FC = () => {
+  const { user } = useAuth();
+
+  const renderDashboard = () => {
+    if (user.role === 'doctor' || user.role === 'physician' || user.role === 'nurse') {
+      return <HospitalDashboard />;
+    } else if (user.role === 'pharmacist' || user.role === 'pharmacy_technician') {
+      return <PharmacyDashboard />;
+    } else if (user.role === 'lab_technician' || user.role === 'pathologist') {
+      return <LaboratoryDashboard />;
+    } else {
+      return <div>General Dashboard</div>;
+    }
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Welcome, {user.firstName}!</h1>
+      {renderDashboard()}
+    </div>
+  );
+};
+
+export default Dashboard;
+typescript
+// File: client/src/components/dashboards/PharmacyDashboard.tsx
+import React, { useState, useEffect } from 'react';
+import { getPrescriptions, updatePrescriptionStatus } from '../../services/api';
+import { Prescription } from '../../types';
+
+const PharmacyDashboard: React.FC = () => {
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPrescriptions();
+  }, []);
+
+  const fetchPrescriptions = async () => {
+    try {
+      const data = await getPrescriptions();
+      setPrescriptions(data);
+    } catch (error) {
+      console.error('Error fetching prescriptions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (id: string, status: string) => {
+    try {
+      await updatePrescriptionStatus(id, status);
+      // Refresh the list
+      fetchPrescriptions();
+    } catch (error) {
+      console.error('Error updating prescription status:', error);
+    }
+  };
+
+  if (loading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <h2 className="text-2xl font-semibold mb-4">Prescription Queue</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {prescriptions.map((prescription) => (
+          <div key={prescription.id} className="bg-white rounded-lg shadow-md p-4">
+            <h3 className="text-lg font-medium">{prescription.medication}</h3>
+            <p className="text-gray-600">Dosage: {prescription.dosage}</p>
+            <p className="text-gray-600">Quantity: {prescription.quantity}</p>
+            <p className="text-gray-600">Status: <span className={`font-semibold ${getStatusColor(prescription.status)}`}>{prescription.status}</span></p>
+            
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700">Update Status:</label>
+              <select 
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                value={prescription.status}
+                onChange={(e) => handleStatusUpdate(prescription.id, e.target.value)}
+              >
+                <option value="new">New</option>
+                <option value="insurance_verification">Insurance Verification</option>
+                <option value="processing">Processing</option>
+                <option value="ready">Ready</option>
+                <option value="dispensed">Dispensed</option>
+              </select>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'new': return 'text-blue-600';
+    case 'insurance_verification': return 'text-yellow-600';
+    case 'processing': return 'text-orange-600';
+    case 'ready': return 'text-green-600';
+    case 'dispensed': return 'text-purple-600';
+    default: return 'text-gray-600';
+  }
+};
+
+export default PharmacyDashboard;
+typescript
+// File: client/src/contexts/AuthContext.tsx
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { login as apiLogin, logout as apiLogout } from '../services/api';
+
+interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  tenantId: string;
+}
+
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  isAuthenticated: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+
+  useEffect(() => {
+    if (token) {
+      // Verify token and get user info
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      // In a real app, you would validate the token with the server
+      if (payload.exp * 1000 > Date.now()) {
+        setUser({
+          id: payload.userId,
+          email: '', // You would fetch this from your API
+          firstName: '', // You would fetch this from your API
+          lastName: '', // You would fetch this from your API
+          role: payload.role,
+          tenantId: payload.tenantId
+        });
+      } else {
+        logout();
+      }
+    }
+  }, [token]);
+
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await apiLogin(email, password);
+      const { token: newToken, user: userData } = response;
+      
+      setToken(newToken);
+      setUser(userData);
+      localStorage.setItem('token', newToken);
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
+    }
+  };
+
+  const logout = () => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem('token');
+    apiLogout();
+  };
+
+  const value = {
+    user,
+    token,
+    login,
+    logout,
+    isAuthenticated: !!user,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+typescript
+// File: client/src/services/api.ts
+import axios from 'axios';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+});
+
+// Add token to requests if available
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Handle authentication errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export const login = (email: string, password: string) => {
+  return api.post('/auth/login', { email, password }).then(res => res.data);
+};
+
+export const logout = () => {
+  return api.post('/auth/logout');
+};
+
+export const getPrescriptions = () => {
+  return api.get('/prescriptions').then(res => res.data);
+};
+
+export const updatePrescriptionStatus = (id: string, status: string) => {
+  return api.patch(`/prescriptions/${id}/status`, { status }).then(res => res.data);
+};
+
+export const getPatients = () => {
+  return api.get('/patients').then(res => res.data);
+};
+
+export default api;
+typescript
+// File: client/src/types/index.ts
+export interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  tenantId: string;
+  isActive: boolean;
+  lastLogin?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Tenant {
+  id: string;
+  name: string;
+  type: string;
+  subdomain: string;
+  config: any;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Patient {
+  id: string;
+  tenantId: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: string;
+  phone?: string;
+  email?: string;
+  address?: any;
+  emergencyContact?: any;
+  medicalHistory?: any;
+  insuranceInfo?: any;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Prescription {
+  id: string;
+  tenantId: string;
+  patientId: string;
+  doctorId: string;
+  pharmacyId?: string;
+  medication: string;
+  dosage: string;
+  quantity: number;
+  instructions?: string;
+  status: string;
+  insuranceStatus?: string;
+  copay?: number;
+  createdAt: string;
+  updatedAt: string;
+}
