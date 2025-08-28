@@ -214,6 +214,12 @@ async function initializePlatform() {
     }
     
     app.use(express.static(distPath));
+    
+    // Serve pharmacy HTML page directly
+    app.get("/pharmacy", (req, res) => {
+      res.sendFile(path.join(__dirname, "public/pharmacy.html"));
+    });
+    
     // Catch-all handler for SPA routing
     app.use("*", (_req, res) => {
       res.sendFile(path.resolve(distPath, "index.html"));
