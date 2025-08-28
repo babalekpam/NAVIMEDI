@@ -1056,19 +1056,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         function showSection(sectionName) {
-            // Hide all sections
-            const sections = document.querySelectorAll('.content-section');
-            sections.forEach(section => section.style.display = 'none');
-            
-            // Remove active class from all nav items
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(item => item.classList.remove('active'));
-            
-            // Show selected section
-            document.getElementById(sectionName + '-section').style.display = 'block';
-            
-            // Add active class to selected nav item
-            event.target.closest('.nav-item').classList.add('active');
+            try {
+                console.log('Switching to section:', sectionName);
+                
+                // Hide all sections
+                const sections = document.querySelectorAll('.content-section');
+                sections.forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                // Remove active class from all nav items
+                const navItems = document.querySelectorAll('.nav-item');
+                navItems.forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Show selected section
+                const targetSection = document.getElementById(sectionName + '-section');
+                if (targetSection) {
+                    targetSection.style.display = 'block';
+                    console.log('Showing section:', sectionName + '-section');
+                } else {
+                    console.error('Section not found:', sectionName + '-section');
+                    return;
+                }
+                
+                // Add active class to clicked nav item
+                if (event && event.target) {
+                    const navItem = event.target.closest('.nav-item');
+                    if (navItem) {
+                        navItem.classList.add('active');
+                    }
+                }
+                
+                // Load section-specific data
+                if (sectionName === 'prescriptions') {
+                    loadPrescriptions();
+                } else if (sectionName === 'inventory') {
+                    loadInventoryData();
+                } else if (sectionName === 'patients') {
+                    loadPatientData();
+                } else if (sectionName === 'suppliers') {
+                    loadSupplierData();
+                } else if (sectionName === 'billing') {
+                    loadBillingData();
+                } else if (sectionName === 'reports') {
+                    loadReportsData();
+                }
+                
+            } catch (error) {
+                console.error('Error in showSection:', error);
+                alert('Error switching tabs. Please refresh the page.');
+            }
         }
 
         function viewPrescription(id) {
@@ -1153,6 +1192,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         function generateReport(reportType) {
             alert('Generate ' + reportType + ' report - would create comprehensive ' + reportType + ' analytics');
+        }
+
+        function loadInventoryData() {
+            console.log('Loading inventory data...');
+            // Inventory data is already displayed
+        }
+
+        function loadPatientData() {
+            console.log('Loading patient data...');
+            // Patient data is already displayed
+        }
+
+        function loadSupplierData() {
+            console.log('Loading supplier data...');
+            // Supplier data is already displayed
+        }
+
+        function loadBillingData() {
+            console.log('Loading billing data...');
+            // Billing data is already displayed
+        }
+
+        function loadReportsData() {
+            console.log('Loading reports data...');
+            // Reports data is already displayed
         }
 
 
