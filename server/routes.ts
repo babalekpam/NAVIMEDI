@@ -561,43 +561,453 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             <div id="inventory-section" class="content-section" style="display: none;">
                 <h2 class="section-title">Inventory Management</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-medications">127</div>
+                        <div class="stat-label">Total Medications</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="low-stock">8</div>
+                        <div class="stat-label">Low Stock Alerts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="expired-soon">3</div>
+                        <div class="stat-label">Expiring Soon</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-value">$42,850</div>
+                        <div class="stat-label">Inventory Value</div>
+                    </div>
+                </div>
+                
                 <div class="card">
-                    <p>Inventory management system coming soon...</p>
+                    <div class="card-header">
+                        <h3>Medication Inventory</h3>
+                        <button class="btn btn-primary" onclick="addMedication()">
+                            <i class="fas fa-plus"></i> Add Medication
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>NDC Code</th>
+                                    <th>Medication</th>
+                                    <th>Strength</th>
+                                    <th>Quantity</th>
+                                    <th>Expiry</th>
+                                    <th>Unit Cost</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-tbody">
+                                <tr>
+                                    <td>0069-3130-68</td>
+                                    <td>Lisinopril</td>
+                                    <td>10mg</td>
+                                    <td><span class="status status-danger">15</span></td>
+                                    <td>2026-03-15</td>
+                                    <td>$0.45</td>
+                                    <td><span class="status status-warning">Low Stock</span></td>
+                                    <td>
+                                        <button class="action-btn" onclick="reorderMedication('lisinopril')"><i class="fas fa-shopping-cart"></i></button>
+                                        <button class="action-btn" onclick="editMedication('lisinopril')"><i class="fas fa-edit"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>0078-0222-15</td>
+                                    <td>Metformin</td>
+                                    <td>500mg</td>
+                                    <td><span class="status status-success">450</span></td>
+                                    <td>2025-11-30</td>
+                                    <td>$0.23</td>
+                                    <td><span class="status status-success">In Stock</span></td>
+                                    <td>
+                                        <button class="action-btn" onclick="reorderMedication('metformin')"><i class="fas fa-shopping-cart"></i></button>
+                                        <button class="action-btn" onclick="editMedication('metformin')"><i class="fas fa-edit"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>0071-0155-23</td>
+                                    <td>Atorvastatin</td>
+                                    <td>20mg</td>
+                                    <td><span class="status status-success">285</span></td>
+                                    <td>2026-07-22</td>
+                                    <td>$1.12</td>
+                                    <td><span class="status status-success">In Stock</span></td>
+                                    <td>
+                                        <button class="action-btn" onclick="reorderMedication('atorvastatin')"><i class="fas fa-shopping-cart"></i></button>
+                                        <button class="action-btn" onclick="editMedication('atorvastatin')"><i class="fas fa-edit"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             
             <div id="patients-section" class="content-section" style="display: none;">
                 <h2 class="section-title">Patient Management</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="active-patients">1,247</div>
+                        <div class="stat-label">Active Patients</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="new-patients">23</div>
+                        <div class="stat-label">New This Month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="insurance-verified">967</div>
+                        <div class="stat-label">Insurance Verified</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="loyalty-members">589</div>
+                        <div class="stat-label">Loyalty Members</div>
+                    </div>
+                </div>
+                
                 <div class="card">
-                    <p>Patient management system coming soon...</p>
+                    <div class="card-header">
+                        <h3>Patient Records</h3>
+                        <div class="search-bar">
+                            <input type="text" placeholder="Search patients..." onkeyup="searchPatients(this.value)">
+                            <button class="btn btn-primary" onclick="addPatient()">
+                                <i class="fas fa-user-plus"></i> Add Patient
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Patient ID</th>
+                                    <th>Name</th>
+                                    <th>Date of Birth</th>
+                                    <th>Insurance</th>
+                                    <th>Active Rx</th>
+                                    <th>Last Visit</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="patients-tbody">
+                                <tr>
+                                    <td>P001247</td>
+                                    <td>Sarah Johnson</td>
+                                    <td>1985-03-15</td>
+                                    <td>BlueCross BlueShield</td>
+                                    <td>3</td>
+                                    <td>2025-08-20</td>
+                                    <td><span class="status status-success">Active</span></td>
+                                    <td>
+                                        <button class="action-btn" onclick="viewPatient('P001247')"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn" onclick="editPatient('P001247')"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn" onclick="patientHistory('P001247')"><i class="fas fa-history"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>P001248</td>
+                                    <td>Michael Chen</td>
+                                    <td>1978-11-22</td>
+                                    <td>Aetna</td>
+                                    <td>1</td>
+                                    <td>2025-08-18</td>
+                                    <td><span class="status status-success">Active</span></td>
+                                    <td>
+                                        <button class="action-btn" onclick="viewPatient('P001248')"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn" onclick="editPatient('P001248')"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn" onclick="patientHistory('P001248')"><i class="fas fa-history"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             
             <div id="suppliers-section" class="content-section" style="display: none;">
                 <h2 class="section-title">Supplier Management</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="active-suppliers">12</div>
+                        <div class="stat-label">Active Suppliers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="pending-orders">7</div>
+                        <div class="stat-label">Pending Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="monthly-spending">$18,450</div>
+                        <div class="stat-label">Monthly Spending</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="delivery-time">2.3</div>
+                        <div class="stat-label">Avg Delivery Days</div>
+                    </div>
+                </div>
+                
                 <div class="card">
-                    <p>Supplier management system coming soon...</p>
+                    <div class="card-header">
+                        <h3>Supplier Directory</h3>
+                        <button class="btn btn-primary" onclick="addSupplier()">
+                            <i class="fas fa-plus"></i> Add Supplier
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Supplier</th>
+                                    <th>Contact</th>
+                                    <th>Specialization</th>
+                                    <th>Rating</th>
+                                    <th>Active Orders</th>
+                                    <th>Payment Terms</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="suppliers-tbody">
+                                <tr>
+                                    <td>Cardinal Health</td>
+                                    <td>orders@cardinalhealth.com</td>
+                                    <td>Generic Pharmaceuticals</td>
+                                    <td>⭐⭐⭐⭐⭐ 4.8</td>
+                                    <td>3</td>
+                                    <td>Net 30</td>
+                                    <td><span class="status status-success">Active</span></td>
+                                    <td>
+                                        <button class="action-btn" onclick="viewSupplier('cardinal')"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn" onclick="createOrder('cardinal')"><i class="fas fa-shopping-cart"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>McKesson Corporation</td>
+                                    <td>pharmacy@mckesson.com</td>
+                                    <td>Brand & Generic</td>
+                                    <td>⭐⭐⭐⭐⭐ 4.6</td>
+                                    <td>2</td>
+                                    <td>Net 45</td>
+                                    <td><span class="status status-success">Active</span></td>
+                                    <td>
+                                        <button class="action-btn" onclick="viewSupplier('mckesson')"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn" onclick="createOrder('mckesson')"><i class="fas fa-shopping-cart"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             
             <div id="billing-section" class="content-section" style="display: none;">
                 <h2 class="section-title">Billing & Insurance</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="monthly-revenue">$127,450</div>
+                        <div class="stat-label">Monthly Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="insurance-claims">89</div>
+                        <div class="stat-label">Pending Claims</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="copay-collected">$8,290</div>
+                        <div class="stat-label">Copays Collected</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="claim-success">94.2%</div>
+                        <div class="stat-label">Claim Success Rate</div>
+                    </div>
+                </div>
+                
                 <div class="card">
-                    <p>Billing management system coming soon...</p>
+                    <div class="card-header">
+                        <h3>Recent Transactions</h3>
+                        <button class="btn btn-primary" onclick="processClaim()">
+                            <i class="fas fa-file-invoice"></i> Process Claim
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>Patient</th>
+                                    <th>Insurance</th>
+                                    <th>Amount</th>
+                                    <th>Copay</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="billing-tbody">
+                                <tr>
+                                    <td>TXN-001234</td>
+                                    <td>Sarah Johnson</td>
+                                    <td>BlueCross BlueShield</td>
+                                    <td>$45.99</td>
+                                    <td>$10.00</td>
+                                    <td><span class="status status-success">Paid</span></td>
+                                    <td>2025-08-28</td>
+                                    <td>
+                                        <button class="action-btn" onclick="viewTransaction('001234')"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn" onclick="printReceipt('001234')"><i class="fas fa-print"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>TXN-001235</td>
+                                    <td>Michael Chen</td>
+                                    <td>Aetna</td>
+                                    <td>$127.50</td>
+                                    <td>$25.00</td>
+                                    <td><span class="status status-warning">Pending</span></td>
+                                    <td>2025-08-28</td>
+                                    <td>
+                                        <button class="action-btn" onclick="viewTransaction('001235')"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn" onclick="followUpClaim('001235')"><i class="fas fa-phone"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             
             <div id="reports-section" class="content-section" style="display: none;">
                 <h2 class="section-title">Reports & Analytics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="prescriptions-filled">2,847</div>
+                        <div class="stat-label">Prescriptions Filled (MTD)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avg-wait-time">12 min</div>
+                        <div class="stat-label">Avg Wait Time</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="customer-satisfaction">4.7/5</div>
+                        <div class="stat-label">Customer Satisfaction</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="profit-margin">23.5%</div>
+                        <div class="stat-label">Profit Margin</div>
+                    </div>
+                </div>
+                
                 <div class="card">
-                    <p>Reporting system coming soon...</p>
+                    <div class="card-header">
+                        <h3>Generate Reports</h3>
+                    </div>
+                    <div class="reports-grid">
+                        <div class="report-card" onclick="generateReport('financial')">
+                            <i class="fas fa-chart-line"></i>
+                            <h4>Financial Report</h4>
+                            <p>Revenue, expenses, and profit analysis</p>
+                        </div>
+                        <div class="report-card" onclick="generateReport('inventory')">
+                            <i class="fas fa-boxes"></i>
+                            <h4>Inventory Report</h4>
+                            <p>Stock levels, turnover, and reorder points</p>
+                        </div>
+                        <div class="report-card" onclick="generateReport('prescription')">
+                            <i class="fas fa-prescription-bottle"></i>
+                            <h4>Prescription Report</h4>
+                            <p>Volume, trends, and medication analysis</p>
+                        </div>
+                        <div class="report-card" onclick="generateReport('compliance')">
+                            <i class="fas fa-shield-alt"></i>
+                            <h4>Compliance Report</h4>
+                            <p>Regulatory compliance and audit trails</p>
+                        </div>
+                    </div>
                 </div>
             </div>
             
             <div id="integration-section" class="content-section" style="display: none;">
                 <h2 class="section-title">EHR Integration</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="connected-providers">23</div>
+                        <div class="stat-label">Connected Providers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="integration-uptime">99.8%</div>
+                        <div class="stat-label">Integration Uptime</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="daily-syncs">1,247</div>
+                        <div class="stat-label">Daily Data Syncs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="sync-errors">0</div>
+                        <div class="stat-label">Sync Errors Today</div>
+                    </div>
+                </div>
+                
                 <div class="card">
-                    <p>EHR integration settings coming soon...</p>
+                    <div class="card-header">
+                        <h3>EHR Connections</h3>
+                        <button class="btn btn-primary" onclick="addEHRConnection()">
+                            <i class="fas fa-plus"></i> Add Connection
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Provider</th>
+                                    <th>EHR System</th>
+                                    <th>Connection Type</th>
+                                    <th>Last Sync</th>
+                                    <th>Status</th>
+                                    <th>Prescriptions/Day</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ehr-tbody">
+                                <tr>
+                                    <td>City General Hospital</td>
+                                    <td>Epic MyChart</td>
+                                    <td>HL7 FHIR</td>
+                                    <td>2025-08-28 01:15 AM</td>
+                                    <td><span class="status status-success">Connected</span></td>
+                                    <td>47</td>
+                                    <td>
+                                        <button class="action-btn" onclick="testConnection('epic')"><i class="fas fa-wifi"></i></button>
+                                        <button class="action-btn" onclick="configureEHR('epic')"><i class="fas fa-cog"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Metro Family Practice</td>
+                                    <td>Cerner PowerChart</td>
+                                    <td>Direct API</td>
+                                    <td>2025-08-28 01:12 AM</td>
+                                    <td><span class="status status-success">Connected</span></td>
+                                    <td>23</td>
+                                    <td>
+                                        <button class="action-btn" onclick="testConnection('cerner')"><i class="fas fa-wifi"></i></button>
+                                        <button class="action-btn" onclick="configureEHR('cerner')"><i class="fas fa-cog"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Downtown Clinic</td>
+                                    <td>athenahealth</td>
+                                    <td>RESTful API</td>
+                                    <td>2025-08-28 01:08 AM</td>
+                                    <td><span class="status status-warning">Delayed</span></td>
+                                    <td>15</td>
+                                    <td>
+                                        <button class="action-btn" onclick="testConnection('athena')"><i class="fas fa-wifi"></i></button>
+                                        <button class="action-btn" onclick="configureEHR('athena')"><i class="fas fa-cog"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -763,6 +1173,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 alert('Prescription processed successfully!');
                 loadPrescriptions(); // Refresh data
             }
+        }
+
+        // Tab navigation functions for new features
+        function addMedication() {
+            alert('Add Medication feature - would open medication entry form');
+        }
+
+        function reorderMedication(medication) {
+            alert('Reorder ' + medication + ' - would contact supplier for restocking');
+        }
+
+        function editMedication(medication) {
+            alert('Edit ' + medication + ' - would open medication details editor');
+        }
+
+        function addPatient() {
+            alert('Add Patient feature - would open patient registration form');
+        }
+
+        function searchPatients(query) {
+            console.log('Searching patients for: ' + query);
+            // Would implement patient search functionality
+        }
+
+        function viewPatient(patientId) {
+            alert('View Patient ' + patientId + ' - would show patient profile');
+        }
+
+        function editPatient(patientId) {
+            alert('Edit Patient ' + patientId + ' - would open patient editor');
+        }
+
+        function patientHistory(patientId) {
+            alert('Patient History ' + patientId + ' - would show prescription and visit history');
+        }
+
+        function addSupplier() {
+            alert('Add Supplier feature - would open supplier registration form');
+        }
+
+        function viewSupplier(supplier) {
+            alert('View ' + supplier + ' details - would show supplier profile and catalog');
+        }
+
+        function createOrder(supplier) {
+            alert('Create order with ' + supplier + ' - would open order form');
+        }
+
+        function processClaim() {
+            alert('Process Insurance Claim - would open claim submission form');
+        }
+
+        function viewTransaction(transactionId) {
+            alert('View Transaction ' + transactionId + ' - would show transaction details');
+        }
+
+        function printReceipt(transactionId) {
+            alert('Print Receipt ' + transactionId + ' - would generate printable receipt');
+        }
+
+        function followUpClaim(transactionId) {
+            alert('Follow up claim ' + transactionId + ' - would contact insurance company');
+        }
+
+        function generateReport(reportType) {
+            alert('Generate ' + reportType + ' report - would create comprehensive ' + reportType + ' analytics');
+        }
+
+        function addEHRConnection() {
+            alert('Add EHR Connection - would open EHR integration wizard');
+        }
+
+        function testConnection(ehrSystem) {
+            alert('Testing connection to ' + ehrSystem + ' - would verify EHR connectivity');
+        }
+
+        function configureEHR(ehrSystem) {
+            alert('Configure ' + ehrSystem + ' - would open EHR settings panel');
         }
 
         // Auto-login if token exists
@@ -3435,6 +3923,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Hospital-to-Pharmacy Prescription Routing Endpoint
+  // Hospital prescription receiving endpoint for pharmacies
+  app.post("/api/pharmacy/receive-prescription", async (req, res) => {
+    try {
+      console.log("[PHARMACY] 📨 Receiving prescription from hospital:", req.body);
+      
+      const prescriptionData = {
+        ...req.body,
+        status: "received", // Set status to received when pharmacy gets it
+        receivedDate: new Date(),
+        pharmacyTenantId: req.body.pharmacyTenantId
+      };
+
+      const prescription = await storage.createPrescription(prescriptionData);
+      
+      console.log("[PHARMACY] ✅ Prescription received and stored:", prescription.id);
+      
+      res.status(201).json({
+        message: "Prescription received successfully",
+        prescriptionId: prescription.id,
+        status: "received"
+      });
+    } catch (error) {
+      console.error("[PHARMACY] ❌ Error receiving prescription:", error);
+      res.status(500).json({ message: "Error receiving prescription" });
+    }
+  });
+
   app.post("/api/hospital/route-prescription", authenticateToken, requireTenant, async (req, res) => {
     try {
       const { patientId, prescriptionData, preferredPharmacyId } = req.body;
