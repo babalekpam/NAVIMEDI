@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { db } from "./db";
-import { tenants, users } from "@shared/schema";
+import { tenants, users, pharmacies } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 
 /**
@@ -356,7 +356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/patients', async (req, res) => {
     try {
       const { tenantId } = req.user as any;
-      const patients = await storage.getPatients(tenantId);
+      const patients = await storage.getPatientsByTenant(tenantId);
       res.json(patients);
     } catch (error) {
       console.error('Error fetching patients:', error);
@@ -457,6 +457,160 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching billing:', error);
       res.status(500).json({ message: 'Failed to fetch billing data' });
+    }
+  });
+
+  // PHARMACY API ENDPOINTS FOR PRESCRIPTION ROUTING
+  // Get all available pharmacies for prescription routing
+  app.get('/api/pharmacies', async (req, res) => {
+    try {
+      const { location, radius = 25, insurance, specializations } = req.query;
+      
+      // Get all active pharmacy tenants
+      const pharmacyTenants = await db.select({
+        id: tenants.id,
+        name: tenants.name,
+        address: tenants.address,
+        phone: tenants.phone,
+        email: tenants.email
+      }).from(tenants)
+      .where(and(eq(tenants.type, 'pharmacy'), eq(tenants.isActive, true)));
+      
+      // Get detailed pharmacy information
+      const pharmacies = await Promise.all(
+        pharmacyTenants.map(async (tenant) => {
+          const [pharmacy] = await db.select().from(pharmacies)
+            .where(and(eq(pharmacies.tenantId, tenant.id), eq(pharmacies.isActive, true)));
+          
+          if (pharmacy) {
+            return {
+              id: pharmacy.id,
+              tenantId: tenant.id,
+              name: tenant.name || pharmacy.name,
+              phone: pharmacy.phone || tenant.phone,
+              email: pharmacy.email || tenant.email,
+              address: pharmacy.address || tenant.address,
+              licenseNumber: pharmacy.licenseNumber,
+              npiNumber: pharmacy.npiNumber,
+              acceptsInsurance: pharmacy.acceptsInsurance,
+              deliveryService: pharmacy.deliveryService,
+              operatingHours: pharmacy.operatingHours,
+              specializations: pharmacy.specializations,
+              websiteUrl: pharmacy.websiteUrl
+            };
+          }
+          return null;
+        })
+      );
+      
+      const validPharmacies = pharmacies.filter(p => p !== null);
+      res.json(validPharmacies);
+    } catch (error) {
+      console.error('Error fetching pharmacies:', error);
+      res.status(500).json({ message: 'Failed to fetch pharmacies' });
+    }
+  });
+
+  // Send prescription to selected pharmacy
+  app.post('/api/prescriptions/:prescriptionId/send-to-pharmacy', async (req, res) => {
+    try {
+      const { prescriptionId } = req.params;
+      const { pharmacyTenantId, routingNotes } = req.body;
+      const { tenantId, userId, role } = req.user as any;
+      
+      // Verify user is authorized to route prescriptions (doctor/physician)
+      if (role !== 'physician' && role !== 'tenant_admin') {
+        return res.status(403).json({ message: 'Only physicians can route prescriptions' });
+      }
+
+      // Get the prescription and verify ownership
+      const prescription = await storage.getPrescription(prescriptionId, tenantId);
+      if (!prescription) {
+        return res.status(404).json({ message: 'Prescription not found' });
+      }
+
+      // Verify pharmacy exists and is active
+      const [pharmacyTenant] = await db.select().from(tenants)
+        .where(and(eq(tenants.id, pharmacyTenantId), eq(tenants.type, 'pharmacy'), eq(tenants.isActive, true)));
+      
+      if (!pharmacyTenant) {
+        return res.status(400).json({ message: 'Invalid pharmacy selected' });
+      }
+
+      // Update prescription with pharmacy routing information
+      const updatedPrescription = await storage.updatePrescription(prescriptionId, tenantId, {
+        pharmacyTenantId,
+        routedFromHospital: tenantId,
+        patientSelectedPharmacy: true,
+        routingNotes,
+        status: 'sent_to_pharmacy',
+        sentToPharmacyDate: new Date(),
+        lastStatusUpdate: new Date()
+      });
+
+      res.json({
+        message: 'Prescription successfully sent to pharmacy',
+        prescription: updatedPrescription,
+        pharmacy: {
+          id: pharmacyTenant.id,
+          name: pharmacyTenant.name,
+          address: pharmacyTenant.address
+        }
+      });
+    } catch (error) {
+      console.error('Error sending prescription to pharmacy:', error);
+      res.status(500).json({ message: 'Failed to send prescription to pharmacy' });
+    }
+  });
+
+  // Get prescription routing status
+  app.get('/api/prescriptions/:prescriptionId/routing-status', async (req, res) => {
+    try {
+      const { prescriptionId } = req.params;
+      const { tenantId } = req.user as any;
+
+      const prescription = await storage.getPrescription(prescriptionId, tenantId);
+      if (!prescription) {
+        return res.status(404).json({ message: 'Prescription not found' });
+      }
+
+      // Get pharmacy information if routed
+      let pharmacyInfo = null;
+      if (prescription.pharmacyTenantId) {
+        const [pharmacyTenant] = await db.select().from(tenants)
+          .where(eq(tenants.id, prescription.pharmacyTenantId));
+        if (pharmacyTenant) {
+          pharmacyInfo = {
+            id: pharmacyTenant.id,
+            name: pharmacyTenant.name,
+            phone: pharmacyTenant.phone,
+            address: pharmacyTenant.address
+          };
+        }
+      }
+
+      res.json({
+        prescriptionId: prescription.id,
+        status: prescription.status,
+        routingStatus: {
+          isRouted: !!prescription.pharmacyTenantId,
+          sentToPharmacyDate: prescription.sentToPharmacyDate,
+          routingNotes: prescription.routingNotes,
+          patientSelectedPharmacy: prescription.patientSelectedPharmacy
+        },
+        pharmacy: pharmacyInfo,
+        workflow: {
+          prescribedDate: prescription.prescribedDate,
+          sentToPharmacyDate: prescription.sentToPharmacyDate,
+          insuranceVerifiedDate: prescription.insuranceVerifiedDate,
+          processingStartedDate: prescription.processingStartedDate,
+          readyDate: prescription.readyDate,
+          dispensedDate: prescription.dispensedDate
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching prescription routing status:', error);
+      res.status(500).json({ message: 'Failed to fetch routing status' });
     }
   });
 
