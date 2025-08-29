@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarInitials } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Users, Phone, Mail, Calendar, Pill, FileText, Plus } from "lucide-react";
 
 interface PharmacyCustomer {
@@ -272,7 +272,9 @@ export default function PharmacyCustomers() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
-                          <AvatarFallback>{getInitials(customer.firstName, customer.lastName)}</AvatarFallback>
+                          <AvatarFallback className="bg-blue-100 text-blue-800 font-medium">
+                            {getInitials(customer.firstName, customer.lastName)}
+                          </AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="font-medium">{customer.firstName} {customer.lastName}</div>
