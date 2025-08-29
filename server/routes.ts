@@ -282,14 +282,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let subdomain = baseSubdomain;
       let counter = 1;
       
+      console.log('Checking subdomain availability for:', subdomain);
+      
       while (true) {
         const existing = await storage.getTenantBySubdomain(subdomain);
+        console.log(`Subdomain ${subdomain} exists:`, !!existing);
+        
         if (!existing) {
           break; // Subdomain is available
         }
         subdomain = `${baseSubdomain}-${counter}`;
         counter++;
+        console.log('Trying next subdomain:', subdomain);
       }
+      
+      console.log('Final subdomain selected:', subdomain);
 
       // Create tenant
       const tenantData = {
