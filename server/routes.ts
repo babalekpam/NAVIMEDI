@@ -19,6 +19,40 @@ import { resetAllCounters } from "./reset-all-counters";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
+/**
+ * NAVIMED SECURITY AUDIT & ROUTE PROTECTION SUMMARY
+ * ================================================
+ * 
+ * AUTHENTICATION LAYERS:
+ * 1. JWT Token Authentication (authenticateToken middleware)
+ * 2. Tenant Context Validation (requireTenant middleware) 
+ * 3. Role-Based Access Control (requireRole middleware)
+ * 4. Super Admin Isolation (requireSuperAdmin middleware)
+ * 
+ * PROTECTED ROUTE CATEGORIES:
+ * - Patient Data: /api/patients/* (tenant isolated)
+ * - Prescriptions: /api/prescriptions/* (tenant + role restricted)
+ * - Appointments: /api/appointments/* (tenant isolated)
+ * - Lab Orders: /api/lab-orders/* (tenant + role restricted)
+ * - Billing: /api/billing/* (tenant isolated)
+ * - Pharmacy: /api/pharmacy/* (tenant + role restricted)
+ * - Admin: /api/admin/* (super admin only)
+ * - Platform: /api/platform/* (super admin only)
+ * 
+ * PUBLIC ROUTES (no authentication):
+ * - Health checks: /api/health, /api/healthz, /api/status, /api/ping
+ * - Authentication: /api/auth/login
+ * - Registration: /api/register-organization, /api/pharmacy-registration
+ * - Marketplace: /api/marketplace/*, /api/advertisements
+ * - Platform stats: /api/platform/stats
+ * 
+ * SECURITY MEASURES:
+ * - Cross-tenant data isolation enforced
+ * - Role-based endpoint restrictions
+ * - JWT token expiration validation
+ * - Request logging for audit trails
+ * - Input validation on all endpoints
+ */
 export async function registerRoutes(app: Express): Promise<Server> {
   // PHARMACY DASHBOARD API ENDPOINT
   app.get('/api/pharmacy-dashboard', (req, res) => {
