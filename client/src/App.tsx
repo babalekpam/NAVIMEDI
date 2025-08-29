@@ -36,16 +36,6 @@ import LabResultsReporting from "@/pages/lab-results-reporting";
 import LabAnalyticsDashboard from "@/pages/lab-analytics-dashboard";
 import LabInventoryManagement from "@/pages/lab-inventory-management";
 import HealthRecommendations from "@/pages/health-recommendations";
-// import PharmacyDashboardEnhanced from "@/pages/pharmacy-dashboard-enhanced";
-import PharmacyDashboardSimple from "@/pages/pharmacy-dashboard-simple";
-
-import PharmacyDashboardWorking from "@/pages/pharmacy-dashboard-working";
-import PharmacyDashboardSimpleFixed from "@/pages/pharmacy-dashboard-simple-fixed";
-import PharmacyRedirect from "@/components/pharmacy/PharmacyRedirect";
-import PharmacyRegistration from "@/pages/pharmacy-registration";
-import { PharmacyInventoryManager } from "@/components/pharmacy/PharmacyInventoryManager";
-import { PharmacyPrescriptionManager } from "@/components/pharmacy/PharmacyPrescriptionManager";
-import { PharmacyPOS } from "@/components/pharmacy/PharmacyPOS";
 import PricingPage from "@/pages/pricing";
 import ServicePricingManagement from "@/pages/service-pricing-management";
 import WhiteLabelSettingsPage from "@/pages/white-label-settings";
@@ -71,7 +61,6 @@ import Integrations from "@/pages/integrations";
 import ApiDocs from "@/pages/api-docs";
 import HospitalSolutions from "@/pages/solutions/hospitals";
 import ClinicSolutions from "@/pages/solutions/clinics";
-import PharmacySolutions from "@/pages/solutions/pharmacies";
 import LaboratorySolutions from "@/pages/solutions/laboratories";
 import Documentation from "@/pages/support/documentation";
 import HelpCenter from "@/pages/support/help-center";
@@ -98,7 +87,6 @@ import PostLabResults from "@/pages/post-lab-results";
 import LabResults from "@/pages/lab-results";
 import LaboratoryBilling from "@/pages/laboratory-billing";
 import HospitalBilling from "@/pages/hospital-billing";
-import PharmacyBilling from "@/pages/pharmacy-billing";
 import MedicationInsuranceClaims from "@/pages/medication-insurance-claims";
 import PatientPortal from "@/pages/patient-portal";
 import PatientPortalStaff from "@/pages/patient-portal-staff";
@@ -110,10 +98,7 @@ import DoctorCalendar from "@/pages/doctor-calendar";
 import Achievements from "@/pages/achievements";
 import PatientAccessManagement from "@/pages/patient-access-management";
 
-import PharmacyPatientManagement from "@/pages/pharmacy-patient-management";
-import PharmacyReports from "@/pages/pharmacy-reports";
 import PrescriptionArchives from "@/pages/prescription-archives";
-import PharmacyEmployeeManagement from "@/pages/pharmacy-employee-management";
 import LaboratoryDashboard from "@/pages/laboratory-dashboard";
 
 
@@ -142,8 +127,6 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
-        <Route path="/pharmacy-dashboard" component={PharmacyRedirect} />
-        <Route path="/pharmacy" component={PharmacyDashboardSimpleFixed} />
         <Route path="/patients">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
@@ -429,45 +412,6 @@ function AppContent() {
           </ProtectedRoute>
         </Route>
 
-        <Route path="/pharmacy-patient-management">
-          <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <PharmacyPatientManagement />
-                </main>
-              </div>
-            </div>
-          </ProtectedRoute>
-        </Route>
-        <Route path="/pharmacy-reports">
-          <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <PharmacyReports />
-                </main>
-              </div>
-            </div>
-          </ProtectedRoute>
-        </Route>
-        <Route path="/pharmacy-employee-management">
-          <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <PharmacyEmployeeManagement />
-                </main>
-              </div>
-            </div>
-          </ProtectedRoute>
-        </Route>
         <Route path="/medical-communications">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
@@ -508,45 +452,6 @@ function AppContent() {
           </ProtectedRoute>
         </Route>
         
-        <Route path="/pharmacy-inventory">
-          <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <PharmacyInventoryManager />
-                </main>
-              </div>
-            </div>
-          </ProtectedRoute>
-        </Route>
-        <Route path="/pharmacy-prescriptions">
-          <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <PharmacyPrescriptionManager />
-                </main>
-              </div>
-            </div>
-          </ProtectedRoute>
-        </Route>
-        <Route path="/pharmacy-pos">
-          <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto">
-                  <PharmacyPOS />
-                </main>
-              </div>
-            </div>
-          </ProtectedRoute>
-        </Route>
         <Route path="/receptionist-dashboard">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
@@ -634,7 +539,7 @@ function AppContent() {
           </ProtectedRoute>
         </Route>
         
-        <Route path="/pharmacy-registration" component={PharmacyRegistration} />
+
         <Route path="/pricing" component={PricingPage} />
         <Route path="/service-pricing-management">
           <ProtectedRoute>
@@ -780,19 +685,6 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
-        <Route path="/pharmacy-billing">
-          <ProtectedRoute>
-            <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <PharmacyBilling />
-                </main>
-              </div>
-            </div>
-          </ProtectedRoute>
-        </Route>
         <Route path="/medication-insurance-claims">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
@@ -818,7 +710,6 @@ function AppContent() {
         {/* Solutions Pages */}
         <Route path="/solutions/hospitals" component={HospitalSolutions} />
         <Route path="/solutions/clinics" component={ClinicSolutions} />
-        <Route path="/solutions/pharmacies" component={PharmacySolutions} />
         <Route path="/solutions/laboratories" component={LaboratorySolutions} />
         
         {/* Support Pages */}
@@ -896,7 +787,7 @@ function Router() {
           <Route path="/contact" component={ContactPage} />
           <Route path="/pricing" component={PricingPage} />
           <Route path="/laboratory-registration" component={LaboratoryRegistration} />
-          <Route path="/pharmacy-registration" component={PharmacyRegistration} />
+  
           {/* Support and documentation pages */}
           <Route path="/support/documentation" component={Documentation} />
           <Route path="/support/help-center" component={HelpCenter} />
