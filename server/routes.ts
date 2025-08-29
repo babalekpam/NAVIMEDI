@@ -380,7 +380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/prescriptions', async (req, res) => {
     try {
       const { tenantId } = req.user as any;
-      const prescriptions = await storage.getPrescriptions(tenantId);
+      const prescriptions = await storage.getPrescriptionsByTenant(tenantId);
       res.json(prescriptions);
     } catch (error) {
       console.error('Error fetching prescriptions:', error);
@@ -404,7 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/appointments', async (req, res) => {
     try {
       const { tenantId } = req.user as any;
-      const appointments = await storage.getAppointments(tenantId);
+      const appointments = await storage.getAppointmentsByTenant(tenantId);
       res.json(appointments);
     } catch (error) {
       console.error('Error fetching appointments:', error);
