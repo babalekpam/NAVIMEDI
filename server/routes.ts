@@ -471,6 +471,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 <span>Reports</span>
             </div>
             
+            <!-- Logout Section -->
+            <div style="margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <div class="nav-item" onclick="logout()" style="color: #fca5a5; cursor: pointer;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </div>
+            </div>
+            
         </div>
         
         <!-- Main Content -->
@@ -991,6 +999,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }
             } catch (error) {
                 alert('Login error: ' + error.message);
+            }
+        }
+
+        // Logout function - added for user convenience
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                // Clear authentication token and user data
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('auth_user');
+                
+                // Reset application state
+                authToken = null;
+                prescriptionsData = [];
+                
+                // Show login screen and hide main dashboard
+                document.getElementById('login-overlay').style.display = 'flex';
+                document.getElementById('main-app').style.display = 'none';
+                
+                // Reset form fields for security
+                document.getElementById('email').value = 'admin@deopharmacy.com';
+                document.getElementById('password').value = 'password';
+                
+                alert('You have been successfully logged out.');
             }
         }
 
