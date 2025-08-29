@@ -53,10 +53,11 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
   console.log('Checking pharmacy condition:', {
     tenantType: tenant?.type,
     userEmail: user?.email,
-    shouldShowPharmacy: tenant?.type === 'pharmacy' || user?.email === 'admin@deopharmacy.com'
+    shouldShowPharmacy: tenant?.type === 'pharmacy' && user?.email === 'admin@deopharmacy.com'
   });
   
-  if (tenant?.type === 'pharmacy' || user?.email === 'admin@deopharmacy.com') {
+  // Only show pharmacy dashboard for actual pharmacy tenants with pharmacy admin credentials
+  if (tenant?.type === 'pharmacy' && user?.email === 'admin@deopharmacy.com') {
     console.log('RENDERING PHARMACY DASHBOARD!');
     return (
       <div className="space-y-6">
