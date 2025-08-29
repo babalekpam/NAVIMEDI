@@ -131,13 +131,13 @@ export const Header = () => {
                   📦 Inventory
                 </button>
                 <button 
-                  onClick={() => setLocation("/pharmacy-patient-management")}
+                  onClick={() => setLocation("/pharmacy-customers")}
                   className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
                 >
                   👤 Customers
                 </button>
                 <button 
-                  onClick={() => setLocation("/pharmacy-pos")}
+                  onClick={() => setLocation("/pharmacy-billing")}
                   className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
                 >
                   💳 Billing
