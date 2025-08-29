@@ -170,8 +170,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Direct database query to find user and tenant
       let user, tenant;
       
-      if (tenantId) {
-        // Find tenant by name and user by email
+      // Check if this is super admin login first
+      if (email === 'abel@argilette.com') {
+        console.log('Super admin login detected');
+        const [userResult] = await db.select().from(users).where(
+          and(eq(users.email, email), eq(users.role, 'super_admin'))
+        );
+        user = userResult;
+        console.log('Super admin lookup result:', !!user);
+      } else if (tenantId) {
+        // Regular tenant user login
         console.log('Looking for tenant:', tenantId);
         const [tenantResult] = await db.select().from(tenants).where(eq(tenants.name, tenantId));
         if (!tenantResult) {
@@ -187,12 +195,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user = userResult;
         console.log('User lookup result:', !!user, user ? 'found' : 'not found');
       } else {
-        // Super admin login without tenant
-        const [userResult] = await db.select().from(users).where(
-          and(eq(users.email, email), eq(users.role, 'super_admin'))
-        );
-        user = userResult;
-        console.log('Super admin lookup result:', !!user);
+        console.log('❌ No tenant specified for regular user');
+        return res.status(400).json({ message: 'Organization is required' });
       }
       
       if (!user) {
@@ -212,7 +216,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get user tenant information for proper routing (if not already loaded)
       if (!tenant && user.tenantId) {
-        tenant = await storage.getTenant(user.tenantId);
+        const [tenantResult] = await db.select().from(tenants).where(eq(tenants.id, user.tenantId));
+        tenant = tenantResult;
         if (!tenant) {
           return res.status(500).json({ message: 'Tenant not found' });
         }
