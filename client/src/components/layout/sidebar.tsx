@@ -165,7 +165,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "prescription-management", label: "💊 Prescription Management", icon: Pill, path: "/prescriptions", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "pharmacy-inventory", label: "📦 Inventory", icon: Package, path: "/pharmacy-inventory", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "health-wellness", label: "🛒 Health & Wellness", icon: Heart, path: "/pharmacy-inventory", roles: ["pharmacist", "tenant_admin", "director"] },
-  { id: "insurance-verification", label: "💰 Insurance & Savings", icon: DollarSign, path: "/pharmacy-pos", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "insurance-verification", label: "💰 Insurance & Savings", icon: DollarSign, path: "/medication-insurance-claims", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "delivery-pickup", label: "🚚 Delivery & Pickup", icon: Truck, path: "/pharmacy-customers", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "customer-accounts", label: "👤 Customer Accounts", icon: Users, path: "/pharmacy-customers", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "pharmacy-support", label: "📞 Support & Chat", icon: Phone, path: "/dashboard", roles: ["pharmacist", "tenant_admin", "director"] },
