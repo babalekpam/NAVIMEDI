@@ -194,7 +194,7 @@ export default function Patients() {
                         )}
                       </div>
                       <p className="text-sm text-gray-500">
-                        DOB: {formatDate(patient.dateOfBirth)}
+                        DOB: {patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : 'N/A'}
                       </p>
                       <p className="text-xs text-gray-400">
                         MRN: {patient.mrn}
@@ -206,7 +206,7 @@ export default function Patients() {
                     <div className="text-right">
                       <p className="text-sm text-gray-500">Last Visit</p>
                       <p className="text-sm font-medium text-gray-900">
-                        {formatDate(patient.updatedAt)}
+                        {patient.updatedAt ? new Date(patient.updatedAt).toLocaleDateString() : 'N/A'}
                       </p>
                     </div>
                     
@@ -265,7 +265,7 @@ export default function Patients() {
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => {
                                 // Copy patient details to clipboard
-                                const patientText = `Patient: ${patient.firstName} ${patient.lastName}\nMRN: ${patient.mrn}\nDOB: ${formatDate(patient.dateOfBirth)}\nPhone: ${patient.phone || 'N/A'}`;
+                                const patientText = `Patient: ${patient.firstName} ${patient.lastName}\nMRN: ${patient.mrn}\nDOB: ${patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : 'N/A'}\nPhone: ${patient.phone || 'N/A'}`;
                                 navigator.clipboard.writeText(patientText);
                               }}>
                                 <Copy className="h-4 w-4 mr-2" />
@@ -348,7 +348,7 @@ export default function Patients() {
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Date of Birth:</span>
-                      <span>{formatDate(selectedPatient.dateOfBirth)}</span>
+                      <span>{selectedPatient.dateOfBirth ? new Date(selectedPatient.dateOfBirth).toLocaleDateString() : 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Gender:</span>
@@ -381,7 +381,7 @@ export default function Patients() {
                       <p className="text-sm text-gray-600 mt-1">
                         {selectedPatient.address && typeof selectedPatient.address === 'object' 
                           ? `${(selectedPatient.address as any).street || ''} ${(selectedPatient.address as any).city || ''} ${(selectedPatient.address as any).state || ''} ${(selectedPatient.address as any).zipCode || ''}`.trim() || 'No address on file'
-                          : selectedPatient.address || 'No address on file'
+                          : (selectedPatient.address as string) || 'No address on file'
                         }
                       </p>
                     </div>
@@ -390,7 +390,7 @@ export default function Patients() {
                       <p className="text-sm text-gray-600 mt-1">
                         {selectedPatient.emergencyContact && typeof selectedPatient.emergencyContact === 'object' 
                           ? `${(selectedPatient.emergencyContact as any).name || 'N/A'} (${(selectedPatient.emergencyContact as any).relationship || 'N/A'}) - ${(selectedPatient.emergencyContact as any).phone || 'N/A'}`
-                          : selectedPatient.emergencyContact || 'No emergency contact on file'
+                          : (selectedPatient.emergencyContact as string) || 'No emergency contact on file'
                         }
                       </p>
                     </div>
@@ -412,7 +412,7 @@ export default function Patients() {
                       <div className="space-y-2">
                         {selectedPatient.allergies.map((allergy, index) => (
                           <Badge key={index} variant="destructive" className="mr-2">
-                            {allergy}
+                            {String(allergy)}
                           </Badge>
                         ))}
                       </div>
@@ -434,7 +434,7 @@ export default function Patients() {
                       <div className="space-y-2">
                         {selectedPatient.medicalHistory.map((condition, index) => (
                           <div key={index} className="p-2 bg-gray-50 rounded text-sm">
-                            {condition}
+                            {String(condition)}
                           </div>
                         ))}
                       </div>
@@ -468,7 +468,7 @@ export default function Patients() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-600">{selectedPatient.insuranceInfo}</p>
+                      <p className="text-sm text-gray-600">{String(selectedPatient.insuranceInfo)}</p>
                     )}
                   </CardContent>
                 </Card>
