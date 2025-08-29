@@ -101,6 +101,9 @@ import PatientAccessManagement from "@/pages/patient-access-management";
 import PrescriptionArchives from "@/pages/prescription-archives";
 import LaboratoryDashboard from "@/pages/laboratory-dashboard";
 import PharmacyDashboard from "@/pages/pharmacy-dashboard";
+import PharmacyInventory from "@/pages/pharmacy-inventory";
+import PharmacyCustomers from "@/pages/pharmacy-customers";
+import PharmacyBilling from "@/pages/pharmacy-billing";
 
 
 
@@ -461,6 +464,48 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <PharmacyDashboard />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        
+        <Route path="/pharmacy-inventory">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PharmacyInventory />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        
+        <Route path="/pharmacy-customers">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PharmacyCustomers />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        
+        <Route path="/pharmacy-billing">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PharmacyBilling />
                 </main>
               </div>
             </div>
