@@ -161,6 +161,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password, tenantId } = req.body;
       
+      console.log('🔐 Login attempt:', { email, tenantId, hasPassword: !!password });
+      
       if (!email || !password) {
         return res.status(400).json({ message: 'Email and password are required' });
       }
@@ -170,30 +172,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (tenantId) {
         // Find tenant by name and user by email
+        console.log('Looking for tenant:', tenantId);
         const [tenantResult] = await db.select().from(tenants).where(eq(tenants.name, tenantId));
         if (!tenantResult) {
+          console.log('❌ Tenant not found:', tenantId);
           return res.status(401).json({ message: 'Invalid credentials' });
         }
         tenant = tenantResult;
+        console.log('✅ Tenant found:', tenant.id, tenant.name);
         
         const [userResult] = await db.select().from(users).where(
           and(eq(users.email, email), eq(users.tenantId, tenant.id))
         );
         user = userResult;
+        console.log('User lookup result:', !!user, user ? 'found' : 'not found');
       } else {
         // Super admin login without tenant
         const [userResult] = await db.select().from(users).where(
           and(eq(users.email, email), eq(users.role, 'super_admin'))
         );
         user = userResult;
+        console.log('Super admin lookup result:', !!user);
       }
       
       if (!user) {
+        console.log('❌ User not found for email:', email);
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
+      console.log('✅ User found:', user.id, user.email, 'has passwordHash:', !!user.passwordHash);
+      
       const isValid = await bcrypt.compare(password, user.passwordHash);
+      console.log('Password validation result:', isValid);
+      
       if (!isValid) {
+        console.log('❌ Password validation failed');
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
