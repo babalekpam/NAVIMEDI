@@ -10,7 +10,7 @@ import navimedLogo from "@assets/JPG_1753663321927.jpg";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [tenantId, setTenantId] = useState("");
   const [error, setError] = useState("");
@@ -19,8 +19,8 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
-      setError("Username and password are required");
+    if (!email || !password) {
+      setError("Email and password are required");
       return;
     }
 
@@ -35,7 +35,7 @@ export default function Login() {
       const response = await apiRequest("/api/auth/login", {
         method: "POST",
         body: {
-          username,
+          email,
           password,
           tenantId: tenantId || undefined
         }
@@ -126,13 +126,13 @@ export default function Login() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="username">Username/Email</Label>
+              <Label htmlFor="email">Email Address</Label>
               <Input
-                id="username"
-                type="text"
-                placeholder="Enter your username or email"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                type="email"
+                placeholder="Enter your email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
