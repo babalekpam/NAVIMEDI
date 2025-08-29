@@ -77,7 +77,7 @@ export default function RegisterOrganization() {
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/tenant/register', {
+      const response = await fetch('/api/register-organization', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
