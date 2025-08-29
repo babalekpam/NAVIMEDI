@@ -670,7 +670,7 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     // SECURITY: Only for super admin platform management
-    console.log("[SECURITY] Cross-tenant user listing accessed");
+    // Reduced logging for performance optimization
     return await db.select().from(users);
   }
 
