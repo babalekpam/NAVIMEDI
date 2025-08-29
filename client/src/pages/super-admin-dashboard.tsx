@@ -483,10 +483,10 @@ export default function SuperAdminDashboard() {
                       <div className="flex items-center space-x-4">
                         <div className="text-right">
                           <p className="text-sm font-medium">
-                            {tenant.stats.userCount} users
+                            {tenant.stats?.userCount || 0} users
                           </p>
                           <p className="text-sm text-gray-600">
-                            {tenant.stats.patientCount} patients
+                            {tenant.stats?.patientCount || 0} patients
                           </p>
                         </div>
                         
