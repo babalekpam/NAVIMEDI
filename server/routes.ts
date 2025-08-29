@@ -271,10 +271,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const saltRounds = 10;
       const passwordHash = await bcrypt.hash(adminPassword, saltRounds);
 
+      // Generate subdomain from organization name
+      const subdomain = organizationName.toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-') // Replace multiple hyphens with single
+        .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+
       // Create tenant
       const tenantData = {
         name: organizationName,
         type: organizationType,
+        subdomain: subdomain,
         settings: {
           country: country || 'USA',
           address,
