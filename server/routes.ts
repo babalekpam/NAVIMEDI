@@ -7,6 +7,9 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { nanoid } from "nanoid";
+import { db } from "./db";
+import { tenants, users } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
 
 /**
  * NAVIGED HEALTHCARE PLATFORM - ROUTE DEFINITIONS
@@ -156,26 +159,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication endpoint
   app.post('/api/auth/login', async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { email, password, tenantId } = req.body;
       
       if (!email || !password) {
         return res.status(400).json({ message: 'Email and password are required' });
       }
 
-      const user = await storage.getUserByEmail(email);
+      // Direct database query to find user and tenant
+      let user, tenant;
+      
+      if (tenantId) {
+        // Find tenant by name and user by email
+        const [tenantResult] = await db.select().from(tenants).where(eq(tenants.name, tenantId));
+        if (!tenantResult) {
+          return res.status(401).json({ message: 'Invalid credentials' });
+        }
+        tenant = tenantResult;
+        
+        const [userResult] = await db.select().from(users).where(
+          and(eq(users.email, email), eq(users.tenantId, tenant.id))
+        );
+        user = userResult;
+      } else {
+        // Super admin login without tenant
+        const [userResult] = await db.select().from(users).where(
+          and(eq(users.email, email), eq(users.role, 'super_admin'))
+        );
+        user = userResult;
+      }
+      
       if (!user) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
-      const isValid = await bcrypt.compare(password, user.passwordHash);
+      const isValid = await bcrypt.compare(password, user.password);
       if (!isValid) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
-      // Get user tenant information for proper routing
-      const tenant = await storage.getTenant(user.tenantId);
-      if (!tenant) {
-        return res.status(500).json({ message: 'Tenant not found' });
+      // Get user tenant information for proper routing (if not already loaded)
+      if (!tenant && user.tenantId) {
+        tenant = await storage.getTenant(user.tenantId);
+        if (!tenant) {
+          return res.status(500).json({ message: 'Tenant not found' });
+        }
       }
 
       const token = jwt.sign(
