@@ -144,6 +144,20 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
+        
+        <Route path="/patient-management">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <Patients />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
         <Route path="/patient-medical-records">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
