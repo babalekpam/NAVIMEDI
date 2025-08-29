@@ -174,7 +174,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "pharmacy-patient-management", label: "Patient Management", icon: Users, path: "/patients", roles: ["pharmacist", "billing_staff", "tenant_admin", "director"] },
   { id: "pharmacy-employee-management", label: "Employee Management", icon: UserCheck, path: "/user-roles", roles: ["tenant_admin", "director"] },
   { id: "pharmacy-billing", label: "Billing", icon: DollarSign, path: "/pharmacy-billing", roles: ["pharmacist", "pharmacy_admin", "tenant_admin", "director"] },
-  { id: "pharmacy-insurance-claims", label: "Insurance Claims", icon: Receipt, path: "/pharmacy-pos", roles: ["pharmacist", "pharmacy_admin", "tenant_admin", "director"] },
+  { id: "pharmacy-insurance-claims", label: "Insurance Claims", icon: Receipt, path: "/medication-insurance-claims", roles: ["pharmacist", "pharmacy_admin", "tenant_admin", "director"] },
 
   { id: "health-recommendations", label: t("health-recommendations"), icon: Brain, path: "/health-recommendations", roles: ["physician", "nurse", "tenant_admin", "director"] },
   { id: "medical-communications", label: t("medical-communications"), icon: Languages, path: "/medical-communications", roles: ["physician", "nurse", "receptionist", "tenant_admin", "director"] },
