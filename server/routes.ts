@@ -381,7 +381,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/tenant/current', async (req, res) => {
     try {
       const { tenantId } = req.user as any;
-      console.log('🏥 Getting current tenant for tenantId:', tenantId);
       
       if (!tenantId) {
         return res.status(400).json({ message: 'No tenant ID found' });
@@ -392,10 +391,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Tenant not found' });
       }
       
-      console.log('✅ Current tenant found:', tenant.name);
       res.json(tenant);
     } catch (error) {
-      console.error('❌ Error fetching current tenant:', error);
+      console.error('Error fetching current tenant:', error);
       res.status(500).json({ message: 'Failed to fetch tenant' });
     }
   });
@@ -733,19 +731,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/users', async (req, res) => {
     try {
       const user = req.user as any;
-      console.log('🔍 DEBUG: User object in /api/users:', JSON.stringify(user, null, 2));
-      
-      // Handle both tenantId and tenant_id naming conventions
       const tenantId = user.tenantId || user.tenant_id;
-      console.log('🔍 DEBUG: Extracted tenantId:', tenantId);
       
       if (!tenantId) {
-        console.error('❌ No tenantId found in user object');
         return res.status(400).json({ message: 'Tenant ID not found' });
       }
       
       const users = await storage.getUsersByTenant(tenantId);
-      console.log('🔍 DEBUG: Found users for tenant:', users.length);
       res.json(users);
     } catch (error) {
       console.error('Error fetching users:', error);
