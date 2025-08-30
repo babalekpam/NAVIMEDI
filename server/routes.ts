@@ -770,7 +770,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // HOSPITAL PATIENT INSURANCE ROUTES
-  console.log('📋 Registering hospital patient insurance routes...');
   app.get("/api/hospital-patient-insurance/:patientId", async (req, res) => {
     try {
       const { patientId } = req.params;
@@ -785,14 +784,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/hospital-patient-insurance", async (req, res) => {
     try {
-      console.log('🔍 INSURANCE DEBUG - Request received');
-      console.log('🔍 User:', JSON.stringify(req.user, null, 2));
-      console.log('🔍 Body:', JSON.stringify(req.body, null, 2));
-      
       const { tenantId } = req.user as any;
       
       if (!tenantId) {
-        console.log('❌ Missing tenantId');
         return res.status(400).json({ 
           message: 'Missing authentication data - tenantId required'
         });
@@ -803,15 +797,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenantId,
       };
       
-      console.log('🔍 Final insurance data:', JSON.stringify(insuranceData, null, 2));
-      
       const insurance = await storage.createHospitalPatientInsurance(insuranceData);
-      console.log('✅ Insurance created:', insurance?.id || 'no id');
-      
       res.status(201).json(insurance);
     } catch (error) {
-      console.error('❌ Insurance error:', error);
-      console.error('❌ Error stack:', error.stack);
+      console.error('Error creating hospital patient insurance:', error);
       res.status(500).json({ message: "Failed to create insurance information" });
     }
   });

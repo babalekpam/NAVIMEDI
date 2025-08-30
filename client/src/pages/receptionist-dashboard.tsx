@@ -905,7 +905,11 @@ export default function ReceptionistDashboard() {
                       </div>
                       <div>
                         <label className="text-sm font-medium">Coverage Percentage</label>
-                        <p className="text-sm font-semibold text-green-600">{patientInsurance.coveragePercentage}%</p>
+                        <p className="text-sm font-semibold text-green-600">
+                          {patientInsurance.coveragePercentage !== null && patientInsurance.coveragePercentage !== undefined 
+                            ? `${patientInsurance.coveragePercentage}%` 
+                            : 'Not specified'}
+                        </p>
                       </div>
                       <div>
                         <label className="text-sm font-medium">Verification Status</label>
