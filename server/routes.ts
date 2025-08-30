@@ -762,6 +762,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User status update endpoint (activate/deactivate)
+  app.patch('/api/users/:id', async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const { id } = req.params;
+      const { isActive } = req.body;
+      
+      if (typeof isActive !== 'boolean') {
+        return res.status(400).json({ message: 'isActive must be a boolean value' });
+      }
+      
+      // Update user status - ensure user belongs to current tenant for security
+      const updatedUser = await storage.updateUserStatus(id, tenantId, isActive);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'User not found or access denied' });
+      }
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      res.status(500).json({ message: 'Failed to update user status' });
+    }
+  });
+
   // SUPER ADMIN ROUTES
   app.use('/api/admin', requireRole('super_admin'));
 

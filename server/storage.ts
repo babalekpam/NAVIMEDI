@@ -190,6 +190,7 @@ export interface IStorage {
   getUserByEmailOrUsername(emailOrUsername: string, tenantId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
+  updateUserStatus(id: string, tenantId: string, isActive: boolean): Promise<User | undefined>;
   getUsersByTenant(tenantId: string): Promise<User[]>;
   getUsersByRole(role: string, tenantId: string): Promise<User[]>;
   getAllUsers(): Promise<User[]>; // SECURITY: Super admin only
@@ -707,6 +708,18 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db.update(users)
       .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
       .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
+  }
+
+  async updateUserStatus(id: string, tenantId: string, isActive: boolean): Promise<User | undefined> {
+    // SECURITY: Ensure user belongs to current tenant for isolation
+    const [user] = await db.update(users)
+      .set({ 
+        isActive, 
+        updatedAt: sql`CURRENT_TIMESTAMP` 
+      })
+      .where(and(eq(users.id, id), eq(users.tenantId, tenantId)))
       .returning();
     return user || undefined;
   }
