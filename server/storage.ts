@@ -889,7 +889,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPatient(insertPatient: InsertPatient): Promise<Patient> {
+    console.log('🚀 NEW createPatient method called with data:', JSON.stringify(insertPatient, null, 2));
+    
     // Generate required identifiers
+    console.log('🔄 Generating tenant patient ID...');
     const tenantPatientId = await this.generateTenantPatientId(insertPatient.tenantId);
     const mrn = tenantPatientId; // Use same identifier for MRN (Medical Record Number)
     
@@ -902,7 +905,10 @@ export class DatabaseStorage implements IStorage {
       mrn
     };
     
+    console.log('📦 Final patient data being inserted:', JSON.stringify(patientData, null, 2));
+    
     const [patient] = await db.insert(patients).values(patientData).returning();
+    console.log('✅ Patient created successfully:', patient.id, patient.mrn);
     return patient;
   }
 
