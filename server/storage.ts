@@ -889,7 +889,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPatient(insertPatient: InsertPatient): Promise<Patient> {
-    const [patient] = await db.insert(patients).values(insertPatient).returning();
+    // Generate required identifiers
+    const tenantPatientId = await this.generateTenantPatientId(insertPatient.tenantId);
+    const mrn = tenantPatientId; // Use same identifier for MRN (Medical Record Number)
+    
+    console.log('🏥 Generated patient identifiers:', { tenantPatientId, mrn });
+    
+    // Include generated identifiers in patient data
+    const patientData = {
+      ...insertPatient,
+      tenantPatientId,
+      mrn
+    };
+    
+    const [patient] = await db.insert(patients).values(patientData).returning();
     return patient;
   }
 
