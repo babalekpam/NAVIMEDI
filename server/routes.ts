@@ -554,6 +554,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PHARMACY PRESCRIPTION STATUS UPDATE ENDPOINT
+  app.patch('/api/prescriptions/:id/status', async (req, res) => {
+    try {
+      const { tenantId, id: userId } = req.user as any;
+      const prescriptionId = req.params.id;
+      const { status } = req.body;
+      
+      console.log(`🏥 PRESCRIPTION STATUS UPDATE - ID: ${prescriptionId}, Status: ${status}, Tenant: ${tenantId}`);
+
+      if (!status) {
+        return res.status(400).json({ message: 'Status is required' });
+      }
+
+      // Get the tenant to check if it's a pharmacy
+      const tenant = await storage.getTenant(tenantId);
+      
+      if (tenant && tenant.type === 'pharmacy') {
+        // For pharmacies: can only update prescriptions routed to them
+        const [prescription] = await db.select().from(prescriptions)
+          .where(and(eq(prescriptions.id, prescriptionId), eq(prescriptions.pharmacyTenantId, tenantId)));
+        
+        if (!prescription) {
+          return res.status(404).json({ message: 'Prescription not found or not routed to this pharmacy' });
+        }
+
+        // Update prescription status for pharmacy workflow
+        const [updatedPrescription] = await db
+          .update(prescriptions)
+          .set({
+            status: status,
+            lastStatusUpdate: new Date(),
+            ...(status === 'dispensed' && { dispensedDate: new Date() }),
+            ...(status === 'ready_for_pickup' && { readyForPickupDate: new Date() })
+          })
+          .where(eq(prescriptions.id, prescriptionId))
+          .returning();
+
+        console.log(`✅ PHARMACY STATUS UPDATE - Updated prescription ${prescriptionId} to ${status}`);
+        res.json(updatedPrescription);
+      } else {
+        // For hospitals: can only update prescriptions they created
+        const updatedPrescription = await storage.updatePrescription(prescriptionId, tenantId, { 
+          status: status, 
+          lastStatusUpdate: new Date() 
+        });
+        
+        if (!updatedPrescription) {
+          return res.status(404).json({ message: 'Prescription not found or access denied' });
+        }
+
+        res.json(updatedPrescription);
+      }
+    } catch (error) {
+      console.error('❌ Error updating prescription status:', error);
+      res.status(500).json({ 
+        message: 'Failed to update prescription status',
+        error: error.message 
+      });
+    }
+  });
+
   // PATIENT CHECK-IN ROUTES
   // Create new patient check-in
   app.post('/api/patient-check-ins', async (req, res) => {
