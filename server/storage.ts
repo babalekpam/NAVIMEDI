@@ -1455,22 +1455,21 @@ export class DatabaseStorage implements IStorage {
     
     // For each prescription, get patient and doctor details separately
     for (const prescription of prescriptionsList) {
-      // Get patient info
+      // Get patient info with debugging
       const patientResult = await db.execute(sql`
         SELECT first_name, last_name, mrn, email, phone 
         FROM patients 
         WHERE id = ${prescription.patient_id}::uuid
       `);
       
-      // Get doctor info (users.id is varchar, so cast prescription.provider_id to text)
       const doctorResult = await db.execute(sql`
         SELECT first_name, last_name, role 
         FROM users 
         WHERE id = ${prescription.provider_id}::text
       `);
       
-      const patient = patientResult[0] || {};
-      const doctor = doctorResult[0] || {};
+      const patient = patientResult.rows[0] || {};
+      const doctor = doctorResult.rows[0] || {};
       
       prescriptionsWithNames.push({
         ...prescription,
