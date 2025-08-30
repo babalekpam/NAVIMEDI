@@ -199,19 +199,32 @@ export default function UserRoles() {
     },
   });
 
+  // Debug logging to see why query might not be running
+  console.log('🔍 USER-ROLES DEBUG:', {
+    hasUser: !!user,
+    hasToken: !!localStorage.getItem('auth_token'),
+    hasTenant: !!tenant,
+    userRole: user?.role,
+    tenantName: tenant?.name,
+    queryEnabled: !!user && !!tenant
+  });
+
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
     enabled: !!user && !!tenant,
     queryFn: async () => {
+      console.log('🚀 MAKING /api/users REQUEST');
       const response = await fetch('/api/users', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
       });
       if (!response.ok) {
+        console.error('❌ /api/users failed:', response.status, response.statusText);
         throw new Error('Failed to fetch users');
       }
       const data = await response.json();
+      console.log('✅ /api/users response:', data);
       return Array.isArray(data) ? data : [];
     }
   });
