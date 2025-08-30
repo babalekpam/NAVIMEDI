@@ -54,7 +54,6 @@ export default function PrescriptionsPage() {
   const [isViewDetailsModalOpen, setIsViewDetailsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("new"); // For prescription tabs
-  const [forceUpdate, setForceUpdate] = useState(0); // Force re-render
 
   // Fetch prescriptions for current tenant (hospital or pharmacy)
   const { data: prescriptions = [], isLoading } = useQuery<Prescription[]>({
@@ -308,30 +307,6 @@ export default function PrescriptionsPage() {
         </TabsList>
 
         <TabsContent value="new" className="space-y-6">
-          {/* SUPER SIMPLE DEBUG */}
-          <div className="mb-4 p-4 bg-red-100 border border-red-300 rounded">
-            <h3 className="font-bold mb-2">🔥 SUPER SIMPLE TEST</h3>
-            <div className="flex gap-2">
-              <button
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                onClick={() => alert('SIMPLE CLICK WORKS!')}
-              >
-                🔥 SIMPLE ALERT TEST
-              </button>
-              <button
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                onClick={() => {
-                  alert('Trying to open modal...');
-                  setIsProcessingModalOpen(true);
-                  setForceUpdate(prev => prev + 1); // Force re-render
-                  alert('Modal state set!');
-                }}
-              >
-                🔥 DIRECT MODAL TEST
-              </button>
-            </div>
-            <p className="text-xs mt-2">Modal states: Processing={isProcessingModalOpen.toString()}, Details={isViewDetailsModalOpen.toString()}, ForceUpdate={forceUpdate}</p>
-          </div>
 
           {/* New Prescriptions Table */}
           <Card>
@@ -385,26 +360,20 @@ export default function PrescriptionsPage() {
                           <TableCell>
                             <div className="flex gap-2">
                               <button
-                                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors cursor-pointer"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  console.log('Process button clicked for prescription:', prescription.id);
+                                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                                onClick={() => {
                                   setSelectedPrescription(prescription);
-                                  setTimeout(() => setIsProcessingModalOpen(true), 10);
+                                  setIsProcessingModalOpen(true);
                                 }}
                                 data-testid={`button-process-${prescription.id}`}
                               >
                                 Process
                               </button>
                               <button
-                                className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors cursor-pointer"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  console.log('View Details button clicked for prescription:', prescription.id);
+                                className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                                onClick={() => {
                                   setSelectedPrescription(prescription);
-                                  setTimeout(() => setIsViewDetailsModalOpen(true), 10);
+                                  setIsViewDetailsModalOpen(true);
                                 }}
                                 data-testid={`button-view-details-${prescription.id}`}
                               >
@@ -538,7 +507,7 @@ export default function PrescriptionsPage() {
 
       {/* Processing Modal */}
       <Dialog open={isProcessingModalOpen} onOpenChange={setIsProcessingModalOpen}>
-        <DialogContent className="max-w-2xl" style={{ zIndex: 99999, position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', backgroundColor: 'white', border: '3px solid red' }}>
+        <DialogContent className="max-w-2xl" style={{ zIndex: 99999, position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', backgroundColor: 'white' }}>
           <DialogHeader>
             <DialogTitle>Process Prescription</DialogTitle>
             <DialogDescription>
@@ -712,7 +681,7 @@ export default function PrescriptionsPage() {
 
       {/* View Details Modal */}
       <Dialog open={isViewDetailsModalOpen} onOpenChange={setIsViewDetailsModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" style={{ zIndex: 99999, position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', backgroundColor: 'white' }}>
           <DialogHeader>
             <DialogTitle>Prescription Details</DialogTitle>
             <DialogDescription>
