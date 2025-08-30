@@ -361,8 +361,14 @@ export default function PrescriptionsPage() {
                               <button
                                 className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors cursor-pointer"
                                 onClick={() => {
-                                  setSelectedPrescription(prescription);
-                                  setIsProcessingModalOpen(true);
+                                  alert('Process clicked - trying modal...');
+                                  try {
+                                    setSelectedPrescription(prescription);
+                                    setIsProcessingModalOpen(true);
+                                    alert('Modal should be open now!');
+                                  } catch (error) {
+                                    alert('Error: ' + error);
+                                  }
                                 }}
                                 data-testid={`button-process-${prescription.id}`}
                               >
@@ -371,8 +377,14 @@ export default function PrescriptionsPage() {
                               <button
                                 className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors cursor-pointer"
                                 onClick={() => {
-                                  setSelectedPrescription(prescription);
-                                  setIsViewDetailsModalOpen(true);
+                                  alert('View Details clicked - trying modal...');
+                                  try {
+                                    setSelectedPrescription(prescription);
+                                    setIsViewDetailsModalOpen(true);
+                                    alert('Modal should be open now!');
+                                  } catch (error) {
+                                    alert('Error: ' + error);
+                                  }
                                 }}
                                 data-testid={`button-view-details-${prescription.id}`}
                               >
