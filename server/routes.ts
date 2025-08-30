@@ -654,15 +654,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Appointment status update endpoint
   app.patch('/api/appointments/:id', async (req, res) => {
     try {
+      console.log('🔍 APPOINTMENT DEBUG - Request received');
+      console.log('🔍 User:', JSON.stringify(req.user, null, 2));
+      console.log('🔍 Body:', JSON.stringify(req.body, null, 2));
+      console.log('🔍 Params:', JSON.stringify(req.params, null, 2));
+      
       const { tenantId } = req.user as any;
       const { id } = req.params;
       const { status, notes } = req.body;
 
-      console.log('🏥 Updating appointment status - ID:', id, 'Status:', status, 'Tenant:', tenantId);
+      if (!tenantId) {
+        console.log('❌ Missing tenantId');
+        return res.status(400).json({ 
+          message: 'Missing authentication data - tenantId required'
+        });
+      }
 
       if (!status) {
         return res.status(400).json({ message: 'Status is required' });
       }
+
+      console.log('🏥 Updating appointment - ID:', id, 'Status:', status, 'Tenant:', tenantId);
 
       // Update appointment status with tenant security check
       const updatedAppointment = await storage.updateAppointment(id, { status, notes }, tenantId);
@@ -671,14 +683,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Appointment not found or access denied' });
       }
 
-      console.log('🏥 Appointment status updated successfully:', id, 'New status:', status);
+      console.log('✅ Appointment updated successfully:', id, 'New status:', status);
       res.json(updatedAppointment);
     } catch (error) {
-      console.error('❌ Error updating appointment status:', error);
+      console.error('❌ Appointment update error:', error);
+      console.error('❌ Error stack:', error.stack);
       res.status(500).json({ 
         message: 'Failed to update appointment status',
         error: error.message
       });
+    }
+  });
+
+  // VISIT SUMMARIES ROUTES (Essential for appointment finalization)
+  app.get("/api/visit-summaries/appointment/:appointmentId", async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const visitSummary = await storage.getVisitSummaryByAppointment(req.params.appointmentId, tenantId);
+      res.json(visitSummary);
+    } catch (error) {
+      console.error("Error fetching appointment visit summary:", error);
+      res.status(500).json({ message: "Failed to fetch appointment visit summary" });
+    }
+  });
+
+  app.post("/api/visit-summaries", async (req, res) => {
+    try {
+      console.log('🔍 VISIT SUMMARY DEBUG - Request received');
+      console.log('🔍 User:', JSON.stringify(req.user, null, 2));
+      console.log('🔍 Body:', JSON.stringify(req.body, null, 2));
+      
+      const { tenantId, id: providerId } = req.user as any;
+      
+      if (!tenantId || !providerId) {
+        console.log('❌ Missing tenantId or providerId');
+        return res.status(400).json({ 
+          message: 'Missing authentication data - tenantId and providerId required'
+        });
+      }
+
+      const validatedData = {
+        ...req.body,
+        tenantId,
+        providerId
+      };
+
+      console.log('🔍 Final visit summary data:', JSON.stringify(validatedData, null, 2));
+
+      const visitSummary = await storage.createVisitSummary(validatedData);
+      console.log('✅ Visit summary created:', visitSummary?.id || 'no id');
+      
+      res.json(visitSummary);
+    } catch (error) {
+      console.error('❌ Visit summary error:', error);
+      console.error('❌ Error stack:', error.stack);
+      res.status(500).json({ message: "Failed to create visit summary" });
     }
   });
 
