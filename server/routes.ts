@@ -761,42 +761,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all available pharmacies for prescription routing
   app.get('/api/pharmacies', async (req, res) => {
     try {
-      const { location, radius = 25, insurance, specializations } = req.query;
-      
-      // Get all active pharmacy tenants
+      // Get all active pharmacy tenants (simplified query)
       const pharmacyTenants = await db.select({
         id: tenants.id,
-        name: tenants.name,
-        address: tenants.address,
-        phone: tenants.phone,
-        email: tenants.email
+        name: tenants.name
       }).from(tenants)
       .where(and(eq(tenants.type, 'pharmacy'), eq(tenants.isActive, true)));
       
       // Get detailed pharmacy information
       const pharmacyList = await Promise.all(
         pharmacyTenants.map(async (tenant) => {
-          const [pharmacyDetails] = await db.select().from(pharmacies)
-            .where(and(eq(pharmacies.tenantId, tenant.id), eq(pharmacies.isActive, true)));
-          
-          if (pharmacyDetails) {
-            return {
-              id: pharmacyDetails.id,
-              tenantId: tenant.id,
-              name: tenant.name || pharmacyDetails.name,
-              phone: pharmacyDetails.phone || tenant.phone,
-              email: pharmacyDetails.email || tenant.email,
-              address: pharmacyDetails.address || tenant.address,
-              licenseNumber: pharmacyDetails.licenseNumber,
-              npiNumber: pharmacyDetails.npiNumber,
-              acceptsInsurance: pharmacyDetails.acceptsInsurance,
-              deliveryService: pharmacyDetails.deliveryService,
-              operatingHours: pharmacyDetails.operatingHours,
-              specializations: pharmacyDetails.specializations,
-              websiteUrl: pharmacyDetails.websiteUrl
-            };
+          try {
+            const [pharmacyDetails] = await db.select().from(pharmacies)
+              .where(and(eq(pharmacies.tenantId, tenant.id), eq(pharmacies.isActive, true)));
+            
+            if (pharmacyDetails) {
+              return {
+                id: pharmacyDetails.id,
+                tenantId: tenant.id,
+                name: tenant.name || pharmacyDetails.name || 'Unknown Pharmacy',
+                phone: pharmacyDetails.phone || '',
+                email: pharmacyDetails.email || '',
+                address: pharmacyDetails.address || '',
+                licenseNumber: pharmacyDetails.licenseNumber || '',
+                npiNumber: pharmacyDetails.npiNumber || '',
+                acceptsInsurance: pharmacyDetails.acceptsInsurance || false,
+                deliveryService: pharmacyDetails.deliveryService || false,
+                operatingHours: pharmacyDetails.operatingHours || null,
+                specializations: pharmacyDetails.specializations || [],
+                websiteUrl: pharmacyDetails.websiteUrl || ''
+              };
+            }
+            return null;
+          } catch (error) {
+            console.error('Error fetching pharmacy details for tenant:', tenant.id, error);
+            return null;
           }
-          return null;
         })
       );
       
