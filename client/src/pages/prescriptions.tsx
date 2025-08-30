@@ -51,6 +51,7 @@ export default function PrescriptionsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
   const [isProcessingModalOpen, setIsProcessingModalOpen] = useState(false);
+  const [isViewDetailsModalOpen, setIsViewDetailsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("active"); // For prescription tabs
 
@@ -179,6 +180,11 @@ export default function PrescriptionsPage() {
   const handleProcessPrescription = (prescription: Prescription) => {
     setSelectedPrescription(prescription);
     setIsProcessingModalOpen(true);
+  };
+
+  const handleViewDetails = (prescription: Prescription) => {
+    setSelectedPrescription(prescription);
+    setIsViewDetailsModalOpen(true);
   };
 
   if (isLoading) {
@@ -383,7 +389,12 @@ export default function PrescriptionsPage() {
                       >
                         Process
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleViewDetails(prescription)}
+                        data-testid={`button-view-details-${prescription.id}`}
+                      >
                         View Details
                       </Button>
                     </div>
@@ -564,6 +575,94 @@ export default function PrescriptionsPage() {
                   className="mt-1"
                 />
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* View Details Modal */}
+      <Dialog open={isViewDetailsModalOpen} onOpenChange={setIsViewDetailsModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Prescription Details</DialogTitle>
+            <DialogDescription>
+              View complete information for {selectedPrescription?.medication}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPrescription && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <Label className="font-medium">Patient:</Label>
+                  <p>{selectedPrescription.patientName}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Current Status:</Label>
+                  <Badge className={getStatusColor(selectedPrescription.status)}>
+                    {selectedPrescription.status.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="font-medium">Prescribed Date:</Label>
+                  <p>{new Date(selectedPrescription.prescribedDate).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Provider:</Label>
+                  <p>{selectedPrescription.providerName || 'N/A'}</p>
+                </div>
+                {selectedPrescription.expiryDate && (
+                  <div>
+                    <Label className="font-medium">Expiry Date:</Label>
+                    <p>{new Date(selectedPrescription.expiryDate).toLocaleDateString()}</p>
+                  </div>
+                )}
+              </div>
+              
+              <div>
+                <Label className="font-medium">Medication Details:</Label>
+                <div className="bg-gray-50 p-3 rounded mt-1">
+                  <p><strong>Medication:</strong> {selectedPrescription.medication}</p>
+                  <p><strong>Dosage:</strong> {selectedPrescription.dosage}</p>
+                  <p><strong>Frequency:</strong> {selectedPrescription.frequency}</p>
+                  <p><strong>Quantity:</strong> {selectedPrescription.quantity}</p>
+                  <p><strong>Refills:</strong> {selectedPrescription.refills}</p>
+                  {selectedPrescription.instructions && (
+                    <p><strong>Instructions:</strong> {selectedPrescription.instructions}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Insurance Information */}
+              {(selectedPrescription.insuranceProvider || selectedPrescription.insuranceCopay) && (
+                <div>
+                  <Label className="font-medium">Insurance Information:</Label>
+                  <div className="bg-blue-50 p-3 rounded mt-1">
+                    {selectedPrescription.insuranceProvider && (
+                      <p><strong>Provider:</strong> {selectedPrescription.insuranceProvider}</p>
+                    )}
+                    {selectedPrescription.insuranceCopay && (
+                      <p><strong>Copay:</strong> ${selectedPrescription.insuranceCopay}</p>
+                    )}
+                    {selectedPrescription.insuranceCoveragePercentage && (
+                      <p><strong>Coverage:</strong> {selectedPrescription.insuranceCoveragePercentage}%</p>
+                    )}
+                    {selectedPrescription.totalCost && (
+                      <p><strong>Total Cost:</strong> ${selectedPrescription.totalCost}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Pharmacy Notes */}
+              {selectedPrescription.pharmacyNotes && (
+                <div>
+                  <Label className="font-medium">Pharmacy Notes:</Label>
+                  <div className="bg-green-50 p-3 rounded mt-1">
+                    <p>{selectedPrescription.pharmacyNotes}</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { db } from "./db";
-import { tenants, users, pharmacies } from "@shared/schema";
+import { tenants, users, pharmacies, prescriptions } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 
 /**
