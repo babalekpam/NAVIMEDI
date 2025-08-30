@@ -434,12 +434,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/patients', async (req, res) => {
     try {
       const { tenantId } = req.user as any;
+      
+      console.log('🏥 Creating patient - Raw data:', JSON.stringify(req.body, null, 2));
+      
+      // Convert dateOfBirth string to Date object if provided
       const patientData = { ...req.body, tenantId };
+      if (patientData.dateOfBirth && typeof patientData.dateOfBirth === 'string') {
+        const dateObj = new Date(patientData.dateOfBirth);
+        if (isNaN(dateObj.getTime())) {
+          return res.status(400).json({ 
+            message: 'Invalid date format for dateOfBirth',
+            received: patientData.dateOfBirth 
+          });
+        }
+        patientData.dateOfBirth = dateObj;
+        console.log('🏥 Converted dateOfBirth from string to Date:', dateObj);
+      }
+      
+      console.log('🏥 Clean patient data:', JSON.stringify(patientData, null, 2));
       const patient = await storage.createPatient(patientData);
+      console.log('🏥 Patient created successfully:', patient.id);
       res.status(201).json(patient);
     } catch (error) {
-      console.error('Error creating patient:', error);
-      res.status(500).json({ message: 'Failed to create patient' });
+      console.error('❌ Error creating patient:', error);
+      console.error('❌ Error details:', error.message, error.code);
+      res.status(500).json({ 
+        message: 'Failed to create patient',
+        error: error.message
+      });
     }
   });
 
