@@ -660,6 +660,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Super Admin tenant management routes
+  app.put('/api/admin/tenants/:id/suspend', async (req, res) => {
+    try {
+      const { role } = req.user as any;
+      if (role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+      
+      const { id } = req.params;
+      const { reason } = req.body;
+      
+      await db.update(tenants).set({ 
+        isActive: false,
+        suspendedAt: new Date(),
+        suspensionReason: reason || 'Account suspended by administrator'
+      }).where(eq(tenants.id, id));
+      
+      res.json({ message: 'Tenant suspended successfully' });
+    } catch (error) {
+      console.error('Error suspending tenant:', error);
+      res.status(500).json({ message: 'Failed to suspend tenant' });
+    }
+  });
+
+  app.put('/api/admin/tenants/:id/activate', async (req, res) => {
+    try {
+      const { role } = req.user as any;
+      if (role !== 'super_admin') {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+      
+      const { id } = req.params;
+      
+      await db.update(tenants).set({ 
+        isActive: true,
+        suspendedAt: null,
+        suspensionReason: null 
+      }).where(eq(tenants.id, id));
+      
+      res.json({ message: 'Tenant activated successfully' });
+    } catch (error) {
+      console.error('Error activating tenant:', error);
+      res.status(500).json({ message: 'Failed to activate tenant' });
+    }
+  });
+
   // User management routes
   app.get('/api/users', async (req, res) => {
     try {
