@@ -789,10 +789,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all available pharmacies for prescription routing
   app.get('/api/pharmacies', async (req, res) => {
     try {
-      // Get all active pharmacy tenants
+      // Get all active pharmacy tenants for prescription routing
       const pharmacyTenants = await db.select()
         .from(tenants)
         .where(and(eq(tenants.type, 'pharmacy'), eq(tenants.isActive, true)));
+      
+      console.log(`📋 PHARMACY ROUTING - Found ${pharmacyTenants.length} active pharmacies`);
       
       // Convert tenant data to pharmacy format for prescription routing
       const pharmacyList = pharmacyTenants.map((tenant) => ({
@@ -813,8 +815,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(pharmacyList);
     } catch (error) {
-      console.error('Error fetching pharmacies:', error);
+      console.error('Error fetching pharmacies for routing:', error);
       res.status(500).json({ message: 'Failed to fetch pharmacies' });
+    }
+  });
+
+  // Route prescription to pharmacy - updates prescription status to "sent_to_pharmacy"
+  app.post('/api/prescriptions/:id/route-to-pharmacy', async (req, res) => {
+    try {
+      const { tenantId, userId } = req.user as any;
+      const prescriptionId = req.params.id;
+      const { pharmacyTenantId } = req.body;
+
+      console.log(`📋 ROUTING PRESCRIPTION - ID: ${prescriptionId} to pharmacy: ${pharmacyTenantId}`);
+
+      // Update prescription with pharmacy routing info
+      const [updatedPrescription] = await db
+        .update(prescriptions)
+        .set({
+          pharmacyTenantId: pharmacyTenantId,
+          status: 'sent_to_pharmacy',
+          sentToPharmacyDate: new Date(),
+          lastStatusUpdate: new Date(),
+          patientSelectedPharmacy: true,
+          routedFromHospital: tenantId
+        })
+        .where(eq(prescriptions.id, prescriptionId))
+        .returning();
+
+      if (!updatedPrescription) {
+        return res.status(404).json({ message: 'Prescription not found' });
+      }
+
+      console.log(`✅ PRESCRIPTION ROUTED - Successfully routed to pharmacy`);
+      res.json(updatedPrescription);
+    } catch (error) {
+      console.error('Error routing prescription to pharmacy:', error);
+      res.status(500).json({ message: 'Failed to route prescription to pharmacy' });
     }
   });
 
