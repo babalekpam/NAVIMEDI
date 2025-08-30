@@ -482,12 +482,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/appointments', async (req, res) => {
     try {
       const { tenantId } = req.user as any;
+      console.log('🏥 Creating appointment - User:', req.user?.username, 'Tenant:', tenantId);
+      console.log('🏥 Request body:', JSON.stringify(req.body, null, 2));
+      
       const appointmentData = { ...req.body, tenantId };
+      console.log('🏥 Final appointment data:', JSON.stringify(appointmentData, null, 2));
+      
       const appointment = await storage.createAppointment(appointmentData);
+      console.log('🏥 Appointment created successfully:', appointment.id);
       res.status(201).json(appointment);
     } catch (error) {
-      console.error('Error creating appointment:', error);
-      res.status(500).json({ message: 'Failed to create appointment' });
+      console.error('❌ Error creating appointment:', error);
+      console.error('❌ Error details:', error.message, error.code);
+      res.status(500).json({ 
+        message: 'Failed to create appointment',
+        error: error.message,
+        details: error.code || 'Unknown error'
+      });
     }
   });
 
