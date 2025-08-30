@@ -317,10 +317,6 @@ export default function PrescriptionsPage() {
               <CardDescription>
                 Recently received prescriptions awaiting processing
               </CardDescription>
-              {/* TEST BUTTON */}
-              <Button onClick={() => alert('TEST BUTTON WORKS!')} className="mb-4">
-                🔧 TEST BUTTON - Click Me!
-              </Button>
             </CardHeader>
             <CardContent>
               {(() => {
@@ -363,20 +359,22 @@ export default function PrescriptionsPage() {
                           <TableCell>
                             <div className="flex gap-2">
                               <button
-                                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                                 onClick={() => {
-                                  alert(`Process clicked for ${prescription.patientName} - ${prescription.medication}`);
+                                  console.log('🔧 Opening Process modal for:', prescription.patientName, prescription.medication);
                                   handleProcessPrescription(prescription);
                                 }}
+                                data-testid={`button-process-${prescription.id}`}
                               >
                                 Process
                               </button>
                               <button
-                                className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
+                                className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
                                 onClick={() => {
-                                  alert(`View Details clicked for ${prescription.patientName} - ${prescription.medication}`);
+                                  console.log('👁️ Opening View Details modal for:', prescription.patientName, prescription.medication);
                                   handleViewDetails(prescription);
                                 }}
+                                data-testid={`button-view-details-${prescription.id}`}
                               >
                                 View Details
                               </button>
