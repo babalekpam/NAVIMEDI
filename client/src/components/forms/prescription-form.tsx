@@ -12,13 +12,14 @@ import { z } from "zod";
 
 interface PrescriptionFormProps {
   onSubmit: (data: any) => void;
+  onCancel?: () => void;
   isLoading?: boolean;
   patients: Patient[];
   prescription?: any; // For editing mode
   isEditing?: boolean;
 }
 
-export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescription, isEditing = false }: PrescriptionFormProps) => {
+export const PrescriptionForm = ({ onSubmit, onCancel, isLoading = false, patients, prescription, isEditing = false }: PrescriptionFormProps) => {
   // Fetch available pharmacies for prescription routing
   const { data: pharmacies = [], isLoading: pharmaciesLoading } = useQuery({
     queryKey: ["/api/pharmacies"],
@@ -298,7 +299,7 @@ export const PrescriptionForm = ({ onSubmit, isLoading = false, patients, prescr
         />
 
         <div className="flex justify-end space-x-3">
-          <Button type="button" variant="outline">
+          <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
           <Button 
