@@ -437,8 +437,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('🏥 Creating patient - Raw data:', JSON.stringify(req.body, null, 2));
       
+      // Clean patient data - exclude auto-generated fields and convert dates
+      const { createdAt, updatedAt, id, ...cleanData } = req.body;
+      const patientData = { ...cleanData, tenantId };
+      
       // Convert dateOfBirth string to Date object if provided
-      const patientData = { ...req.body, tenantId };
       if (patientData.dateOfBirth && typeof patientData.dateOfBirth === 'string') {
         const dateObj = new Date(patientData.dateOfBirth);
         if (isNaN(dateObj.getTime())) {
@@ -451,8 +454,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('🏥 Converted dateOfBirth from string to Date:', dateObj);
       }
       
-      console.log('🏥 Clean patient data:', JSON.stringify(patientData, null, 2));
-      const patient = await storage.createPatient(patientData);
+      // Remove any other timestamp fields that might be sent from frontend
+      const finalData = {
+        ...patientData,
+        // Ensure these are not included - let DB handle them
+        createdAt: undefined,
+        updatedAt: undefined,
+        id: undefined
+      };
+      
+      // Remove undefined fields
+      Object.keys(finalData).forEach(key => {
+        if (finalData[key] === undefined) {
+          delete finalData[key];
+        }
+      });
+      
+      console.log('🏥 Clean patient data (final):', JSON.stringify(finalData, null, 2));
+      const patient = await storage.createPatient(finalData);
       console.log('🏥 Patient created successfully:', patient.id);
       res.status(201).json(patient);
     } catch (error) {
