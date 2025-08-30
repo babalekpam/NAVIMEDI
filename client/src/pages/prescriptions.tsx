@@ -54,6 +54,7 @@ export default function PrescriptionsPage() {
   const [isViewDetailsModalOpen, setIsViewDetailsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("new"); // For prescription tabs
+  const [forceUpdate, setForceUpdate] = useState(0); // Force re-render
 
   // Fetch prescriptions for current tenant (hospital or pharmacy)
   const { data: prescriptions = [], isLoading } = useQuery<Prescription[]>({
@@ -321,20 +322,15 @@ export default function PrescriptionsPage() {
                 className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                 onClick={() => {
                   alert('Trying to open modal...');
-                  console.log('Before state update:', isProcessingModalOpen);
                   setIsProcessingModalOpen(true);
-                  console.log('After state update call');
-                  setTimeout(() => {
-                    console.log('State after timeout:', isProcessingModalOpen);
-                    alert('State after timeout: ' + isProcessingModalOpen);
-                  }, 100);
+                  setForceUpdate(prev => prev + 1); // Force re-render
                   alert('Modal state set!');
                 }}
               >
                 🔥 DIRECT MODAL TEST
               </button>
             </div>
-            <p className="text-xs mt-2">Modal states: Processing={isProcessingModalOpen.toString()}, Details={isViewDetailsModalOpen.toString()}</p>
+            <p className="text-xs mt-2">Modal states: Processing={isProcessingModalOpen.toString()}, Details={isViewDetailsModalOpen.toString()}, ForceUpdate={forceUpdate}</p>
           </div>
 
           {/* New Prescriptions Table */}
