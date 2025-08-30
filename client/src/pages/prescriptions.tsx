@@ -360,22 +360,14 @@ export default function PrescriptionsPage() {
                           <TableCell>
                             <div className="flex gap-2">
                               <button
-                                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                                onClick={() => {
-                                  setSelectedPrescription(prescription);
-                                  setIsProcessingModalOpen(true);
-                                }}
-                                data-testid={`button-process-${prescription.id}`}
+                                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                onClick={() => alert(`PROCESSING:\nPatient: ${prescription.patientName}\nMedication: ${prescription.medication}\nDosage: ${prescription.dosage}\nStatus: ${prescription.status}`)}
                               >
                                 Process
                               </button>
                               <button
-                                className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-                                onClick={() => {
-                                  setSelectedPrescription(prescription);
-                                  setIsViewDetailsModalOpen(true);
-                                }}
-                                data-testid={`button-view-details-${prescription.id}`}
+                                className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
+                                onClick={() => alert(`DETAILS:\nPatient: ${prescription.patientName}\nMedication: ${prescription.medication}\nDosage: ${prescription.dosage}\nQuantity: ${prescription.quantity}\nInstructions: ${prescription.instructions}\nPrescribed: ${new Date(prescription.prescribedDate).toLocaleDateString()}\nProvider: ${prescription.providerName}`)}
                               >
                                 View Details
                               </button>
