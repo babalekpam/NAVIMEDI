@@ -397,7 +397,7 @@ export default function UserRoles() {
       return response.json();
     },
     onSuccess: (_, { isActive }) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
         title: "Success",
         description: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
