@@ -761,10 +761,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all available pharmacies for prescription routing
   app.get('/api/pharmacies', async (req, res) => {
     try {
+      console.log('🔍 PHARMACY DEBUG - Fetching pharmacy tenants...');
+      
       // Get all active pharmacy tenants - simplified approach
       const pharmacyTenants = await db.select()
         .from(tenants)
         .where(and(eq(tenants.type, 'pharmacy'), eq(tenants.isActive, true)));
+      
+      console.log('🔍 Raw pharmacy tenants found:', pharmacyTenants.length);
+      console.log('🔍 Pharmacy tenants details:', pharmacyTenants.map(t => ({ id: t.id, name: t.name, type: t.type })));
       
       // Convert tenant data to pharmacy format for prescription routing
       const pharmacyList = pharmacyTenants.map((tenant) => ({
@@ -783,10 +788,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         websiteUrl: ''
       }));
       
-      console.log(`Found ${pharmacyList.length} pharmacies:`, pharmacyList.map(p => p.name));
+      console.log('✅ Final pharmacy list:', pharmacyList.map(p => ({ id: p.id, name: p.name })));
       res.json(pharmacyList);
     } catch (error) {
-      console.error('Error fetching pharmacies:', error);
+      console.error('❌ Error fetching pharmacies:', error);
+      console.error('❌ Error stack:', error.stack);
       res.status(500).json({ message: 'Failed to fetch pharmacies' });
     }
   });
