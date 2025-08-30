@@ -178,17 +178,21 @@ export default function PrescriptionsPage() {
   };
 
   const handleProcessPrescription = (prescription: Prescription) => {
-    console.log('🔧 Process button clicked!', prescription);
+    console.log('🔧 Process handler called!', prescription);
+    console.log('🔧 Setting selected prescription:', prescription.id);
     setSelectedPrescription(prescription);
+    console.log('🔧 Opening processing modal...');
     setIsProcessingModalOpen(true);
-    console.log('✅ Processing modal should open now');
+    console.log('✅ Processing modal state set to true');
   };
 
   const handleViewDetails = (prescription: Prescription) => {
-    console.log('👁️ View Details button clicked!', prescription);
+    console.log('👁️ View Details handler called!', prescription);
+    console.log('👁️ Setting selected prescription:', prescription.id);
     setSelectedPrescription(prescription);
+    console.log('👁️ Opening view details modal...');
     setIsViewDetailsModalOpen(true);
-    console.log('✅ View Details modal should open now');
+    console.log('✅ View Details modal state set to true');
   };
 
   if (isLoading) {
@@ -370,8 +374,15 @@ export default function PrescriptionsPage() {
                               <button
                                 className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                                 onClick={() => {
-                                  console.log('🔧 Opening Process modal for:', prescription.patientName, prescription.medication);
-                                  handleProcessPrescription(prescription);
+                                  alert(`🔧 Process clicked: ${prescription.patientName} - ${prescription.medication}`);
+                                  console.log('🔧 Process button clicked, calling handler...');
+                                  try {
+                                    handleProcessPrescription(prescription);
+                                    console.log('✅ handleProcessPrescription called successfully');
+                                  } catch (error) {
+                                    console.error('❌ Error in handleProcessPrescription:', error);
+                                    alert('Error: ' + error);
+                                  }
                                 }}
                                 data-testid={`button-process-${prescription.id}`}
                               >
@@ -380,8 +391,15 @@ export default function PrescriptionsPage() {
                               <button
                                 className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
                                 onClick={() => {
-                                  console.log('👁️ Opening View Details modal for:', prescription.patientName, prescription.medication);
-                                  handleViewDetails(prescription);
+                                  alert(`👁️ View Details clicked: ${prescription.patientName} - ${prescription.medication}`);
+                                  console.log('👁️ View Details button clicked, calling handler...');
+                                  try {
+                                    handleViewDetails(prescription);
+                                    console.log('✅ handleViewDetails called successfully');
+                                  } catch (error) {
+                                    console.error('❌ Error in handleViewDetails:', error);
+                                    alert('Error: ' + error);
+                                  }
                                 }}
                                 data-testid={`button-view-details-${prescription.id}`}
                               >
