@@ -527,7 +527,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new patient check-in
   app.post('/api/patient-check-ins', async (req, res) => {
     try {
+      console.log('🔍 CHECK-IN DEBUG - Request received');
+      console.log('🔍 User:', JSON.stringify(req.user, null, 2));
+      console.log('🔍 Body:', JSON.stringify(req.body, null, 2));
+      
       const { tenantId, userId } = req.user as any;
+      
+      if (!tenantId || !userId) {
+        console.log('❌ Missing tenantId or userId');
+        return res.status(400).json({ 
+          message: 'Missing authentication data',
+          tenantId: !!tenantId,
+          userId: !!userId
+        });
+      }
       
       const checkInData = {
         ...req.body,
@@ -537,10 +550,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'waiting'
       };
       
+      console.log('🔍 Final check-in data:', JSON.stringify(checkInData, null, 2));
+      
       const checkIn = await storage.createPatientCheckIn(checkInData);
+      console.log('✅ Check-in created:', checkIn.id);
+      
       res.status(201).json(checkIn);
     } catch (error) {
-      console.error('Error creating patient check-in:', error);
+      console.error('❌ Check-in error:', error);
+      console.error('❌ Error stack:', error.stack);
       res.status(500).json({ 
         message: 'Failed to check in patient',
         error: error.message
