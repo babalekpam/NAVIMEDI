@@ -38,7 +38,7 @@ interface PlatformMetrics {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { tenant } = useTenant();
+  const { tenant, isLoading: tenantLoading } = useTenant();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -109,12 +109,14 @@ export default function Dashboard() {
     staleTime: 5 * 60 * 1000, // 5 minutes for tenant list
   });
 
-  if (!user) {
+  // Only show loading if we're actually waiting for critical data
+  if (!user || (tenantLoading && !isSuperAdmin)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">{t('loading')}</h2>
-          <p className="text-gray-600">Setting up your workspace</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-900">NaviMED</h2>
+          <p className="text-gray-600">Initializing dashboard...</p>
         </div>
       </div>
     );
