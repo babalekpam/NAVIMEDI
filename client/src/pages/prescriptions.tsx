@@ -321,7 +321,13 @@ export default function PrescriptionsPage() {
                 className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                 onClick={() => {
                   alert('Trying to open modal...');
+                  console.log('Before state update:', isProcessingModalOpen);
                   setIsProcessingModalOpen(true);
+                  console.log('After state update call');
+                  setTimeout(() => {
+                    console.log('State after timeout:', isProcessingModalOpen);
+                    alert('State after timeout: ' + isProcessingModalOpen);
+                  }, 100);
                   alert('Modal state set!');
                 }}
               >
