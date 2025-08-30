@@ -516,43 +516,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { tenantId, userId } = req.user as any;
       
       console.log('🔍 PRESCRIPTION DEBUG - Received body:', JSON.stringify(req.body, null, 2));
+      console.log('🔍 PRESCRIPTION DEBUG - User data:', { tenantId, userId });
       
-      // Fix date fields - convert strings to proper Date objects
-      const prescriptionData = { 
-        ...req.body, 
-        tenantId, 
-        prescribedBy: userId,
-        providerId: userId, // Map to correct field name
-        // Ensure ALL possible timestamp fields are properly converted
-        prescribedDate: req.body.prescribedDate ? new Date(req.body.prescribedDate) : new Date(),
-        dateIssued: req.body.dateIssued ? new Date(req.body.dateIssued) : undefined,
-        dateFilled: req.body.dateFilled ? new Date(req.body.dateFilled) : undefined,
-        expiryDate: req.body.expiryDate ? new Date(req.body.expiryDate) : undefined,
-        sentToPharmacyDate: req.body.sentToPharmacyDate ? new Date(req.body.sentToPharmacyDate) : undefined,
-        filledDate: req.body.filledDate ? new Date(req.body.filledDate) : undefined,
-        insuranceVerifiedDate: req.body.insuranceVerifiedDate ? new Date(req.body.insuranceVerifiedDate) : undefined,
-        processingStartedDate: req.body.processingStartedDate ? new Date(req.body.processingStartedDate) : undefined,
-        readyDate: req.body.readyDate ? new Date(req.body.readyDate) : undefined,
-        dispensedDate: req.body.dispensedDate ? new Date(req.body.dispensedDate) : undefined,
-        lastStatusUpdate: req.body.lastStatusUpdate ? new Date(req.body.lastStatusUpdate) : new Date(),
-        patientWaitingSince: req.body.patientWaitingSince ? new Date(req.body.patientWaitingSince) : undefined
+      // Create properly mapped prescription data for database schema
+      const prescriptionData = {
+        tenantId: tenantId,
+        patientId: req.body.patientId,
+        providerId: userId, // This is the key field that was missing!
+        pharmacyTenantId: req.body.pharmacyTenantId || null,
+        medicationName: req.body.medicationName,
+        dosage: req.body.dosage,
+        frequency: req.body.frequency,
+        quantity: req.body.quantity,
+        refills: req.body.refills || 0,
+        instructions: req.body.instructions || null,
+        status: req.body.status || 'prescribed',
+        // Set current timestamp for prescribed date
+        prescribedDate: new Date(),
+        // Only set expiry date if provided, otherwise leave null
+        expiryDate: req.body.expiryDate ? new Date(req.body.expiryDate) : null,
+        // Set current timestamp for last status update
+        lastStatusUpdate: new Date()
       };
       
-      // Remove undefined fields to avoid sending them to database
-      Object.keys(prescriptionData).forEach(key => {
-        if (prescriptionData[key] === undefined) {
-          delete prescriptionData[key];
-        }
-      });
-      
-      console.log('🔍 PRESCRIPTION DEBUG - Processed data:', JSON.stringify(prescriptionData, null, 2));
+      console.log('🔍 PRESCRIPTION DEBUG - Final mapped data:', JSON.stringify(prescriptionData, null, 2));
       
       const prescription = await storage.createPrescription(prescriptionData);
+      console.log('✅ PRESCRIPTION DEBUG - Successfully created:', prescription.id);
       res.status(201).json(prescription);
     } catch (error) {
       console.error('❌ Error creating prescription:', error);
       console.error('❌ Error message:', error.message);
-      console.error('❌ Error stack:', error.stack);
       res.status(500).json({ message: 'Failed to create prescription' });
     }
   });
