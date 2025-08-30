@@ -435,48 +435,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { tenantId } = req.user as any;
       
-      console.log('🏥 Creating patient - Raw data:', JSON.stringify(req.body, null, 2));
+      console.log('🔍 RAW PATIENT DATA:', JSON.stringify(req.body, null, 2));
       
-      // Clean patient data - exclude auto-generated fields and convert dates
-      const { createdAt, updatedAt, id, ...cleanData } = req.body;
-      const patientData = { ...cleanData, tenantId };
-      
-      // Convert dateOfBirth string to Date object if provided
-      if (patientData.dateOfBirth && typeof patientData.dateOfBirth === 'string') {
-        const dateObj = new Date(patientData.dateOfBirth);
-        if (isNaN(dateObj.getTime())) {
-          return res.status(400).json({ 
-            message: 'Invalid date format for dateOfBirth',
-            received: patientData.dateOfBirth 
-          });
-        }
-        patientData.dateOfBirth = dateObj;
-        console.log('🏥 Converted dateOfBirth from string to Date:', dateObj);
-      }
-      
-      // Remove any other timestamp fields that might be sent from frontend
-      const finalData = {
-        ...patientData,
-        // Ensure these are not included - let DB handle them
-        createdAt: undefined,
-        updatedAt: undefined,
-        id: undefined
-      };
-      
-      // Remove undefined fields
-      Object.keys(finalData).forEach(key => {
-        if (finalData[key] === undefined) {
-          delete finalData[key];
+      // Detailed field analysis
+      Object.keys(req.body).forEach(key => {
+        const value = req.body[key];
+        const type = typeof value;
+        console.log(`🔍 Field "${key}": type=${type}, value=${value}`);
+        
+        // Check if it looks like a date string
+        if (type === 'string' && value && value.match(/^\d{4}-\d{2}-\d{2}/)) {
+          console.log(`⚠️  POTENTIAL DATE STRING: "${key}" = "${value}"`);
         }
       });
       
-      console.log('🏥 Clean patient data (final):', JSON.stringify(finalData, null, 2));
-      const patient = await storage.createPatient(finalData);
-      console.log('🏥 Patient created successfully:', patient.id);
+      // Clean patient data - exclude auto-generated fields
+      const { createdAt, updatedAt, id, ...cleanData } = req.body;
+      const patientData = { ...cleanData, tenantId };
+      
+      console.log('🔍 AFTER CLEANUP:', JSON.stringify(patientData, null, 2));
+      
+      // Convert dateOfBirth string to Date object if provided
+      if (patientData.dateOfBirth) {
+        console.log(`🔍 dateOfBirth type: ${typeof patientData.dateOfBirth}, value: ${patientData.dateOfBirth}`);
+        if (typeof patientData.dateOfBirth === 'string') {
+          const dateObj = new Date(patientData.dateOfBirth);
+          if (isNaN(dateObj.getTime())) {
+            return res.status(400).json({ 
+              message: 'Invalid date format for dateOfBirth',
+              received: patientData.dateOfBirth 
+            });
+          }
+          patientData.dateOfBirth = dateObj;
+          console.log('✅ Converted dateOfBirth from string to Date:', dateObj);
+        }
+      }
+      
+      // Check for any remaining string dates
+      Object.keys(patientData).forEach(key => {
+        const value = patientData[key];
+        if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}/)) {
+          console.log(`🚨 STILL A DATE STRING: "${key}" = "${value}" - THIS WILL CAUSE ERROR!`);
+        }
+      });
+      
+      // Remove auto-generated fields completely
+      delete patientData.createdAt;
+      delete patientData.updatedAt; 
+      delete patientData.id;
+      
+      console.log('🔍 FINAL DATA FOR DB:', JSON.stringify(patientData, null, 2));
+      
+      const patient = await storage.createPatient(patientData);
+      console.log('✅ Patient created successfully:', patient.id);
       res.status(201).json(patient);
     } catch (error) {
       console.error('❌ Error creating patient:', error);
-      console.error('❌ Error details:', error.message, error.code);
+      console.error('❌ Error stack:', error.stack);
       res.status(500).json({ 
         message: 'Failed to create patient',
         error: error.message
