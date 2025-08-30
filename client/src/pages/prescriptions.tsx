@@ -317,6 +317,10 @@ export default function PrescriptionsPage() {
               <CardDescription>
                 Recently received prescriptions awaiting processing
               </CardDescription>
+              {/* TEST BUTTON */}
+              <Button onClick={() => alert('TEST BUTTON WORKS!')} className="mb-4">
+                🔧 TEST BUTTON - Click Me!
+              </Button>
             </CardHeader>
             <CardContent>
               {(() => {
@@ -358,31 +362,24 @@ export default function PrescriptionsPage() {
                           <TableCell>{prescription.providerName || 'N/A'}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  console.log('🔧 BUTTON CLICKED - Process!', prescription.id);
+                              <button
+                                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                onClick={() => {
+                                  alert(`Process clicked for ${prescription.patientName} - ${prescription.medication}`);
                                   handleProcessPrescription(prescription);
                                 }}
-                                data-testid={`button-process-${prescription.id}`}
                               >
                                 Process
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  console.log('👁️ BUTTON CLICKED - View Details!', prescription.id);
+                              </button>
+                              <button
+                                className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
+                                onClick={() => {
+                                  alert(`View Details clicked for ${prescription.patientName} - ${prescription.medication}`);
                                   handleViewDetails(prescription);
                                 }}
-                                data-testid={`button-view-details-${prescription.id}`}
                               >
                                 View Details
-                              </Button>
+                              </button>
                             </div>
                           </TableCell>
                         </TableRow>
