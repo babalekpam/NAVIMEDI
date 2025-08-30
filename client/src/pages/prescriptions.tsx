@@ -360,15 +360,12 @@ export default function PrescriptionsPage() {
                             <div className="flex gap-2">
                               <button
                                 className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors cursor-pointer"
-                                onClick={() => {
-                                  alert('Process clicked - trying modal...');
-                                  try {
-                                    setSelectedPrescription(prescription);
-                                    setIsProcessingModalOpen(true);
-                                    alert('Modal should be open now!');
-                                  } catch (error) {
-                                    alert('Error: ' + error);
-                                  }
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  console.log('Process button clicked for prescription:', prescription.id);
+                                  setSelectedPrescription(prescription);
+                                  setTimeout(() => setIsProcessingModalOpen(true), 10);
                                 }}
                                 data-testid={`button-process-${prescription.id}`}
                               >
@@ -376,15 +373,12 @@ export default function PrescriptionsPage() {
                               </button>
                               <button
                                 className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors cursor-pointer"
-                                onClick={() => {
-                                  alert('View Details clicked - trying modal...');
-                                  try {
-                                    setSelectedPrescription(prescription);
-                                    setIsViewDetailsModalOpen(true);
-                                    alert('Modal should be open now!');
-                                  } catch (error) {
-                                    alert('Error: ' + error);
-                                  }
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  console.log('View Details button clicked for prescription:', prescription.id);
+                                  setSelectedPrescription(prescription);
+                                  setTimeout(() => setIsViewDetailsModalOpen(true), 10);
                                 }}
                                 data-testid={`button-view-details-${prescription.id}`}
                               >
