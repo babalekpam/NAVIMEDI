@@ -523,6 +523,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PATIENT CHECK-IN ROUTES
+  // Create new patient check-in
+  app.post('/api/patient-check-ins', async (req, res) => {
+    try {
+      const { tenantId, userId } = req.user as any;
+      
+      const checkInData = {
+        ...req.body,
+        tenantId,
+        checkedInBy: userId,
+        checkedInAt: new Date(),
+        status: 'waiting'
+      };
+      
+      const checkIn = await storage.createPatientCheckIn(checkInData);
+      res.status(201).json(checkIn);
+    } catch (error) {
+      console.error('Error creating patient check-in:', error);
+      res.status(500).json({ 
+        message: 'Failed to check in patient',
+        error: error.message
+      });
+    }
+  });
+
+  // Get waiting patients
+  app.get('/api/patient-check-ins/waiting', async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const waitingPatients = await storage.getWaitingPatients(tenantId);
+      res.json(waitingPatients);
+    } catch (error) {
+      console.error('Error fetching waiting patients:', error);
+      res.status(500).json({ message: 'Failed to fetch waiting patients' });
+    }
+  });
+
+  // Get today's check-ins
+  app.get('/api/patient-check-ins/today', async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const todaysCheckIns = await storage.getTodaysCheckIns(tenantId);
+      res.json(todaysCheckIns);
+    } catch (error) {
+      console.error('Error fetching today\'s check-ins:', error);
+      res.status(500).json({ message: 'Failed to fetch today\'s check-ins' });
+    }
+  });
+
+  // Update patient check-in status
+  app.patch('/api/patient-check-ins/:id', async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const updatedCheckIn = await storage.updatePatientCheckIn(id, updates, tenantId);
+      
+      if (!updatedCheckIn) {
+        return res.status(404).json({ message: 'Check-in not found' });
+      }
+      
+      res.json(updatedCheckIn);
+    } catch (error) {
+      console.error('Error updating patient check-in:', error);
+      res.status(500).json({ 
+        message: 'Failed to update check-in',
+        error: error.message
+      });
+    }
+  });
+
   // Appointment management routes
   app.get('/api/appointments', async (req, res) => {
     try {
