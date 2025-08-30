@@ -761,56 +761,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all available pharmacies for prescription routing
   app.get('/api/pharmacies', async (req, res) => {
     try {
-      // Return mock pharmacy data for now to unblock prescription functionality
-      const mockPharmacies = [
-        {
-          id: 'pharmacy-001',
-          tenantId: 'tenant-pharmacy-001', 
-          name: 'Central Pharmacy',
-          phone: '+1-555-0123',
-          email: 'info@centralpharmacy.com',
-          address: '123 Main Street, Downtown',
-          licenseNumber: 'PH-001-2024',
-          npiNumber: '1234567890',
-          acceptsInsurance: true,
-          deliveryService: true,
-          operatingHours: { open: '8:00 AM', close: '9:00 PM' },
-          specializations: ['General', 'Prescription Delivery'],
-          websiteUrl: 'https://centralpharmacy.com'
-        },
-        {
-          id: 'pharmacy-002',
-          tenantId: 'tenant-pharmacy-002',
-          name: 'Community Health Pharmacy', 
-          phone: '+1-555-0124',
-          email: 'contact@communityhealthrx.com',
-          address: '456 Health Boulevard, Medical District',
-          licenseNumber: 'PH-002-2024',
-          npiNumber: '0987654321',
-          acceptsInsurance: true,
-          deliveryService: false,
-          operatingHours: { open: '7:00 AM', close: '8:00 PM' },
-          specializations: ['General', 'Specialty Medications'],
-          websiteUrl: 'https://communityhealthrx.com'
-        },
-        {
-          id: 'pharmacy-003',
-          tenantId: 'tenant-pharmacy-003',
-          name: '24/7 Express Pharmacy',
-          phone: '+1-555-0125', 
-          email: 'support@247expressrx.com',
-          address: '789 Emergency Lane, Hospital District',
-          licenseNumber: 'PH-003-2024',
-          npiNumber: '1122334455',
-          acceptsInsurance: true,
-          deliveryService: true,
-          operatingHours: { open: '24 Hours', close: '24 Hours' },
-          specializations: ['Emergency', '24/7 Service', 'Prescription Delivery'],
-          websiteUrl: 'https://247expressrx.com'
-        }
-      ];
-
-      res.json(mockPharmacies);
+      // Get all active pharmacy tenants - simplified approach
+      const pharmacyTenants = await db.select()
+        .from(tenants)
+        .where(and(eq(tenants.type, 'pharmacy'), eq(tenants.isActive, true)));
+      
+      // Convert tenant data to pharmacy format for prescription routing
+      const pharmacyList = pharmacyTenants.map((tenant) => ({
+        id: tenant.id,
+        tenantId: tenant.id,
+        name: tenant.name || 'Unknown Pharmacy',
+        phone: tenant.phoneNumber || '',
+        email: '', // Not available in tenants table
+        address: tenant.address || '',
+        licenseNumber: '',
+        npiNumber: '',
+        acceptsInsurance: true, // Default to true
+        deliveryService: false, // Default to false
+        operatingHours: null,
+        specializations: [],
+        websiteUrl: ''
+      }));
+      
+      console.log(`Found ${pharmacyList.length} pharmacies:`, pharmacyList.map(p => p.name));
+      res.json(pharmacyList);
     } catch (error) {
       console.error('Error fetching pharmacies:', error);
       res.status(500).json({ message: 'Failed to fetch pharmacies' });
