@@ -783,7 +783,7 @@ export default function PrescriptionsPage() {
           <PrescriptionForm
             onSubmit={(data) => createPrescriptionMutation.mutate(data)}
             isLoading={createPrescriptionMutation.isPending}
-            patients={patients}
+            patients={(patients as any) || []}
           />
         </DialogContent>
       </Dialog>
