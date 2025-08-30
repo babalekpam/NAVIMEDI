@@ -770,6 +770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // HOSPITAL PATIENT INSURANCE ROUTES
+  console.log('📋 Registering hospital patient insurance routes...');
   app.get("/api/hospital-patient-insurance/:patientId", async (req, res) => {
     try {
       const { patientId } = req.params;
