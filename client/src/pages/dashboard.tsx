@@ -71,8 +71,9 @@ export default function Dashboard() {
   const { data: metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useQuery<DashboardMetrics>({
     queryKey: ["/api/dashboard/metrics"],
     enabled: !!user && !!tenant && !isSuperAdmin,
-    staleTime: 0, // Force fresh data every time
-    refetchInterval: 30 * 1000, // Auto-refresh every 30 seconds
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    refetchInterval: false, // Disable auto-refresh to improve performance
+    refetchOnWindowFocus: false, // Disable refetch on window focus
   });
 
   // Only fetch appointments if we actually need them (not for all users)

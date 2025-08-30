@@ -40,10 +40,10 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
         hasUser: !!user, 
         hasStoredToken: !!storedToken 
       });
-      // Don't set loading to false yet if we have a stored token but user isn't loaded
-      if (!storedToken) {
-        setIsLoading(false);
-      }
+      // Set loading to false to prevent infinite loading
+      setIsLoading(false);
+      setTenant(null);
+      setAvailableTenants([]);
       return;
     }
 
