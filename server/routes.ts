@@ -513,7 +513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/prescriptions', async (req, res) => {
     try {
-      const { tenantId, userId } = req.user as any;
+      const { tenantId, id: userId } = req.user as any;
       
       console.log('🔍 PRESCRIPTION DEBUG - Received body:', JSON.stringify(req.body, null, 2));
       console.log('🔍 PRESCRIPTION DEBUG - User data:', { tenantId, userId });
@@ -831,7 +831,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Route prescription to pharmacy - updates prescription status to "sent_to_pharmacy"
   app.post('/api/prescriptions/:id/route-to-pharmacy', async (req, res) => {
     try {
-      const { tenantId, userId } = req.user as any;
+      const { tenantId, id: userId } = req.user as any;
       const prescriptionId = req.params.id;
       const { pharmacyTenantId } = req.body;
 
