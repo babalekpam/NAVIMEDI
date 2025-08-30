@@ -360,7 +360,12 @@ export default function PrescriptionsPage() {
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
-                                onClick={() => handleProcessPrescription(prescription)}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  console.log('🔧 BUTTON CLICKED - Process!', prescription.id);
+                                  handleProcessPrescription(prescription);
+                                }}
                                 data-testid={`button-process-${prescription.id}`}
                               >
                                 Process
@@ -368,7 +373,12 @@ export default function PrescriptionsPage() {
                               <Button 
                                 size="sm" 
                                 variant="outline"
-                                onClick={() => handleViewDetails(prescription)}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  console.log('👁️ BUTTON CLICKED - View Details!', prescription.id);
+                                  handleViewDetails(prescription);
+                                }}
                                 data-testid={`button-view-details-${prescription.id}`}
                               >
                                 View Details
