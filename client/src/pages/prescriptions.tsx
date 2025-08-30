@@ -53,7 +53,7 @@ export default function PrescriptionsPage() {
   const [isProcessingModalOpen, setIsProcessingModalOpen] = useState(false);
   const [isViewDetailsModalOpen, setIsViewDetailsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("active"); // For prescription tabs
+  const [activeTab, setActiveTab] = useState("new"); // For prescription tabs
 
   // Fetch prescriptions for current tenant (hospital or pharmacy)
   const { data: prescriptions = [], isLoading } = useQuery<Prescription[]>({
@@ -283,7 +283,11 @@ export default function PrescriptionsPage() {
 
       {/* Prescription Management Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="new" className="flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            New Prescriptions
+          </TabsTrigger>
           <TabsTrigger value="active" className="flex items-center gap-2">
             <Pill className="h-4 w-4" />
             Active Prescriptions
@@ -297,6 +301,91 @@ export default function PrescriptionsPage() {
             Prescription Transfers
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="new" className="space-y-6">
+          {/* New Prescriptions Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                New Prescriptions
+              </CardTitle>
+              <CardDescription>
+                Recently received prescriptions awaiting processing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const newPrescriptions = prescriptions.filter((p) => 
+                  ['prescribed', 'new', 'sent_to_pharmacy', 'received'].includes(p.status)
+                );
+                
+                return newPrescriptions.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Patient</TableHead>
+                        <TableHead>Medication</TableHead>
+                        <TableHead>Dosage</TableHead>
+                        <TableHead>Quantity</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Prescribed Date</TableHead>
+                        <TableHead>Provider</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {newPrescriptions.map((prescription) => (
+                        <TableRow key={prescription.id}>
+                          <TableCell className="font-medium">
+                            {prescription.patientName}
+                          </TableCell>
+                          <TableCell>{prescription.medication}</TableCell>
+                          <TableCell>{prescription.dosage}</TableCell>
+                          <TableCell>{prescription.quantity}</TableCell>
+                          <TableCell>
+                            <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+                              NEW
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(prescription.prescribedDate).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>{prescription.providerName || 'N/A'}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleProcessPrescription(prescription)}
+                                data-testid={`button-process-${prescription.id}`}
+                              >
+                                Process
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleViewDetails(prescription)}
+                                data-testid={`button-view-details-${prescription.id}`}
+                              >
+                                View Details
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8">
+                    <Package className="mx-auto h-8 w-8 text-gray-300 mb-4" />
+                    <p className="text-gray-500 text-lg">No new prescriptions</p>
+                    <p className="text-sm text-gray-400">New prescriptions will appear here when received</p>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="active" className="space-y-6">
           {/* Filters */}
