@@ -317,6 +317,15 @@ export default function PrescriptionsPage() {
               <CardDescription>
                 Recently received prescriptions awaiting processing
               </CardDescription>
+              {/* Quick test */}
+              <div className="mb-4">
+                <button 
+                  className="px-4 py-2 bg-red-500 text-white rounded"
+                  onClick={() => alert('Click works!')}
+                >
+                  🧪 Quick Test
+                </button>
+              </div>
             </CardHeader>
             <CardContent>
               {(() => {
