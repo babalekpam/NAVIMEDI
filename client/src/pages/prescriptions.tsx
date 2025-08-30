@@ -360,15 +360,21 @@ export default function PrescriptionsPage() {
                             <div className="flex gap-2">
                               <button
                                 className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors cursor-pointer"
-                                onClick={() => alert('PROCESS WORKS!')}
-                                style={{ zIndex: 1000 }}
+                                onClick={() => {
+                                  setSelectedPrescription(prescription);
+                                  setIsProcessingModalOpen(true);
+                                }}
+                                data-testid={`button-process-${prescription.id}`}
                               >
                                 Process
                               </button>
                               <button
                                 className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors cursor-pointer"
-                                onClick={() => alert('VIEW DETAILS WORKS!')}
-                                style={{ zIndex: 1000 }}
+                                onClick={() => {
+                                  setSelectedPrescription(prescription);
+                                  setIsViewDetailsModalOpen(true);
+                                }}
+                                data-testid={`button-view-details-${prescription.id}`}
                               >
                                 View Details
                               </button>
