@@ -514,11 +514,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/prescriptions', async (req, res) => {
     try {
       const { tenantId, userId } = req.user as any;
-      const prescriptionData = { ...req.body, tenantId, prescribedBy: userId };
+      
+      console.log('🔍 PRESCRIPTION DEBUG - Received body:', JSON.stringify(req.body, null, 2));
+      
+      // Fix date fields - convert strings to proper Date objects
+      const prescriptionData = { 
+        ...req.body, 
+        tenantId, 
+        prescribedBy: userId,
+        providerId: userId, // Map to correct field name
+        // Ensure ALL possible timestamp fields are properly converted
+        prescribedDate: req.body.prescribedDate ? new Date(req.body.prescribedDate) : new Date(),
+        dateIssued: req.body.dateIssued ? new Date(req.body.dateIssued) : undefined,
+        dateFilled: req.body.dateFilled ? new Date(req.body.dateFilled) : undefined,
+        expiryDate: req.body.expiryDate ? new Date(req.body.expiryDate) : undefined,
+        sentToPharmacyDate: req.body.sentToPharmacyDate ? new Date(req.body.sentToPharmacyDate) : undefined,
+        filledDate: req.body.filledDate ? new Date(req.body.filledDate) : undefined,
+        insuranceVerifiedDate: req.body.insuranceVerifiedDate ? new Date(req.body.insuranceVerifiedDate) : undefined,
+        processingStartedDate: req.body.processingStartedDate ? new Date(req.body.processingStartedDate) : undefined,
+        readyDate: req.body.readyDate ? new Date(req.body.readyDate) : undefined,
+        dispensedDate: req.body.dispensedDate ? new Date(req.body.dispensedDate) : undefined,
+        lastStatusUpdate: req.body.lastStatusUpdate ? new Date(req.body.lastStatusUpdate) : new Date(),
+        patientWaitingSince: req.body.patientWaitingSince ? new Date(req.body.patientWaitingSince) : undefined
+      };
+      
+      // Remove undefined fields to avoid sending them to database
+      Object.keys(prescriptionData).forEach(key => {
+        if (prescriptionData[key] === undefined) {
+          delete prescriptionData[key];
+        }
+      });
+      
+      console.log('🔍 PRESCRIPTION DEBUG - Processed data:', JSON.stringify(prescriptionData, null, 2));
+      
       const prescription = await storage.createPrescription(prescriptionData);
       res.status(201).json(prescription);
     } catch (error) {
-      console.error('Error creating prescription:', error);
+      console.error('❌ Error creating prescription:', error);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Error stack:', error.stack);
       res.status(500).json({ message: 'Failed to create prescription' });
     }
   });
@@ -761,15 +795,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all available pharmacies for prescription routing
   app.get('/api/pharmacies', async (req, res) => {
     try {
-      console.log('🔍 PHARMACY DEBUG - Fetching pharmacy tenants...');
-      
-      // Get all active pharmacy tenants - simplified approach
+      // Get all active pharmacy tenants
       const pharmacyTenants = await db.select()
         .from(tenants)
         .where(and(eq(tenants.type, 'pharmacy'), eq(tenants.isActive, true)));
-      
-      console.log('🔍 Raw pharmacy tenants found:', pharmacyTenants.length);
-      console.log('🔍 Pharmacy tenants details:', pharmacyTenants.map(t => ({ id: t.id, name: t.name, type: t.type })));
       
       // Convert tenant data to pharmacy format for prescription routing
       const pharmacyList = pharmacyTenants.map((tenant) => ({
@@ -777,22 +806,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenantId: tenant.id,
         name: tenant.name || 'Unknown Pharmacy',
         phone: tenant.phoneNumber || '',
-        email: '', // Not available in tenants table
+        email: '',
         address: tenant.address || '',
         licenseNumber: '',
         npiNumber: '',
-        acceptsInsurance: true, // Default to true
-        deliveryService: false, // Default to false
+        acceptsInsurance: true,
+        deliveryService: false,
         operatingHours: null,
         specializations: [],
         websiteUrl: ''
       }));
       
-      console.log('✅ Final pharmacy list:', pharmacyList.map(p => ({ id: p.id, name: p.name })));
       res.json(pharmacyList);
     } catch (error) {
-      console.error('❌ Error fetching pharmacies:', error);
-      console.error('❌ Error stack:', error.stack);
+      console.error('Error fetching pharmacies:', error);
       res.status(500).json({ message: 'Failed to fetch pharmacies' });
     }
   });
