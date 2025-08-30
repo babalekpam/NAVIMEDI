@@ -486,12 +486,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🏥 Request body:', JSON.stringify(req.body, null, 2));
       
       // Convert appointmentDate string to Date object for database
-      const appointmentData = { 
-        ...req.body, 
+      const dateObj = new Date(req.body.appointmentDate);
+      console.log('🏥 Date conversion - Original:', req.body.appointmentDate, 'Converted:', dateObj, 'Valid:', !isNaN(dateObj.getTime()));
+      
+      // Clean appointment data - only include fields that should be in database
+      const appointmentData = {
         tenantId,
-        appointmentDate: new Date(req.body.appointmentDate)
+        patientId: req.body.patientId,
+        providerId: req.body.providerId,
+        appointmentDate: dateObj,
+        duration: req.body.duration || 30,
+        type: req.body.type,
+        status: req.body.status || 'scheduled',
+        notes: req.body.notes || null,
+        chiefComplaint: req.body.chiefComplaint || null
       };
-      console.log('🏥 Final appointment data:', JSON.stringify(appointmentData, null, 2));
+      console.log('🏥 Clean appointment data:', JSON.stringify(appointmentData, null, 2));
       
       const appointment = await storage.createAppointment(appointmentData);
       console.log('🏥 Appointment created successfully:', appointment.id);
