@@ -377,6 +377,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // AUTHENTICATED ROUTES
 
+  // Tenant current endpoint - CRITICAL: Returns current user's tenant info
+  app.get('/api/tenant/current', async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      console.log('🏥 Getting current tenant for tenantId:', tenantId);
+      
+      if (!tenantId) {
+        return res.status(400).json({ message: 'No tenant ID found' });
+      }
+      
+      const tenant = await storage.getTenant(tenantId);
+      if (!tenant) {
+        return res.status(404).json({ message: 'Tenant not found' });
+      }
+      
+      console.log('✅ Current tenant found:', tenant.name);
+      res.json(tenant);
+    } catch (error) {
+      console.error('❌ Error fetching current tenant:', error);
+      res.status(500).json({ message: 'Failed to fetch tenant' });
+    }
+  });
+
   // Hospital admin dashboard
   app.get('/api/admin/dashboard', async (req, res) => {
     try {
