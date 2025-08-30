@@ -503,8 +503,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/prescriptions', async (req, res) => {
     try {
       const { tenantId } = req.user as any;
-      const prescriptions = await storage.getPrescriptionsByTenant(tenantId);
-      res.json(prescriptions);
+      
+      // Check if current tenant is a pharmacy
+      const tenant = await storage.getTenant(tenantId);
+      
+      if (tenant && tenant.type === 'pharmacy') {
+        // For pharmacies: get prescriptions routed TO this pharmacy
+        const prescriptions = await storage.getPrescriptionsByPharmacyTenant(tenantId);
+        console.log(`📋 PHARMACY PRESCRIPTIONS - Found ${prescriptions.length} prescriptions for pharmacy ${tenant.name}`);
+        res.json(prescriptions);
+      } else {
+        // For hospitals: get prescriptions created BY this tenant
+        const prescriptions = await storage.getPrescriptionsByTenant(tenantId);
+        res.json(prescriptions);
+      }
     } catch (error) {
       console.error('Error fetching prescriptions:', error);
       res.status(500).json({ message: 'Failed to fetch prescriptions' });
