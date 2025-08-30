@@ -307,6 +307,43 @@ export default function PrescriptionsPage() {
         </TabsList>
 
         <TabsContent value="new" className="space-y-6">
+          {/* TEST BUTTONS OUTSIDE TABLE */}
+          <div className="mb-4 p-4 bg-yellow-100 border border-yellow-300 rounded">
+            <h3 className="font-bold mb-2">🧪 TEST BUTTONS (Outside Table)</h3>
+            <div className="flex gap-2">
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                onClick={() => {
+                  console.log('🧪 TEST Process button clicked');
+                  const newPrescriptions = prescriptions.filter((p) => 
+                    ['prescribed', 'new', 'sent_to_pharmacy', 'received'].includes(p.status)
+                  );
+                  if (newPrescriptions[0]) {
+                    setSelectedPrescription(newPrescriptions[0]);
+                    setIsProcessingModalOpen(true);
+                  }
+                }}
+              >
+                🧪 TEST Process
+              </button>
+              <button
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                onClick={() => {
+                  console.log('🧪 TEST View Details button clicked');
+                  const newPrescriptions = prescriptions.filter((p) => 
+                    ['prescribed', 'new', 'sent_to_pharmacy', 'received'].includes(p.status)
+                  );
+                  if (newPrescriptions[0]) {
+                    setSelectedPrescription(newPrescriptions[0]);
+                    setIsViewDetailsModalOpen(true);
+                  }
+                }}
+              >
+                🧪 TEST View Details
+              </button>
+            </div>
+          </div>
+
           {/* New Prescriptions Table */}
           <Card>
             <CardHeader>
