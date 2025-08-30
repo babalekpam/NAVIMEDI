@@ -178,21 +178,17 @@ export default function PrescriptionsPage() {
   };
 
   const handleProcessPrescription = (prescription: Prescription) => {
-    console.log('🔧 Process handler called!', prescription);
-    console.log('🔧 Setting selected prescription:', prescription.id);
+    console.log('🔧 Process prescription:', prescription.patientName, prescription.medication);
     setSelectedPrescription(prescription);
-    console.log('🔧 Opening processing modal...');
     setIsProcessingModalOpen(true);
-    console.log('✅ Processing modal state set to true');
+    console.log('✅ Process modal opened');
   };
 
   const handleViewDetails = (prescription: Prescription) => {
-    console.log('👁️ View Details handler called!', prescription);
-    console.log('👁️ Setting selected prescription:', prescription.id);
+    console.log('👁️ View details for:', prescription.patientName, prescription.medication);
     setSelectedPrescription(prescription);
-    console.log('👁️ Opening view details modal...');
     setIsViewDetailsModalOpen(true);
-    console.log('✅ View Details modal state set to true');
+    console.log('✅ View Details modal opened');
   };
 
   if (isLoading) {
@@ -321,15 +317,6 @@ export default function PrescriptionsPage() {
               <CardDescription>
                 Recently received prescriptions awaiting processing
               </CardDescription>
-              {/* Quick test */}
-              <div className="mb-4">
-                <button 
-                  className="px-4 py-2 bg-red-500 text-white rounded"
-                  onClick={() => alert('Click works!')}
-                >
-                  🧪 Quick Test
-                </button>
-              </div>
             </CardHeader>
             <CardContent>
               {(() => {
@@ -374,15 +361,8 @@ export default function PrescriptionsPage() {
                               <button
                                 className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                                 onClick={() => {
-                                  alert(`🔧 Process clicked: ${prescription.patientName} - ${prescription.medication}`);
-                                  console.log('🔧 Process button clicked, calling handler...');
-                                  try {
-                                    handleProcessPrescription(prescription);
-                                    console.log('✅ handleProcessPrescription called successfully');
-                                  } catch (error) {
-                                    console.error('❌ Error in handleProcessPrescription:', error);
-                                    alert('Error: ' + error);
-                                  }
+                                  console.log('🔧 Opening Process modal for:', prescription.patientName);
+                                  handleProcessPrescription(prescription);
                                 }}
                                 data-testid={`button-process-${prescription.id}`}
                               >
@@ -391,15 +371,8 @@ export default function PrescriptionsPage() {
                               <button
                                 className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
                                 onClick={() => {
-                                  alert(`👁️ View Details clicked: ${prescription.patientName} - ${prescription.medication}`);
-                                  console.log('👁️ View Details button clicked, calling handler...');
-                                  try {
-                                    handleViewDetails(prescription);
-                                    console.log('✅ handleViewDetails called successfully');
-                                  } catch (error) {
-                                    console.error('❌ Error in handleViewDetails:', error);
-                                    alert('Error: ' + error);
-                                  }
+                                  console.log('👁️ Opening View Details modal for:', prescription.patientName);
+                                  handleViewDetails(prescription);
                                 }}
                                 data-testid={`button-view-details-${prescription.id}`}
                               >
