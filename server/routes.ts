@@ -540,6 +540,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       console.log('🔍 PRESCRIPTION DEBUG - Final mapped data:', JSON.stringify(prescriptionData, null, 2));
+      console.log('🔍 PRESCRIPTION DEBUG - ProviderId value:', prescriptionData.providerId);
+      console.log('🔍 PRESCRIPTION DEBUG - ProviderId type:', typeof prescriptionData.providerId);
+      
+      // Validate required fields before sending to storage
+      if (!prescriptionData.providerId) {
+        console.error('❌ MISSING PROVIDER ID - userId from auth:', userId);
+        return res.status(400).json({ message: 'Provider ID is required' });
+      }
       
       const prescription = await storage.createPrescription(prescriptionData);
       console.log('✅ PRESCRIPTION DEBUG - Successfully created:', prescription.id);
