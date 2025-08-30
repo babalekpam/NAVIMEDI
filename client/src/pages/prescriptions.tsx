@@ -178,13 +178,17 @@ export default function PrescriptionsPage() {
   };
 
   const handleProcessPrescription = (prescription: Prescription) => {
+    console.log('🔧 Process button clicked!', prescription);
     setSelectedPrescription(prescription);
     setIsProcessingModalOpen(true);
+    console.log('✅ Processing modal should open now');
   };
 
   const handleViewDetails = (prescription: Prescription) => {
+    console.log('👁️ View Details button clicked!', prescription);
     setSelectedPrescription(prescription);
     setIsViewDetailsModalOpen(true);
+    console.log('✅ View Details modal should open now');
   };
 
   if (isLoading) {
