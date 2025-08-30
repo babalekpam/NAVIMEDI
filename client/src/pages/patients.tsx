@@ -11,7 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Search, Plus, MoreHorizontal, UserCircle, Calendar, Phone, Mail, MapPin, Heart, AlertTriangle, Edit, Trash2, Copy, FileText, Share } from "lucide-react";
 import { Patient } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
-import { useTenant } from "@/contexts/tenant-context-fixed";
+import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
 import { PatientForm } from "@/components/forms/patient-form";
 import { useLocation } from "wouter";

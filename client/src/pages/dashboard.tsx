@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Users, Pill, TestTube, DollarSign, AlertTriangle, CheckCircle, Clock, RefreshCw, Building2, Activity, TrendingUp, Database, Stethoscope, Heart, UserCheck, Package, Shield, ShieldCheck, FileText, UserPlus, Plus, User, Phone, Mail, MapPin, Smartphone, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useTenant } from "@/contexts/tenant-context-fixed";
+import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
 import { useLocation } from "wouter";
 import { usePermissions } from "@/hooks/usePermissions";

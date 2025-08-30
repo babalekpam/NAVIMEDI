@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Separator } from "@/components/ui/separator";
 import { Settings, Shield, Eye, Edit, Plus, Trash2, Save, RefreshCw, Users, Building2, Stethoscope, Heart, Microscope, Calculator, Phone, ClipboardList, FileText, Activity, Database, Package, DollarSign, Calendar, TestTube, Pill } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useTenant } from "@/contexts/tenant-context-fixed";
+import { useTenant } from "@/contexts/tenant-context";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 

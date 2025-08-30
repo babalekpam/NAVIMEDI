@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TestTube, FlaskConical, Clock, CheckCircle, AlertTriangle, Users, BarChart3, FileText, Settings, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
-import { useTenant } from "@/contexts/tenant-context-fixed";
+import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
 
 export default function LaboratoryDashboard() {

@@ -38,7 +38,7 @@ import {
   Layers
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useTenant } from "@/contexts/tenant-context-fixed";
+import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
 import { cn } from "@/lib/utils";
 

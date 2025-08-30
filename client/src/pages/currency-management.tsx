@@ -8,7 +8,7 @@ import { CurrencySelector } from "@/components/ui/currency-selector";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
-import { useTenant } from "@/contexts/tenant-context-fixed";
+import { useTenant } from "@/contexts/tenant-context";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { useTenantCurrencies, useAllCurrencies, useAfricanCurrencies, useConvertCurrency, formatCurrencyAmount } from "@/hooks/useCurrency";

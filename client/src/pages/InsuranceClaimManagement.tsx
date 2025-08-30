@@ -20,7 +20,7 @@ import {
   Building
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
-import { useTenant } from "@/contexts/tenant-context-fixed";
+import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";

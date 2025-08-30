@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Calendar, Clock, Plus, Search, Filter, MoreHorizontal, Eye, Edit, Phone, Mail, User as UserIcon, Activity, FileText, Trash2, Copy, Share, CheckCircle } from "lucide-react";
 import { Appointment, Patient, User, VitalSigns } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
-import { useTenant } from "@/contexts/tenant-context-fixed";
+import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
 import { AppointmentForm } from "@/components/forms/appointment-form";
 import { VitalSignsForm } from "@/components/forms/vital-signs-form";

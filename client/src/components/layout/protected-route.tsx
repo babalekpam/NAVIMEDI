@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { useAuth } from "@/contexts/auth-context";
-// import { useTenant } from "@/contexts/tenant-context-fixed";
+// import { useTenant } from "@/contexts/tenant-context";
 import { useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 
