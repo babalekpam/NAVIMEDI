@@ -200,10 +200,10 @@ export default function UserRoles() {
   });
 
   const { data: users, isLoading } = useQuery<User[]>({
-    queryKey: ["/api/users", tenant?.id],
+    queryKey: ["/api/users"],
     enabled: !!user && !!tenant,
     queryFn: async () => {
-      const response = await fetch(`/api/users/${tenant?.id}`, {
+      const response = await fetch('/api/users', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
@@ -307,7 +307,7 @@ export default function UserRoles() {
       }
     },
     onSuccess: (responseData, formData) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users", tenant?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       setIsCreateDialogOpen(false);
       form.reset();
       
