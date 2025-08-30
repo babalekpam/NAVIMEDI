@@ -485,7 +485,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🏥 Creating appointment - User:', req.user?.username, 'Tenant:', tenantId);
       console.log('🏥 Request body:', JSON.stringify(req.body, null, 2));
       
-      const appointmentData = { ...req.body, tenantId };
+      // Convert appointmentDate string to Date object for database
+      const appointmentData = { 
+        ...req.body, 
+        tenantId,
+        appointmentDate: new Date(req.body.appointmentDate)
+      };
       console.log('🏥 Final appointment data:', JSON.stringify(appointmentData, null, 2));
       
       const appointment = await storage.createAppointment(appointmentData);
