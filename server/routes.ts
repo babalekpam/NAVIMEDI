@@ -531,14 +531,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔍 User:', JSON.stringify(req.user, null, 2));
       console.log('🔍 Body:', JSON.stringify(req.body, null, 2));
       
-      const { tenantId, userId } = req.user as any;
+      const { tenantId, id: userId } = req.user as any;
+      
+      console.log('🔍 Extracted values:');
+      console.log('  - tenantId:', tenantId, '(type:', typeof tenantId, ')');
+      console.log('  - userId:', userId, '(type:', typeof userId, ')');
+      console.log('  - tenantId truthy:', !!tenantId);
+      console.log('  - userId truthy:', !!userId);
       
       if (!tenantId || !userId) {
         console.log('❌ Missing tenantId or userId');
         return res.status(400).json({ 
           message: 'Missing authentication data',
           tenantId: !!tenantId,
-          userId: !!userId
+          userId: !!userId,
+          debug: { tenantId, userId }
         });
       }
       
