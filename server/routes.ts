@@ -527,25 +527,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new patient check-in
   app.post('/api/patient-check-ins', async (req, res) => {
     try {
-      console.log('🔍 CHECK-IN DEBUG - Request received');
-      console.log('🔍 User:', JSON.stringify(req.user, null, 2));
-      console.log('🔍 Body:', JSON.stringify(req.body, null, 2));
-      
       const { tenantId, id: userId } = req.user as any;
       
-      console.log('🔍 Extracted values:');
-      console.log('  - tenantId:', tenantId, '(type:', typeof tenantId, ')');
-      console.log('  - userId:', userId, '(type:', typeof userId, ')');
-      console.log('  - tenantId truthy:', !!tenantId);
-      console.log('  - userId truthy:', !!userId);
-      
       if (!tenantId || !userId) {
-        console.log('❌ Missing tenantId or userId');
         return res.status(400).json({ 
-          message: 'Missing authentication data',
-          tenantId: !!tenantId,
-          userId: !!userId,
-          debug: { tenantId, userId }
+          message: 'Missing authentication data'
         });
       }
       
@@ -557,15 +543,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'waiting'
       };
       
-      console.log('🔍 Final check-in data:', JSON.stringify(checkInData, null, 2));
-      
       const checkIn = await storage.createPatientCheckIn(checkInData);
-      console.log('✅ Check-in created:', checkIn.id);
-      
       res.status(201).json(checkIn);
     } catch (error) {
-      console.error('❌ Check-in error:', error);
-      console.error('❌ Error stack:', error.stack);
+      console.error('Error creating patient check-in:', error);
       res.status(500).json({ 
         message: 'Failed to check in patient',
         error: error.message

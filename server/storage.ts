@@ -3337,8 +3337,8 @@ export class DatabaseStorage implements IStorage {
         },
         vitalSigns: {
           id: vitalSigns.id,
-          systolicBp: vitalSigns.bloodPressureSystolic,
-          diastolicBp: vitalSigns.bloodPressureDiastolic,
+          systolicBp: vitalSigns.systolicBp,
+          diastolicBp: vitalSigns.diastolicBp,
           heartRate: vitalSigns.heartRate,
           temperature: vitalSigns.temperature,
           temperatureUnit: vitalSigns.temperatureUnit,
