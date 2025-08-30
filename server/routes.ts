@@ -657,33 +657,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       .where(and(eq(tenants.type, 'pharmacy'), eq(tenants.isActive, true)));
       
       // Get detailed pharmacy information
-      const pharmacies = await Promise.all(
+      const pharmacyList = await Promise.all(
         pharmacyTenants.map(async (tenant) => {
-          const [pharmacy] = await db.select().from(pharmacies)
+          const [pharmacyDetails] = await db.select().from(pharmacies)
             .where(and(eq(pharmacies.tenantId, tenant.id), eq(pharmacies.isActive, true)));
           
-          if (pharmacy) {
+          if (pharmacyDetails) {
             return {
-              id: pharmacy.id,
+              id: pharmacyDetails.id,
               tenantId: tenant.id,
-              name: tenant.name || pharmacy.name,
-              phone: pharmacy.phone || tenant.phone,
-              email: pharmacy.email || tenant.email,
-              address: pharmacy.address || tenant.address,
-              licenseNumber: pharmacy.licenseNumber,
-              npiNumber: pharmacy.npiNumber,
-              acceptsInsurance: pharmacy.acceptsInsurance,
-              deliveryService: pharmacy.deliveryService,
-              operatingHours: pharmacy.operatingHours,
-              specializations: pharmacy.specializations,
-              websiteUrl: pharmacy.websiteUrl
+              name: tenant.name || pharmacyDetails.name,
+              phone: pharmacyDetails.phone || tenant.phone,
+              email: pharmacyDetails.email || tenant.email,
+              address: pharmacyDetails.address || tenant.address,
+              licenseNumber: pharmacyDetails.licenseNumber,
+              npiNumber: pharmacyDetails.npiNumber,
+              acceptsInsurance: pharmacyDetails.acceptsInsurance,
+              deliveryService: pharmacyDetails.deliveryService,
+              operatingHours: pharmacyDetails.operatingHours,
+              specializations: pharmacyDetails.specializations,
+              websiteUrl: pharmacyDetails.websiteUrl
             };
           }
           return null;
         })
       );
       
-      const validPharmacies = pharmacies.filter(p => p !== null);
+      const validPharmacies = pharmacyList.filter(p => p !== null);
       res.json(validPharmacies);
     } catch (error) {
       console.error('Error fetching pharmacies:', error);
