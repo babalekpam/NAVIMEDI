@@ -509,7 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (tenant && tenant.type === 'pharmacy') {
         // For pharmacies: get prescriptions routed TO this pharmacy
-        const prescriptions = await storage.getPrescriptionsByPharmacyTenant(tenantId);
+        const prescriptions = await storage.getPrescriptionsByPharmacy(tenantId);
         console.log(`📋 PHARMACY PRESCRIPTIONS - Found ${prescriptions.length} prescriptions for pharmacy ${tenant.name}`);
         res.json(prescriptions);
       } else {
