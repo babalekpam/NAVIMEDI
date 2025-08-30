@@ -515,14 +515,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { tenantId, id: userId } = req.user as any;
       
-      console.log('🔍 PRESCRIPTION DEBUG - Received body:', JSON.stringify(req.body, null, 2));
-      console.log('🔍 PRESCRIPTION DEBUG - User data:', { tenantId, userId });
-      
       // Create properly mapped prescription data for database schema
       const prescriptionData = {
         tenantId: tenantId,
         patientId: req.body.patientId,
-        providerId: userId, // This is the key field that was missing!
+        providerId: userId,
         pharmacyTenantId: req.body.pharmacyTenantId || null,
         medicationName: req.body.medicationName,
         dosage: req.body.dosage,
@@ -531,26 +528,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         refills: req.body.refills || 0,
         instructions: req.body.instructions || null,
         status: req.body.status || 'prescribed',
-        // Set current timestamp for prescribed date
         prescribedDate: new Date(),
-        // Only set expiry date if provided, otherwise leave null
         expiryDate: req.body.expiryDate ? new Date(req.body.expiryDate) : null,
-        // Set current timestamp for last status update
         lastStatusUpdate: new Date()
       };
       
-      console.log('🔍 PRESCRIPTION DEBUG - Final mapped data:', JSON.stringify(prescriptionData, null, 2));
-      console.log('🔍 PRESCRIPTION DEBUG - ProviderId value:', prescriptionData.providerId);
-      console.log('🔍 PRESCRIPTION DEBUG - ProviderId type:', typeof prescriptionData.providerId);
-      
-      // Validate required fields before sending to storage
-      if (!prescriptionData.providerId) {
-        console.error('❌ MISSING PROVIDER ID - userId from auth:', userId);
-        return res.status(400).json({ message: 'Provider ID is required' });
-      }
-      
       const prescription = await storage.createPrescription(prescriptionData);
-      console.log('✅ PRESCRIPTION DEBUG - Successfully created:', prescription.id);
       res.status(201).json(prescription);
     } catch (error) {
       console.error('❌ Error creating prescription:', error);
@@ -802,7 +785,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(tenants)
         .where(and(eq(tenants.type, 'pharmacy'), eq(tenants.isActive, true)));
       
-      console.log(`📋 PHARMACY ROUTING - Found ${pharmacyTenants.length} active pharmacies`);
       
       // Convert tenant data to pharmacy format for prescription routing
       const pharmacyList = pharmacyTenants.map((tenant) => ({
