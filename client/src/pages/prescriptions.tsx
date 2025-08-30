@@ -361,8 +361,10 @@ export default function PrescriptionsPage() {
                               <button
                                 className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                                 onClick={() => {
-                                  console.log('🔧 Opening Process modal for:', prescription.patientName);
-                                  handleProcessPrescription(prescription);
+                                  console.log('🔧 Process clicked for:', prescription.patientName);
+                                  setSelectedPrescription(prescription);
+                                  setIsProcessingModalOpen(true);
+                                  console.log('🔧 Modal state set to:', true);
                                 }}
                                 data-testid={`button-process-${prescription.id}`}
                               >
@@ -371,8 +373,10 @@ export default function PrescriptionsPage() {
                               <button
                                 className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
                                 onClick={() => {
-                                  console.log('👁️ Opening View Details modal for:', prescription.patientName);
-                                  handleViewDetails(prescription);
+                                  console.log('👁️ View Details clicked for:', prescription.patientName);
+                                  setSelectedPrescription(prescription);
+                                  setIsViewDetailsModalOpen(true);
+                                  console.log('👁️ Modal state set to:', true);
                                 }}
                                 data-testid={`button-view-details-${prescription.id}`}
                               >
