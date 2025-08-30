@@ -355,6 +355,13 @@ export default function ReceptionistDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/appointments'] });
       queryClient.invalidateQueries({ queryKey: ['/api/appointments/date'] });
+      // Invalidate today's appointments specifically
+      const today = new Date().toISOString().split('T')[0];
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments/date', today] });
+      // Invalidate selected appointment date if different from today
+      if (selectedAppointmentDate && selectedAppointmentDate !== today) {
+        queryClient.invalidateQueries({ queryKey: ['/api/appointments/date', selectedAppointmentDate] });
+      }
       setIsAppointmentDialogOpen(false);
       toast({
         title: "Appointment Scheduled Successfully!",
