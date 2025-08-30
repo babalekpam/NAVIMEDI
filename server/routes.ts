@@ -517,6 +517,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Appointment status update endpoint
+  app.patch('/api/appointments/:id', async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const { id } = req.params;
+      const { status, notes } = req.body;
+
+      console.log('🏥 Updating appointment status - ID:', id, 'Status:', status, 'Tenant:', tenantId);
+
+      if (!status) {
+        return res.status(400).json({ message: 'Status is required' });
+      }
+
+      // Update appointment status with tenant security check
+      const updatedAppointment = await storage.updateAppointment(id, { status, notes }, tenantId);
+      
+      if (!updatedAppointment) {
+        return res.status(404).json({ message: 'Appointment not found or access denied' });
+      }
+
+      console.log('🏥 Appointment status updated successfully:', id, 'New status:', status);
+      res.json(updatedAppointment);
+    } catch (error) {
+      console.error('❌ Error updating appointment status:', error);
+      res.status(500).json({ 
+        message: 'Failed to update appointment status',
+        error: error.message
+      });
+    }
+  });
+
   // Lab order management routes
   app.get('/api/lab-orders', async (req, res) => {
     try {
