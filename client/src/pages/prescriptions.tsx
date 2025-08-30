@@ -307,41 +307,28 @@ export default function PrescriptionsPage() {
         </TabsList>
 
         <TabsContent value="new" className="space-y-6">
-          {/* TEST BUTTONS OUTSIDE TABLE */}
-          <div className="mb-4 p-4 bg-yellow-100 border border-yellow-300 rounded">
-            <h3 className="font-bold mb-2">🧪 TEST BUTTONS (Outside Table)</h3>
+          {/* SUPER SIMPLE DEBUG */}
+          <div className="mb-4 p-4 bg-red-100 border border-red-300 rounded">
+            <h3 className="font-bold mb-2">🔥 SUPER SIMPLE TEST</h3>
             <div className="flex gap-2">
               <button
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                onClick={() => {
-                  console.log('🧪 TEST Process button clicked');
-                  const newPrescriptions = prescriptions.filter((p) => 
-                    ['prescribed', 'new', 'sent_to_pharmacy', 'received'].includes(p.status)
-                  );
-                  if (newPrescriptions[0]) {
-                    setSelectedPrescription(newPrescriptions[0]);
-                    setIsProcessingModalOpen(true);
-                  }
-                }}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                onClick={() => alert('SIMPLE CLICK WORKS!')}
               >
-                🧪 TEST Process
+                🔥 SIMPLE ALERT TEST
               </button>
               <button
-                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                 onClick={() => {
-                  console.log('🧪 TEST View Details button clicked');
-                  const newPrescriptions = prescriptions.filter((p) => 
-                    ['prescribed', 'new', 'sent_to_pharmacy', 'received'].includes(p.status)
-                  );
-                  if (newPrescriptions[0]) {
-                    setSelectedPrescription(newPrescriptions[0]);
-                    setIsViewDetailsModalOpen(true);
-                  }
+                  alert('Trying to open modal...');
+                  setIsProcessingModalOpen(true);
+                  alert('Modal state set!');
                 }}
               >
-                🧪 TEST View Details
+                🔥 DIRECT MODAL TEST
               </button>
             </div>
+            <p className="text-xs mt-2">Modal states: Processing={isProcessingModalOpen.toString()}, Details={isViewDetailsModalOpen.toString()}</p>
           </div>
 
           {/* New Prescriptions Table */}
