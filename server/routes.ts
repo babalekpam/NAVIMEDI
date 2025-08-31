@@ -935,36 +935,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { tenantId, id: userId } = req.user as any;
       console.log('💊 User context:', { tenantId, userId });
       
-      // Create insurance claim from medication claim data
+      // Create insurance claim from medication claim data  
       const claimData = {
         tenantId: tenantId,
         patientId: req.body.patientId,
         providerId: userId,
         claimNumber: req.body.claimNumber,
-        claimType: req.body.claimType || 'medication',
         status: req.body.status || 'submitted',
         
-        // Medication-specific fields
-        prescriptionId: req.body.prescriptionId,
-        medicationName: req.body.medicationName,
-        medicationCode: req.body.medicationCode,
-        dosage: req.body.dosage,
-        quantity: req.body.quantity,
-        daysSupply: req.body.daysSupply,
-        medicationCost: req.body.medicationCost,
-        insuranceCoverageRate: req.body.insuranceCoverageRate,
-        patientShare: req.body.patientShare,
-        claimAmount: req.body.claimAmount,
-        diagnosticCode: req.body.diagnosticCode,
-        pharmacyNpi: req.body.pharmacyNpi,
-        medicationNote: req.body.medicationNote,
+        // Required arrays for insurance claims table
+        secondaryDiagnosisCodes: [],
+        procedureCodes: [],
+        diagnosisCodes: [],
+        attachments: [],
         
-        // Additional fields for insurance claims table
+        // Medical information
         primaryDiagnosisCode: req.body.diagnosticCode,
         primaryDiagnosisDescription: req.body.medicationNote || 'Medication prescription claim',
-        totalAmount: req.body.claimAmount?.toString(),
-        totalPatientCopay: req.body.patientShare?.toString(),
-        totalInsuranceAmount: (req.body.claimAmount - req.body.patientShare)?.toString(),
+        clinicalFindings: `Medication prescribed: ${req.body.medicationName}`,
+        treatmentProvided: `${req.body.medicationName} ${req.body.dosage}`,
+        medicalNecessity: 'Prescription medication as prescribed by physician',
+        
+        // Financial information
+        totalAmount: req.body.claimAmount?.toString() || '0',
+        totalPatientCopay: req.body.patientShare?.toString() || '0', 
+        totalInsuranceAmount: ((req.body.claimAmount || 0) - (req.body.patientShare || 0))?.toString() || '0',
         submittedDate: req.body.submittedAt || new Date().toISOString(),
       };
 
