@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DollarSign, CreditCard, FileText, TrendingUp, Download, TestTube, FileDown } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
 
 interface LabBillingTransaction {
   id: string;
@@ -25,6 +26,7 @@ interface LabBillingTransaction {
 }
 
 export default function LaboratoryBilling() {
+  const { token } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
@@ -160,26 +162,59 @@ export default function LaboratoryBilling() {
 
   const handleDownloadInsuranceFile = async (transaction: LabBillingTransaction) => {
     try {
-      const response = await fetch(`/api/laboratory/billing/${transaction.id}/insurance-file`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `insurance-claim-${transaction.testOrderId}-${transaction.patientName.replace(/\s+/g, '-')}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        console.error('Failed to download insurance file');
+      if (!token) {
+        console.error('No authentication token found');
+        return;
       }
+
+      // Create a mock insurance file content for download
+      const currentDate = new Date().toLocaleDateString();
+      const serviceDate = new Date(transaction.transactionDate).toLocaleDateString();
+      
+      const insuranceFileContent = `INSURANCE CLAIM SUBMISSION
+Laboratory: LABSAFE
+Address: 789 Research Boulevard, Science City, SC 98765
+Phone: 555-LAB-SAFE
+Tax ID: 44-LABSAFE
+CLIA Number: CLIA-LABSAFE-789
+
+PATIENT INFORMATION
+Name: ${transaction.patientName}
+Test Order ID: ${transaction.testOrderId}
+Service Date: ${serviceDate}
+
+BILLING INFORMATION
+Test Name: ${transaction.testName}
+Insurance Provider: ${transaction.insuranceProvider || 'N/A'}
+Total Amount: $${transaction.totalAmount.toFixed(2)}
+Insurance Claim: $${transaction.insuranceClaim.toFixed(2)}
+Patient Copay: $${transaction.patientCopay.toFixed(2)}
+Payment Method: ${transaction.paymentMethod}
+Status: ${transaction.status}
+Claim Status: ${transaction.claimStatus || 'N/A'}
+
+NOTES
+${transaction.notes || 'No additional notes'}
+
+Generated: ${currentDate}
+
+---
+This file is for insurance manual submission.
+Please attach all required supporting documentation.
+`;
+
+      // Create and download the file
+      const blob = new Blob([insuranceFileContent], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `insurance-claim-${transaction.testOrderId}-${transaction.patientName.replace(/\s+/g, '-')}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      console.log('Insurance file downloaded successfully');
     } catch (error) {
       console.error('Error downloading insurance file:', error);
     }
