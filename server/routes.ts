@@ -930,8 +930,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post('/api/insurance-claims', async (req, res) => {
+    console.log('💊 POST /api/insurance-claims - Request received:', req.body);
     try {
       const { tenantId, id: userId } = req.user as any;
+      console.log('💊 User context:', { tenantId, userId });
       
       // Create insurance claim from medication claim data
       const claimData = {
