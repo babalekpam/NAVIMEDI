@@ -226,7 +226,7 @@ export default function Patients() {
                       >
                         View EHR
                       </Button>
-                      {(user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director" || user.role === "super_admin") && (
+                      {(user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director" || user.role === "super_admin") && tenant?.type !== "pharmacy" && (
                         <Button 
                           variant="ghost" 
                           size="sm" 
@@ -247,7 +247,7 @@ export default function Patients() {
                             <FileText className="h-4 w-4 mr-2" />
                             View EHR
                           </DropdownMenuItem>
-                          {(user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director" || user.role === "super_admin") && (
+                          {(user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director" || user.role === "super_admin") && tenant?.type !== "pharmacy" && (
                             <DropdownMenuItem onClick={() => handleScheduleAppointment(patient)}>
                               <Calendar className="h-4 w-4 mr-2" />
                               Schedule Appointment
@@ -476,13 +476,15 @@ export default function Patients() {
 
               {/* Action Buttons */}
               <div className="flex justify-end space-x-3 pt-4 border-t">
-                <Button 
-                  variant="outline"
-                  onClick={() => handleScheduleAppointment(selectedPatient)}
-                >
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Schedule Appointment
-                </Button>
+                {(user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director" || user.role === "super_admin") && tenant?.type !== "pharmacy" && (
+                  <Button 
+                    variant="outline"
+                    onClick={() => handleScheduleAppointment(selectedPatient)}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Schedule Appointment
+                  </Button>
+                )}
                 <Button onClick={() => setIsEHROpen(false)}>
                   Close
                 </Button>

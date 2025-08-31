@@ -541,6 +541,11 @@ export const Sidebar = () => {
       const labClinicalIds = ["dashboard", "patients", "lab-records", "lab-orders", "lab-results"];
       return labClinicalIds.includes(item.id);
     }
+    // For pharmacy tenants, exclude appointment-related items - pharmacies don't schedule appointments
+    if (currentTenant?.type === "pharmacy") {
+      const excludedForPharmacy = ["book-appointment", "appointments"];
+      return clinicalItemIds.includes(item.id) && !excludedForPharmacy.includes(item.id);
+    }
     return clinicalItemIds.includes(item.id) && !["pharmacy-dashboard", "lab-records"].includes(item.id);
   });
   const operationItems = filteredItems.filter(item => {
