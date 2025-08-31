@@ -1735,6 +1735,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update laboratory bill endpoint
+  app.patch('/api/laboratory/billing/:billId', authenticateToken, async (req, res) => {
+    try {
+      const { billId } = req.params;
+      const { tenantId } = req.user as any;
+      const updates = req.body;
+      
+      console.log(`🧪 PATCH /api/laboratory/billing/${billId} - Updating bill for tenant:`, tenantId);
+      console.log('🧪 Update data:', updates);
+      
+      const updatedBill = await storage.updateLabBill(billId, updates, tenantId);
+      
+      if (!updatedBill) {
+        return res.status(404).json({ message: 'Laboratory bill not found' });
+      }
+      
+      console.log(`🧪 LAB BILL UPDATED - Bill ${billId} updated successfully`);
+      
+      res.json({
+        success: true,
+        message: 'Laboratory bill updated successfully',
+        bill: updatedBill
+      });
+    } catch (error) {
+      console.error('Error updating laboratory bill:', error);
+      res.status(500).json({ message: 'Failed to update laboratory bill' });
+    }
+  });
+
+  // Get laboratory bill receipt endpoint
+  app.get('/api/laboratory/billing/:billId/receipt', authenticateToken, async (req, res) => {
+    try {
+      const { billId } = req.params;
+      const { tenantId } = req.user as any;
+      
+      console.log(`🧪 GET /api/laboratory/billing/${billId}/receipt - Generating receipt for tenant:`, tenantId);
+      
+      const bill = await storage.getLabBill(billId, tenantId);
+      
+      if (!bill) {
+        return res.status(404).json({ message: 'Laboratory bill not found' });
+      }
+      
+      // Generate receipt data
+      const receipt = {
+        receiptNumber: `LAB-${bill.id.substring(0, 8).toUpperCase()}`,
+        tenantName: 'LABSAFE Laboratory',
+        patientName: `${bill.patientFirstName} ${bill.patientLastName}`,
+        patientMrn: bill.patientMrn,
+        testName: bill.testName,
+        description: bill.description,
+        serviceType: bill.serviceType || 'Laboratory Test',
+        amount: bill.amount,
+        status: bill.status,
+        notes: bill.notes,
+        createdAt: bill.createdAt
+      };
+      
+      console.log(`🧪 RECEIPT GENERATED - Receipt ${receipt.receiptNumber} for bill ${billId}`);
+      
+      res.json(receipt);
+    } catch (error) {
+      console.error('Error generating laboratory bill receipt:', error);
+      res.status(500).json({ message: 'Failed to generate laboratory bill receipt' });
+    }
+  });
+
   // SUPER ADMIN ROUTES
   app.use('/api/admin', requireRole('super_admin'));
 
