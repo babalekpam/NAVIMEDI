@@ -1977,8 +1977,34 @@ export class DatabaseStorage implements IStorage {
     return claim || undefined;
   }
 
-  async getInsuranceClaimsByTenant(tenantId: string): Promise<InsuranceClaim[]> {
-    return await db.select().from(insuranceClaims).where(eq(insuranceClaims.tenantId, tenantId))
+  async getInsuranceClaimsByTenant(tenantId: string): Promise<any[]> {
+    return await db
+      .select({
+        // Claim fields
+        id: insuranceClaims.id,
+        tenantId: insuranceClaims.tenantId,
+        patientId: insuranceClaims.patientId,
+        claimNumber: insuranceClaims.claimNumber,
+        medicationName: insuranceClaims.medicationName,
+        dosage: insuranceClaims.dosage,
+        quantity: insuranceClaims.quantity,
+        daysSupply: insuranceClaims.daysSupply,
+        totalAmount: insuranceClaims.totalAmount,
+        totalPatientCopay: insuranceClaims.totalPatientCopay,
+        totalInsuranceAmount: insuranceClaims.totalInsuranceAmount,
+        approvedAmount: insuranceClaims.approvedAmount,
+        status: insuranceClaims.status,
+        submittedDate: insuranceClaims.submittedDate,
+        processedDate: insuranceClaims.processedDate,
+        createdAt: insuranceClaims.createdAt,
+        // Patient fields
+        patientFirstName: patients.firstName,
+        patientLastName: patients.lastName,
+        patientMrn: patients.mrn,
+      })
+      .from(insuranceClaims)
+      .leftJoin(patients, eq(insuranceClaims.patientId, patients.id))
+      .where(eq(insuranceClaims.tenantId, tenantId))
       .orderBy(desc(insuranceClaims.createdAt));
   }
 
