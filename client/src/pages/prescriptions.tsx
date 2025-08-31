@@ -219,7 +219,16 @@ export default function PrescriptionsPage() {
         </div>
         {/* Only doctors/physicians from hospitals can create prescriptions - pharmacies receive prescriptions */}
         {(user?.role === 'doctor' || user?.role === 'physician' || user?.role === 'nurse' || user?.role === 'tenant_admin' || user?.role === 'director' || (user?.role === 'super_admin' && tenant?.type !== 'pharmacy')) && tenant?.type !== 'pharmacy' && (
-          <Button onClick={() => setIsCreateModalOpen(true)} data-testid="button-create-prescription">
+          <Button 
+            onClick={() => {
+              console.log('New Prescription button clicked');
+              console.log('Current modal state:', isCreateModalOpen);
+              setIsCreateModalOpen(true);
+              console.log('Modal state after click:', true);
+            }} 
+            data-testid="button-create-prescription"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
             <Plus className="mr-2 h-4 w-4" />
             New Prescription
           </Button>
@@ -792,7 +801,10 @@ Click outside to close`);
       </Dialog>
 
       {/* Create Prescription Modal */}
-      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+      <Dialog open={isCreateModalOpen} onOpenChange={(open) => {
+        console.log('Modal onOpenChange called:', open);
+        setIsCreateModalOpen(open);
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Prescription</DialogTitle>
