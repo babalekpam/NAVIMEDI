@@ -1735,6 +1735,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate insurance file for manual submission
+  app.get('/api/laboratory/billing/:id/insurance-file', authenticateToken, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const { id } = req.params;
+      
+      console.log('🧪 Generating insurance file for bill:', id, 'tenant:', tenantId);
+      
+      // Get the specific lab bill
+      const bills = await storage.getLabBillsByTenant(tenantId);
+      const bill = bills.find(b => b.id === id);
+      
+      if (!bill) {
+        return res.status(404).json({ message: 'Lab bill not found' });
+      }
+
+      // Get patient information
+      const patients = await storage.getAllPatients();
+      const patient = patients.find(p => p.id === bill.patientId);
+      
+      if (!patient) {
+        return res.status(404).json({ message: 'Patient not found' });
+      }
+
+      // Get tenant information
+      const tenant = await storage.getTenantById(tenantId);
+      
+      if (!tenant) {
+        return res.status(404).json({ message: 'Laboratory not found' });
+      }
+
+      // Generate insurance claim text file content
+      const currentDate = new Date().toLocaleDateString();
+      const serviceDate = new Date(bill.createdAt || Date.now()).toLocaleDateString();
+      
+      const insuranceFileContent = `INSURANCE CLAIM SUBMISSION
+Laboratory: ${tenant.name}
+Address: ${tenant.settings?.address || 'N/A'}
+Phone: ${tenant.settings?.phone || 'N/A'}
+Tax ID: ${tenant.settings?.taxId || 'N/A'}
+CLIA Number: ${tenant.settings?.cliaNumber || 'N/A'}
+
+PATIENT INFORMATION
+Name: ${patient.firstName} ${patient.lastName}
+MRN: ${patient.mrn}
+Date of Birth: ${patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : 'N/A'}
+Phone: ${patient.phone || 'N/A'}
+Address: ${patient.address ? (typeof patient.address === 'string' ? patient.address : JSON.stringify(patient.address)) : 'N/A'}
+
+BILLING INFORMATION
+Bill Number: ${bill.billNumber}
+Service Date: ${serviceDate}
+Test Name: ${bill.testName || 'Lab Test'}
+Lab Codes: ${bill.labCodes || 'N/A'}
+Diagnosis Codes: ${bill.diagnosisCodes || 'N/A'}
+Description: ${bill.description}
+
+FINANCIAL DETAILS
+Total Amount: $${bill.amount}
+Insurance Coverage Rate: ${bill.insuranceCoverageRate || '0'}%
+Insurance Amount: $${bill.insuranceAmount || '0.00'}
+Patient Amount: $${bill.patientAmount || bill.amount}
+Claim Number: ${bill.claimNumber || 'PENDING'}
+
+NOTES
+${bill.notes || 'No additional notes'}
+
+Generated: ${currentDate}
+Status: ${bill.status}
+
+---
+This file is for insurance manual submission.
+Please attach all required supporting documentation.
+`;
+
+      // Set headers for file download
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Disposition', `attachment; filename="insurance-claim-${bill.billNumber}-${patient.firstName}-${patient.lastName}.txt"`);
+      
+      res.send(insuranceFileContent);
+      
+    } catch (error) {
+      console.error('Error generating insurance file:', error);
+      res.status(500).json({ message: 'Failed to generate insurance file' });
+    }
+  });
+
   // Update laboratory bill endpoint
   app.patch('/api/laboratory/billing/:billId', authenticateToken, async (req, res) => {
     try {

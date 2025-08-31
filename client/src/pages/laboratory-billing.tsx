@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, CreditCard, FileText, TrendingUp, Download, TestTube } from "lucide-react";
+import { DollarSign, CreditCard, FileText, TrendingUp, Download, TestTube, FileDown } from "lucide-react";
 
 interface LabBillingTransaction {
   id: string;
@@ -158,11 +158,38 @@ export default function LaboratoryBilling() {
     return methods[method as keyof typeof methods] || method;
   };
 
+  const handleDownloadInsuranceFile = async (transaction: LabBillingTransaction) => {
+    try {
+      const response = await fetch(`/api/laboratory/billing/${transaction.id}/insurance-file`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `insurance-claim-${transaction.testOrderId}-${transaction.patientName.replace(/\s+/g, '-')}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        console.error('Failed to download insurance file');
+      }
+    } catch (error) {
+      console.error('Error downloading insurance file:', error);
+    }
+  };
+
   // Filter data
   const filteredData = billingData.filter(transaction => {
-    const matchesSearch = transaction.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         transaction.testName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         transaction.testOrderId.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (transaction.patientName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (transaction.testName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (transaction.testOrderId || '').toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || transaction.status === statusFilter;
     const matchesPaymentMethod = paymentMethodFilter === "all" || transaction.paymentMethod === paymentMethodFilter;
@@ -342,9 +369,21 @@ export default function LaboratoryBilling() {
                       {getStatusBadge(transaction.status)}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" data-testid="view-receipt">
-                        <FileText className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" data-testid="view-receipt" title="View Receipt">
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleDownloadInsuranceFile(transaction)}
+                          data-testid="download-insurance-file"
+                          title="Download Insurance File"
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          <FileDown className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
