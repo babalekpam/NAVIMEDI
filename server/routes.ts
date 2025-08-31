@@ -425,7 +425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { tenantId } = req.user as any;
       
       // Check if this is a pharmacy tenant by looking up the tenant info
-      const tenant = await storage.getTenantById(tenantId);
+      const tenant = await storage.getTenant(tenantId);
       
       // For pharmacies, return patients from prescriptions they've received
       if (tenant && tenant.type === 'pharmacy') {
@@ -867,7 +867,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { tenantId } = req.user as any;
       
       // Check if this is a pharmacy tenant by looking up the tenant info
-      const tenant = await storage.getTenantById(tenantId);
+      const tenant = await storage.getTenant(tenantId);
       
       // For pharmacies, return patients from prescriptions they've received
       if (tenant && tenant.type === 'pharmacy') {
