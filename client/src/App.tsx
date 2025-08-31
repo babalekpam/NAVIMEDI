@@ -101,6 +101,7 @@ import PatientAccessManagement from "@/pages/patient-access-management";
 import PrescriptionArchives from "@/pages/prescription-archives";
 import LaboratoryDashboard from "@/pages/laboratory-dashboard";
 import PharmacyDashboard from "@/pages/pharmacy-dashboard";
+import PharmacyDashboardEnhanced from "@/pages/pharmacy-dashboard-enhanced";
 import PharmacyInventory from "@/pages/pharmacy-inventory";
 import PharmacyCustomers from "@/pages/pharmacy-customers";
 import PharmacyBilling from "@/pages/pharmacy-billing";
@@ -872,14 +873,14 @@ function Router() {
           <Route path="/patient-portal-public" component={PatientPortalPublic} />
           <Route path="/patient-login" component={PatientLogin} />
           
-          {/* Pharmacy Dashboard - Public Access for Testing */}
+          {/* Enhanced Pharmacy Dashboard - Your Original Work */}
           <Route path="/pharmacy-dashboard">
             <div className="flex flex-col h-screen bg-gray-50">
               <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <PharmacyDashboard />
+                <main className="flex-1 overflow-y-auto">
+                  <PharmacyDashboardEnhanced />
                 </main>
               </div>
             </div>
