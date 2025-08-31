@@ -423,8 +423,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/patients', async (req, res) => {
     try {
       const { tenantId } = req.user as any;
-      const patients = await storage.getPatientsByTenant(tenantId);
-      res.json(patients);
+      
+      // Check if this is a pharmacy tenant by looking up the tenant info
+      const tenant = await storage.getTenantById(tenantId);
+      
+      // For pharmacies, return patients from prescriptions they've received
+      if (tenant && tenant.type === 'pharmacy') {
+        const patients = await storage.getPatientsWithPrescriptionsForPharmacy(tenantId);
+        console.log(`🏥 PHARMACY PATIENTS - Found ${patients.length} patients with prescriptions for pharmacy ${tenant.name}`);
+        res.json(patients);
+      } else {
+        // For other tenant types, return their own patients
+        const patients = await storage.getPatientsByTenant(tenantId);
+        res.json(patients);
+      }
     } catch (error) {
       console.error('Error fetching patients:', error);
       res.status(500).json({ message: 'Failed to fetch patients' });
