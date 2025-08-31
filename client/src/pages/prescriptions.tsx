@@ -812,15 +812,86 @@ Click outside to close`);
                 Prescription Refills
               </CardTitle>
               <CardDescription>
-                Manage prescription refill requests from patients
+                Prescriptions eligible for refills (refills remaining &gt; 0)
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <RefreshCw className="mx-auto h-8 w-8 mb-2" />
-                <p>No refill requests at this time</p>
-                <p className="text-sm">Refill requests will appear here when patients request them</p>
-              </div>
+              {(() => {
+                const refillablePrescriptions = prescriptions.filter((p) => 
+                  p.refills > 0 && ['dispensed', 'sent_to_pharmacy', 'received', 'processing', 'ready'].includes(p.status)
+                );
+                
+                return refillablePrescriptions.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Patient</TableHead>
+                        <TableHead>Medication</TableHead>
+                        <TableHead>Dosage</TableHead>
+                        <TableHead>Refills Remaining</TableHead>
+                        <TableHead>Last Filled</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Provider</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {refillablePrescriptions.map((prescription) => (
+                        <TableRow key={prescription.id}>
+                          <TableCell className="font-medium">
+                            {prescription.patientName}
+                          </TableCell>
+                          <TableCell>{prescription.medication}</TableCell>
+                          <TableCell>{prescription.dosage}</TableCell>
+                          <TableCell>
+                            <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                              {prescription.refills} remaining
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(prescription.prescribedDate).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getStatusColor(prescription.status)}>
+                              {prescription.status.replace('_', ' ').toUpperCase()}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{prescription.providerName || 'N/A'}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedPrescription(prescription);
+                                  setIsProcessingModalOpen(true);
+                                }}
+                              >
+                                Process Refill
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedPrescription(prescription);
+                                  setIsViewDetailsModalOpen(true);
+                                }}
+                              >
+                                View Details
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <RefreshCw className="mx-auto h-8 w-8 mb-2" />
+                    <p>No prescriptions eligible for refills</p>
+                    <p className="text-sm">Prescriptions with remaining refills will appear here</p>
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
