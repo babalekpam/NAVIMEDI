@@ -365,7 +365,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Apply authentication middleware to all /api routes except public ones
   app.use('/api', (req, res, next) => {
-    const publicRoutes = ['/api/auth/login', '/api/register-organization', '/api/health', '/api/healthz', '/api/status', '/api/ping', '/api/platform/stats'];
+    const publicRoutes = ['/api/auth/login', '/api/register-organization', '/api/health', '/api/healthz', '/api/status', '/api/ping', '/api/platform/stats', '/api/test-post', '/api/insurance-claims-test'];
+    
+    // Debug logging for insurance claims requests
+    if (req.path.includes('/api/insurance-claims')) {
+      console.log(`🔐 AUTH CHECK - ${req.method} ${req.path}`);
+      console.log('🔐 Headers:', req.headers.authorization ? 'Token present' : 'No token');
+      console.log('🔐 User agent:', req.headers['user-agent']);
+    }
+    
     if (publicRoutes.some(route => req.path.startsWith(route))) {
       return next();
     }
@@ -935,6 +943,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ success: true, message: 'POST request working', data: req.body });
   });
 
+  // Simple insurance claims test without database
+  app.post('/api/insurance-claims-test', (req, res) => {
+    console.log('💊 INSURANCE CLAIMS TEST - Request received:', req.body);
+    res.json({ 
+      success: true, 
+      message: 'Insurance claims test endpoint working',
+      receivedData: req.body 
+    });
+  });
+
   app.post('/api/insurance-claims', async (req, res) => {
     console.log('💊 POST /api/insurance-claims - Request received:', req.body);
     try {
@@ -947,7 +965,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         patientId: req.body.patientId,
         providerId: userId,
         claimNumber: req.body.claimNumber,
-        status: 'submitted', // Saved as submitted, ready for manual processing
+        status: 'submitted' as const, // Saved as submitted, ready for manual processing
         
         // Required arrays for insurance claims table
         secondaryDiagnosisCodes: [],
