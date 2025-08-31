@@ -1030,21 +1030,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`💊 PDF DOWNLOAD - Found claim for patient ${claim.patientFirstName} ${claim.patientLastName}`);
-      console.log(`💊 PDF DOWNLOAD - Full claim data:`, JSON.stringify(claim, null, 2));
 
+      // Extract medication details from procedureCodes and notes
+      const procedureCode = claim.procedureCodes?.[0];
+      const medicationName = procedureCode?.description?.split(' - ')[0] || 'N/A';
+      
+      // Parse notes to extract medication details
+      const notes = claim.notes || '';
+      const dosageMatch = notes.match(/Dosage: ([^,]+)/);
+      const quantityMatch = notes.match(/Quantity: ([^,]+)/);
+      const daysSupplyMatch = notes.match(/Days Supply: ([^,]+)/);
+      
       // Create comprehensive claim data with real patient information
       const claimWithPatient = {
         id: claim.id,
         claimNumber: claim.claimNumber,
-        medicationName: claim.medicationName,
-        dosage: claim.dosage,
-        quantity: claim.quantity,
-        daysSupply: claim.daysSupply,
-        totalAmount: claim.medicationCost?.toString() || claim.claimAmount?.toString() || '0.00',
-        totalPatientCopay: claim.patientShare?.toString() || '0.00', 
-        totalInsuranceAmount: claim.claimAmount?.toString() || '0.00',
+        medicationName: medicationName,
+        dosage: dosageMatch?.[1] || 'N/A',
+        quantity: quantityMatch?.[1] || 'N/A',
+        daysSupply: daysSupplyMatch?.[1] || 'N/A',
+        totalAmount: claim.totalAmount || '0.00',
+        totalPatientCopay: claim.totalPatientCopay || '0.00', 
+        totalInsuranceAmount: claim.totalInsuranceAmount || '0.00',
         status: claim.status,
-        submittedDate: claim.submittedAt,
+        submittedDate: claim.submittedDate,
         patientFirstName: claim.patientFirstName,
         patientLastName: claim.patientLastName,
         patientMrn: claim.patientMrn,
