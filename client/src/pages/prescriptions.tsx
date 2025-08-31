@@ -361,13 +361,19 @@ export default function PrescriptionsPage() {
                             <div className="flex gap-2">
                               <button
                                 className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                                onClick={() => alert(`PROCESSING:\nPatient: ${prescription.patientName}\nMedication: ${prescription.medication}\nDosage: ${prescription.dosage}\nStatus: ${prescription.status}`)}
+                                onClick={() => {
+                                  setSelectedPrescription(prescription);
+                                  setIsProcessingModalOpen(true);
+                                }}
                               >
                                 Process
                               </button>
                               <button
                                 className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
-                                onClick={() => alert(`DETAILS:\nPatient: ${prescription.patientName}\nMedication: ${prescription.medication}\nDosage: ${prescription.dosage}\nQuantity: ${prescription.quantity}\nInstructions: ${prescription.instructions}\nPrescribed: ${new Date(prescription.prescribedDate).toLocaleDateString()}\nProvider: ${prescription.providerName}`)}
+                                onClick={() => {
+                                  setSelectedPrescription(prescription);
+                                  setIsViewDetailsModalOpen(true);
+                                }}
                               >
                                 View Details
                               </button>
