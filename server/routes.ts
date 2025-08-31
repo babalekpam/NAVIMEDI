@@ -512,10 +512,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if this is a pharmacy tenant by looking up the tenant info
       const tenant = await storage.getTenant(tenantId);
       
-      // For pharmacies, return patients from prescriptions they've received
+      // For pharmacies, return all patients who have this pharmacy as preferred + patients with prescriptions
       if (tenant && tenant.type === 'pharmacy') {
-        const patients = await storage.getPatientsWithPrescriptionsForPharmacy(tenantId);
-        console.log(`🏥 PHARMACY PATIENTS - Found ${patients.length} patients with prescriptions for pharmacy ${tenant.name}`);
+        // Get both: patients who chose this pharmacy as preferred AND patients with prescriptions
+        const [ownPatients, prescriptionPatients] = await Promise.all([
+          storage.getPatientsByTenant(tenantId),
+          storage.getPatientsWithPrescriptionsForPharmacy(tenantId)
+        ]);
+        
+        // Merge and deduplicate patients by ID
+        const allPatientsMap = new Map();
+        [...ownPatients, ...prescriptionPatients].forEach(patient => {
+          allPatientsMap.set(patient.id, patient);
+        });
+        const patients = Array.from(allPatientsMap.values());
+        
+        console.log(`🏥 PHARMACY PATIENTS - Found ${patients.length} total patients (${ownPatients.length} own + ${prescriptionPatients.length} with prescriptions) for pharmacy ${tenant.name}`);
         res.json(patients);
       } else {
         // For other tenant types, return their own patients
