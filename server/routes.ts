@@ -11,8 +11,8 @@ import { db } from "./db";
 import { tenants, users, pharmacies, prescriptions, insuranceClaims, type InsuranceClaim } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 
-// PDF Generation Function for Insurance Claims
-function generateInsuranceClaimPDF(claim: InsuranceClaim): string {
+// Document Generation Function for Insurance Claims
+function generateInsuranceClaimDocument(claim: InsuranceClaim): string {
   const currentDate = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -1102,15 +1102,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Insurance claim not found' });
       }
 
-      // Generate professional PDF content
-      const pdfContent = generateInsuranceClaimPDF(claim);
+      // Generate professional document content
+      const documentContent = generateInsuranceClaimDocument(claim);
       
-      // Set headers for PDF download
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="Insurance_Claim_${claim.claimNumber}.pdf"`);
+      // Set headers for text document download
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="Insurance_Claim_${claim.claimNumber}.txt"`);
       
-      // Send PDF content
-      res.send(Buffer.from(pdfContent, 'binary'));
+      // Send document content
+      res.send(documentContent);
       
     } catch (error) {
       console.error('Error generating PDF:', error);
