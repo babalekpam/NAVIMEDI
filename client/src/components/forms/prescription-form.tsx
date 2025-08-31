@@ -141,22 +141,21 @@ export const PrescriptionForm = ({ onSubmit, onCancel, isLoading = false, patien
           name="patientId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Patient</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select patient" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
+              <FormLabel>Patient *</FormLabel>
+              <FormControl>
+                <select 
+                  {...field}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="">Select a patient</option>
                   {patients.map((patient: any) => (
-                    <SelectItem key={patient.id} value={patient.id}>
+                    <option key={patient.id} value={patient.id}>
                       {patient.firstName || patient.first_name || 'Unknown'} {patient.lastName || patient.last_name || 'Patient'} 
                       {patient.mrn ? ` (MRN: ${patient.mrn})` : ''}
-                    </SelectItem>
+                    </option>
                   ))}
-                </SelectContent>
-              </Select>
+                </select>
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -172,27 +171,26 @@ export const PrescriptionForm = ({ onSubmit, onCancel, isLoading = false, patien
             return (
               <FormItem>
                 <FormLabel>Send to Pharmacy</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select pharmacy" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
+                <FormControl>
+                  <select 
+                    {...field}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Select a pharmacy</option>
                     {pharmaciesLoading ? (
-                      <SelectItem value="loading" disabled>Loading pharmacies...</SelectItem>
+                      <option disabled>Loading pharmacies...</option>
                     ) : (pharmacies as any[]).length > 0 ? (
                       (pharmacies as any[]).map((pharmacy: any) => (
-                        <SelectItem key={pharmacy.id} value={pharmacy.id}>
+                        <option key={pharmacy.id} value={pharmacy.id}>
                           {pharmacy.name}
                           {pharmacy.id === selectedPatient?.preferredPharmacyId && " (Patient's Preferred)"}
-                        </SelectItem>
+                        </option>
                       ))
                     ) : (
-                      <SelectItem value="no-pharmacies" disabled>No pharmacies available</SelectItem>
+                      <option disabled>No pharmacies available</option>
                     )}
-                  </SelectContent>
-                </Select>
+                  </select>
+                </FormControl>
                 {preferredPharmacy && (
                   <FormDescription>
                     Auto-selected {preferredPharmacy.name} as patient's preferred pharmacy. You can change this if needed.
