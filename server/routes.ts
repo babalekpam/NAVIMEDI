@@ -1101,7 +1101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalAmount: req.body.claimAmount?.toString() || '0.00',
         totalPatientCopay: req.body.patientShare?.toString() || '0.00', 
         totalInsuranceAmount: ((parseFloat(req.body.claimAmount || '0')) - (parseFloat(req.body.patientShare || '0')))?.toString() || '0.00',
-        submittedDate: new Date().toISOString(),
+        submittedDate: new Date(),
         
         // Additional medication details
         notes: `Medication: ${req.body.medicationName}, Dosage: ${req.body.dosage}, Quantity: ${req.body.quantity}, Days Supply: ${req.body.daysSupply}, Pharmacy NPI: ${req.body.pharmacyNpi || 'N/A'}`
