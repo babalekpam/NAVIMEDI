@@ -37,36 +37,22 @@ Patient ID: ${claim.patientId}
 
 MEDICATION DETAILS
 -----------------
-Medication Name: ${claim.medicationName}
-Medication Code: ${claim.medicationCode || 'N/A'}
+Medication Name: ${claim.medicationName || 'N/A'}
 Dosage: ${claim.dosage || 'N/A'}
-Quantity: ${claim.quantity}
-Days Supply: ${claim.daysSupply}
+Quantity: ${claim.quantity || 'N/A'}
+Days Supply: ${claim.daysSupply || 'N/A'}
 
 FINANCIAL INFORMATION
 --------------------
-Medication Cost: $${(claim.medicationCost || 0).toFixed(2)}
-Insurance Coverage Rate: ${(claim.insuranceCoverageRate || 0)}%
-Claim Amount: $${(claim.claimAmount || 0).toFixed(2)}
-Patient Share: $${(claim.patientShare || 0).toFixed(2)}
-
-CLAIM DETAILS
--------------
-Claim Type: ${claim.claimType || 'medication'}
-Diagnostic Code: ${claim.diagnosticCode || 'N/A'}
-Pharmacy NPI: ${claim.pharmacyNpi || 'N/A'}
-Prescription ID: ${claim.prescriptionId}
+Total Amount: $${(parseFloat(claim.totalAmount) || 0).toFixed(2)}
+Patient Copay: $${(parseFloat(claim.totalPatientCopay) || 0).toFixed(2)}
+Insurance Amount: $${(parseFloat(claim.totalInsuranceAmount) || 0).toFixed(2)}
+${claim.approvedAmount ? `Approved Amount: $${parseFloat(claim.approvedAmount).toFixed(2)}` : ''}
 
 SUBMISSION INFORMATION
 ---------------------
-Submitted Date: ${claim.submittedAt ? new Date(claim.submittedAt).toLocaleDateString() : 'N/A'}
-${claim.processedAt ? `Processed Date: ${new Date(claim.processedAt).toLocaleDateString()}` : ''}
-${claim.approvedAmount ? `Approved Amount: $${claim.approvedAmount.toFixed(2)}` : ''}
-${claim.copayAmount ? `Copay Amount: $${claim.copayAmount.toFixed(2)}` : ''}
-
-ADDITIONAL NOTES
----------------
-${claim.medicationNote || 'No additional notes provided.'}
+Submitted Date: ${claim.submittedDate ? new Date(claim.submittedDate).toLocaleDateString() : 'N/A'}
+${claim.processedDate ? `Processed Date: ${new Date(claim.processedDate).toLocaleDateString()}` : ''}
 
 ---
 This document was generated electronically by NaviMED Healthcare Platform.

@@ -1933,11 +1933,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Insurance claims management
-  async getInsuranceClaim(id: string, tenantId: string): Promise<InsuranceClaim | undefined> {
-    const [claim] = await db.select().from(insuranceClaims).where(
-      and(eq(insuranceClaims.id, id), eq(insuranceClaims.tenantId, tenantId))
-    );
-    return claim || undefined;
+  async getInsuranceClaim(id: string, tenantId: string): Promise<any> {
+    const [claimWithPatient] = await db
+      .select({
+        // Claim fields
+        id: insuranceClaims.id,
+        tenantId: insuranceClaims.tenantId,
+        patientId: insuranceClaims.patientId,
+        claimNumber: insuranceClaims.claimNumber,
+        medicationName: insuranceClaims.medicationName,
+        dosage: insuranceClaims.dosage,
+        quantity: insuranceClaims.quantity,
+        daysSupply: insuranceClaims.daysSupply,
+        totalAmount: insuranceClaims.totalAmount,
+        totalPatientCopay: insuranceClaims.totalPatientCopay,
+        totalInsuranceAmount: insuranceClaims.totalInsuranceAmount,
+        approvedAmount: insuranceClaims.approvedAmount,
+        status: insuranceClaims.status,
+        submittedDate: insuranceClaims.submittedDate,
+        processedDate: insuranceClaims.processedDate,
+        // Patient fields
+        patientFirstName: patients.firstName,
+        patientLastName: patients.lastName,
+        patientMrn: patients.mrn,
+      })
+      .from(insuranceClaims)
+      .leftJoin(patients, eq(insuranceClaims.patientId, patients.id))
+      .where(and(eq(insuranceClaims.id, id), eq(insuranceClaims.tenantId, tenantId)));
+    
+    return claimWithPatient || undefined;
   }
 
   async createInsuranceClaim(insertClaim: InsertInsuranceClaim): Promise<InsuranceClaim> {
