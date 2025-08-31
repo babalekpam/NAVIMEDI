@@ -957,7 +957,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Lab order management routes
   app.get('/api/lab-orders', async (req, res) => {
     console.log('🔥 LAB ORDERS ROUTE HIT!', req.query);
+    console.log('🔥 Request user:', req.user);
+    console.log('🔥 Request headers:', req.headers.authorization);
     try {
+      if (!req.user) {
+        console.log('🚨 No user in request - authentication failed');
+        return res.status(401).json({ message: 'Authentication required' });
+      }
       const { tenantId } = req.user as any;
       const { forLaboratory, archived } = req.query;
       
