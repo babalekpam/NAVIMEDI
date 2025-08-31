@@ -1022,24 +1022,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`💊 PDF DOWNLOAD - Fetching claim ${claimId} for tenant ${tenantId}`);
       
-      // Get the claim directly with raw query to avoid ORM issues
-      const [claim] = await db.select().from(insuranceClaims)
-        .where(and(eq(insuranceClaims.id, claimId), eq(insuranceClaims.tenantId, tenantId)));
+      // Use raw SQL to avoid ORM issues
+      const claimResult = await db.execute(sql`
+        SELECT * FROM insurance_claims 
+        WHERE id = ${claimId} AND tenant_id = ${tenantId}
+        LIMIT 1
+      `);
       
-      if (!claim) {
+      if (!claimResult.rows || claimResult.rows.length === 0) {
         return res.status(404).json({ message: 'Insurance claim not found' });
       }
+      
+      const claim = claimResult.rows[0];
 
-      // Get patient info separately
+      // Get patient info with raw SQL
       let patientInfo = { firstName: 'Unknown', lastName: 'Patient', mrn: 'N/A' };
       try {
-        const [patient] = await db.select()
-          .from(patients)
-          .where(eq(patients.id, claim.patientId));
-        if (patient) {
+        const patientResult = await db.execute(sql`
+          SELECT first_name, last_name, mrn FROM patients 
+          WHERE id = ${claim.patient_id}
+          LIMIT 1
+        `);
+        
+        if (patientResult.rows && patientResult.rows.length > 0) {
+          const patient = patientResult.rows[0];
           patientInfo = {
-            firstName: patient.firstName || 'Unknown',
-            lastName: patient.lastName || 'Patient', 
+            firstName: patient.first_name || 'Unknown',
+            lastName: patient.last_name || 'Patient', 
             mrn: patient.mrn || 'N/A'
           };
         }
@@ -1049,7 +1058,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create claim object with patient info
       const claimWithPatient = {
-        ...claim,
+        id: claim.id,
+        claimNumber: claim.claim_number,
+        medicationName: claim.medication_name,
+        dosage: claim.dosage,
+        quantity: claim.quantity,
+        daysSupply: claim.days_supply,
+        totalAmount: claim.total_amount,
+        totalPatientCopay: claim.total_patient_copay,
+        totalInsuranceAmount: claim.total_insurance_amount,
+        status: claim.status,
+        submittedDate: claim.submitted_date,
         patientFirstName: patientInfo.firstName,
         patientLastName: patientInfo.lastName,
         patientMrn: patientInfo.mrn
@@ -1060,7 +1079,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Set headers for text document download
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      res.setHeader('Content-Disposition', `attachment; filename="Insurance_Claim_${claim.claimNumber}.txt"`);
+      res.setHeader('Content-Disposition', `attachment; filename="Insurance_Claim_${claimWithPatient.claimNumber}.txt"`);
       
       // Send document content
       res.send(documentContent);
