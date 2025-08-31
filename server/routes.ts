@@ -955,7 +955,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Lab order management routes
-  app.get('/api/lab-orders', authenticateToken, async (req, res) => {
+  app.get('/api/lab-orders', async (req, res) => {
     console.log('🔥 LAB ORDERS ROUTE HIT!', req.query);
     try {
       const { tenantId } = req.user as any;
