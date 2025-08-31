@@ -3761,16 +3761,32 @@ export class DatabaseStorage implements IStorage {
         .where(eq(labBills.tenantId, tenantId))
         .orderBy(desc(labBills.createdAt));
 
-      // Enrich with patient information (cross-tenant access)
+      // Enrich with patient information (cross-tenant access for laboratory billing)
       const enrichedBills = [];
       for (const bill of bills) {
-        const patient = await this.getPatientById(bill.patientId);
-        enrichedBills.push({
-          ...bill,
-          patientFirstName: patient?.firstName,
-          patientLastName: patient?.lastName,
-          patientMrn: patient?.mrn,
-        });
+        try {
+          // Use direct database query to avoid cross-tenant security restrictions for laboratory billing
+          const [patient] = await db.select({
+            firstName: patients.firstName,
+            lastName: patients.lastName,
+            mrn: patients.mrn
+          }).from(patients).where(eq(patients.id, bill.patientId));
+          
+          enrichedBills.push({
+            ...bill,
+            patientFirstName: patient?.firstName || 'Unknown',
+            patientLastName: patient?.lastName || 'Patient',
+            patientMrn: patient?.mrn || 'N/A',
+          });
+        } catch (error) {
+          console.error(`Error fetching patient ${bill.patientId} for lab bill ${bill.id}:`, error);
+          enrichedBills.push({
+            ...bill,
+            patientFirstName: 'Unknown',
+            patientLastName: 'Patient',
+            patientMrn: 'N/A',
+          });
+        }
       }
 
       return enrichedBills;
@@ -3798,14 +3814,29 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(labBills.id, id), eq(labBills.tenantId, tenantId)));
     
     if (bill) {
-      // Enrich with patient information
-      const patient = await this.getPatientById(bill.patientId);
-      return {
-        ...bill,
-        patientFirstName: patient?.firstName,
-        patientLastName: patient?.lastName,
-        patientMrn: patient?.mrn,
-      };
+      // Enrich with patient information (cross-tenant access for laboratory billing)
+      try {
+        const [patient] = await db.select({
+          firstName: patients.firstName,
+          lastName: patients.lastName,
+          mrn: patients.mrn
+        }).from(patients).where(eq(patients.id, bill.patientId));
+        
+        return {
+          ...bill,
+          patientFirstName: patient?.firstName || 'Unknown',
+          patientLastName: patient?.lastName || 'Patient',
+          patientMrn: patient?.mrn || 'N/A',
+        };
+      } catch (error) {
+        console.error(`Error fetching patient ${bill.patientId} for lab bill ${bill.id}:`, error);
+        return {
+          ...bill,
+          patientFirstName: 'Unknown',
+          patientLastName: 'Patient',
+          patientMrn: 'N/A',
+        };
+      }
     }
     
     return undefined;
