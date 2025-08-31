@@ -1978,34 +1978,45 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getInsuranceClaimsByTenant(tenantId: string): Promise<any[]> {
-    return await db
-      .select({
-        // Claim fields
-        id: insuranceClaims.id,
-        tenantId: insuranceClaims.tenantId,
-        patientId: insuranceClaims.patientId,
-        claimNumber: insuranceClaims.claimNumber,
-        medicationName: insuranceClaims.medicationName,
-        dosage: insuranceClaims.dosage,
-        quantity: insuranceClaims.quantity,
-        daysSupply: insuranceClaims.daysSupply,
-        totalAmount: insuranceClaims.totalAmount,
-        totalPatientCopay: insuranceClaims.totalPatientCopay,
-        totalInsuranceAmount: insuranceClaims.totalInsuranceAmount,
-        approvedAmount: insuranceClaims.approvedAmount,
-        status: insuranceClaims.status,
-        submittedDate: insuranceClaims.submittedDate,
-        processedDate: insuranceClaims.processedDate,
-        createdAt: insuranceClaims.createdAt,
-        // Patient fields
-        patientFirstName: patients.firstName,
-        patientLastName: patients.lastName,
-        patientMrn: patients.mrn,
-      })
-      .from(insuranceClaims)
-      .leftJoin(patients, eq(insuranceClaims.patientId, patients.id))
-      .where(eq(insuranceClaims.tenantId, tenantId))
-      .orderBy(desc(insuranceClaims.createdAt));
+    try {
+      const claims = await db.select().from(insuranceClaims).where(eq(insuranceClaims.tenantId, tenantId));
+      
+      // Get patient info for each claim
+      const claimsWithPatients = await Promise.all(
+        claims.map(async (claim) => {
+          try {
+            const [patient] = await db.select({
+              firstName: patients.firstName,
+              lastName: patients.lastName,
+              mrn: patients.mrn,
+            }).from(patients).where(eq(patients.id, claim.patientId));
+            
+            return {
+              ...claim,
+              patientFirstName: patient?.firstName || 'N/A',
+              patientLastName: patient?.lastName || 'N/A',
+              patientMrn: patient?.mrn || 'N/A',
+            };
+          } catch (error) {
+            console.error('Error fetching patient for claim:', claim.id, error);
+            return {
+              ...claim,
+              patientFirstName: 'Unknown',
+              patientLastName: 'Patient',
+              patientMrn: 'N/A',
+            };
+          }
+        })
+      );
+      
+      // Sort by submittedDate descending
+      return claimsWithPatients.sort((a, b) => 
+        new Date(b.submittedDate || 0).getTime() - new Date(a.submittedDate || 0).getTime()
+      );
+    } catch (error) {
+      console.error('Error in getInsuranceClaimsByTenant:', error);
+      throw error;
+    }
   }
 
   async getInsuranceClaimsByPatient(patientId: string, tenantId: string): Promise<InsuranceClaim[]> {
