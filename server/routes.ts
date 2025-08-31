@@ -1022,29 +1022,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`💊 PDF DOWNLOAD - Generating document for claim ${claimId}`);
       
-      // Create a mock claim with realistic data for now
-      // TODO: Fix database query issues
-      const currentDate = new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',  
-        day: 'numeric'
-      });
+      // Get the actual claim from database
+      const claim = await storage.getInsuranceClaim(claimId, tenantId);
+      if (!claim) {
+        return res.status(404).json({ message: 'Insurance claim not found' });
+      }
 
+      // Get the prescription details for this claim
+      const prescription = await storage.getPrescription(claim.prescriptionId, tenantId);
+      if (!prescription) {
+        return res.status(404).json({ message: 'Associated prescription not found' });
+      }
+
+      // Get the patient details for this prescription 
+      const patient = await storage.getPatient(prescription.patientId, prescription.originalTenantId || tenantId);
+      if (!patient) {
+        return res.status(404).json({ message: 'Patient information not found' });
+      }
+
+      // Create comprehensive claim data with real patient information
       const claimWithPatient = {
-        id: claimId,
-        claimNumber: `CLM-${Math.floor(Math.random() * 900000) + 100000}-${Math.floor(Math.random() * 900) + 100}`,
-        medicationName: 'Nurtec',
-        dosage: '500mg',
-        quantity: 30,
-        daysSupply: 1,
-        totalAmount: '375.00',
-        totalPatientCopay: '75.00',
-        totalInsuranceAmount: '300.00',
-        status: 'submitted',
-        submittedDate: new Date().toISOString(),
-        patientFirstName: 'John',
-        patientLastName: 'Smith',
-        patientMrn: '123456'
+        id: claim.id,
+        claimNumber: claim.claimNumber,
+        medicationName: claim.medicationName,
+        dosage: claim.dosage,
+        quantity: claim.quantity,
+        daysSupply: claim.daysSupply,
+        totalAmount: claim.claimAmount?.toString() || '0.00',
+        totalPatientCopay: claim.patientShare?.toString() || '0.00', 
+        totalInsuranceAmount: claim.claimAmount?.toString() || '0.00',
+        status: claim.status,
+        submittedDate: claim.submittedAt,
+        patientFirstName: patient.firstName,
+        patientLastName: patient.lastName,
+        patientMrn: patient.mrn || patient.id.slice(-6),
+        patientId: patient.id
       };
 
       // Generate professional document content
@@ -1052,9 +1064,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Set headers for text document download
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      res.setHeader('Content-Disposition', `attachment; filename="Insurance_Claim_${claimWithPatient.claimNumber}.txt"`);
+      res.setHeader('Content-Disposition', `attachment; filename="Insurance_Claim_${claim.claimNumber}.txt"`);
       
-      console.log(`💊 PDF DOWNLOAD SUCCESS - Document generated for claim ${claimId}`);
+      console.log(`💊 PDF DOWNLOAD SUCCESS - Document generated for claim ${claimId} for patient ${patient.firstName} ${patient.lastName}`);
       
       // Send document content
       res.send(documentContent);
