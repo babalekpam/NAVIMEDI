@@ -2302,37 +2302,6 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              {/* Healthcare Support Tabs */}
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <Activity className="h-5 w-5 text-green-600" />
-                    💉 Clinical Services
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
-                    <Shield className="h-3 w-3 mr-2" />
-                    Immunizations & vaccines
-                  </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
-                    <CheckCircle className="h-3 w-3 mr-2" />
-                    Health screenings
-                  </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
-                    <Pill className="h-3 w-3 mr-2" />
-                    Medication therapy management
-                  </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
-                    <Heart className="h-3 w-3 mr-2" />
-                    Blood pressure monitoring
-                  </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
-                    <Activity className="h-3 w-3 mr-2" />
-                    Diabetes care
-                  </Button>
-                </CardContent>
-              </Card>
 
               <Card className="hover:shadow-lg transition-shadow">
                 <CardHeader className="pb-3">
