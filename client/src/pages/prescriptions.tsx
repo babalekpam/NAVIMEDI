@@ -866,8 +866,10 @@ Click outside to close`);
                               <Button
                                 size="sm"
                                 onClick={() => {
+                                  console.log('🔧 Process Refill clicked:', prescription.patientName, prescription.medication);
                                   setSelectedPrescription(prescription);
                                   setIsProcessingModalOpen(true);
+                                  console.log('✅ Processing modal should be open now');
                                 }}
                               >
                                 Process Refill
@@ -876,8 +878,10 @@ Click outside to close`);
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
+                                  console.log('👁️ View Details clicked:', prescription.patientName, prescription.medication);
                                   setSelectedPrescription(prescription);
                                   setIsViewDetailsModalOpen(true);
+                                  console.log('✅ View Details modal should be open now');
                                 }}
                               >
                                 View Details
