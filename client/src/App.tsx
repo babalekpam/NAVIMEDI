@@ -115,6 +115,7 @@ function AppContent() {
     <div className="min-h-screen">
       <Switch>
         <Route path="/" component={LandingPage} />
+        <Route path="/login" component={Login} />
         <Route path="/register" component={RegisterOrganization} />
         <Route path="/change-password" component={ChangePasswordPage} />
         <Route path="/dashboard">
@@ -870,6 +871,19 @@ function Router() {
           {/* Supplier routes handled by direct HTML pages */}
           <Route path="/patient-portal-public" component={PatientPortalPublic} />
           <Route path="/patient-login" component={PatientLogin} />
+          
+          {/* Medication Insurance Claims - Public Access for Testing */}
+          <Route path="/medication-insurance-claims">
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <MedicationInsuranceClaims />
+                </main>
+              </div>
+            </div>
+          </Route>
           
           {/* 404 Not Found - should only show for truly unmatched routes */}
           <Route component={NotFound} />
