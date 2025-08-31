@@ -107,6 +107,13 @@ export const PrescriptionForm = ({ onSubmit, onCancel, isLoading = false, patien
     onSubmit(submissionData);
   };
 
+  // Debug patient data
+  console.log("[DEBUG] Patients data in form:", patients);
+  console.log("[DEBUG] Patients array length:", patients?.length || 0);
+  if (patients?.length > 0) {
+    console.log("[DEBUG] First patient structure:", patients[0]);
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
@@ -123,11 +130,16 @@ export const PrescriptionForm = ({ onSubmit, onCancel, isLoading = false, patien
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {patients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
-                      {patient.firstName} {patient.lastName} (MRN: {patient.mrn})
-                    </SelectItem>
-                  ))}
+                  {(!patients || patients.length === 0) ? (
+                    <SelectItem value="no-patients" disabled>No patients available</SelectItem>
+                  ) : (
+                    patients.map((patient: any) => (
+                      <SelectItem key={patient.id} value={patient.id}>
+                        {patient.firstName || patient.first_name || 'Unknown'} {patient.lastName || patient.last_name || 'Patient'} 
+                        {patient.mrn ? ` (MRN: ${patient.mrn})` : ''}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />
