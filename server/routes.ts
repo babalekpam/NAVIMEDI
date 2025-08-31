@@ -1022,23 +1022,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`💊 PDF DOWNLOAD - Generating document for claim ${claimId}`);
       
-      // Get the actual claim from database
+      // Get the actual claim from database (already includes patient data)
       const claim = await storage.getInsuranceClaim(claimId, tenantId);
       if (!claim) {
+        console.log(`💊 PDF DOWNLOAD ERROR - Claim ${claimId} not found for tenant ${tenantId}`);
         return res.status(404).json({ message: 'Insurance claim not found' });
       }
 
-      // Get the prescription details for this claim
-      const prescription = await storage.getPrescription(claim.prescriptionId, tenantId);
-      if (!prescription) {
-        return res.status(404).json({ message: 'Associated prescription not found' });
-      }
-
-      // Get the patient details for this prescription 
-      const patient = await storage.getPatient(prescription.patientId, prescription.originalTenantId || tenantId);
-      if (!patient) {
-        return res.status(404).json({ message: 'Patient information not found' });
-      }
+      console.log(`💊 PDF DOWNLOAD - Found claim for patient ${claim.patientFirstName} ${claim.patientLastName}`);
 
       // Create comprehensive claim data with real patient information
       const claimWithPatient = {
@@ -1053,10 +1044,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalInsuranceAmount: claim.claimAmount?.toString() || '0.00',
         status: claim.status,
         submittedDate: claim.submittedAt,
-        patientFirstName: patient.firstName,
-        patientLastName: patient.lastName,
-        patientMrn: patient.mrn || patient.id.slice(-6),
-        patientId: patient.id
+        patientFirstName: claim.patientFirstName,
+        patientLastName: claim.patientLastName,
+        patientMrn: claim.patientMrn,
+        patientId: claim.patientId
       };
 
       // Generate professional document content
@@ -1066,7 +1057,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename="Insurance_Claim_${claim.claimNumber}.txt"`);
       
-      console.log(`💊 PDF DOWNLOAD SUCCESS - Document generated for claim ${claimId} for patient ${patient.firstName} ${patient.lastName}`);
+      console.log(`💊 PDF DOWNLOAD SUCCESS - Document generated for claim ${claimId} for patient ${claim.patientFirstName} ${claim.patientLastName}`);
       
       // Send document content
       res.send(documentContent);
