@@ -955,10 +955,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Lab order management routes
-  app.get('/api/lab-orders', async (req, res) => {
+  app.get('/api/lab-orders', authenticateToken, async (req, res) => {
     try {
       const { tenantId } = req.user as any;
-      const labOrders = await storage.getLabOrders(tenantId);
+      const { forLaboratory, archived } = req.query;
+      
+      console.log('🧪 Lab orders request:', { tenantId, forLaboratory, archived });
+      
+      let labOrders;
+      
+      if (forLaboratory === 'true') {
+        // Laboratory viewing orders sent TO them
+        console.log('🧪 Fetching orders sent to laboratory:', tenantId);
+        labOrders = await storage.getLabOrdersForLaboratory(tenantId);
+        console.log(`🧪 Found ${labOrders.length} orders for laboratory`);
+      } else {
+        // Hospital/clinic viewing orders they created
+        console.log('🧪 Fetching orders created by tenant:', tenantId);
+        labOrders = await storage.getLabOrdersByTenant(tenantId);
+        console.log(`🧪 Found ${labOrders.length} orders created by tenant`);
+      }
+      
       res.json(labOrders);
     } catch (error) {
       console.error('Error fetching lab orders:', error);
