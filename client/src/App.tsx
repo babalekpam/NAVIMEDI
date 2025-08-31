@@ -872,6 +872,19 @@ function Router() {
           <Route path="/patient-portal-public" component={PatientPortalPublic} />
           <Route path="/patient-login" component={PatientLogin} />
           
+          {/* Pharmacy Dashboard - Public Access for Testing */}
+          <Route path="/pharmacy-dashboard">
+            <div className="flex flex-col h-screen bg-gray-50">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PharmacyDashboard />
+                </main>
+              </div>
+            </div>
+          </Route>
+          
           {/* Medication Insurance Claims - Public Access for Testing */}
           <Route path="/medication-insurance-claims">
             <div className="flex flex-col h-screen bg-gray-50">
