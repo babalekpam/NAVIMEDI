@@ -73,7 +73,7 @@ export default function LaboratoryBilling() {
     queryKey: ["/api/laboratory/analytics"],
     enabled: !!user && !!tenant,
     staleTime: 0,
-    cacheTime: 0,
+    gcTime: 0,
     refetchInterval: 5000,
   });
 
@@ -81,7 +81,7 @@ export default function LaboratoryBilling() {
     queryKey: ["/api/reports"],
     enabled: !!user && !!tenant,
     staleTime: 0,
-    cacheTime: 0,
+    gcTime: 0,
     refetchInterval: 5000,
   });
 
@@ -380,7 +380,9 @@ export default function LaboratoryBilling() {
   // Receipt handling functions
   const handleViewReceipt = async (billId: string) => {
     try {
-      const response = await apiRequest("GET", `/api/laboratory/billing/${billId}/receipt`);
+      const response = await apiRequest(`/api/laboratory/billing/${billId}/receipt`, {
+        method: "GET"
+      });
       const receipt = await response.json();
       
       // Create a printable receipt view
@@ -445,8 +447,9 @@ export default function LaboratoryBilling() {
     }
   };
 
+
   const handlePrintInvoice = (billId: string) => {
-    const bill = labBills?.find(b => b.id === billId);
+    const bill = bills?.find(b => b.id === billId);
     if (bill) {
       printReport(bill);
     } else {
