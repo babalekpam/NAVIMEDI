@@ -175,25 +175,42 @@ export default function PharmacyCustomers() {
   });
 
   // Transform API data to match PharmacyCustomer interface
-  const transformedCustomers: PharmacyCustomer[] = customers.map((patient: any) => ({
-    id: patient.id,
-    firstName: patient.firstName,
-    lastName: patient.lastName,
-    email: patient.email || '',
-    phone: patient.phone || '',
-    dateOfBirth: patient.dateOfBirth,
-    address: patient.address || { street: '', city: '', state: '', zipCode: '' },
-    deliveryAddress: patient.deliveryAddress,
-    insuranceProvider: patient.insuranceInfo?.provider,
-    totalPrescriptions: 0, // Will be calculated from prescription data
-    activePrescriptions: 0, // Will be calculated from prescription data
-    lastVisit: patient.updatedAt || patient.createdAt,
-    preferredContactMethod: patient.preferredContactMethod || 'email',
-    preferredFulfillmentMethod: patient.preferredFulfillmentMethod || 'pickup',
-    deliveryInstructions: patient.deliveryInstructions,
-    allergies: Array.isArray(patient.allergies) ? patient.allergies : [],
-    notes: patient.notes || '',
-  }));
+  const transformedCustomers: PharmacyCustomer[] = customers.map((patient: any) => {
+    // Handle insurance info - it can be a JSON object or string
+    let insuranceProvider = '';
+    if (patient.insuranceInfo) {
+      if (typeof patient.insuranceInfo === 'string') {
+        try {
+          const parsed = JSON.parse(patient.insuranceInfo);
+          insuranceProvider = parsed.provider || parsed.manualProvider || '';
+        } catch (e) {
+          insuranceProvider = patient.insuranceInfo;
+        }
+      } else if (typeof patient.insuranceInfo === 'object') {
+        insuranceProvider = patient.insuranceInfo.provider || patient.insuranceInfo.manualProvider || '';
+      }
+    }
+
+    return {
+      id: patient.id,
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      email: patient.email || '',
+      phone: patient.phone || '',
+      dateOfBirth: patient.dateOfBirth,
+      address: patient.address || { street: '', city: '', state: '', zipCode: '' },
+      deliveryAddress: patient.deliveryAddress,
+      insuranceProvider,
+      totalPrescriptions: 0, // Will be calculated from prescription data
+      activePrescriptions: 0, // Will be calculated from prescription data
+      lastVisit: patient.updatedAt || patient.createdAt,
+      preferredContactMethod: patient.preferredContactMethod || 'email',
+      preferredFulfillmentMethod: patient.preferredFulfillmentMethod || 'pickup',
+      deliveryInstructions: patient.deliveryInstructions,
+      allergies: Array.isArray(patient.allergies) ? patient.allergies : [],
+      notes: patient.notes || '',
+    };
+  });
 
   // Use transformed customers from API data instead of mock data
   const finalCustomers = transformedCustomers.length > 0 ? transformedCustomers : [
