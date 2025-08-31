@@ -535,6 +535,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get prescriptions for a specific patient (for insurance claims and billing)
+  app.get('/api/prescriptions/patient/:patientId', async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const { patientId } = req.params;
+      
+      // Check if this is a pharmacy tenant
+      const tenant = await storage.getTenant(tenantId);
+      
+      if (tenant && tenant.type === 'pharmacy') {
+        // For pharmacies: get prescriptions for this patient that were routed to this pharmacy
+        const prescriptions = await db.select().from(prescriptions)
+          .where(and(
+            eq(prescriptions.patientId, patientId),
+            eq(prescriptions.pharmacyTenantId, tenantId)
+          ));
+        
+        console.log(`💊 PATIENT PRESCRIPTIONS - Found ${prescriptions.length} prescriptions for patient ${patientId} at pharmacy ${tenant.name}`);
+        res.json(prescriptions);
+      } else {
+        // For hospitals: get prescriptions for this patient created by this tenant
+        const patientPrescriptions = await storage.getPrescriptionsByPatient(patientId, tenantId);
+        console.log(`🏥 PATIENT PRESCRIPTIONS - Found ${patientPrescriptions.length} prescriptions for patient ${patientId}`);
+        res.json(patientPrescriptions);
+      }
+    } catch (error) {
+      console.error('Error fetching patient prescriptions:', error);
+      res.status(500).json({ message: 'Failed to fetch patient prescriptions' });
+    }
+  });
+
   app.post('/api/prescriptions', async (req, res) => {
     try {
       const { tenantId, id: userId } = req.user as any;
