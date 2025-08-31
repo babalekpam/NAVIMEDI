@@ -1030,6 +1030,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`💊 PDF DOWNLOAD - Found claim for patient ${claim.patientFirstName} ${claim.patientLastName}`);
+      console.log(`💊 PDF DOWNLOAD - Full claim data:`, JSON.stringify(claim, null, 2));
 
       // Create comprehensive claim data with real patient information
       const claimWithPatient = {
@@ -1039,7 +1040,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dosage: claim.dosage,
         quantity: claim.quantity,
         daysSupply: claim.daysSupply,
-        totalAmount: claim.claimAmount?.toString() || '0.00',
+        totalAmount: claim.medicationCost?.toString() || claim.claimAmount?.toString() || '0.00',
         totalPatientCopay: claim.patientShare?.toString() || '0.00', 
         totalInsuranceAmount: claim.claimAmount?.toString() || '0.00',
         status: claim.status,
