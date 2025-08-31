@@ -968,9 +968,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/lab-orders', async (req, res) => {
     try {
-      const { tenantId, userId } = req.user as any;
-      const labOrderData = { ...req.body, tenantId, providerId: userId };
-      console.log('🧪 Creating lab order with data:', { ...labOrderData, providerId: 'USER_ID_SET' });
+      const { tenantId, userId, id } = req.user as any;
+      console.log('🧪 Debug - req.user contents:', req.user);
+      console.log('🧪 Debug - userId:', userId, 'id:', id, 'tenantId:', tenantId);
+      
+      // Use either userId or id, whichever is available
+      const providerId = userId || id;
+      
+      if (!providerId) {
+        console.error('🚨 No provider ID found in req.user');
+        return res.status(400).json({ message: 'Provider ID missing from authentication' });
+      }
+      
+      const labOrderData = { ...req.body, tenantId, providerId };
+      console.log('🧪 Creating lab order with data:', labOrderData);
       const labOrder = await storage.createLabOrder(labOrderData);
       res.status(201).json(labOrder);
     } catch (error) {
