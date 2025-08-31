@@ -242,24 +242,29 @@ export const PrescriptionForm = ({ onSubmit, onCancel, isLoading = false, patien
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Frequency</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select frequency" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Once daily">Once daily</SelectItem>
-                    <SelectItem value="Twice daily">Twice daily</SelectItem>
-                    <SelectItem value="Three times daily">Three times daily</SelectItem>
-                    <SelectItem value="Four times daily">Four times daily</SelectItem>
-                    <SelectItem value="As needed">As needed</SelectItem>
-                    <SelectItem value="Every 4 hours">Every 4 hours</SelectItem>
-                    <SelectItem value="Every 6 hours">Every 6 hours</SelectItem>
-                    <SelectItem value="Every 8 hours">Every 8 hours</SelectItem>
-                    <SelectItem value="Every 12 hours">Every 12 hours</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <select 
+                    {...field}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Select frequency</option>
+                    <option value="Once daily">Once daily</option>
+                    <option value="Twice daily">Twice daily</option>
+                    <option value="Three times daily">Three times daily</option>
+                    <option value="Four times daily">Four times daily</option>
+                    <option value="Every 4 hours">Every 4 hours</option>
+                    <option value="Every 6 hours">Every 6 hours</option>
+                    <option value="Every 8 hours">Every 8 hours</option>
+                    <option value="Every 12 hours">Every 12 hours</option>
+                    <option value="Before meals">Before meals</option>
+                    <option value="After meals">After meals</option>
+                    <option value="With meals">With meals</option>
+                    <option value="At bedtime">At bedtime</option>
+                    <option value="As needed">As needed (PRN)</option>
+                    <option value="Weekly">Weekly</option>
+                    <option value="Monthly">Monthly</option>
+                  </select>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
