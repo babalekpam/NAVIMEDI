@@ -170,7 +170,7 @@ export default function MedicationInsuranceClaims() {
           submittedAt: new Date().toISOString(),
         },
       });
-      return response.json();
+      return response;
     },
     onSuccess: () => {
       toast({
