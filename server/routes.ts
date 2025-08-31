@@ -861,6 +861,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Billing patients endpoint - same logic as /api/patients for billing purposes
+  app.get('/api/billing/patients', async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      
+      // Check if this is a pharmacy tenant by looking up the tenant info
+      const tenant = await storage.getTenantById(tenantId);
+      
+      // For pharmacies, return patients from prescriptions they've received
+      if (tenant && tenant.type === 'pharmacy') {
+        const patients = await storage.getPatientsWithPrescriptionsForPharmacy(tenantId);
+        console.log(`💊 BILLING PATIENTS - Found ${patients.length} patients with prescriptions for pharmacy ${tenant.name}`);
+        res.json(patients);
+      } else {
+        // For other tenant types, return their own patients
+        const patients = await storage.getPatientsByTenant(tenantId);
+        console.log(`💊 BILLING PATIENTS - Found ${patients.length} patients for ${tenant?.type || 'unknown'} ${tenant?.name || tenantId}`);
+        res.json(patients);
+      }
+    } catch (error) {
+      console.error('Error fetching billing patients:', error);
+      res.status(500).json({ message: 'Failed to fetch billing patients' });
+    }
+  });
+
   // PHARMACY API ENDPOINTS FOR PRESCRIPTION ROUTING
   // Get all available pharmacies for prescription routing
   app.get('/api/pharmacies', async (req, res) => {
