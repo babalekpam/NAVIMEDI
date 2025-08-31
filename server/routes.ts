@@ -437,12 +437,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api', (req, res, next) => {
     const publicRoutes = ['/api/auth/login', '/api/register-organization', '/api/health', '/api/healthz', '/api/status', '/api/ping', '/api/platform/stats', '/api/test-post', '/api/insurance-claims-test'];
     
-    // Debug logging for lab orders specifically
-    if (req.path.includes('/api/lab-orders')) {
-      console.log(`🔥 GLOBAL AUTH CHECK - ${req.method} ${req.path}`);
-      console.log('🔥 Headers:', req.headers.authorization ? 'Token present' : 'No token');
-      console.log('🔥 User agent:', req.headers['user-agent']);
-    }
     
     // Debug logging for insurance claims requests
     if (req.path.includes('/api/insurance-claims')) {
@@ -963,36 +957,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Lab order management routes
   app.get('/api/lab-orders', async (req, res) => {
-    console.log('🔥 LAB ORDERS ROUTE HIT!', req.query);
-    console.log('🔥 Request user:', req.user);
-    console.log('🔥 Request headers:', req.headers.authorization);
     try {
       if (!req.user) {
-        console.log('🚨 No user in request - authentication failed');
         return res.status(401).json({ message: 'Authentication required' });
       }
       const { tenantId } = req.user as any;
       const { forLaboratory, archived } = req.query;
       
-      console.log('🧪 Lab orders request:', { tenantId, forLaboratory, archived, user: req.user });
-      
       let labOrders;
       
       if (forLaboratory === 'true') {
         // Laboratory viewing orders sent TO them
-        console.log('🧪 Fetching orders sent to laboratory:', tenantId);
         labOrders = await storage.getLabOrdersForLaboratory(tenantId);
-        console.log(`🧪 Found ${labOrders.length} orders for laboratory:`, labOrders);
       } else {
         // Hospital/clinic viewing orders they created
-        console.log('🧪 Fetching orders created by tenant:', tenantId);
         labOrders = await storage.getLabOrdersByTenant(tenantId);
-        console.log(`🧪 Found ${labOrders.length} orders created by tenant:`, labOrders);
       }
       
       res.json(labOrders);
     } catch (error) {
-      console.error('🚨 Error fetching lab orders:', error);
+      console.error('Error fetching lab orders:', error);
       res.status(500).json({ message: 'Failed to fetch lab orders' });
     }
   });

@@ -97,7 +97,7 @@ export default function LabOrders() {
       const url = `/api/lab-orders?${params.toString()}`;
       console.log(`[LAB ORDERS] Fetching ${statusFilter === 'archived' ? 'archived' : 'active'} orders for ${tenant?.type} using URL:`, url);
       const response = await apiRequest("GET", url);
-      return response.json();
+      return response;
     },
     enabled: !!user && !!tenant,
   });
