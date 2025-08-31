@@ -978,6 +978,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get active laboratories for lab order creation
+  app.get('/api/laboratories/active', authenticateToken, async (req, res) => {
+    try {
+      console.log('🔬 Fetching active laboratories for lab order creation');
+      const laboratories = await storage.getActiveLaboratoryTenants();
+      console.log(`🔬 Found ${laboratories.length} active laboratories:`, laboratories.map(lab => `${lab.name} (${lab.subdomain})`));
+      res.json(laboratories);
+    } catch (error) {
+      console.error('Error fetching active laboratories:', error);
+      res.status(500).json({ message: 'Failed to fetch active laboratories' });
+    }
+  });
+
   // Billing routes
   app.get('/api/billing', async (req, res) => {
     try {
