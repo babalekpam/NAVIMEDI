@@ -25,8 +25,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import { useTenant } from "@/hooks/use-tenant";
+import { useAuth } from "@/contexts/auth-context";
+import { useTenant } from "@/contexts/tenant-context";
 import { apiRequest } from "@/lib/queryClient";
 
 // Medication insurance claim schema
