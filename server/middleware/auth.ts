@@ -42,10 +42,18 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
 
-  // Reduced debug logging for performance
+  // Debug lab orders authentication specifically
+  if (req.path?.includes('/api/lab-orders')) {
+    console.log('🔥 AUTHENTICATE TOKEN - Lab orders request');
+    console.log('🔥 Auth header:', authHeader);
+    console.log('🔥 Token:', token ? 'Present' : 'Missing');
+  }
 
   if (!token) {
     // No token provided
+    if (req.path?.includes('/api/lab-orders')) {
+      console.log('🚨 LAB ORDERS - No token provided, returning 401');
+    }
     return res.status(401).json({ message: "Access token required" });
   }
 

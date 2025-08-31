@@ -437,6 +437,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api', (req, res, next) => {
     const publicRoutes = ['/api/auth/login', '/api/register-organization', '/api/health', '/api/healthz', '/api/status', '/api/ping', '/api/platform/stats', '/api/test-post', '/api/insurance-claims-test'];
     
+    // Debug logging for lab orders specifically
+    if (req.path.includes('/api/lab-orders')) {
+      console.log(`🔥 GLOBAL AUTH CHECK - ${req.method} ${req.path}`);
+      console.log('🔥 Headers:', req.headers.authorization ? 'Token present' : 'No token');
+      console.log('🔥 User agent:', req.headers['user-agent']);
+    }
+    
     // Debug logging for insurance claims requests
     if (req.path.includes('/api/insurance-claims')) {
       console.log(`🔐 AUTH CHECK - ${req.method} ${req.path}`);
