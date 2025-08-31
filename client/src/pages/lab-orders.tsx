@@ -202,7 +202,6 @@ export default function LabOrders() {
       
       const labResultData = {
         labOrderId: completionLabOrder.id,
-        laboratoryId: tenant?.id, // Current laboratory tenant ID
         patientId: completionLabOrder.patientId,
         testName: completionLabOrder.testName,
         result: data.result,

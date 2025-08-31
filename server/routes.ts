@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { db } from "./db";
-import { tenants, users, pharmacies, prescriptions, insuranceClaims, type InsuranceClaim } from "@shared/schema";
+import { tenants, users, pharmacies, prescriptions, insuranceClaims, insertLabResultSchema, type InsuranceClaim } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 
 // Document Generation Function for Insurance Claims
@@ -1005,6 +1005,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error creating lab order:', error);
       res.status(500).json({ message: 'Failed to create lab order' });
+    }
+  });
+
+  // Lab Results Routes
+  app.get("/api/lab-results", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const labResults = await storage.getLabResultsByTenant(req.tenantId!);
+      res.json(labResults);
+    } catch (error) {
+      console.error("Error fetching lab results:", error);
+      res.status(500).json({ message: "Failed to fetch lab results" });
+    }
+  });
+
+  app.get("/api/lab-results/patient/:patientId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const labResults = await storage.getLabResultsByPatient(req.params.patientId, req.tenantId!);
+      res.json(labResults);
+    } catch (error) {
+      console.error("Error fetching patient lab results:", error);
+      res.status(500).json({ message: "Failed to fetch patient lab results" });
+    }
+  });
+
+  app.get("/api/lab-results/order/:labOrderId", authenticateToken, requireTenant, async (req, res) => {
+    try {
+      const labResults = await storage.getLabResultsByOrder(req.params.labOrderId, req.tenantId!);
+      res.json(labResults);
+    } catch (error) {
+      console.error("Error fetching lab order results:", error);
+      res.status(500).json({ message: "Failed to fetch lab order results" });
+    }
+  });
+
+  app.post("/api/lab-results", authenticateToken, requireRole(["lab_technician", "physician", "tenant_admin", "director", "super_admin"]), requireTenant, async (req, res) => {
+    try {
+      // Find the laboratory record for this tenant
+      const laboratories = await storage.getLaboratoriesByTenant(req.tenantId!);
+      const laboratory = laboratories[0];
+      if (!laboratory) {
+        return res.status(400).json({ message: "No laboratory found for this tenant" });
+      }
+
+      const labResultData = insertLabResultSchema.parse({
+        ...req.body,
+        tenantId: req.tenantId,
+        laboratoryId: laboratory.id
+      });
+
+      const labResult = await storage.createLabResult(labResultData);
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.tenantId!,
+        userId: req.userId!,
+        entityType: "lab_result",
+        entityId: labResult.id,
+        action: "create",
+        previousData: null,
+        newData: labResult,
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.status(201).json(labResult);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid lab result data", errors: error.errors });
+      }
+      console.error("Error creating lab result:", error);
+      res.status(500).json({ message: "Failed to create lab result" });
     }
   });
 
