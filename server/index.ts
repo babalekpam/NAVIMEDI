@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { registerSimpleTestRoutes } from "./simple-test-routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { db } from "./db";
 import { tenants, users } from "@shared/schema";
@@ -177,6 +178,9 @@ async function initializePlatform() {
 }
 
 (async () => {
+  // Register simple test routes FIRST (no dependencies, should always work)
+  registerSimpleTestRoutes(app);
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
