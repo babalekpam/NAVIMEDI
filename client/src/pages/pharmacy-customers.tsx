@@ -179,15 +179,21 @@ export default function PharmacyCustomers() {
     // Handle insurance info - it can be a JSON object or string
     let insuranceProvider = '';
     if (patient.insuranceInfo) {
-      if (typeof patient.insuranceInfo === 'string') {
-        try {
+      try {
+        // If it's already an object, use it directly
+        if (typeof patient.insuranceInfo === 'object') {
+          insuranceProvider = patient.insuranceInfo.provider || patient.insuranceInfo.manualProvider || '';
+        } 
+        // If it's a string, parse it as JSON
+        else if (typeof patient.insuranceInfo === 'string') {
           const parsed = JSON.parse(patient.insuranceInfo);
           insuranceProvider = parsed.provider || parsed.manualProvider || '';
-        } catch (e) {
-          insuranceProvider = patient.insuranceInfo;
         }
-      } else if (typeof patient.insuranceInfo === 'object') {
-        insuranceProvider = patient.insuranceInfo.provider || patient.insuranceInfo.manualProvider || '';
+        
+        console.log(`Insurance for ${patient.firstName} ${patient.lastName}:`, insuranceProvider);
+      } catch (e) {
+        console.warn(`Failed to parse insurance for ${patient.firstName} ${patient.lastName}:`, patient.insuranceInfo);
+        insuranceProvider = '';
       }
     }
 

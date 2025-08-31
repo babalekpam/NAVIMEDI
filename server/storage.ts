@@ -989,6 +989,7 @@ export class DatabaseStorage implements IStorage {
         address: patients.address,
         mrn: patients.mrn,
         emergencyContact: patients.emergencyContact,
+        insuranceInfo: patients.insuranceInfo,
         allergies: patients.allergies,
         medications: patients.medications,
         medicalHistory: patients.medicalHistory,
@@ -1006,8 +1007,8 @@ export class DatabaseStorage implements IStorage {
       )
       .groupBy(patients.id, patients.tenantId, patients.firstName, patients.lastName, 
                patients.dateOfBirth, patients.gender, patients.phone, patients.email, 
-               patients.address, patients.mrn, patients.emergencyContact, patients.allergies, 
-               patients.medications, patients.medicalHistory, patients.isActive, 
+               patients.address, patients.mrn, patients.emergencyContact, patients.insuranceInfo,
+               patients.allergies, patients.medications, patients.medicalHistory, patients.isActive, 
                patients.createdAt, patients.updatedAt)
       .orderBy(patients.lastName, patients.firstName);
 
