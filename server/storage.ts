@@ -1981,7 +1981,7 @@ export class DatabaseStorage implements IStorage {
       .groupBy(labOrders.patientId);
 
     // Get full patient information for each unique patient
-    const patients = await Promise.all(orders.map(async (order) => {
+    const patientsWithLabOrders = await Promise.all(orders.map(async (order) => {
       const [patient] = await db.select().from(patients)
         .where(eq(patients.id, order.patientId))
         .limit(1);
@@ -2017,7 +2017,7 @@ export class DatabaseStorage implements IStorage {
     }));
 
     // Filter out null results and return valid patients
-    const validPatients = patients.filter(p => p !== null);
+    const validPatients = patientsWithLabOrders.filter(p => p !== null);
     console.log(`🧪 STORAGE - Found ${validPatients.length} unique patients with lab orders for laboratory`);
     return validPatients;
   }
