@@ -163,12 +163,12 @@ export default function MedicationInsuranceClaims() {
     mutationFn: async (data: MedicationClaimForm) => {
       const response = await apiRequest("/api/insurance-test", {
         method: "POST",
-        body: JSON.stringify({
+        body: {
           ...data,
           claimType: "medication",
           status: "submitted",
           submittedAt: new Date().toISOString(),
-        }),
+        },
       });
       return response.json();
     },
