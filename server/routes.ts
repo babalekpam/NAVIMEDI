@@ -723,10 +723,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json(updatedPrescription);
       } else {
         // For hospitals: can only update prescriptions they created
-        const updatedPrescription = await storage.updatePrescription(prescriptionId, tenantId, { 
+        const updatedPrescription = await storage.updatePrescription(prescriptionId, { 
           status: status, 
-          lastStatusUpdate: new Date() 
-        });
+          lastStatusUpdate: new Date(),
+          ...(status === 'sent_to_pharmacy' && { sentToPharmacyDate: new Date() })
+        }, tenantId);
         
         if (!updatedPrescription) {
           return res.status(404).json({ message: 'Prescription not found or access denied' });
