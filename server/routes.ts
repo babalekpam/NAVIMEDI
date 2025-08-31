@@ -1670,7 +1670,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate lab bill number
       const billNumber = `LAB-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
       
-      // Create lab bill data
+      // Determine bill status based on insurance information
+      const hasInsuranceInfo = insuranceCoverageRate > 0 || insuranceAmount > 0 || claimNumber;
+      const billStatus = hasInsuranceInfo ? "pending" : "pending_manual_review";
+      
+      // Create lab bill data with proper null handling
       const labBillData = {
         tenantId,
         patientId,
@@ -1678,16 +1682,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         billNumber,
         amount: amount.toString(),
         description,
-        status: "pending",
+        status: billStatus,
         serviceType: "lab_test",
-        labCodes,
-        diagnosisCodes,
-        notes: labNotes,
-        testName,
-        claimNumber,
-        insuranceCoverageRate: insuranceCoverageRate?.toString(),
-        insuranceAmount: insuranceAmount?.toString(),
-        patientAmount: patientAmount?.toString(),
+        labCodes: labCodes || null,
+        diagnosisCodes: diagnosisCodes || null,
+        notes: labNotes || null,
+        testName: testName || null,
+        claimNumber: claimNumber || null,
+        insuranceCoverageRate: insuranceCoverageRate ? insuranceCoverageRate.toString() : null,
+        insuranceAmount: insuranceAmount ? insuranceAmount.toString() : null,
+        patientAmount: patientAmount ? patientAmount.toString() : null,
         generatedBy: userId
       };
       
