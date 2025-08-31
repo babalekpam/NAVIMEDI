@@ -1635,7 +1635,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Laboratory billing endpoint - Create lab bills with insurance information
   app.post('/api/laboratory/billing', async (req, res) => {
+    console.log('🧪 LAB BILLING POST - Endpoint hit!');
+    console.log('🧪 Request method:', req.method);
+    console.log('🧪 Request path:', req.path);
+    console.log('🧪 Request headers:', req.headers);
+    console.log('🧪 User object exists:', !!req.user);
+    console.log('🧪 Request body:', req.body);
+    
     try {
+      if (!req.user) {
+        console.log('🚨 No user object found in request');
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+      
       const { tenantId, id: userId } = req.user as any;
       console.log('🧪 POST /api/laboratory/billing - Request received:', req.body);
       console.log('🧪 User context:', { tenantId, userId });
