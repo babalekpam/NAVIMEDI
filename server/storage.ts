@@ -2106,19 +2106,62 @@ export class DatabaseStorage implements IStorage {
               mrn: patients.mrn,
             }).from(patients).where(eq(patients.id, claim.patientId));
             
+            // Parse medication details from notes field - CRITICAL FOR DISPLAY
+            let medicationName = '';
+            let dosage = '';
+            let quantity = '';
+            
+            if (claim.notes) {
+              const noteMatch = claim.notes.match(/Medication: ([^,]+), Dosage: ([^,]+), Quantity: ([^,]+)/);
+              if (noteMatch) {
+                medicationName = noteMatch[1].trim();
+                dosage = noteMatch[2].trim();
+                quantity = noteMatch[3].trim();
+              }
+            }
+
             return {
               ...claim,
               patientFirstName: patient?.firstName || 'N/A',
               patientLastName: patient?.lastName || 'N/A',
               patientMrn: patient?.mrn || 'N/A',
+              // Map database fields to frontend expected names - CRITICAL FOR CLAIMS DISPLAY
+              medicationName: medicationName,
+              dosage: dosage,
+              quantity: quantity,
+              claimAmount: claim.totalAmount,
+              submittedAt: claim.submittedDate,
+              claimNumber: claim.claimNumber,
             };
           } catch (error) {
             console.error('Error fetching patient for claim:', claim.id, error);
+            
+            // Parse medication details from notes field even for error case
+            let medicationName = '';
+            let dosage = '';
+            let quantity = '';
+            
+            if (claim.notes) {
+              const noteMatch = claim.notes.match(/Medication: ([^,]+), Dosage: ([^,]+), Quantity: ([^,]+)/);
+              if (noteMatch) {
+                medicationName = noteMatch[1].trim();
+                dosage = noteMatch[2].trim();
+                quantity = noteMatch[3].trim();
+              }
+            }
+            
             return {
               ...claim,
               patientFirstName: 'Unknown',
               patientLastName: 'Patient',
               patientMrn: 'N/A',
+              // Map database fields to frontend expected names - CRITICAL FOR CLAIMS DISPLAY
+              medicationName: medicationName,
+              dosage: dosage,
+              quantity: quantity,
+              claimAmount: claim.totalAmount,
+              submittedAt: claim.submittedDate,
+              claimNumber: claim.claimNumber,
             };
           }
         })
