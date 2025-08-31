@@ -964,14 +964,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Authentication required' });
       }
       const { tenantId } = req.user as any;
-      const { forLaboratory, archived } = req.query;
-      console.log('🧪 Processing request for tenant:', tenantId, 'forLaboratory:', forLaboratory);
+      const { forLaboratory, archived, status } = req.query;
+      console.log('🧪 Processing request for tenant:', tenantId, 'forLaboratory:', forLaboratory, 'status:', status);
       
       let labOrders;
       
       if (forLaboratory === 'true') {
         // Laboratory viewing orders sent TO them
         labOrders = await storage.getLabOrdersForLaboratory(tenantId);
+        
+        // Filter by status if provided
+        if (status) {
+          labOrders = labOrders.filter((order: any) => order.status === status);
+          console.log(`🧪 Filtered lab orders by status '${status}': ${labOrders.length} orders`);
+        }
       } else {
         // Hospital/clinic viewing orders they created
         labOrders = await storage.getLabOrdersByTenant(tenantId);

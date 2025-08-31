@@ -269,8 +269,7 @@ export default function LaboratoryBilling() {
     queryKey: ["/api/lab-orders", "laboratory", { status: "completed" }],
     queryFn: async () => {
       console.log("Fetching completed lab orders sent to laboratory...");
-      const response = await apiRequest("GET", "/api/lab-orders/laboratory?status=completed");
-      const data = await response.json();
+      const data = await apiRequest("/api/lab-orders?forLaboratory=true&status=completed");
       console.log("Completed lab orders sent to laboratory:", data);
       return data;
     },
