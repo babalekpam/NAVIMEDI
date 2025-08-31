@@ -1022,14 +1022,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`💊 PDF DOWNLOAD - Fetching claim ${claimId} for tenant ${tenantId}`);
       
-      // Get the claim from storage
-      const claim = await storage.getInsuranceClaim(claimId, tenantId);
+      // Get the claim directly with raw query to avoid ORM issues
+      const [claim] = await db.select().from(insuranceClaims)
+        .where(and(eq(insuranceClaims.id, claimId), eq(insuranceClaims.tenantId, tenantId)));
+      
       if (!claim) {
         return res.status(404).json({ message: 'Insurance claim not found' });
       }
 
+      // Get patient info separately
+      let patientInfo = { firstName: 'Unknown', lastName: 'Patient', mrn: 'N/A' };
+      try {
+        const [patient] = await db.select()
+          .from(patients)
+          .where(eq(patients.id, claim.patientId));
+        if (patient) {
+          patientInfo = {
+            firstName: patient.firstName || 'Unknown',
+            lastName: patient.lastName || 'Patient', 
+            mrn: patient.mrn || 'N/A'
+          };
+        }
+      } catch (patientError) {
+        console.log('Could not fetch patient info, using defaults');
+      }
+
+      // Create claim object with patient info
+      const claimWithPatient = {
+        ...claim,
+        patientFirstName: patientInfo.firstName,
+        patientLastName: patientInfo.lastName,
+        patientMrn: patientInfo.mrn
+      };
+
       // Generate professional document content
-      const documentContent = generateInsuranceClaimDocument(claim);
+      const documentContent = generateInsuranceClaimDocument(claimWithPatient);
       
       // Set headers for text document download
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
