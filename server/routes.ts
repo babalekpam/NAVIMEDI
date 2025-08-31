@@ -941,16 +941,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { tenantId, id: userId } = req.user as any;
       console.log('💊 User context:', { tenantId, userId });
       
-      // Simple response first to test endpoint
-      res.status(201).json({ 
-        success: true, 
-        message: 'Insurance claim endpoint working',
+      // Create insurance claim filing for storage (since no external API integration)
+      const claimData = {
+        tenantId: tenantId,
+        patientId: req.body.patientId,
+        providerId: userId,
         claimNumber: req.body.claimNumber,
-        patientId: req.body.patientId
+        status: 'submitted', // Saved as submitted, ready for manual processing
+        
+        // Required arrays for insurance claims table
+        secondaryDiagnosisCodes: [],
+        procedureCodes: [{
+          code: req.body.medicationCode || 'MED-001',
+          description: `${req.body.medicationName} - ${req.body.dosage}`,
+          amount: parseFloat(req.body.claimAmount || '0')
+        }],
+        diagnosisCodes: [],
+        attachments: [],
+        
+        // Medical information from prescription
+        primaryDiagnosisCode: req.body.diagnosticCode || 'Z00.00',
+        primaryDiagnosisDescription: req.body.medicationNote || 'Medication prescription claim',
+        clinicalFindings: `Prescription medication: ${req.body.medicationName || 'Unknown'} (${req.body.dosage || 'N/A'})`,
+        treatmentProvided: `${req.body.medicationName || 'Medication'} prescribed for ${req.body.daysSupply || 30} days`,
+        medicalNecessity: 'Prescription medication as prescribed by licensed physician',
+        
+        // Financial information
+        totalAmount: req.body.claimAmount?.toString() || '0.00',
+        totalPatientCopay: req.body.patientShare?.toString() || '0.00', 
+        totalInsuranceAmount: ((parseFloat(req.body.claimAmount || '0')) - (parseFloat(req.body.patientShare || '0')))?.toString() || '0.00',
+        submittedDate: new Date().toISOString(),
+        
+        // Additional medication details
+        notes: `Medication: ${req.body.medicationName}, Dosage: ${req.body.dosage}, Quantity: ${req.body.quantity}, Days Supply: ${req.body.daysSupply}, Pharmacy NPI: ${req.body.pharmacyNpi || 'N/A'}`
+      };
+
+      // Save the filing to database instead of sending to external API
+      const savedClaim = await storage.createInsuranceClaim(claimData);
+      
+      console.log(`💊 INSURANCE FILING SAVED - Claim ${savedClaim.claimNumber} filed for patient ${req.body.patientId}`);
+      
+      res.status(201).json({ 
+        success: true,
+        message: 'Insurance claim filing saved successfully',
+        claim: {
+          id: savedClaim.id,
+          claimNumber: savedClaim.claimNumber,
+          status: savedClaim.status,
+          totalAmount: savedClaim.totalAmount,
+          submittedDate: savedClaim.submittedDate
+        }
       });
     } catch (error) {
-      console.error('Error creating insurance claim:', error);
-      res.status(500).json({ message: 'Failed to create insurance claim' });
+      console.error('Error saving insurance claim filing:', error);
+      res.status(500).json({ message: 'Failed to save insurance claim filing' });
     }
   });
 
