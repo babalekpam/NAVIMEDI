@@ -546,14 +546,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (tenant && tenant.type === 'pharmacy') {
         // For pharmacies: get prescriptions for this patient that were routed to this pharmacy
-        const prescriptions = await db.select().from(prescriptions)
+        const patientPrescriptions = await db.select().from(prescriptions)
           .where(and(
             eq(prescriptions.patientId, patientId),
             eq(prescriptions.pharmacyTenantId, tenantId)
           ));
         
-        console.log(`💊 PATIENT PRESCRIPTIONS - Found ${prescriptions.length} prescriptions for patient ${patientId} at pharmacy ${tenant.name}`);
-        res.json(prescriptions);
+        console.log(`💊 PATIENT PRESCRIPTIONS - Found ${patientPrescriptions.length} prescriptions for patient ${patientId} at pharmacy ${tenant.name}`);
+        res.json(patientPrescriptions);
       } else {
         // For hospitals: get prescriptions for this patient created by this tenant
         const patientPrescriptions = await storage.getPrescriptionsByPatient(patientId, tenantId);
