@@ -969,7 +969,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/lab-orders', async (req, res) => {
     try {
       const { tenantId, userId } = req.user as any;
-      const labOrderData = { ...req.body, tenantId, orderedBy: userId };
+      const labOrderData = { ...req.body, tenantId, providerId: userId };
+      console.log('🧪 Creating lab order with data:', { ...labOrderData, providerId: 'USER_ID_SET' });
       const labOrder = await storage.createLabOrder(labOrderData);
       res.status(201).json(labOrder);
     } catch (error) {
