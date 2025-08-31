@@ -1416,9 +1416,103 @@ export class DatabaseStorage implements IStorage {
     ).orderBy(desc(prescriptions.prescribedDate));
   }
 
-  async getPrescriptionsByTenant(tenantId: string): Promise<Prescription[]> {
-    return await db.select().from(prescriptions).where(eq(prescriptions.tenantId, tenantId))
-      .orderBy(desc(prescriptions.prescribedDate));
+  async getPrescriptionsByTenant(tenantId: string): Promise<any[]> {
+    console.log(`[HOSPITAL API] 🔍 Getting prescriptions for hospital: ${tenantId}`);
+    
+    // Get prescriptions first, then lookup patient and doctor names separately
+    const prescriptionsResult = await db.execute(sql`
+      SELECT 
+        id,
+        medication_name,
+        dosage,
+        frequency,
+        quantity,
+        refills,
+        instructions,
+        status,
+        prescribed_date,
+        expiry_date,
+        pharmacy_tenant_id,
+        patient_id,
+        provider_id
+      FROM prescriptions 
+      WHERE tenant_id = ${tenantId}::uuid
+      ORDER BY prescribed_date DESC
+    `);
+    
+    const prescriptionsWithNames = [];
+    
+    // Check if prescriptionsResult is an array, if not use rows property
+    const prescriptionsList = Array.isArray(prescriptionsResult) ? prescriptionsResult : prescriptionsResult.rows || [];
+    
+    // For each prescription, get patient and doctor details separately
+    for (const prescription of prescriptionsList) {
+      // Get patient info
+      const patientResult = await db.execute(sql`
+        SELECT first_name, last_name, mrn, email, phone 
+        FROM patients 
+        WHERE id = ${prescription.patient_id}::uuid
+      `);
+      
+      const doctorResult = await db.execute(sql`
+        SELECT first_name, last_name, role 
+        FROM users 
+        WHERE id = ${prescription.provider_id}::text
+      `);
+      
+      const patient = patientResult.rows[0] || {};
+      const doctor = doctorResult.rows[0] || {};
+      
+      prescriptionsWithNames.push({
+        ...prescription,
+        patient_first_name: patient.first_name,
+        patient_last_name: patient.last_name,
+        patient_mrn: patient.mrn,
+        patient_email: patient.email,
+        patient_phone: patient.phone,
+        provider_first_name: doctor.first_name,
+        provider_last_name: doctor.last_name,
+        provider_role: doctor.role
+      });
+    }
+    
+    console.log(`[HOSPITAL API] ✅ Found ${prescriptionsWithNames.length} prescriptions with patient/doctor names`);
+    
+    // Return formatted data with actual names for hospital view
+    const formattedPrescriptions = prescriptionsWithNames.map((p: any) => ({
+      id: p.id,
+      patientName: p.patient_first_name && p.patient_last_name ? 
+        `${p.patient_first_name} ${p.patient_last_name}` : 
+        `Patient ${p.patient_id}`,
+      patientMrn: p.patient_mrn,
+      medication: p.medication_name,
+      medicationName: p.medication_name, // Include both for compatibility
+      dosage: p.dosage,
+      frequency: p.frequency,
+      quantity: p.quantity,
+      refills: p.refills,
+      instructions: p.instructions,
+      providerName: p.provider_first_name && p.provider_last_name ? 
+        `Dr. ${p.provider_first_name} ${p.provider_last_name}` : 
+        `Provider ${p.provider_id}`,
+      doctorRole: p.provider_role,
+      status: p.status,
+      prescribedDate: p.prescribed_date,
+      expiryDate: p.expiry_date,
+      pharmacyTenantId: p.pharmacy_tenant_id,
+      // Patient contact information
+      patientEmail: p.patient_email,
+      patientPhone: p.patient_phone
+    }));
+    
+    console.log(`[HOSPITAL API] 📋 Returning ${formattedPrescriptions.length} formatted prescriptions:`, 
+      formattedPrescriptions.map(p => ({ 
+        patient: p.patientName, 
+        doctor: p.providerName, 
+        medication: p.medication 
+      })));
+    
+    return formattedPrescriptions;
   }
 
   async getPrescriptionsByPharmacyTenant(pharmacyTenantId: string): Promise<Prescription[]> {
