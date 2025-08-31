@@ -251,12 +251,7 @@ export default function LaboratoryBilling() {
     queryFn: async () => {
       console.log("Fetching lab billing patients... User:", user?.id, "Tenant:", tenant?.id);
       try {
-        const response = await apiRequest("GET", "/api/laboratory/billing-patients");
-        if (!response.ok) {
-          console.error("Failed to fetch patients:", response.status, response.statusText);
-          throw new Error(`Failed to fetch patients: ${response.status}`);
-        }
-        const data = await response.json();
+        const data = await apiRequest("/api/billing/patients");
         console.log("Lab billing patients data:", data);
         return data;
       } catch (error) {
