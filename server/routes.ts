@@ -957,12 +957,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Lab order management routes
   app.get('/api/lab-orders', async (req, res) => {
+    console.log('🧪 LAB ORDERS ENDPOINT HIT:', req.query);
     try {
       if (!req.user) {
+        console.log('🚨 No user authenticated');
         return res.status(401).json({ message: 'Authentication required' });
       }
       const { tenantId } = req.user as any;
       const { forLaboratory, archived } = req.query;
+      console.log('🧪 Processing request for tenant:', tenantId, 'forLaboratory:', forLaboratory);
       
       let labOrders;
       

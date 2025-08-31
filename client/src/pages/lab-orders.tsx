@@ -96,8 +96,18 @@ export default function LabOrders() {
       }
       const url = `/api/lab-orders?${params.toString()}`;
       console.log(`[LAB ORDERS] Fetching ${statusFilter === 'archived' ? 'archived' : 'active'} orders for ${tenant?.type} using URL:`, url);
-      const response = await apiRequest("GET", url);
-      return response;
+      try {
+        console.log(`[LAB ORDERS] Making request to:`, url);
+        console.log(`[LAB ORDERS] Auth token exists:`, !!localStorage.getItem("auth_token"));
+        const response = await apiRequest("GET", url);
+        console.log(`[LAB ORDERS] SUCCESS - Response:`, response);
+        return response;
+      } catch (error) {
+        console.error(`[LAB ORDERS] ERROR - Request failed:`, error);
+        console.error(`[LAB ORDERS] ERROR - Message:`, error?.message);
+        console.error(`[LAB ORDERS] ERROR - Stack:`, error?.stack);
+        throw error;
+      }
     },
     enabled: !!user && !!tenant,
   });
