@@ -917,6 +917,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Insurance Claims routes
+  app.get('/api/insurance-claims', async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const claims = await storage.getInsuranceClaimsByTenant(tenantId);
+      res.json(claims);
+    } catch (error) {
+      console.error('Error fetching insurance claims:', error);
+      res.status(500).json({ message: 'Failed to fetch insurance claims' });
+    }
+  });
+
+  app.post('/api/insurance-claims', async (req, res) => {
+    try {
+      const { tenantId, id: userId } = req.user as any;
+      
+      // Create insurance claim from medication claim data
+      const claimData = {
+        tenantId: tenantId,
+        patientId: req.body.patientId,
+        providerId: userId,
+        claimNumber: req.body.claimNumber,
+        claimType: req.body.claimType || 'medication',
+        status: req.body.status || 'submitted',
+        
+        // Medication-specific fields
+        prescriptionId: req.body.prescriptionId,
+        medicationName: req.body.medicationName,
+        medicationCode: req.body.medicationCode,
+        dosage: req.body.dosage,
+        quantity: req.body.quantity,
+        daysSupply: req.body.daysSupply,
+        medicationCost: req.body.medicationCost,
+        insuranceCoverageRate: req.body.insuranceCoverageRate,
+        patientShare: req.body.patientShare,
+        claimAmount: req.body.claimAmount,
+        diagnosticCode: req.body.diagnosticCode,
+        pharmacyNpi: req.body.pharmacyNpi,
+        medicationNote: req.body.medicationNote,
+        
+        // Additional fields for insurance claims table
+        primaryDiagnosisCode: req.body.diagnosticCode,
+        primaryDiagnosisDescription: req.body.medicationNote || 'Medication prescription claim',
+        totalAmount: req.body.claimAmount?.toString(),
+        totalPatientCopay: req.body.patientShare?.toString(),
+        totalInsuranceAmount: (req.body.claimAmount - req.body.patientShare)?.toString(),
+        submittedDate: req.body.submittedAt || new Date().toISOString(),
+      };
+
+      const claim = await storage.createInsuranceClaim(claimData);
+      console.log(`💊 MEDICATION CLAIM CREATED - Claim ${claim.claimNumber} for patient ${req.body.patientId}`);
+      res.status(201).json(claim);
+    } catch (error) {
+      console.error('Error creating insurance claim:', error);
+      res.status(500).json({ message: 'Failed to create insurance claim' });
+    }
+  });
+
   // PHARMACY API ENDPOINTS FOR PRESCRIPTION ROUTING
   // Get all available pharmacies for prescription routing
   app.get('/api/pharmacies', async (req, res) => {
