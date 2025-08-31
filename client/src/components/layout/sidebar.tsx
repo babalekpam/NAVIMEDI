@@ -304,7 +304,6 @@ export const Sidebar = () => {
     
     // Patient & Client Services
     const clientServicesItems = [
-      { id: "patient-management", label: "👤 Patient Management", icon: Users, path: "/patients", roles: ["lab_technician", "tenant_admin", "director"] },
       { id: "lab-orders", label: "🧪 Lab Orders", icon: TestTube, path: "/lab-orders", roles: ["lab_technician", "tenant_admin", "director"] }
     ];
     
