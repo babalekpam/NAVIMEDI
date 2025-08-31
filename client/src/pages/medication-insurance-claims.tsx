@@ -959,7 +959,7 @@ export default function MedicationInsuranceClaims() {
                   </div>
                   <div>
                     <span className="font-medium text-gray-700">Claim Amount:</span>
-                    <p className="font-semibold text-green-600">${claim.claimAmount ? claim.claimAmount.toFixed(2) : '0.00'}</p>
+                    <p className="font-semibold text-green-600">${claim.claimAmount ? parseFloat(claim.claimAmount).toFixed(2) : '0.00'}</p>
                   </div>
                   <div>
                     <span className="font-medium text-gray-700">Submitted:</span>
@@ -968,13 +968,13 @@ export default function MedicationInsuranceClaims() {
                   {claim.approvedAmount && (
                     <div>
                       <span className="font-medium text-gray-700">Approved:</span>
-                      <p className="font-semibold text-blue-600">${claim.approvedAmount.toFixed(2)}</p>
+                      <p className="font-semibold text-blue-600">${parseFloat(claim.approvedAmount).toFixed(2)}</p>
                     </div>
                   )}
                   {claim.copayAmount && (
                     <div>
                       <span className="font-medium text-gray-700">Copay:</span>
-                      <p className="font-semibold text-orange-600">${claim.copayAmount.toFixed(2)}</p>
+                      <p className="font-semibold text-orange-600">${parseFloat(claim.copayAmount).toFixed(2)}</p>
                     </div>
                   )}
                   {claim.processedAt && (
