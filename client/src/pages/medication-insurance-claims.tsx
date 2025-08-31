@@ -221,7 +221,7 @@ export default function MedicationInsuranceClaims() {
       // Create download link
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Insurance_Claim_${claimNumber}.pdf`;
+      link.download = `Insurance_Claim_${claimNumber}.txt`;
       document.body.appendChild(link);
       link.click();
       
@@ -230,7 +230,7 @@ export default function MedicationInsuranceClaims() {
       document.body.removeChild(link);
       
       toast({
-        title: "PDF Downloaded",
+        title: "Claim Downloaded",
         description: `Insurance claim ${claimNumber} has been downloaded successfully.`,
       });
     } catch (error) {
