@@ -200,6 +200,49 @@ export default function MedicationInsuranceClaims() {
     return `${prefix}-${timestamp}-${random}`;
   };
 
+  // Download claim PDF function
+  const downloadClaimPDF = async (claimId: string, claimNumber: string) => {
+    try {
+      const response = await fetch(`/api/insurance-claims/${claimId}/download`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download PDF');
+      }
+
+      // Create blob from response
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Insurance_Claim_${claimNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+      
+      toast({
+        title: "PDF Downloaded",
+        description: `Insurance claim ${claimNumber} has been downloaded successfully.`,
+      });
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download the insurance claim PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Handle patient selection
   const handlePatientSelect = (patient: Patient) => {
     setSelectedPatient(patient);
@@ -886,7 +929,18 @@ export default function MedicationInsuranceClaims() {
                       Patient: {claim.patientFirstName} {claim.patientLastName} ({claim.patientMrn})
                     </p>
                   </div>
-                  {getStatusBadge(claim.status)}
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(claim.status)}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => downloadClaimPDF(claim.id, claim.claimNumber)}
+                      data-testid={`download-claim-${claim.id}`}
+                    >
+                      <FileText className="h-4 w-4 mr-1" />
+                      Download PDF
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>

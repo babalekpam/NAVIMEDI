@@ -8,8 +8,75 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { db } from "./db";
-import { tenants, users, pharmacies, prescriptions, insuranceClaims } from "@shared/schema";
+import { tenants, users, pharmacies, prescriptions, insuranceClaims, type InsuranceClaim } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
+
+// PDF Generation Function for Insurance Claims
+function generateInsuranceClaimPDF(claim: InsuranceClaim): string {
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  // Generate a professional insurance claim document in text format
+  // In a production environment, you'd use a proper PDF library like puppeteer or pdfkit
+  const pdfContent = `
+PROFESSIONAL INSURANCE CLAIM DOCUMENT
+=====================================
+
+Generated on: ${currentDate}
+Claim Number: ${claim.claimNumber}
+Status: ${claim.status?.toUpperCase() || 'SUBMITTED'}
+
+PATIENT INFORMATION
+------------------
+Patient Name: ${claim.patientFirstName || 'N/A'} ${claim.patientLastName || 'N/A'}
+Patient MRN: ${claim.patientMrn || 'N/A'}
+Patient ID: ${claim.patientId}
+
+MEDICATION DETAILS
+-----------------
+Medication Name: ${claim.medicationName}
+Medication Code: ${claim.medicationCode || 'N/A'}
+Dosage: ${claim.dosage || 'N/A'}
+Quantity: ${claim.quantity}
+Days Supply: ${claim.daysSupply}
+
+FINANCIAL INFORMATION
+--------------------
+Medication Cost: $${(claim.medicationCost || 0).toFixed(2)}
+Insurance Coverage Rate: ${(claim.insuranceCoverageRate || 0)}%
+Claim Amount: $${(claim.claimAmount || 0).toFixed(2)}
+Patient Share: $${(claim.patientShare || 0).toFixed(2)}
+
+CLAIM DETAILS
+-------------
+Claim Type: ${claim.claimType || 'medication'}
+Diagnostic Code: ${claim.diagnosticCode || 'N/A'}
+Pharmacy NPI: ${claim.pharmacyNpi || 'N/A'}
+Prescription ID: ${claim.prescriptionId}
+
+SUBMISSION INFORMATION
+---------------------
+Submitted Date: ${claim.submittedAt ? new Date(claim.submittedAt).toLocaleDateString() : 'N/A'}
+${claim.processedAt ? `Processed Date: ${new Date(claim.processedAt).toLocaleDateString()}` : ''}
+${claim.approvedAmount ? `Approved Amount: $${claim.approvedAmount.toFixed(2)}` : ''}
+${claim.copayAmount ? `Copay Amount: $${claim.copayAmount.toFixed(2)}` : ''}
+
+ADDITIONAL NOTES
+---------------
+${claim.medicationNote || 'No additional notes provided.'}
+
+---
+This document was generated electronically by NaviMED Healthcare Platform.
+For questions regarding this claim, please contact your healthcare provider.
+Document ID: ${claim.id}
+Generated: ${new Date().toISOString()}
+`;
+
+  return pdfContent;
+}
 
 /**
  * NAVIGED HEALTHCARE PLATFORM - ROUTE DEFINITIONS
@@ -1018,6 +1085,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching insurance claims:', error);
       res.status(500).json({ message: 'Failed to fetch insurance claims' });
+    }
+  });
+
+  // Download insurance claim as PDF
+  app.get('/api/insurance-claims/:id/download', async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const { id: claimId } = req.params;
+      
+      console.log(`💊 PDF DOWNLOAD - Fetching claim ${claimId} for tenant ${tenantId}`);
+      
+      // Get the claim from storage
+      const claim = await storage.getInsuranceClaim(claimId, tenantId);
+      if (!claim) {
+        return res.status(404).json({ message: 'Insurance claim not found' });
+      }
+
+      // Generate professional PDF content
+      const pdfContent = generateInsuranceClaimPDF(claim);
+      
+      // Set headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="Insurance_Claim_${claim.claimNumber}.pdf"`);
+      
+      // Send PDF content
+      res.send(Buffer.from(pdfContent, 'binary'));
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      res.status(500).json({ message: 'Failed to generate PDF' });
     }
   });
 
