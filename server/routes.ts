@@ -929,43 +929,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint to verify POST requests work
+  app.post('/api/test-post', (req, res) => {
+    console.log('🧪 TEST POST - Request received:', req.body);
+    res.json({ success: true, message: 'POST request working', data: req.body });
+  });
+
   app.post('/api/insurance-claims', async (req, res) => {
     console.log('💊 POST /api/insurance-claims - Request received:', req.body);
     try {
       const { tenantId, id: userId } = req.user as any;
       console.log('💊 User context:', { tenantId, userId });
       
-      // Create insurance claim from medication claim data  
-      const claimData = {
-        tenantId: tenantId,
-        patientId: req.body.patientId,
-        providerId: userId,
+      // Simple response first to test endpoint
+      res.status(201).json({ 
+        success: true, 
+        message: 'Insurance claim endpoint working',
         claimNumber: req.body.claimNumber,
-        status: req.body.status || 'submitted',
-        
-        // Required arrays for insurance claims table
-        secondaryDiagnosisCodes: [],
-        procedureCodes: [],
-        diagnosisCodes: [],
-        attachments: [],
-        
-        // Medical information
-        primaryDiagnosisCode: req.body.diagnosticCode,
-        primaryDiagnosisDescription: req.body.medicationNote || 'Medication prescription claim',
-        clinicalFindings: `Medication prescribed: ${req.body.medicationName}`,
-        treatmentProvided: `${req.body.medicationName} ${req.body.dosage}`,
-        medicalNecessity: 'Prescription medication as prescribed by physician',
-        
-        // Financial information
-        totalAmount: req.body.claimAmount?.toString() || '0',
-        totalPatientCopay: req.body.patientShare?.toString() || '0', 
-        totalInsuranceAmount: ((req.body.claimAmount || 0) - (req.body.patientShare || 0))?.toString() || '0',
-        submittedDate: req.body.submittedAt || new Date().toISOString(),
-      };
-
-      const claim = await storage.createInsuranceClaim(claimData);
-      console.log(`💊 MEDICATION CLAIM CREATED - Claim ${claim.claimNumber} for patient ${req.body.patientId}`);
-      res.status(201).json(claim);
+        patientId: req.body.patientId
+      });
     } catch (error) {
       console.error('Error creating insurance claim:', error);
       res.status(500).json({ message: 'Failed to create insurance claim' });
