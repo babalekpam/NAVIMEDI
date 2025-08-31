@@ -233,16 +233,10 @@ export default function LaboratoryBilling() {
   // Fetch laboratory bills
   const { data: bills = [], isLoading, refetch: refetchBills } = useQuery<LabBill[]>({
     queryKey: ["/api/laboratory/billing"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/laboratory/billing");
-      const data = await response.json();
-      console.log("Laboratory bills API response:", data);
-      return data;
-    },
     enabled: !!user && !!tenant,
     refetchInterval: 5000, // Reduced to 5 seconds for faster updates
     staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache data
+    gcTime: 0, // Don't cache data
   });
 
   // Fetch patients for laboratory billing (cross-tenant access)
@@ -298,8 +292,10 @@ export default function LaboratoryBilling() {
   // Create lab bill mutation
   const createLabBillMutation = useMutation({
     mutationFn: async (data: LabBillForm) => {
-      const response = await apiRequest("POST", "/api/laboratory/billing", data);
-      return response.json();
+      return await apiRequest("/api/laboratory/billing", {
+        method: "POST",
+        body: data
+      });
     },
     onSuccess: () => {
       toast({
@@ -322,8 +318,10 @@ export default function LaboratoryBilling() {
   // Update lab bill mutation
   const updateLabBillMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<LabBillForm> }) => {
-      const response = await apiRequest("PATCH", `/api/laboratory/billing/${id}`, data);
-      return response.json();
+      return await apiRequest(`/api/laboratory/billing/${id}`, {
+        method: "PATCH",
+        body: data
+      });
     },
     onSuccess: () => {
       toast({

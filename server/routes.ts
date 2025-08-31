@@ -1633,6 +1633,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get laboratory bills endpoint
+  app.get('/api/laboratory/billing', authenticateToken, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      console.log('🧪 GET /api/laboratory/billing - Fetching bills for tenant:', tenantId);
+      
+      const bills = await storage.getLabBillsByTenant(tenantId);
+      console.log(`🧪 Found ${bills.length} lab bills for tenant ${tenantId}`);
+      
+      res.json(bills);
+    } catch (error) {
+      console.error('Error fetching laboratory bills:', error);
+      res.status(500).json({ message: 'Failed to fetch laboratory bills' });
+    }
+  });
+
   // Laboratory billing endpoint - Create lab bills with insurance information
   app.post('/api/laboratory/billing', authenticateToken, async (req, res) => {
     console.log('🧪 LAB BILLING POST - Endpoint hit!');
