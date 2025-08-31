@@ -1550,9 +1550,9 @@ export class DatabaseStorage implements IStorage {
     
     // For each prescription, get patient and doctor details separately
     for (const prescription of prescriptionsList) {
-      // Get patient info with debugging
+      // Get patient info with insurance data - CRITICAL FOR PHARMACY OPERATIONS
       const patientResult = await db.execute(sql`
-        SELECT first_name, last_name, mrn, email, phone 
+        SELECT first_name, last_name, mrn, email, phone, insurance_info
         FROM patients 
         WHERE id = ${prescription.patient_id}::uuid
       `);
@@ -1566,6 +1566,18 @@ export class DatabaseStorage implements IStorage {
       const patient = patientResult.rows[0] || {};
       const doctor = doctorResult.rows[0] || {};
       
+      // Parse insurance data from patient record - CRITICAL FOR PHARMACY OPERATIONS
+      let insuranceData = {};
+      try {
+        if (patient.insurance_info) {
+          insuranceData = typeof patient.insurance_info === 'string' ? 
+            JSON.parse(patient.insurance_info) : patient.insurance_info;
+        }
+      } catch (e) {
+        console.log('Error parsing insurance data:', e);
+        insuranceData = {};
+      }
+      
       prescriptionsWithNames.push({
         ...prescription,
         patient_first_name: patient.first_name,
@@ -1573,6 +1585,7 @@ export class DatabaseStorage implements IStorage {
         patient_mrn: patient.mrn,
         patient_email: patient.email,
         patient_phone: patient.phone,
+        patient_insurance: insuranceData,
         provider_first_name: doctor.first_name,
         provider_last_name: doctor.last_name,
         provider_role: doctor.role
@@ -1596,6 +1609,12 @@ export class DatabaseStorage implements IStorage {
       prescribingDoctor: p.provider_first_name && p.provider_last_name ? 
         `Dr. ${p.provider_first_name} ${p.provider_last_name}` : 
         `Provider ${p.provider_id}`,
+      providerName: p.provider_first_name && p.provider_last_name ? 
+        `Dr. ${p.provider_first_name} ${p.provider_last_name}` : 
+        `Unknown Provider`,
+      doctorName: p.provider_first_name && p.provider_last_name ? 
+        `Dr. ${p.provider_first_name} ${p.provider_last_name}` : 
+        `Unknown Provider`,
       doctorRole: p.provider_role,
       status: p.status === 'prescribed' ? 'new' : p.status === 'dispensed' ? 'ready' : p.status,
       prescribedDate: p.prescribed_date,
@@ -1603,14 +1622,17 @@ export class DatabaseStorage implements IStorage {
       // Patient contact information
       patientEmail: p.patient_email,
       patientPhone: p.patient_phone,
-      // Insurance information (we'll add this back separately)
-      insuranceProvider: 'Pending Insurance Lookup',
-      policyNumber: 'N/A',
-      copayAmount: 0,
-      deductibleAmount: 0,
+      // Real insurance information from patient records - CRITICAL FOR PHARMACY FILING
+      insuranceProvider: p.patient_insurance?.provider || p.patient_insurance?.insuranceProvider || 'No Insurance on File',
+      policyNumber: p.patient_insurance?.policyNumber || 'Not Available',
+      copayAmount: p.patient_insurance?.copayAmount || p.patient_insurance?.copay || 0,
+      deductibleAmount: p.patient_insurance?.deductibleAmount || p.patient_insurance?.deductible || 0,
+      groupNumber: p.patient_insurance?.groupNumber || 'N/A',
+      memberNumber: p.patient_insurance?.memberNumber || p.patient_insurance?.memberId || 'N/A',
+      insurancePlan: p.patient_insurance?.planName || p.patient_insurance?.plan || 'N/A',
       waitTime: Math.floor(Math.random() * 20), // Demo wait time
       priority: 'normal',
-      insuranceStatus: 'pending'
+      insuranceStatus: p.patient_insurance?.provider ? 'verified' : 'pending'
     }));
     
     console.log(`[PHARMACY API] 📋 Returning ${formattedPrescriptions.length} formatted prescriptions:`, 
