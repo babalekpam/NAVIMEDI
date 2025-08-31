@@ -107,8 +107,9 @@ export async function apiRequest(
   // Try to parse as JSON
   try {
     return JSON.parse(responseText);
-  } catch (parseError) {
-    throw new Error(`Failed to parse JSON response: ${parseError.message}`);
+  } catch (parseError: unknown) {
+    const err = parseError as Error;
+    throw new Error(`Failed to parse JSON response: ${err.message}`);
   }
 }
 

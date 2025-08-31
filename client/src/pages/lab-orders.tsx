@@ -99,13 +99,14 @@ export default function LabOrders() {
       try {
         console.log(`[LAB ORDERS] Making request to:`, url);
         console.log(`[LAB ORDERS] Auth token exists:`, !!localStorage.getItem("auth_token"));
-        const response = await apiRequest("GET", url);
+        const response = await apiRequest(url);
         console.log(`[LAB ORDERS] SUCCESS - Response:`, response);
         return response;
       } catch (error) {
         console.error(`[LAB ORDERS] ERROR - Request failed:`, error);
-        console.error(`[LAB ORDERS] ERROR - Message:`, error?.message);
-        console.error(`[LAB ORDERS] ERROR - Stack:`, error?.stack);
+        const err = error as any;
+        console.error(`[LAB ORDERS] ERROR - Message:`, err?.message);
+        console.error(`[LAB ORDERS] ERROR - Stack:`, err?.stack);
         throw error;
       }
     },
@@ -215,7 +216,7 @@ export default function LabOrders() {
       
       console.log("Completing lab order with data:", labResultData);
       
-      return await apiRequest("POST", "/api/lab-results", labResultData);
+      return await apiRequest("/api/lab-results", { method: 'POST', body: labResultData });
     },
     onSuccess: (result) => {
       console.log("Lab order completed successfully:", result);
@@ -661,22 +662,16 @@ export default function LabOrders() {
               <div className="bg-green-50 p-4 rounded-lg">
                 <h3 className="font-semibold text-gray-900 mb-2">Clinical Information</h3>
                 <div className="space-y-3">
-                  {selectedLabOrder.clinicalHistory && (
+                  {selectedLabOrder.instructions && (
                     <div>
                       <p className="text-sm text-gray-600">Clinical History</p>
-                      <p className="text-gray-700">{selectedLabOrder.clinicalHistory}</p>
+                      <p className="text-gray-700">{selectedLabOrder.instructions}</p>
                     </div>
                   )}
                   {selectedLabOrder.instructions && (
                     <div>
                       <p className="text-sm text-gray-600">Special Instructions</p>
                       <p className="text-gray-700">{selectedLabOrder.instructions}</p>
-                    </div>
-                  )}
-                  {selectedLabOrder.diagnosis && (
-                    <div>
-                      <p className="text-sm text-gray-600">Provisional Diagnosis</p>
-                      <p className="text-gray-700">{selectedLabOrder.diagnosis}</p>
                     </div>
                   )}
                 </div>
@@ -688,18 +683,12 @@ export default function LabOrders() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Ordering Physician</p>
-                    <p className="font-medium">{selectedLabOrder.orderingPhysician || 'Not specified'}</p>
+                    <p className="font-medium">Not specified</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Order ID</p>
                     <p className="font-mono text-sm text-gray-600">{selectedLabOrder.id.slice(-8)}</p>
                   </div>
-                  {selectedLabOrder.expectedDate && (
-                    <div>
-                      <p className="text-sm text-gray-600">Expected Completion</p>
-                      <p className="font-medium">{new Date(selectedLabOrder.expectedDate).toLocaleDateString()}</p>
-                    </div>
-                  )}
                   {selectedLabOrder.resultDate && (
                     <div>
                       <p className="text-sm text-gray-600">Results Available</p>

@@ -956,7 +956,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Lab order management routes
-  app.get('/api/lab-orders', async (req, res) => {
+  app.get('/api/lab-orders', authenticateToken, async (req, res) => {
     console.log('🧪 LAB ORDERS ENDPOINT HIT:', req.query);
     try {
       if (!req.user) {
@@ -984,7 +984,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/lab-orders', async (req, res) => {
+  app.post('/api/lab-orders', authenticateToken, async (req, res) => {
     try {
       const { tenantId, userId, id } = req.user as any;
       console.log('🧪 Debug - req.user contents:', req.user);

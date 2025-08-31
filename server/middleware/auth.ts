@@ -68,15 +68,16 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
     
     // Token validated successfully
     next();
-  } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      console.error("JWT Token expired:", error.expiredAt);
-      return res.status(401).json({ message: "Token expired", code: "TOKEN_EXPIRED", expiredAt: error.expiredAt });
-    } else if (error.name === 'JsonWebTokenError') {
-      console.error("Invalid JWT token:", error.message);
+  } catch (error: unknown) {
+    const err = error as any;
+    if (err.name === 'TokenExpiredError') {
+      console.error("JWT Token expired:", err.expiredAt);
+      return res.status(401).json({ message: "Token expired", code: "TOKEN_EXPIRED", expiredAt: err.expiredAt });
+    } else if (err.name === 'JsonWebTokenError') {
+      console.error("Invalid JWT token:", err.message);
       return res.status(401).json({ message: "Invalid token", code: "TOKEN_INVALID" });
     } else {
-      console.error("Token verification error:", error);
+      console.error("Token verification error:", err);
       return res.status(401).json({ message: "Authentication failed", code: "AUTH_ERROR" });
     }
   }
