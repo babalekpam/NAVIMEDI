@@ -221,19 +221,12 @@ export default function PrescriptionsPage() {
         {(user?.role === 'doctor' || user?.role === 'physician' || user?.role === 'nurse' || user?.role === 'tenant_admin' || user?.role === 'director' || (user?.role === 'super_admin' && tenant?.type !== 'pharmacy')) && tenant?.type !== 'pharmacy' && (
           <Button 
             onClick={() => {
-              console.log('🔴 NEW PRESCRIPTION BUTTON CLICKED');
-              console.log('🔴 Current modal states:', {
-                create: isCreateModalOpen,
-                processing: isProcessingModalOpen,
-                viewDetails: isViewDetailsModalOpen
-              });
               // Force close any other modals that might be open
               setIsProcessingModalOpen(false);
               setIsViewDetailsModalOpen(false);
               setShowSimpleModal(false);
               // Then open the create modal
               setIsCreateModalOpen(true);
-              console.log('🔴 Create modal should now be open');
             }} 
             data-testid="button-create-prescription"
             className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -855,14 +848,7 @@ Click outside to close`);
       </Tabs>
 
       {/* Create Prescription Modal - MOVED OUTSIDE TABS */}
-      <Dialog open={isCreateModalOpen} onOpenChange={(open) => {
-        console.log('Create Modal onOpenChange called:', open);
-        setIsCreateModalOpen(open);
-        if (!open) {
-          // Ensure clean state when modal closes
-          console.log('Create modal closed, resetting state');
-        }
-      }}>
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" style={{ zIndex: 99999, position: 'fixed' }}>
           <DialogHeader>
             <DialogTitle>Create New Prescription</DialogTitle>
@@ -871,14 +857,8 @@ Click outside to close`);
             </DialogDescription>
           </DialogHeader>
           <PrescriptionForm
-            onSubmit={(data) => {
-              console.log('Submitting prescription:', data);
-              createPrescriptionMutation.mutate(data);
-            }}
-            onCancel={() => {
-              console.log('Prescription form cancelled');
-              setIsCreateModalOpen(false);
-            }}
+            onSubmit={(data) => createPrescriptionMutation.mutate(data)}
+            onCancel={() => setIsCreateModalOpen(false)}
             isLoading={createPrescriptionMutation.isPending}
             patients={(patients as any) || []}
           />
