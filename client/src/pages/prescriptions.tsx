@@ -54,6 +54,8 @@ export default function PrescriptionsPage() {
   const [isViewDetailsModalOpen, setIsViewDetailsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("new"); // For prescription tabs
+  const [showSimpleModal, setShowSimpleModal] = useState(false);
+  const [modalContent, setModalContent] = useState("");
 
   // Fetch prescriptions for current tenant (hospital or pharmacy)
   const { data: prescriptions = [], isLoading } = useQuery<Prescription[]>({
@@ -362,8 +364,18 @@ export default function PrescriptionsPage() {
                               <button
                                 className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
                                 onClick={() => {
-                                  setSelectedPrescription(prescription);
-                                  setIsProcessingModalOpen(true);
+                                  setModalContent(`PROCESS PRESCRIPTION
+
+Patient: ${prescription.patientName}
+Medication: ${prescription.medication}
+Dosage: ${prescription.dosage}
+Quantity: ${prescription.quantity}
+Status: ${prescription.status}
+Prescribed: ${new Date(prescription.prescribedDate).toLocaleDateString()}
+Provider: ${prescription.providerName}
+
+Click outside to close`);
+                                  setShowSimpleModal(true);
                                 }}
                               >
                                 Process
@@ -371,8 +383,22 @@ export default function PrescriptionsPage() {
                               <button
                                 className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
                                 onClick={() => {
-                                  setSelectedPrescription(prescription);
-                                  setIsViewDetailsModalOpen(true);
+                                  setModalContent(`PRESCRIPTION DETAILS
+
+Patient: ${prescription.patientName}
+Medication: ${prescription.medication}
+Dosage: ${prescription.dosage}
+Quantity: ${prescription.quantity}
+Frequency: ${prescription.frequency}
+Refills: ${prescription.refills}
+Instructions: ${prescription.instructions}
+Status: ${prescription.status}
+Prescribed: ${new Date(prescription.prescribedDate).toLocaleDateString()}
+Expiry: ${prescription.expiryDate ? new Date(prescription.expiryDate).toLocaleDateString() : 'N/A'}
+Provider: ${prescription.providerName}
+
+Click outside to close`);
+                                  setShowSimpleModal(true);
                                 }}
                               >
                                 View Details
@@ -825,6 +851,43 @@ export default function PrescriptionsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Simple Custom Modal */}
+      {showSimpleModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 999999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onClick={() => setShowSimpleModal(false)}
+        >
+          <div 
+            style={{
+              backgroundColor: 'white',
+              padding: '30px',
+              borderRadius: '10px',
+              maxWidth: '600px',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              border: '2px solid #3b82f6',
+              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <pre style={{ fontFamily: 'system-ui', fontSize: '14px', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+              {modalContent}
+            </pre>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
