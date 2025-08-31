@@ -161,7 +161,8 @@ export default function MedicationInsuranceClaims() {
   // Create medication insurance claim mutation
   const createClaimMutation = useMutation({
     mutationFn: async (data: MedicationClaimForm) => {
-      const response = await apiRequest("POST", "/api/insurance-test", {
+      const response = await apiRequest("/api/insurance-test", {
+        method: "POST",
         body: JSON.stringify({
           ...data,
           claimType: "medication",
