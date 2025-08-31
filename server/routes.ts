@@ -1633,6 +1633,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Laboratory billing endpoint - Create lab bills with insurance information
+  app.post('/api/laboratory/billing', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { tenantId, id: userId } = req.user as any;
+      console.log('🧪 POST /api/laboratory/billing - Request received:', req.body);
+      console.log('🧪 User context:', { tenantId, userId });
+      
+      const {
+        patientId,
+        labOrderId,
+        amount,
+        description,
+        insuranceCoverageRate,
+        insuranceAmount,
+        patientAmount,
+        claimNumber,
+        labCodes,
+        diagnosisCodes,
+        labNotes,
+        testName
+      } = req.body;
+      
+      // Generate lab bill number
+      const billNumber = `LAB-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      
+      // Create lab bill data
+      const labBillData = {
+        tenantId,
+        patientId,
+        labOrderId,
+        billNumber,
+        amount: amount.toString(),
+        description,
+        status: "pending",
+        serviceType: "lab_test",
+        labCodes,
+        diagnosisCodes,
+        notes: labNotes,
+        testName,
+        claimNumber,
+        insuranceCoverageRate: insuranceCoverageRate?.toString(),
+        insuranceAmount: insuranceAmount?.toString(),
+        patientAmount: patientAmount?.toString(),
+        generatedBy: userId
+      };
+      
+      console.log('🧪 Creating lab bill with data:', labBillData);
+      
+      // Save the lab bill to database
+      const savedLabBill = await storage.createLabBill(labBillData);
+      
+      console.log(`🧪 LAB BILL CREATED - Bill ${savedLabBill.billNumber} created for patient ${patientId}`);
+      
+      res.status(201).json({ 
+        success: true,
+        message: 'Laboratory bill created successfully',
+        labBill: {
+          id: savedLabBill.id,
+          billNumber: savedLabBill.billNumber,
+          status: savedLabBill.status,
+          amount: savedLabBill.amount,
+          description: savedLabBill.description
+        }
+      });
+    } catch (error) {
+      console.error('Error creating laboratory bill:', error);
+      res.status(500).json({ message: 'Failed to create laboratory bill' });
+    }
+  });
+
   // SUPER ADMIN ROUTES
   app.use('/api/admin', requireRole('super_admin'));
 
