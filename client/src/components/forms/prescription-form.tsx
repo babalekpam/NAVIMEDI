@@ -114,6 +114,25 @@ export const PrescriptionForm = ({ onSubmit, onCancel, isLoading = false, patien
     console.log("[DEBUG] First patient structure:", patients[0]);
   }
 
+  // Simple test form first
+  if (!patients || patients.length === 0) {
+    return (
+      <div className="p-6 text-center">
+        <h3 className="text-lg font-medium mb-4">Loading Patients...</h3>
+        <p className="text-gray-600 mb-4">Please wait while we load patient data.</p>
+        <div className="space-y-2">
+          <p className="text-sm text-gray-500">Debug info:</p>
+          <p className="text-xs">Patients array: {JSON.stringify(patients)}</p>
+        </div>
+        <div className="mt-4 space-x-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
@@ -130,16 +149,12 @@ export const PrescriptionForm = ({ onSubmit, onCancel, isLoading = false, patien
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {(!patients || patients.length === 0) ? (
-                    <SelectItem value="no-patients" disabled>No patients available</SelectItem>
-                  ) : (
-                    patients.map((patient: any) => (
-                      <SelectItem key={patient.id} value={patient.id}>
-                        {patient.firstName || patient.first_name || 'Unknown'} {patient.lastName || patient.last_name || 'Patient'} 
-                        {patient.mrn ? ` (MRN: ${patient.mrn})` : ''}
-                      </SelectItem>
-                    ))
-                  )}
+                  {patients.map((patient: any) => (
+                    <SelectItem key={patient.id} value={patient.id}>
+                      {patient.firstName || patient.first_name || 'Unknown'} {patient.lastName || patient.last_name || 'Patient'} 
+                      {patient.mrn ? ` (MRN: ${patient.mrn})` : ''}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />
