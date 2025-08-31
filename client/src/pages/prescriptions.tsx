@@ -802,6 +802,7 @@ Click outside to close`);
           </DialogHeader>
           <PrescriptionForm
             onSubmit={(data) => createPrescriptionMutation.mutate(data)}
+            onCancel={() => setIsCreateModalOpen(false)}
             isLoading={createPrescriptionMutation.isPending}
             patients={(patients as any) || []}
           />

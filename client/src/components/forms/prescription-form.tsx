@@ -76,7 +76,7 @@ export const PrescriptionForm = ({ onSubmit, onCancel, isLoading = false, patien
       
       if (selectedPatient?.preferredPharmacyId) {
         // Check if the preferred pharmacy exists in our pharmacy list
-        const preferredPharmacyExists = pharmacies.find(p => p.id === selectedPatient.preferredPharmacyId);
+        const preferredPharmacyExists = (pharmacies as any[]).find((p: any) => p.id === selectedPatient.preferredPharmacyId);
         console.log("[DEBUG] Preferred pharmacy exists:", preferredPharmacyExists);
         
         if (preferredPharmacyExists) {
