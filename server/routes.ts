@@ -956,11 +956,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Lab order management routes
   app.get('/api/lab-orders', authenticateToken, async (req, res) => {
+    console.log('🔥 LAB ORDERS ROUTE HIT!', req.query);
     try {
       const { tenantId } = req.user as any;
       const { forLaboratory, archived } = req.query;
       
-      console.log('🧪 Lab orders request:', { tenantId, forLaboratory, archived });
+      console.log('🧪 Lab orders request:', { tenantId, forLaboratory, archived, user: req.user });
       
       let labOrders;
       
@@ -968,17 +969,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Laboratory viewing orders sent TO them
         console.log('🧪 Fetching orders sent to laboratory:', tenantId);
         labOrders = await storage.getLabOrdersForLaboratory(tenantId);
-        console.log(`🧪 Found ${labOrders.length} orders for laboratory`);
+        console.log(`🧪 Found ${labOrders.length} orders for laboratory:`, labOrders);
       } else {
         // Hospital/clinic viewing orders they created
         console.log('🧪 Fetching orders created by tenant:', tenantId);
         labOrders = await storage.getLabOrdersByTenant(tenantId);
-        console.log(`🧪 Found ${labOrders.length} orders created by tenant`);
+        console.log(`🧪 Found ${labOrders.length} orders created by tenant:`, labOrders);
       }
       
       res.json(labOrders);
     } catch (error) {
-      console.error('Error fetching lab orders:', error);
+      console.error('🚨 Error fetching lab orders:', error);
       res.status(500).json({ message: 'Failed to fetch lab orders' });
     }
   });
