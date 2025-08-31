@@ -219,39 +219,28 @@ export default function PrescriptionsPage() {
         </div>
         {/* Only doctors/physicians from hospitals can create prescriptions - pharmacies receive prescriptions */}
         {(user?.role === 'doctor' || user?.role === 'physician' || user?.role === 'nurse' || user?.role === 'tenant_admin' || user?.role === 'director' || (user?.role === 'super_admin' && tenant?.type !== 'pharmacy')) && tenant?.type !== 'pharmacy' && (
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => {
-                console.log('🔴 NEW PRESCRIPTION BUTTON CLICKED');
-                console.log('🔴 Current modal states:', {
-                  create: isCreateModalOpen,
-                  processing: isProcessingModalOpen,
-                  viewDetails: isViewDetailsModalOpen
-                });
-                // Force close any other modals that might be open
-                setIsProcessingModalOpen(false);
-                setIsViewDetailsModalOpen(false);
-                // Then open the create modal
-                setIsCreateModalOpen(true);
-                console.log('🔴 Create modal should now be open');
-              }} 
-              data-testid="button-create-prescription"
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              New Prescription
-            </Button>
-            <Button 
-              onClick={() => {
-                console.log('🟡 SIMPLE TEST BUTTON CLICKED');
-                alert('Button click works! Modal state: ' + isCreateModalOpen);
-                setIsCreateModalOpen(!isCreateModalOpen);
-              }} 
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              Test Modal
-            </Button>
-          </div>
+          <Button 
+            onClick={() => {
+              console.log('🔴 NEW PRESCRIPTION BUTTON CLICKED');
+              console.log('🔴 Current modal states:', {
+                create: isCreateModalOpen,
+                processing: isProcessingModalOpen,
+                viewDetails: isViewDetailsModalOpen
+              });
+              // Force close any other modals that might be open
+              setIsProcessingModalOpen(false);
+              setIsViewDetailsModalOpen(false);
+              setShowSimpleModal(false);
+              // Then open the create modal
+              setIsCreateModalOpen(true);
+              console.log('🔴 Create modal should now be open');
+            }} 
+            data-testid="button-create-prescription"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            New Prescription
+          </Button>
         )}
       </div>
 
@@ -820,36 +809,6 @@ Click outside to close`);
         </DialogContent>
       </Dialog>
 
-      {/* Create Prescription Modal */}
-      <Dialog open={isCreateModalOpen} onOpenChange={(open) => {
-        console.log('Create Modal onOpenChange called:', open);
-        setIsCreateModalOpen(open);
-        if (!open) {
-          // Ensure clean state when modal closes
-          console.log('Create modal closed, resetting state');
-        }
-      }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create New Prescription</DialogTitle>
-            <DialogDescription>
-              Fill out the prescription details below. All fields marked with * are required.
-            </DialogDescription>
-          </DialogHeader>
-          <PrescriptionForm
-            onSubmit={(data) => {
-              console.log('Submitting prescription:', data);
-              createPrescriptionMutation.mutate(data);
-            }}
-            onCancel={() => {
-              console.log('Prescription form cancelled');
-              setIsCreateModalOpen(false);
-            }}
-            isLoading={createPrescriptionMutation.isPending}
-            patients={(patients as any) || []}
-          />
-        </DialogContent>
-      </Dialog>
         </TabsContent>
 
         <TabsContent value="refills" className="space-y-6">
@@ -894,6 +853,37 @@ Click outside to close`);
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Create Prescription Modal - MOVED OUTSIDE TABS */}
+      <Dialog open={isCreateModalOpen} onOpenChange={(open) => {
+        console.log('Create Modal onOpenChange called:', open);
+        setIsCreateModalOpen(open);
+        if (!open) {
+          // Ensure clean state when modal closes
+          console.log('Create modal closed, resetting state');
+        }
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" style={{ zIndex: 99999, position: 'fixed' }}>
+          <DialogHeader>
+            <DialogTitle>Create New Prescription</DialogTitle>
+            <DialogDescription>
+              Fill out the prescription details below. All fields marked with * are required.
+            </DialogDescription>
+          </DialogHeader>
+          <PrescriptionForm
+            onSubmit={(data) => {
+              console.log('Submitting prescription:', data);
+              createPrescriptionMutation.mutate(data);
+            }}
+            onCancel={() => {
+              console.log('Prescription form cancelled');
+              setIsCreateModalOpen(false);
+            }}
+            isLoading={createPrescriptionMutation.isPending}
+            patients={(patients as any) || []}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Simple Custom Modal */}
       {showSimpleModal && (
