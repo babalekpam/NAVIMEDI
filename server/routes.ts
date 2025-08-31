@@ -406,19 +406,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ success: true, message: 'Quick test works' });
   });
 
-  // SIMPLE INSURANCE CLAIMS ENDPOINT (NO AUTH REQUIRED FOR TESTING)
-  app.post('/api/insurance-claims', (req, res) => {
-    console.log('💊 INSURANCE CLAIMS - Simple POST received:', req.body);
-    res.json({ 
-      success: true, 
-      message: 'Insurance claim saved successfully',
-      claim: {
-        id: `claim_${Date.now()}`,
-        claimNumber: req.body.claimNumber || `CLM-${Date.now()}`,
-        status: 'submitted',
-        submittedAt: new Date().toISOString()
-      }
-    });
+  // SIMPLE INSURANCE CLAIMS ENDPOINT - SAVE TO DATABASE
+  app.post('/api/insurance-claims', async (req, res) => {
+    console.log('💊 INSURANCE CLAIMS - Saving to database:', req.body);
+    try {
+      // Get user context (simplified)
+      const tenantId = req.user?.tenantId || 'c0bdce16-06c2-4b54-a5e6-24ba214afb96'; // Default to DEO pharmacy
+      const userId = req.user?.id || 'default-user';
+      
+      // Create insurance claim for database
+      const claimData = {
+        tenantId: tenantId,
+        patientId: req.body.patientId,
+        providerId: userId,
+        claimNumber: req.body.claimNumber,
+        status: 'submitted' as const,
+        secondaryDiagnosisCodes: [],
+        procedureCodes: [{
+          code: req.body.medicationCode || 'MED-001',
+          description: `${req.body.medicationName} - ${req.body.dosage}`,
+          amount: parseFloat(req.body.claimAmount || '0')
+        }],
+        diagnosisCodes: [],
+        attachments: [],
+        primaryDiagnosisCode: req.body.diagnosticCode || 'Z00.00',
+        primaryDiagnosisDescription: req.body.medicationNote || 'Medication prescription claim',
+        clinicalFindings: `Prescription medication: ${req.body.medicationName || 'Unknown'} (${req.body.dosage || 'N/A'})`,
+        treatmentProvided: `${req.body.medicationName || 'Medication'} prescribed for ${req.body.daysSupply || 30} days`,
+        medicalNecessity: 'Prescription medication as prescribed by licensed physician',
+        totalAmount: req.body.claimAmount?.toString() || '0.00',
+        totalPatientCopay: req.body.patientShare?.toString() || '0.00',
+        totalInsuranceAmount: ((parseFloat(req.body.claimAmount || '0')) - (parseFloat(req.body.patientShare || '0')))?.toString() || '0.00',
+        submittedDate: new Date(),
+        notes: `Medication: ${req.body.medicationName}, Dosage: ${req.body.dosage}, Quantity: ${req.body.quantity}, Days Supply: ${req.body.daysSupply}`
+      };
+
+      // Save directly to database (bypass storage interface)
+      const [savedClaim] = await db.insert(insuranceClaims).values(claimData).returning();
+      
+      console.log(`💊 CLAIM SAVED TO DATABASE - ID: ${savedClaim.id}, Claim: ${savedClaim.claimNumber}`);
+      
+      res.status(201).json({ 
+        success: true,
+        message: 'Insurance claim saved successfully',
+        claim: {
+          id: savedClaim.id,
+          claimNumber: savedClaim.claimNumber,
+          status: savedClaim.status,
+          totalAmount: savedClaim.totalAmount,
+          submittedDate: savedClaim.submittedDate
+        }
+      });
+    } catch (error) {
+      console.error('Error saving insurance claim:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to save insurance claim',
+        error: error.message 
+      });
+    }
   });
 
   // AUTHENTICATED ROUTES
