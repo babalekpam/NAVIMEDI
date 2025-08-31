@@ -1971,6 +1971,57 @@ export class DatabaseStorage implements IStorage {
     return enrichedOrders;
   }
 
+  // Get patients who have lab orders at this laboratory (for billing purposes)
+  async getPatientsWithLabOrdersForLaboratory(laboratoryTenantId: string): Promise<any[]> {
+    // Get unique patients who have lab orders at this laboratory
+    const orders = await db.select({
+      patientId: labOrders.patientId,
+    }).from(labOrders)
+      .where(eq(labOrders.labTenantId, laboratoryTenantId))
+      .groupBy(labOrders.patientId);
+
+    // Get full patient information for each unique patient
+    const patients = await Promise.all(orders.map(async (order) => {
+      const [patient] = await db.select().from(patients)
+        .where(eq(patients.id, order.patientId))
+        .limit(1);
+      
+      if (!patient) return null;
+      
+      // Get the originating hospital for this patient's lab orders
+      const [latestOrder] = await db.select({
+        tenantId: labOrders.tenantId
+      }).from(labOrders)
+        .where(and(
+          eq(labOrders.patientId, order.patientId),
+          eq(labOrders.labTenantId, laboratoryTenantId)
+        ))
+        .orderBy(desc(labOrders.orderedDate))
+        .limit(1);
+      
+      // Get hospital info
+      let hospitalName = 'Unknown Hospital';
+      if (latestOrder) {
+        const [hospital] = await db.select({
+          name: tenants.name
+        }).from(tenants)
+          .where(eq(tenants.id, latestOrder.tenantId))
+          .limit(1);
+        hospitalName = hospital?.name || 'Unknown Hospital';
+      }
+      
+      return {
+        ...patient,
+        originatingHospital: hospitalName
+      };
+    }));
+
+    // Filter out null results and return valid patients
+    const validPatients = patients.filter(p => p !== null);
+    console.log(`🧪 STORAGE - Found ${validPatients.length} unique patients with lab orders for laboratory`);
+    return validPatients;
+  }
+
   async getLabOrdersByPatientMrn(patientMrn: string): Promise<any[]> {
     // Find patient by MRN first
     const patientResult = await db.select().from(patients).where(eq(patients.mrn, patientMrn));

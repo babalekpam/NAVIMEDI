@@ -1105,7 +1105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Billing patients endpoint - same logic as /api/patients for billing purposes
-  app.get('/api/billing/patients', async (req, res) => {
+  app.get('/api/billing/patients', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
     try {
       const { tenantId } = req.user as any;
       
@@ -1116,6 +1116,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (tenant && tenant.type === 'pharmacy') {
         const patients = await storage.getPatientsWithPrescriptionsForPharmacy(tenantId);
         console.log(`💊 BILLING PATIENTS - Found ${patients.length} patients with prescriptions for pharmacy ${tenant.name}`);
+        res.json(patients);
+      } else if (tenant && tenant.type === 'laboratory') {
+        // For laboratories, return patients who have completed lab orders at this laboratory
+        const patients = await storage.getPatientsWithLabOrdersForLaboratory(tenantId);
+        console.log(`🧪 BILLING PATIENTS - Found ${patients.length} patients with lab orders for laboratory ${tenant.name}`);
         res.json(patients);
       } else {
         // For other tenant types, return their own patients
