@@ -1934,34 +1934,32 @@ export class DatabaseStorage implements IStorage {
 
   // Insurance claims management
   async getInsuranceClaim(id: string, tenantId: string): Promise<any> {
-    const [claimWithPatient] = await db
-      .select({
-        // Claim fields
-        id: insuranceClaims.id,
-        tenantId: insuranceClaims.tenantId,
-        patientId: insuranceClaims.patientId,
-        claimNumber: insuranceClaims.claimNumber,
-        medicationName: insuranceClaims.medicationName,
-        dosage: insuranceClaims.dosage,
-        quantity: insuranceClaims.quantity,
-        daysSupply: insuranceClaims.daysSupply,
-        totalAmount: insuranceClaims.totalAmount,
-        totalPatientCopay: insuranceClaims.totalPatientCopay,
-        totalInsuranceAmount: insuranceClaims.totalInsuranceAmount,
-        approvedAmount: insuranceClaims.approvedAmount,
-        status: insuranceClaims.status,
-        submittedDate: insuranceClaims.submittedDate,
-        processedDate: insuranceClaims.processedDate,
-        // Patient fields
-        patientFirstName: patients.firstName,
-        patientLastName: patients.lastName,
-        patientMrn: patients.mrn,
-      })
-      .from(insuranceClaims)
-      .leftJoin(patients, eq(insuranceClaims.patientId, patients.id))
-      .where(and(eq(insuranceClaims.id, id), eq(insuranceClaims.tenantId, tenantId)));
-    
-    return claimWithPatient || undefined;
+    try {
+      // Get the claim first
+      const [claim] = await db.select().from(insuranceClaims)
+        .where(and(eq(insuranceClaims.id, id), eq(insuranceClaims.tenantId, tenantId)));
+      
+      if (!claim) {
+        return undefined;
+      }
+      
+      // Get patient info separately
+      const [patient] = await db.select({
+        firstName: patients.firstName,
+        lastName: patients.lastName,
+        mrn: patients.mrn,
+      }).from(patients).where(eq(patients.id, claim.patientId));
+      
+      return {
+        ...claim,
+        patientFirstName: patient?.firstName || 'N/A',
+        patientLastName: patient?.lastName || 'N/A',
+        patientMrn: patient?.mrn || 'N/A',
+      };
+    } catch (error) {
+      console.error('Error in getInsuranceClaim:', error);
+      return undefined;
+    }
   }
 
   async createInsuranceClaim(insertClaim: InsertInsuranceClaim): Promise<InsuranceClaim> {
