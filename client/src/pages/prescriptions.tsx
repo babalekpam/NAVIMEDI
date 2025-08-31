@@ -867,9 +867,15 @@ Click outside to close`);
                                 size="sm"
                                 onClick={() => {
                                   console.log('🔧 Process Refill clicked:', prescription.patientName, prescription.medication);
-                                  setSelectedPrescription(prescription);
-                                  setIsProcessingModalOpen(true);
-                                  console.log('✅ Processing modal should be open now');
+                                  // Direct refill processing - simpler approach
+                                  statusUpdateMutation.mutate({
+                                    prescriptionId: prescription.id,
+                                    status: 'processing',
+                                  });
+                                  toast({
+                                    title: "Refill Processing",
+                                    description: `Started processing refill for ${prescription.medication}`,
+                                  });
                                 }}
                               >
                                 Process Refill
@@ -879,9 +885,13 @@ Click outside to close`);
                                 variant="outline"
                                 onClick={() => {
                                   console.log('👁️ View Details clicked:', prescription.patientName, prescription.medication);
+                                  // Force close other modals and open details
+                                  setIsProcessingModalOpen(false);
+                                  setIsCreateModalOpen(false);
+                                  setShowSimpleModal(false);
                                   setSelectedPrescription(prescription);
                                   setIsViewDetailsModalOpen(true);
-                                  console.log('✅ View Details modal should be open now');
+                                  console.log('✅ View Details modal state set to:', true);
                                 }}
                               >
                                 View Details
