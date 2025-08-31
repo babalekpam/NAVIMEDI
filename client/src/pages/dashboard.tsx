@@ -43,6 +43,16 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const { hasPermission, canAccessModule, getModulePermissions } = usePermissions();
+  
+  // Modal states
+  const [showModal, setShowModal] = React.useState(false);
+  const [modalContent, setModalContent] = React.useState('');
+  
+  // Helper function to show informational modal
+  const showInfoModal = (title: string, message: string) => {
+    setModalContent(`${title}\n\n${message}`);
+    setShowModal(true);
+  };
 
   const isSuperAdmin = user?.role === 'super_admin';
 
@@ -2025,7 +2035,322 @@ export default function Dashboard() {
   }
   
   if (user.role === 'pharmacist') {
-    return <PharmacyDashboardEnhancedV2 />;
+    return (
+      <div>
+        {/* Pharmacy Dashboard Content - with functional buttons */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">DEO Pharmacy Dashboard</h1>
+              <p className="text-gray-600 mt-1">
+                Welcome back, {user.firstName}. Your pharmacy operations overview.
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Badge className="bg-green-100 text-green-800">
+                <Activity className="h-3 w-3 mr-1" />
+                Active
+              </Badge>
+            </div>
+          </div>
+
+          {/* Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Prescriptions Filled</CardTitle>
+                <Pill className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">24</div>
+                <p className="text-xs text-muted-foreground">+12% from yesterday</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Revenue Today</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">$2,543</div>
+                <p className="text-xs text-muted-foreground">+8% from yesterday</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Patients Served</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">18</div>
+                <p className="text-xs text-muted-foreground">Today's count</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Delivery Orders</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">7</div>
+                <p className="text-xs text-muted-foreground">2 in transit</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Comprehensive Pharmacy Service Tabs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            
+            {/* Core Service Tabs */}
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <Pill className="h-5 w-5 text-purple-600" />
+                  💊 Prescriptions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/prescriptions')}>
+                  <RefreshCw className="h-3 w-3 mr-2" />
+                  Prescription refills
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Prescription Transfers', 'Transfer your prescriptions from other pharmacies to DEO Pharmacy. Our team will handle all the paperwork and coordination.')}>
+                  <Plus className="h-3 w-3 mr-2" />
+                  New prescription transfers
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/prescriptions')}>
+                  <FileText className="h-3 w-3 mr-2" />
+                  Prescription history
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Auto-Refill Management', 'Set up automatic refills for your regular medications. Never run out of important prescriptions again. Contact our pharmacy team to enroll.')}>
+                  <Clock className="h-3 w-3 mr-2" />
+                  Auto-refill management
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/prescriptions')}>
+                  <TrendingUp className="h-3 w-3 mr-2" />
+                  Prescription tracking
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-red-500" />
+                  🛒 Health & Wellness
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Health & Wellness Products', 'Browse our selection of health and wellness products including fitness trackers, blood pressure monitors, and wellness supplements. Available in-store and online.')}>
+                  <Shield className="h-3 w-3 mr-2" />
+                  Health & wellness products
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Personal Care Items', 'Complete range of personal care products including skincare, dental care, hair care, and hygiene products from trusted brands.')}>
+                  <User className="h-3 w-3 mr-2" />
+                  Personal care items
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Vitamins & Supplements', 'High-quality vitamins, minerals, and dietary supplements. Our pharmacists can help you choose the right supplements for your health needs.')}>
+                  <Activity className="h-3 w-3 mr-2" />
+                  Vitamins & supplements
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Medical Supplies', 'Medical equipment and supplies including wound care, diabetic supplies, mobility aids, and home healthcare products.')}>
+                  <Package className="h-3 w-3 mr-2" />
+                  Medical supplies
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <Smartphone className="h-5 w-5 text-blue-500" />
+                  📱 Digital Services
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Mobile App Download', 'Download the DEO Pharmacy mobile app for easy prescription management, refill requests, and delivery tracking. Available on iOS and Android.')}>
+                  <Smartphone className="h-3 w-3 mr-2" />
+                  Mobile app download
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Text Notifications', 'Get SMS alerts for prescription ready notifications, refill reminders, and important health updates. Manage your preferences in your account settings.')}>
+                  <AlertCircle className="h-3 w-3 mr-2" />
+                  Text notifications
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Email Reminders', 'Receive email reminders for prescription refills, medication adherence, and health check-ups. Configure your email preferences anytime.')}>
+                  <Mail className="h-3 w-3 mr-2" />
+                  Email reminders
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/prescriptions')}>
+                  <Database className="h-3 w-3 mr-2" />
+                  Digital prescription management
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Telehealth Consultations', 'Connect with healthcare providers through secure video consultations. Schedule appointments and get medical advice from the comfort of your home.')}>
+                  <Stethoscope className="h-3 w-3 mr-2" />
+                  Telehealth consultations
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-green-500" />
+                  💰 Insurance & Savings
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/medication-insurance-claims')}>
+                  <ShieldCheck className="h-3 w-3 mr-2" />
+                  Insurance verification
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Generic Alternatives', 'Save money with FDA-approved generic medications. Our pharmacists will help you find cost-effective alternatives to brand-name drugs without compromising quality.')}>
+                  <Pill className="h-3 w-3 mr-2" />
+                  Generic alternatives
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Discount Programs', 'Access various discount programs including manufacturer coupons, pharmacy savings cards, and patient assistance programs to reduce your medication costs.')}>
+                  <TrendingUp className="h-3 w-3 mr-2" />
+                  Discount programs
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Prescription Assistance Programs', 'Get help paying for your medications through manufacturer assistance programs, government programs, and non-profit organizations.')}>
+                  <Shield className="h-3 w-3 mr-2" />
+                  Prescription assistance programs
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Price Comparison Tools', 'Compare medication prices across different pharmacies and insurance plans. Find the best deals and savings opportunities for your prescriptions.')}>
+                  <DollarSign className="h-3 w-3 mr-2" />
+                  Price comparison tools
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-orange-500" />
+                  🏪 Store Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Store Locations & Hours', 'DEO Pharmacy Main Location:\\n\\n📍 123 Healthcare Drive, Medical District\\n🕐 Monday-Friday: 8:00 AM - 9:00 PM\\n🕐 Saturday: 9:00 AM - 7:00 PM\\n🕐 Sunday: 10:00 AM - 6:00 PM\\n\\nEmergency services available 24/7')}>
+                  <Building2 className="h-3 w-3 mr-2" />
+                  Store locations & hours
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Pharmacy Hours', 'DEO Pharmacy Operating Hours:\\n\\n🕐 Monday-Friday: 8:00 AM - 9:00 PM\\n🕐 Saturday: 9:00 AM - 7:00 PM\\n🕐 Sunday: 10:00 AM - 6:00 PM\\n\\n📞 24/7 Emergency Line: 1-800-DEO-PHARM')}>
+                  <Clock className="h-3 w-3 mr-2" />
+                  Pharmacy hours
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Contact Information', 'DEO Pharmacy Contact Details:\\n\\n📞 Main: (555) 123-PHARM\\n📞 Emergency: 1-800-DEO-PHARM\\n📧 Email: info@deopharmacy.com\\n📱 Text: (555) 123-TEXT\\n\\n💬 Live chat available on our website and mobile app')}>
+                  <Phone className="h-3 w-3 mr-2" />
+                  Contact information
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Directions & Parking', 'Getting to DEO Pharmacy:\\n\\n📍 123 Healthcare Drive, Medical District\\n🚗 Free parking available\\n🚌 Bus routes: 15, 32, 78\\n🚇 Metro: Medical Center Station (2 blocks)\\n\\n♿ Wheelchair accessible entrance\\n🚗 Drive-thru available')}>
+                  <MapPin className="h-3 w-3 mr-2" />
+                  Directions & parking
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Drive-Thru Services', 'Convenient Drive-Thru Pharmacy:\\n\\n🚗 Fast prescription pickup\\n🕐 Same hours as main pharmacy\\n💳 All payment methods accepted\\n📱 Mobile order ahead available\\n\\nTypical wait time: 2-5 minutes')}>
+                  <TrendingUp className="h-3 w-3 mr-2" />
+                  Drive-thru services
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <User className="h-5 w-5 text-purple-500" />
+                  👤 My Account
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/patients')}>
+                  <User className="h-3 w-3 mr-2" />
+                  Personal profile
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/patients')}>
+                  <Users className="h-3 w-3 mr-2" />
+                  Family member management
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/medication-insurance-claims')}>
+                  <Shield className="h-3 w-3 mr-2" />
+                  Insurance information
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/prescriptions')}>
+                  <FileText className="h-3 w-3 mr-2" />
+                  Order history
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Saved Payment Methods', 'Manage your saved payment methods for faster checkout. Add credit cards, debit cards, or HSA/FSA accounts for convenient prescription payments.')}>
+                  <DollarSign className="h-3 w-3 mr-2" />
+                  Saved payment methods
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <Phone className="h-5 w-5 text-cyan-500" />
+                  🆘 Support
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Live Chat with Pharmacist', 'Connect with our licensed pharmacists for real-time assistance:\\n\\n💬 Available during pharmacy hours\\n📱 Through mobile app or website\\n🔒 HIPAA-compliant secure messaging\\n⚡ Average response time: 2-3 minutes\\n\\nGet answers about medications, side effects, and drug interactions.')}>
+                  <Phone className="h-3 w-3 mr-2" />
+                  Live chat with pharmacist
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('FAQ Section', 'Frequently Asked Questions:\\n\\n❓ How do I refill my prescription?\\n❓ What insurance do you accept?\\n❓ How long does delivery take?\\n❓ Can I transfer prescriptions?\\n❓ What are your hours?\\n\\nFind answers to common questions on our website or mobile app.')}>
+                  <FileText className="h-3 w-3 mr-2" />
+                  FAQ section
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Contact Forms', 'Get in touch with us:\\n\\n📝 General inquiries\\n💊 Prescription questions\\n🚚 Delivery issues\\n💰 Insurance concerns\\n📱 Technical support\\n\\nWe respond to all inquiries within 24 hours during business days.')}>
+                  <Mail className="h-3 w-3 mr-2" />
+                  Contact forms
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Medication Education', 'Learn about your medications:\\n\\n📚 Drug information sheets\\n⚠️ Side effects and warnings\\n🍽️ Food and drug interactions\\n⏰ Proper timing and dosage\\n🏥 When to contact your doctor\\n\\nOur pharmacists provide personalized medication counseling.')}>
+                  <Stethoscope className="h-3 w-3 mr-2" />
+                  Medication education
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Drug Interaction Checker', 'Check for dangerous drug interactions:\\n\\n⚠️ Prescription medications\\n💊 Over-the-counter drugs\\n🌿 Supplements and vitamins\\n🍷 Food and alcohol interactions\\n\\nOur system alerts you to potential problems and provides safety recommendations.')}>
+                  <AlertTriangle className="h-3 w-3 mr-2" />
+                  Drug interaction checker
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <Package className="h-5 w-5 text-indigo-500" />
+                  🚚 Delivery & Pickup
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Same-Day Delivery', 'Fast prescription delivery service:\\n\\n🚚 Orders before 2 PM delivered same day\\n📦 Free delivery for orders over $35\\n📍 Local delivery area: 15-mile radius\\n⏰ Delivery window: 4-8 PM\\n📱 Real-time tracking available\\n\\nPerfect for urgent medications and convenience.')}>
+                  <Clock className="h-3 w-3 mr-2" />
+                  Same-day delivery
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Curbside Pickup', 'Contactless curbside service:\\n\\n🚗 Call when you arrive\\n📱 Text updates when ready\\n💳 Pay by phone or app\\n⏱️ Average wait: 3-5 minutes\\n🆓 Free service\\n\\nStay safe and save time with curbside pickup.')}>
+                  <Package className="h-3 w-3 mr-2" />
+                  Curbside pickup
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Scheduled Delivery', 'Plan your prescription deliveries:\\n\\n📅 Choose your preferred delivery day\\n⏰ Select delivery time windows\\n🔄 Set up recurring deliveries\\n📱 Modify schedule anytime\\n💰 Subscription discounts available\\n\\nNever worry about running out of medications.')}>
+                  <Calendar className="h-3 w-3 mr-2" />
+                  Scheduled delivery
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Pickup Notifications', 'Stay informed about your prescriptions:\\n\\n📱 SMS alerts when ready\\n📧 Email notifications\\n🔔 Push notifications via app\\n⏰ Reminder to pick up\\n📍 Location and hours included\\n\\nNever miss a prescription pickup again.')}>
+                  <AlertCircle className="h-3 w-3 mr-2" />
+                  Pickup notifications
+                </Button>
+                <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Delivery Tracking', 'Track your prescription deliveries:\\n\\n📍 Real-time GPS tracking\\n📱 Live updates via app/SMS\\n🕐 Estimated delivery time\\n✅ Delivery confirmation\\n📷 Photo proof of delivery\\n\\nKnow exactly when your medications will arrive.')}>
+                  <TrendingUp className="h-3 w-3 mr-2" />
+                  Delivery tracking
+                </Button>
+              </CardContent>
+            </Card>
+
+          </div>
+        </div>
+        {renderModal()}
+      </div>
+    );
   }
   
   // Handle other roles directly with inline JSX
@@ -2221,23 +2546,23 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/prescriptions')}>
                     <RefreshCw className="h-3 w-3 mr-2" />
                     Prescription refills
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Prescription Transfers', 'Transfer your prescriptions from other pharmacies to DEO Pharmacy. Our team will handle all the paperwork and coordination.')}>
                     <Plus className="h-3 w-3 mr-2" />
                     New prescription transfers
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/prescriptions')}>
                     <FileText className="h-3 w-3 mr-2" />
                     Prescription history
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Auto-Refill Management', 'Set up automatic refills for your regular medications. Never run out of important prescriptions again. Contact our pharmacy team to enroll.')}>
                     <Clock className="h-3 w-3 mr-2" />
                     Auto-refill management
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/prescriptions')}>
                     <TrendingUp className="h-3 w-3 mr-2" />
                     Prescription tracking
                   </Button>
@@ -2252,19 +2577,19 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Health & Wellness Products', 'Browse our selection of health and wellness products including fitness trackers, blood pressure monitors, and wellness supplements. Available in-store and online.')}>
                     <Shield className="h-3 w-3 mr-2" />
                     Health & wellness products
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Personal Care Items', 'Complete range of personal care products including skincare, dental care, hair care, and hygiene products from trusted brands.')}>
                     <User className="h-3 w-3 mr-2" />
                     Personal care items
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Vitamins & Supplements', 'High-quality vitamins, minerals, and dietary supplements. Our pharmacists can help you choose the right supplements for your health needs.')}>
                     <Activity className="h-3 w-3 mr-2" />
                     Vitamins & supplements
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Medical Supplies', 'Medical equipment and supplies including wound care, diabetic supplies, mobility aids, and home healthcare products.')}>
                     <Package className="h-3 w-3 mr-2" />
                     Medical supplies
                   </Button>
@@ -2279,23 +2604,23 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Mobile App Download', 'Download the DEO Pharmacy mobile app for easy prescription management, refill requests, and delivery tracking. Available on iOS and Android.')}>
                     <Smartphone className="h-3 w-3 mr-2" />
                     Mobile app download
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Text Notifications', 'Get SMS alerts for prescription ready notifications, refill reminders, and important health updates. Manage your preferences in your account settings.')}>
                     <AlertCircle className="h-3 w-3 mr-2" />
                     Text notifications
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Email Reminders', 'Receive email reminders for prescription refills, medication adherence, and health check-ups. Configure your email preferences anytime.')}>
                     <Mail className="h-3 w-3 mr-2" />
                     Email reminders
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/prescriptions')}>
                     <Database className="h-3 w-3 mr-2" />
                     Digital prescription management
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Telehealth Consultations', 'Connect with healthcare providers through secure video consultations. Schedule appointments and get medical advice from the comfort of your home.')}>
                     <Stethoscope className="h-3 w-3 mr-2" />
                     Telehealth consultations
                   </Button>
@@ -2311,23 +2636,23 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/medication-insurance-claims')}>
                     <ShieldCheck className="h-3 w-3 mr-2" />
                     Insurance verification
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Generic Alternatives', 'Save money with FDA-approved generic medications. Our pharmacists will help you find cost-effective alternatives to brand-name drugs without compromising quality.')}>
                     <Pill className="h-3 w-3 mr-2" />
                     Generic alternatives
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Discount Programs', 'Access various discount programs including manufacturer coupons, pharmacy savings cards, and patient assistance programs to reduce your medication costs.')}>
                     <TrendingUp className="h-3 w-3 mr-2" />
                     Discount programs
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Prescription Assistance Programs', 'Get help paying for your medications through manufacturer assistance programs, government programs, and non-profit organizations.')}>
                     <Shield className="h-3 w-3 mr-2" />
                     Prescription assistance programs
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Price Comparison Tools', 'Compare medication prices across different pharmacies and insurance plans. Find the best deals and savings opportunities for your prescriptions.')}>
                     <DollarSign className="h-3 w-3 mr-2" />
                     Price comparison tools
                   </Button>
@@ -2343,23 +2668,23 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Store Locations & Hours', 'DEO Pharmacy Main Location:\n\n📍 123 Healthcare Drive, Medical District\n🕐 Monday-Friday: 8:00 AM - 9:00 PM\n🕐 Saturday: 9:00 AM - 7:00 PM\n🕐 Sunday: 10:00 AM - 6:00 PM\n\nEmergency services available 24/7')}>
                     <Building2 className="h-3 w-3 mr-2" />
                     Store locations & hours
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Pharmacy Hours', 'DEO Pharmacy Operating Hours:\n\n🕐 Monday-Friday: 8:00 AM - 9:00 PM\n🕐 Saturday: 9:00 AM - 7:00 PM\n🕐 Sunday: 10:00 AM - 6:00 PM\n\n📞 24/7 Emergency Line: 1-800-DEO-PHARM')}>
                     <Clock className="h-3 w-3 mr-2" />
                     Pharmacy hours
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Contact Information', 'DEO Pharmacy Contact Details:\n\n📞 Main: (555) 123-PHARM\n📞 Emergency: 1-800-DEO-PHARM\n📧 Email: info@deopharmacy.com\n📱 Text: (555) 123-TEXT\n\n💬 Live chat available on our website and mobile app')}>
                     <Phone className="h-3 w-3 mr-2" />
                     Contact information
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Directions & Parking', 'Getting to DEO Pharmacy:\n\n📍 123 Healthcare Drive, Medical District\n🚗 Free parking available\n🚌 Bus routes: 15, 32, 78\n🚇 Metro: Medical Center Station (2 blocks)\n\n♿ Wheelchair accessible entrance\n🚗 Drive-thru available')}>
                     <MapPin className="h-3 w-3 mr-2" />
                     Directions & parking
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Drive-Thru Services', 'Convenient Drive-Thru Pharmacy:\n\n🚗 Fast prescription pickup\n🕐 Same hours as main pharmacy\n💳 All payment methods accepted\n📱 Mobile order ahead available\n\nTypical wait time: 2-5 minutes')}>
                     <TrendingUp className="h-3 w-3 mr-2" />
                     Drive-thru services
                   </Button>
@@ -2374,23 +2699,23 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/patients')}>
                     <User className="h-3 w-3 mr-2" />
                     Personal profile
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/patients')}>
                     <Users className="h-3 w-3 mr-2" />
                     Family member management
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/medication-insurance-claims')}>
                     <Shield className="h-3 w-3 mr-2" />
                     Insurance information
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => setLocation('/prescriptions')}>
                     <FileText className="h-3 w-3 mr-2" />
                     Order history
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Saved Payment Methods', 'Manage your saved payment methods for faster checkout. Add credit cards, debit cards, or HSA/FSA accounts for convenient prescription payments.')}>
                     <DollarSign className="h-3 w-3 mr-2" />
                     Saved payment methods
                   </Button>
@@ -2405,23 +2730,23 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Live Chat with Pharmacist', 'Connect with our licensed pharmacists for real-time assistance:\n\n💬 Available during pharmacy hours\n📱 Through mobile app or website\n🔒 HIPAA-compliant secure messaging\n⚡ Average response time: 2-3 minutes\n\nGet answers about medications, side effects, and drug interactions.')}>
                     <Phone className="h-3 w-3 mr-2" />
                     Live chat with pharmacist
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('FAQ Section', 'Frequently Asked Questions:\n\n❓ How do I refill my prescription?\n❓ What insurance do you accept?\n❓ How long does delivery take?\n❓ Can I transfer prescriptions?\n❓ What are your hours?\n\nFind answers to common questions on our website or mobile app.')}>
                     <FileText className="h-3 w-3 mr-2" />
                     FAQ section
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Contact Forms', 'Get in touch with us:\n\n📝 General inquiries\n💊 Prescription questions\n🚚 Delivery issues\n💰 Insurance concerns\n📱 Technical support\n\nWe respond to all inquiries within 24 hours during business days.')}>
                     <Mail className="h-3 w-3 mr-2" />
                     Contact forms
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Medication Education', 'Learn about your medications:\n\n📚 Drug information sheets\n⚠️ Side effects and warnings\n🍽️ Food and drug interactions\n⏰ Proper timing and dosage\n🏥 When to contact your doctor\n\nOur pharmacists provide personalized medication counseling.')}>
                     <Stethoscope className="h-3 w-3 mr-2" />
                     Medication education
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Drug Interaction Checker', 'Check for dangerous drug interactions:\n\n⚠️ Prescription medications\n💊 Over-the-counter drugs\n🌿 Supplements and vitamins\n🍷 Food and alcohol interactions\n\nOur system alerts you to potential problems and provides safety recommendations.')}>
                     <AlertTriangle className="h-3 w-3 mr-2" />
                     Drug interaction checker
                   </Button>
@@ -2437,23 +2762,23 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Same-Day Delivery', 'Fast prescription delivery service:\n\n🚚 Orders before 2 PM delivered same day\n📦 Free delivery for orders over $35\n📍 Local delivery area: 15-mile radius\n⏰ Delivery window: 4-8 PM\n📱 Real-time tracking available\n\nPerfect for urgent medications and convenience.')}>
                     <Clock className="h-3 w-3 mr-2" />
                     Same-day delivery
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Curbside Pickup', 'Contactless curbside service:\n\n🚗 Call when you arrive\n📱 Text updates when ready\n💳 Pay by phone or app\n⏱️ Average wait: 3-5 minutes\n🆓 Free service\n\nStay safe and save time with curbside pickup.')}>
                     <Package className="h-3 w-3 mr-2" />
                     Curbside pickup
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Scheduled Delivery', 'Plan your prescription deliveries:\n\n📅 Choose your preferred delivery day\n⏰ Select delivery time windows\n🔄 Set up recurring deliveries\n📱 Modify schedule anytime\n💰 Subscription discounts available\n\nNever worry about running out of medications.')}>
                     <Calendar className="h-3 w-3 mr-2" />
                     Scheduled delivery
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Pickup Notifications', 'Stay informed about your prescriptions:\n\n📱 SMS alerts when ready\n📧 Email notifications\n🔔 Push notifications via app\n⏰ Reminder to pick up\n📍 Location and hours included\n\nNever miss a prescription pickup again.')}>
                     <AlertCircle className="h-3 w-3 mr-2" />
                     Pickup notifications
                   </Button>
-                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm">
+                  <Button className="w-full justify-start text-sm" variant="ghost" size="sm" onClick={() => showInfoModal('Delivery Tracking', 'Track your prescription deliveries:\n\n📍 Real-time GPS tracking\n📱 Live updates via app/SMS\n🕐 Estimated delivery time\n✅ Delivery confirmation\n📷 Photo proof of delivery\n\nKnow exactly when your medications will arrive.')}>
                     <TrendingUp className="h-3 w-3 mr-2" />
                     Delivery tracking
                   </Button>
@@ -2474,4 +2799,51 @@ export default function Dashboard() {
         </div>
       );
   }
+
+  
+  // Render the modal
+  const renderModal = () => {
+    if (!showModal) return null;
+    
+    return (
+      <div 
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 999999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        onClick={() => setShowModal(false)}
+      >
+        <div 
+          style={{
+            backgroundColor: 'white',
+            padding: '30px',
+            borderRadius: '10px',
+            maxWidth: '600px',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            border: '2px solid #3b82f6',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <pre style={{ fontFamily: 'system-ui', fontSize: '14px', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+            {modalContent}
+          </pre>
+          <div style={{ marginTop: '20px', textAlign: 'right' }}>
+            <Button onClick={() => setShowModal(false)} variant="outline">
+              Close
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 }
