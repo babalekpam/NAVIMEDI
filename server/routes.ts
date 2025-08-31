@@ -1634,7 +1634,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Laboratory billing endpoint - Create lab bills with insurance information
-  app.post('/api/laboratory/billing', async (req, res) => {
+  app.post('/api/laboratory/billing', authenticateToken, async (req, res) => {
     console.log('🧪 LAB BILLING POST - Endpoint hit!');
     console.log('🧪 Request method:', req.method);
     console.log('🧪 Request path:', req.path);

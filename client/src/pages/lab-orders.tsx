@@ -83,33 +83,8 @@ export default function LabOrders() {
 
   const { data: labOrders = [], isLoading } = useQuery<LabOrder[]>({
     queryKey: tenant?.type === 'laboratory' 
-      ? ["/api/lab-orders", { forLaboratory: 'true', archived: statusFilter === 'archived' ? 'true' : 'false' }] 
-      : ["/api/lab-orders", { archived: statusFilter === 'archived' ? 'true' : 'false' }],
-    queryFn: async () => {
-      const { apiRequest } = await import("@/lib/queryClient");
-      const params = new URLSearchParams();
-      if (tenant?.type === 'laboratory') {
-        params.append('forLaboratory', 'true');
-      }
-      if (statusFilter === 'archived') {
-        params.append('archived', 'true');
-      }
-      const url = `/api/lab-orders?${params.toString()}`;
-      console.log(`[LAB ORDERS] Fetching ${statusFilter === 'archived' ? 'archived' : 'active'} orders for ${tenant?.type} using URL:`, url);
-      try {
-        console.log(`[LAB ORDERS] Making request to:`, url);
-        console.log(`[LAB ORDERS] Auth token exists:`, !!localStorage.getItem("auth_token"));
-        const response = await apiRequest(url);
-        console.log(`[LAB ORDERS] SUCCESS - Response:`, response);
-        return response;
-      } catch (error) {
-        console.error(`[LAB ORDERS] ERROR - Request failed:`, error);
-        const err = error as any;
-        console.error(`[LAB ORDERS] ERROR - Message:`, err?.message);
-        console.error(`[LAB ORDERS] ERROR - Stack:`, err?.stack);
-        throw error;
-      }
-    },
+      ? ["/api/lab-orders", `forLaboratory=true&status=${statusFilter === 'archived' ? 'archived' : 'completed'}`]
+      : ["/api/lab-orders", `status=${statusFilter === 'archived' ? 'archived' : 'pending'}`],
     enabled: !!user && !!tenant,
   });
 
