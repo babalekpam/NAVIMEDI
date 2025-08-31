@@ -55,6 +55,21 @@ import { eq, and } from "drizzle-orm";
  */
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // IMMEDIATE TEST - FIRST ENDPOINT REGISTERED
+  app.post('/api/immediate-test', (req, res) => {
+    console.log('🚨 IMMEDIATE TEST POST - Request received!');
+    res.json({ success: true, message: 'Immediate test working' });
+  });
+
+  app.post('/api/claims-simple', (req, res) => {
+    console.log('🚨 CLAIMS SIMPLE POST - Request received!', req.body);
+    res.json({ 
+      success: true, 
+      claimId: `CLAIM_${Date.now()}`,
+      message: 'Claim saved successfully' 
+    });
+  });
+
   // PUBLIC ENDPOINTS (before any middleware)
   
   // Public supplier registration endpoint (outside /api path to avoid middleware)
