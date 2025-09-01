@@ -164,7 +164,7 @@ function ImageCarousel() {
                 className="w-full h-full object-cover"
                 loading={index === 0 ? "eager" : "lazy"}
                 decoding="async"
-                fetchPriority={index === 0 ? "high" : "low"}
+                {...(index === 0 && { fetchpriority: "high" })}
                 style={{
                   contentVisibility: index === currentImageIndex ? 'visible' : 'hidden'
                 }}
