@@ -344,9 +344,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/create-setup-intent', async (req, res) => {
     try {
       if (!stripe) {
-        return res.status(503).json({ 
-          error: 'Payment processing not available',
-          message: 'Stripe is not properly configured' 
+        // Return demo mode when Stripe is not configured
+        return res.json({ 
+          clientSecret: 'demo_setup_intent_test_mode',
+          testMode: true,
+          message: 'Demo mode - Stripe not configured. Registration will proceed without payment collection.'
         });
       }
 

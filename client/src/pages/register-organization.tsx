@@ -96,6 +96,13 @@ function RegistrationSteps() {
       .then(data => {
         if (data.clientSecret) {
           setSetupIntent(data.clientSecret);
+          // Handle demo mode when Stripe is not configured
+          if (data.testMode) {
+            toast({
+              title: "Demo Mode",
+              description: data.message || "Registration will proceed in demo mode",
+            });
+          }
         }
       })
       .catch(err => {
@@ -118,25 +125,32 @@ function RegistrationSteps() {
 
   const handlePaymentSetup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!stripe || !elements) {
-      toast({
-        title: "Payment Error",
-        description: "Payment system not initialized. Please refresh and try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
 
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) {
-      setIsLoading(false);
-      return;
-    }
-
     try {
+      // Check if we're in demo mode (Stripe not configured)
+      if (setupIntent === 'demo_setup_intent_test_mode') {
+        // Skip payment setup and proceed to registration in demo mode
+        await completeRegistration('demo_payment_method');
+        return;
+      }
+    
+      if (!stripe || !elements) {
+        toast({
+          title: "Payment Error",
+          description: "Payment system not initialized. Please refresh and try again.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) {
+        setIsLoading(false);
+        return;
+      }
+
       const { error, setupIntent: confirmedSetupIntent } = await stripe.confirmCardSetup(
         setupIntent!,
         {
@@ -542,6 +556,49 @@ function RegistrationSteps() {
                   <div className="animate-spin w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full mx-auto" />
                   <p className="text-gray-600 mt-4">Setting up payment processing...</p>
                 </div>
+              ) : setupIntent === 'demo_setup_intent_test_mode' ? (
+                // Demo mode - no payment collection needed
+                <form onSubmit={handlePaymentSetup} className="space-y-6">
+                  <Alert className="bg-blue-50 border-blue-200">
+                    <CreditCard className="h-4 w-4 text-blue-600" />
+                    <AlertDescription className="text-blue-800">
+                      <strong>Demo Mode Active:</strong> Payment processing is not configured. 
+                      Your registration will proceed without payment collection for testing purposes.
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Ready to Complete Registration</h3>
+                    <p className="text-gray-600">
+                      Your organization details have been validated. Click below to complete registration and start your trial.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-emerald-600 hover:bg-emerald-700"
+                      disabled={isLoading}
+                      data-testid="button-complete-demo-registration"
+                    >
+                      {isLoading ? "Completing registration..." : "Complete Registration & Start Trial"}
+                    </Button>
+                    
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setCurrentStep(1)}
+                      disabled={isLoading}
+                      data-testid="button-back-step"
+                    >
+                      Back to Organization Details
+                    </Button>
+                  </div>
+                </form>
               ) : (
                 <form onSubmit={handlePaymentSetup} className="space-y-6">
                   <Alert>
