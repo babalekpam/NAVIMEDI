@@ -195,6 +195,10 @@ export interface IStorage {
   getUsersByRole(role: string, tenantId: string): Promise<User[]>;
   getAllUsers(): Promise<User[]>; // SECURITY: Super admin only
   
+  // Stripe integration methods
+  updateStripeCustomerId(userId: string, stripeCustomerId: string): Promise<User | undefined>;
+  updateUserStripeInfo(userId: string, stripeCustomerId: string, stripeSubscriptionId: string): Promise<User | undefined>;
+  
   // Replit Auth specific methods
   upsertUser(user: UpsertUser): Promise<User>;
 
@@ -737,6 +741,27 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  // Stripe integration method implementations
+  async updateStripeCustomerId(userId: string, stripeCustomerId: string): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set({ stripeCustomerId, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(users.id, userId))
+      .returning();
+    return user || undefined;
+  }
+
+  async updateUserStripeInfo(userId: string, stripeCustomerId: string, stripeSubscriptionId: string): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set({ 
+        stripeCustomerId,
+        stripeSubscriptionId,
+        updatedAt: sql`CURRENT_TIMESTAMP` 
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user || undefined;
   }
 
   async getUsersByTenant(tenantId: string): Promise<User[]> {

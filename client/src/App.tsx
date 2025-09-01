@@ -105,6 +105,11 @@ import PharmacyDashboardEnhanced from "@/pages/pharmacy-dashboard-enhanced";
 import PharmacyInventory from "@/pages/pharmacy-inventory";
 import PharmacyCustomers from "@/pages/pharmacy-customers";
 import PharmacyBilling from "@/pages/pharmacy-billing";
+import Checkout from "@/pages/checkout";
+import Subscribe from "@/pages/subscribe";
+import PaymentSuccess from "@/pages/payment-success";
+import SubscriptionSuccess from "@/pages/subscription-success";
+import PaymentDemo from "@/pages/payment-demo";
 
 
 
@@ -869,6 +874,33 @@ function Router() {
           <Route path="/supplier-signup" component={SupplierSignupPage} />
           <Route path="/supplier-portal" component={SupplierPortal} />
           <Route path="/register" component={RegisterOrganization} />
+          
+          {/* Payment routes - require authentication */}
+          <Route path="/checkout">
+            <ProtectedRoute>
+              <Checkout />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/subscribe">
+            <ProtectedRoute>
+              <Subscribe />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/payment-success">
+            <ProtectedRoute>
+              <PaymentSuccess />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/subscription-success">
+            <ProtectedRoute>
+              <SubscriptionSuccess />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/payment-demo">
+            <ProtectedRoute>
+              <PaymentDemo />
+            </ProtectedRoute>
+          </Route>
           <Route path="/features" component={FeaturesPage} />
           <Route path="/solutions" component={SolutionsPage} />
           <Route path="/security" component={SecurityPage} />

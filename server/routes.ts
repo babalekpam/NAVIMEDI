@@ -10,6 +10,17 @@ import { nanoid } from "nanoid";
 import { db } from "./db";
 import { tenants, users, pharmacies, prescriptions, insuranceClaims, insertLabResultSchema, type InsuranceClaim } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
+import Stripe from "stripe";
+
+// Initialize Stripe - only if secret key is properly configured
+let stripe: Stripe | null = null;
+if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_')) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2023-10-16",
+  });
+} else {
+  console.warn("⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'");
+}
 
 // Document Generation Function for Insurance Claims
 function generateInsuranceClaimDocument(claim: InsuranceClaim): string {
@@ -1886,6 +1897,123 @@ Please attach all required supporting documentation.
     } catch (error) {
       console.error('Error generating laboratory bill receipt:', error);
       res.status(500).json({ message: 'Failed to generate laboratory bill receipt' });
+    }
+  });
+
+  // STRIPE PAYMENT ROUTES
+  
+  // Stripe payment route for one-time payments
+  app.post("/api/create-payment-intent", authenticateToken, async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(503).json({ message: "Payment processing not available - Stripe configuration missing" });
+      }
+      
+      const { amount } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Valid amount is required" });
+      }
+      
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Convert to cents
+        currency: "usd",
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+      
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error: any) {
+      console.error("Error creating payment intent:", error);
+      res.status(500).json({ message: "Error creating payment intent: " + error.message });
+    }
+  });
+
+  // Stripe subscription route for recurring payments
+  app.post('/api/get-or-create-subscription', authenticateToken, async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(503).json({ message: "Subscription processing not available - Stripe configuration missing" });
+      }
+      
+      const user = req.user as any;
+      
+      if (!user) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      // Check if user already has a subscription
+      if (user.stripeSubscriptionId) {
+        try {
+          const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+          
+          if (subscription.latest_invoice && typeof subscription.latest_invoice === 'object') {
+            const latestInvoice = subscription.latest_invoice;
+            const paymentIntent = latestInvoice.payment_intent;
+            
+            if (paymentIntent && typeof paymentIntent === 'object') {
+              return res.json({
+                subscriptionId: subscription.id,
+                clientSecret: paymentIntent.client_secret,
+              });
+            }
+          }
+        } catch (stripeError) {
+          console.error("Error retrieving existing subscription:", stripeError);
+        }
+      }
+      
+      if (!user.email) {
+        return res.status(400).json({ message: 'User email is required for subscription' });
+      }
+
+      // Create new Stripe customer if needed
+      let stripeCustomerId = user.stripeCustomerId;
+      if (!stripeCustomerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username,
+        });
+        
+        stripeCustomerId = customer.id;
+        await storage.updateStripeCustomerId(user.id, customer.id);
+      }
+
+      // Create subscription (using a default price - this should be configurable)
+      const subscription = await stripe.subscriptions.create({
+        customer: stripeCustomerId,
+        items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'NaviMED Healthcare Platform Subscription',
+              description: 'Monthly subscription to healthcare platform services',
+            },
+            unit_amount: 2999, // $29.99 per month
+            recurring: {
+              interval: 'month',
+            },
+          },
+        }],
+        payment_behavior: 'default_incomplete',
+        expand: ['latest_invoice.payment_intent'],
+      });
+
+      // Update user with Stripe info
+      await storage.updateUserStripeInfo(user.id, stripeCustomerId, subscription.id);
+
+      const latestInvoice = subscription.latest_invoice;
+      const paymentIntent = latestInvoice && typeof latestInvoice === 'object' ? latestInvoice.payment_intent : null;
+      const clientSecret = paymentIntent && typeof paymentIntent === 'object' ? paymentIntent.client_secret : null;
+
+      res.json({
+        subscriptionId: subscription.id,
+        clientSecret: clientSecret,
+      });
+    } catch (error: any) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ message: "Error creating subscription: " + error.message });
     }
   });
 

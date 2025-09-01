@@ -489,6 +489,9 @@ export const users = pgTable("users", {
   mustChangePassword: boolean("must_change_password").default(false),
   languagePreference: text("language_preference").default("en"),
   lastLogin: timestamp("last_login"),
+  // Stripe integration fields
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
