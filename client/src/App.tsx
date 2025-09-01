@@ -874,6 +874,7 @@ function Router() {
           <Route path="/supplier-signup" component={SupplierSignupPage} />
           <Route path="/supplier-portal" component={SupplierPortal} />
           <Route path="/register" component={RegisterOrganization} />
+          <Route path="/organizations/register" component={RegisterOrganization} />
           
           {/* Payment routes - require authentication */}
           <Route path="/checkout">
