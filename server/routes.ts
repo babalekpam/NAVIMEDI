@@ -340,7 +340,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Organization registration endpoint
+  // Create setup intent for payment method collection during registration
+  app.post('/api/create-setup-intent', async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(503).json({ 
+          error: 'Payment processing not available',
+          message: 'Stripe is not properly configured' 
+        });
+      }
+
+      const { email, name } = req.body;
+
+      if (!email || !name) {
+        return res.status(400).json({ error: 'Email and name are required' });
+      }
+
+      const setupIntent = await stripe.setupIntents.create({
+        customer: undefined, // We'll create customer later during registration
+        payment_method_types: ['card'],
+        usage: 'off_session',
+        metadata: {
+          email,
+          name,
+          purpose: 'organization_registration'
+        }
+      });
+
+      res.json({
+        clientSecret: setupIntent.client_secret
+      });
+
+    } catch (error: any) {
+      console.error('Setup intent creation error:', error);
+      res.status(500).json({ 
+        error: 'Failed to create setup intent', 
+        message: error.message 
+      });
+    }
+  });
+
+  // Organization registration endpoint with payment method
   app.post('/api/register-organization', async (req, res) => {
     try {
       console.log('Organization registration request:', req.body);
@@ -358,7 +398,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         state,
         zipCode,
         phone,
-        website
+        website,
+        paymentMethodId
       } = req.body;
 
       // Validate required fields
@@ -366,9 +407,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
+      // Validate payment method is provided
+      if (!paymentMethodId) {
+        return res.status(400).json({ error: 'Payment method is required for registration' });
+      }
+
       // Hash admin password
       const saltRounds = 10;
       const passwordHash = await bcrypt.hash(adminPassword, saltRounds);
+
+      // Create Stripe customer with payment method
+      let stripeCustomerId = null;
+      if (stripe && paymentMethodId) {
+        try {
+          const customer = await stripe.customers.create({
+            email: adminEmail,
+            name: `${adminFirstName} ${adminLastName}`,
+            metadata: {
+              organizationName,
+              organizationType,
+              purpose: 'trial_registration'
+            }
+          });
+
+          // Attach payment method to customer
+          await stripe.paymentMethods.attach(paymentMethodId, {
+            customer: customer.id,
+          });
+
+          // Set as default payment method
+          await stripe.customers.update(customer.id, {
+            invoice_settings: {
+              default_payment_method: paymentMethodId,
+            },
+          });
+
+          stripeCustomerId = customer.id;
+          console.log('✅ Stripe customer created:', customer.id);
+        } catch (stripeError: any) {
+          console.error('Stripe customer creation error:', stripeError);
+          return res.status(400).json({ 
+            error: 'Payment method setup failed',
+            message: stripeError.message 
+          });
+        }
+      }
 
       // Generate subdomain from organization name
       let baseSubdomain = organizationName.toLowerCase()
@@ -415,7 +498,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const tenant = await storage.createTenant(tenantData);
 
-      // Create admin user
+      // Create admin user with Stripe customer ID
       const userData = {
         tenantId: tenant.id,
         username: adminEmail,
@@ -424,18 +507,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: adminLastName || 'User',
         role: 'tenant_admin',
         passwordHash,
-        isActive: true
+        isActive: true,
+        stripeCustomerId: stripeCustomerId
       };
 
       const user = await storage.createUser(userData);
 
-      console.log('✅ Organization registered successfully:', tenant.id);
+      console.log('✅ Organization registered successfully with payment method:', tenant.id);
 
       res.status(201).json({
-        message: 'Organization registered successfully',
+        message: 'Organization registered successfully with payment method',
         tenantId: tenant.id,
         userId: user.id,
-        organizationType
+        organizationType,
+        stripeCustomerId: stripeCustomerId,
+        trialStarted: true
       });
 
     } catch (error: any) {
@@ -446,7 +532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Apply authentication middleware to all /api routes except public ones
   app.use('/api', (req, res, next) => {
-    const publicRoutes = ['/api/auth/login', '/api/register-organization', '/api/health', '/api/healthz', '/api/status', '/api/ping', '/api/platform/stats', '/api/test-post', '/api/insurance-claims-test'];
+    const publicRoutes = ['/api/auth/login', '/api/register-organization', '/api/create-setup-intent', '/api/health', '/api/healthz', '/api/status', '/api/ping', '/api/platform/stats', '/api/test-post', '/api/insurance-claims-test'];
     
     
     // Debug logging for insurance claims requests
