@@ -77,6 +77,7 @@ interface PlatformData {
 // Professional Healthcare Image Carousel Component
 function ImageCarousel() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imagesLoaded, setImagesLoaded] = useState<Set<number>>(new Set());
   
   // Professional healthcare photographs provided by the user
   const healthcareImages = [
@@ -118,6 +119,15 @@ function ImageCarousel() {
     }
   ];
 
+  // Preload critical first image for faster LCP
+  useEffect(() => {
+    if (healthcareImages.length > 0) {
+      const firstImage = new Image();
+      firstImage.src = healthcareImages[0].url;
+      firstImage.onload = () => setImagesLoaded(prev => new Set(prev).add(0));
+    }
+  }, []);
+
   // Auto-rotate images every 4 seconds
   useEffect(() => {
     const interval = setInterval(() => {
@@ -133,27 +143,42 @@ function ImageCarousel() {
     <div className="relative max-w-6xl mx-auto">
       {/* Main Image Display */}
       <div className="relative h-96 rounded-2xl overflow-hidden shadow-2xl">
-        {healthcareImages.map((image, index) => (
-          <div
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            <img
-              src={image.url}
-              alt={image.alt}
-              className="w-full h-full object-cover"
-            />
-            {/* Overlay with gradient and text */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end">
-              <div className="p-8 text-white">
-                <h3 className="text-2xl font-bold mb-2">{image.title}</h3>
-                <p className="text-lg opacity-90">{image.description}</p>
+        {healthcareImages.map((image, index) => {
+          // Only render current image and next image for performance
+          const shouldRender = index === currentImageIndex || 
+                               index === (currentImageIndex + 1) % healthcareImages.length ||
+                               index === (currentImageIndex - 1 + healthcareImages.length) % healthcareImages.length;
+          
+          if (!shouldRender) return null;
+          
+          return (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <img
+                src={image.url}
+                alt={image.alt}
+                className="w-full h-full object-cover"
+                loading={index === 0 ? "eager" : "lazy"}
+                decoding="async"
+                fetchPriority={index === 0 ? "high" : "low"}
+                style={{
+                  contentVisibility: index === currentImageIndex ? 'visible' : 'hidden'
+                }}
+              />
+              {/* Overlay with gradient and text */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end">
+                <div className="p-8 text-white">
+                  <h3 className="text-2xl font-bold mb-2">{image.title}</h3>
+                  <p className="text-lg opacity-90">{image.description}</p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Navigation Dots */}

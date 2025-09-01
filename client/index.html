@@ -14,6 +14,14 @@
     
     <!-- Resource hints for critical assets -->
     <link rel="prefetch" href="/api/platform/stats">
+    
+    <!-- Critical CSS inlining hint -->
+    <style>
+      /* Critical above-the-fold CSS */
+      body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+      .loading-spinner { animation: spin 1s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
     <title>NaviMED - #1 Healthcare Management Platform | Hospital, Pharmacy & Lab Software</title>
     <meta name="description" content="Transform your healthcare practice with NaviMED - the leading multi-tenant platform for hospitals, pharmacies & laboratories. HIPAA compliant, multilingual support, real-time patient management. Start your free trial today!">
     <meta name="keywords" content="healthcare management software, hospital management system, pharmacy management platform, laboratory information system, medical records software, prescription management, patient portal, telemedicine, healthcare technology, HIPAA compliant healthcare software, medical practice management, clinical workflow automation, electronic health records, healthcare billing software, medical inventory management, patient scheduling software, healthcare analytics, multi-tenant healthcare platform, African healthcare software, global healthcare solutions">

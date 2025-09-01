@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -11,105 +11,117 @@ import { useAuth } from "@/contexts/auth-context";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { ProtectedRoute } from "@/components/layout/protected-route";
+
+// Loading component for Suspense fallback
+const LoadingPage = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="text-center">
+      <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+      <p className="text-lg font-medium text-gray-700">Loading...</p>
+    </div>
+  </div>
+);
+
+// Critical pages loaded immediately (public pages users see first)
 import LandingPage from "@/pages/landing-fixed";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import RegisterOrganization from "@/pages/register-organization";
-import Dashboard from "@/pages/dashboard";
-import Patients from "@/pages/patients";
-import PatientMedicalRecords from "@/pages/patient-medical-records";
-import Appointments from "@/pages/appointments";
-import Prescriptions from "@/pages/prescriptions";
-import LabOrders from "@/pages/lab-orders";
-import Billing from "@/pages/billing";
-import TenantManagement from "@/pages/tenant-management";
-import SuperAdminDashboard from "@/pages/super-admin-dashboard";
-import SuperAdminClientManagement from "@/pages/super-admin-client-management";
-import AuditLogs from "@/pages/audit-logs";
-import UserRoles from "@/pages/user-roles";
-import Reports from "@/pages/reports";
-import MedicalCommunications from "@/pages/medical-communications";
-import LaboratoryRegistration from "@/pages/laboratory-registration";
-import LabSampleManagement from "@/pages/lab-sample-management";
-import LabTestManagement from "@/pages/lab-test-management";
-import LabResultsReporting from "@/pages/lab-results-reporting";
-import LabAnalyticsDashboard from "@/pages/lab-analytics-dashboard";
-import LabInventoryManagement from "@/pages/lab-inventory-management";
-import HealthRecommendations from "@/pages/health-recommendations";
-import PricingPage from "@/pages/pricing";
-import ServicePricingManagement from "@/pages/service-pricing-management";
-import WhiteLabelSettingsPage from "@/pages/white-label-settings";
-import OfflineModePage from "@/pages/offline-mode";
-import TrialStatusPage from "@/pages/trial-status";
-import ProfileSettingsPage from "@/pages/profile-settings";
-import ReceptionistDashboard from "@/pages/receptionist-dashboard";
-import ConsultationHistory from "@/pages/consultation-history";
-import Advertisements from "@/pages/advertisements";
-import MarketplacePage from "@/pages/marketplace";
-import SupplierSignupPage from "@/pages/supplier-signup";
-import { CurrencyManagementPage } from "@/pages/currency-management";
-import SupplierPortal from "@/pages/supplier-portal";
-import AdminCounterReset from "@/pages/admin-counter-reset";
-import AdminMedicalCodes from "@/pages/admin-medical-codes";
-// Supplier system moved to pure HTML to prevent conflicts
 
-import FeaturesPage from "@/pages/features";
-import SolutionsPage from "@/pages/solutions";
-import SecurityPage from "@/pages/security";
-import ContactPage from "@/pages/contact";
-import Integrations from "@/pages/integrations";
-import ApiDocs from "@/pages/api-docs";
-import HospitalSolutions from "@/pages/solutions/hospitals";
-import ClinicSolutions from "@/pages/solutions/clinics";
-import LaboratorySolutions from "@/pages/solutions/laboratories";
-import Documentation from "@/pages/support/documentation";
-import HelpCenter from "@/pages/support/help-center";
-import Contact from "@/pages/support/contact";
-import Status from "@/pages/support/status";
-import { GettingStarted } from "@/pages/docs/getting-started";
-import { PatientManagement } from "@/pages/docs/patient-management";
-import { ApiDocs as ApiDocsPage } from "@/pages/docs/api-docs";
-import { AppointmentScheduling } from "@/pages/docs/appointment-scheduling";
-import { BillingInsurance } from "@/pages/docs/billing-insurance";
-import { SecurityCompliance } from "@/pages/docs/security-compliance";
-import { PlatformOverview } from "@/pages/docs/platform-overview";
-import { OrganizationSetup } from "@/pages/docs/organization-setup";
-import { ElectronicHealthRecords } from "@/pages/docs/electronic-health-records";
-import { PrescriptionManagement } from "@/pages/docs/prescription-management";
-import { LaboratoryOrderProcessing } from "@/pages/docs/laboratory-order-processing";
-import { ClinicalDocumentation } from "@/pages/docs/clinical-documentation";
-import VideoPlayer from "@/pages/videos/video-player";
-import VideoIntegrationOptions from "@/pages/videos/video-integration-options";
-import YoutubeIntegration from "@/pages/videos/youtube-integration";
-import VimeoIntegration from "@/pages/videos/vimeo-integration";
-import AWSIntegration from "@/pages/videos/aws-integration";
-import PostLabResults from "@/pages/post-lab-results";
-import LabResults from "@/pages/lab-results";
-import LaboratoryBilling from "@/pages/laboratory-billing";
-import HospitalBilling from "@/pages/hospital-billing";
-import MedicationInsuranceClaims from "@/pages/medication-insurance-claims";
-import PatientPortal from "@/pages/patient-portal";
-import PatientPortalStaff from "@/pages/patient-portal-staff";
-import ChangePasswordPage from "@/pages/change-password";
-import AdminDashboard from "@/pages/admin-dashboard";
-import PatientPortalPublic from "@/pages/patient-portal-public";
-import PatientLogin from "@/pages/patient-login";
-import DoctorCalendar from "@/pages/doctor-calendar";
-import Achievements from "@/pages/achievements";
-import PatientAccessManagement from "@/pages/patient-access-management";
+// All other pages loaded dynamically with code splitting
+const Dashboard = React.lazy(() => import("@/pages/dashboard"));
+const Patients = React.lazy(() => import("@/pages/patients"));
+const PatientMedicalRecords = React.lazy(() => import("@/pages/patient-medical-records"));
+const Appointments = React.lazy(() => import("@/pages/appointments"));
+const Prescriptions = React.lazy(() => import("@/pages/prescriptions"));
+const LabOrders = React.lazy(() => import("@/pages/lab-orders"));
+const Billing = React.lazy(() => import("@/pages/billing"));
+const TenantManagement = React.lazy(() => import("@/pages/tenant-management"));
+const SuperAdminDashboard = React.lazy(() => import("@/pages/super-admin-dashboard"));
+const SuperAdminClientManagement = React.lazy(() => import("@/pages/super-admin-client-management"));
+const AuditLogs = React.lazy(() => import("@/pages/audit-logs"));
+const UserRoles = React.lazy(() => import("@/pages/user-roles"));
+const Reports = React.lazy(() => import("@/pages/reports"));
+const MedicalCommunications = React.lazy(() => import("@/pages/medical-communications"));
+const LaboratoryRegistration = React.lazy(() => import("@/pages/laboratory-registration"));
+const LabSampleManagement = React.lazy(() => import("@/pages/lab-sample-management"));
+const LabTestManagement = React.lazy(() => import("@/pages/lab-test-management"));
+const LabResultsReporting = React.lazy(() => import("@/pages/lab-results-reporting"));
+const LabAnalyticsDashboard = React.lazy(() => import("@/pages/lab-analytics-dashboard"));
+const LabInventoryManagement = React.lazy(() => import("@/pages/lab-inventory-management"));
+const HealthRecommendations = React.lazy(() => import("@/pages/health-recommendations"));
+const PricingPage = React.lazy(() => import("@/pages/pricing"));
+const ServicePricingManagement = React.lazy(() => import("@/pages/service-pricing-management"));
+const WhiteLabelSettingsPage = React.lazy(() => import("@/pages/white-label-settings"));
+const OfflineModePage = React.lazy(() => import("@/pages/offline-mode"));
+const TrialStatusPage = React.lazy(() => import("@/pages/trial-status"));
+const ProfileSettingsPage = React.lazy(() => import("@/pages/profile-settings"));
+const ReceptionistDashboard = React.lazy(() => import("@/pages/receptionist-dashboard"));
+const ConsultationHistory = React.lazy(() => import("@/pages/consultation-history"));
+const Advertisements = React.lazy(() => import("@/pages/advertisements"));
+const MarketplacePage = React.lazy(() => import("@/pages/marketplace"));
+const SupplierSignupPage = React.lazy(() => import("@/pages/supplier-signup"));
+const CurrencyManagementPage = React.lazy(() => import("@/pages/currency-management").then(m => ({ default: m.CurrencyManagementPage })));
+const SupplierPortal = React.lazy(() => import("@/pages/supplier-portal"));
+const AdminCounterReset = React.lazy(() => import("@/pages/admin-counter-reset"));
+const AdminMedicalCodes = React.lazy(() => import("@/pages/admin-medical-codes"));
 
-import PrescriptionArchives from "@/pages/prescription-archives";
-import LaboratoryDashboard from "@/pages/laboratory-dashboard";
-import PharmacyDashboard from "@/pages/pharmacy-dashboard";
-import PharmacyDashboardEnhanced from "@/pages/pharmacy-dashboard-enhanced";
-import PharmacyInventory from "@/pages/pharmacy-inventory";
-import PharmacyCustomers from "@/pages/pharmacy-customers";
-import PharmacyBilling from "@/pages/pharmacy-billing";
-import Checkout from "@/pages/checkout";
-import Subscribe from "@/pages/subscribe";
-import PaymentSuccess from "@/pages/payment-success";
-import SubscriptionSuccess from "@/pages/subscription-success";
-import PaymentDemo from "@/pages/payment-demo";
+const FeaturesPage = React.lazy(() => import("@/pages/features"));
+const SolutionsPage = React.lazy(() => import("@/pages/solutions"));
+const SecurityPage = React.lazy(() => import("@/pages/security"));
+const ContactPage = React.lazy(() => import("@/pages/contact"));
+const Integrations = React.lazy(() => import("@/pages/integrations"));
+const ApiDocs = React.lazy(() => import("@/pages/api-docs"));
+const HospitalSolutions = React.lazy(() => import("@/pages/solutions/hospitals"));
+const ClinicSolutions = React.lazy(() => import("@/pages/solutions/clinics"));
+const LaboratorySolutions = React.lazy(() => import("@/pages/solutions/laboratories"));
+const Documentation = React.lazy(() => import("@/pages/support/documentation"));
+const HelpCenter = React.lazy(() => import("@/pages/support/help-center"));
+const Contact = React.lazy(() => import("@/pages/support/contact"));
+const Status = React.lazy(() => import("@/pages/support/status"));
+const GettingStarted = React.lazy(() => import("@/pages/docs/getting-started").then(m => ({ default: m.GettingStarted })));
+const PatientManagement = React.lazy(() => import("@/pages/docs/patient-management").then(m => ({ default: m.PatientManagement })));
+const ApiDocsPage = React.lazy(() => import("@/pages/docs/api-docs").then(m => ({ default: m.ApiDocs })));
+const AppointmentScheduling = React.lazy(() => import("@/pages/docs/appointment-scheduling").then(m => ({ default: m.AppointmentScheduling })));
+const BillingInsurance = React.lazy(() => import("@/pages/docs/billing-insurance").then(m => ({ default: m.BillingInsurance })));
+const SecurityCompliance = React.lazy(() => import("@/pages/docs/security-compliance").then(m => ({ default: m.SecurityCompliance })));
+const PlatformOverview = React.lazy(() => import("@/pages/docs/platform-overview").then(m => ({ default: m.PlatformOverview })));
+const OrganizationSetup = React.lazy(() => import("@/pages/docs/organization-setup").then(m => ({ default: m.OrganizationSetup })));
+const ElectronicHealthRecords = React.lazy(() => import("@/pages/docs/electronic-health-records").then(m => ({ default: m.ElectronicHealthRecords })));
+const PrescriptionManagement = React.lazy(() => import("@/pages/docs/prescription-management").then(m => ({ default: m.PrescriptionManagement })));
+const LaboratoryOrderProcessing = React.lazy(() => import("@/pages/docs/laboratory-order-processing").then(m => ({ default: m.LaboratoryOrderProcessing })));
+const ClinicalDocumentation = React.lazy(() => import("@/pages/docs/clinical-documentation").then(m => ({ default: m.ClinicalDocumentation })));
+const VideoPlayer = React.lazy(() => import("@/pages/videos/video-player"));
+const VideoIntegrationOptions = React.lazy(() => import("@/pages/videos/video-integration-options"));
+const YoutubeIntegration = React.lazy(() => import("@/pages/videos/youtube-integration"));
+const VimeoIntegration = React.lazy(() => import("@/pages/videos/vimeo-integration"));
+const AWSIntegration = React.lazy(() => import("@/pages/videos/aws-integration"));
+const PostLabResults = React.lazy(() => import("@/pages/post-lab-results"));
+const LabResults = React.lazy(() => import("@/pages/lab-results"));
+const LaboratoryBilling = React.lazy(() => import("@/pages/laboratory-billing"));
+const HospitalBilling = React.lazy(() => import("@/pages/hospital-billing"));
+const MedicationInsuranceClaims = React.lazy(() => import("@/pages/medication-insurance-claims"));
+const PatientPortal = React.lazy(() => import("@/pages/patient-portal"));
+const PatientPortalStaff = React.lazy(() => import("@/pages/patient-portal-staff"));
+const ChangePasswordPage = React.lazy(() => import("@/pages/change-password"));
+const AdminDashboard = React.lazy(() => import("@/pages/admin-dashboard"));
+const PatientPortalPublic = React.lazy(() => import("@/pages/patient-portal-public"));
+const PatientLogin = React.lazy(() => import("@/pages/patient-login"));
+const DoctorCalendar = React.lazy(() => import("@/pages/doctor-calendar"));
+const Achievements = React.lazy(() => import("@/pages/achievements"));
+const PatientAccessManagement = React.lazy(() => import("@/pages/patient-access-management"));
+const PrescriptionArchives = React.lazy(() => import("@/pages/prescription-archives"));
+const LaboratoryDashboard = React.lazy(() => import("@/pages/laboratory-dashboard"));
+const PharmacyDashboard = React.lazy(() => import("@/pages/pharmacy-dashboard"));
+const PharmacyDashboardEnhanced = React.lazy(() => import("@/pages/pharmacy-dashboard-enhanced"));
+const PharmacyInventory = React.lazy(() => import("@/pages/pharmacy-inventory"));
+const PharmacyCustomers = React.lazy(() => import("@/pages/pharmacy-customers"));
+const PharmacyBilling = React.lazy(() => import("@/pages/pharmacy-billing"));
+const Checkout = React.lazy(() => import("@/pages/checkout"));
+const Subscribe = React.lazy(() => import("@/pages/subscribe"));
+const PaymentSuccess = React.lazy(() => import("@/pages/payment-success"));
+const SubscriptionSuccess = React.lazy(() => import("@/pages/subscription-success"));
+const PaymentDemo = React.lazy(() => import("@/pages/payment-demo"));
 
 
 
@@ -123,7 +135,11 @@ function AppContent() {
         <Route path="/" component={LandingPage} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={RegisterOrganization} />
-        <Route path="/change-password" component={ChangePasswordPage} />
+        <Route path="/change-password">
+          <Suspense fallback={<LoadingPage />}>
+            <ChangePasswordPage />
+          </Suspense>
+        </Route>
         <Route path="/dashboard">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
@@ -131,7 +147,9 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Dashboard />
+                  <Suspense fallback={<LoadingPage />}>
+                    <Dashboard />
+                  </Suspense>
                 </main>
               </div>
             </div>
@@ -144,7 +162,9 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Patients />
+                  <Suspense fallback={<LoadingPage />}>
+                    <Patients />
+                  </Suspense>
                 </main>
               </div>
             </div>
@@ -158,7 +178,9 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Patients />
+                  <Suspense fallback={<LoadingPage />}>
+                    <Patients />
+                  </Suspense>
                 </main>
               </div>
             </div>
@@ -171,7 +193,9 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <PatientMedicalRecords />
+                  <Suspense fallback={<LoadingPage />}>
+                    <PatientMedicalRecords />
+                  </Suspense>
                 </main>
               </div>
             </div>
@@ -184,7 +208,9 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Appointments />
+                  <Suspense fallback={<LoadingPage />}>
+                    <Appointments />
+                  </Suspense>
                 </main>
               </div>
             </div>
@@ -197,7 +223,9 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Prescriptions />
+                  <Suspense fallback={<LoadingPage />}>
+                    <Prescriptions />
+                  </Suspense>
                 </main>
               </div>
             </div>
@@ -224,7 +252,9 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <LabOrders />
+                  <Suspense fallback={<LoadingPage />}>
+                    <LabOrders />
+                  </Suspense>
                 </main>
               </div>
             </div>
@@ -310,7 +340,9 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Billing />
+                  <Suspense fallback={<LoadingPage />}>
+                    <Billing />
+                  </Suspense>
                 </main>
               </div>
             </div>
