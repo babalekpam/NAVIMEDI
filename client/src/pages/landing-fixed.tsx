@@ -235,12 +235,12 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 bg-clip-text text-transparent mb-6">
-              {brandName} - #1 Healthcare Management Platform
+              {brandName} - #1 Healthcare SaaS Platform
             </h1>
             <p className="text-xl md:text-2xl text-gray-700 mb-8 max-w-4xl mx-auto">
-              <strong>HIPAA-compliant healthcare software</strong> for hospitals, pharmacies & laboratories. 
-              Streamline patient management, prescription workflows, and lab operations with 
-              <strong> multilingual support</strong> across 25+ languages and <strong>enterprise-grade security</strong>.
+              <strong>Cloud-based SaaS healthcare platform</strong> for hospitals, pharmacies & laboratories. 
+              <strong>No installation required</strong> - access from anywhere with 
+              <strong>multilingual support</strong> across 25+ languages and <strong>enterprise-grade security</strong>.
             </p>
             <div className="flex flex-wrap justify-center gap-4 mb-12">
               <Badge variant="secondary" className="px-4 py-2 text-sm">
@@ -257,7 +257,7 @@ export default function LandingPage() {
               </Badge>
               <Badge variant="secondary" className="px-4 py-2 text-sm">
                 <Globe className="w-4 h-4 mr-2" />
-                Global Deployment
+                100% Cloud-Based SaaS
               </Badge>
             </div>
           </div>
@@ -438,10 +438,10 @@ export default function LandingPage() {
       {/* Call to Action */}
       <section className="py-16 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <div className="max-w-4xl mx-auto text-center px-4">
-          <h2 className="text-4xl font-bold mb-6">Start Your Free Trial - Transform Healthcare Today</h2>
+          <h2 className="text-4xl font-bold mb-6">Start Your Free SaaS Trial - Transform Healthcare Today</h2>
           <p className="text-xl mb-8 opacity-90">
-            Join 500+ healthcare organizations worldwide using NaviMED for improved patient outcomes, 
-            streamlined workflows, and enhanced security. <strong>Free 30-day trial</strong> with full platform access.
+            Join 500+ healthcare organizations worldwide using our <strong>cloud-based SaaS platform</strong> for improved patient outcomes, 
+            streamlined workflows, and enhanced security. <strong>Free 30-day trial</strong> with full access - no installation required!
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link href="/organizations/register">
