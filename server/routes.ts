@@ -395,6 +395,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         adminFirstName,
         adminLastName,
         country,
+        currency,
+        language,
         address,
         city,
         state,
@@ -405,7 +407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } = req.body;
 
       // Validate required fields
-      if (!organizationName || !organizationType || !adminEmail || !adminPassword) {
+      if (!organizationName || !organizationType || !adminEmail || !adminPassword || !currency || !language) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
@@ -490,6 +492,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: true, // Ensure new registrations are active
         settings: {
           country: country || 'USA',
+          currency: currency || 'USD',
+          language: language || 'en',
           address,
           city,
           state,

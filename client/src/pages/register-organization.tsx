@@ -41,6 +41,8 @@ function RegistrationSteps() {
     phoneNumber: "",
     address: "",
     country: "",
+    currency: "",
+    language: "",
     description: ""
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -75,6 +77,12 @@ function RegistrationSteps() {
     }
     if (formData.phoneNumber && !/^\d{10}$/.test(formData.phoneNumber.replace(/\D/g, ''))) {
       newErrors.phoneNumber = "Phone number must be exactly 10 digits";
+    }
+    if (!formData.currency) {
+      newErrors.currency = "Please select your organization's base currency";
+    }
+    if (!formData.language) {
+      newErrors.language = "Please select your organization's primary language";
     }
 
     setErrors(newErrors);
@@ -204,6 +212,8 @@ function RegistrationSteps() {
           phoneNumber: formData.phoneNumber,
           address: formData.address,
           country: formData.country,
+          currency: formData.currency,
+          language: formData.language,
           description: formData.description,
           paymentMethodId: paymentMethodId
         }),
@@ -658,6 +668,124 @@ function RegistrationSteps() {
                           <SelectItem value="Azerbaijan">Azerbaijan</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="currency">Base Currency</Label>
+                      <Select value={formData.currency} onValueChange={(value) => setFormData({ ...formData, currency: value })}>
+                        <SelectTrigger data-testid="select-currency">
+                          <SelectValue placeholder="Select currency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* Major Global Currencies */}
+                          <SelectItem value="USD">USD - US Dollar ($)</SelectItem>
+                          <SelectItem value="EUR">EUR - Euro (€)</SelectItem>
+                          <SelectItem value="GBP">GBP - British Pound (£)</SelectItem>
+                          <SelectItem value="CAD">CAD - Canadian Dollar (C$)</SelectItem>
+                          <SelectItem value="AUD">AUD - Australian Dollar (A$)</SelectItem>
+                          <SelectItem value="CHF">CHF - Swiss Franc (₣)</SelectItem>
+                          <SelectItem value="JPY">JPY - Japanese Yen (¥)</SelectItem>
+                          <SelectItem value="CNY">CNY - Chinese Yuan (¥)</SelectItem>
+
+                          {/* African Currencies */}
+                          <SelectItem value="NGN">NGN - Nigerian Naira (₦)</SelectItem>
+                          <SelectItem value="ZAR">ZAR - South African Rand (R)</SelectItem>
+                          <SelectItem value="GHS">GHS - Ghanaian Cedi (₵)</SelectItem>
+                          <SelectItem value="KES">KES - Kenyan Shilling (KSh)</SelectItem>
+                          <SelectItem value="TZS">TZS - Tanzanian Shilling (TSh)</SelectItem>
+                          <SelectItem value="UGX">UGX - Ugandan Shilling (USh)</SelectItem>
+                          <SelectItem value="EGP">EGP - Egyptian Pound (ج.م)</SelectItem>
+                          <SelectItem value="MAD">MAD - Moroccan Dirham (DH)</SelectItem>
+                          <SelectItem value="TND">TND - Tunisian Dinar (د.ت)</SelectItem>
+                          <SelectItem value="XOF">XOF - West African CFA Franc (₣)</SelectItem>
+                          <SelectItem value="XAF">XAF - Central African CFA Franc (₣)</SelectItem>
+                          <SelectItem value="ETB">ETB - Ethiopian Birr (Br)</SelectItem>
+                          <SelectItem value="RWF">RWF - Rwandan Franc (₣)</SelectItem>
+                          <SelectItem value="ZMW">ZMW - Zambian Kwacha (ZK)</SelectItem>
+                          <SelectItem value="BWP">BWP - Botswana Pula (P)</SelectItem>
+                          <SelectItem value="NAD">NAD - Namibian Dollar (N$)</SelectItem>
+                          <SelectItem value="SZL">SZL - Swazi Lilangeni (L)</SelectItem>
+                          <SelectItem value="LSL">LSL - Lesotho Loti (L)</SelectItem>
+                          <SelectItem value="MZN">MZN - Mozambican Metical (MT)</SelectItem>
+                          <SelectItem value="AOA">AOA - Angolan Kwanza (Kz)</SelectItem>
+
+                          {/* Middle East & Asia */}
+                          <SelectItem value="AED">AED - UAE Dirham (د.إ)</SelectItem>
+                          <SelectItem value="SAR">SAR - Saudi Riyal (ر.س)</SelectItem>
+                          <SelectItem value="QAR">QAR - Qatari Riyal (ر.ق)</SelectItem>
+                          <SelectItem value="KWD">KWD - Kuwaiti Dinar (د.ك)</SelectItem>
+                          <SelectItem value="BHD">BHD - Bahraini Dinar (د.ب)</SelectItem>
+                          <SelectItem value="OMR">OMR - Omani Rial (ر.ع.)</SelectItem>
+                          <SelectItem value="JOD">JOD - Jordanian Dinar (د.ا)</SelectItem>
+                          <SelectItem value="LBP">LBP - Lebanese Pound (ل.ل)</SelectItem>
+                          <SelectItem value="TRY">TRY - Turkish Lira (₺)</SelectItem>
+                          <SelectItem value="ILS">ILS - Israeli Shekel (₪)</SelectItem>
+                          <SelectItem value="INR">INR - Indian Rupee (₹)</SelectItem>
+                          <SelectItem value="PKR">PKR - Pakistani Rupee (₨)</SelectItem>
+                          <SelectItem value="BDT">BDT - Bangladeshi Taka (৳)</SelectItem>
+                          <SelectItem value="LKR">LKR - Sri Lankan Rupee (₨)</SelectItem>
+                          <SelectItem value="SGD">SGD - Singapore Dollar (S$)</SelectItem>
+                          <SelectItem value="MYR">MYR - Malaysian Ringgit (RM)</SelectItem>
+                          <SelectItem value="THB">THB - Thai Baht (฿)</SelectItem>
+                          <SelectItem value="IDR">IDR - Indonesian Rupiah (Rp)</SelectItem>
+                          <SelectItem value="PHP">PHP - Philippine Peso (₱)</SelectItem>
+                          <SelectItem value="VND">VND - Vietnamese Dong (₫)</SelectItem>
+                          <SelectItem value="KRW">KRW - South Korean Won (₩)</SelectItem>
+
+                          {/* Latin America */}
+                          <SelectItem value="BRL">BRL - Brazilian Real (R$)</SelectItem>
+                          <SelectItem value="ARS">ARS - Argentine Peso ($)</SelectItem>
+                          <SelectItem value="CLP">CLP - Chilean Peso ($)</SelectItem>
+                          <SelectItem value="COP">COP - Colombian Peso ($)</SelectItem>
+                          <SelectItem value="PEN">PEN - Peruvian Sol (S/)</SelectItem>
+                          <SelectItem value="MXN">MXN - Mexican Peso ($)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.currency && (
+                        <p className="text-sm text-red-600">{errors.currency}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="language">Primary Language</Label>
+                      <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
+                        <SelectTrigger data-testid="select-language">
+                          <SelectValue placeholder="Select language" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="es">Español (Spanish)</SelectItem>
+                          <SelectItem value="fr">Français (French)</SelectItem>
+                          <SelectItem value="de">Deutsch (German)</SelectItem>
+                          <SelectItem value="it">Italiano (Italian)</SelectItem>
+                          <SelectItem value="pt">Português (Portuguese)</SelectItem>
+                          <SelectItem value="ar">العربية (Arabic)</SelectItem>
+                          <SelectItem value="sw">Kiswahili (Swahili)</SelectItem>
+                          <SelectItem value="am">አማርኛ (Amharic)</SelectItem>
+                          <SelectItem value="yo">Yorùbá (Yoruba)</SelectItem>
+                          <SelectItem value="ig">Igbo</SelectItem>
+                          <SelectItem value="ha">Hausa</SelectItem>
+                          <SelectItem value="zu">isiZulu (Zulu)</SelectItem>
+                          <SelectItem value="xh">isiXhosa (Xhosa)</SelectItem>
+                          <SelectItem value="af">Afrikaans</SelectItem>
+                          <SelectItem value="ru">Русский (Russian)</SelectItem>
+                          <SelectItem value="ja">日本語 (Japanese)</SelectItem>
+                          <SelectItem value="ko">한국어 (Korean)</SelectItem>
+                          <SelectItem value="zh">中文 (Chinese)</SelectItem>
+                          <SelectItem value="hi">हिन्दी (Hindi)</SelectItem>
+                          <SelectItem value="tr">Türkçe (Turkish)</SelectItem>
+                          <SelectItem value="pl">Polski (Polish)</SelectItem>
+                          <SelectItem value="nl">Nederlands (Dutch)</SelectItem>
+                          <SelectItem value="sv">Svenska (Swedish)</SelectItem>
+                          <SelectItem value="da">Dansk (Danish)</SelectItem>
+                          <SelectItem value="no">Norsk (Norwegian)</SelectItem>
+                          <SelectItem value="fi">Suomi (Finnish)</SelectItem>
+                          <SelectItem value="he">עברית (Hebrew)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.language && (
+                        <p className="text-sm text-red-600">{errors.language}</p>
+                      )}
                     </div>
                   </div>
 
