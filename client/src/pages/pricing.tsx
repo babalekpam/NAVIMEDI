@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { PublicHeader } from "@/components/layout/public-header";
+import { SEOHead } from "@/components/seo-head";
 import { 
   Check, 
   X, 
@@ -146,16 +147,24 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50">
+      <SEOHead
+        title="NaviMED Pricing - Healthcare Management Software Plans | Start Free Trial"
+        description="Flexible pricing for healthcare management software. Plans starting at $49.99/month for hospitals, pharmacies & laboratories. HIPAA compliant with 30-day free trial. Compare features and choose your plan."
+        keywords="healthcare software pricing, medical practice management cost, hospital management system pricing, pharmacy software plans, laboratory management pricing, healthcare SaaS pricing, medical software subscription"
+        canonicalUrl="https://navimedi.com/pricing"
+        ogImage="https://navimedi.com/images/navimed-pricing-og.jpg"
+      />
       <PublicHeader />
 
       <div className="container mx-auto px-4 py-20">
         {/* Header Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-slate-900 via-emerald-700 to-blue-700 bg-clip-text text-transparent">
-            Choose Your Plan
+            Healthcare Management Software Pricing - Plans for Every Organization
           </h1>
           <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
-            Flexible pricing for healthcare organizations of all sizes. Start with a 14-day free trial.
+            <strong>HIPAA-compliant healthcare software</strong> with transparent pricing for hospitals, pharmacies & laboratories. 
+            Plans starting at <strong>$49.99/month</strong> with <strong>30-day free trial</strong> and no setup fees.
           </p>
 
           {/* Billing Toggle */}

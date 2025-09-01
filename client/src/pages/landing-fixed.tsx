@@ -210,10 +210,12 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 bg-clip-text text-transparent mb-6">
-              {brandName}
+              {brandName} - #1 Healthcare Management Platform
             </h1>
             <p className="text-xl md:text-2xl text-gray-700 mb-8 max-w-4xl mx-auto">
-              {tagline}
+              <strong>HIPAA-compliant healthcare software</strong> for hospitals, pharmacies & laboratories. 
+              Streamline patient management, prescription workflows, and lab operations with 
+              <strong> multilingual support</strong> across 25+ languages and <strong>enterprise-grade security</strong>.
             </p>
             <div className="flex flex-wrap justify-center gap-4 mb-12">
               <Badge variant="secondary" className="px-4 py-2 text-sm">
@@ -267,7 +269,7 @@ export default function LandingPage() {
         <section className="py-16 bg-white/50 backdrop-blur-sm">
           <div className="max-w-6xl mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">
-              Live Platform Statistics
+              Trusted by 500+ Healthcare Organizations Worldwide
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
               <Card className="text-center p-6 hover:shadow-lg transition-all duration-300">
@@ -411,9 +413,10 @@ export default function LandingPage() {
       {/* Call to Action */}
       <section className="py-16 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <div className="max-w-4xl mx-auto text-center px-4">
-          <h2 className="text-4xl font-bold mb-6">Ready to Transform Healthcare?</h2>
+          <h2 className="text-4xl font-bold mb-6">Start Your Free Trial - Transform Healthcare Today</h2>
           <p className="text-xl mb-8 opacity-90">
-            Join thousands of healthcare organizations already using NaviMED for better patient outcomes.
+            Join 500+ healthcare organizations worldwide using NaviMED for improved patient outcomes, 
+            streamlined workflows, and enhanced security. <strong>Free 30-day trial</strong> with full platform access.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link href="/organizations/register">

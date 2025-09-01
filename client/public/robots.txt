@@ -1,8 +1,29 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /patient-portal/
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+Disallow: /tenant-management/
+Disallow: /super-admin-dashboard/
+
+# Allow important pages for SEO
+Allow: /
+Allow: /pricing
+Allow: /features
+Allow: /solutions
+Allow: /contact
+Allow: /security
+Allow: /marketplace
+Allow: /advertisements
 
 # Allow Google to crawl verification files
 Allow: /google*.html
 
-# Sitemap
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Sitemap location
 Sitemap: https://navimedi.com/sitemap.xml
