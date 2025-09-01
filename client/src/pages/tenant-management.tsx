@@ -45,13 +45,13 @@ export default function TenantManagement() {
   const queryClient = useQueryClient();
 
   const { data: tenants = [], isLoading } = useQuery<Tenant[]>({
-    queryKey: ["/api/tenants"],
+    queryKey: ["/api/admin/tenants"],
     enabled: !!user && user.role === "super_admin",
   });
 
   const createTenantMutation = useMutation({
     mutationFn: async (tenantData: any) => {
-      const response = await fetch("/api/tenants", {
+      const response = await fetch("/api/admin/tenants", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -63,7 +63,7 @@ export default function TenantManagement() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tenants"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tenants"] });
       setIsFormOpen(false);
       form.reset();
     }

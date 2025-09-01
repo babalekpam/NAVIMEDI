@@ -2119,6 +2119,16 @@ Please attach all required supporting documentation.
     }
   });
 
+  app.post('/api/admin/tenants', async (req, res) => {
+    try {
+      const tenant = await storage.createTenant(req.body);
+      res.status(201).json(tenant);
+    } catch (error) {
+      console.error('Error creating tenant:', error);
+      res.status(500).json({ message: 'Failed to create tenant' });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
   
