@@ -34,10 +34,10 @@ import Patients from "@/pages/patients";
 import PatientMedicalRecords from "@/pages/patient-medical-records";
 import Appointments from "@/pages/appointments";
 import Prescriptions from "@/pages/prescriptions";
-const LabOrders = React.lazy(() => import("@/pages/lab-orders"));
-const Billing = React.lazy(() => import("@/pages/billing"));
-const TenantManagement = React.lazy(() => import("@/pages/tenant-management"));
-const SuperAdminDashboard = React.lazy(() => import("@/pages/super-admin-dashboard"));
+import LabOrders from "@/pages/lab-orders";
+import Billing from "@/pages/billing";
+import TenantManagement from "@/pages/tenant-management";
+import SuperAdminDashboard from "@/pages/super-admin-dashboard";
 const SuperAdminClientManagement = React.lazy(() => import("@/pages/super-admin-client-management"));
 const AuditLogs = React.lazy(() => import("@/pages/audit-logs"));
 const UserRoles = React.lazy(() => import("@/pages/user-roles"));
@@ -236,9 +236,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Suspense fallback={<LoadingPage />}>
-                    <LabOrders />
-                  </Suspense>
+                  <LabOrders />
                 </main>
               </div>
             </div>
@@ -324,9 +322,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Suspense fallback={<LoadingPage />}>
-                    <Billing />
-                  </Suspense>
+                  <Billing />
                 </main>
               </div>
             </div>
@@ -339,9 +335,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Suspense fallback={<LoadingPage />}>
-                    <TenantManagement />
-                  </Suspense>
+                  <TenantManagement />
                 </main>
               </div>
             </div>
