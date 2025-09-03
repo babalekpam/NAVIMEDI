@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -18,6 +18,16 @@ import LandingPage from "@/pages/landing-fixed";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import RegisterOrganization from "@/pages/register-organization";
+
+// Loading component
+const LoadingPage = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="text-center">
+      <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+      <p className="text-lg font-medium text-gray-700">Loading...</p>
+    </div>
+  </div>
+);
 
 import Dashboard from "@/pages/dashboard";
 import Patients from "@/pages/patients";
@@ -226,7 +236,9 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <LabOrders />
+                  <Suspense fallback={<LoadingPage />}>
+                    <LabOrders />
+                  </Suspense>
                 </main>
               </div>
             </div>
@@ -312,7 +324,9 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Billing />
+                  <Suspense fallback={<LoadingPage />}>
+                    <Billing />
+                  </Suspense>
                 </main>
               </div>
             </div>
@@ -325,7 +339,9 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <TenantManagement />
+                  <Suspense fallback={<LoadingPage />}>
+                    <TenantManagement />
+                  </Suspense>
                 </main>
               </div>
             </div>
