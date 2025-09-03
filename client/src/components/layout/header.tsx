@@ -14,14 +14,14 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 import { TenantSwitcher } from "@/components/tenant/tenant-switcher";
 import { LanguageSelector } from "@/components/language-selector";
 import { useState } from "react";
 
 interface Notification {
   id: number;
-  type: 'info' | 'warning' | 'error' | 'lab_result' | 'insurance' | 'appointment';
+  type: 'info' | 'warning' | 'error';
   message: string;
   time: string;
   urgent?: boolean;
@@ -30,8 +30,7 @@ interface Notification {
 export const Header = () => {
   const { user, logout } = useAuth();
   const { tenant } = useTenant();
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
@@ -84,7 +83,7 @@ export const Header = () => {
           {/* Global Navigation */}
           <nav className="hidden md:flex space-x-8">
             <button 
-              onClick={() => navigate("/dashboard")}
+              onClick={() => setLocation("/dashboard")}
               className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
             >
               {t('dashboard')}
@@ -93,19 +92,19 @@ export const Header = () => {
               // Platform Owner Navigation
               <>
                 <button 
-                  onClick={() => navigate("/tenant-management")}
+                  onClick={() => setLocation("/tenant-management")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('tenant-management')}
                 </button>
                 <button 
-                  onClick={() => navigate("/user-roles")}
+                  onClick={() => setLocation("/user-roles")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('user-roles')}
                 </button>
                 <button 
-                  onClick={() => navigate("/audit-logs")}
+                  onClick={() => setLocation("/audit-logs")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('audit-logs')}
@@ -116,29 +115,29 @@ export const Header = () => {
               <>
                 {/* Receptionists use sidebar navigation exclusively */}
               </>
-            ) : (tenant?.type === "pharmacy" as any || user.role === "pharmacist" || ((user.role === "tenant_admin" || user.role === "director") && tenant?.type === "pharmacy" as any) || user.tenantId === "c0bdce16-06c2-4b54-a5e6-24ba214af49d") ? (
+            ) : tenant?.type === "pharmacy" || user.role === "pharmacist" || ((user.role === "tenant_admin" || user.role === "director") && tenant?.type === "pharmacy") || user.tenantId === "c0bdce16-06c2-4b54-a5e6-24ba214af49d" ? (
               // Pharmacy Navigation
               <>
                 <button 
-                  onClick={() => navigate("/prescriptions")}
+                  onClick={() => setLocation("/prescriptions")}
                   className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
                 >
                   💊 Prescriptions
                 </button>
                 <button 
-                  onClick={() => navigate("/pharmacy-inventory")}
+                  onClick={() => setLocation("/pharmacy-inventory")}
                   className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
                 >
                   📦 Inventory
                 </button>
                 <button 
-                  onClick={() => navigate("/pharmacy-customers")}
+                  onClick={() => setLocation("/pharmacy-customers")}
                   className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
                 >
                   👤 Customers
                 </button>
                 <button 
-                  onClick={() => navigate("/pharmacy-billing")}
+                  onClick={() => setLocation("/pharmacy-billing")}
                   className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
                 >
                   💳 Billing
@@ -148,19 +147,19 @@ export const Header = () => {
               // Laboratory Navigation
               <>
                 <button 
-                  onClick={() => navigate("/lab-orders")}
+                  onClick={() => setLocation("/lab-orders")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('lab-orders')}
                 </button>
                 <button 
-                  onClick={() => navigate("/lab-results")}
+                  onClick={() => setLocation("/lab-results")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('lab-results')}
                 </button>
                 <button 
-                  onClick={() => navigate("/laboratory-billing")}
+                  onClick={() => setLocation("/laboratory-billing")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('billing')}
@@ -170,31 +169,31 @@ export const Header = () => {
               // Hospital/Clinical Navigation
               <>
                 <button 
-                  onClick={() => navigate("/patients")}
+                  onClick={() => setLocation("/patients")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('patients')}
                 </button>
                 <button 
-                  onClick={() => navigate("/appointments")}
+                  onClick={() => setLocation("/appointments")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('appointments')}
                 </button>
                 <button 
-                  onClick={() => navigate("/prescriptions")}
+                  onClick={() => setLocation("/prescriptions")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('prescriptions')}
                 </button>
                 <button 
-                  onClick={() => navigate("/lab-orders")}
+                  onClick={() => setLocation("/lab-orders")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('lab-orders')}
                 </button>
                 <button 
-                  onClick={() => navigate("/billing")}
+                  onClick={() => setLocation("/billing")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('billing')}
@@ -304,13 +303,13 @@ export const Header = () => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>{t('my-account')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/profile-settings")}>
+                <DropdownMenuItem onClick={() => setLocation("/profile-settings")}>
                   {t('profile-settings')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/profile-settings")}>
+                <DropdownMenuItem onClick={() => setLocation("/profile-settings")}>
                   {t('security-privacy')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/audit-logs")}>
+                <DropdownMenuItem onClick={() => setLocation("/audit-logs")}>
                   {t('audit-logs')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

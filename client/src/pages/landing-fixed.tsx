@@ -128,28 +128,16 @@ function ImageCarousel() {
     }
   }, []);
 
-  // Auto-rotate images every 5 seconds, pause on user interaction
-  const [isPaused, setIsPaused] = useState(false);
-  
+  // Auto-rotate images every 4 seconds
   useEffect(() => {
-    if (isPaused) return;
-    
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => 
         (prevIndex + 1) % healthcareImages.length
       );
-    }, 5000);
+    }, 4000);
 
     return () => clearInterval(interval);
-  }, [healthcareImages.length, isPaused]);
-
-  // Manual navigation handler
-  const handleManualNavigation = (index: number) => {
-    setCurrentImageIndex(index);
-    setIsPaused(true);
-    // Resume auto-rotation after 10 seconds of no interaction
-    setTimeout(() => setIsPaused(false), 10000);
-  };
+  }, [healthcareImages.length]);
 
   return (
     <div className="relative max-w-6xl mx-auto">
@@ -198,7 +186,7 @@ function ImageCarousel() {
         {healthcareImages.map((_, index) => (
           <button
             key={index}
-            onClick={() => handleManualNavigation(index)}
+            onClick={() => setCurrentImageIndex(index)}
             className={`w-3 h-3 rounded-full transition-all duration-300 ${
               index === currentImageIndex 
                 ? 'bg-blue-600 scale-125' 
@@ -210,20 +198,18 @@ function ImageCarousel() {
 
       {/* Navigation Arrows */}
       <button
-        onClick={() => {
-          const newIndex = currentImageIndex === 0 ? healthcareImages.length - 1 : currentImageIndex - 1;
-          handleManualNavigation(newIndex);
-        }}
+        onClick={() => setCurrentImageIndex((prev) => 
+          prev === 0 ? healthcareImages.length - 1 : prev - 1
+        )}
         className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-3 shadow-lg transition-all duration-300 hover:scale-110"
       >
         <ArrowRight className="w-5 h-5 rotate-180 text-gray-700" />
       </button>
       
       <button
-        onClick={() => {
-          const newIndex = (currentImageIndex + 1) % healthcareImages.length;
-          handleManualNavigation(newIndex);
-        }}
+        onClick={() => setCurrentImageIndex((prev) => 
+          (prev + 1) % healthcareImages.length
+        )}
         className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-3 shadow-lg transition-all duration-300 hover:scale-110"
       >
         <ArrowRight className="w-5 h-5 text-gray-700" />
