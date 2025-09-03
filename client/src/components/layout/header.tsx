@@ -14,7 +14,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
-import { useLocation } from "wouter";
+import { useLocation, useNavigate } from "react-router-dom";
 import { TenantSwitcher } from "@/components/tenant/tenant-switcher";
 import { LanguageSelector } from "@/components/language-selector";
 import { useState } from "react";
@@ -30,7 +30,8 @@ interface Notification {
 export const Header = () => {
   const { user, logout } = useAuth();
   const { tenant } = useTenant();
-  const [, setLocation] = useLocation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
@@ -83,7 +84,7 @@ export const Header = () => {
           {/* Global Navigation */}
           <nav className="hidden md:flex space-x-8">
             <button 
-              onClick={() => setLocation("/dashboard")}
+              onClick={() => navigate("/dashboard")}
               className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
             >
               {t('dashboard')}
@@ -92,19 +93,19 @@ export const Header = () => {
               // Platform Owner Navigation
               <>
                 <button 
-                  onClick={() => setLocation("/tenant-management")}
+                  onClick={() => navigate("/tenant-management")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('tenant-management')}
                 </button>
                 <button 
-                  onClick={() => setLocation("/user-roles")}
+                  onClick={() => navigate("/user-roles")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('user-roles')}
                 </button>
                 <button 
-                  onClick={() => setLocation("/audit-logs")}
+                  onClick={() => navigate("/audit-logs")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('audit-logs')}
@@ -119,25 +120,25 @@ export const Header = () => {
               // Pharmacy Navigation
               <>
                 <button 
-                  onClick={() => setLocation("/prescriptions")}
+                  onClick={() => navigate("/prescriptions")}
                   className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
                 >
                   💊 Prescriptions
                 </button>
                 <button 
-                  onClick={() => setLocation("/pharmacy-inventory")}
+                  onClick={() => navigate("/pharmacy-inventory")}
                   className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
                 >
                   📦 Inventory
                 </button>
                 <button 
-                  onClick={() => setLocation("/pharmacy-customers")}
+                  onClick={() => navigate("/pharmacy-customers")}
                   className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
                 >
                   👤 Customers
                 </button>
                 <button 
-                  onClick={() => setLocation("/pharmacy-billing")}
+                  onClick={() => navigate("/pharmacy-billing")}
                   className="text-blue-600 border-b-2 border-blue-600 px-1 pb-4 text-sm font-medium"
                 >
                   💳 Billing
@@ -147,19 +148,19 @@ export const Header = () => {
               // Laboratory Navigation
               <>
                 <button 
-                  onClick={() => setLocation("/lab-orders")}
+                  onClick={() => navigate("/lab-orders")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('lab-orders')}
                 </button>
                 <button 
-                  onClick={() => setLocation("/lab-results")}
+                  onClick={() => navigate("/lab-results")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('lab-results')}
                 </button>
                 <button 
-                  onClick={() => setLocation("/laboratory-billing")}
+                  onClick={() => navigate("/laboratory-billing")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('billing')}
@@ -169,31 +170,31 @@ export const Header = () => {
               // Hospital/Clinical Navigation
               <>
                 <button 
-                  onClick={() => setLocation("/patients")}
+                  onClick={() => navigate("/patients")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('patients')}
                 </button>
                 <button 
-                  onClick={() => setLocation("/appointments")}
+                  onClick={() => navigate("/appointments")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('appointments')}
                 </button>
                 <button 
-                  onClick={() => setLocation("/prescriptions")}
+                  onClick={() => navigate("/prescriptions")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('prescriptions')}
                 </button>
                 <button 
-                  onClick={() => setLocation("/lab-orders")}
+                  onClick={() => navigate("/lab-orders")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('lab-orders')}
                 </button>
                 <button 
-                  onClick={() => setLocation("/billing")}
+                  onClick={() => navigate("/billing")}
                   className="text-gray-500 hover:text-gray-700 px-1 pb-4 text-sm font-medium"
                 >
                   {t('billing')}
@@ -303,13 +304,13 @@ export const Header = () => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>{t('my-account')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setLocation("/profile-settings")}>
+                <DropdownMenuItem onClick={() => navigate("/profile-settings")}>
                   {t('profile-settings')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLocation("/profile-settings")}>
+                <DropdownMenuItem onClick={() => navigate("/profile-settings")}>
                   {t('security-privacy')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLocation("/audit-logs")}>
+                <DropdownMenuItem onClick={() => navigate("/audit-logs")}>
                   {t('audit-logs')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

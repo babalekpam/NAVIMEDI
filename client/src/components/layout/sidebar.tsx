@@ -124,7 +124,7 @@ import {
 } from "lucide-react";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 import { Button } from "@/components/ui/button";
-import { useLocation } from "wouter";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
@@ -201,7 +201,8 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
 ];
 
 export const Sidebar = () => {
-  const [location, setLocation] = useLocation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { tenant: currentTenant } = useTenant();
   const { t } = useTranslation();
@@ -240,16 +241,14 @@ export const Sidebar = () => {
                 Platform Management
               </h3>
 
-
-
               {platformItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location === item.path;
+                const isActive = location.pathname === item.path;
                 
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setLocation(item.path)}
+                    onClick={() => navigate(item.path)}
                     className={cn(
                       "w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
                       isActive
@@ -335,12 +334,12 @@ export const Sidebar = () => {
               </h3>
               {coreOperationsItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location === item.path;
+                const isActive = location.pathname === item.path;
                 
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setLocation(item.path)}
+                    onClick={() => navigate(item.path)}
                     className={cn(
                       "w-full flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-colors",
                       isActive
@@ -362,12 +361,12 @@ export const Sidebar = () => {
               </h3>
               {analyticsItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location === item.path;
+                const isActive = location.pathname === item.path;
                 
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setLocation(item.path)}
+                    onClick={() => navigate(item.path)}
                     className={cn(
                       "w-full flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-colors",
                       isActive
@@ -389,12 +388,12 @@ export const Sidebar = () => {
               </h3>
               {resourceItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location === item.path;
+                const isActive = location.pathname === item.path;
                 
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setLocation(item.path)}
+                    onClick={() => navigate(item.path)}
                     className={cn(
                       "w-full flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-colors",
                       isActive
@@ -416,12 +415,12 @@ export const Sidebar = () => {
               </h3>
               {clientServicesItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location === item.path;
+                const isActive = location.pathname === item.path;
                 
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setLocation(item.path)}
+                    onClick={() => navigate(item.path)}
                     className={cn(
                       "w-full flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-colors",
                       isActive
@@ -443,12 +442,12 @@ export const Sidebar = () => {
               </h3>
               {complianceItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location === item.path;
+                const isActive = location.pathname === item.path;
                 
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setLocation(item.path)}
+                    onClick={() => navigate(item.path)}
                     className={cn(
                       "w-full flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-colors",
                       isActive
@@ -495,12 +494,12 @@ export const Sidebar = () => {
               </h3>
               {pharmacyItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location === item.path;
+                const isActive = location.pathname === item.path;
                 
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setLocation(item.path)}
+                    onClick={() => navigate(item.path)}
                     className={cn(
                       "w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
                       isActive
@@ -520,37 +519,17 @@ export const Sidebar = () => {
     );
   }
 
-  // For hospital users - include receptionist billing access
-  const isHospitalTenant = currentTenant?.type === "hospital" || currentTenant?.type === "clinic";
-  
-  // For regular tenant users (excluding pharmacists, receptionists only exist in hospitals/clinics)
+  // Regular tenant users (hospitals and clinics)
   const clinicalItems = filteredItems.filter(item => {
-    // Receptionists should only exist in hospital/clinic tenants
-    if (user.role === "receptionist" && !isHospitalTenant) {
-      return false; // No receptionist access for pharmacy tenants
-    }
-    // For hospital receptionists, include billing access
-    if (user.role === "receptionist" && isHospitalTenant && item.id === "hospital-billing") {
-      return true;
-    }
-    // Include core clinical items - exclude laboratory-specific items for non-laboratory tenants
-    const clinicalItemIds = ["dashboard", "patient-portal", "register-patient", "book-appointment", "patients", "patient-medical-records", "patient-messages", "consultation-history", "appointments", "prescriptions", "lab-orders", "lab-results", "health-recommendations", "medical-communications", "patient-access-management"];
-    // For laboratory tenants, exclude prescription-related items and medical communications
-    if (currentTenant?.type === "laboratory") {
-      const labClinicalIds = ["dashboard", "patients", "lab-records", "lab-orders", "lab-results"];
-      return labClinicalIds.includes(item.id);
-    }
-    // For pharmacy tenants, exclude appointment-related items - pharmacies don't schedule appointments
-    if (currentTenant?.type === "pharmacy") {
-      const excludedForPharmacy = ["book-appointment", "appointments"];
-      return clinicalItemIds.includes(item.id) && !excludedForPharmacy.includes(item.id);
-    }
-    return clinicalItemIds.includes(item.id) && !["pharmacy-dashboard", "lab-records"].includes(item.id);
+    const clinicalItemIds = ["dashboard", "patients", "patient-medical-records", "appointments", "prescriptions", "lab-orders", "lab-results", "health-recommendations", "medical-communications", "consultation-history", "patient-access-management", "achievements", "advertisements"];
+    return clinicalItemIds.includes(item.id);
   });
+  
   const operationItems = filteredItems.filter(item => {
-    const operationItemIds = ["billing", "service-prices", "advertisements"];
+    const operationItemIds = ["billing", "hospital-billing", "service-prices", "currency-management", "reports"];
     return operationItemIds.includes(item.id);
   });
+  
   const adminItems = filteredItems.filter(item => {
     // For laboratory tenants, exclude white-label settings and advanced features
     if (currentTenant?.type === "laboratory") {
@@ -580,7 +559,7 @@ export const Sidebar = () => {
             {(user.role === "physician" || user.role === "nurse" || user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director") && (
               <Button 
                 className="w-full bg-green-600 hover:bg-green-700 text-white shadow-md"
-                onClick={() => setLocation("/patient-portal-staff")}
+                onClick={() => navigate("/patient-portal-staff")}
                 title="Access patient portal to view from patient perspective"
               >
                 <Users className="h-4 w-4 mr-2" />
@@ -589,7 +568,7 @@ export const Sidebar = () => {
             )}
             <Button 
               className="w-full bg-blue-600 hover:bg-blue-700"
-              onClick={() => setLocation("/patients?action=register")}
+              onClick={() => navigate("/patients?action=register")}
             >
               <Plus className="h-4 w-4 mr-2" />
               New Patient
@@ -607,12 +586,12 @@ export const Sidebar = () => {
               </h3>
               {clinicalItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location === item.path;
+                const isActive = location.pathname === item.path;
                 
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setLocation(item.path)}
+                    onClick={() => navigate(item.path)}
                     className={cn(
                       "w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
                       isActive
@@ -636,12 +615,12 @@ export const Sidebar = () => {
               </h3>
               {operationItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location === item.path;
+                const isActive = location.pathname === item.path;
                 
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setLocation(item.path)}
+                    onClick={() => navigate(item.path)}
                     className={cn(
                       "w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
                       isActive
@@ -665,12 +644,12 @@ export const Sidebar = () => {
               </h3>
               {adminItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location === item.path;
+                const isActive = location.pathname === item.path;
                 
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setLocation(item.path)}
+                    onClick={() => navigate(item.path)}
                     className={cn(
                       "w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
                       isActive
