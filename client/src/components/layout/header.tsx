@@ -21,7 +21,7 @@ import { useState } from "react";
 
 interface Notification {
   id: number;
-  type: 'info' | 'warning' | 'error';
+  type: 'info' | 'warning' | 'error' | 'lab_result' | 'insurance' | 'appointment';
   message: string;
   time: string;
   urgent?: boolean;
@@ -116,7 +116,7 @@ export const Header = () => {
               <>
                 {/* Receptionists use sidebar navigation exclusively */}
               </>
-            ) : tenant?.type === "pharmacy" || user.role === "pharmacist" || ((user.role === "tenant_admin" || user.role === "director") && tenant?.type === "pharmacy") || user.tenantId === "c0bdce16-06c2-4b54-a5e6-24ba214af49d" ? (
+            ) : (tenant?.type === "pharmacy" as any || user.role === "pharmacist" || ((user.role === "tenant_admin" || user.role === "director") && tenant?.type === "pharmacy" as any) || user.tenantId === "c0bdce16-06c2-4b54-a5e6-24ba214af49d") ? (
               // Pharmacy Navigation
               <>
                 <button 
