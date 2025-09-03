@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React from "react";
 import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -12,15 +12,6 @@ import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { ProtectedRoute } from "@/components/layout/protected-route";
 
-// Loading component for Suspense fallback
-const LoadingPage = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50">
-    <div className="text-center">
-      <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-      <p className="text-lg font-medium text-gray-700">Loading...</p>
-    </div>
-  </div>
-);
 
 // Critical pages loaded immediately (public pages users see first)
 import LandingPage from "@/pages/landing-fixed";
@@ -28,12 +19,11 @@ import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import RegisterOrganization from "@/pages/register-organization";
 
-// All other pages loaded dynamically with code splitting
-const Dashboard = React.lazy(() => import("@/pages/dashboard"));
-const Patients = React.lazy(() => import("@/pages/patients"));
-const PatientMedicalRecords = React.lazy(() => import("@/pages/patient-medical-records"));
-const Appointments = React.lazy(() => import("@/pages/appointments"));
-const Prescriptions = React.lazy(() => import("@/pages/prescriptions"));
+import Dashboard from "@/pages/dashboard";
+import Patients from "@/pages/patients";
+import PatientMedicalRecords from "@/pages/patient-medical-records";
+import Appointments from "@/pages/appointments";
+import Prescriptions from "@/pages/prescriptions";
 const LabOrders = React.lazy(() => import("@/pages/lab-orders"));
 const Billing = React.lazy(() => import("@/pages/billing"));
 const TenantManagement = React.lazy(() => import("@/pages/tenant-management"));
@@ -135,11 +125,7 @@ function AppContent() {
         <Route path="/" component={LandingPage} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={RegisterOrganization} />
-        <Route path="/change-password">
-          <Suspense fallback={<LoadingPage />}>
-            <ChangePasswordPage />
-          </Suspense>
-        </Route>
+        <Route path="/change-password" component={ChangePasswordPage} />
         <Route path="/dashboard">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
@@ -147,9 +133,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Suspense fallback={<LoadingPage />}>
-                    <Dashboard />
-                  </Suspense>
+                  <Dashboard />
                 </main>
               </div>
             </div>
@@ -162,9 +146,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Suspense fallback={<LoadingPage />}>
-                    <Patients />
-                  </Suspense>
+                  <Patients />
                 </main>
               </div>
             </div>
@@ -178,9 +160,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Suspense fallback={<LoadingPage />}>
-                    <Patients />
-                  </Suspense>
+                  <Patients />
                 </main>
               </div>
             </div>
@@ -193,9 +173,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Suspense fallback={<LoadingPage />}>
-                    <PatientMedicalRecords />
-                  </Suspense>
+                  <PatientMedicalRecords />
                 </main>
               </div>
             </div>
@@ -208,9 +186,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Suspense fallback={<LoadingPage />}>
-                    <Appointments />
-                  </Suspense>
+                  <Appointments />
                 </main>
               </div>
             </div>
@@ -223,9 +199,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Suspense fallback={<LoadingPage />}>
-                    <Prescriptions />
-                  </Suspense>
+                  <Prescriptions />
                 </main>
               </div>
             </div>
@@ -252,9 +226,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Suspense fallback={<LoadingPage />}>
-                    <LabOrders />
-                  </Suspense>
+                  <LabOrders />
                 </main>
               </div>
             </div>
@@ -340,9 +312,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <Suspense fallback={<LoadingPage />}>
-                    <Billing />
-                  </Suspense>
+                  <Billing />
                 </main>
               </div>
             </div>

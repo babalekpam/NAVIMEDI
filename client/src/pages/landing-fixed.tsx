@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PublicHeader } from "@/components/layout/public-header";
+import { OptimizedImage } from "@/components/optimized-image";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 import healthcareTeam from "@assets/image_1754352574197.png";
 import medicalImaging from "@assets/image_1754352599331.png";
@@ -77,7 +78,6 @@ interface PlatformData {
 // Professional Healthcare Image Carousel Component
 function ImageCarousel() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [imagesLoaded, setImagesLoaded] = useState<Set<number>>(new Set());
   
   // Professional healthcare photographs provided by the user
   const healthcareImages = [
@@ -119,14 +119,8 @@ function ImageCarousel() {
     }
   ];
 
-  // Preload critical first image for faster LCP
-  useEffect(() => {
-    if (healthcareImages.length > 0) {
-      const firstImage = new Image();
-      firstImage.src = healthcareImages[0].url;
-      firstImage.onload = () => setImagesLoaded(prev => new Set(prev).add(0));
-    }
-  }, []);
+  // Image loading is now handled by OptimizedImage component
+  // First image gets priority loading for faster LCP
 
   // Auto-rotate images every 4 seconds
   useEffect(() => {
@@ -158,13 +152,11 @@ function ImageCarousel() {
                 index === currentImageIndex ? 'opacity-100' : 'opacity-0'
               }`}
             >
-              <img
+              <OptimizedImage
                 src={image.url}
                 alt={image.alt}
                 className="w-full h-full object-cover"
-                loading={index === 0 ? "eager" : "lazy"}
-                decoding="async"
-                {...(index === 0 && { fetchpriority: "high" })}
+                priority={index === 0}
                 style={{
                   contentVisibility: index === currentImageIndex ? 'visible' : 'hidden'
                 }}
