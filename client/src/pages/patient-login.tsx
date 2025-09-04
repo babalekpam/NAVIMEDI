@@ -19,7 +19,7 @@ import { apiRequest } from "@/lib/queryClient";
 
 export default function PatientLogin() {
   const [formData, setFormData] = useState({
-    username: "",
+    email: "",
     password: ""
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +35,7 @@ export default function PatientLogin() {
       const response = await apiRequest("/api/auth/login", {
         method: "POST",
         body: {
-          username: formData.username,
+          email: formData.email,
           password: formData.password,
           tenantId: "" // For patients, auto-detect tenant
         }
@@ -55,8 +55,8 @@ export default function PatientLogin() {
     }
   };
 
-  const handleQuickLogin = (username: string, password: string) => {
-    setFormData({ username, password });
+  const handleQuickLogin = (email: string, password: string) => {
+    setFormData({ email, password });
     // Auto-submit after setting form data
     setTimeout(() => {
       const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
@@ -99,16 +99,16 @@ export default function PatientLogin() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="username" className="flex items-center">
-                  <User className="h-4 w-4 mr-2" />
-                  Username
+                <Label htmlFor="email" className="flex items-center">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Email
                 </Label>
                 <Input
-                  id="username"
-                  type="text"
-                  placeholder="Enter your username"
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email address"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                 />
               </div>
