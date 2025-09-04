@@ -58,7 +58,7 @@ const TrialStatusPage = React.lazy(() => import("@/pages/trial-status"));
 const ProfileSettingsPage = React.lazy(() => import("@/pages/profile-settings"));
 const ReceptionistDashboard = React.lazy(() => import("@/pages/receptionist-dashboard"));
 const ConsultationHistory = React.lazy(() => import("@/pages/consultation-history"));
-const Advertisements = React.lazy(() => import("@/pages/advertisements"));
+import Advertisements from "@/pages/advertisements";
 const MarketplacePage = React.lazy(() => import("@/pages/marketplace"));
 const SupplierSignupPage = React.lazy(() => import("@/pages/supplier-signup"));
 const CurrencyManagementPage = React.lazy(() => import("@/pages/currency-management").then(m => ({ default: m.CurrencyManagementPage })));
