@@ -299,8 +299,27 @@ export default function DoctorCalendar() {
         chiefComplaint: appointmentData.reason
       };
 
-      const result = await apiRequest("POST", "/api/appointments", requestBody);
-      return result;
+      console.log("Booking appointment with data:", requestBody);
+      
+      try {
+        const result = await apiRequest("POST", "/api/appointments", requestBody);
+        console.log("Appointment booking successful:", result);
+        return result;
+      } catch (error) {
+        console.error("Appointment booking failed:", error);
+        
+        // Check if it's an authentication error
+        if (error.message.includes('401')) {
+          // Redirect to patient login if authentication failed
+          localStorage.removeItem("token");
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("auth_user");
+          window.location.href = "/patient-login?message=Please log in to book appointments";
+          return;
+        }
+        
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patient/appointments"] });
