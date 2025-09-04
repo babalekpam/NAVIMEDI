@@ -239,7 +239,7 @@ Report ID: ${labOrder.id}
         <p className="text-blue-100">Stay on top of your health with your personal dashboard</p>
         {patientProfile && (
           <div className="mt-4 text-sm text-blue-100">
-            <p>MRN: {patientProfile.patient.mrn} • Metro General Hospital</p>
+            <p>MRN: {patientProfile.mrn} • Metro General Hospital</p>
           </div>
         )}
       </div>
@@ -266,7 +266,7 @@ Report ID: ${labOrder.id}
               <div>
                 <p className="text-sm font-medium text-blue-800">Active Prescriptions</p>
                 <p className="text-2xl font-bold text-blue-900">
-                  {prescriptions ? prescriptions.filter(p => p.status === 'active').length : "–"}
+                  {prescriptions ? prescriptions.filter(p => ['prescribed', 'ready', 'dispensed'].includes(p.status)).length : "–"}
                 </p>
               </div>
               <Pill className="h-8 w-8 text-blue-600" />
@@ -280,7 +280,7 @@ Report ID: ${labOrder.id}
               <div>
                 <p className="text-sm font-medium text-purple-800">Pending Results</p>
                 <p className="text-2xl font-bold text-purple-900">
-                  {labResults ? labResults.filter(l => l.status === 'pending').length : "–"}
+                  {labResults ? labResults.filter(l => ['ordered', 'processing'].includes(l.status)).length : "–"}
                 </p>
               </div>
               <FileText className="h-8 w-8 text-purple-600" />
