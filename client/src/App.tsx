@@ -50,7 +50,7 @@ const LabResultsReporting = React.lazy(() => import("@/pages/lab-results-reporti
 const LabAnalyticsDashboard = React.lazy(() => import("@/pages/lab-analytics-dashboard"));
 const LabInventoryManagement = React.lazy(() => import("@/pages/lab-inventory-management"));
 const HealthRecommendations = React.lazy(() => import("@/pages/health-recommendations"));
-const PricingPage = React.lazy(() => import("@/pages/pricing"));
+import PricingPage from "@/pages/pricing";
 const ServicePricingManagement = React.lazy(() => import("@/pages/service-pricing-management"));
 import WhiteLabelSettingsPage from "@/pages/white-label-settings";
 import OfflineModePage from "@/pages/offline-mode";
@@ -59,17 +59,17 @@ const ProfileSettingsPage = React.lazy(() => import("@/pages/profile-settings"))
 const ReceptionistDashboard = React.lazy(() => import("@/pages/receptionist-dashboard"));
 const ConsultationHistory = React.lazy(() => import("@/pages/consultation-history"));
 import Advertisements from "@/pages/advertisements";
-const MarketplacePage = React.lazy(() => import("@/pages/marketplace"));
-const SupplierSignupPage = React.lazy(() => import("@/pages/supplier-signup"));
+import MarketplacePage from "@/pages/marketplace";
+import SupplierSignupPage from "@/pages/supplier-signup";
 const CurrencyManagementPage = React.lazy(() => import("@/pages/currency-management").then(m => ({ default: m.CurrencyManagementPage })));
-const SupplierPortal = React.lazy(() => import("@/pages/supplier-portal"));
+import SupplierPortal from "@/pages/supplier-portal";
 import AdminCounterReset from "@/pages/admin-counter-reset";
 import AdminMedicalCodes from "@/pages/admin-medical-codes";
 
-const FeaturesPage = React.lazy(() => import("@/pages/features"));
-const SolutionsPage = React.lazy(() => import("@/pages/solutions"));
-const SecurityPage = React.lazy(() => import("@/pages/security"));
-const ContactPage = React.lazy(() => import("@/pages/contact"));
+import FeaturesPage from "@/pages/features";
+import SolutionsPage from "@/pages/solutions";
+import SecurityPage from "@/pages/security";
+import ContactPage from "@/pages/contact";
 const Integrations = React.lazy(() => import("@/pages/integrations"));
 const ApiDocs = React.lazy(() => import("@/pages/api-docs"));
 const HospitalSolutions = React.lazy(() => import("@/pages/solutions/hospitals"));
