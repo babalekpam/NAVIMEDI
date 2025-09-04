@@ -638,9 +638,6 @@ export default function DoctorCalendar() {
         </Alert>
 
         <div className="flex gap-4">
-          <Button variant="outline" onClick={() => window.location.href = "/patient-portal"}>
-            Back to Portal
-          </Button>
           <Button onClick={() => window.location.reload()}>
             Book Another Appointment
           </Button>
@@ -663,9 +660,9 @@ export default function DoctorCalendar() {
               </div>
             </div>
             
-            <Button variant="outline" onClick={() => window.location.href = "/patient-portal"}>
+            <Button variant="outline" onClick={() => window.history.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Portal
+              Back
             </Button>
           </div>
         </div>
