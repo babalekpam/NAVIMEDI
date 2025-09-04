@@ -299,8 +299,8 @@ export default function DoctorCalendar() {
         chiefComplaint: appointmentData.reason
       };
 
-      const response = await apiRequest("POST", "/api/appointments", requestBody);
-      return response.json();
+      const result = await apiRequest("POST", "/api/appointments", requestBody);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patient/appointments"] });
