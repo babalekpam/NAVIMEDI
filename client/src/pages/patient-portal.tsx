@@ -2331,6 +2331,26 @@ Report ID: ${labOrder.id}
                             </Badge>
                             <span className="text-sm text-green-600 font-medium">${doctor.consultationFee}</span>
                           </div>
+                          <div className="mt-4 flex gap-2">
+                            <Button 
+                              size="sm" 
+                              onClick={() => window.location.href = `/doctor-calendar?doctorId=${doctor.id}&doctorName=${encodeURIComponent(doctor.fullName)}`}
+                              className="flex-1"
+                            >
+                              <CalendarIcon className="h-4 w-4 mr-2" />
+                              Book Appointment
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                alert(`Contact Dr. ${doctor.fullName}\nDepartment: ${doctor.department}\nSpecialty: ${doctor.specialization}\n\nTo schedule an appointment, use the "Book Appointment" button or call the hospital.`);
+                              }}
+                            >
+                              <Phone className="h-4 w-4 mr-2" />
+                              Contact
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </CardContent>

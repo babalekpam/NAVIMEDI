@@ -74,6 +74,21 @@ export default function DoctorCalendar() {
   const [step, setStep] = useState<number>(1);
   const [searchFilter, setSearchFilter] = useState<string>("");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
+  
+  // Check for pre-selected doctor from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const doctorId = urlParams.get('doctorId');
+    const doctorName = urlParams.get('doctorName');
+    
+    if (doctorId && doctors) {
+      const preSelectedDoctor = doctors.find((doc: Doctor) => doc.id === doctorId);
+      if (preSelectedDoctor) {
+        setSelectedDoctor(preSelectedDoctor);
+        setStep(2); // Skip doctor selection, go to calendar
+      }
+    }
+  }, [doctors]);
 
   // Redirect to patient login if not authenticated
   if (!authLoading && !user) {
