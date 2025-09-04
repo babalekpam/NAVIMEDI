@@ -57,7 +57,7 @@ import OfflineModePage from "@/pages/offline-mode";
 const TrialStatusPage = React.lazy(() => import("@/pages/trial-status"));
 const ProfileSettingsPage = React.lazy(() => import("@/pages/profile-settings"));
 const ReceptionistDashboard = React.lazy(() => import("@/pages/receptionist-dashboard"));
-const ConsultationHistory = React.lazy(() => import("@/pages/consultation-history"));
+import ConsultationHistory from "@/pages/consultation-history";
 import Advertisements from "@/pages/advertisements";
 import MarketplacePage from "@/pages/marketplace";
 import SupplierSignupPage from "@/pages/supplier-signup";
