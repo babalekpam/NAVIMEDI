@@ -52,8 +52,8 @@ const LabInventoryManagement = React.lazy(() => import("@/pages/lab-inventory-ma
 const HealthRecommendations = React.lazy(() => import("@/pages/health-recommendations"));
 const PricingPage = React.lazy(() => import("@/pages/pricing"));
 const ServicePricingManagement = React.lazy(() => import("@/pages/service-pricing-management"));
-const WhiteLabelSettingsPage = React.lazy(() => import("@/pages/white-label-settings"));
-const OfflineModePage = React.lazy(() => import("@/pages/offline-mode"));
+import WhiteLabelSettingsPage from "@/pages/white-label-settings";
+import OfflineModePage from "@/pages/offline-mode";
 const TrialStatusPage = React.lazy(() => import("@/pages/trial-status"));
 const ProfileSettingsPage = React.lazy(() => import("@/pages/profile-settings"));
 const ReceptionistDashboard = React.lazy(() => import("@/pages/receptionist-dashboard"));
