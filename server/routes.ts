@@ -8,8 +8,8 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { db } from "./db";
-import { tenants, users, pharmacies, prescriptions, insuranceClaims, insertLabResultSchema, type InsuranceClaim } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { tenants, users, pharmacies, prescriptions, insuranceClaims, insertLabResultSchema, type InsuranceClaim, labOrders, appointments, patients } from "@shared/schema";
+import { eq, and, desc } from "drizzle-orm";
 import Stripe from "stripe";
 
 // Initialize Stripe - only if secret key is properly configured
@@ -2107,6 +2107,90 @@ Please attach all required supporting documentation.
     } catch (error: any) {
       console.error("Error creating subscription:", error);
       res.status(500).json({ message: "Error creating subscription: " + error.message });
+    }
+  });
+
+  // PATIENT PORTAL API ROUTES
+  // These are specific endpoints for the patient portal interface
+  
+  // Get prescriptions for the authenticated patient
+  app.get('/api/patient/prescriptions', authenticateToken, async (req, res) => {
+    try {
+      const { id: userId, tenantId } = req.user as any;
+      
+      // For patient users, their ID is also their patient ID
+      console.log(`🩺 PATIENT PRESCRIPTIONS - Getting prescriptions for patient ${userId}`);
+      
+      const patientPrescriptions = await db.select().from(prescriptions)
+        .where(eq(prescriptions.patientId, userId))
+        .orderBy(desc(prescriptions.prescribedDate));
+      
+      console.log(`🩺 Found ${patientPrescriptions.length} prescriptions for patient ${userId}`);
+      res.json(patientPrescriptions);
+    } catch (error) {
+      console.error('Error fetching patient prescriptions:', error);
+      res.status(500).json({ message: 'Failed to fetch prescriptions' });
+    }
+  });
+
+  // Get lab results for the authenticated patient
+  app.get('/api/patient/lab-results', authenticateToken, async (req, res) => {
+    try {
+      const { id: userId } = req.user as any;
+      
+      console.log(`🧪 PATIENT LAB RESULTS - Getting lab results for patient ${userId}`);
+      
+      // Get lab orders for this patient
+      const patientLabOrders = await db.select().from(labOrders)
+        .where(eq(labOrders.patientId, userId))
+        .orderBy(desc(labOrders.orderedDate));
+      
+      console.log(`🧪 Found ${patientLabOrders.length} lab orders for patient ${userId}`);
+      res.json(patientLabOrders);
+    } catch (error) {
+      console.error('Error fetching patient lab results:', error);
+      res.status(500).json({ message: 'Failed to fetch lab results' });
+    }
+  });
+
+  // Get appointments for the authenticated patient
+  app.get('/api/patient/appointments', authenticateToken, async (req, res) => {
+    try {
+      const { id: userId } = req.user as any;
+      
+      console.log(`📅 PATIENT APPOINTMENTS - Getting appointments for patient ${userId}`);
+      
+      const patientAppointments = await db.select().from(appointments)
+        .where(eq(appointments.patientId, userId))
+        .orderBy(desc(appointments.appointmentDate));
+      
+      console.log(`📅 Found ${patientAppointments.length} appointments for patient ${userId}`);
+      res.json(patientAppointments);
+    } catch (error) {
+      console.error('Error fetching patient appointments:', error);
+      res.status(500).json({ message: 'Failed to fetch appointments' });
+    }
+  });
+
+  // Get profile for the authenticated patient
+  app.get('/api/patient/profile', authenticateToken, async (req, res) => {
+    try {
+      const { id: userId } = req.user as any;
+      
+      console.log(`👤 PATIENT PROFILE - Getting profile for patient ${userId}`);
+      
+      const [patientProfile] = await db.select().from(patients)
+        .where(eq(patients.id, userId));
+      
+      if (!patientProfile) {
+        return res.status(404).json({ message: 'Patient profile not found' });
+      }
+      
+      console.log(`👤 Found profile for patient ${patientProfile.firstName} ${patientProfile.lastName}`);
+      res.json(patientProfile);
+    } catch (error) {
+      console.error('Error fetching patient profile:', error);
+      res.status(500).json({ message: 'Failed to fetch patient profile' });
     }
   });
 
