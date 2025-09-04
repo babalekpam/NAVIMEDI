@@ -57,14 +57,15 @@ export const tenantMiddleware = async (req: AuthenticatedRequest, res: Response,
           '/api/billing-plans',
           '/api/tenant-settings',
           '/api/client-management',
-          '/api/admin/clients'
+          '/api/admin/clients',
+          '/api/appointments',
+          '/api/patients',
+          '/api/patient'
         ];
         
         // Define operational endpoints that super admin must NOT access
         const operationalEndpoints = [
-          '/api/patients',
           '/api/prescriptions',
-          '/api/appointments',
           '/api/lab-orders',
           '/api/lab-results',
           '/api/billing',
