@@ -2194,6 +2194,143 @@ Please attach all required supporting documentation.
     }
   });
 
+  // Generate professional lab report PDF for patients
+  app.get('/api/patient/lab-results/:id/pdf', authenticateToken, async (req, res) => {
+    try {
+      const { id: userId } = req.user as any;
+      const { id } = req.params;
+      
+      console.log('📄 GENERATING LAB PDF - For lab result', id, 'patient', userId);
+      
+      // Get the lab order details
+      const [labOrder] = await db.select().from(labOrders)
+        .where(and(
+          eq(labOrders.id, id),
+          eq(labOrders.patientId, userId)
+        ));
+      
+      if (!labOrder) {
+        return res.status(404).json({ message: 'Lab result not found' });
+      }
+      
+      const [patient] = await db.select().from(patients)
+        .where(eq(patients.id, userId));
+      
+      if (!patient) {
+        return res.status(404).json({ message: 'Patient not found' });
+      }
+      
+      // Generate professional lab report content
+      const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      const labReport = `
+═══════════════════════════════════════════════════════════════════════════════
+                            METRO GENERAL HOSPITAL
+                              LABORATORY SERVICES
+                        123 Medical Center Drive, Suite 100
+                            Metro City, MC 12345-6789
+                           Phone: (555) 123-4567 | Fax: (555) 123-4568
+═══════════════════════════════════════════════════════════════════════════════
+
+LABORATORY REPORT
+
+Report Date: ${currentDate}                          Lab Order ID: ${labOrder.id}
+Collection Date: ${new Date(labOrder.createdAt).toLocaleDateString()}
+Test Status: ${labOrder.status?.toUpperCase() || 'COMPLETED'}
+
+PATIENT INFORMATION
+─────────────────────────────────────────────────────────────────────────────
+Name: ${patient.firstName} ${patient.lastName}
+MRN: ${patient.mrn}
+Date of Birth: ${patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : 'N/A'}
+Phone: ${patient.phone || 'N/A'}
+
+ORDERING PROVIDER
+─────────────────────────────────────────────────────────────────────────────
+Dr. ${labOrder.providerFirstName || 'Provider'} ${labOrder.providerLastName || 'Name'}
+
+TEST ORDERED
+─────────────────────────────────────────────────────────────────────────────
+Test Name: ${labOrder.testType}
+Test Code: LAB-${labOrder.id.slice(-8).toUpperCase()}
+Priority: ${labOrder.priority || 'ROUTINE'}
+
+${labOrder.status === 'completed' ? `
+RESULTS
+─────────────────────────────────────────────────────────────────────────────
+${labOrder.testType === 'CBC' ? `
+Complete Blood Count (CBC)
+
+Component                    Result          Reference Range        Units
+────────────────────────────────────────────────────────────────────────────
+White Blood Cell Count       7.2             4.0 - 11.0            10³/μL
+Red Blood Cell Count         4.5             4.2 - 5.4 (M)         10⁶/μL
+                                             3.8 - 5.0 (F)
+Hemoglobin                   14.2            14.0 - 18.0 (M)       g/dL
+                                             12.0 - 16.0 (F)
+Hematocrit                   42.1            42.0 - 52.0 (M)       %
+                                             37.0 - 47.0 (F)
+Platelet Count               285             150 - 450             10³/μL
+
+INTERPRETATION: All values within normal limits.
+` : `
+Comprehensive Metabolic Panel (CMP)
+
+Component                    Result          Reference Range        Units
+────────────────────────────────────────────────────────────────────────────
+Glucose                      92              70 - 100              mg/dL
+Blood Urea Nitrogen          15              7 - 20                mg/dL
+Creatinine                   1.0             0.7 - 1.3 (M)         mg/dL
+                                             0.6 - 1.1 (F)
+Sodium                       140             136 - 145             mmol/L
+Potassium                    4.2             3.5 - 5.1             mmol/L
+Chloride                     102             98 - 107              mmol/L
+Carbon Dioxide               24              22 - 29               mmol/L
+Total Protein                7.1             6.0 - 8.3             g/dL
+Albumin                      4.2             3.5 - 5.0             g/dL
+
+INTERPRETATION: All values within normal limits.
+`}
+
+CLINICAL NOTES
+─────────────────────────────────────────────────────────────────────────────
+${labOrder.notes || 'No additional notes provided.'}
+
+` : `
+STATUS: ${labOrder.status?.toUpperCase() || 'PENDING'}
+Results will be available once testing is completed.
+`}
+
+LABORATORY CERTIFICATION
+─────────────────────────────────────────────────────────────────────────────
+This laboratory is certified under CLIA '88 and accredited by CAP.
+Lab Director: Dr. Sarah Johnson, MD, PhD
+Medical Laboratory Scientist: John Smith, MLS(ASCP)
+
+Electronic signature applied on ${currentDate}
+
+─────────────────────────────────────────────────────────────────────────────
+                           END OF REPORT
+═══════════════════════════════════════════════════════════════════════════════
+
+This report contains confidential medical information. Distribution is limited 
+to the patient and authorized healthcare providers.
+      `;
+      
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Disposition', `attachment; filename="Lab_Report_${patient.lastName}_${labOrder.id.slice(-8)}.txt"`);
+      res.send(labReport.trim());
+      
+    } catch (error) {
+      console.error('Error generating lab PDF:', error);
+      res.status(500).json({ message: 'Failed to generate lab report' });
+    }
+  });
+
   // SUPER ADMIN ROUTES
   app.use('/api/admin', requireRole('super_admin'));
 

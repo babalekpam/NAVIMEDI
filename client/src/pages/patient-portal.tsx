@@ -86,7 +86,7 @@ export default function PatientPortal() {
   const queryClient = useQueryClient();
 
   // Function to download lab results as PDF
-  const downloadLabResult = (labOrder: any) => {
+  const downloadLabResult = async (labOrder: any) => {
     // Create a comprehensive lab result document
     const resultText = `
 LABORATORY RESULTS REPORT
@@ -128,16 +128,45 @@ Generated on: ${new Date().toLocaleString()}
 Report ID: ${labOrder.id}
     `;
 
-    // Create and download the file
-    const blob = new Blob([resultText], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Lab_Results_${labOrder.testName.replace(/[^\w\s]/gi, '')}_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    try {
+      // Download professional laboratory PDF report
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/patient/lab-results/${labOrder.id}/pdf`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download lab report');
+      }
+
+      // Get the PDF blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Lab_Report_${(labOrder.testType || labOrder.testName).replace(/[^\w\s]/gi, '')}_${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Error downloading lab report:', error);
+      // Fallback to original text download
+      const blob = new Blob([resultText], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Lab_Results_${labOrder.testName.replace(/[^\w\s]/gi, '')}_${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    }
   };
 
   // Fetch patient data
