@@ -37,7 +37,7 @@ export default function PatientLogin() {
         body: {
           email: formData.email,
           password: formData.password,
-          tenantId: "" // For patients, auto-detect tenant
+          tenantId: "ad97f863-d247-4b1c-af94-e8bedfb98acc" // SAINT PAUL hospital tenant
         }
       });
 
