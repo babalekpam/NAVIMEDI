@@ -7,8 +7,8 @@ function generateCSR(options) {
         commonName = 'navimedi.org',
         organization = 'NaviMED Healthcare Platform',
         organizationalUnit = 'IT Department',
-        locality = 'New York',
-        state = 'NY',
+        locality = 'Lake Saint Louis',
+        state = 'MO',
         country = 'US',
         email = 'admin@navimedi.org',
         keySize = 2048
@@ -99,8 +99,8 @@ generateCSR({
     commonName: 'navimedi.org',
     organization: 'NaviMED Healthcare Platform',
     organizationalUnit: 'Healthcare Technology',
-    locality: 'New York',
-    state: 'NY',
+    locality: 'Lake Saint Louis',
+    state: 'MO',
     country: 'US',
     email: 'admin@navimedi.org'
 });
