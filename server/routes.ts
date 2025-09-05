@@ -522,6 +522,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('✅ Organization registered successfully with payment method:', tenant.id);
 
+      // Send confirmation email to the new admin user
+      const { sendRegistrationConfirmationEmail } = await import('./email-service');
+      try {
+        const loginUrl = `https://navimed-healthcare.replit.app/login`;
+        const emailSent = await sendRegistrationConfirmationEmail(
+          adminEmail,
+          `${adminFirstName} ${adminLastName}`,
+          organizationName,
+          loginUrl
+        );
+        console.log(`📧 Registration confirmation email ${emailSent ? 'sent successfully' : 'failed to send'} to ${adminEmail}`);
+      } catch (emailError) {
+        console.error('⚠️ Failed to send registration confirmation email:', emailError);
+        // Don't fail the registration if email fails
+      }
+
       res.status(201).json({
         message: 'Organization registered successfully with payment method',
         tenantId: tenant.id,
@@ -1705,6 +1721,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const newUserData = { ...userData, tenantId, passwordHash };
       const user = await storage.createUser(newUserData);
+
+      // Send confirmation email to the new user
+      const { sendRegistrationConfirmationEmail } = await import('./email-service');
+      if (userData.email) {
+        try {
+          const currentTenant = await storage.getTenant(tenantId);
+          const loginUrl = `https://navimed-healthcare.replit.app/login`;
+          const userName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.username || 'New User';
+          const emailSent = await sendRegistrationConfirmationEmail(
+            userData.email,
+            userName,
+            currentTenant?.name || 'NaviMED',
+            loginUrl
+          );
+          console.log(`📧 User creation confirmation email ${emailSent ? 'sent successfully' : 'failed to send'} to ${userData.email}`);
+        } catch (emailError) {
+          console.error('⚠️ Failed to send user creation confirmation email:', emailError);
+          // Don't fail user creation if email fails
+        }
+      }
+
       res.status(201).json(user);
     } catch (error) {
       console.error('Error creating user:', error);

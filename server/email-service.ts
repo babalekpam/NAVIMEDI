@@ -182,7 +182,7 @@ Thank you for choosing NaviMED Healthcare Platform!
 
   return await sendEmail({
     to: userEmail,
-    from: 'noreply@navimed-healthcare.com',
+    from: 'noreply@navimedi.com',
     subject: 'Welcome to NaviMED - Registration Confirmed',
     text: confirmationText,
     html: confirmationHtml
@@ -260,7 +260,7 @@ export async function sendWelcomeEmail(params: WelcomeEmailParams): Promise<bool
             </div>
             
             <div class="footer">
-                <p>This email was sent from info@navimedi.com</p>
+                <p>This email was sent from noreply@navimedi.com</p>
                 <p>© 2025 NaviMed Healthcare Platform. All rights reserved.</p>
             </div>
         </div>
@@ -294,13 +294,13 @@ If you have any questions, please contact our support team.
 Best regards,
 The NaviMed Team
 
-This email was sent from info@navimedi.com
+This email was sent from noreply@navimedi.com
 © 2025 NaviMed Healthcare Platform. All rights reserved.
   `;
 
   return await sendEmail({
     to: params.userEmail,
-    from: 'info@navimedi.com',
+    from: 'noreply@navimedi.com',
     subject: `Welcome to NaviMed - Your Account Details for ${params.organizationName}`,
     text: textContent,
     html: htmlContent
