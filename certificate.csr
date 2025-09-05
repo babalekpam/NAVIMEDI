@@ -1,0 +1,14 @@
+-----BEGIN CERTIFICATE REQUEST-----
+Subject: C=US/ST=NY/L=New York/O=NaviMED Healthcare Platform/OU=Healthcare Technology/CN=navimedi.org/emailAddress=admin@navimedi.org
+Public Key: 
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlSLDDYBVxfk3Vuj+HpJG
+e4//IeWzkxpobGMCJVKi8NBDa7DrE3kWpKA8xD+uxMUlTOYo+sq5OACW+x26fwfh
+NwHC82n/8XC+Nqtkk0GGNuOgLaQOfA1Qb6HJxcLsyxoSE+b6KUiM4JKmVWKVIwSW
+PgGCfFBD5OxiXpMr/MJSPFLi2KZIVJ/flbFuQtd/8XqVGo/C8IzIXPpdwJTUfA4H
+5ds/HKuW8fNvXwX2SHL7eJu7q8uimog7znZX7yxYINWsEigFGvBUDofBuB/HLd8T
+1cW/ubDo9xbzAbXGJUFcn5NQUsIdOxRILUTlqSUcewSwLiIJ4EWWdyIpkNiQ98YP
+LwIDAQAB
+-----END PUBLIC KEY-----
+
+-----END CERTIFICATE REQUEST-----
