@@ -170,8 +170,9 @@ Fi5aW115S6aL4Cd3r8Br`);
   // New SSL Certificate Domain Validation Endpoint
   app.get('/.well-known/pki-validation/AEE904F2EBE36AC8DA5D83A4DBC6675D.txt', (req, res) => {
     res.setHeader('Content-Type', 'text/plain');
-    // Replace with actual validation content from your SSL provider
-    res.send('REPLACE_WITH_VALIDATION_CONTENT_FROM_SSL_PROVIDER');
+    res.send(`5E81AA5B6043F0DFBF61DF1420BB5DCF3EE05B118FDD5482515ECFBB02122239
+sectigo.com
+5FO9CLglkodjbw91bMvO`);
   });
   
   // CSRF Token endpoint (public)
