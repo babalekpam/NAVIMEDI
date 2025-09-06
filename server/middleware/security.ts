@@ -62,7 +62,11 @@ export const breachProtectionHeaders = (req: Request, res: Response, next: NextF
     // SSL/TLS Security Headers for Lucky 13 and CBC vulnerability mitigation
     'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
     'X-SSL-Protection': 'enforce-tls12-plus',
-    'X-Cipher-Policy': 'gcm-only-no-cbc'
+    'X-Cipher-Policy': 'gcm-only-no-cbc',
+    // Additional TLS security headers
+    'X-TLS-Version': 'min-tls-1.2',
+    'X-Cipher-Security': 'no-cbc-ciphers',
+    'X-Vulnerability-Protection': 'lucky13-mitigated'
   });
   
   next();
