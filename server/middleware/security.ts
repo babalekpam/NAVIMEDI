@@ -58,7 +58,11 @@ export const breachProtectionHeaders = (req: Request, res: Response, next: NextF
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Cache-Control': 'no-cache, no-store, must-revalidate, private',
     'Pragma': 'no-cache',
-    'Expires': '0'
+    'Expires': '0',
+    // SSL/TLS Security Headers for Lucky 13 and CBC vulnerability mitigation
+    'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
+    'X-SSL-Protection': 'enforce-tls12-plus',
+    'X-Cipher-Policy': 'gcm-only-no-cbc'
   });
   
   next();
