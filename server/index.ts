@@ -112,12 +112,16 @@ async function initializeDefaultCountries() {
   try {
     console.log('🌍 Initializing default countries...');
     
-    // Check if countries already exist
-    const existingCountries = await db.select().from(countries).limit(1);
-    if (existingCountries.length > 0) {
-      console.log('✓ Countries already initialized');
+    // Check if comprehensive countries already exist (check for African countries)
+    const existingAfrican = await db.select().from(countries).where(eq(countries.code, 'NG')).limit(1);
+    if (existingAfrican.length > 0) {
+      console.log('✓ Comprehensive countries already initialized');
       return;
     }
+
+    // Clear existing limited countries to make room for comprehensive list
+    await db.delete(countries);
+    console.log('🔄 Cleared existing countries for comprehensive update');
 
     // Comprehensive list of world countries with focus on Africa
     const defaultCountries = [
