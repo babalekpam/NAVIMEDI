@@ -279,13 +279,7 @@ sectigo.com
     });
   });
 
-  // Apply CSRF protection to all API routes except public ones
-  app.use('/api', csrfProtection);
-  
-  // Apply token randomization for sensitive endpoints
-  app.use(['/api/auth', '/api/patients', '/api/prescriptions'], securityMiddleware.breach.tokenRandomization);
-
-  // Authentication endpoint
+  // Authentication endpoint (BEFORE CSRF protection)
   app.post('/api/auth/login', async (req, res) => {
     try {
       const { email, password, tenantId } = req.body;
