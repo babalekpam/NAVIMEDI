@@ -102,7 +102,9 @@ export default function AdminMedicalCodes() {
   // Queries
   const { data: countries = [], isLoading: countriesLoading } = useQuery({
     queryKey: ["/api/admin/countries"],
-    queryFn: () => apiRequest("/api/admin/countries")
+    queryFn: () => apiRequest("/api/admin/countries"),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    cacheTime: 10 * 60 * 1000, // Keep in memory for 10 minutes
   });
 
   const { data: medicalCodes = [], isLoading: codesLoading } = useQuery({
@@ -811,18 +813,24 @@ export default function AdminMedicalCodes() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Target Country</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-upload-country">
-                              <SelectValue placeholder="Select country for upload" />
+                              <SelectValue placeholder={countriesLoading ? "Loading countries..." : countries.length === 0 ? "No countries available" : "Select country for upload"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {countries.map((country: Country) => (
-                              <SelectItem key={country.id} value={country.id}>
-                                {country.name} ({country.code})
-                              </SelectItem>
-                            ))}
+                            {countriesLoading ? (
+                              <SelectItem value="loading" disabled>Loading countries...</SelectItem>
+                            ) : countries.length === 0 ? (
+                              <SelectItem value="empty" disabled>No countries available - Add countries first</SelectItem>
+                            ) : (
+                              countries.map((country: Country) => (
+                                <SelectItem key={country.id} value={country.id}>
+                                  {country.name} ({country.code})
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
