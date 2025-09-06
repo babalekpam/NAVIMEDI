@@ -32,8 +32,21 @@ export default function Login() {
       localStorage.removeItem("auth_token");
       localStorage.removeItem("auth_user");
       
+      // Get CSRF token first
+      let csrfToken = null;
+      try {
+        const csrfResponse = await fetch("/api/csrf-token", { credentials: "include" });
+        if (csrfResponse.ok) {
+          const csrfData = await csrfResponse.json();
+          csrfToken = csrfData.csrfToken;
+        }
+      } catch (csrfError) {
+        console.warn("Could not fetch CSRF token:", csrfError);
+      }
+      
       const response = await apiRequest("/api/auth/login", {
         method: "POST",
+        headers: csrfToken ? { "X-CSRF-Token": csrfToken } : {},
         body: {
           email,
           password,
