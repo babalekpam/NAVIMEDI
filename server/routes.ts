@@ -136,6 +136,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // PUBLIC ENDPOINTS (before any middleware)
   
+  // SSL Certificate Domain Validation Endpoint
+  app.get('/.well-known/pki-validation/E370C04EDF08F576C43E1B2E537304A1.txt', (req, res) => {
+    res.setHeader('Content-Type', 'text/plain');
+    res.send(`3D1EF0371BC9FD6AF93ED7AF9A47955EEF0EA42779EBC0FD06072B3C54052F83
+sectigo.com
+Fi5aW115S6aL4Cd3r8Br`);
+  });
+  
   // Public supplier registration endpoint (outside /api path to avoid middleware)
   app.post('/public/suppliers/register', async (req, res) => {
     try {
