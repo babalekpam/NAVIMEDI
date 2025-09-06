@@ -104,7 +104,7 @@ export default function AdminMedicalCodes() {
     queryKey: ["/api/admin/countries"],
     queryFn: () => apiRequest("/api/admin/countries"),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    cacheTime: 10 * 60 * 1000, // Keep in memory for 10 minutes
+    gcTime: 10 * 60 * 1000, // Keep in memory for 10 minutes (formerly cacheTime)
   });
 
   const { data: medicalCodes = [], isLoading: codesLoading } = useQuery({
@@ -123,8 +123,9 @@ export default function AdminMedicalCodes() {
     queryFn: () => apiRequest("/api/admin/medical-code-uploads")
   });
 
-  // Forms
-  const countryForm = useForm<z.infer<typeof countrySchema>>({
+  // Forms  
+  type CountryFormData = z.infer<typeof countrySchema>;
+  const countryForm = useForm<CountryFormData>({
     resolver: zodResolver(countrySchema),
     defaultValues: {
       code: "",
@@ -139,7 +140,8 @@ export default function AdminMedicalCodes() {
     }
   });
 
-  const codeForm = useForm<z.infer<typeof medicalCodeSchema>>({
+  type MedicalCodeFormData = z.infer<typeof medicalCodeSchema>;
+  const codeForm = useForm<MedicalCodeFormData>({
     resolver: zodResolver(medicalCodeSchema),
     defaultValues: {
       countryId: "",
@@ -151,7 +153,8 @@ export default function AdminMedicalCodes() {
     }
   });
 
-  const uploadForm = useForm<z.infer<typeof csvUploadSchema>>({
+  type UploadFormData = z.infer<typeof csvUploadSchema>;
+  const uploadForm = useForm<UploadFormData>({
     resolver: zodResolver(csvUploadSchema),
     defaultValues: {
       countryId: ""
@@ -160,7 +163,7 @@ export default function AdminMedicalCodes() {
 
   // Mutations
   const createCountryMutation = useMutation({
-    mutationFn: (data: z.infer<typeof countrySchema>) => 
+    mutationFn: (data: CountryFormData) => 
       apiRequest("/api/admin/countries", { method: "POST", body: JSON.stringify(data) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/countries"] });
@@ -175,7 +178,7 @@ export default function AdminMedicalCodes() {
   });
 
   const updateCountryMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: z.infer<typeof countrySchema> }) => 
+    mutationFn: ({ id, data }: { id: string; data: CountryFormData }) => 
       apiRequest(`/api/admin/countries/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/countries"] });
@@ -190,7 +193,7 @@ export default function AdminMedicalCodes() {
   });
 
   const createCodeMutation = useMutation({
-    mutationFn: (data: z.infer<typeof medicalCodeSchema>) => 
+    mutationFn: (data: MedicalCodeFormData) => 
       apiRequest("/api/admin/medical-codes", { method: "POST", body: JSON.stringify({ ...data, amount: data.amount ? parseFloat(data.amount) : undefined }) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/medical-codes"] });
@@ -205,7 +208,7 @@ export default function AdminMedicalCodes() {
   });
 
   const updateCodeMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: z.infer<typeof medicalCodeSchema> }) => 
+    mutationFn: ({ id, data }: { id: string; data: MedicalCodeFormData }) => 
       apiRequest(`/api/admin/medical-codes/${id}`, { method: "PUT", body: JSON.stringify({ ...data, amount: data.amount ? parseFloat(data.amount) : undefined }) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/medical-codes"] });
@@ -247,7 +250,7 @@ export default function AdminMedicalCodes() {
   });
 
   // Handlers
-  const handleCountrySubmit = (data: z.infer<typeof countrySchema>) => {
+  const handleCountrySubmit = (data: CountryFormData) => {
     if (editingCountry) {
       updateCountryMutation.mutate({ id: editingCountry.id, data });
     } else {
@@ -255,7 +258,7 @@ export default function AdminMedicalCodes() {
     }
   };
 
-  const handleCodeSubmit = (data: z.infer<typeof medicalCodeSchema>) => {
+  const handleCodeSubmit = (data: MedicalCodeFormData) => {
     if (editingCode) {
       updateCodeMutation.mutate({ id: editingCode.id, data });
     } else {
