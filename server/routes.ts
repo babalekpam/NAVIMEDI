@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { authenticateToken, requireRole } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
+import { securityMiddleware } from "./middleware/security";
+import { csrfProtection, getCSRFToken } from "./middleware/csrf";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
@@ -119,6 +121,22 @@ Generated: ${new Date().toISOString()}
  */
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Apply security middleware early (before any routes)
+  console.log('🔒 Applying security middleware for BREACH protection...');
+  
+  // Apply Helmet for basic security headers
+  app.use(securityMiddleware.helmet);
+  
+  // Apply BREACH protection headers
+  app.use(securityMiddleware.breach.headers);
+  
+  // Apply rate limiting
+  app.use('/api/auth', securityMiddleware.rateLimit.auth);
+  app.use('/api', securityMiddleware.rateLimit.api);
+  
+  // Apply sensitive data protection
+  app.use(securityMiddleware.breach.sensitiveDataProtection);
+  
   // IMMEDIATE TEST - FIRST ENDPOINT REGISTERED
   app.post('/api/immediate-test', (req, res) => {
     console.log('🚨 IMMEDIATE TEST POST - Request received!');
@@ -143,6 +161,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 sectigo.com
 Fi5aW115S6aL4Cd3r8Br`);
   });
+  
+  // CSRF Token endpoint (public)
+  app.get('/api/csrf-token', getCSRFToken);
   
   // Public supplier registration endpoint (outside /api path to avoid middleware)
   app.post('/public/suppliers/register', async (req, res) => {
@@ -244,6 +265,12 @@ Fi5aW115S6aL4Cd3r8Br`);
       performance: "optimized"
     });
   });
+
+  // Apply CSRF protection to all API routes except public ones
+  app.use('/api', csrfProtection);
+  
+  // Apply token randomization for sensitive endpoints
+  app.use(['/api/auth', '/api/patients', '/api/prescriptions'], securityMiddleware.breach.tokenRandomization);
 
   // Authentication endpoint
   app.post('/api/auth/login', async (req, res) => {
