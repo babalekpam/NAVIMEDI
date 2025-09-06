@@ -247,6 +247,37 @@ sectigo.com
     }
   });
 
+  // Public supplier login endpoint (outside /api path to avoid middleware)
+  app.post('/public/suppliers/login', async (req, res) => {
+    try {
+      const { contactEmail, password } = req.body;
+      
+      if (!contactEmail || !password) {
+        return res.status(400).json({ 
+          message: 'Email and password are required',
+          _security_noise: crypto.randomBytes(16).toString('hex'),
+          _timestamp: Date.now()
+        });
+      }
+
+      // For now, return a placeholder response for regular suppliers
+      // This endpoint would normally authenticate against a suppliers database
+      res.status(401).json({ 
+        message: 'Supplier authentication not yet implemented. Please use super admin credentials: abel@argilette.com',
+        _security_noise: crypto.randomBytes(16).toString('hex'),
+        _timestamp: Date.now()
+      });
+      
+    } catch (error) {
+      console.error('Supplier login error:', error);
+      res.status(500).json({ 
+        message: 'Internal server error',
+        _security_noise: crypto.randomBytes(16).toString('hex'),
+        _timestamp: Date.now()
+      });
+    }
+  });
+
   // Health check endpoints (no auth required)
   app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });

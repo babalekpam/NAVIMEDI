@@ -41,18 +41,48 @@ export default function SupplierPortal() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: typeof loginData) => {
-      const response = await fetch('/public/suppliers/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Login failed');
+      // Check if this is super admin login
+      if (data.contactEmail === 'abel@argilette.com') {
+        // Use main auth endpoint for super admin
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: data.contactEmail,
+            password: data.password
+          })
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Login failed');
+        }
+        
+        const result = await response.json();
+        return {
+          token: result.token,
+          supplier: {
+            id: 'super_admin',
+            companyName: 'NaviMED Platform Admin',
+            role: 'super_admin',
+            email: result.user.email
+          }
+        };
+      } else {
+        // Regular supplier login
+        const response = await fetch('/public/suppliers/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Login failed');
+        }
+        
+        return response.json();
       }
-      
-      return response.json();
     },
     onSuccess: (data) => {
       toast({
@@ -64,8 +94,24 @@ export default function SupplierPortal() {
       localStorage.setItem('supplierToken', data.token);
       localStorage.setItem('supplierData', JSON.stringify(data.supplier));
       
-      // Redirect to supplier dashboard
-      window.location.href = '/supplier-dashboard-direct';
+      // Check if super admin - redirect to main dashboard with supplier management access
+      if (data.supplier.role === 'super_admin') {
+        // Store auth data in main app format for seamless access
+        localStorage.setItem('auth_token', data.token);
+        localStorage.setItem('auth_user', JSON.stringify({
+          id: data.supplier.id,
+          email: data.supplier.email,
+          role: 'super_admin',
+          firstName: 'Abel',
+          lastName: 'Platform Admin'
+        }));
+        
+        // Redirect to super admin dashboard
+        window.location.href = '/super-admin-dashboard';
+      } else {
+        // Regular supplier redirect
+        window.location.href = '/supplier-dashboard-direct';
+      }
     },
     onError: (error: Error) => {
       toast({
