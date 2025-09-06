@@ -5,6 +5,7 @@ import { authenticateToken, requireRole } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import { securityMiddleware } from "./middleware/security";
 import { csrfProtection, getCSRFToken } from "./middleware/csrf";
+import { compressionMitigation } from "./middleware/compression";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
@@ -136,6 +137,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Apply sensitive data protection
   app.use(securityMiddleware.breach.sensitiveDataProtection);
+  
+  // Apply compression control for BREACH mitigation
+  app.use(compressionMitigation.control);
+  app.use(compressionMitigation.antiNoise);
   
   // IMMEDIATE TEST - FIRST ENDPOINT REGISTERED
   app.post('/api/immediate-test', (req, res) => {

@@ -10,7 +10,6 @@ import crypto from 'crypto';
 
 interface CSRFRequest extends Request {
   csrfToken?: () => string;
-  session?: any;
 }
 
 // Store CSRF tokens in memory (in production, use Redis or database)
@@ -19,11 +18,15 @@ const csrfTokens = new Map<string, { token: string, timestamp: number }>();
 // Clean up old tokens every hour
 setInterval(() => {
   const oneHourAgo = Date.now() - (60 * 60 * 1000);
-  for (const [sessionId, data] of csrfTokens.entries()) {
+  const keysToDelete: string[] = [];
+  
+  csrfTokens.forEach((data, sessionId) => {
     if (data.timestamp < oneHourAgo) {
-      csrfTokens.delete(sessionId);
+      keysToDelete.push(sessionId);
     }
-  }
+  });
+  
+  keysToDelete.forEach(key => csrfTokens.delete(key));
 }, 60 * 60 * 1000);
 
 export const generateCSRFToken = (): string => {
