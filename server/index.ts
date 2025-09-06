@@ -119,74 +119,96 @@ async function initializeDefaultCountries() {
       return;
     }
 
-    // Default countries to initialize 
+    // Comprehensive list of world countries with focus on Africa
     const defaultCountries = [
-      {
-        code: 'US',
-        name: 'United States',
-        region: 'North America',
-        cptCodeSystem: 'CPT-4',
-        icd10CodeSystem: 'ICD-10-CM',
-        pharmaceuticalCodeSystem: 'NDC',
-        currencyCode: 'USD',
-        dateFormat: 'MM/DD/YYYY',
-        timeZone: 'America/New_York'
-      },
-      {
-        code: 'CA',
-        name: 'Canada',
-        region: 'North America',
-        cptCodeSystem: 'CPT-4',
-        icd10CodeSystem: 'ICD-10-CA',
-        pharmaceuticalCodeSystem: 'DIN',
-        currencyCode: 'CAD',
-        dateFormat: 'DD/MM/YYYY',
-        timeZone: 'America/Toronto'
-      },
-      {
-        code: 'GB',
-        name: 'United Kingdom',
-        region: 'Europe',
-        cptCodeSystem: 'OPCS-4',
-        icd10CodeSystem: 'ICD-10',
-        pharmaceuticalCodeSystem: 'BNF',
-        currencyCode: 'GBP',
-        dateFormat: 'DD/MM/YYYY',
-        timeZone: 'Europe/London'
-      },
-      {
-        code: 'AU',
-        name: 'Australia',
-        region: 'Oceania',
-        cptCodeSystem: 'MBS',
-        icd10CodeSystem: 'ICD-10-AM',
-        pharmaceuticalCodeSystem: 'PBS',
-        currencyCode: 'AUD',
-        dateFormat: 'DD/MM/YYYY',
-        timeZone: 'Australia/Sydney'
-      },
-      {
-        code: 'DE',
-        name: 'Germany',
-        region: 'Europe',
-        cptCodeSystem: 'EBM',
-        icd10CodeSystem: 'ICD-10-GM',
-        pharmaceuticalCodeSystem: 'PZN',
-        currencyCode: 'EUR',
-        dateFormat: 'DD.MM.YYYY',
-        timeZone: 'Europe/Berlin'
-      },
-      {
-        code: 'FR',
-        name: 'France', 
-        region: 'Europe',
-        cptCodeSystem: 'CCAM',
-        icd10CodeSystem: 'CIM-10',
-        pharmaceuticalCodeSystem: 'CIP',
-        currencyCode: 'EUR',
-        dateFormat: 'DD/MM/YYYY',
-        timeZone: 'Europe/Paris'
-      }
+      // AFRICA (All 54 Countries)
+      { code: 'DZ', name: 'Algeria', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'DZD', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Algiers' },
+      { code: 'AO', name: 'Angola', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'AOA', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Luanda' },
+      { code: 'BJ', name: 'Benin', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'XOF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Porto-Novo' },
+      { code: 'BW', name: 'Botswana', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'BWP', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Gaborone' },
+      { code: 'BF', name: 'Burkina Faso', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'XOF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Ouagadougou' },
+      { code: 'BI', name: 'Burundi', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'BIF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Bujumbura' },
+      { code: 'CV', name: 'Cape Verde', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'CVE', dateFormat: 'DD/MM/YYYY', timeZone: 'Atlantic/Cape_Verde' },
+      { code: 'CM', name: 'Cameroon', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'XAF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Douala' },
+      { code: 'CF', name: 'Central African Republic', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'XAF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Bangui' },
+      { code: 'TD', name: 'Chad', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'XAF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Ndjamena' },
+      { code: 'KM', name: 'Comoros', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'KMF', dateFormat: 'DD/MM/YYYY', timeZone: 'Indian/Comoro' },
+      { code: 'CG', name: 'Congo', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'XAF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Brazzaville' },
+      { code: 'CD', name: 'Democratic Republic of the Congo', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'CDF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Kinshasa' },
+      { code: 'CI', name: 'Côte d\'Ivoire', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'XOF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Abidjan' },
+      { code: 'DJ', name: 'Djibouti', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'DJF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Djibouti' },
+      { code: 'EG', name: 'Egypt', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'EGP', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Cairo' },
+      { code: 'GQ', name: 'Equatorial Guinea', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'XAF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Malabo' },
+      { code: 'ER', name: 'Eritrea', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'ERN', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Asmara' },
+      { code: 'SZ', name: 'Eswatini', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'SZL', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Mbabane' },
+      { code: 'ET', name: 'Ethiopia', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'ETB', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Addis_Ababa' },
+      { code: 'GA', name: 'Gabon', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'XAF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Libreville' },
+      { code: 'GM', name: 'Gambia', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'GMD', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Banjul' },
+      { code: 'GH', name: 'Ghana', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'GHS', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Accra' },
+      { code: 'GN', name: 'Guinea', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'GNF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Conakry' },
+      { code: 'GW', name: 'Guinea-Bissau', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'XOF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Bissau' },
+      { code: 'KE', name: 'Kenya', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'KES', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Nairobi' },
+      { code: 'LS', name: 'Lesotho', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'LSL', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Maseru' },
+      { code: 'LR', name: 'Liberia', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'LRD', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Monrovia' },
+      { code: 'LY', name: 'Libya', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'LYD', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Tripoli' },
+      { code: 'MG', name: 'Madagascar', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'MGA', dateFormat: 'DD/MM/YYYY', timeZone: 'Indian/Antananarivo' },
+      { code: 'MW', name: 'Malawi', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'MWK', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Blantyre' },
+      { code: 'ML', name: 'Mali', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'XOF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Bamako' },
+      { code: 'MR', name: 'Mauritania', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'MRU', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Nouakchott' },
+      { code: 'MU', name: 'Mauritius', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'MUR', dateFormat: 'DD/MM/YYYY', timeZone: 'Indian/Mauritius' },
+      { code: 'MA', name: 'Morocco', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'MAD', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Casablanca' },
+      { code: 'MZ', name: 'Mozambique', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'MZN', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Maputo' },
+      { code: 'NA', name: 'Namibia', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'NAD', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Windhoek' },
+      { code: 'NE', name: 'Niger', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'XOF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Niamey' },
+      { code: 'NG', name: 'Nigeria', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'NGN', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Lagos' },
+      { code: 'RW', name: 'Rwanda', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'RWF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Kigali' },
+      { code: 'ST', name: 'São Tomé and Príncipe', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'STN', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Sao_Tome' },
+      { code: 'SN', name: 'Senegal', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'XOF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Dakar' },
+      { code: 'SC', name: 'Seychelles', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'SCR', dateFormat: 'DD/MM/YYYY', timeZone: 'Indian/Mahe' },
+      { code: 'SL', name: 'Sierra Leone', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'SLE', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Freetown' },
+      { code: 'SO', name: 'Somalia', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'SOS', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Mogadishu' },
+      { code: 'ZA', name: 'South Africa', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'ZAR', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Johannesburg' },
+      { code: 'SS', name: 'South Sudan', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'SSP', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Juba' },
+      { code: 'SD', name: 'Sudan', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'SDG', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Khartoum' },
+      { code: 'TZ', name: 'Tanzania', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'TZS', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Dar_es_Salaam' },
+      { code: 'TG', name: 'Togo', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'XOF', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Lome' },
+      { code: 'TN', name: 'Tunisia', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'TND', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Tunis' },
+      { code: 'UG', name: 'Uganda', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'UGX', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Kampala' },
+      { code: 'ZM', name: 'Zambia', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'ZMW', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Lusaka' },
+      { code: 'ZW', name: 'Zimbabwe', region: 'Africa', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'ZWL', dateFormat: 'DD/MM/YYYY', timeZone: 'Africa/Harare' },
+
+      // MAJOR WORLD COUNTRIES
+      // North America
+      { code: 'US', name: 'United States', region: 'North America', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10-CM', pharmaceuticalCodeSystem: 'NDC', currencyCode: 'USD', dateFormat: 'MM/DD/YYYY', timeZone: 'America/New_York' },
+      { code: 'CA', name: 'Canada', region: 'North America', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10-CA', pharmaceuticalCodeSystem: 'DIN', currencyCode: 'CAD', dateFormat: 'DD/MM/YYYY', timeZone: 'America/Toronto' },
+      { code: 'MX', name: 'Mexico', region: 'North America', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'MXN', dateFormat: 'DD/MM/YYYY', timeZone: 'America/Mexico_City' },
+
+      // Europe
+      { code: 'GB', name: 'United Kingdom', region: 'Europe', cptCodeSystem: 'OPCS-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'BNF', currencyCode: 'GBP', dateFormat: 'DD/MM/YYYY', timeZone: 'Europe/London' },
+      { code: 'DE', name: 'Germany', region: 'Europe', cptCodeSystem: 'EBM', icd10CodeSystem: 'ICD-10-GM', pharmaceuticalCodeSystem: 'PZN', currencyCode: 'EUR', dateFormat: 'DD.MM.YYYY', timeZone: 'Europe/Berlin' },
+      { code: 'FR', name: 'France', region: 'Europe', cptCodeSystem: 'CCAM', icd10CodeSystem: 'CIM-10', pharmaceuticalCodeSystem: 'CIP', currencyCode: 'EUR', dateFormat: 'DD/MM/YYYY', timeZone: 'Europe/Paris' },
+      { code: 'IT', name: 'Italy', region: 'Europe', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'EUR', dateFormat: 'DD/MM/YYYY', timeZone: 'Europe/Rome' },
+      { code: 'ES', name: 'Spain', region: 'Europe', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'EUR', dateFormat: 'DD/MM/YYYY', timeZone: 'Europe/Madrid' },
+      { code: 'NL', name: 'Netherlands', region: 'Europe', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'EUR', dateFormat: 'DD-MM-YYYY', timeZone: 'Europe/Amsterdam' },
+
+      // Asia
+      { code: 'CN', name: 'China', region: 'Asia', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'CNY', dateFormat: 'YYYY/MM/DD', timeZone: 'Asia/Shanghai' },
+      { code: 'IN', name: 'India', region: 'Asia', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'INR', dateFormat: 'DD/MM/YYYY', timeZone: 'Asia/Kolkata' },
+      { code: 'JP', name: 'Japan', region: 'Asia', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'JPY', dateFormat: 'YYYY/MM/DD', timeZone: 'Asia/Tokyo' },
+      { code: 'KR', name: 'South Korea', region: 'Asia', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'KRW', dateFormat: 'YYYY.MM.DD', timeZone: 'Asia/Seoul' },
+      { code: 'ID', name: 'Indonesia', region: 'Asia', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'IDR', dateFormat: 'DD/MM/YYYY', timeZone: 'Asia/Jakarta' },
+      { code: 'TH', name: 'Thailand', region: 'Asia', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'THB', dateFormat: 'DD/MM/YYYY', timeZone: 'Asia/Bangkok' },
+      { code: 'MY', name: 'Malaysia', region: 'Asia', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'MYR', dateFormat: 'DD/MM/YYYY', timeZone: 'Asia/Kuala_Lumpur' },
+      { code: 'SG', name: 'Singapore', region: 'Asia', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'SGD', dateFormat: 'DD/MM/YYYY', timeZone: 'Asia/Singapore' },
+
+      // Oceania
+      { code: 'AU', name: 'Australia', region: 'Oceania', cptCodeSystem: 'MBS', icd10CodeSystem: 'ICD-10-AM', pharmaceuticalCodeSystem: 'PBS', currencyCode: 'AUD', dateFormat: 'DD/MM/YYYY', timeZone: 'Australia/Sydney' },
+      { code: 'NZ', name: 'New Zealand', region: 'Oceania', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'NZD', dateFormat: 'DD/MM/YYYY', timeZone: 'Pacific/Auckland' },
+
+      // South America
+      { code: 'BR', name: 'Brazil', region: 'South America', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'BRL', dateFormat: 'DD/MM/YYYY', timeZone: 'America/Sao_Paulo' },
+      { code: 'AR', name: 'Argentina', region: 'South America', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'ARS', dateFormat: 'DD/MM/YYYY', timeZone: 'America/Buenos_Aires' },
+      { code: 'CL', name: 'Chile', region: 'South America', cptCodeSystem: 'CPT-4', icd10CodeSystem: 'ICD-10', pharmaceuticalCodeSystem: 'ATC', currencyCode: 'CLP', dateFormat: 'DD/MM/YYYY', timeZone: 'America/Santiago' }
     ];
 
     // Insert countries
