@@ -87,19 +87,16 @@ export default function Login() {
         redirectPath = '/receptionist-dashboard';
       }
       
-      console.log('Login successful, navigating to:', redirectPath);
+      console.log('Login successful, setting redirect path:', redirectPath);
       
-      // Force a longer delay to ensure localStorage is written and auth context updates
-      setTimeout(() => {
-        // Trigger a storage event to notify auth context of changes
-        window.dispatchEvent(new Event('storage'));
-        
-        // Add a second delay to ensure auth context has processed the storage event
-        setTimeout(() => {
-          console.log('Navigating to:', redirectPath);
-          setLocation(redirectPath);
-        }, 200);
-      }, 100);
+      // Store the redirect path for the Router to handle after auth context updates
+      localStorage.setItem('post_login_redirect', redirectPath);
+      
+      // Trigger a storage event to notify auth context of changes
+      window.dispatchEvent(new Event('storage'));
+      
+      // Let the Router component handle the redirect once auth context is ready
+      // The Router will check for 'post_login_redirect' and redirect automatically
     } catch (err: any) {
       setError(err.message || "Login failed");
     } finally {
