@@ -1,0 +1,29 @@
+{
+  "name": "navimed-healthcare-platform",
+  "version": "2.1.0",
+  "description": "NaviMED Healthcare Platform - Production Build",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^7.17.0",
+    "@google/genai": "^1.15.0",
+    "@neondatabase/serverless": "^1.0.1",
+    "@sendgrid/mail": "^8.1.5",
+    "@stripe/stripe-js": "^7.7.0",
+    "bcrypt": "^6.0.0",
+    "connect-pg-simple": "^10.0.0",
+    "csurf": "^1.11.0",
+    "drizzle-orm": "^0.44.4",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.1.0",
+    "express-session": "^1.18.2",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "nanoid": "^5.1.5",
+    "stripe": "^18.4.0",
+    "zod": "^3.25.76"
+  }
+}
