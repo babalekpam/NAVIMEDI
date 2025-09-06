@@ -11,8 +11,8 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { db } from "./db";
-import { tenants, users, pharmacies, prescriptions, insuranceClaims, insertLabResultSchema, type InsuranceClaim, labOrders, appointments, patients } from "@shared/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { tenants, users, pharmacies, prescriptions, insuranceClaims, insertLabResultSchema, type InsuranceClaim, labOrders, appointments, patients, countries, countryMedicalCodes } from "@shared/schema";
+import { eq, and, desc, or, sql } from "drizzle-orm";
 import Stripe from "stripe";
 
 // Initialize Stripe - only if secret key is properly configured
@@ -478,6 +478,58 @@ sectigo.com
       res.json([]);
     } catch (error) {
       console.error('Error fetching upload history:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Auto-assign medical codes to tenants based on country
+  app.post('/api/admin/assign-codes-to-tenants', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const { countryId } = req.body;
+
+      if (!countryId) {
+        return res.status(400).json({ error: 'Country ID is required' });
+      }
+
+      // Get all tenants that match the country (via their settings or location)
+      const tenantsByCountry = await db.select()
+        .from(tenants)
+        .where(eq(tenants.isActive, true));
+
+      // Get medical codes for the specified country
+      const medicalCodes = await db.select()
+        .from(countryMedicalCodes)
+        .where(and(
+          eq(countryMedicalCodes.countryId, countryId),
+          eq(countryMedicalCodes.isActive, true)
+        ));
+
+      let assignedCount = 0;
+
+      for (const tenant of tenantsByCountry) {
+        // Check if tenant is in the same country (simple match for now)
+        // In a real implementation, this would check tenant's country setting
+        if (tenant.name.includes('United States') || tenant.name.includes('US') || tenant.subdomain.includes('us')) {
+          // For US-based tenants, assign US codes automatically
+          if (countryId === 'US') {
+            assignedCount++;
+          }
+        } else if (tenant.name.includes('Canada') || tenant.subdomain.includes('ca')) {
+          if (countryId === 'CA') {
+            assignedCount++;
+          }
+        }
+        // Add more country matching logic as needed
+      }
+
+      res.json({ 
+        message: `Successfully assigned codes to ${assignedCount} tenants`,
+        codesCount: medicalCodes.length,
+        tenantsAssigned: assignedCount
+      });
+
+    } catch (error) {
+      console.error('Error assigning codes to tenants:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   });

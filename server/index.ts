@@ -3,7 +3,7 @@ import { registerRoutes } from "./routes";
 import { registerSimpleTestRoutes } from "./simple-test-routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { db } from "./db";
-import { tenants, users } from "@shared/schema";
+import { tenants, users, countries, countryMedicalCodes } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
