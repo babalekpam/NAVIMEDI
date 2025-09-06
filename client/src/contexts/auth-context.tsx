@@ -106,7 +106,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Listen for storage events to react to login changes immediately
     const handleStorageChange = () => {
       console.log('Storage event detected, re-checking auth state');
-      checkAuthState();
+      // Force immediate re-check without delay
+      setIsLoading(true);
+      setTimeout(() => {
+        checkAuthState();
+      }, 10);
     };
     
     window.addEventListener('storage', handleStorageChange);

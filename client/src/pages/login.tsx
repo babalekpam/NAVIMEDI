@@ -89,12 +89,17 @@ export default function Login() {
       
       console.log('Login successful, navigating to:', redirectPath);
       
-      // Force a small delay to ensure localStorage is written and auth context updates
+      // Force a longer delay to ensure localStorage is written and auth context updates
       setTimeout(() => {
         // Trigger a storage event to notify auth context of changes
         window.dispatchEvent(new Event('storage'));
-        setLocation(redirectPath);
-      }, 50);
+        
+        // Add a second delay to ensure auth context has processed the storage event
+        setTimeout(() => {
+          console.log('Navigating to:', redirectPath);
+          setLocation(redirectPath);
+        }, 200);
+      }, 100);
     } catch (err: any) {
       setError(err.message || "Login failed");
     } finally {
