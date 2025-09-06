@@ -108,6 +108,102 @@ app.use((req, res, next) => {
 // Initialize platform asynchronously after server starts
 let platformInitialized = false;
 
+async function initializeDefaultCountries() {
+  try {
+    console.log('🌍 Initializing default countries...');
+    
+    // Check if countries already exist
+    const existingCountries = await db.select().from(countries).limit(1);
+    if (existingCountries.length > 0) {
+      console.log('✓ Countries already initialized');
+      return;
+    }
+
+    // Default countries to initialize 
+    const defaultCountries = [
+      {
+        code: 'US',
+        name: 'United States',
+        region: 'North America',
+        cptCodeSystem: 'CPT-4',
+        icd10CodeSystem: 'ICD-10-CM',
+        pharmaceuticalCodeSystem: 'NDC',
+        currencyCode: 'USD',
+        dateFormat: 'MM/DD/YYYY',
+        timeZone: 'America/New_York'
+      },
+      {
+        code: 'CA',
+        name: 'Canada',
+        region: 'North America',
+        cptCodeSystem: 'CPT-4',
+        icd10CodeSystem: 'ICD-10-CA',
+        pharmaceuticalCodeSystem: 'DIN',
+        currencyCode: 'CAD',
+        dateFormat: 'DD/MM/YYYY',
+        timeZone: 'America/Toronto'
+      },
+      {
+        code: 'GB',
+        name: 'United Kingdom',
+        region: 'Europe',
+        cptCodeSystem: 'OPCS-4',
+        icd10CodeSystem: 'ICD-10',
+        pharmaceuticalCodeSystem: 'BNF',
+        currencyCode: 'GBP',
+        dateFormat: 'DD/MM/YYYY',
+        timeZone: 'Europe/London'
+      },
+      {
+        code: 'AU',
+        name: 'Australia',
+        region: 'Oceania',
+        cptCodeSystem: 'MBS',
+        icd10CodeSystem: 'ICD-10-AM',
+        pharmaceuticalCodeSystem: 'PBS',
+        currencyCode: 'AUD',
+        dateFormat: 'DD/MM/YYYY',
+        timeZone: 'Australia/Sydney'
+      },
+      {
+        code: 'DE',
+        name: 'Germany',
+        region: 'Europe',
+        cptCodeSystem: 'EBM',
+        icd10CodeSystem: 'ICD-10-GM',
+        pharmaceuticalCodeSystem: 'PZN',
+        currencyCode: 'EUR',
+        dateFormat: 'DD.MM.YYYY',
+        timeZone: 'Europe/Berlin'
+      },
+      {
+        code: 'FR',
+        name: 'France', 
+        region: 'Europe',
+        cptCodeSystem: 'CCAM',
+        icd10CodeSystem: 'CIM-10',
+        pharmaceuticalCodeSystem: 'CIP',
+        currencyCode: 'EUR',
+        dateFormat: 'DD/MM/YYYY',
+        timeZone: 'Europe/Paris'
+      }
+    ];
+
+    // Insert countries
+    for (const country of defaultCountries) {
+      await db.insert(countries).values({
+        ...country,
+        isActive: true
+      });
+      console.log(`✓ Added country: ${country.name} (${country.code})`);
+    }
+
+    console.log('✅ Default countries initialized successfully');
+  } catch (error) {
+    console.error('❌ Error initializing default countries:', error);
+  }
+}
+
 async function initializePlatform() {
   try {
     // Wait a moment for database to be fully ready
@@ -158,6 +254,9 @@ async function initializePlatform() {
     } else {
       log("✓ Super admin already exists");
     }
+    
+    // Initialize default countries
+    await initializeDefaultCountries();
     
     platformInitialized = true;
     log("✓ Platform initialization complete");

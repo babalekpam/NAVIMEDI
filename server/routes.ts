@@ -295,6 +295,193 @@ sectigo.com
     res.status(200).json({ message: 'pong' });
   });
 
+  // ===== ADMIN MEDICAL CODES MANAGEMENT API =====
+  
+  // Countries CRUD
+  app.get('/api/admin/countries', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      // Direct database query since storage methods might not exist yet
+      const result = await db.select().from(countries).where(eq(countries.isActive, true));
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching countries:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/admin/countries', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      // Basic validation
+      const countryData = {
+        code: req.body.code?.toUpperCase(),
+        name: req.body.name,
+        region: req.body.region || null,
+        cptCodeSystem: req.body.cptCodeSystem || 'CPT-4',
+        icd10CodeSystem: req.body.icd10CodeSystem || 'ICD-10',
+        pharmaceuticalCodeSystem: req.body.pharmaceuticalCodeSystem || 'NDC',
+        currencyCode: req.body.currencyCode || 'USD',
+        dateFormat: req.body.dateFormat || 'MM/DD/YYYY',
+        timeZone: req.body.timeZone || 'America/New_York',
+        isActive: true
+      };
+
+      const [country] = await db.insert(countries).values(countryData).returning();
+      res.status(201).json(country);
+    } catch (error) {
+      console.error('Error creating country:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.put('/api/admin/countries/:id', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const countryData = {
+        code: req.body.code?.toUpperCase(),
+        name: req.body.name,
+        region: req.body.region || null,
+        cptCodeSystem: req.body.cptCodeSystem,
+        icd10CodeSystem: req.body.icd10CodeSystem,
+        pharmaceuticalCodeSystem: req.body.pharmaceuticalCodeSystem,
+        currencyCode: req.body.currencyCode,
+        dateFormat: req.body.dateFormat,
+        timeZone: req.body.timeZone
+      };
+
+      const [country] = await db.update(countries)
+        .set(countryData)
+        .where(eq(countries.id, req.params.id))
+        .returning();
+
+      if (!country) {
+        return res.status(404).json({ error: 'Country not found' });
+      }
+
+      res.json(country);
+    } catch (error) {
+      console.error('Error updating country:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Medical Codes CRUD  
+  app.get('/api/admin/medical-codes', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      let query = db.select().from(countryMedicalCodes).where(eq(countryMedicalCodes.isActive, true));
+      
+      // Apply filters
+      if (req.query.countryId) {
+        query = query.where(eq(countryMedicalCodes.countryId, req.query.countryId as string));
+      }
+      
+      if (req.query.codeType && req.query.codeType !== 'ALL') {
+        query = query.where(eq(countryMedicalCodes.codeType, req.query.codeType as string));
+      }
+      
+      if (req.query.search) {
+        const searchTerm = `%${req.query.search}%`;
+        query = query.where(
+          or(
+            sql`${countryMedicalCodes.code} ILIKE ${searchTerm}`,
+            sql`${countryMedicalCodes.description} ILIKE ${searchTerm}`
+          )
+        );
+      }
+      
+      const codes = await query.limit(1000); // Prevent too many results
+      res.json(codes);
+    } catch (error) {
+      console.error('Error fetching medical codes:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/admin/medical-codes', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const codeData = {
+        countryId: req.body.countryId,
+        codeType: req.body.codeType,
+        code: req.body.code,
+        description: req.body.description,
+        category: req.body.category || null,
+        amount: req.body.amount ? req.body.amount.toString() : null,
+        source: 'manual',
+        uploadedBy: (req.user as any)?.id || null,
+        isActive: true
+      };
+
+      const [medicalCode] = await db.insert(countryMedicalCodes).values(codeData).returning();
+      res.status(201).json(medicalCode);
+    } catch (error) {
+      console.error('Error creating medical code:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.put('/api/admin/medical-codes/:id', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const codeData = {
+        countryId: req.body.countryId,
+        codeType: req.body.codeType,
+        code: req.body.code,
+        description: req.body.description,
+        category: req.body.category || null,
+        amount: req.body.amount ? req.body.amount.toString() : null
+      };
+
+      const [medicalCode] = await db.update(countryMedicalCodes)
+        .set(codeData)
+        .where(eq(countryMedicalCodes.id, req.params.id))
+        .returning();
+
+      if (!medicalCode) {
+        return res.status(404).json({ error: 'Medical code not found' });
+      }
+
+      res.json(medicalCode);
+    } catch (error) {
+      console.error('Error updating medical code:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.delete('/api/admin/medical-codes/:id', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      await db.update(countryMedicalCodes)
+        .set({ isActive: false })
+        .where(eq(countryMedicalCodes.id, req.params.id));
+        
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting medical code:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // CSV Upload for Medical Codes (simplified implementation)
+  app.post('/api/admin/medical-codes/upload', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      // For now, return success message - file upload would need multer implementation
+      res.status(201).json({ 
+        message: 'Upload functionality available - please implement file handling with multer',
+        status: 'pending'
+      });
+    } catch (error) {
+      console.error('Error uploading medical codes:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Upload History
+  app.get('/api/admin/medical-code-uploads', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      // Return empty array for now - would need upload tracking table
+      res.json([]);
+    } catch (error) {
+      console.error('Error fetching upload history:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   // Platform stats endpoint (public, cached for performance)
   app.get('/api/platform/stats', (req, res) => {
     // Return static cached response for performance (250x speed improvement)
