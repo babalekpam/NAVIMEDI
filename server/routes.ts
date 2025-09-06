@@ -167,6 +167,13 @@ sectigo.com
 Fi5aW115S6aL4Cd3r8Br`);
   });
   
+  // New SSL Certificate Domain Validation Endpoint
+  app.get('/.well-known/pki-validation/AEE904F2EBE36AC8DA5D83A4DBC6675D.txt', (req, res) => {
+    res.setHeader('Content-Type', 'text/plain');
+    // Replace with actual validation content from your SSL provider
+    res.send('REPLACE_WITH_VALIDATION_CONTENT_FROM_SSL_PROVIDER');
+  });
+  
   // CSRF Token endpoint (public)
   app.get('/api/csrf-token', getCSRFToken);
   
