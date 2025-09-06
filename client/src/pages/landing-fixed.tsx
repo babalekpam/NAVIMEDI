@@ -433,7 +433,7 @@ export default function LandingPage() {
           <h2 className="text-4xl font-bold mb-6">Start Your Free SaaS Trial - Transform Healthcare Today</h2>
           <p className="text-xl mb-8 opacity-90">
             Join 500+ healthcare organizations worldwide using our <strong>cloud-based SaaS platform</strong> for improved patient outcomes, 
-            streamlined workflows, and enhanced security. <strong>Free 30-day trial</strong> with full access - no installation required!
+            streamlined workflows, and enhanced security. <strong>Free 14-day trial</strong> with full access - no installation required!
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link href="/organizations/register">

@@ -149,7 +149,7 @@ export default function PricingPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50">
       <SEOHead
         title="NaviMED Pricing - Healthcare Management Software Plans | Start Free Trial"
-        description="Flexible pricing for healthcare management software. Plans starting at $49.99/month for hospitals, pharmacies & laboratories. HIPAA compliant with 30-day free trial. Compare features and choose your plan."
+        description="Flexible pricing for healthcare management software. Plans starting at $49.99/month for hospitals, pharmacies & laboratories. HIPAA compliant with 14-day free trial. Compare features and choose your plan."
         keywords="healthcare software pricing, medical practice management cost, hospital management system pricing, pharmacy software plans, laboratory management pricing, healthcare SaaS pricing, medical software subscription"
         canonicalUrl="https://navimedi.com/pricing"
         ogImage="https://navimedi.com/images/navimed-pricing-og.jpg"
@@ -164,7 +164,7 @@ export default function PricingPage() {
           </h1>
           <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
             <strong>HIPAA-compliant healthcare software</strong> with transparent pricing for hospitals, pharmacies & laboratories. 
-            Plans starting at <strong>$49.99/month</strong> with <strong>30-day free trial</strong> and no setup fees.
+            Plans starting at <strong>$49.99/month</strong> with <strong>14-day free trial</strong> and no setup fees.
           </p>
 
           {/* Billing Toggle */}
