@@ -2659,7 +2659,7 @@ sectigo.com
       const saltRounds = 10;
       const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
 
-      // Update password in database
+      // Update password in database using consistent field name
       await storage.updateUser(userId, { 
         passwordHash: newPasswordHash,
         mustChangePassword: false, // Clear any forced password change flags
