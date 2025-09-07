@@ -82,10 +82,21 @@ export default function AdminMedicalCodesSimple() {
   // Country update mutation
   const updateCountryMutation = useMutation({
     mutationFn: async (data: { id: string; updates: any }) => {
-      return apiRequest(`/api/admin/countries/${data.id}`, {
+      const response = await fetch(`/api/admin/countries/${data.id}`, {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
         body: JSON.stringify(data.updates)
       });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to update country: ${response.status} ${errorText}`);
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/countries"] });
@@ -112,13 +123,20 @@ export default function AdminMedicalCodesSimple() {
       formData.append('file', data.file);
       formData.append('countryId', data.countryId);
       
-      return fetch('/api/admin/medical-codes/upload', {
+      const response = await fetch('/api/admin/medical-codes/upload', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
         body: formData
-      }).then(res => {
-        if (!res.ok) throw new Error('Upload failed');
-        return res.json();
       });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${response.status} ${errorText}`);
+      }
+      
+      return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/medical-codes"] });
@@ -176,7 +194,9 @@ export default function AdminMedicalCodesSimple() {
     queryKey: ["/api/admin/medical-codes", selectedCountry, selectedCodeType, searchTerm],
     queryFn: () => {
       const params = new URLSearchParams();
-      if (selectedCountry) params.append("countryId", selectedCountry);
+      if (selectedCountry && selectedCountry !== "all-countries") {
+        params.append("countryId", selectedCountry);
+      }
       if (selectedCodeType !== "ALL") params.append("codeType", selectedCodeType);
       if (searchTerm) params.append("search", searchTerm);
       return apiRequest(`/api/admin/medical-codes?${params}`);
@@ -407,7 +427,7 @@ export default function AdminMedicalCodesSimple() {
                     <SelectValue placeholder="All Countries" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Countries</SelectItem>
+                    <SelectItem value="all-countries">All Countries</SelectItem>
                     {countries.map((country: Country) => (
                       <SelectItem key={country.id} value={country.id}>
                         {country.name} ({country.code})
@@ -429,7 +449,7 @@ export default function AdminMedicalCodesSimple() {
                 <Button 
                   variant="outline" 
                   onClick={() => {
-                    setSelectedCountry("");
+                    setSelectedCountry("all-countries");
                     setSelectedCodeType("ALL");
                     setSearchTerm("");
                   }}
