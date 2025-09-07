@@ -3153,6 +3153,70 @@ to the patient and authorized healthcare providers.
     }
   });
 
+  // User profile endpoints
+  app.get("/api/users/profile", authenticateToken, async (req, res) => {
+    try {
+      // Return current user's profile
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Remove sensitive data before sending
+      const { password, ...userProfile } = user;
+      res.json(userProfile);
+    } catch (error) {
+      console.error("Get user profile error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/users/profile", authenticateToken, async (req, res) => {
+    try {
+      const { firstName, lastName, email, phone, bio, profileImage } = req.body;
+      
+      // Validate input
+      if (!firstName || !lastName || !email) {
+        return res.status(400).json({ message: "First name, last name, and email are required" });
+      }
+
+      const updateData = {
+        firstName,
+        lastName,
+        email,
+        phone: phone || null,
+        bio: bio || null,
+        profileImage: profileImage || null
+      };
+
+      const updatedUser = await storage.updateUser(req.user!.id, updateData);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user!.tenantId,
+        userId: req.user!.id,
+        entityType: "user",
+        entityId: req.user!.id,
+        action: "update_profile",
+        previousData: null,
+        newData: updateData,
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      // Remove sensitive data before sending
+      const { password, ...userProfile } = updatedUser;
+      res.json(userProfile);
+    } catch (error) {
+      console.error("Update user profile error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
   
