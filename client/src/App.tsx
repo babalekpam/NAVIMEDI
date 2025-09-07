@@ -139,7 +139,6 @@ function AppContent() {
         <Route path="/dashboard">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -152,7 +151,6 @@ function AppContent() {
         <Route path="/patients">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -166,7 +164,6 @@ function AppContent() {
         <Route path="/patient-management">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -179,7 +176,6 @@ function AppContent() {
         <Route path="/patient-medical-records">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -192,7 +188,6 @@ function AppContent() {
         <Route path="/appointments">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -205,7 +200,6 @@ function AppContent() {
         <Route path="/prescriptions">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -218,7 +212,6 @@ function AppContent() {
         <Route path="/prescription-archives">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -232,7 +225,6 @@ function AppContent() {
         <Route path="/lab-orders">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -245,7 +237,6 @@ function AppContent() {
         <Route path="/post-lab-results">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -258,7 +249,6 @@ function AppContent() {
         <Route path="/laboratory-billing">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -271,7 +261,6 @@ function AppContent() {
         <Route path="/achievements">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -284,7 +273,6 @@ function AppContent() {
         <Route path="/patient-access-management">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -318,7 +306,6 @@ function AppContent() {
         <Route path="/billing">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -331,7 +318,6 @@ function AppContent() {
         <Route path="/tenant-management">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -344,7 +330,6 @@ function AppContent() {
         <Route path="/audit-logs">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -357,7 +342,6 @@ function AppContent() {
         <Route path="/admin-dashboard">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -370,7 +354,6 @@ function AppContent() {
         <Route path="/admin-medical-codes">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -383,7 +366,6 @@ function AppContent() {
         <Route path="/super-admin-dashboard">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -398,7 +380,6 @@ function AppContent() {
         <Route path="/admin/clients">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto">
@@ -411,7 +392,6 @@ function AppContent() {
         <Route path="/admin/counter-reset">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -424,7 +404,6 @@ function AppContent() {
         <Route path="/user-roles">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -437,7 +416,6 @@ function AppContent() {
         <Route path="/reports">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -451,7 +429,6 @@ function AppContent() {
         <Route path="/medical-communications">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -464,7 +441,6 @@ function AppContent() {
         <Route path="/health-recommendations">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -477,7 +453,6 @@ function AppContent() {
         <Route path="/laboratory-dashboard">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -491,7 +466,6 @@ function AppContent() {
         <Route path="/pharmacy-dashboard">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -505,7 +479,6 @@ function AppContent() {
         <Route path="/pharmacy-dashboard-enhanced">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -519,7 +492,6 @@ function AppContent() {
         <Route path="/pharmacy-inventory">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -533,7 +505,6 @@ function AppContent() {
         <Route path="/pharmacy-customers">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -547,7 +518,6 @@ function AppContent() {
         <Route path="/pharmacy-billing">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -573,7 +543,6 @@ function AppContent() {
         <Route path="/receptionist-dashboard">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -590,7 +559,6 @@ function AppContent() {
         <Route path="/lab/sample-management">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto">
@@ -604,7 +572,6 @@ function AppContent() {
         <Route path="/lab/test-management">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto">
@@ -618,7 +585,6 @@ function AppContent() {
         <Route path="/lab/results-reporting">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto">
@@ -632,7 +598,6 @@ function AppContent() {
         <Route path="/lab/analytics">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto">
@@ -646,7 +611,6 @@ function AppContent() {
         <Route path="/lab/inventory">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto">
@@ -662,7 +626,6 @@ function AppContent() {
         <Route path="/service-pricing-management">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -675,7 +638,6 @@ function AppContent() {
         <Route path="/currency-management">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -688,7 +650,6 @@ function AppContent() {
         <Route path="/white-label-settings">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -701,7 +662,6 @@ function AppContent() {
         <Route path="/offline-mode">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -714,7 +674,6 @@ function AppContent() {
         <Route path="/trial-status">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -727,7 +686,6 @@ function AppContent() {
         <Route path="/profile-settings">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -740,7 +698,6 @@ function AppContent() {
         <Route path="/consultation-history">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -753,7 +710,6 @@ function AppContent() {
         <Route path="/advertisements">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -767,7 +723,6 @@ function AppContent() {
         <Route path="/lab-results">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -780,7 +735,6 @@ function AppContent() {
         <Route path="/laboratory-billing">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -793,7 +747,6 @@ function AppContent() {
         <Route path="/hospital-billing">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
@@ -936,7 +889,6 @@ function Router() {
           {/* Medication Insurance Claims - Public Access for Testing */}
           <Route path="/medication-insurance-claims">
             <div className="flex flex-col h-screen bg-gray-50">
-              <Header />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">

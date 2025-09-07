@@ -226,7 +226,7 @@ export const Sidebar = () => {
         <div className="p-6">
           {/* NaviMed Logo */}
           <div className="flex items-center space-x-3 mb-8 pb-4 border-b border-gray-200">
-            <img src={navimedLogo} alt="NaviMed" className="h-8 w-8 rounded-lg object-contain" />
+            <img src={navimedLogo} alt="NaviMed" className="h-16 w-16 rounded-lg object-contain" />
             <div>
               <h1 className="text-sm font-bold text-blue-600">{currentTenant?.brandName || 'NAVIMED'}</h1>
               <p className="text-xs text-gray-500">{currentTenant?.type === 'platform' ? 'Platform Admin' : 'Admin'}</p>
@@ -320,7 +320,7 @@ export const Sidebar = () => {
         <div className="p-6">
           {/* NaviMed Logo */}
           <div className="flex items-center space-x-3 mb-8 pb-4 border-b border-gray-200">
-            <img src={navimedLogo} alt="NaviMed" className="h-8 w-8 rounded-lg object-contain" />
+            <img src={navimedLogo} alt="NaviMed" className="h-16 w-16 rounded-lg object-contain" />
             <div>
               <h1 className="text-sm font-bold text-purple-600">LABSAFE</h1>
               <p className="text-xs text-gray-500">{currentTenant?.name || 'Laboratory'}</p>
@@ -481,7 +481,7 @@ export const Sidebar = () => {
         <div className="p-6">
           {/* NaviMed Logo */}
           <div className="flex items-center space-x-3 mb-8 pb-4 border-b border-gray-200">
-            <img src={navimedLogo} alt="NaviMed" className="h-8 w-8 rounded-lg object-contain" />
+            <img src={navimedLogo} alt="NaviMed" className="h-16 w-16 rounded-lg object-contain" />
             <div>
               <h1 className="text-sm font-bold text-blue-600">NAVIMED</h1>
               <p className="text-xs text-gray-500">{currentTenant?.name || 'Pharmacy'}</p>
