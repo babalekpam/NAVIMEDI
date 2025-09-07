@@ -604,6 +604,17 @@ export default function SuperAdminDashboard() {
                         </div>
                         
                         <div className="flex flex-col gap-2">
+                          {/* Edit button - available for all tenants */}
+                          <Button 
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditDialog(tenant)}
+                            className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                          >
+                            <Edit3 className="w-3 h-3 mr-1" />
+                            Edit
+                          </Button>
+                          
                           {tenant.isActive && !tenant.suspendedAt && tenant.type !== 'platform' && (
                             <Button 
                               variant="outline"
@@ -643,6 +654,204 @@ export default function SuperAdminDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Edit Organization Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Edit Organization</DialogTitle>
+            <DialogDescription>
+              Update the organization details below. All changes will be applied immediately.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onSubmitEdit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Organization Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter organization name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="brandName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Brand Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter brand name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Organization Type</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select organization type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="hospital">Hospital</SelectItem>
+                          <SelectItem value="pharmacy">Pharmacy</SelectItem>
+                          <SelectItem value="laboratory">Laboratory</SelectItem>
+                          <SelectItem value="platform">Platform</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="subdomain"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Subdomain</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter subdomain" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        This will be the URL: {field.value}.navimed.health
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="primaryColor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Primary Color</FormLabel>
+                      <FormControl>
+                        <Input type="color" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="secondaryColor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Secondary Color</FormLabel>
+                      <FormControl>
+                        <Input type="color" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="defaultLanguage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Default Language</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select language" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="es">Spanish</SelectItem>
+                          <SelectItem value="fr">French</SelectItem>
+                          <SelectItem value="de">German</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="baseCurrency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Base Currency</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select currency" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="USD">USD - US Dollar</SelectItem>
+                          <SelectItem value="EUR">EUR - Euro</SelectItem>
+                          <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                          <SelectItem value="CAD">CAD - Canadian Dollar</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={editForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Enter organization description"
+                        className="resize-none"
+                        rows={3}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={editTenantMutation.isPending}
+                >
+                  {editTenantMutation.isPending ? "Updating..." : "Update Organization"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
