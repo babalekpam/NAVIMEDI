@@ -254,7 +254,7 @@ export const TabsNavigation = () => {
                 Profile Settings
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => setLocation("/user-preferences")}
+                onClick={() => setLocation("/profile-settings")}
                 className="cursor-pointer"
               >
                 Preferences
