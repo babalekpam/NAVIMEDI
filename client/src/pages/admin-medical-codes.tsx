@@ -126,7 +126,7 @@ export default function AdminMedicalCodes() {
   // Forms  
   type CountryFormData = z.infer<typeof countrySchema>;
   const countryForm = useForm<CountryFormData>({
-    resolver: zodResolver(countrySchema),
+    resolver: zodResolver(countrySchema) as any,
     defaultValues: {
       code: "",
       name: "",
@@ -266,7 +266,7 @@ export default function AdminMedicalCodes() {
     }
   };
 
-  const handleUploadSubmit = (data: z.infer<typeof csvUploadSchema>) => {
+  const handleUploadSubmit = (data: UploadFormData) => {
     const formData = new FormData();
     formData.append("countryId", data.countryId);
     formData.append("file", data.file[0]);
@@ -353,10 +353,10 @@ export default function AdminMedicalCodes() {
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...countryForm}>
-                  <form onSubmit={countryForm.handleSubmit(handleCountrySubmit)} className="space-y-4">
+                  <form onSubmit={countryForm.handleSubmit(handleCountrySubmit as any)} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
-                        control={countryForm.control}
+                        control={countryForm.control as any}
                         name="code"
                         render={({ field }) => (
                           <FormItem>
@@ -369,7 +369,7 @@ export default function AdminMedicalCodes() {
                         )}
                       />
                       <FormField
-                        control={countryForm.control}
+                        control={countryForm.control as any}
                         name="name"
                         render={({ field }) => (
                           <FormItem>
@@ -384,7 +384,7 @@ export default function AdminMedicalCodes() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
-                        control={countryForm.control}
+                        control={countryForm.control as any}
                         name="region"
                         render={({ field }) => (
                           <FormItem>
@@ -397,7 +397,7 @@ export default function AdminMedicalCodes() {
                         )}
                       />
                       <FormField
-                        control={countryForm.control}
+                        control={countryForm.control as any}
                         name="currencyCode"
                         render={({ field }) => (
                           <FormItem>
@@ -412,7 +412,7 @@ export default function AdminMedicalCodes() {
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <FormField
-                        control={countryForm.control}
+                        control={countryForm.control as any}
                         name="cptCodeSystem"
                         render={({ field }) => (
                           <FormItem>
@@ -425,7 +425,7 @@ export default function AdminMedicalCodes() {
                         )}
                       />
                       <FormField
-                        control={countryForm.control}
+                        control={countryForm.control as any}
                         name="icd10CodeSystem"
                         render={({ field }) => (
                           <FormItem>
@@ -438,7 +438,7 @@ export default function AdminMedicalCodes() {
                         )}
                       />
                       <FormField
-                        control={countryForm.control}
+                        control={countryForm.control as any}
                         name="pharmaceuticalCodeSystem"
                         render={({ field }) => (
                           <FormItem>
@@ -453,7 +453,7 @@ export default function AdminMedicalCodes() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
-                        control={countryForm.control}
+                        control={countryForm.control as any}
                         name="dateFormat"
                         render={({ field }) => (
                           <FormItem>
@@ -466,7 +466,7 @@ export default function AdminMedicalCodes() {
                         )}
                       />
                       <FormField
-                        control={countryForm.control}
+                        control={countryForm.control as any}
                         name="timeZone"
                         render={({ field }) => (
                           <FormItem>
