@@ -4,6 +4,7 @@ import { useAuth } from "./auth-context";
 
 interface TenantContextType {
   tenant: Tenant | null;
+  currentTenant: Tenant | null; // Alias for compatibility
   availableTenants: Tenant[];
   switchTenant: (tenantId: string) => void;
   isLoading: boolean;
@@ -116,7 +117,7 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
   };
 
   return (
-    <TenantContext.Provider value={{ tenant, availableTenants, switchTenant, isLoading }}>
+    <TenantContext.Provider value={{ tenant, currentTenant: tenant, availableTenants, switchTenant, isLoading }}>
       {children}
     </TenantContext.Provider>
   );

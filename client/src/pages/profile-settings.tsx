@@ -164,7 +164,7 @@ export default function ProfileSettingsPage() {
 
   useEffect(() => {
     if (securitySettings) {
-      setTwoFactorEnabled(securitySettings.twoFactorEnabled || false);
+      setTwoFactorEnabled((securitySettings as any)?.twoFactorEnabled || false);
     }
   }, [securitySettings]);
 

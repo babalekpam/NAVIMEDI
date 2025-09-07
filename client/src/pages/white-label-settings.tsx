@@ -102,7 +102,7 @@ export default function WhiteLabelSettingsPage() {
   // Super admin and ARGILETTE platform owner have unlimited white label access
   const isSuperAdmin = user?.role === 'super_admin';
   const isPlatformOwner = currentTenant?.name?.includes('ARGILETTE') || currentTenant?.type === 'platform' || currentTenant?.subdomain === 'argilette';
-  const hasUnlimitedPlan = currentTenant?.settings?.planType === 'unlimited' || currentTenant?.settings?.features?.includes('unlimited');
+  const hasUnlimitedPlan = (currentTenant?.settings as any)?.planType === 'unlimited' || (currentTenant?.settings as any)?.features?.includes('unlimited');
   const isWhiteLabelEnabled = isSuperAdmin || isPlatformOwner || hasUnlimitedPlan || (subscription as any)?.whitelabelEnabled || (subscription as any)?.plan === 'white_label';
 
   if (!isWhiteLabelEnabled) {

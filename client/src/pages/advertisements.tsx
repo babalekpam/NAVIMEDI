@@ -108,8 +108,8 @@ export default function Advertisements() {
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
-  // Check if user is a supplier (can post advertisements)
-  const isSupplier = currentTenant?.type === 'supplier';
+  // Check if user is a supplier (can post advertisements) 
+  const isSupplier = currentTenant?.type === 'medical_supplier';
   // Healthcare practices can only view advertisements, not create them
   const isHealthcarePractice = ['hospital', 'pharmacy', 'laboratory'].includes(currentTenant?.type || '');
 

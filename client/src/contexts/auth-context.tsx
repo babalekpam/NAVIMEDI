@@ -10,8 +10,13 @@ interface AuthUser {
   lastName: string;
   role: string;
   tenantId: string;
+  phone?: string;
+  bio?: string;
+  profileImage?: string;
+  isActive?: boolean;
   mustChangePassword?: boolean;
   isTemporaryPassword?: boolean;
+  twoFactorEnabled?: boolean;
 }
 
 interface AuthContextType {
@@ -19,6 +24,7 @@ interface AuthContextType {
   token: string | null;
   login: (username: string, password: string, tenantId: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -180,6 +186,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.setItem('post_login_redirect', redirectPath);
   };
 
+  const refreshUser = async () => {
+    if (!token) return;
+    
+    try {
+      const response = await fetch('/api/user/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        const updatedUser = { ...user, ...userData };
+        setUser(updatedUser);
+        localStorage.setItem("auth_user", JSON.stringify(updatedUser));
+      }
+    } catch (error) {
+      console.warn('Failed to refresh user data:', error);
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -190,7 +218,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, refreshUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
