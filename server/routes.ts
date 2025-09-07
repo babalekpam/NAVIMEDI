@@ -2632,8 +2632,20 @@ sectigo.com
         return res.status(404).json({ message: 'User not found' });
       }
 
+      console.log('User object keys:', Object.keys(user));
+      console.log('Password hash exists:', !!user.passwordHash);
+      console.log('Password field exists:', !!(user as any).password);
+
+      // Check if user has a password set
+      const storedPasswordHash = user.passwordHash || (user as any).password;
+      if (!storedPasswordHash) {
+        return res.status(400).json({ 
+          message: 'No password is currently set for this user. Please contact support.' 
+        });
+      }
+
       // Verify current password
-      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, storedPasswordHash);
       if (!isCurrentPasswordValid) {
         return res.status(400).json({ 
           message: 'Current password is incorrect' 
