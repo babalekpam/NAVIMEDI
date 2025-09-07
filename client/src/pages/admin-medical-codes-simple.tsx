@@ -106,7 +106,10 @@ export default function AdminMedicalCodesSimple() {
         ✅ <strong>SUCCESS!</strong> If you can see this message, the component is rendering properly.
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={(value) => {
+        console.log("Tab changed to:", value);
+        setActiveTab(value);
+      }} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="countries">Countries</TabsTrigger>
           <TabsTrigger value="codes">Medical Codes</TabsTrigger>
@@ -343,8 +346,12 @@ export default function AdminMedicalCodesSimple() {
         <TabsContent value="upload" className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Bulk Upload Medical Codes</h2>
-            <Button variant="outline">
-              <Search className="h-4 w-4 mr-2" />
+            <Button 
+              variant="outline"
+              onClick={downloadTemplate}
+              data-testid="button-download-template"
+            >
+              <Download className="h-4 w-4 mr-2" />
               Download Template
             </Button>
           </div>
@@ -354,20 +361,45 @@ export default function AdminMedicalCodesSimple() {
               <CardTitle>Upload CSV File</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                  <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <Plus className="h-6 w-6 text-gray-400" />
+              <div className="space-y-6">
+                {/* File Upload Area */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+                  <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                    <Upload className="h-8 w-8 text-blue-500" />
                   </div>
-                  <p className="text-lg font-medium">Upload Medical Codes</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Drag and drop your CSV file here, or click to browse
+                  <p className="text-lg font-medium text-gray-700">Upload Medical Codes CSV</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Drag and drop your CSV file here, or click to select file
                   </p>
-                  <Button className="mt-4">Choose File</Button>
+                  <Button className="mt-4" data-testid="button-choose-file">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Choose File
+                  </Button>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  <p>CSV format: codeType, code, description, category, amount</p>
-                  <p>Maximum file size: 10MB. Supported formats: CSV, Excel</p>
+
+                {/* File Format Information */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-medium text-blue-800 mb-2">CSV File Requirements:</h4>
+                  <div className="text-sm text-blue-700 space-y-1">
+                    <p><span className="font-medium">Format:</span> codeType, code, description, category, amount</p>
+                    <p><span className="font-medium">Code Types:</span> CPT, ICD10, PHARMACEUTICAL</p>
+                    <p><span className="font-medium">File Size:</span> Maximum 10MB</p>
+                    <p><span className="font-medium">Encoding:</span> UTF-8 recommended</p>
+                  </div>
+                </div>
+
+                {/* Sample Data Preview */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-800 mb-3">Sample Data Preview:</h4>
+                  <div className="font-mono text-xs bg-white border border-gray-300 rounded p-3 overflow-x-auto">
+                    <div className="text-gray-600">codeType,code,description,category,amount</div>
+                    <div>CPT,99213,Office Visit Level 3,Office Visit,150.00</div>
+                    <div>ICD10,Z00.00,General Adult Medical Examination,Preventive,0.00</div>
+                    <div>PHARMACEUTICAL,NDC123456,Generic Medication,Antibiotics,25.99</div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Download the template above to get started with the correct format.
+                  </p>
                 </div>
               </div>
             </CardContent>
