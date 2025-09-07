@@ -2632,11 +2632,7 @@ sectigo.com
         return res.status(404).json({ message: 'User not found' });
       }
 
-      console.log('User object keys:', Object.keys(user));
-      console.log('Password hash exists:', !!user.passwordHash);
-      console.log('Password field exists:', !!(user as any).password);
-
-      // Check if user has a password set
+      // Check if user has a password set (handle both field names for compatibility)
       const storedPasswordHash = user.passwordHash || (user as any).password;
       if (!storedPasswordHash) {
         return res.status(400).json({ 
