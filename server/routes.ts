@@ -2512,7 +2512,7 @@ sectigo.com
   });
 
   // User status update endpoint (activate/deactivate)
-  app.patch('/api/users/:id', async (req, res) => {
+  app.patch('/api/users/:id', authenticateToken, async (req, res) => {
     try {
       const { tenantId } = req.user as any;
       const { id } = req.params;
