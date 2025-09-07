@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React, { Suspense, startTransition } from "react";
 import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -958,12 +958,23 @@ function Router() {
   if (redirectPath && redirectPath !== location) {
     localStorage.removeItem('post_login_redirect');
     console.log('Handling post-login redirect to:', redirectPath);
-    return <Redirect to={redirectPath} />;
+    // Use startTransition for redirect to prevent suspension
+    startTransition(() => {
+      // Use a timeout to ensure the redirect happens in the next tick
+      setTimeout(() => {
+        window.location.href = redirectPath;
+      }, 0);
+    });
+    return <LoadingPage />;
   }
 
   // User is authenticated, show the protected app content
   console.log('User authenticated, showing app content for:', user.username);
-  return <AppContent />;
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <AppContent />
+    </Suspense>
+  );
 }
 
 function App() {

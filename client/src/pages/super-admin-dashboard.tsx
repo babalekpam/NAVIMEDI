@@ -13,6 +13,7 @@ interface TenantWithStats {
   type: string;
   subdomain: string;
   isActive: boolean;
+  suspendedAt?: string;
   stats: {
     userCount: number;
     patientCount: number;
@@ -37,7 +38,7 @@ interface MedicalSupplier {
   productCategories: string[];
   yearsInBusiness: string;
   username: string;
-  status: "pending_review" | "approved" | "rejected";
+  status: "pending_review" | "approved" | "rejected" | "suspended";
   termsAccepted: boolean;
   createdAt: string;
 }
