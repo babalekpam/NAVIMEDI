@@ -3395,6 +3395,11 @@ export class DatabaseStorage implements IStorage {
       const [tenant] = await db.update(tenants)
         .set({ 
           brandName: settings.brandName,
+          logoUrl: settings.logoUrl,
+          primaryColor: settings.primaryColor,
+          secondaryColor: settings.secondaryColor,
+          customDomain: settings.customDomain,
+          customCss: settings.customCss,
           updatedAt: sql`CURRENT_TIMESTAMP` 
         })
         .where(eq(tenants.id, tenantId))
