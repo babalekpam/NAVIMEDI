@@ -35,10 +35,10 @@ export const createRateLimit = (windowMs: number = 15 * 60 * 1000, max: number =
 };
 
 // Aggressive rate limiting for authentication endpoints
-export const authRateLimit = createRateLimit(15 * 60 * 1000, 5); // 5 attempts per 15 minutes
+export const authRateLimit = createRateLimit(15 * 60 * 1000, 50); // 50 attempts per 15 minutes
 
-// General API rate limiting
-export const apiRateLimit = createRateLimit(15 * 60 * 1000, 100); // 100 requests per 15 minutes
+// General API rate limiting - increased for development
+export const apiRateLimit = createRateLimit(15 * 60 * 1000, 1000); // 1000 requests per 15 minutes
 
 // BREACH protection headers
 export const breachProtectionHeaders = (req: Request, res: Response, next: NextFunction) => {
