@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, startTransition } from "react";
 import { Tenant } from "@shared/schema";
 import { useAuth } from "./auth-context";
 
@@ -75,8 +75,10 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
           console.log('Tenant context: Successfully fetched tenant:', tenantData?.name || 'No name');
           
           if (tenantData && tenantData.id) {
-            setTenant(tenantData);
-            setAvailableTenants([tenantData]);
+            startTransition(() => {
+              setTenant(tenantData);
+              setAvailableTenants([tenantData]);
+            });
             console.log('Tenant context: State updated successfully');
           } else {
             console.error('Tenant context: Invalid tenant data structure:', tenantData);
@@ -102,7 +104,9 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
         setTenant(null);
         setAvailableTenants([]);
       } finally {
-        setIsLoading(false);
+        startTransition(() => {
+          setIsLoading(false);
+        });
       }
     };
 

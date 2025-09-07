@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, startTransition } from "react";
 import { User } from "@shared/schema";
 
 interface AuthUser {
@@ -76,14 +76,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         localStorage.removeItem("auth_user");
         setToken(null);
         setUser(null);
-        setIsLoading(false);
+        startTransition(() => {
+      setIsLoading(false);
+    });
         return;
       }
       
       try {
         const parsedUser = JSON.parse(storedUser);
-        setToken(storedToken);
-        setUser(parsedUser);
+        startTransition(() => {
+          setToken(storedToken);
+          setUser(parsedUser);
+        });
         console.log('Successfully restored auth state for user:', parsedUser.username);
       } catch (error) {
         console.warn('Failed to parse stored user data, clearing auth:', error);
@@ -103,7 +107,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setToken(null);
       setUser(null);
     }
-    setIsLoading(false);
+    startTransition(() => {
+      setIsLoading(false);
+    });
   };
 
   useEffect(() => {
