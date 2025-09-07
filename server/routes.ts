@@ -6,6 +6,8 @@ import { setTenantContext, requireTenant } from "./middleware/tenant";
 import { securityMiddleware } from "./middleware/security";
 import { csrfProtection, getCSRFToken } from "./middleware/csrf";
 import { compressionMitigation } from "./middleware/compression";
+import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { ObjectPermission } from "./objectAcl";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
@@ -2526,6 +2528,49 @@ sectigo.com
     } catch (error) {
       console.error("Get user profile error:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Object upload endpoint - Get presigned URL for upload
+  app.post('/api/objects/upload', authenticateToken, async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error('Error getting upload URL:', error);
+      res.status(500).json({ error: 'Failed to get upload URL' });
+    }
+  });
+
+  // Profile image update endpoint
+  app.put('/api/users/profile-image', authenticateToken, async (req, res) => {
+    try {
+      const { profileImageURL } = req.body;
+      
+      if (!profileImageURL) {
+        return res.status(400).json({ error: 'profileImageURL is required' });
+      }
+
+      const userId = req.user!.id;
+      const objectStorageService = new ObjectStorageService();
+      
+      // Set ACL policy for the uploaded image
+      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
+        profileImageURL,
+        {
+          owner: userId,
+          visibility: "public", // Profile images are public
+        }
+      );
+
+      // Update user profile in database
+      await storage.updateUser(userId, { profileImage: objectPath });
+
+      res.json({ objectPath });
+    } catch (error) {
+      console.error('Error updating profile image:', error);
+      res.status(500).json({ error: 'Failed to update profile image' });
     }
   });
 

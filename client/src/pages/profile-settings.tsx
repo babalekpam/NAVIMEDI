@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ObjectUploader } from "@/components/ObjectUploader";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/contexts/translation-context";
 import { useAuth } from "@/contexts/auth-context";
@@ -622,10 +623,68 @@ export default function ProfileSettingsPage() {
                   <div className="space-y-2">
                     <Label>Profile Picture</Label>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <ObjectUploader
+                        maxNumberOfFiles={1}
+                        maxFileSize={5 * 1024 * 1024} // 5MB limit for profile images
+                        onGetUploadParameters={async () => {
+                          const response = await fetch('/api/objects/upload', {
+                            method: 'POST',
+                            headers: {
+                              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                            }
+                          });
+                          if (!response.ok) {
+                            throw new Error('Failed to get upload URL');
+                          }
+                          const data = await response.json();
+                          return {
+                            method: 'PUT' as const,
+                            url: data.uploadURL
+                          };
+                        }}
+                        onComplete={async (result) => {
+                          if (result.successful && result.successful.length > 0) {
+                            const uploadURL = result.successful[0].uploadURL;
+                            try {
+                              // Update profile with new image URL
+                              const response = await fetch('/api/users/profile-image', {
+                                method: 'PUT',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                                },
+                                body: JSON.stringify({ profileImageURL: uploadURL })
+                              });
+                              
+                              if (!response.ok) {
+                                throw new Error('Failed to update profile image');
+                              }
+                              
+                              const data = await response.json();
+                              setProfileData(prev => ({ ...prev, profileImage: data.objectPath }));
+                              
+                              toast({
+                                title: "Profile Picture Updated",
+                                description: "Your profile picture has been successfully updated."
+                              });
+                              
+                              // Refresh user data
+                              refreshUser();
+                            } catch (error) {
+                              console.error('Error updating profile image:', error);
+                              toast({
+                                title: "Upload Failed",
+                                description: "Failed to update profile picture. Please try again.",
+                                variant: "destructive"
+                              });
+                            }
+                          }
+                        }}
+                        buttonClassName="variant-outline size-sm"
+                      >
                         <Camera className="w-4 h-4 mr-2" />
                         Upload Photo
-                      </Button>
+                      </ObjectUploader>
                       {profileData.profileImage && (
                         <Button variant="outline" size="sm" onClick={() => setProfileData(prev => ({ ...prev, profileImage: "" }))}>
                           Remove
