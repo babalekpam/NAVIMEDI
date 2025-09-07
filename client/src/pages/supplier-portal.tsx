@@ -108,8 +108,21 @@ export default function SupplierPortal() {
       });
       
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Registration failed');
+        const error = await response.json().catch(() => ({ error: 'Registration failed' }));
+        // Extract the most meaningful error message
+        let errorMessage = 'Registration failed';
+        if (error.error) {
+          errorMessage = error.error;
+        } else if (error.message) {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        }
+        // Limit error message length for better UX
+        if (errorMessage.length > 200) {
+          errorMessage = 'Registration failed. Please check all required fields and try again.';
+        }
+        throw new Error(errorMessage);
       }
       
       return response.json();
