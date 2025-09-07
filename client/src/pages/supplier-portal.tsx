@@ -496,11 +496,27 @@ export default function SupplierPortal() {
                             <SelectValue placeholder="Select country" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="USA">United States</SelectItem>
+                            <SelectItem value="United States">United States</SelectItem>
                             <SelectItem value="Canada">Canada</SelectItem>
-                            <SelectItem value="UK">United Kingdom</SelectItem>
+                            <SelectItem value="China">China</SelectItem>
+                            <SelectItem value="India">India</SelectItem>
+                            <SelectItem value="United Kingdom">United Kingdom</SelectItem>
                             <SelectItem value="Germany">Germany</SelectItem>
                             <SelectItem value="France">France</SelectItem>
+                            <SelectItem value="Spain">Spain</SelectItem>
+                            <SelectItem value="Italy">Italy</SelectItem>
+                            <SelectItem value="Japan">Japan</SelectItem>
+                            <SelectItem value="South Korea">South Korea</SelectItem>
+                            <SelectItem value="Australia">Australia</SelectItem>
+                            <SelectItem value="Brazil">Brazil</SelectItem>
+                            <SelectItem value="Mexico">Mexico</SelectItem>
+                            <SelectItem value="South Africa">South Africa</SelectItem>
+                            <SelectItem value="Nigeria">Nigeria</SelectItem>
+                            <SelectItem value="Kenya">Kenya</SelectItem>
+                            <SelectItem value="Egypt">Egypt</SelectItem>
+                            <SelectItem value="Saudi Arabia">Saudi Arabia</SelectItem>
+                            <SelectItem value="United Arab Emirates">United Arab Emirates</SelectItem>
+                            <SelectItem value="Singapore">Singapore</SelectItem>
                             <SelectItem value="Other">Other</SelectItem>
                           </SelectContent>
                         </Select>
