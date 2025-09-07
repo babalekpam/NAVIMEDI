@@ -20,6 +20,16 @@ import { tenants, users, pharmacies, prescriptions, insuranceClaims, insertLabRe
 import { eq, and, desc, or, sql } from "drizzle-orm";
 import Stripe from "stripe";
 
+// Initialize Stripe - only if secret key is properly configured
+let stripe: Stripe | null = null;
+if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_')) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2023-10-16",
+  });
+  console.log("✅ Stripe initialized successfully");
+} else {
+  console.warn("⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'");
+}
 
 // Document Generation Function for Insurance Claims
 function generateInsuranceClaimDocument(claim: InsuranceClaim): string {
