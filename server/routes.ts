@@ -3284,6 +3284,62 @@ to the patient and authorized healthcare providers.
     }
   });
 
+  // White label settings endpoint
+  app.patch("/api/tenants/:id/white-label", authenticateToken, async (req, res) => {
+    try {
+      const tenantId = req.params.id;
+      const { 
+        brandName, 
+        logoUrl, 
+        primaryColor, 
+        secondaryColor,
+        customDomain,
+        customCss 
+      } = req.body;
+
+      // Validate user has access to this tenant
+      const { role, tenantId: userTenantId } = req.user as any;
+      
+      // Super admin can update any tenant, others can only update their own
+      if (role !== 'super_admin' && userTenantId !== tenantId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const updateData = {
+        brandName: brandName || null,
+        logoUrl: logoUrl || null,
+        primaryColor: primaryColor || "#10b981",
+        secondaryColor: secondaryColor || "#3b82f6",
+        customDomain: customDomain || null,
+        customCss: customCss || null
+      };
+
+      const updatedTenant = await storage.updateTenant(tenantId, updateData);
+      
+      if (!updatedTenant) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: userTenantId,
+        userId: req.user!.id,
+        entityType: "tenant",
+        entityId: tenantId,
+        action: "update_white_label",
+        previousData: null,
+        newData: updateData,
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.json(updatedTenant);
+    } catch (error) {
+      console.error("Update white label settings error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
 
   // Create HTTP server
   const httpServer = createServer(app);
