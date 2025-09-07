@@ -2601,6 +2601,79 @@ sectigo.com
     }
   });
 
+  // Change password endpoint
+  app.post('/api/users/change-password', authenticateToken, async (req, res) => {
+    try {
+      const { currentPassword, newPassword, confirmPassword } = req.body;
+      const userId = req.user!.id;
+
+      // Validate input
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({ 
+          message: 'Current password, new password, and confirm password are required' 
+        });
+      }
+
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({ 
+          message: 'New password and confirm password do not match' 
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ 
+          message: 'New password must be at least 6 characters long' 
+        });
+      }
+
+      // Get current user to verify current password
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Verify current password
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!isCurrentPasswordValid) {
+        return res.status(400).json({ 
+          message: 'Current password is incorrect' 
+        });
+      }
+
+      // Hash new password
+      const saltRounds = 10;
+      const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+
+      // Update password in database
+      await storage.updateUser(userId, { 
+        passwordHash: newPasswordHash,
+        mustChangePassword: false, // Clear any forced password change flags
+        isTemporaryPassword: false
+      });
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user!.tenantId,
+        userId: req.user!.id,
+        entityType: "user",
+        entityId: req.user!.id,
+        action: "change_password",
+        previousData: null,
+        newData: { passwordChanged: true },
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.json({ 
+        message: 'Password changed successfully',
+        success: true 
+      });
+    } catch (error) {
+      console.error('Change password error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   app.patch("/api/users/profile", authenticateToken, async (req, res) => {
     try {
       const { firstName, lastName, email, phone, bio, profileImage } = req.body;
