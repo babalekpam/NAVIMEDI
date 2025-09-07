@@ -62,7 +62,7 @@ export const Header = () => {
             <div className="flex items-center space-x-3">
               <img src={navimedLogo} alt="NaviMed" className="h-10 w-10 rounded-lg object-contain" />
               <div>
-                <h1 className="text-xl font-bold text-blue-600">NAVIMED</h1>
+                <h1 className="text-xl font-bold text-blue-600">{tenant?.brandName || 'NAVIMED'}</h1>
                 <p className="text-xs text-gray-500">
                   {tenant?.name || 'Loading...'}{' '}
                   <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
@@ -72,7 +72,7 @@ export const Header = () => {
                     {tenant?.type === 'clinic' && 'Clinic'}
                     {tenant?.type === 'insurance_provider' && 'Insurance'}
                     {tenant?.type === 'medical_supplier' && 'Supplier'}
-                    {tenant?.type === 'platform' && 'Platform Admin'}
+                    {tenant?.type === 'platform' && (tenant?.brandName ? `${tenant.brandName} Admin` : 'Platform Admin')}
                     {!tenant?.type && 'Loading...'}
                   </span>
                 </p>

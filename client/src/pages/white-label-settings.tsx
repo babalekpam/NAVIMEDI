@@ -72,6 +72,9 @@ export default function WhiteLabelSettingsPage() {
         description: "White label settings have been updated successfully."
       });
       queryClient.invalidateQueries({ queryKey: ['/api/tenants'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tenant/current'] });
+      // Force reload the page to refresh all brand name references
+      window.location.reload();
     },
     onError: (error: any) => {
       toast({
