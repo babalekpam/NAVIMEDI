@@ -193,9 +193,6 @@ export default function ProfileSettingsPage() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: Partial<UserProfile>) => {
-      // Debug: Log what we're sending
-      console.log('🔍 Profile update data before cleaning:', data);
-      
       // Filter out undefined values and ensure we only send allowed fields
       const allowedFields = ['firstName', 'lastName', 'email', 'phone', 'bio', 'profileImage'];
       const cleanData = Object.keys(data)
@@ -204,9 +201,6 @@ export default function ProfileSettingsPage() {
           obj[key] = data[key as keyof UserProfile];
           return obj;
         }, {} as any);
-
-      console.log('🔍 Profile update cleaned data:', cleanData);
-      console.log('🔍 Sending to endpoint: /api/users/profile');
 
       const response = await fetch(`/api/users/profile`, {
         method: 'PATCH',
@@ -217,17 +211,13 @@ export default function ProfileSettingsPage() {
         body: JSON.stringify(cleanData)
       });
       
-      console.log('🔍 Profile update response status:', response.status);
-      
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('🔍 Profile update error response:', errorText);
+        console.error('Profile update error:', errorText);
         throw new Error('Failed to update profile');
       }
       
-      const result = await response.json();
-      console.log('🔍 Profile update successful:', result);
-      return result;
+      return response.json();
     },
     onSuccess: () => {
       toast({
