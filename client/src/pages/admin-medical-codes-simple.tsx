@@ -320,23 +320,54 @@ export default function AdminMedicalCodesSimple() {
         </TabsContent>
 
         <TabsContent value="upload" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Bulk Upload Medical Codes</h2>
+            <Button variant="outline">
+              <Search className="h-4 w-4 mr-2" />
+              Download Template
+            </Button>
+          </div>
+
           <Card>
             <CardHeader>
-              <CardTitle>Upload Tab - Working!</CardTitle>
+              <CardTitle>Upload CSV File</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-lg text-green-600">✅ Upload tab is visible and working.</p>
+              <div className="space-y-4">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                  <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <Plus className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <p className="text-lg font-medium">Upload Medical Codes</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Drag and drop your CSV file here, or click to browse
+                  </p>
+                  <Button className="mt-4">Choose File</Button>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  <p>CSV format: codeType, code, description, category, amount</p>
+                  <p>Maximum file size: 10MB. Supported formats: CSV, Excel</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="history" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Upload History</h2>
+          </div>
+
           <Card>
             <CardHeader>
-              <CardTitle>History Tab - Working!</CardTitle>
+              <CardTitle>Recent Uploads</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-lg text-green-600">✅ History tab is visible and working.</p>
+              <div className="text-center py-8 text-muted-foreground">
+                <AlertCircle className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <p>No upload history available</p>
+                <p className="text-sm mt-1">Upload medical codes to see history here</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

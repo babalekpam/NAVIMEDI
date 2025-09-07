@@ -64,7 +64,7 @@ import SupplierSignupPage from "@/pages/supplier-signup";
 const CurrencyManagementPage = React.lazy(() => import("@/pages/currency-management").then(m => ({ default: m.CurrencyManagementPage })));
 import SupplierPortal from "@/pages/supplier-portal";
 import AdminCounterReset from "@/pages/admin-counter-reset";
-import AdminMedicalCodes from "@/pages/admin-medical-codes";
+import AdminMedicalCodesWorking from "@/pages/admin-medical-codes-working";
 import AdminMedicalCodesSimple from "@/pages/admin-medical-codes-simple";
 import TestMedicalCodes from "@/pages/test-medical-codes";
 
@@ -376,7 +376,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <AdminMedicalCodesSimple />
+                  <AdminMedicalCodesWorking />
                 </main>
               </div>
             </div>
