@@ -107,7 +107,7 @@ export default function AdminMedicalCodes() {
     gcTime: 10 * 60 * 1000, // Keep in memory for 10 minutes (formerly cacheTime)
   });
 
-  const { data: medicalCodes = [], isLoading: codesLoading } = useQuery({
+  const { data: medicalCodes = [], isLoading: codesLoading, error: codesError } = useQuery({
     queryKey: ["/api/admin/medical-codes", selectedCountry, selectedCodeType, searchTerm],
     queryFn: () => {
       const params = new URLSearchParams();
@@ -115,6 +115,13 @@ export default function AdminMedicalCodes() {
       if (selectedCodeType !== "ALL") params.append("codeType", selectedCodeType);
       if (searchTerm) params.append("search", searchTerm);
       return apiRequest(`/api/admin/medical-codes?${params}`);
+    },
+    retry: (failureCount, error) => {
+      // Don't retry on authentication errors
+      if (error?.message?.includes('401') || error?.message?.includes('Authentication')) {
+        return false;
+      }
+      return failureCount < 2;
     }
   });
 
@@ -744,6 +751,26 @@ export default function AdminMedicalCodes() {
             <CardContent className="pt-6">
               {codesLoading ? (
                 <div className="text-center py-8">Loading medical codes...</div>
+              ) : codesError ? (
+                <div className="text-center py-8">
+                  <div className="text-red-600 mb-2">⚠️ Authentication Error</div>
+                  <p className="text-muted-foreground mb-4">
+                    Unable to load medical codes. Please ensure you're logged in as super admin.
+                  </p>
+                  <Button 
+                    onClick={() => window.location.href = '/login'} 
+                    variant="outline"
+                    className="mx-2"
+                  >
+                    Login Again
+                  </Button>
+                  <Button 
+                    onClick={() => window.location.reload()} 
+                    variant="default"
+                  >
+                    Retry
+                  </Button>
+                </div>
               ) : medicalCodes.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No medical codes found. Add codes manually or upload a CSV file.
