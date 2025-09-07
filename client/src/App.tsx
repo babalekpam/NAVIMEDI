@@ -808,7 +808,11 @@ function AppContent() {
         {/* Payment System Routes */}
         <Route path="/payment-demo" component={PaymentDemo} />
         <Route path="/checkout" component={Checkout} />
-        <Route path="/checkout-simple" component={React.lazy(() => import("@/pages/checkout-simple"))} />
+        <Route path="/checkout-simple">
+          <React.Suspense fallback={<LoadingPage />}>
+            {React.createElement(React.lazy(() => import("@/pages/checkout-simple")))}
+          </React.Suspense>
+        </Route>
         <Route path="/subscribe" component={Subscribe} />
         <Route path="/payment-success" component={PaymentSuccess} />
         <Route path="/subscription-success" component={SubscriptionSuccess} />

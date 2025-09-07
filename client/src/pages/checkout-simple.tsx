@@ -75,21 +75,36 @@ export default function CheckoutSimple() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Create PaymentIntent as soon as the page loads
-    apiRequest("/api/create-payment-intent", { 
-      method: "POST", 
-      body: { amount: 50.00 } 
-    })
-    .then((data) => {
-      console.log('🔥 PAYMENT INTENT:', data);
-      setClientSecret(data.clientSecret);
-      setLoading(false);
-    })
-    .catch((err) => {
-      console.error('💥 PAYMENT ERROR:', err);
-      setError('Failed to initialize payment');
-      setLoading(false);
-    });
+    console.log('🚀 Starting payment setup...');
+    console.log('🔑 Stripe key exists:', !!import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+    console.log('🔑 Stripe key preview:', import.meta.env.VITE_STRIPE_PUBLIC_KEY?.substring(0, 20) + '...');
+    
+    // Add a small delay to ensure everything is ready
+    const timer = setTimeout(() => {
+      console.log('📞 Making API request to create payment intent...');
+      
+      apiRequest("/api/create-payment-intent", { 
+        method: "POST", 
+        body: { amount: 50.00 } 
+      })
+      .then((data) => {
+        console.log('🔥 PAYMENT INTENT SUCCESS:', data);
+        if (data.clientSecret) {
+          setClientSecret(data.clientSecret);
+          console.log('✅ Client secret set, should render form now');
+        } else {
+          throw new Error('No client secret in response');
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('💥 PAYMENT ERROR:', err);
+        setError(`Failed to initialize payment: ${err.message}`);
+        setLoading(false);
+      });
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   if (loading) {
