@@ -94,8 +94,13 @@ export default function Checkout() {
     // Create PaymentIntent as soon as the page loads
     apiRequest("/api/create-payment-intent", { method: "POST", body: { amount: 50.00 } }) // Default $50 payment
       .then((data) => {
-        setClientSecret(data.clientSecret);
-        setIsLoading(false);
+        console.log("Payment intent created successfully:", data);
+        if (data.clientSecret) {
+          setClientSecret(data.clientSecret);
+          setIsLoading(false);
+        } else {
+          throw new Error("No client secret received from server");
+        }
       })
       .catch((err) => {
         console.error("Payment intent error:", err);
@@ -131,14 +136,32 @@ export default function Checkout() {
   }
 
   if (!clientSecret) {
+    console.log("Waiting for client secret...", { clientSecret, isLoading, error });
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading" />
+        <Card className="w-full max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle>Preparing Payment</CardTitle>
+            <CardDescription>Setting up secure payment processing...</CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  // Make SURE to wrap the form in <Elements> which provides the stripe context.
+  // Only render Elements after we have the clientSecret to avoid prop change errors
+  const appearance = {
+    theme: 'stripe' as const,
+  };
+  
+  const options = {
+    clientSecret,
+    appearance,
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
       <div className="container mx-auto px-4">
@@ -151,9 +174,15 @@ export default function Checkout() {
           </p>
         </div>
         
-        <Elements stripe={stripePromise} options={{ clientSecret }}>
-          <CheckoutForm />
-        </Elements>
+        {stripePromise && clientSecret && (
+          <Elements 
+            key={clientSecret} 
+            stripe={stripePromise} 
+            options={options}
+          >
+            <CheckoutForm />
+          </Elements>
+        )}
       </div>
     </div>
   );
