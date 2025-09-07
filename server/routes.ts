@@ -10,6 +10,9 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { nanoid } from "nanoid";
+import multer from "multer";
+import csv from "csv-parser";
+import { Readable } from "stream";
 import { db } from "./db";
 import { tenants, users, pharmacies, prescriptions, insuranceClaims, insertLabResultSchema, type InsuranceClaim, labOrders, appointments, patients, countries, countryMedicalCodes } from "@shared/schema";
 import { eq, and, desc, or, sql } from "drizzle-orm";
@@ -457,14 +460,105 @@ sectigo.com
     }
   });
 
-  // CSV Upload for Medical Codes (simplified implementation)
-  app.post('/api/admin/medical-codes/upload', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+  // Configure multer for file uploads
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype === 'text/csv' || 
+          file.originalname.endsWith('.csv') ||
+          file.mimetype === 'application/vnd.ms-excel' ||
+          file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+        cb(null, true);
+      } else {
+        cb(new Error('Only CSV files are allowed'), false);
+      }
+    }
+  });
+
+  // CSV Upload for Medical Codes (full implementation)
+  app.post('/api/admin/medical-codes/upload', authenticateToken, requireRole(['super_admin']), upload.single('file'), async (req, res) => {
     try {
-      // For now, return success message - file upload would need multer implementation
-      res.status(201).json({ 
-        message: 'Upload functionality available - please implement file handling with multer',
-        status: 'pending'
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { countryId } = req.body;
+      if (!countryId) {
+        return res.status(400).json({ error: 'Country ID is required' });
+      }
+
+      // Verify country exists
+      const country = await db.select().from(countries).where(eq(countries.id, countryId)).limit(1);
+      if (!country.length) {
+        return res.status(400).json({ error: 'Invalid country ID' });
+      }
+
+      const results: any[] = [];
+      const errors: string[] = [];
+      let processedCount = 0;
+      let importedCount = 0;
+
+      // Create a readable stream from the buffer
+      const stream = Readable.from(req.file.buffer.toString());
+
+      // Parse CSV
+      await new Promise<void>((resolve, reject) => {
+        stream
+          .pipe(csv())
+          .on('data', async (data) => {
+            processedCount++;
+            
+            // Validate required fields
+            if (!data.codeType || !data.code || !data.description) {
+              errors.push(`Row ${processedCount}: Missing required fields (codeType, code, description)`);
+              return;
+            }
+
+            // Validate code type
+            if (!['CPT', 'ICD10', 'PHARMACEUTICAL'].includes(data.codeType?.toUpperCase())) {
+              errors.push(`Row ${processedCount}: Invalid code type '${data.codeType}'. Must be CPT, ICD10, or PHARMACEUTICAL`);
+              return;
+            }
+
+            try {
+              // Insert medical code
+              const medicalCodeData = {
+                countryId,
+                codeType: data.codeType.toUpperCase(),
+                code: data.code.trim(),
+                description: data.description.trim(),
+                category: data.category?.trim() || null,
+                amount: data.amount ? parseFloat(data.amount) : null,
+                source: 'csv_upload',
+                uploadedBy: (req as any).user.id,
+                uploadedAt: sql`CURRENT_TIMESTAMP`
+              };
+
+              await db.insert(countryMedicalCodes).values(medicalCodeData);
+              importedCount++;
+            } catch (dbError: any) {
+              errors.push(`Row ${processedCount}: Database error - ${dbError.message}`);
+            }
+          })
+          .on('end', () => {
+            resolve();
+          })
+          .on('error', (err) => {
+            reject(err);
+          });
       });
+
+      res.status(201).json({
+        message: 'Medical codes uploaded successfully',
+        imported: importedCount,
+        processed: processedCount,
+        errors: errors.slice(0, 10), // Limit errors to first 10
+        totalErrors: errors.length
+      });
+
     } catch (error) {
       console.error('Error uploading medical codes:', error);
       res.status(500).json({ error: 'Internal server error' });
