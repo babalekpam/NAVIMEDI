@@ -304,7 +304,7 @@ export default function PrescriptionsPage() {
 
       {/* Prescription Management Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground w-full max-w-4xl">
           <TabsTrigger value="new" className="flex items-center gap-2">
             <Package className="h-4 w-4" />
             New Prescriptions

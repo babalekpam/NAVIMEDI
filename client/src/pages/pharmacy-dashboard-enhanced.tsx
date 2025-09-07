@@ -378,7 +378,7 @@ export default function PharmacyDashboardEnhanced() {
 
       {/* Navigation Tabs */}
       <Tabs value={activeView} onValueChange={setActiveView} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground w-full max-w-3xl">
           <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
           <TabsTrigger value="prescriptions" data-testid="tab-prescriptions">Prescriptions</TabsTrigger>
           <TabsTrigger value="inventory" data-testid="tab-inventory">Inventory</TabsTrigger>

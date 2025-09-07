@@ -373,7 +373,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
       </div>
 
       <Tabs value={currentTab} onValueChange={setCurrentTab} className="space-y-6">
-        <TabsList className={`grid w-full ${organizationType === 'pharmacy' ? 'grid-cols-3' : 'grid-cols-4'}`}>
+        <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground w-full max-w-4xl">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="add-staff">Add Staff</TabsTrigger>
           <TabsTrigger value="manage-users">Manage Users</TabsTrigger>

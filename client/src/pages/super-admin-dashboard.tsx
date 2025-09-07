@@ -262,7 +262,7 @@ export default function SuperAdminDashboard() {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground w-full max-w-2xl">
           <TabsTrigger value="overview">Platform Overview</TabsTrigger>
           <TabsTrigger value="suppliers" className="relative">
             Supplier Approvals

@@ -490,7 +490,7 @@ function CreateAdForm({ onSubmit }: { onSubmit: (data: any) => void }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs defaultValue="basic" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground w-full max-w-2xl">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="content">Content</TabsTrigger>
           <TabsTrigger value="billing">Billing & Duration</TabsTrigger>

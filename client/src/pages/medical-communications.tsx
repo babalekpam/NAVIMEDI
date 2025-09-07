@@ -167,7 +167,7 @@ export default function MedicalCommunications() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground w-full max-w-2xl">
           <TabsTrigger value="all-messages">
             <MessageSquare className="h-4 w-4 mr-2" />
             All Messages ({filteredMessages.length})

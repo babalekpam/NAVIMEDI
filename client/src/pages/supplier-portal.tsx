@@ -218,7 +218,7 @@ export default function SupplierPortal() {
         
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground w-full max-w-xl">
               <TabsTrigger value="login" className="flex items-center gap-2">
                 <LogIn className="h-4 w-4" />
                 Login
