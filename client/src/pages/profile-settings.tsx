@@ -193,13 +193,22 @@ export default function ProfileSettingsPage() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: Partial<UserProfile>) => {
+      // Filter out undefined values and ensure we only send allowed fields
+      const allowedFields = ['firstName', 'lastName', 'email', 'phone', 'bio', 'profileImage'];
+      const cleanData = Object.keys(data)
+        .filter(key => allowedFields.includes(key) && data[key as keyof UserProfile] !== undefined)
+        .reduce((obj, key) => {
+          obj[key] = data[key as keyof UserProfile];
+          return obj;
+        }, {} as any);
+
       const response = await fetch(`/api/users/profile`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(cleanData)
       });
       
       if (!response.ok) {
