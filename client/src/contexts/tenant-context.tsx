@@ -42,16 +42,20 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
         hasStoredToken: !!storedToken 
       });
       // Set loading to false to prevent infinite loading
-      setIsLoading(false);
-      setTenant(null);
-      setAvailableTenants([]);
+      startTransition(() => {
+        setIsLoading(false);
+        setTenant(null);
+        setAvailableTenants([]);
+      });
       return;
     }
 
     // Validate token format
     if (effectiveToken === 'undefined' || effectiveToken === 'null' || effectiveToken.length < 10) {
       console.error('Tenant context: Invalid token format', { tokenPreview: effectiveToken?.substring(0, 20) });
-      setIsLoading(false);
+      startTransition(() => {
+        setIsLoading(false);
+      });
       return;
     }
 
@@ -82,8 +86,10 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
             console.log('Tenant context: State updated successfully');
           } else {
             console.error('Tenant context: Invalid tenant data structure:', tenantData);
-            setTenant(null);
-            setAvailableTenants([]);
+            startTransition(() => {
+              setTenant(null);
+              setAvailableTenants([]);
+            });
           }
         } else {
           console.error('Failed to fetch tenant:', response.status, response.statusText);
@@ -95,14 +101,18 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
             console.log('Tenant context: Clearing invalid auth data');
             localStorage.removeItem('auth_token');
             localStorage.removeItem('auth_user');
-            setTenant(null);
-            setAvailableTenants([]);
+            startTransition(() => {
+              setTenant(null);
+              setAvailableTenants([]);
+            });
           }
         }
       } catch (error) {
         console.error('Failed to fetch tenant:', error);
-        setTenant(null);
-        setAvailableTenants([]);
+        startTransition(() => {
+          setTenant(null);
+          setAvailableTenants([]);
+        });
       } finally {
         startTransition(() => {
           setIsLoading(false);

@@ -74,11 +74,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.warn('Token is expired, clearing auth data');
         localStorage.removeItem("auth_token");
         localStorage.removeItem("auth_user");
-        setToken(null);
-        setUser(null);
         startTransition(() => {
-      setIsLoading(false);
-    });
+          setToken(null);
+          setUser(null);
+          setIsLoading(false);
+        });
         return;
       }
       
@@ -93,8 +93,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.warn('Failed to parse stored user data, clearing auth:', error);
         localStorage.removeItem("auth_token");
         localStorage.removeItem("auth_user");
-        setToken(null);
-        setUser(null);
+        startTransition(() => {
+          setToken(null);
+          setUser(null);
+        });
       }
     } else if (storedToken) {
       // Clear corrupted tokens
