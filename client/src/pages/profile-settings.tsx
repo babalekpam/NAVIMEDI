@@ -516,7 +516,16 @@ export default function ProfileSettingsPage() {
   });
 
   const handleSaveProfile = () => {
-    updateProfileMutation.mutate(profileData);
+    // Only send the specific fields that are allowed for profile updates
+    const profileUpdate = {
+      firstName: profileData.firstName,
+      lastName: profileData.lastName,
+      email: profileData.email,
+      phone: profileData.phone || null,
+      bio: profileData.bio || null,
+      profileImage: profileData.profileImage || null
+    };
+    updateProfileMutation.mutate(profileUpdate);
   };
 
   const handleSavePreferences = () => {

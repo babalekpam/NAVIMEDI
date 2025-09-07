@@ -3153,6 +3153,76 @@ to the patient and authorized healthcare providers.
     }
   });
 
+  // Update tenant endpoint for super admin
+  app.put("/api/admin/tenants/:id", authenticateToken, async (req, res) => {
+    try {
+      // Check if user is super admin
+      if (!req.user?.isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+
+      const tenantId = req.params.id;
+      const {
+        name,
+        brandName,
+        type,
+        subdomain,
+        description,
+        primaryColor,
+        secondaryColor,
+        defaultLanguage,
+        baseCurrency,
+        isActive,
+        settings
+      } = req.body;
+
+      // Validate required fields
+      if (!name || !type || !subdomain) {
+        return res.status(400).json({ message: "Name, type, and subdomain are required" });
+      }
+
+      const updateData = {
+        name,
+        brandName: brandName || null,
+        type,
+        subdomain,
+        primaryColor: primaryColor || "#10b981",
+        secondaryColor: secondaryColor || "#3b82f6",
+        defaultLanguage: defaultLanguage || "en",
+        baseCurrency: baseCurrency || "USD",
+        isActive: isActive !== undefined ? isActive : true,
+        settings: {
+          ...settings,
+          description: description || null
+        }
+      };
+
+      const updatedTenant = await storage.updateTenant(tenantId, updateData);
+      
+      if (!updatedTenant) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+
+      // Create audit log
+      await storage.createAuditLog({
+        tenantId: req.user!.tenantId,
+        userId: req.user!.id,
+        entityType: "tenant",
+        entityId: tenantId,
+        action: "update_organization",
+        previousData: null,
+        newData: updateData,
+        ipAddress: req.ip || null,
+        userAgent: req.get("User-Agent") || null
+      });
+
+      res.json(updatedTenant);
+    } catch (error) {
+      console.error("Update tenant error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // User profile endpoints
   app.get("/api/users/profile", authenticateToken, async (req, res) => {
     try {
