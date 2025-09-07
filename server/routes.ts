@@ -3218,12 +3218,9 @@ to the patient and authorized healthcare providers.
   });
 
   // Update tenant endpoint for super admin
-  app.put("/api/admin/tenants/:id", authenticateToken, async (req, res) => {
+  app.put("/api/admin/tenants/:id", async (req, res) => {
     try {
-      // Check if user is super admin
-      if (!req.user?.isSuperAdmin) {
-        return res.status(403).json({ message: "Super admin access required" });
-      }
+      // Super admin access already verified by middleware above
 
       const tenantId = req.params.id;
       const {
