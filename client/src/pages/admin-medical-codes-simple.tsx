@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Globe, Plus, Search, AlertCircle, RefreshCw } from "lucide-react";
+import { Globe, Plus, Search, AlertCircle, RefreshCw, Download, Upload } from "lucide-react";
 
 interface Country {
   id: string;
@@ -36,6 +36,20 @@ export default function AdminMedicalCodesSimple() {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedCodeType, setSelectedCodeType] = useState("ALL");
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Template download function
+  const downloadTemplate = () => {
+    const csvContent = "codeType,code,description,category,amount\nCPT,99213,Office Visit Level 3,Office Visit,150.00\nICD10,Z00.00,General Adult Medical Examination,Preventive,0.00\nPHARMACEUTICAL,NDC123456,Generic Medication,Antibiotics,25.99\nCPT,99214,Office Visit Level 4,Office Visit,200.00\nICD10,M79.1,Myalgia,Musculoskeletal,0.00";
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "medical-codes-template.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
 
   // Countries query with proper error handling
   const { 
@@ -139,33 +153,40 @@ export default function AdminMedicalCodesSimple() {
                   No countries found. Add countries to manage medical codes.
                 </div>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {countries.slice(0, 12).map((country: Country) => (
-                    <Card key={country.id} className="hover:shadow-md transition-shadow">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Badge variant="outline">{country.code}</Badge>
-                          {country.name}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-1 text-xs">
-                          <div><span className="font-medium">Currency:</span> {country.currencyCode}</div>
-                          <div><span className="font-medium">CPT:</span> {country.cptCodeSystem}</div>
-                          <div><span className="font-medium">ICD:</span> {country.icd10CodeSystem}</div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  {countries.length > 12 && (
-                    <Card className="flex items-center justify-center border-dashed">
-                      <CardContent className="text-center py-8">
-                        <p className="text-muted-foreground">
-                          +{countries.length - 12} more countries
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
+                <div className="space-y-4">
+                  <div className="text-sm text-muted-foreground">
+                    Showing all {countries.length} countries. Click "Edit" to customize medical coding systems for each country.
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {countries.map((country: Country) => (
+                      <Card key={country.id} className="hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">{country.code}</Badge>
+                              <span className="truncate">{country.name}</span>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              data-testid={`button-edit-country-${country.code}`}
+                            >
+                              <Search className="h-3 w-3" />
+                            </Button>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-1 text-xs">
+                            <div><span className="font-medium">Currency:</span> {country.currencyCode}</div>
+                            <div><span className="font-medium">CPT System:</span> <span className="text-blue-600">{country.cptCodeSystem}</span></div>
+                            <div><span className="font-medium">ICD System:</span> <span className="text-green-600">{country.icd10CodeSystem}</span></div>
+                            <div><span className="font-medium">Pharma System:</span> <span className="text-purple-600">{country.pharmaceuticalCodeSystem}</span></div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>
