@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,16 @@ export default function AdminMedicalCodesSimple() {
   const [editingCountry, setEditingCountry] = useState<Country | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [selectedUploadCountry, setSelectedUploadCountry] = useState("");
+  const [editFormData, setEditFormData] = useState({
+    currencyCode: "",
+    cptCodeSystem: "",
+    icd10CodeSystem: "",
+    pharmaceuticalCodeSystem: ""
+  });
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Template download function
   const downloadTemplate = () => {
@@ -59,8 +70,74 @@ export default function AdminMedicalCodesSimple() {
   // Handle country edit
   const handleEditCountry = (country: Country) => {
     setEditingCountry(country);
+    setEditFormData({
+      currencyCode: country.currencyCode,
+      cptCodeSystem: country.cptCodeSystem,
+      icd10CodeSystem: country.icd10CodeSystem,
+      pharmaceuticalCodeSystem: country.pharmaceuticalCodeSystem
+    });
     setIsEditDialogOpen(true);
   };
+
+  // Country update mutation
+  const updateCountryMutation = useMutation({
+    mutationFn: async (data: { id: string; updates: any }) => {
+      return apiRequest(`/api/admin/countries/${data.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data.updates)
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/countries"] });
+      toast({
+        title: "Success!",
+        description: "Country configuration updated successfully",
+      });
+      setIsEditDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update country configuration",
+        variant: "destructive",
+      });
+      console.error("Update error:", error);
+    }
+  });
+
+  // File upload mutation
+  const uploadMutation = useMutation({
+    mutationFn: async (data: { file: File; countryId: string }) => {
+      const formData = new FormData();
+      formData.append('file', data.file);
+      formData.append('countryId', data.countryId);
+      
+      return fetch('/api/admin/medical-codes/upload', {
+        method: 'POST',
+        body: formData
+      }).then(res => {
+        if (!res.ok) throw new Error('Upload failed');
+        return res.json();
+      });
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/medical-codes"] });
+      toast({
+        title: "Upload Successful!",
+        description: `Imported ${data.imported} medical codes successfully`,
+      });
+      setUploadFile(null);
+      setSelectedUploadCountry("");
+    },
+    onError: (error) => {
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload medical codes. Please check file format.",
+        variant: "destructive",
+      });
+      console.error("Upload error:", error);
+    }
+  });
 
   // Handle file upload
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -241,7 +318,8 @@ export default function AdminMedicalCodesSimple() {
                       <Label htmlFor="currency">Currency Code</Label>
                       <Input
                         id="currency"
-                        defaultValue={editingCountry.currencyCode}
+                        value={editFormData.currencyCode}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, currencyCode: e.target.value }))}
                         placeholder="USD, EUR, GBP..."
                       />
                     </div>
@@ -251,7 +329,8 @@ export default function AdminMedicalCodesSimple() {
                     <Label htmlFor="cpt-system">CPT Code System</Label>
                     <Input
                       id="cpt-system"
-                      defaultValue={editingCountry.cptCodeSystem}
+                      value={editFormData.cptCodeSystem}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, cptCodeSystem: e.target.value }))}
                       placeholder="e.g., AMA CPT, Local CPT, Custom CPT..."
                     />
                   </div>
@@ -260,7 +339,8 @@ export default function AdminMedicalCodesSimple() {
                     <Label htmlFor="icd-system">ICD-10 Code System</Label>
                     <Input
                       id="icd-system"
-                      defaultValue={editingCountry.icd10CodeSystem}
+                      value={editFormData.icd10CodeSystem}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, icd10CodeSystem: e.target.value }))}
                       placeholder="e.g., WHO ICD-10, ICD-10-CM, Local ICD..."
                     />
                   </div>
@@ -269,7 +349,8 @@ export default function AdminMedicalCodesSimple() {
                     <Label htmlFor="pharma-system">Pharmaceutical Code System</Label>
                     <Input
                       id="pharma-system"
-                      defaultValue={editingCountry.pharmaceuticalCodeSystem}
+                      value={editFormData.pharmaceuticalCodeSystem}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, pharmaceuticalCodeSystem: e.target.value }))}
                       placeholder="e.g., NDC, ATC, Local Drug Codes..."
                     />
                   </div>
@@ -278,11 +359,18 @@ export default function AdminMedicalCodesSimple() {
                     <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                       Cancel
                     </Button>
-                    <Button onClick={() => {
-                      console.log("Saving country configuration for:", editingCountry.name);
-                      setIsEditDialogOpen(false);
-                    }}>
-                      Save Changes
+                    <Button 
+                      onClick={() => {
+                        if (editingCountry) {
+                          updateCountryMutation.mutate({
+                            id: editingCountry.id,
+                            updates: editFormData
+                          });
+                        }
+                      }}
+                      disabled={updateCountryMutation.isPending}
+                    >
+                      {updateCountryMutation.isPending ? "Saving..." : "Save Changes"}
                     </Button>
                   </div>
                 </div>
@@ -488,14 +576,71 @@ export default function AdminMedicalCodesSimple() {
                 {/* File Selection Status */}
                 {uploadFile && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h4 className="font-medium text-green-800 mb-2">File Selected:</h4>
-                    <p className="text-sm text-green-700">
-                      <span className="font-medium">{uploadFile.name}</span> ({(uploadFile.size / 1024).toFixed(1)} KB)
-                    </p>
-                    <Button className="mt-3" size="sm">
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload File
-                    </Button>
+                    <h4 className="font-medium text-green-800 mb-3">File Ready for Upload:</h4>
+                    <div className="space-y-3">
+                      <p className="text-sm text-green-700">
+                        <span className="font-medium">{uploadFile.name}</span> ({(uploadFile.size / 1024).toFixed(1)} KB)
+                      </p>
+                      
+                      {/* Country Selection for Upload */}
+                      <div className="space-y-2">
+                        <Label htmlFor="upload-country">Select Country for Medical Codes:</Label>
+                        <Select value={selectedUploadCountry} onValueChange={setSelectedUploadCountry}>
+                          <SelectTrigger id="upload-country">
+                            <SelectValue placeholder="Choose country for these medical codes" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {countries.map((country: Country) => (
+                              <SelectItem key={country.id} value={country.id}>
+                                {country.name} ({country.code}) - {country.cptCodeSystem}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button 
+                          className="flex-1" 
+                          onClick={() => {
+                            if (!selectedUploadCountry) {
+                              toast({
+                                title: "Country Required",
+                                description: "Please select a country for the medical codes",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+                            uploadMutation.mutate({ 
+                              file: uploadFile, 
+                              countryId: selectedUploadCountry 
+                            });
+                          }}
+                          disabled={!selectedUploadCountry || uploadMutation.isPending}
+                        >
+                          {uploadMutation.isPending ? (
+                            <>
+                              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4 mr-2" />
+                              Upload to {selectedUploadCountry ? countries.find(c => c.id === selectedUploadCountry)?.name : "Country"}
+                            </>
+                          )}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => {
+                            setUploadFile(null);
+                            setSelectedUploadCountry("");
+                          }}
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
