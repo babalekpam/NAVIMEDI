@@ -92,8 +92,7 @@ export default function Checkout() {
     }
 
     // Create PaymentIntent as soon as the page loads
-    apiRequest("POST", "/api/create-payment-intent", { amount: 50.00 }) // Default $50 payment
-      .then((res) => res.json())
+    apiRequest("/api/create-payment-intent", { method: "POST", body: { amount: 50.00 } }) // Default $50 payment
       .then((data) => {
         setClientSecret(data.clientSecret);
         setIsLoading(false);
