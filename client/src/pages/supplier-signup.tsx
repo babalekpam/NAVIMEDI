@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Building2, ArrowRight, CheckCircle } from "lucide-react";
 import { Link } from "wouter";
@@ -23,10 +24,13 @@ const supplierSignupSchema = z.object({
   zipCode: z.string().min(5, "ZIP code must be at least 5 characters"),
   country: z.string().min(2, "Country must be at least 2 characters"),
   businessType: z.string().min(2, "Business type is required"),
-  yearsInBusiness: z.number().min(0, "Years in business must be 0 or more"),
+  yearsInBusiness: z.string().min(1, "Years in business is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   specialties: z.string().min(5, "Specialties must be at least 5 characters"),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  termsAccepted: z.boolean().refine(val => val === true, "You must accept the terms and conditions"),
 });
 
 type SupplierSignupForm = z.infer<typeof supplierSignupSchema>;
@@ -179,13 +183,19 @@ export default function SupplierSignupPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="yearsInBusiness">Years in Business *</Label>
-                    <Input
-                      id="yearsInBusiness"
-                      type="number"
-                      min="0"
-                      {...register("yearsInBusiness", { valueAsNumber: true })}
-                      className={errors.yearsInBusiness ? "border-red-500" : ""}
-                    />
+                    <Select onValueChange={(value) => setValue("yearsInBusiness", value)} defaultValue={watch("yearsInBusiness")}>
+                      <SelectTrigger className={errors.yearsInBusiness ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Select years" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0-1">0-1 years</SelectItem>
+                        <SelectItem value="1-2">1-2 years</SelectItem>
+                        <SelectItem value="3-5">3-5 years</SelectItem>
+                        <SelectItem value="6-10">6-10 years</SelectItem>
+                        <SelectItem value="11-20">11-20 years</SelectItem>
+                        <SelectItem value="20+">20+ years</SelectItem>
+                      </SelectContent>
+                    </Select>
                     {errors.yearsInBusiness && (
                       <p className="text-sm text-red-500 mt-1">{errors.yearsInBusiness.message}</p>
                     )}
@@ -263,6 +273,42 @@ export default function SupplierSignupPage() {
                     />
                     {errors.contactPhone && (
                       <p className="text-sm text-red-500 mt-1">{errors.contactPhone.message}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Account Setup */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Account Setup
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="username">Username *</Label>
+                    <Input
+                      id="username"
+                      placeholder="Choose a unique username"
+                      {...register("username")}
+                      className={errors.username ? "border-red-500" : ""}
+                    />
+                    {errors.username && (
+                      <p className="text-sm text-red-500 mt-1">{errors.username.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="password">Password *</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Minimum 6 characters"
+                      {...register("password")}
+                      className={errors.password ? "border-red-500" : ""}
+                    />
+                    {errors.password && (
+                      <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
                     )}
                   </div>
                 </div>
@@ -359,6 +405,23 @@ export default function SupplierSignupPage() {
                     <p className="text-sm text-red-500 mt-1">{errors.country.message}</p>
                   )}
                 </div>
+              </div>
+
+              {/* Terms and Conditions */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="termsAccepted" 
+                    {...register("termsAccepted")}
+                    className={errors.termsAccepted ? "border-red-500" : ""}
+                  />
+                  <Label htmlFor="termsAccepted" className="text-sm">
+                    I agree to the <Link href="/terms" className="text-blue-600 hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</Link> *
+                  </Label>
+                </div>
+                {errors.termsAccepted && (
+                  <p className="text-sm text-red-500 mt-1">{errors.termsAccepted.message}</p>
+                )}
               </div>
 
               {submitStatus === "error" && (
