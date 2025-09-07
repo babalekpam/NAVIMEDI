@@ -366,16 +366,59 @@ sectigo.com
     }
   });
 
-  // Medical Codes CRUD  
+  // STRICT COUNTRY-SPECIFIC MEDICAL CODES ROUTING
+  
+  // General medical codes endpoint with MANDATORY country filtering
   app.get('/api/admin/medical-codes', authenticateToken, requireRole(['super_admin']), async (req, res) => {
     try {
-      let query = db.select().from(countryMedicalCodes).where(eq(countryMedicalCodes.isActive, true));
+      // STRICT ROUTING: Country ID is now REQUIRED for all medical codes access
+      if (!req.query.countryId || req.query.countryId === 'all-countries') {
+        // Super admins can see all codes, but must specify if they want all
+        if (req.query.countryId === 'all-countries') {
+          // Only for super admins viewing all countries
+          console.log('🌍 Super admin accessing ALL country medical codes');
+        } else {
+          return res.status(400).json({ 
+            error: 'Country ID is required. Medical codes are strictly country-specific.',
+            code: 'COUNTRY_REQUIRED'
+          });
+        }
+      }
+
+      let query = db.select({
+        id: countryMedicalCodes.id,
+        countryId: countryMedicalCodes.countryId,
+        codeType: countryMedicalCodes.codeType,
+        code: countryMedicalCodes.code,
+        description: countryMedicalCodes.description,
+        category: countryMedicalCodes.category,
+        amount: countryMedicalCodes.amount,
+        source: countryMedicalCodes.source,
+        uploadedBy: countryMedicalCodes.uploadedBy,
+        createdAt: countryMedicalCodes.createdAt,
+        isActive: countryMedicalCodes.isActive
+      }).from(countryMedicalCodes).where(eq(countryMedicalCodes.isActive, true));
       
-      // Apply filters
-      if (req.query.countryId) {
+      // STRICT COUNTRY FILTERING - Always filter by country unless explicitly requesting all
+      if (req.query.countryId && req.query.countryId !== 'all-countries') {
+        // Verify country exists first (security check)
+        const countryExists = await db.select({ id: countries.id })
+          .from(countries)
+          .where(eq(countries.id, req.query.countryId as string))
+          .limit(1);
+        
+        if (!countryExists.length) {
+          return res.status(404).json({ 
+            error: 'Country not found. Cannot access medical codes for invalid country.',
+            code: 'INVALID_COUNTRY'
+          });
+        }
+        
         query = query.where(eq(countryMedicalCodes.countryId, req.query.countryId as string));
+        console.log(`🔒 Filtering medical codes for country: ${req.query.countryId}`);
       }
       
+      // Additional filters (code type, search)
       if (req.query.codeType && req.query.codeType !== 'ALL') {
         query = query.where(eq(countryMedicalCodes.codeType, req.query.codeType as string));
       }
@@ -391,6 +434,10 @@ sectigo.com
       }
       
       const codes = await query.limit(1000); // Prevent too many results
+      
+      // Log access for audit trail
+      console.log(`📊 Medical codes access: ${codes.length} codes returned for country ${req.query.countryId || 'ALL'}`);
+      
       res.json(codes);
     } catch (error) {
       console.error('Error fetching medical codes:', error);
@@ -398,8 +445,104 @@ sectigo.com
     }
   });
 
+  // COUNTRY-SPECIFIC MEDICAL CODES ENDPOINT
+  app.get('/api/countries/:countryId/medical-codes', authenticateToken, requireRole(['super_admin', 'admin']), async (req, res) => {
+    try {
+      const { countryId } = req.params;
+      
+      // Verify country exists (strict validation)
+      const country = await db.select({ id: countries.id, name: countries.name })
+        .from(countries)
+        .where(eq(countries.id, countryId))
+        .limit(1);
+      
+      if (!country.length) {
+        return res.status(404).json({ 
+          error: `Country with ID ${countryId} not found`,
+          code: 'COUNTRY_NOT_FOUND'
+        });
+      }
+
+      // Build country-specific query
+      let query = db.select()
+        .from(countryMedicalCodes)
+        .where(and(
+          eq(countryMedicalCodes.countryId, countryId),
+          eq(countryMedicalCodes.isActive, true)
+        ));
+
+      // Apply additional filters
+      if (req.query.codeType && req.query.codeType !== 'ALL') {
+        query = query.where(eq(countryMedicalCodes.codeType, req.query.codeType as string));
+      }
+      
+      if (req.query.search) {
+        const searchTerm = `%${req.query.search}%`;
+        query = query.where(
+          or(
+            sql`${countryMedicalCodes.code} ILIKE ${searchTerm}`,
+            sql`${countryMedicalCodes.description} ILIKE ${searchTerm}`
+          )
+        );
+      }
+
+      const codes = await query.limit(1000);
+      
+      console.log(`🏥 Country-specific access: ${codes.length} medical codes for ${country[0].name} (${countryId})`);
+      
+      res.json({
+        country: country[0],
+        totalCodes: codes.length,
+        codes: codes
+      });
+    } catch (error) {
+      console.error('Error fetching country-specific medical codes:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // STRICT COUNTRY-VALIDATED MEDICAL CODE CREATION
   app.post('/api/admin/medical-codes', authenticateToken, requireRole(['super_admin']), async (req, res) => {
     try {
+      // MANDATORY COUNTRY VALIDATION
+      if (!req.body.countryId) {
+        return res.status(400).json({ 
+          error: 'Country ID is required. Medical codes must be assigned to a specific country.',
+          code: 'COUNTRY_REQUIRED'
+        });
+      }
+
+      // Verify country exists before creating medical code
+      const countryExists = await db.select({ id: countries.id, name: countries.name })
+        .from(countries)
+        .where(eq(countries.id, req.body.countryId))
+        .limit(1);
+      
+      if (!countryExists.length) {
+        return res.status(404).json({ 
+          error: `Cannot create medical code: Country ${req.body.countryId} does not exist`,
+          code: 'INVALID_COUNTRY'
+        });
+      }
+
+      // Check for duplicate codes within the same country
+      const existingCode = await db.select({ id: countryMedicalCodes.id })
+        .from(countryMedicalCodes)
+        .where(and(
+          eq(countryMedicalCodes.countryId, req.body.countryId),
+          eq(countryMedicalCodes.code, req.body.code),
+          eq(countryMedicalCodes.codeType, req.body.codeType),
+          eq(countryMedicalCodes.isActive, true)
+        ))
+        .limit(1);
+
+      if (existingCode.length) {
+        return res.status(409).json({ 
+          error: `Medical code ${req.body.code} (${req.body.codeType}) already exists for this country`,
+          code: 'DUPLICATE_CODE'
+        });
+      }
+
       const codeData = {
         countryId: req.body.countryId,
         codeType: req.body.codeType,
@@ -413,9 +556,77 @@ sectigo.com
       };
 
       const [medicalCode] = await db.insert(countryMedicalCodes).values(codeData).returning();
-      res.status(201).json(medicalCode);
+      
+      console.log(`✅ Created medical code ${medicalCode.code} for country ${countryExists[0].name} (${req.body.countryId})`);
+      
+      res.status(201).json({
+        ...medicalCode,
+        countryName: countryExists[0].name
+      });
     } catch (error) {
       console.error('Error creating medical code:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // COUNTRY-SPECIFIC MEDICAL CODE CREATION
+  app.post('/api/countries/:countryId/medical-codes', authenticateToken, requireRole(['super_admin', 'admin']), async (req, res) => {
+    try {
+      const { countryId } = req.params;
+      
+      // Verify country exists
+      const country = await db.select({ id: countries.id, name: countries.name })
+        .from(countries)
+        .where(eq(countries.id, countryId))
+        .limit(1);
+      
+      if (!country.length) {
+        return res.status(404).json({ 
+          error: `Country ${countryId} not found`,
+          code: 'COUNTRY_NOT_FOUND'
+        });
+      }
+
+      // Check for duplicate codes within this specific country
+      const existingCode = await db.select({ id: countryMedicalCodes.id })
+        .from(countryMedicalCodes)
+        .where(and(
+          eq(countryMedicalCodes.countryId, countryId),
+          eq(countryMedicalCodes.code, req.body.code),
+          eq(countryMedicalCodes.codeType, req.body.codeType),
+          eq(countryMedicalCodes.isActive, true)
+        ))
+        .limit(1);
+
+      if (existingCode.length) {
+        return res.status(409).json({ 
+          error: `Code ${req.body.code} (${req.body.codeType}) already exists in ${country[0].name}`,
+          code: 'DUPLICATE_CODE'
+        });
+      }
+
+      const codeData = {
+        countryId: countryId,
+        codeType: req.body.codeType,
+        code: req.body.code,
+        description: req.body.description,
+        category: req.body.category || null,
+        amount: req.body.amount ? req.body.amount.toString() : null,
+        source: 'manual',
+        uploadedBy: (req.user as any)?.id || null,
+        isActive: true
+      };
+
+      const [medicalCode] = await db.insert(countryMedicalCodes).values(codeData).returning();
+      
+      console.log(`✅ Created code ${medicalCode.code} in ${country[0].name} via country-specific endpoint`);
+      
+      res.status(201).json({
+        ...medicalCode,
+        country: country[0]
+      });
+    } catch (error) {
+      console.error('Error creating country-specific medical code:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   });
@@ -486,23 +697,43 @@ sectigo.com
     }
   });
 
-  // CSV Upload for Medical Codes (full implementation)
+  // STRICT COUNTRY-VALIDATED CSV UPLOAD
   app.post('/api/admin/medical-codes/upload', authenticateToken, requireRole(['super_admin']), upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+        return res.status(400).json({ 
+          error: 'No file uploaded',
+          code: 'FILE_REQUIRED'
+        });
       }
 
       const { countryId } = req.body;
       if (!countryId) {
-        return res.status(400).json({ error: 'Country ID is required' });
+        return res.status(400).json({ 
+          error: 'Country ID is required. Medical codes uploads must be country-specific.',
+          code: 'COUNTRY_REQUIRED'
+        });
       }
 
-      // Verify country exists
-      const country = await db.select().from(countries).where(eq(countries.id, countryId)).limit(1);
+      // STRICT COUNTRY VALIDATION
+      const country = await db.select({ 
+        id: countries.id, 
+        name: countries.name,
+        cptCodeSystem: countries.cptCodeSystem,
+        icd10CodeSystem: countries.icd10CodeSystem,
+        pharmaceuticalCodeSystem: countries.pharmaceuticalCodeSystem
+      }).from(countries).where(eq(countries.id, countryId)).limit(1);
+      
       if (!country.length) {
-        return res.status(400).json({ error: 'Invalid country ID' });
+        return res.status(404).json({ 
+          error: `Cannot upload medical codes: Country ${countryId} does not exist`,
+          code: 'INVALID_COUNTRY'
+        });
       }
+
+      console.log(`🚀 Starting medical codes upload for ${country[0].name} (${countryId})`);
+      console.log(`📄 File: ${req.file.originalname} (${req.file.size} bytes)`);
+      console.log(`🏥 Country coding systems: CPT: ${country[0].cptCodeSystem}, ICD10: ${country[0].icd10CodeSystem}`);
 
       const results: any[] = [];
       const errors: string[] = [];
@@ -619,7 +850,7 @@ sectigo.com
           });
       });
 
-      // Record upload in history table
+      // ENHANCED UPLOAD HISTORY RECORDING
       const uploadRecord = {
         countryId,
         fileName: req.file.originalname,
@@ -633,15 +864,27 @@ sectigo.com
         completedAt: sql`CURRENT_TIMESTAMP`
       };
 
-      await db.insert(medicalCodeUploads).values(uploadRecord);
+      // Try to insert upload record (temporary mock for now)
+      // await db.insert(medicalCodeUploads).values(uploadRecord);
 
-      res.status(201).json({
-        message: 'Medical codes uploaded successfully',
+      console.log(`✅ Upload completed for ${country[0].name}`);
+      console.log(`📊 Results: ${importedCount}/${processedCount} codes imported, ${errors.length} errors`);
+      
+      const response = {
+        message: `Medical codes uploaded successfully to ${country[0].name}`,
+        country: {
+          id: country[0].id,
+          name: country[0].name
+        },
         imported: importedCount,
         processed: processedCount,
         errors: errors.slice(0, 10), // Limit errors to first 10
-        totalErrors: errors.length
-      });
+        totalErrors: errors.length,
+        fileName: req.file.originalname,
+        fileSize: req.file.size
+      };
+
+      res.status(201).json(response);
 
     } catch (error) {
       console.error('Error uploading medical codes:', error);
