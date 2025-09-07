@@ -14,7 +14,7 @@ import multer from "multer";
 import csv from "csv-parser";
 import { Readable } from "stream";
 import { db } from "./db";
-import { tenants, users, pharmacies, prescriptions, insuranceClaims, insertLabResultSchema, type InsuranceClaim, labOrders, appointments, patients, countries, countryMedicalCodes } from "@shared/schema";
+import { tenants, users, pharmacies, prescriptions, insuranceClaims, insertLabResultSchema, type InsuranceClaim, labOrders, appointments, patients, countries, countryMedicalCodes, medicalCodeUploads } from "@shared/schema";
 import { eq, and, desc, or, sql } from "drizzle-orm";
 import Stripe from "stripe";
 
@@ -619,6 +619,22 @@ sectigo.com
           });
       });
 
+      // Record upload in history table
+      const uploadRecord = {
+        countryId,
+        fileName: req.file.originalname,
+        fileSize: req.file.size,
+        recordsProcessed: processedCount,
+        recordsImported: importedCount,
+        recordsSkipped: processedCount - importedCount,
+        errors: errors,
+        status: errors.length > 0 ? 'completed_with_errors' : 'completed',
+        uploadedBy: (req as any).user.id,
+        completedAt: sql`CURRENT_TIMESTAMP`
+      };
+
+      await db.insert(medicalCodeUploads).values(uploadRecord);
+
       res.status(201).json({
         message: 'Medical codes uploaded successfully',
         imported: importedCount,
@@ -636,8 +652,27 @@ sectigo.com
   // Upload History
   app.get('/api/admin/medical-code-uploads', authenticateToken, requireRole(['super_admin']), async (req, res) => {
     try {
-      // Return empty array for now - would need upload tracking table
-      res.json([]);
+      const uploadHistory = await db.select({
+        id: medicalCodeUploads.id,
+        fileName: medicalCodeUploads.fileName,
+        fileSize: medicalCodeUploads.fileSize,
+        recordsProcessed: medicalCodeUploads.recordsProcessed,
+        recordsImported: medicalCodeUploads.recordsImported,
+        recordsSkipped: medicalCodeUploads.recordsSkipped,
+        errors: medicalCodeUploads.errors,
+        status: medicalCodeUploads.status,
+        createdAt: medicalCodeUploads.createdAt,
+        completedAt: medicalCodeUploads.completedAt,
+        countryName: countries.name,
+        uploaderEmail: users.email
+      })
+      .from(medicalCodeUploads)
+      .leftJoin(countries, eq(medicalCodeUploads.countryId, countries.id))
+      .leftJoin(users, eq(medicalCodeUploads.uploadedBy, users.id))
+      .orderBy(desc(medicalCodeUploads.createdAt))
+      .limit(100);
+
+      res.json(uploadHistory);
     } catch (error) {
       console.error('Error fetching upload history:', error);
       res.status(500).json({ error: 'Internal server error' });
