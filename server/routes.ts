@@ -3047,7 +3047,39 @@ Please attach all required supporting documentation.
     }
   });
 
-  // Stripe subscription route for recurring payments
+  // Healthcare subscription pricing plans (matches pricing.tsx)
+  const healthcarePricingPlans = {
+    starter: { 
+      name: "Starter", 
+      monthlyPrice: 4999, 
+      yearlyPrice: 51099, 
+      description: "Perfect for small clinics and practices",
+      features: ["5 users", "100 patients", "1GB storage", "Basic support"]
+    },
+    professional: { 
+      name: "Professional", 
+      monthlyPrice: 11999, 
+      yearlyPrice: 121099, 
+      description: "Ideal for growing healthcare organizations",
+      features: ["25 users", "1000 patients", "10GB storage", "Advanced reports", "Priority support"]
+    }, 
+    enterprise: { 
+      name: "Enterprise", 
+      monthlyPrice: 31999, 
+      yearlyPrice: 321099, 
+      description: "For large hospitals and health systems",
+      features: ["100 users", "10000 patients", "100GB storage", "Custom integrations", "24/7 support"]
+    },
+    white_label: { 
+      name: "White Label", 
+      monthlyPrice: 101999, 
+      yearlyPrice: 1021099, 
+      description: "Full customization and branding control",
+      features: ["Unlimited users", "Unlimited patients", "Unlimited storage", "White label branding", "Dedicated support"]
+    }
+  };
+
+  // Stripe subscription route for recurring payments with plan selection
   app.post('/api/get-or-create-subscription', authenticateToken, async (req, res) => {
     try {
       if (!stripe) {
@@ -3055,10 +3087,22 @@ Please attach all required supporting documentation.
       }
       
       const user = req.user as any;
+      const { planId = 'professional', interval = 'monthly' } = req.body;
       
       if (!user) {
         return res.status(401).json({ message: "User not authenticated" });
       }
+
+      // Validate plan selection
+      if (!healthcarePricingPlans[planId as keyof typeof healthcarePricingPlans]) {
+        return res.status(400).json({ message: `Invalid plan selected: ${planId}. Available plans: starter, professional, enterprise, white_label` });
+      }
+
+      const selectedPlan = healthcarePricingPlans[planId as keyof typeof healthcarePricingPlans];
+      const unitAmount = interval === 'yearly' ? selectedPlan.yearlyPrice : selectedPlan.monthlyPrice;
+      const intervalType = interval === 'yearly' ? 'year' : 'month';
+
+      console.log(`💳 SUBSCRIPTION - Creating ${selectedPlan.name} plan (${interval}) for ${user.email} - $${unitAmount/100}`);
 
       // Check if user already has a subscription
       if (user.stripeSubscriptionId) {
@@ -3073,6 +3117,9 @@ Please attach all required supporting documentation.
               return res.json({
                 subscriptionId: subscription.id,
                 clientSecret: paymentIntent.client_secret,
+                planId,
+                interval,
+                amount: unitAmount / 100
               });
             }
           }
@@ -3091,30 +3138,40 @@ Please attach all required supporting documentation.
         const customer = await stripe.customers.create({
           email: user.email,
           name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username,
+          metadata: {
+            tenantId: user.tenantId || '',
+            role: user.role || ''
+          }
         });
         
         stripeCustomerId = customer.id;
         await storage.updateStripeCustomerId(user.id, customer.id);
       }
 
-      // Create subscription (using a default price - this should be configurable)
+      // Create subscription with selected healthcare plan
       const subscription = await stripe.subscriptions.create({
         customer: stripeCustomerId,
         items: [{
           price_data: {
             currency: 'usd',
             product_data: {
-              name: 'NaviMED Healthcare Platform Subscription',
-              description: 'Monthly subscription to healthcare platform services',
+              name: `NaviMED ${selectedPlan.name} Plan`,
+              description: `${selectedPlan.description} - ${selectedPlan.features.join(', ')}`,
             },
-            unit_amount: 2999, // $29.99 per month
+            unit_amount: unitAmount,
             recurring: {
-              interval: 'month',
+              interval: intervalType,
             },
           },
         }],
         payment_behavior: 'default_incomplete',
         expand: ['latest_invoice.payment_intent'],
+        metadata: {
+          planId,
+          interval,
+          userId: user.id,
+          tenantId: user.tenantId || ''
+        }
       });
 
       // Update user with Stripe info
@@ -3124,9 +3181,16 @@ Please attach all required supporting documentation.
       const paymentIntent = latestInvoice && typeof latestInvoice === 'object' ? latestInvoice.payment_intent : null;
       const clientSecret = paymentIntent && typeof paymentIntent === 'object' ? paymentIntent.client_secret : null;
 
+      console.log(`✅ SUBSCRIPTION - Successfully created ${selectedPlan.name} subscription for ${user.email}`);
+
       res.json({
         subscriptionId: subscription.id,
         clientSecret: clientSecret,
+        planId,
+        interval,
+        amount: unitAmount / 100,
+        planName: selectedPlan.name,
+        planDescription: selectedPlan.description
       });
     } catch (error: any) {
       console.error("Error creating subscription:", error);
