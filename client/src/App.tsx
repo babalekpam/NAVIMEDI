@@ -805,6 +805,13 @@ function AppContent() {
           </ProtectedRoute>
         </Route>
         
+        {/* Payment System Routes */}
+        <Route path="/payment-demo" component={PaymentDemo} />
+        <Route path="/checkout" component={Checkout} />
+        <Route path="/subscribe" component={Subscribe} />
+        <Route path="/payment-success" component={PaymentSuccess} />
+        <Route path="/subscription-success" component={SubscriptionSuccess} />
+        
         {/* Platform Footer Pages */}
         <Route path="/features" component={FeaturesPage} />
         <Route path="/solutions" component={SolutionsPage} />
