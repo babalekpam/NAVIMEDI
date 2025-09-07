@@ -2574,6 +2574,33 @@ sectigo.com
     }
   });
 
+  // Object serving endpoint - Serve uploaded images and files
+  app.get('/objects/:objectPath(*)', async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      
+      // For public profile images, no authentication required
+      // ACL is checked within canAccessObjectEntity
+      const canAccess = await objectStorageService.canAccessObjectEntity({
+        objectFile,
+        requestedPermission: ObjectPermission.READ,
+      });
+      
+      if (!canAccess) {
+        return res.status(404).json({ error: 'Object not found' });
+      }
+      
+      await objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error('Error serving object:', error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.status(404).json({ error: 'Object not found' });
+      }
+      return res.status(500).json({ error: 'Failed to serve object' });
+    }
+  });
+
   app.patch("/api/users/profile", authenticateToken, async (req, res) => {
     try {
       const { firstName, lastName, email, phone, bio, profileImage } = req.body;
