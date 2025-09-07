@@ -521,35 +521,67 @@ sectigo.com
       const stream = Readable.from(req.file.buffer.toString());
 
       // Parse CSV
+      let actualHeaders: string[] = [];
+      let isFirstRowHeaders = false;
+      
       await new Promise<void>((resolve, reject) => {
         stream
           .pipe(csv())
           .on('data', async (data) => {
             processedCount++;
             
-            // Normalize column names to handle variations
-            const normalizedData: any = {};
-            Object.keys(data).forEach(key => {
-              const normalizedKey = key.toLowerCase().replace(/[^a-z]/g, '');
-              normalizedData[normalizedKey] = data[key];
-            });
-            
-            // Map common column variations
-            const codeType = normalizedData.codetype || normalizedData.type || data.codeType || data.type || data.CodeType || data.Type;
-            const code = normalizedData.code || data.code || data.Code || data.CODE;
-            const description = normalizedData.description || normalizedData.desc || data.description || data.Description || data.desc;
-            const category = normalizedData.category || data.category || data.Category;
-            const amount = normalizedData.amount || normalizedData.price || data.amount || data.Amount || data.price || data.Price;
-            
             // Debug: log the first row to see what columns we got
             if (processedCount === 1) {
               console.log('CSV Columns found:', Object.keys(data));
               console.log('Sample row data:', data);
+              
+              // Check if first row contains the actual headers (Numbers export issue)
+              const firstRowValues = Object.values(data);
+              if (firstRowValues.includes('codeType') || firstRowValues.includes('code') || firstRowValues.includes('description')) {
+                console.log('Detected actual headers in first row data - fixing CSV structure');
+                actualHeaders = firstRowValues as string[];
+                isFirstRowHeaders = true;
+                return; // Skip processing this row as it's headers
+              }
+            }
+            
+            let actualData: any = {};
+            
+            // If we detected headers in first row, remap the data
+            if (isFirstRowHeaders && actualHeaders.length > 0) {
+              const values = Object.values(data);
+              actualHeaders.forEach((header, index) => {
+                if (values[index]) {
+                  actualData[header] = values[index];
+                }
+              });
+            } else {
+              actualData = data;
+            }
+            
+            // Normalize column names to handle variations
+            const normalizedData: any = {};
+            Object.keys(actualData).forEach(key => {
+              const normalizedKey = key.toLowerCase().replace(/[^a-z]/g, '');
+              normalizedData[normalizedKey] = actualData[key];
+            });
+            
+            // Map common column variations
+            const codeType = normalizedData.codetype || normalizedData.type || actualData.codeType || actualData.type || actualData.CodeType || actualData.Type;
+            const code = normalizedData.code || actualData.code || actualData.Code || actualData.CODE;
+            const description = normalizedData.description || normalizedData.desc || actualData.description || actualData.Description || actualData.desc;
+            const category = normalizedData.category || actualData.category || actualData.Category;
+            const amount = normalizedData.amount || normalizedData.price || actualData.amount || actualData.Amount || actualData.price || actualData.Price;
+            
+            // Skip if this is clearly a header row (first row processing when not detected earlier)
+            if (processedCount === 1 && (codeType === 'codeType' || code === 'code' || description === 'description')) {
+              console.log('Skipping header row');
+              return;
             }
             
             // Validate required fields
             if (!codeType || !code || !description) {
-              errors.push(`Row ${processedCount}: Missing required fields. Found columns: ${Object.keys(data).join(', ')}`);
+              errors.push(`Row ${processedCount}: Missing required fields. Expected: codeType, code, description. Got: ${Object.keys(actualData).join(', ')}`);
               return;
             }
 
