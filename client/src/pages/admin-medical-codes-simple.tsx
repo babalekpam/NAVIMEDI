@@ -139,13 +139,17 @@ export default function AdminMedicalCodesSimple() {
       return response.json();
     },
     onSuccess: (data) => {
+      console.log("Upload success data:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/medical-codes"] });
+      queryClient.refetchQueries({ queryKey: ["/api/admin/medical-codes"] });
       toast({
         title: "Upload Successful!",
-        description: `Imported ${data.imported} medical codes successfully`,
+        description: `Upload completed. Check medical codes tab for imported data.`,
       });
       setUploadFile(null);
       setSelectedUploadCountry("");
+      // Switch to medical codes tab to show results
+      setActiveTab("codes");
     },
     onError: (error) => {
       toast({
@@ -508,8 +512,21 @@ export default function AdminMedicalCodesSimple() {
                 </div>
               ) : medicalCodes.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p>No medical codes found.</p>
-                  <p className="text-sm mt-1">Add codes manually or upload a CSV file.</p>
+                  <p>No medical codes found for current filters.</p>
+                  <p className="text-sm mt-1">Try removing filters or upload a CSV file.</p>
+                  <div className="mt-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedCountry("all-countries");
+                        setSelectedCodeType("ALL");
+                        setSearchTerm("");
+                      }}
+                    >
+                      Show All Medical Codes
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-2">
