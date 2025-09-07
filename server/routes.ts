@@ -1051,7 +1051,14 @@ sectigo.com
 
       console.log('✅ User found:', user.id, user.email, 'has password:', !!user.password);
       
-      const isValid = await bcrypt.compare(password, user.password);
+      // Handle both password field names for compatibility
+      const storedPasswordHash = user.passwordHash || user.password;
+      if (!storedPasswordHash) {
+        console.log('❌ No password hash found');
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+      
+      const isValid = await bcrypt.compare(password, storedPasswordHash);
       console.log('Password validation result:', isValid);
       
       if (!isValid) {
