@@ -287,8 +287,8 @@ export default function PricingPage() {
                 </div>
 
                 <div className="pt-4">
-                  <Link href="/register" className="block">
-                    <Button className={`w-full ${plan.buttonColor}`}>
+                  <Link href={`/subscribe?plan=${plan.id}&interval=${isYearly ? 'yearly' : 'monthly'}`} className="block">
+                    <Button className={`w-full ${plan.buttonColor}`} data-testid={`button-start-trial-${plan.id}`}>
                       Start Free Trial
                     </Button>
                   </Link>
@@ -402,12 +402,12 @@ export default function PricingPage() {
             Join thousands of healthcare organizations using NAVIMED
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/register">
-              <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 px-8">
+            <Link href="/subscribe?plan=professional&interval=monthly">
+              <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 px-8" data-testid="button-start-trial-cta">
                 Start Free Trial
               </Button>
             </Link>
-            <Button size="lg" variant="outline">
+            <Button size="lg" variant="outline" data-testid="button-contact-sales">
               <Mail className="w-4 h-4 mr-2" />
               Contact Sales
             </Button>

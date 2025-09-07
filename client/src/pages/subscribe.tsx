@@ -56,27 +56,26 @@ const SubscribeForm = () => {
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          Subscribe to NaviMED
-          <Badge variant="secondary">$29.99/month</Badge>
+          Subscribe to NaviMED {selectedPlan?.name}
+          <Badge variant="secondary">
+            ${selectedPlan?.price}/{selectedPlan?.interval === 'yearly' ? 'year' : 'month'}
+          </Badge>
         </CardTitle>
         <CardDescription>
-          Full access to healthcare platform features
+          {selectedPlan?.description}
+          {selectedPlan?.savings && (
+            <span className="block text-emerald-600 font-medium mt-1">
+              Save {selectedPlan.savings} with yearly billing
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4 mb-6">
           <div className="text-sm text-gray-600 dark:text-gray-300">
-            <p className="font-medium mb-3">Subscription includes:</p>
+            <p className="font-medium mb-3">{selectedPlan?.name} plan includes:</p>
             <ul className="space-y-2">
-              {[
-                "Patient management system",
-                "Prescription processing",
-                "Lab order management", 
-                "Insurance claim processing",
-                "Secure messaging",
-                "Reporting and analytics",
-                "24/7 customer support"
-              ].map((feature, index) => (
+              {selectedPlan?.features.map((feature: string, index: number) => (
                 <li key={index} className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-green-500" />
                   <span>{feature}</span>
@@ -106,7 +105,45 @@ export default function Subscribe() {
   const [clientSecret, setClientSecret] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const { toast } = useToast();
+
+  // Healthcare pricing plans (matches server and pricing page)
+  const healthcarePricingPlans = {
+    starter: { 
+      name: "Starter", 
+      monthlyPrice: 49.99, 
+      yearlyPrice: 510.99, 
+      description: "Perfect for small clinics and practices",
+      features: ["5 users", "100 patients", "1GB storage", "Basic support"]
+    },
+    professional: { 
+      name: "Professional", 
+      monthlyPrice: 119.99, 
+      yearlyPrice: 1210.99, 
+      description: "Ideal for growing healthcare organizations",
+      features: ["25 users", "1000 patients", "10GB storage", "Advanced reports", "Priority support"]
+    }, 
+    enterprise: { 
+      name: "Enterprise", 
+      monthlyPrice: 319.99, 
+      yearlyPrice: 3210.99, 
+      description: "For large hospitals and health systems",
+      features: ["100 users", "10000 patients", "100GB storage", "Custom integrations", "24/7 support"]
+    },
+    white_label: { 
+      name: "White Label", 
+      monthlyPrice: 1019.99, 
+      yearlyPrice: 10210.99, 
+      description: "Full customization and branding control",
+      features: ["Unlimited users", "Unlimited patients", "Unlimited storage", "White label branding", "Dedicated support"]
+    }
+  };
+
+  // Get plan and interval from URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const planId = urlParams.get('plan') || 'professional';
+  const interval = urlParams.get('interval') || 'monthly';
 
   // Check if Stripe is properly configured
   const isStripeConfigured = !!import.meta.env.VITE_STRIPE_PUBLIC_KEY && !!stripePromise;
@@ -118,10 +155,29 @@ export default function Subscribe() {
       return;
     }
 
-    // Create subscription as soon as the page loads
-    apiRequest("POST", "/api/get-or-create-subscription")
-      .then((res) => res.json())
+    // Validate plan selection
+    if (!healthcarePricingPlans[planId as keyof typeof healthcarePricingPlans]) {
+      setError(`Invalid plan selected: ${planId}. Please go back and select a valid plan.`);
+      setIsLoading(false);
+      return;
+    }
+
+    const plan = healthcarePricingPlans[planId as keyof typeof healthcarePricingPlans];
+    setSelectedPlan({
+      ...plan,
+      id: planId,
+      interval,
+      price: interval === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice,
+      savings: interval === 'yearly' ? '17%' : null
+    });
+
+    // Create subscription with selected plan
+    apiRequest("POST", "/api/get-or-create-subscription", {
+      planId,
+      interval
+    })
       .then((data) => {
+        console.log("✅ Subscription created for plan:", planId, "interval:", interval, "amount:", data.amount);
         setClientSecret(data.clientSecret);
         setIsLoading(false);
       })
@@ -135,7 +191,7 @@ export default function Subscribe() {
           variant: "destructive",
         });
       });
-  }, [toast, isStripeConfigured]);
+  }, [toast, isStripeConfigured, planId, interval]);
 
   if (isLoading) {
     return (
