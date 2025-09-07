@@ -2514,6 +2514,7 @@ sectigo.com
   // User status update endpoint (activate/deactivate)
   app.patch('/api/users/:id', authenticateToken, async (req, res) => {
     try {
+      console.log('🔍 User status update endpoint called with body:', req.body, 'for user ID:', req.params.id);
       const { tenantId } = req.user as any;
       const { id } = req.params;
       const { isActive } = req.body;
@@ -3243,6 +3244,7 @@ to the patient and authorized healthcare providers.
 
   app.patch("/api/users/profile", authenticateToken, async (req, res) => {
     try {
+      console.log('🔍 Profile update endpoint called with body:', req.body);
       const { firstName, lastName, email, phone, bio, profileImage } = req.body;
       
       // Validate input
