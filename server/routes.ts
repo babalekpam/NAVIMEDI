@@ -229,10 +229,8 @@ sectigo.com
 
       console.log('Processed supplier data:', supplierData);
 
-      // Create supplier record
-      // TEMPORARY FIX: Comment out missing method
-      // const supplier = await storage.registerSupplier(supplierData);
-      const supplier = { id: 'temp-' + Date.now() }; // Temporary placeholder
+      // Create supplier record in database
+      const supplier = await storage.createMedicalSupplier(supplierData);
       
       console.log('✅ Supplier registered successfully:', supplier.id);
 
@@ -266,11 +264,63 @@ sectigo.com
         });
       }
 
-      // For now, return a placeholder response for regular suppliers
-      // This endpoint would normally authenticate against a suppliers database
-      res.status(401).json({ 
-        message: 'Supplier authentication not yet implemented. Please use super admin credentials: abel@argilette.com',
-        _security_noise: crypto.randomBytes(16).toString('hex'),
+      // Authenticate supplier against database
+      const supplier = await storage.getMedicalSupplierByEmail(contactEmail);
+      
+      if (!supplier) {
+        return res.status(401).json({ 
+          message: 'Invalid email or password',
+          _security_noise: crypto.randomBytes(16).toString('hex'),
+          _timestamp: Date.now()
+        });
+      }
+
+      // Check if supplier is approved
+      if (supplier.status !== 'approved' && supplier.status !== 'active') {
+        return res.status(403).json({ 
+          message: `Account is ${supplier.status}. Please wait for approval or contact support.`,
+          status: supplier.status,
+          _security_noise: crypto.randomBytes(16).toString('hex'),
+          _timestamp: Date.now()
+        });
+      }
+
+      // Verify password
+      const passwordMatch = await bcrypt.compare(password, supplier.passwordHash);
+      
+      if (!passwordMatch) {
+        return res.status(401).json({ 
+          message: 'Invalid email or password',
+          _security_noise: crypto.randomBytes(16).toString('hex'),
+          _timestamp: Date.now()
+        });
+      }
+
+      // Generate JWT token for supplier
+      const token = jwt.sign(
+        { 
+          id: supplier.id, 
+          email: supplier.contactEmail,
+          role: 'supplier',
+          companyName: supplier.companyName,
+          tenantId: supplier.tenantId || null
+        }, 
+        process.env.JWT_SECRET!, 
+        { expiresIn: '24h' }
+      );
+
+      console.log(`✅ Supplier login successful: ${supplier.companyName} (${supplier.contactEmail})`);
+
+      res.json({ 
+        message: 'Login successful',
+        token,
+        supplier: {
+          id: supplier.id,
+          companyName: supplier.companyName,
+          contactEmail: supplier.contactEmail,
+          status: supplier.status,
+          tenantId: supplier.tenantId
+        },
         _timestamp: Date.now()
       });
       
