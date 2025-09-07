@@ -151,10 +151,32 @@ export default function AdminMedicalCodesSimple() {
       // Switch to medical codes tab to show results
       setActiveTab("codes");
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      let errorMessage = "Failed to upload medical codes. Please check file format.";
+      
+      // Extract actual error message from the server response
+      if (error.message && error.message.includes('Upload failed:')) {
+        try {
+          const responseText = error.message.split('Upload failed:')[1].trim();
+          const serverError = JSON.parse(responseText.split(' ').slice(1).join(' '));
+          if (serverError.instructions) {
+            errorMessage = serverError.instructions;
+          } else if (serverError.error) {
+            errorMessage = serverError.error;
+          }
+        } catch (e) {
+          // If parsing fails, check for specific Numbers file error
+          if (uploadFile?.name.endsWith('.numbers')) {
+            errorMessage = "Please open your Numbers file and use File > Export To > CSV to convert it, then upload the CSV file.";
+          }
+        }
+      } else if (uploadFile?.name.endsWith('.numbers')) {
+        errorMessage = "Please open your Numbers file and use File > Export To > CSV to convert it, then upload the CSV file.";
+      }
+      
       toast({
         title: "Upload Failed",
-        description: "Failed to upload medical codes. Please check file format.",
+        description: errorMessage,
         variant: "destructive",
       });
       console.error("Upload error:", error);
@@ -594,7 +616,7 @@ export default function AdminMedicalCodesSimple() {
                   <div>
                     <input
                       type="file"
-                      accept=".csv,.xlsx,.xls"
+                      accept=".csv,.xlsx,.xls,.numbers"
                       onChange={handleFileSelect}
                       className="hidden"
                       id="file-upload"
@@ -688,6 +710,7 @@ export default function AdminMedicalCodesSimple() {
                     <p><span className="font-medium">Format:</span> codeType, code, description, category, amount</p>
                     <p><span className="font-medium">Code Types:</span> CPT, ICD10, PHARMACEUTICAL</p>
                     <p><span className="font-medium">File Size:</span> Maximum 10MB</p>
+                    <p><span className="font-medium">Supported:</span> CSV, Excel (.xlsx, .xls), Numbers (.numbers)</p>
                     <p><span className="font-medium">Encoding:</span> UTF-8 recommended</p>
                   </div>
                 </div>

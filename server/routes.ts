@@ -467,13 +467,21 @@ sectigo.com
       fileSize: 10 * 1024 * 1024, // 10MB limit
     },
     fileFilter: (req, file, cb) => {
-      if (file.mimetype === 'text/csv' || 
-          file.originalname.endsWith('.csv') ||
-          file.mimetype === 'application/vnd.ms-excel' ||
-          file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+      const allowedTypes = [
+        'text/csv',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.apple.numbers' // Apple Numbers
+      ];
+      
+      const allowedExtensions = ['.csv', '.xls', '.xlsx', '.numbers'];
+      
+      const fileExtension = file.originalname.toLowerCase().substr(file.originalname.lastIndexOf('.'));
+      
+      if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
         cb(null, true);
       } else {
-        cb(new Error('Only CSV files are allowed'), false);
+        cb(new Error(`Unsupported file format. Please save your file as CSV format. Supported formats: ${allowedExtensions.join(', ')}`), false);
       }
     }
   });
@@ -500,6 +508,14 @@ sectigo.com
       const errors: string[] = [];
       let processedCount = 0;
       let importedCount = 0;
+
+      // Handle Numbers files by providing conversion instructions
+      if (req.file.originalname.endsWith('.numbers')) {
+        return res.status(400).json({ 
+          error: 'Numbers files need to be exported to CSV format first',
+          instructions: 'Please open your Numbers file and use File > Export To > CSV to convert it, then upload the CSV file.'
+        });
+      }
 
       // Create a readable stream from the buffer
       const stream = Readable.from(req.file.buffer.toString());
