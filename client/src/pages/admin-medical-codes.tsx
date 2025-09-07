@@ -109,20 +109,21 @@ export default function AdminMedicalCodes() {
 
   const { data: medicalCodes = [], isLoading: codesLoading, error: codesError } = useQuery({
     queryKey: ["/api/admin/medical-codes", selectedCountry, selectedCodeType, searchTerm],
-    queryFn: () => {
+    queryFn: async () => {
+      // Check if user is authenticated first
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        throw new Error("401: Please login as super admin to view medical codes");
+      }
+      
       const params = new URLSearchParams();
       if (selectedCountry) params.append("countryId", selectedCountry);
       if (selectedCodeType !== "ALL") params.append("codeType", selectedCodeType);
       if (searchTerm) params.append("search", searchTerm);
       return apiRequest(`/api/admin/medical-codes?${params}`);
     },
-    retry: (failureCount, error) => {
-      // Don't retry on authentication errors
-      if (error?.message?.includes('401') || error?.message?.includes('Authentication')) {
-        return false;
-      }
-      return failureCount < 2;
-    }
+    retry: false,
+    enabled: countries.length > 0 // Only fetch if countries are loaded
   });
 
   const { data: uploads = [], isLoading: uploadsLoading } = useQuery({
