@@ -564,7 +564,7 @@ export default function AdminMedicalCodesSimple() {
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">{code.description}</p>
                         {code.amount && (
-                          <p className="text-sm font-medium mt-1">${code.amount.toFixed(2)}</p>
+                          <p className="text-sm font-medium mt-1">${parseFloat(code.amount).toFixed(2)}</p>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
