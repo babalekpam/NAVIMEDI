@@ -126,13 +126,13 @@ export default function SuperAdminDashboard() {
       const { id, ...updateData } = data;
       await apiRequest(`/api/admin/tenants/${id}`, {
         method: 'PUT',
-        body: JSON.stringify({
+        body: {
           ...updateData,
           settings: {
             ...editingTenant?.settings,
             description: updateData.description
           }
-        })
+        }
       });
     },
     onSuccess: () => {
