@@ -53,21 +53,23 @@ const CheckoutForm = () => {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>Complete Payment</CardTitle>
+        <CardTitle>Complete Payment - $50.00</CardTitle>
         <CardDescription>
           Secure payment processing for healthcare services
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <PaymentElement />
+          <div className="p-4 border rounded-lg bg-gray-50">
+            <PaymentElement />
+          </div>
           <Button 
             type="submit" 
             disabled={!stripe || isLoading}
             className="w-full"
             data-testid="button-submit-payment"
           >
-            {isLoading ? "Processing..." : "Pay Now"}
+            {isLoading ? "Processing..." : "Pay $50.00"}
           </Button>
         </form>
       </CardContent>
@@ -75,92 +77,118 @@ const CheckoutForm = () => {
   );
 };
 
+const CheckoutWrapper = ({ clientSecret }: { clientSecret: string }) => {
+  if (!stripePromise || !clientSecret) {
+    return (
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle>Payment Setup Error</CardTitle>
+          <CardDescription>Unable to initialize payment system</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  const options = {
+    clientSecret,
+    appearance: {
+      theme: 'stripe' as const,
+    },
+  };
+
+  return (
+    <Elements stripe={stripePromise} options={options}>
+      <CheckoutForm />
+    </Elements>
+  );
+};
+
 export default function Checkout() {
-  const [clientSecret, setClientSecret] = useState("");
+  const [clientSecret, setClientSecret] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string>("");
   const { toast } = useToast();
 
-  // Check if Stripe is properly configured
-  const isStripeConfigured = !!import.meta.env.VITE_STRIPE_PUBLIC_KEY && !!stripePromise;
-
   useEffect(() => {
-    if (!isStripeConfigured) {
+    // Check if Stripe is properly configured
+    if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY || !stripePromise) {
       setError("Stripe payment processing is not configured. Please contact administrator.");
       setIsLoading(false);
       return;
     }
 
-    // Create PaymentIntent as soon as the page loads
-    apiRequest("/api/create-payment-intent", { method: "POST", body: { amount: 50.00 } }) // Default $50 payment
+    // Create PaymentIntent
+    apiRequest("/api/create-payment-intent", { 
+      method: "POST", 
+      body: { amount: 50.00 } 
+    })
       .then((data) => {
-        console.log("Payment intent created successfully:", data);
+        console.log("✅ Payment intent response:", data);
         if (data.clientSecret) {
           setClientSecret(data.clientSecret);
-          setIsLoading(false);
         } else {
-          throw new Error("No client secret received from server");
+          throw new Error("No client secret received");
         }
       })
       .catch((err) => {
-        console.error("Payment intent error:", err);
-        setError("Payment processing is currently unavailable. Please try again later.");
-        setIsLoading(false);
+        console.error("❌ Payment setup failed:", err);
+        setError("Unable to set up payment. Please try again.");
         toast({
           title: "Payment Setup Error",
-          description: "Payment processing is currently unavailable",
+          description: "Unable to initialize payment processing",
           variant: "destructive",
         });
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
-  }, [toast, isStripeConfigured]);
+  }, [toast]);
 
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading" />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              Healthcare Services Payment
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">
+              Setting up secure payment processing...
+            </p>
+          </div>
+          <Card className="w-full max-w-md mx-auto">
+            <CardContent className="flex justify-center items-center p-8">
+              <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+              <span className="ml-3 text-gray-600">Preparing payment...</span>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md mx-auto">
-          <CardHeader>
-            <CardTitle>Payment Unavailable</CardTitle>
-            <CardDescription>{error}</CardDescription>
-          </CardHeader>
-        </Card>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+        <div className="container mx-auto px-4">
+          <Card className="w-full max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle>Payment Unavailable</CardTitle>
+              <CardDescription>{error}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={() => window.location.reload()} 
+                className="w-full"
+              >
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
-
-  if (!clientSecret) {
-    console.log("Waiting for client secret...", { clientSecret, isLoading, error });
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md mx-auto">
-          <CardHeader>
-            <CardTitle>Preparing Payment</CardTitle>
-            <CardDescription>Setting up secure payment processing...</CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Only render Elements after we have the clientSecret to avoid prop change errors
-  const appearance = {
-    theme: 'stripe' as const,
-  };
-  
-  const options = {
-    clientSecret,
-    appearance,
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
@@ -174,14 +202,8 @@ export default function Checkout() {
           </p>
         </div>
         
-        {stripePromise && clientSecret && (
-          <Elements 
-            key={clientSecret} 
-            stripe={stripePromise} 
-            options={options}
-          >
-            <CheckoutForm />
-          </Elements>
+        {clientSecret && (
+          <CheckoutWrapper clientSecret={clientSecret} />
         )}
       </div>
     </div>
