@@ -259,9 +259,6 @@ export default function AdminMedicalCodesSimple() {
         </div>
       </div>
 
-      <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-        ✅ <strong>SUCCESS!</strong> If you can see this message, the component is rendering properly.
-      </div>
 
       <Tabs value={activeTab} onValueChange={(value) => {
         console.log("Tab changed to:", value);
