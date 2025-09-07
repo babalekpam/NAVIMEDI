@@ -264,11 +264,31 @@ export default function AdminMedicalCodesSimple() {
         console.log("Tab changed to:", value);
         setActiveTab(value);
       }} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="countries">Countries</TabsTrigger>
-          <TabsTrigger value="codes">Medical Codes</TabsTrigger>
-          <TabsTrigger value="upload">Bulk Upload</TabsTrigger>
-          <TabsTrigger value="history">Upload History</TabsTrigger>
+        <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground w-full max-w-2xl">
+          <TabsTrigger 
+            value="countries" 
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm mx-1"
+          >
+            Countries
+          </TabsTrigger>
+          <TabsTrigger 
+            value="codes"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm mx-1"
+          >
+            Medical Codes
+          </TabsTrigger>
+          <TabsTrigger 
+            value="upload"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm mx-1"
+          >
+            Bulk Upload
+          </TabsTrigger>
+          <TabsTrigger 
+            value="history"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm mx-1"
+          >
+            Upload History
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="countries" className="space-y-4">
