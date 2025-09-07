@@ -3,9 +3,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, Activity, Database, CheckCircle, XCircle, Clock, Mail, Phone, MapPin, Calendar, Crown } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Building2, Users, Activity, Database, CheckCircle, XCircle, Clock, Mail, Phone, MapPin, Calendar, Crown, Edit3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useState } from "react";
 
 interface TenantWithStats {
   id: string;
@@ -14,6 +23,16 @@ interface TenantWithStats {
   subdomain: string;
   isActive: boolean;
   suspendedAt?: string;
+  brandName?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  defaultLanguage?: string;
+  baseCurrency?: string;
+  settings?: {
+    description?: string;
+    features?: string[];
+    planType?: string;
+  };
   stats: {
     userCount: number;
     patientCount: number;
@@ -51,9 +70,43 @@ interface PlatformStats {
   inactiveTenants: number;
 }
 
+// Edit organization form schema
+const editOrganizationSchema = z.object({
+  name: z.string().min(1, "Organization name is required"),
+  brandName: z.string().optional(),
+  type: z.enum(["hospital", "pharmacy", "laboratory", "platform"]),
+  subdomain: z.string().min(1, "Subdomain is required"),
+  description: z.string().optional(),
+  primaryColor: z.string().optional(),
+  secondaryColor: z.string().optional(),
+  defaultLanguage: z.string().optional(),
+  baseCurrency: z.string().optional(),
+  isActive: z.boolean()
+});
+
+type EditOrganizationForm = z.infer<typeof editOrganizationSchema>;
+
 export default function SuperAdminDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [editingTenant, setEditingTenant] = useState<TenantWithStats | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  const editForm = useForm<EditOrganizationForm>({
+    resolver: zodResolver(editOrganizationSchema),
+    defaultValues: {
+      name: "",
+      brandName: "",
+      type: "hospital",
+      subdomain: "",
+      description: "",
+      primaryColor: "#10b981",
+      secondaryColor: "#3b82f6",
+      defaultLanguage: "en",
+      baseCurrency: "USD",
+      isActive: true
+    }
+  });
 
   const { data: tenants, isLoading: tenantsLoading } = useQuery<TenantWithStats[]>({
     queryKey: ['/api/admin/tenants']
@@ -66,6 +119,65 @@ export default function SuperAdminDashboard() {
   const { data: suppliers, isLoading: suppliersLoading } = useQuery<MedicalSupplier[]>({
     queryKey: ['/api/admin/suppliers']
   });
+
+  // Edit organization mutation
+  const editTenantMutation = useMutation({
+    mutationFn: async (data: EditOrganizationForm & { id: string }) => {
+      const { id, ...updateData } = data;
+      await apiRequest(`/api/admin/tenants/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          ...updateData,
+          settings: {
+            ...editingTenant?.settings,
+            description: updateData.description
+          }
+        })
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Organization Updated",
+        description: "The organization details have been successfully updated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tenants'] });
+      setIsEditDialogOpen(false);
+      setEditingTenant(null);
+      editForm.reset();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update organization. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Function to open edit dialog
+  const openEditDialog = (tenant: TenantWithStats) => {
+    setEditingTenant(tenant);
+    editForm.reset({
+      name: tenant.name,
+      brandName: tenant.brandName || "",
+      type: tenant.type as "hospital" | "pharmacy" | "laboratory" | "platform",
+      subdomain: tenant.subdomain,
+      description: tenant.settings?.description || "",
+      primaryColor: tenant.primaryColor || "#10b981",
+      secondaryColor: tenant.secondaryColor || "#3b82f6",
+      defaultLanguage: tenant.defaultLanguage || "en",
+      baseCurrency: tenant.baseCurrency || "USD",
+      isActive: tenant.isActive
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  // Function to handle form submission
+  const onSubmitEdit = (data: EditOrganizationForm) => {
+    if (editingTenant) {
+      editTenantMutation.mutate({ ...data, id: editingTenant.id });
+    }
+  };
 
   const approveSupplierMutation = useMutation({
     mutationFn: async (supplierId: string) => {
