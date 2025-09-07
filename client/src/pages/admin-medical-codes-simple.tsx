@@ -150,6 +150,8 @@ export default function AdminMedicalCodesSimple() {
       setSelectedUploadCountry("");
       // Switch to medical codes tab to show results
       setActiveTab("codes");
+      // Also refresh upload history
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/medical-code-uploads"] });
     },
     onError: (error: any) => {
       let errorMessage = "Failed to upload medical codes. Please check file format.";
@@ -181,6 +183,18 @@ export default function AdminMedicalCodesSimple() {
       });
       console.error("Upload error:", error);
     }
+  });
+
+  // Upload history query
+  const { 
+    data: uploadHistory = [], 
+    isLoading: historyLoading, 
+    error: historyError,
+    refetch: refetchHistory
+  } = useQuery({
+    queryKey: ["/api/admin/medical-code-uploads"],
+    queryFn: () => apiRequest("/api/admin/medical-code-uploads"),
+    retry: false
   });
 
   // Handle file upload
@@ -743,11 +757,85 @@ export default function AdminMedicalCodesSimple() {
               <CardTitle>Recent Uploads</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <AlertCircle className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                <p>No upload history available</p>
-                <p className="text-sm mt-1">Upload medical codes to see history here</p>
-              </div>
+              {historyLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+                  <span>Loading upload history...</span>
+                </div>
+              ) : historyError ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+                    <p className="text-red-600">Failed to load upload history</p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-2"
+                      onClick={() => refetchHistory()}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Try Again
+                    </Button>
+                  </div>
+                </div>
+              ) : uploadHistory.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <AlertCircle className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                  <p>No upload history available</p>
+                  <p className="text-sm mt-1">Upload medical codes to see history here</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {uploadHistory.map((upload: any) => (
+                    <div key={upload.id} className="border rounded-lg p-4 hover:bg-muted/50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h4 className="font-medium">{upload.fileName}</h4>
+                            <Badge 
+                              variant={upload.status === 'completed' ? 'default' : 'secondary'}
+                              className={upload.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}
+                            >
+                              {upload.status === 'completed' ? '✓ Completed' : '⚠ With Errors'}
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground mb-2">
+                            <div>
+                              <span className="font-medium">Country:</span> {upload.countryName || 'Unknown'}
+                            </div>
+                            <div>
+                              <span className="font-medium">File Size:</span> {upload.fileSize ? `${(upload.fileSize / 1024).toFixed(1)} KB` : 'Unknown'}
+                            </div>
+                            <div>
+                              <span className="font-medium">Processed:</span> {upload.recordsProcessed || 0} rows
+                            </div>
+                            <div>
+                              <span className="font-medium">Imported:</span> 
+                              <span className="text-green-600 font-medium ml-1">{upload.recordsImported || 0} codes</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>Uploaded by: {upload.uploaderEmail || 'Unknown'}</span>
+                            <span>Date: {upload.createdAt ? new Date(upload.createdAt).toLocaleString() : 'Unknown'}</span>
+                          </div>
+                          {upload.errors && upload.errors.length > 0 && (
+                            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm">
+                              <p className="font-medium text-red-800 mb-1">Errors ({upload.errors.length}):</p>
+                              <div className="text-red-700 max-h-20 overflow-y-auto">
+                                {upload.errors.slice(0, 3).map((error: string, index: number) => (
+                                  <div key={index}>• {error}</div>
+                                ))}
+                                {upload.errors.length > 3 && (
+                                  <div>• ... and {upload.errors.length - 3} more errors</div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
