@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Globe, Plus, Search, AlertCircle, RefreshCw, Download, Upload } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Globe, Plus, Search, AlertCircle, RefreshCw, Download, Upload, Edit2 } from "lucide-react";
 
 interface Country {
   id: string;
@@ -36,6 +38,9 @@ export default function AdminMedicalCodesSimple() {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedCodeType, setSelectedCodeType] = useState("ALL");
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingCountry, setEditingCountry] = useState<Country | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
 
   // Template download function
   const downloadTemplate = () => {
@@ -49,6 +54,21 @@ export default function AdminMedicalCodesSimple() {
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
+  };
+
+  // Handle country edit
+  const handleEditCountry = (country: Country) => {
+    setEditingCountry(country);
+    setIsEditDialogOpen(true);
+  };
+
+  // Handle file upload
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setUploadFile(file);
+      console.log("File selected:", file.name);
+    }
   };
 
   // Countries query with proper error handling
@@ -173,9 +193,10 @@ export default function AdminMedicalCodesSimple() {
                               variant="ghost" 
                               size="sm"
                               className="h-6 w-6 p-0"
+                              onClick={() => handleEditCountry(country)}
                               data-testid={`button-edit-country-${country.code}`}
                             >
-                              <Search className="h-3 w-3" />
+                              <Edit2 className="h-3 w-3" />
                             </Button>
                           </CardTitle>
                         </CardHeader>
@@ -194,6 +215,80 @@ export default function AdminMedicalCodesSimple() {
               )}
             </CardContent>
           </Card>
+
+          {/* Country Edit Dialog */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Edit Country Medical Systems</DialogTitle>
+                <DialogDescription>
+                  Configure medical coding systems for {editingCountry?.name}
+                </DialogDescription>
+              </DialogHeader>
+              {editingCountry && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="country-code">Country Code</Label>
+                      <Input
+                        id="country-code"
+                        value={editingCountry.code}
+                        disabled
+                        className="bg-gray-50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="currency">Currency Code</Label>
+                      <Input
+                        id="currency"
+                        defaultValue={editingCountry.currencyCode}
+                        placeholder="USD, EUR, GBP..."
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="cpt-system">CPT Code System</Label>
+                    <Input
+                      id="cpt-system"
+                      defaultValue={editingCountry.cptCodeSystem}
+                      placeholder="e.g., AMA CPT, Local CPT, Custom CPT..."
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="icd-system">ICD-10 Code System</Label>
+                    <Input
+                      id="icd-system"
+                      defaultValue={editingCountry.icd10CodeSystem}
+                      placeholder="e.g., WHO ICD-10, ICD-10-CM, Local ICD..."
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="pharma-system">Pharmaceutical Code System</Label>
+                    <Input
+                      id="pharma-system"
+                      defaultValue={editingCountry.pharmaceuticalCodeSystem}
+                      placeholder="e.g., NDC, ATC, Local Drug Codes..."
+                    />
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={() => {
+                      console.log("Saving country configuration for:", editingCountry.name);
+                      setIsEditDialogOpen(false);
+                    }}>
+                      Save Changes
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="codes" className="space-y-4">
@@ -371,11 +466,38 @@ export default function AdminMedicalCodesSimple() {
                   <p className="text-sm text-muted-foreground mt-2">
                     Drag and drop your CSV file here, or click to select file
                   </p>
-                  <Button className="mt-4" data-testid="button-choose-file">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Choose File
-                  </Button>
+                  <div>
+                    <input
+                      type="file"
+                      accept=".csv,.xlsx,.xls"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    <Button 
+                      className="mt-4" 
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                      data-testid="button-choose-file"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Choose File
+                    </Button>
+                  </div>
                 </div>
+
+                {/* File Selection Status */}
+                {uploadFile && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="font-medium text-green-800 mb-2">File Selected:</h4>
+                    <p className="text-sm text-green-700">
+                      <span className="font-medium">{uploadFile.name}</span> ({(uploadFile.size / 1024).toFixed(1)} KB)
+                    </p>
+                    <Button className="mt-3" size="sm">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload File
+                    </Button>
+                  </div>
+                )}
 
                 {/* File Format Information */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
