@@ -65,6 +65,7 @@ const CurrencyManagementPage = React.lazy(() => import("@/pages/currency-managem
 import SupplierPortal from "@/pages/supplier-portal";
 import AdminCounterReset from "@/pages/admin-counter-reset";
 import AdminMedicalCodes from "@/pages/admin-medical-codes";
+import AdminMedicalCodesSimple from "@/pages/admin-medical-codes-simple";
 import TestMedicalCodes from "@/pages/test-medical-codes";
 
 import FeaturesPage from "@/pages/features";
@@ -375,7 +376,7 @@ function AppContent() {
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
-                  <AdminMedicalCodes />
+                  <AdminMedicalCodesSimple />
                 </main>
               </div>
             </div>
