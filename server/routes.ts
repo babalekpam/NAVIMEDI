@@ -527,15 +527,35 @@ sectigo.com
           .on('data', async (data) => {
             processedCount++;
             
+            // Normalize column names to handle variations
+            const normalizedData: any = {};
+            Object.keys(data).forEach(key => {
+              const normalizedKey = key.toLowerCase().replace(/[^a-z]/g, '');
+              normalizedData[normalizedKey] = data[key];
+            });
+            
+            // Map common column variations
+            const codeType = normalizedData.codetype || normalizedData.type || data.codeType || data.type || data.CodeType || data.Type;
+            const code = normalizedData.code || data.code || data.Code || data.CODE;
+            const description = normalizedData.description || normalizedData.desc || data.description || data.Description || data.desc;
+            const category = normalizedData.category || data.category || data.Category;
+            const amount = normalizedData.amount || normalizedData.price || data.amount || data.Amount || data.price || data.Price;
+            
+            // Debug: log the first row to see what columns we got
+            if (processedCount === 1) {
+              console.log('CSV Columns found:', Object.keys(data));
+              console.log('Sample row data:', data);
+            }
+            
             // Validate required fields
-            if (!data.codeType || !data.code || !data.description) {
-              errors.push(`Row ${processedCount}: Missing required fields (codeType, code, description)`);
+            if (!codeType || !code || !description) {
+              errors.push(`Row ${processedCount}: Missing required fields. Found columns: ${Object.keys(data).join(', ')}`);
               return;
             }
 
             // Validate code type
-            if (!['CPT', 'ICD10', 'PHARMACEUTICAL'].includes(data.codeType?.toUpperCase())) {
-              errors.push(`Row ${processedCount}: Invalid code type '${data.codeType}'. Must be CPT, ICD10, or PHARMACEUTICAL`);
+            if (!['CPT', 'ICD10', 'PHARMACEUTICAL'].includes(codeType?.toUpperCase())) {
+              errors.push(`Row ${processedCount}: Invalid code type '${codeType}'. Must be CPT, ICD10, or PHARMACEUTICAL`);
               return;
             }
 
@@ -543,11 +563,11 @@ sectigo.com
               // Insert medical code
               const medicalCodeData = {
                 countryId,
-                codeType: data.codeType.toUpperCase(),
-                code: data.code.trim(),
-                description: data.description.trim(),
-                category: data.category?.trim() || null,
-                amount: data.amount ? parseFloat(data.amount) : null,
+                codeType: codeType.toUpperCase(),
+                code: code.trim(),
+                description: description.trim(),
+                category: category?.trim() || null,
+                amount: amount ? parseFloat(amount) : null,
                 source: 'csv_upload',
                 uploadedBy: (req as any).user.id,
                 uploadedAt: sql`CURRENT_TIMESTAMP`
