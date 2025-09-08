@@ -366,19 +366,47 @@ export default function SupplierPortal() {
               <div className="mt-6">
                 <h4 className="font-semibold mb-3">Quick Actions</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                  <Button variant="outline" className="justify-start">
+                  <Button 
+                    variant="outline" 
+                    className="justify-start"
+                    onClick={() => toast({
+                      title: "Manage Products",
+                      description: "Product management feature coming soon!",
+                    })}
+                  >
                     <Package className="w-4 h-4 mr-2" />
                     Manage Products
                   </Button>
-                  <Button variant="outline" className="justify-start">
+                  <Button 
+                    variant="outline" 
+                    className="justify-start"
+                    onClick={() => toast({
+                      title: "View Orders",
+                      description: "Order management feature coming soon!",
+                    })}
+                  >
                     <ShoppingCart className="w-4 h-4 mr-2" />
                     View Orders
                   </Button>
-                  <Button variant="outline" className="justify-start">
+                  <Button 
+                    variant="outline" 
+                    className="justify-start"
+                    onClick={() => toast({
+                      title: "Analytics",
+                      description: "Analytics dashboard coming soon!",
+                    })}
+                  >
                     <TrendingUp className="w-4 h-4 mr-2" />
                     Analytics
                   </Button>
-                  <Button variant="outline" className="justify-start">
+                  <Button 
+                    variant="outline" 
+                    className="justify-start"
+                    onClick={() => toast({
+                      title: "Company Settings",
+                      description: "Company settings management coming soon!",
+                    })}
+                  >
                     <Building2 className="w-4 h-4 mr-2" />
                     Company Settings
                   </Button>
