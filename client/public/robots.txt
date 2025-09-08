@@ -1,23 +1,80 @@
 User-agent: *
 Allow: /
+
+# Block admin and sensitive areas
 Disallow: /admin/
 Disallow: /dashboard/
-Disallow: /patient-portal/
+Disallow: /super-admin-dashboard/
+Disallow: /tenant-management/
+Disallow: /billing/
+Disallow: /reports/
+Disallow: /audit-logs/
+Disallow: /user-roles/
 Disallow: /api/
 Disallow: /login
-Disallow: /register
-Disallow: /tenant-management/
-Disallow: /super-admin-dashboard/
+Disallow: /checkout/
+Disallow: /payment-success/
+Disallow: /subscription-success/
+Disallow: /payment-demo/
 
-# Allow important pages for SEO
+# Block patient portal backend (but allow public portal)
+Disallow: /patient-portal/
+Disallow: /patient-portal-staff/
+
+# Allow important public pages for SEO
 Allow: /
 Allow: /pricing
 Allow: /features
 Allow: /solutions
+Allow: /solutions/hospitals
+Allow: /solutions/clinics
+Allow: /solutions/laboratories
 Allow: /contact
 Allow: /security
 Allow: /marketplace
 Allow: /advertisements
+Allow: /register
+Allow: /laboratory-registration
+Allow: /supplier-signup
+Allow: /supplier-portal
+
+# Allow patient-facing public pages
+Allow: /patient-portal-public
+Allow: /patient-login
+
+# Allow all documentation and training content (HIGH PRIORITY)
+Allow: /docs/
+Allow: /docs/getting-started
+Allow: /docs/platform-overview
+Allow: /docs/organization-setup
+Allow: /docs/user-account-configuration
+Allow: /docs/initial-system-configuration
+Allow: /docs/first-patient-registration
+Allow: /docs/role-based-access-setup
+Allow: /docs/comprehensive-user-training
+Allow: /docs/system-admin-training
+Allow: /docs/workflow-training-modules
+Allow: /docs/troubleshooting-guide
+Allow: /docs/quick-reference-guide
+Allow: /docs/patient-management
+Allow: /docs/appointment-scheduling
+Allow: /docs/billing-insurance
+Allow: /docs/security-compliance
+
+# Allow support pages
+Allow: /support/
+Allow: /support/documentation
+Allow: /support/help-center
+Allow: /support/contact
+Allow: /support/status
+
+# Allow integrations and API documentation
+Allow: /integrations
+Allow: /api-docs
+
+# Allow video content
+Allow: /videos/
+Allow: /videos/integration
 
 # Allow Google to crawl verification files
 Allow: /google*.html
