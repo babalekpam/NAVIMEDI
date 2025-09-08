@@ -942,6 +942,8 @@ function Router() {
             <Route path="/marketplace" component={MarketplacePage} />
             <Route path="/supplier-signup" component={SupplierSignupPage} />
             <Route path="/supplier-portal" component={SupplierPortal} />
+            <Route path="/supplier-login-direct" component={SupplierPortal} />
+            <Route path="/supplier-dashboard-direct" component={SupplierPortal} />
             <Route path="/register" component={RegisterOrganization} />
             <Route path="/organizations/register" component={RegisterOrganization} />
           

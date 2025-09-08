@@ -422,6 +422,19 @@ async function initializePlatform() {
       res.sendFile(path.join(__dirname, "public/pharmacy.html"));
     });
     
+    // Serve supplier portal routes directly to React app
+    app.get("/supplier-login-direct", (req, res) => {
+      res.sendFile(path.resolve(distPath, "index.html"));
+    });
+    
+    app.get("/supplier-dashboard-direct", (req, res) => {
+      res.sendFile(path.resolve(distPath, "index.html"));
+    });
+    
+    app.get("/supplier-portal", (req, res) => {
+      res.sendFile(path.resolve(distPath, "index.html"));
+    });
+    
     // Catch-all handler for SPA routing
     app.use("*", (_req, res) => {
       res.sendFile(path.resolve(distPath, "index.html"));
