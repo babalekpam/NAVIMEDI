@@ -12,10 +12,19 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Building2, Users, LogIn, UserPlus, Globe, Phone, Mail, MapPin, LogOut, Package, TrendingUp, ShoppingCart } from "lucide-react";
 
+interface SupplierData {
+  id?: string;
+  companyName?: string;
+  email?: string;
+  status?: string;
+  tenantId?: string;
+  role?: string;
+}
+
 export default function SupplierPortal() {
   const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [supplierData, setSupplierData] = useState(null);
+  const [supplierData, setSupplierData] = useState<SupplierData | null>(null);
   const [loginData, setLoginData] = useState({
     contactEmail: "",
     password: ""
