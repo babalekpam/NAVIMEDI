@@ -57,8 +57,26 @@ export default function SupplierPortal() {
         // Wrong password for super admin
         throw new Error('Invalid credentials for super admin account');
       } else {
-        // Regular supplier login - not implemented yet
-        throw new Error('Supplier authentication not yet implemented. Please use super admin credentials: abel@argilette.com');
+        // Regular supplier login - use proper API endpoint
+        const response = await apiRequest('/public/suppliers/login', {
+          method: 'POST',
+          body: {
+            contactEmail: data.contactEmail,
+            password: data.password
+          }
+        });
+        
+        return {
+          token: response.token,
+          supplier: {
+            id: response.supplier.id,
+            companyName: response.supplier.companyName,
+            role: 'supplier',
+            email: response.supplier.contactEmail,
+            status: response.supplier.status,
+            tenantId: response.supplier.tenantId
+          }
+        };
       }
     },
     onSuccess: (data) => {
