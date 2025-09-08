@@ -143,6 +143,21 @@ export default function SupplierPortal() {
       images: updatedImages
     });
   };
+
+  const [settingsForm, setSettingsForm] = useState({
+    emailNotifications: true,
+    autoAcceptOrders: false
+  });
+
+  const handleSaveSettings = () => {
+    // Save settings functionality
+    toast({
+      title: "Settings Saved",
+      description: "Your account preferences have been updated successfully",
+    });
+    
+    console.log('Settings saved:', settingsForm);
+  };
   const [loginData, setLoginData] = useState({
     contactEmail: "",
     password: ""
@@ -843,15 +858,29 @@ export default function SupplierPortal() {
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <Label htmlFor="notifications">Email Notifications</Label>
-                          <Checkbox id="notifications" defaultChecked />
+                          <Checkbox 
+                            id="notifications" 
+                            checked={settingsForm.emailNotifications}
+                            onCheckedChange={(checked) => 
+                              setSettingsForm({...settingsForm, emailNotifications: checked as boolean})
+                            }
+                          />
                         </div>
                         <div className="flex items-center justify-between">
                           <Label htmlFor="auto-accept">Auto-Accept Small Orders</Label>
-                          <Checkbox id="auto-accept" />
+                          <Checkbox 
+                            id="auto-accept" 
+                            checked={settingsForm.autoAcceptOrders}
+                            onCheckedChange={(checked) => 
+                              setSettingsForm({...settingsForm, autoAcceptOrders: checked as boolean})
+                            }
+                          />
                         </div>
                       </div>
                     </div>
-                    <Button className="w-full">Save Settings</Button>
+                    <Button className="w-full" onClick={handleSaveSettings}>
+                      Save Settings
+                    </Button>
                   </div>
                 </div>
               )}
