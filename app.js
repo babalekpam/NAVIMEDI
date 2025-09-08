@@ -62,9 +62,10 @@ app.get('/api/platform/stats', (req, res) => {
   });
 });
 
-// SPA fallback for client-side routing
-app.get('*', (req, res) => {
-  res.sendFile(path.resolve(distPath, 'index.html'));
+// Add robots.txt route to fix 500 error
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.sendFile(path.resolve(distPath, 'robots.txt'));
 });
 
 // Security headers for best practices
