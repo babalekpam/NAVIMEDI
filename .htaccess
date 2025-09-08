@@ -9,9 +9,11 @@ PassengerAppRoot /var/www/vhosts/navimedi.org/httpdocs
 # Passenger environment and performance settings
 PassengerAppEnv production
 PassengerMinInstances 1
+PassengerMaxInstances 3
 PassengerMaxRequestQueueSize 100
-PassengerStartTimeout 60
+PassengerStartTimeout 120
 PassengerFriendlyErrorPages on
+PassengerLogLevel 3
 
 # URL rewriting for Node.js application
 RewriteEngine On
