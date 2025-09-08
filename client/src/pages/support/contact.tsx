@@ -61,13 +61,29 @@ export default function Contact() {
                       <Mail className="w-8 h-8 text-emerald-600" />
                       <div>
                         <CardTitle>Email Support</CardTitle>
-                        <CardDescription>Send us your questions</CardDescription>
+                        <CardDescription>Technical support and assistance</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-lg font-semibold">support@navimed.com</p>
+                    <p className="text-lg font-semibold">support@navimedi.com</p>
                     <p className="text-gray-600">Response within 2 hours</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <Mail className="w-8 h-8 text-blue-600" />
+                      <div>
+                        <CardTitle>General Information</CardTitle>
+                        <CardDescription>Sales and general inquiries</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-lg font-semibold">info@navimedi.com</p>
+                    <p className="text-gray-600">Response within 4 hours</p>
                   </CardContent>
                 </Card>
 
