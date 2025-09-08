@@ -634,10 +634,10 @@ echo "Backup completed: navimed_backup_$DATE.sql.gz"`}</pre>
                               <div>
                                 <h5 className="font-medium text-orange-800">Warning Alerts</h5>
                                 <ul className="text-orange-700 space-y-1">
-                                  <li>• High CPU/Memory usage (>80%)</li>
-                                  <li>• Slow database queries (>5s)</li>
-                                  <li>• Low disk space (<20%)</li>
-                                  <li>• Failed login attempts (>5)</li>
+                                  <li>• High CPU/Memory usage ({'>'}80%)</li>
+                                  <li>• Slow database queries ({'>'}5s)</li>
+                                  <li>• Low disk space ({'<'}20%)</li>
+                                  <li>• Failed login attempts ({'>'}5)</li>
                                 </ul>
                               </div>
                             </div>
