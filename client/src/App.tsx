@@ -30,6 +30,29 @@ const LoadingPage = () => (
   </div>
 );
 
+// Lazy Route wrapper that uses startTransition
+const LazyRoute = ({ component: Component, ...props }: any) => {
+  const [location] = useLocation();
+  
+  React.useEffect(() => {
+    // Pre-load the component using startTransition to prevent suspension
+    if (location === props.path) {
+      startTransition(() => {
+        // This will trigger the lazy loading without suspension
+        Component.preload?.();
+      });
+    }
+  }, [location, props.path, Component]);
+
+  return (
+    <Route {...props}>
+      <Suspense fallback={<LoadingPage />}>
+        <Component />
+      </Suspense>
+    </Route>
+  );
+};
+
 import Dashboard from "@/pages/dashboard";
 import Patients from "@/pages/patients";
 import PatientMedicalRecords from "@/pages/patient-medical-records";
@@ -911,93 +934,95 @@ function Router() {
   if (!user) {
     return (
       <div className="min-h-screen">
-        <Switch>
-          {/* Public routes - always accessible */}
-          <Route path="/" component={LandingPage} />
-          <Route path="/login" component={Login} />
-          <Route path="/marketplace" component={MarketplacePage} />
-          <Route path="/supplier-signup" component={SupplierSignupPage} />
-          <Route path="/supplier-portal" component={SupplierPortal} />
-          <Route path="/register" component={RegisterOrganization} />
-          <Route path="/organizations/register" component={RegisterOrganization} />
+        <Suspense fallback={<LoadingPage />}>
+          <Switch>
+            {/* Public routes - always accessible */}
+            <Route path="/" component={LandingPage} />
+            <Route path="/login" component={Login} />
+            <Route path="/marketplace" component={MarketplacePage} />
+            <Route path="/supplier-signup" component={SupplierSignupPage} />
+            <Route path="/supplier-portal" component={SupplierPortal} />
+            <Route path="/register" component={RegisterOrganization} />
+            <Route path="/organizations/register" component={RegisterOrganization} />
           
-          {/* Payment routes - require authentication */}
-          <Route path="/checkout">
-            <ProtectedRoute>
-              <Checkout />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/subscribe">
-            <ProtectedRoute>
-              <Subscribe />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/payment-success">
-            <ProtectedRoute>
-              <PaymentSuccess />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/subscription-success">
-            <ProtectedRoute>
-              <SubscriptionSuccess />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/payment-demo">
-            <ProtectedRoute>
-              <PaymentDemo />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/features" component={FeaturesPage} />
-          <Route path="/solutions" component={SolutionsPage} />
-          <Route path="/security" component={SecurityPage} />
-          <Route path="/contact" component={ContactPage} />
-          <Route path="/pricing" component={PricingPage} />
-          <Route path="/laboratory-registration" component={LaboratoryRegistration} />
+            {/* Payment routes - require authentication */}
+            <Route path="/checkout">
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/subscribe">
+              <ProtectedRoute>
+                <Subscribe />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/payment-success">
+              <ProtectedRoute>
+                <PaymentSuccess />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/subscription-success">
+              <ProtectedRoute>
+                <SubscriptionSuccess />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/payment-demo">
+              <ProtectedRoute>
+                <PaymentDemo />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/features" component={FeaturesPage} />
+            <Route path="/solutions" component={SolutionsPage} />
+            <Route path="/security" component={SecurityPage} />
+            <Route path="/contact" component={ContactPage} />
+            <Route path="/pricing" component={PricingPage} />
+            <Route path="/laboratory-registration" component={LaboratoryRegistration} />
   
-          {/* Support and documentation pages */}
-          <Route path="/support/documentation" component={Documentation} />
-          <Route path="/support/help-center" component={HelpCenter} />
-          <Route path="/support/contact" component={Contact} />
-          <Route path="/support/status" component={Status} />
-          <Route path="/integrations" component={Integrations} />
-          <Route path="/api-docs" component={ApiDocsPage} />
+            {/* Support and documentation pages */}
+            <Route path="/support/documentation" component={Documentation} />
+            <Route path="/support/help-center" component={HelpCenter} />
+            <Route path="/support/contact" component={Contact} />
+            <Route path="/support/status" component={Status} />
+            <Route path="/integrations" component={Integrations} />
+            <Route path="/api-docs" component={ApiDocsPage} />
           
-          {/* Public Documentation Pages */}
-          <Route path="/docs/getting-started" component={GettingStarted} />
-          <Route path="/docs/platform-overview" component={PlatformOverview} />
-          <Route path="/docs/organization-setup" component={OrganizationSetup} />
-          <Route path="/docs/user-account-configuration" component={UserAccountConfiguration} />
-          <Route path="/docs/initial-system-configuration" component={InitialSystemConfiguration} />
-          <Route path="/docs/first-patient-registration" component={FirstPatientRegistration} />
-          <Route path="/docs/role-based-access-setup" component={RoleBasedAccessSetup} />
+            {/* Public Documentation Pages */}
+            <Route path="/docs/getting-started" component={GettingStarted} />
+            <Route path="/docs/platform-overview" component={PlatformOverview} />
+            <Route path="/docs/organization-setup" component={OrganizationSetup} />
+            <Route path="/docs/user-account-configuration" component={UserAccountConfiguration} />
+            <Route path="/docs/initial-system-configuration" component={InitialSystemConfiguration} />
+            <Route path="/docs/first-patient-registration" component={FirstPatientRegistration} />
+            <Route path="/docs/role-based-access-setup" component={RoleBasedAccessSetup} />
           
-          {/* Training Materials - Public Access */}
-          <Route path="/docs/comprehensive-user-training" component={ComprehensiveUserTraining} />
-          <Route path="/docs/system-admin-training" component={SystemAdminTraining} />
-          <Route path="/docs/workflow-training-modules" component={WorkflowTrainingModules} />
-          <Route path="/docs/troubleshooting-guide" component={TroubleshootingGuide} />
-          <Route path="/docs/quick-reference-guide" component={QuickReferenceGuide} />
-          {/* Supplier routes handled by direct HTML pages */}
-          <Route path="/patient-portal-public" component={PatientPortalPublic} />
-          <Route path="/patient-login" component={PatientLogin} />
+            {/* Training Materials - Public Access */}
+            <Route path="/docs/comprehensive-user-training" component={ComprehensiveUserTraining} />
+            <Route path="/docs/system-admin-training" component={SystemAdminTraining} />
+            <Route path="/docs/workflow-training-modules" component={WorkflowTrainingModules} />
+            <Route path="/docs/troubleshooting-guide" component={TroubleshootingGuide} />
+            <Route path="/docs/quick-reference-guide" component={QuickReferenceGuide} />
+            {/* Supplier routes handled by direct HTML pages */}
+            <Route path="/patient-portal-public" component={PatientPortalPublic} />
+            <Route path="/patient-login" component={PatientLogin} />
           
           
-          {/* Medication Insurance Claims - Public Access for Testing */}
-          <Route path="/medication-insurance-claims">
-            <div className="flex flex-col h-screen bg-gray-50">
-              <TabsNavigation />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
-                  <MedicationInsuranceClaims />
-                </main>
+            {/* Medication Insurance Claims - Public Access for Testing */}
+            <Route path="/medication-insurance-claims">
+              <div className="flex flex-col h-screen bg-gray-50">
+                <TabsNavigation />
+                <div className="flex flex-1 overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 overflow-y-auto p-6">
+                    <MedicationInsuranceClaims />
+                  </main>
+                </div>
               </div>
-            </div>
-          </Route>
+            </Route>
           
-          {/* 404 Not Found - should only show for truly unmatched routes */}
-          <Route component={NotFound} />
+            {/* 404 Not Found - should only show for truly unmatched routes */}
+            <Route component={NotFound} />
         </Switch>
+        </Suspense>
       </div>
     );
   }
