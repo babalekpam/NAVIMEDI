@@ -1236,7 +1236,7 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <div className="font-semibold">Enterprise Sales</div>
-                    <div className="text-slate-300">info@argilette.com</div>
+                    <div className="text-slate-300">info@navimedi.com</div>
                   </div>
                 </div>
                 

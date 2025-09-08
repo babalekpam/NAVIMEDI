@@ -119,7 +119,7 @@ export default function HelpCenter() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-gray-600 mb-3">Send us a detailed message</p>
-                    <p className="font-semibold">support@navimed.com</p>
+                    <p className="font-semibold">support@navimedi.com</p>
                     <p className="text-sm text-gray-500">Response within 2 hours</p>
                   </CardContent>
                 </Card>

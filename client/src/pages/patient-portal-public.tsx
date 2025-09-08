@@ -288,7 +288,7 @@ export default function PatientPortalPublic() {
                 </div>
                 <div className="flex items-center">
                   <Mail className="h-4 w-4 mr-2" />
-                  <span>Email: support@navimed.com</span>
+                  <span>Email: support@navimedi.com</span>
                 </div>
                 <div className="flex items-center">
                   <Clock className="h-4 w-4 mr-2" />

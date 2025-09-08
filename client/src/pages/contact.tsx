@@ -68,7 +68,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="font-semibold text-lg">Enterprise Sales</div>
-                    <div className="text-slate-600">info@argilette.com</div>
+                    <div className="text-slate-600">info@navimedi.com</div>
                     <div className="text-sm text-slate-500">For custom solutions and partnerships</div>
                   </div>
                 </div>

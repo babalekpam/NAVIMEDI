@@ -228,7 +228,7 @@ export default function LaboratoryRegistration() {
             </p>
             <div className="flex items-center justify-center gap-8 text-sm text-gray-600">
               <div>
-                <strong>Email:</strong> labs@navimed.com
+                <strong>Email:</strong> info@navimedi.com
               </div>
               <div>
                 <strong>Phone:</strong> 1-800-NAVIMED
