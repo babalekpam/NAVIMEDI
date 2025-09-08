@@ -1,0 +1,275 @@
+Discover what your real users are experiencing
+No Data
+
+Diagnose performance issues
+76
+Performance
+82
+Accessibility
+78
+Best Practices
+100
+SEO
+76
+FCP
++8
+LCP
++17
+TBT
++19
+CLS
++24
+SI
++8
+Performance
+Values are estimated and may vary. The performance score is calculated directly from these metrics.See calculator.
+0–49
+50–89
+90–100
+Final Screenshot
+
+METRICS
+Expand view
+First Contentful Paint
+1.1 s
+Largest Contentful Paint
+1.8 s
+Total Blocking Time
+270 ms
+Cumulative Layout Shift
+0.074
+Speed Index
+1.7 s
+Captured at Sep 8, 2025 at 9:16 AM CDT
+Emulated Desktop with Lighthouse 12.8.2
+Single page session
+Initial page load
+Custom throttling
+Using HeadlessChromium 137.0.7151.119 with lr
+View Treemap
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Later this year, insights will replace performance audits. Learn more and provide feedback here.
+Go back to audits
+Show audits relevant to:
+
+All
+
+FCP
+
+LCP
+
+TBT
+
+CLS
+INSIGHTS
+Use efficient cache lifetimes Est savings of 209 KiB
+A long cache lifetime can speed up repeat visits to your page. Learn more.LCPFCP
+Request
+Cache TTL
+Transfer Size
+Stripe Utility 
+212 KiB
+/basil/stripe.js(js.stripe.com)
+1m
+197 KiB
+/out-4.5.44.js(m.stripe.network)
+5m
+14 KiB
+Improve image delivery Est savings of 167 KiB
+Reducing the download time of images can improve the perceived load time of the page and LCP. Learn more about optimizing image sizeLCPFCP
+URL
+Resource Size
+Est Savings
+navimedi.org 1st Party
+181.1 KiB	167.1 KiB
+/assets/image_175….png(navimedi.org)
+181.1 KiB
+167.1 KiB
+Using a modern image format (WebP, AVIF) or increasing the image compression could improve this image's download size.
+167.1 KiB
+Render blocking requests Est savings of 40 ms
+Requests are blocking the page's initial render, which may delay LCP. Deferring or inlining can move these network requests out of the critical path.LCPFCP
+URL
+Transfer Size
+Duration
+navimedi.org 1st Party
+0.8 KiB	70 ms
+/assets/index-BDEI5isa.css(navimedi.org)
+0.8 KiB
+70 ms
+LCP request discovery
+Optimize LCP by making the LCP image discoverable from the HTML immediately, and avoiding lazy-loadingLCP
+lazy load not applied
+fetchpriority=high applied
+Request is discoverable in initial document
+Healthcare Team Meeting
+<img src="/assets/image_1754352574197-4KYOPGEO.png" alt="Healthcare Team Meeting" class="w-full h-full object-cover transition-opacity duration-300 opacity-100" loading="eager" decoding="async" fetchpriority="high">
+Network dependency tree
+Avoid chaining critical requests by reducing the length of chains, reducing the download size of resources, or deferring the download of unnecessary resources to improve page load.LCP
+Maximum critical path latency: 2,967 ms
+Initial Navigation
+https://navimedi.org - 168 ms, 4.22 KiB
+/assets/index-BqhAz7Us.js(navimedi.org) - 688 ms, 641.59 KiB
+…platform/stats(navimedi.org) - 2,967 ms, 4.50 KiB
+/assets/index-BDEI5isa.css(navimedi.org) - 617 ms, 0.84 KiB
+Preconnected origins
+preconnect hints help the browser establish a connection earlier in the page load, saving time when the first request for that origin is made. The following are the origins that the page preconnected to.
+no origins were preconnected
+Preconnect candidates
+Add preconnect hints to your most important origins, but try to use no more than 4.
+Origin
+Est LCP savings
+https://js.stripe.com
+80 ms
+Layout shift culprits
+LCP breakdown
+3rd parties
+These insights are also available in the Chrome DevTools Performance Panel - record a trace to view more detailed information.
+DIAGNOSTICS
+Reduce unused JavaScript Est savings of 492 KiB
+Minify JavaScript Est savings of 65 KiB
+Avoid serving legacy JavaScript to modern browsers Est savings of 0 KiB
+Avoid long main-thread tasks 3 long tasks found
+User Timing marks and measures 1 user timing
+More information about the performance of your application. These numbers don't directly affect the Performance score.
+PASSED AUDITS (17)
+Show
+82
+Accessibility
+These checks highlight opportunities to improve the accessibility of your web app. Automatic detection can only detect a subset of issues and does not guarantee the accessibility of your web app, so manual testing is also encouraged.
+NAMES AND LABELS
+Buttons do not have an accessible name
+When a button doesn't have an accessible name, screen readers announce it as "button", making it unusable for users who rely on screen readers. Learn how to make buttons more accessible.
+Failing Elements
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-gray-300 hover:bg-gray…">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-blue-600 scale-125">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-gray-300 hover:bg-gray…">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-gray-300 hover:bg-gray…">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-gray-300 hover:bg-gray…">
+section.pt-20 > div.max-w-7xl > div.relative > button.absolute
+<button class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounde…">
+section.pt-20 > div.max-w-7xl > div.relative > button.absolute
+<button class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white round…">
+Image elements have [alt] attributes that are redundant text.
+These are opportunities to improve the semantics of the controls in your application. This may enhance the experience for users of assistive technology, like a screen reader.
+BEST PRACTICES
+[user-scalable="no"] is used in the <meta name="viewport"> element or the [maximum-scale] attribute is less than 5.
+Touch targets do not have sufficient size or spacing.
+Touch targets with sufficient size and spacing help users who may have difficulty targeting small controls to activate the targets. Learn more about touch targets.
+Failing Elements
+Features
+<a href="/features" class="text-slate-600 hover:text-emerald-600 transition-colors font-medium">
+NAVIMED
+<a href="/">
+Sign In
+<button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md…">
+Solutions
+<a href="/solutions" class="text-slate-600 hover:text-emerald-600 transition-colors font-medium">
+NAVIMED
+<a href="/">
+Start Free Trial
+<button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md…">
+Marketplace
+<a href="/marketplace" class="text-slate-600 hover:text-emerald-600 transition-colors font-medium">
+NAVIMED
+<a href="/">
+Pricing
+<a href="/pricing" class="text-slate-600 hover:text-emerald-600 transition-colors font-medium">
+NAVIMED
+<a href="/">
+Security
+<a href="/security" class="text-slate-600 hover:text-emerald-600 transition-colors font-medium">
+NAVIMED
+<a href="/">
+Patient Portal
+<a href="/patient-login" class="text-green-600 hover:text-green-700 transition-colors font-medium">
+NAVIMED
+<a href="/">
+Supplier Portal
+<a href="/supplier-portal" class="text-blue-600 hover:text-blue-700 transition-colors font-medium">
+NAVIMED
+<a href="/">
+Contact
+<a href="/contact" class="text-slate-600 hover:text-emerald-600 transition-colors font-medium">
+NAVIMED
+<a href="/">
+Sign In
+<button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md…">
+Features
+<a href="/features" class="text-slate-600 hover:text-emerald-600 transition-colors font-medium">
+Start Free Trial
+<button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md…">
+Solutions
+<a href="/solutions" class="text-slate-600 hover:text-emerald-600 transition-colors font-medium">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-gray-300 hover:bg-gray…">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-blue-600 scale-125">
+section.pt-20 > div.max-w-7xl > div.relative > button.absolute
+<button class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounde…">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-blue-600 scale-125">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-gray-300 hover:bg-gray…">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-gray-300 hover:bg-gray…">
+section.pt-20 > div.max-w-7xl > div.relative > button.absolute
+<button class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounde…">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-gray-300 hover:bg-gray…">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-blue-600 scale-125">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-gray-300 hover:bg-gray…">
+section.pt-20 > div.max-w-7xl > div.relative > button.absolute
+<button class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounde…">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-gray-300 hover:bg-gray…">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-gray-300 hover:bg-gray…">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-gray-300 hover:bg-gray…">
+section.pt-20 > div.max-w-7xl > div.relative > button.absolute
+<button class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white round…">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-gray-300 hover:bg-gray…">
+div.max-w-7xl > div.relative > div.flex > button.w-3
+<button class="w-3 h-3 rounded-full transition-all duration-300 bg-gray-300 hover:bg-gray…">
+section.pt-20 > div.max-w-7xl > div.relative > button.absolute
+<button class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white round…">
+These items highlight common accessibility best practices.
+NAVIGATION
+Heading elements are not in a sequentially-descending order
+These are opportunities to improve keyboard navigation in your application.
+ADDITIONAL ITEMS TO MANUALLY CHECK (10)
+Show
+These items address areas which an automated testing tool cannot cover. Learn more in our guide on conducting an accessibility review.
+PASSED AUDITS (20)
+Show
+NOT APPLICABLE (32)
+Show
+78
+Best Practices
+GENERAL
+Uses deprecated APIs 1 warning found
+Deprecated APIs will eventually be removed from the browser. Learn more about deprecated APIs.
+Deprecation / Warning
+Source
+navimedi.org 1st Party
+H1UserAgentFontSizeInSection
+https://navimedi.org:0:-1
+Browser errors were logged to the console
+Missing source maps for large first-party JavaScript
+TRUST

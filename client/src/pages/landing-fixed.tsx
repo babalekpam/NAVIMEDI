@@ -177,11 +177,12 @@ function ImageCarousel() {
 
       {/* Navigation Dots */}
       <div className="flex justify-center mt-6 space-x-3">
-        {healthcareImages.map((_, index) => (
+        {healthcareImages.map((image, index) => (
           <button
             key={index}
             onClick={() => setCurrentImageIndex(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+            aria-label={`View ${image.title} - Image ${index + 1} of ${healthcareImages.length}`}
+            className={`w-5 h-5 rounded-full transition-all duration-300 ${
               index === currentImageIndex 
                 ? 'bg-blue-600 scale-125' 
                 : 'bg-gray-300 hover:bg-gray-400'
@@ -195,18 +196,20 @@ function ImageCarousel() {
         onClick={() => setCurrentImageIndex((prev) => 
           prev === 0 ? healthcareImages.length - 1 : prev - 1
         )}
-        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-3 shadow-lg transition-all duration-300 hover:scale-110"
+        aria-label="View previous healthcare image"
+        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110"
       >
-        <ArrowRight className="w-5 h-5 rotate-180 text-gray-700" />
+        <ArrowRight className="w-6 h-6 rotate-180 text-gray-700" />
       </button>
       
       <button
         onClick={() => setCurrentImageIndex((prev) => 
           (prev + 1) % healthcareImages.length
         )}
-        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-3 shadow-lg transition-all duration-300 hover:scale-110"
+        aria-label="View next healthcare image"
+        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110"
       >
-        <ArrowRight className="w-5 h-5 text-gray-700" />
+        <ArrowRight className="w-6 h-6 text-gray-700" />
       </button>
     </div>
   );
