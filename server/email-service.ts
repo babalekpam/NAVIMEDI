@@ -261,7 +261,7 @@ export async function sendWelcomeEmail(params: WelcomeEmailParams): Promise<bool
             
             <div class="footer">
                 <p>This email was sent from noreply@navimedi.org</p>
-                <p>© 2025 NaviMed Healthcare Platform. All rights reserved.</p>
+                <p>© 2025 NaviMed by ARGILETTE Lab. All rights reserved.</p>
             </div>
         </div>
     </body>
@@ -295,7 +295,7 @@ Best regards,
 The NaviMed Team
 
 This email was sent from noreply@navimedi.org
-© 2025 NaviMed Healthcare Platform. All rights reserved.
+© 2025 NaviMed by ARGILETTE Lab. All rights reserved.
   `;
 
   return await sendEmail({
