@@ -13,6 +13,10 @@ import { createTestHospital } from "./create-test-hospital";
 
 const app = express();
 
+// CRITICAL FIX: Enable trust proxy for Passenger/nginx deployment
+// This fixes express-rate-limit ValidationError about X-Forwarded-For headers
+app.set('trust proxy', 1);
+
 // IONOS OPTIMIZATION 1: Enable selective gzip compression
 // Compress static assets and non-sensitive content while protecting sensitive endpoints
 app.use(compression({
