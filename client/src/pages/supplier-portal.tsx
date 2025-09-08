@@ -23,11 +23,126 @@ interface SupplierData {
 
 type DashboardSection = 'overview' | 'products' | 'orders' | 'analytics' | 'settings';
 
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  price: string;
+  description: string;
+  images?: string[];
+}
+
+type ProductAction = 'add' | 'edit' | 'view' | null;
+
 export default function SupplierPortal() {
   const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [supplierData, setSupplierData] = useState<SupplierData | null>(null);
   const [activeSection, setActiveSection] = useState<DashboardSection>('overview');
+  const [productAction, setProductAction] = useState<ProductAction>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [products, setProducts] = useState<Product[]>([
+    { id: '1', name: 'Digital X-Ray Machine', category: 'Radiology Equipment', price: '$45,000', description: 'High-resolution digital X-ray system with advanced imaging capabilities' },
+    { id: '2', name: 'Hospital Bed - Electric', category: 'Patient Care', price: '$2,800', description: 'Fully electric hospital bed with side rails and patient controls' },
+    { id: '3', name: 'Surgical Instruments Kit', category: 'Surgical Equipment', price: '$1,200', description: 'Complete surgical instrument set for general procedures' },
+    { id: '4', name: 'Patient Monitor', category: 'Monitoring Equipment', price: '$3,200', description: 'Multi-parameter patient monitoring system' }
+  ]);
+  const [productForm, setProductForm] = useState<Partial<Product>>({
+    name: '',
+    category: '',
+    price: '',
+    description: '',
+    images: []
+  });
+
+  const handleAddProduct = () => {
+    setProductAction('add');
+    setSelectedProduct(null);
+    setProductForm({
+      name: '',
+      category: '',
+      price: '',
+      description: '',
+      images: []
+    });
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setProductAction('edit');
+    setSelectedProduct(product);
+    setProductForm(product);
+  };
+
+  const handleViewProduct = (product: Product) => {
+    setProductAction('view');
+    setSelectedProduct(product);
+    setProductForm(product);
+  };
+
+  const handleSaveProduct = () => {
+    if (!productForm.name || !productForm.price || !productForm.category) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (productAction === 'add') {
+      const newProduct: Product = {
+        id: Date.now().toString(),
+        name: productForm.name!,
+        category: productForm.category!,
+        price: productForm.price!,
+        description: productForm.description || '',
+        images: productForm.images || []
+      };
+      setProducts([...products, newProduct]);
+      toast({
+        title: "Product Added",
+        description: `${newProduct.name} has been added successfully`,
+      });
+    } else if (productAction === 'edit' && selectedProduct) {
+      const updatedProducts = products.map(p => 
+        p.id === selectedProduct.id ? { ...selectedProduct, ...productForm } : p
+      );
+      setProducts(updatedProducts);
+      toast({
+        title: "Product Updated",
+        description: `${productForm.name} has been updated successfully`,
+      });
+    }
+
+    setProductAction(null);
+    setSelectedProduct(null);
+  };
+
+  const handleImageUpload = (imageUrl: string) => {
+    const currentImages = productForm.images || [];
+    if (currentImages.length >= 5) {
+      toast({
+        title: "Limit Reached",
+        description: "Maximum 5 images allowed per product",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setProductForm({
+      ...productForm,
+      images: [...currentImages, imageUrl]
+    });
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const currentImages = productForm.images || [];
+    const updatedImages = currentImages.filter((_, i) => i !== index);
+    setProductForm({
+      ...productForm,
+      images: updatedImages
+    });
+  };
   const [loginData, setLoginData] = useState({
     contactEmail: "",
     password: ""
@@ -439,24 +554,211 @@ export default function SupplierPortal() {
 
               {activeSection === 'products' && (
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-semibold">Product Management</h3>
-                    <Button>Add New Product</Button>
-                  </div>
-                  <div className="space-y-3">
-                    {['Digital X-Ray Machine', 'Hospital Bed - Electric', 'Surgical Instruments Kit', 'Patient Monitor'].map((product, index) => (
-                      <div key={index} className="p-4 border rounded-lg flex justify-between items-center">
-                        <div>
-                          <h4 className="font-medium">{product}</h4>
-                          <p className="text-sm text-gray-600">Category: Medical Equipment</p>
+                  {productAction ? (
+                    // Product Form (Add/Edit/View)
+                    <div className="space-y-6">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-xl font-semibold">
+                          {productAction === 'add' ? 'Add New Product' : 
+                           productAction === 'edit' ? 'Edit Product' : 'View Product'}
+                        </h3>
+                        <Button variant="outline" onClick={() => setProductAction(null)}>
+                          Back to Products
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Product Form */}
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="productName">Product Name *</Label>
+                            <Input
+                              id="productName"
+                              value={productForm.name || ''}
+                              onChange={(e) => setProductForm({...productForm, name: e.target.value})}
+                              placeholder="Enter product name"
+                              disabled={productAction === 'view'}
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="productCategory">Category *</Label>
+                            <Select 
+                              value={productForm.category || ''}
+                              onValueChange={(value) => setProductForm({...productForm, category: value})}
+                              disabled={productAction === 'view'}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Radiology Equipment">Radiology Equipment</SelectItem>
+                                <SelectItem value="Patient Care">Patient Care</SelectItem>
+                                <SelectItem value="Surgical Equipment">Surgical Equipment</SelectItem>
+                                <SelectItem value="Monitoring Equipment">Monitoring Equipment</SelectItem>
+                                <SelectItem value="Laboratory Equipment">Laboratory Equipment</SelectItem>
+                                <SelectItem value="Emergency Equipment">Emergency Equipment</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="productPrice">Price *</Label>
+                            <Input
+                              id="productPrice"
+                              value={productForm.price || ''}
+                              onChange={(e) => setProductForm({...productForm, price: e.target.value})}
+                              placeholder="e.g. $25,000"
+                              disabled={productAction === 'view'}
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="productDescription">Description</Label>
+                            <Textarea
+                              id="productDescription"
+                              value={productForm.description || ''}
+                              onChange={(e) => setProductForm({...productForm, description: e.target.value})}
+                              placeholder="Enter product description"
+                              rows={4}
+                              disabled={productAction === 'view'}
+                            />
+                          </div>
+
+                          {productAction !== 'view' && (
+                            <div className="flex gap-3">
+                              <Button onClick={handleSaveProduct}>
+                                {productAction === 'add' ? 'Add Product' : 'Update Product'}
+                              </Button>
+                              <Button variant="outline" onClick={() => setProductAction(null)}>
+                                Cancel
+                              </Button>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">Edit</Button>
-                          <Button variant="outline" size="sm">View</Button>
+
+                        {/* Image Management */}
+                        <div className="space-y-4">
+                          <div>
+                            <Label>Product Images (JPEG only, max 5)</Label>
+                            <div className="space-y-3">
+                              {/* Current Images */}
+                              {(productForm.images || []).map((image, index) => (
+                                <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
+                                  <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                                    <span className="text-xs text-gray-500">IMG {index + 1}</span>
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="text-sm font-medium">Image {index + 1}</p>
+                                    <p className="text-xs text-gray-500">JPEG format</p>
+                                  </div>
+                                  {productAction !== 'view' && (
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => handleRemoveImage(index)}
+                                    >
+                                      Remove
+                                    </Button>
+                                  )}
+                                </div>
+                              ))}
+
+                              {/* Add Image Button */}
+                              {productAction !== 'view' && (productForm.images || []).length < 5 && (
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                                  <input
+                                    type="file"
+                                    accept=".jpg,.jpeg"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        if (file.type === 'image/jpeg' || file.type === 'image/jpg') {
+                                          // Simulate upload success
+                                          const mockImageUrl = `/uploads/${Date.now()}_${file.name}`;
+                                          handleImageUpload(mockImageUrl);
+                                          toast({
+                                            title: "Image Added",
+                                            description: `${file.name} added successfully`,
+                                          });
+                                        } else {
+                                          toast({
+                                            title: "Invalid Format",
+                                            description: "Only JPEG images are allowed",
+                                            variant: "destructive",
+                                          });
+                                        }
+                                        e.target.value = '';
+                                      }
+                                    }}
+                                    className="hidden"
+                                    id="imageUpload"
+                                  />
+                                  <label htmlFor="imageUpload" className="cursor-pointer">
+                                    <div className="flex flex-col items-center gap-2">
+                                      <Package className="w-8 h-8 text-gray-400" />
+                                      <p className="text-sm text-gray-600">Click to upload JPEG image</p>
+                                      <p className="text-xs text-gray-500">
+                                        {5 - (productForm.images || []).length} slots remaining
+                                      </p>
+                                    </div>
+                                  </label>
+                                </div>
+                              )}
+
+                              {(productForm.images || []).length >= 5 && productAction !== 'view' && (
+                                <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                                  <p className="text-sm text-yellow-600">Maximum 5 images reached</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ) : (
+                    // Product List
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-xl font-semibold">Product Management</h3>
+                        <Button onClick={handleAddProduct}>Add New Product</Button>
+                      </div>
+                      <div className="space-y-3">
+                        {products.map((product) => (
+                          <div key={product.id} className="p-4 border rounded-lg">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h4 className="font-medium">{product.name}</h4>
+                                <p className="text-sm text-gray-600">Category: {product.category}</p>
+                                <p className="text-sm text-gray-600">Price: {product.price}</p>
+                                {product.images && product.images.length > 0 && (
+                                  <p className="text-xs text-blue-600 mt-1">
+                                    📸 {product.images.length} image{product.images.length > 1 ? 's' : ''}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleViewProduct(product)}
+                                >
+                                  View
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleEditProduct(product)}
+                                >
+                                  Edit
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
