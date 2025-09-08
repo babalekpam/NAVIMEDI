@@ -456,10 +456,10 @@ export default function LandingPage() {
                   <div className="p-3 bg-emerald-100 group-hover:bg-emerald-200 rounded-xl transition-colors">
                     <Languages className="w-7 h-7 text-emerald-600" />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900">Real-Time Translation</h3>
+                  <h3 className="text-2xl font-bold text-slate-900">Serve diverse communities in 25+ languages</h3>
                 </div>
                 <p className="text-slate-600 leading-relaxed text-lg">
-                  Instant multilingual support across 50+ languages with AI-powered medical terminology translation for global healthcare delivery.
+                  Break down language barriers with instant multilingual support and AI-powered medical terminology translation for global healthcare delivery.
                 </p>
               </CardContent>
             </Card>
@@ -470,10 +470,10 @@ export default function LandingPage() {
                   <div className="p-3 bg-blue-100 group-hover:bg-blue-200 rounded-xl transition-colors">
                     <Shield className="w-7 h-7 text-blue-600" />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900">Military-Grade Security</h3>
+                  <h3 className="text-2xl font-bold text-slate-900">Bank-level encryption for patient data</h3>
                 </div>
                 <p className="text-slate-600 leading-relaxed text-lg">
-                  Bank-level encryption, complete tenant isolation, and HIPAA compliance with comprehensive audit trails and access controls.
+                  Military-grade security with complete tenant isolation, HIPAA compliance, and comprehensive audit trails for ultimate data protection.
                 </p>
               </CardContent>
             </Card>
@@ -512,10 +512,10 @@ export default function LandingPage() {
                   <div className="p-3 bg-emerald-100 group-hover:bg-emerald-200 rounded-xl transition-colors">
                     <Cloud className="w-7 h-7 text-emerald-600" />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900">Cloud-Native Architecture</h3>
+                  <h3 className="text-2xl font-bold text-slate-900">Scale securely as you grow</h3>
                 </div>
                 <p className="text-slate-600 leading-relaxed text-lg">
-                  Scalable, reliable infrastructure with 99.9% uptime SLA, automatic backups, and disaster recovery capabilities.
+                  Cloud-native architecture with 99.9% uptime SLA, automatic backups, and disaster recovery for seamless expansion.
                 </p>
               </CardContent>
             </Card>
@@ -531,6 +531,201 @@ export default function LandingPage() {
                 <p className="text-slate-600 leading-relaxed text-lg">
                   Responsive design optimized for all devices with offline capabilities and real-time synchronization.
                 </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Customer Success Stories */}
+      <section className="py-24 bg-gradient-to-br from-emerald-50 to-blue-50">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <Badge className="mb-6 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Success Stories
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900">
+              Real Results from Healthcare <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Leaders</span>
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              See how healthcare organizations achieved measurable improvements with NaviMED
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Testimonial 1 */}
+            <Card className="group border-emerald-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-500 bg-white">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <Building2 className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900">Dr. Sarah Chen</h4>
+                    <p className="text-sm text-slate-600">CIO, Metro General Hospital</p>
+                  </div>
+                </div>
+                <blockquote className="text-slate-700 italic mb-4">
+                  "NaviMED reduced our prescription processing time by 60% and eliminated medication errors completely. The multi-language support has been a game-changer for our diverse patient community."
+                </blockquote>
+                <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">
+                  <TrendingUp className="w-4 h-4" />
+                  60% faster processing • Zero medication errors
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Testimonial 2 */}
+            <Card className="group border-blue-200 hover:border-blue-400 hover:shadow-2xl transition-all duration-500 bg-white">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Pill className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900">Michael Rodriguez</h4>
+                    <p className="text-sm text-slate-600">Director, MediCare Pharmacy</p>
+                  </div>
+                </div>
+                <blockquote className="text-slate-700 italic mb-4">
+                  "The unified platform streamlined our entire workflow. We're now serving 40% more patients with the same staff, and patient satisfaction scores increased to 98%."
+                </blockquote>
+                <div className="flex items-center gap-2 text-blue-600 text-sm font-medium">
+                  <Users className="w-4 h-4" />
+                  40% more capacity • 98% satisfaction
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Testimonial 3 */}
+            <Card className="group border-emerald-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-500 bg-white">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <TestTube className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900">Dr. Priya Patel</h4>
+                    <p className="text-sm text-slate-600">Lab Director, Advanced Diagnostics</p>
+                  </div>
+                </div>
+                <blockquote className="text-slate-700 italic mb-4">
+                  "Lab result turnaround time dropped from 3 days to 8 hours. The real-time notifications and automated reporting saved us countless hours of manual work."
+                </blockquote>
+                <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">
+                  <Clock className="w-4 h-4" />
+                  8-hour turnaround • Automated reporting
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Product Screenshots Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <Badge className="mb-6 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100">
+              <Monitor className="w-4 h-4 mr-2" />
+              Platform Preview
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900">
+              See NaviMED in <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Action</span>
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              Explore our intuitive dashboard designed for healthcare professionals
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+            {/* Dashboard Screenshot */}
+            <Card className="group border-slate-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-500">
+              <CardContent className="p-0">
+                <div className="aspect-video bg-gradient-to-br from-emerald-50 to-blue-50 rounded-t-lg p-8 flex items-center justify-center">
+                  <div className="w-full h-full bg-white rounded-lg shadow-lg p-4 flex flex-col">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+                      <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                      <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                    </div>
+                    <div className="space-y-3 flex-1">
+                      <div className="h-8 bg-emerald-100 rounded flex items-center px-3">
+                        <div className="w-4 h-4 bg-emerald-600 rounded mr-2"></div>
+                        <div className="text-xs text-emerald-700">Hospital Dashboard - Live View</div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="h-16 bg-blue-50 rounded p-2">
+                          <div className="text-xs text-blue-600 mb-1">Appointments</div>
+                          <div className="text-lg font-bold text-blue-800">47</div>
+                        </div>
+                        <div className="h-16 bg-emerald-50 rounded p-2">
+                          <div className="text-xs text-emerald-600 mb-1">Prescriptions</div>
+                          <div className="text-lg font-bold text-emerald-800">23</div>
+                        </div>
+                        <div className="h-16 bg-orange-50 rounded p-2">
+                          <div className="text-xs text-orange-600 mb-1">Lab Results</div>
+                          <div className="text-lg font-bold text-orange-800">12</div>
+                        </div>
+                      </div>
+                      <div className="h-12 bg-slate-50 rounded p-2">
+                        <div className="text-xs text-slate-500 mb-1">Recent Activity</div>
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                          <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                          <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                          <div className="text-xs text-slate-600">Live updates</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">Real-Time Dashboard</h3>
+                  <p className="text-slate-600">Comprehensive overview of hospital operations with live metrics and instant notifications.</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Mobile Interface Screenshot */}
+            <Card className="group border-slate-200 hover:border-blue-400 hover:shadow-2xl transition-all duration-500">
+              <CardContent className="p-0">
+                <div className="aspect-video bg-gradient-to-br from-blue-50 to-emerald-50 rounded-t-lg p-8 flex items-center justify-center">
+                  <div className="w-32 h-48 bg-white rounded-2xl shadow-xl p-2 flex flex-col">
+                    <div className="h-4 bg-slate-100 rounded-full mb-2 flex items-center justify-center">
+                      <div className="w-8 h-1 bg-slate-300 rounded-full"></div>
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-6 bg-blue-100 rounded flex items-center px-2">
+                        <div className="w-2 h-2 bg-blue-600 rounded-full mr-1"></div>
+                        <div className="text-xs text-blue-700">Patient Portal</div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="h-4 bg-emerald-50 rounded px-1 flex items-center">
+                          <div className="text-xs text-emerald-600">Appointments</div>
+                        </div>
+                        <div className="h-4 bg-blue-50 rounded px-1 flex items-center">
+                          <div className="text-xs text-blue-600">Prescriptions</div>
+                        </div>
+                        <div className="h-4 bg-orange-50 rounded px-1 flex items-center">
+                          <div className="text-xs text-orange-600">Lab Results</div>
+                        </div>
+                      </div>
+                      <div className="h-8 bg-emerald-100 rounded p-1">
+                        <div className="text-xs text-emerald-700">Quick Actions</div>
+                        <div className="flex gap-1 mt-1">
+                          <div className="w-3 h-3 bg-emerald-600 rounded"></div>
+                          <div className="w-3 h-3 bg-blue-600 rounded"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">Mobile-First Design</h3>
+                  <p className="text-slate-600">Optimized for healthcare professionals on the go with intuitive touch interfaces.</p>
+                </div>
               </CardContent>
             </Card>
           </div>
