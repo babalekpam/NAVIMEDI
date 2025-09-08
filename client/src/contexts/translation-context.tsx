@@ -111,6 +111,12 @@ const translations = {
     'powerful-features': 'Powerful Features for Every Healthcare Professional',
     'enterprise-ready': 'Enterprise-Ready Healthcare Platform',
     
+    // Social Media
+    'follow-us': 'Follow Us',
+    'connect-with-us': 'Connect with us on social media',
+    'facebook': 'Facebook',
+    'linkedin': 'LinkedIn',
+    
     // Dashboard specific
     'physician-dashboard': 'Physician Dashboard',
     'nurse-dashboard': 'Nurse Dashboard', 
@@ -297,6 +303,12 @@ const translations = {
     'all-in-one-platform': 'Plataforma Todo-en-Uno para la Salud Moderna',
     'powerful-features': 'Características Poderosas para Cada Profesional de la Salud',
     'enterprise-ready': 'Plataforma Sanitaria Lista para Empresas',
+    
+    // Social Media
+    'follow-us': 'Síguenos',
+    'connect-with-us': 'Conéctate con nosotros en las redes sociales',
+    'facebook': 'Facebook',
+    'linkedin': 'LinkedIn',
     
     // Dashboard specific
     'physician-dashboard': 'Panel de Médico',
@@ -485,6 +497,12 @@ const translations = {
     'powerful-features': 'Fonctionnalités Puissantes pour Chaque Professionnel de Santé',
     'enterprise-ready': 'Plateforme de Santé Prête pour l\'Entreprise',
     
+    // Social Media
+    'follow-us': 'Suivez-nous',
+    'connect-with-us': 'Connectez-vous avec nous sur les réseaux sociaux',
+    'facebook': 'Facebook',
+    'linkedin': 'LinkedIn',
+    
     // Dashboard specific
     'physician-dashboard': 'Tableau de Bord Médecin',
     'nurse-dashboard': 'Tableau de Bord Infirmière', 
@@ -671,6 +689,12 @@ const translations = {
     'all-in-one-platform': 'All-in-One-Plattform für Moderne Gesundheitsversorgung',
     'powerful-features': 'Leistungsstarke Funktionen für Jede Gesundheitsfachkraft',
     'enterprise-ready': 'Unternehmenstaugliche Gesundheitsplattform',
+    
+    // Social Media
+    'follow-us': 'Folgen Sie uns',
+    'connect-with-us': 'Verbinden Sie sich mit uns in den sozialen Medien',
+    'facebook': 'Facebook',
+    'linkedin': 'LinkedIn',
     
     // Dashboard specific
     'physician-dashboard': 'Arzt-Dashboard',

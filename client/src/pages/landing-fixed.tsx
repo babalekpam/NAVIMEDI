@@ -54,10 +54,10 @@ import {
   Laptop,
   BookOpen
 } from "lucide-react";
+import { useTranslation } from "@/contexts/translation-context";
 
 // Professional healthcare platform branding
 const brandName = "NAVIMED";
-const tagline = "Next-Generation Healthcare Management Platform";
 
 // Interfaces
 interface PlatformStats {
@@ -79,44 +79,45 @@ interface PlatformData {
 // Professional Healthcare Image Carousel Component
 function ImageCarousel() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const { t } = useTranslation();
   
   // Professional healthcare photographs provided by the user
   const healthcareImages = [
     {
       url: healthcareTeam,
-      alt: "Healthcare Team Meeting",
-      title: "Professional Healthcare Team",
-      description: "Collaborative healthcare professionals working together for better patient outcomes"
+      alt: t('healthcare-team-meeting'),
+      title: t('professional-healthcare-team'),
+      description: t('collaborative-healthcare')
     },
     {
       url: medicalImaging,
-      alt: "Medical Imaging Analysis",
-      title: "Advanced Medical Imaging",
-      description: "Cutting-edge diagnostic technology with brain scan analysis and medical expertise"
+      alt: t('medical-imaging-analysis'),
+      title: t('advanced-medical-imaging'),
+      description: t('cutting-edge-diagnostic')
     },
     {
       url: healthAssessment,
-      alt: "Health Assessment Technology",
-      title: "Digital Health Assessment",
-      description: "Comprehensive health monitoring and assessment through advanced digital platforms"
+      alt: t('health-assessment-tech'),
+      title: t('digital-health-assessment'),
+      description: t('comprehensive-health-monitoring')
     },
     {
       url: healthcareManagement,
-      alt: "Healthcare Management System",
-      title: "Healthcare Management Solutions",
-      description: "Integrated healthcare management icons and comprehensive system overview"
+      alt: t('healthcare-management-system'),
+      title: t('healthcare-management-solutions'),
+      description: t('integrated-healthcare-management')
     },
     {
       url: healthcareSecurity,
-      alt: "Healthcare Security & Compliance",
-      title: "Secure Healthcare Platform",
-      description: "Advanced security measures and compliance protocols for healthcare data protection"
+      alt: t('healthcare-security-compliance'),
+      title: t('secure-healthcare-platform'),
+      description: t('advanced-security-measures')
     },
     {
       url: medicalSupply,
-      alt: "Medical Supply Warehouse",
-      title: "Medical Supply Management",
-      description: "State-of-the-art medical equipment warehouse and inventory management systems"
+      alt: t('medical-supply-warehouse'),
+      title: t('medical-supply-management'),
+      description: t('state-of-art-medical-equipment')
     }
   ];
 
@@ -212,6 +213,7 @@ function ImageCarousel() {
 }
 
 export default function LandingPage() {
+  const { t } = useTranslation();
   const { data: platformData, isLoading } = useQuery<PlatformData>({
     queryKey: ['/api/platform/stats'],
     retry: false,
@@ -790,11 +792,40 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-xl font-bold mb-4">{brandName}</h3>
-              <p className="text-gray-400 mb-4">{tagline}</p>
-              <div className="flex space-x-4">
+              <p className="text-gray-400 mb-4">{t('next-generation-healthcare')}</p>
+              <div className="flex space-x-4 mb-4">
                 <MessageCircle className="w-5 h-5 hover:text-blue-400 cursor-pointer" />
                 <Phone className="w-5 h-5 hover:text-green-400 cursor-pointer" />
                 <Mail className="w-5 h-5 hover:text-red-400 cursor-pointer" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-400 mb-2">{t('follow-us')}:</p>
+                <div className="flex space-x-4">
+                  <a 
+                    href="https://www.facebook.com/profile.php?id=61573739589044" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                    aria-label={t('facebook')}
+                  >
+                    <span className="sr-only">{t('facebook')}</span>
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                  </a>
+                  <a 
+                    href="https://www.linkedin.com/company/106468931/admin/dashboard/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                    aria-label={t('linkedin')}
+                  >
+                    <span className="sr-only">{t('linkedin')}</span>
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                  </a>
+                </div>
               </div>
             </div>
             <div>
