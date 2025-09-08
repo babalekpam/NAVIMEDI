@@ -96,11 +96,11 @@ const ElectronicHealthRecords = React.lazy(() => import("@/pages/docs/electronic
 const PrescriptionManagement = React.lazy(() => import("@/pages/docs/prescription-management").then(m => ({ default: m.PrescriptionManagement })));
 const LaboratoryOrderProcessing = React.lazy(() => import("@/pages/docs/laboratory-order-processing").then(m => ({ default: m.LaboratoryOrderProcessing })));
 const ClinicalDocumentation = React.lazy(() => import("@/pages/docs/clinical-documentation").then(m => ({ default: m.ClinicalDocumentation })));
-const ComprehensiveUserTraining = React.lazy(() => import("@/pages/docs/comprehensive-user-training"));
-const SystemAdminTraining = React.lazy(() => import("@/pages/docs/system-admin-training"));
-const WorkflowTrainingModules = React.lazy(() => import("@/pages/docs/workflow-training-modules"));
-const TroubleshootingGuide = React.lazy(() => import("@/pages/docs/troubleshooting-guide"));
-const QuickReferenceGuide = React.lazy(() => import("@/pages/docs/quick-reference-guide"));
+const ComprehensiveUserTraining = React.lazy(() => import("@/pages/docs/comprehensive-user-training").then(m => ({ default: m.default })));
+const SystemAdminTraining = React.lazy(() => import("@/pages/docs/system-admin-training").then(m => ({ default: m.default })));
+const WorkflowTrainingModules = React.lazy(() => import("@/pages/docs/workflow-training-modules").then(m => ({ default: m.default })));
+const TroubleshootingGuide = React.lazy(() => import("@/pages/docs/troubleshooting-guide").then(m => ({ default: m.default })));
+const QuickReferenceGuide = React.lazy(() => import("@/pages/docs/quick-reference-guide").then(m => ({ default: m.default })));
 const VideoPlayer = React.lazy(() => import("@/pages/videos/video-player"));
 const VideoIntegrationOptions = React.lazy(() => import("@/pages/videos/video-integration-options"));
 const YoutubeIntegration = React.lazy(() => import("@/pages/videos/youtube-integration"));
@@ -961,6 +961,22 @@ function Router() {
           <Route path="/support/status" component={Status} />
           <Route path="/integrations" component={Integrations} />
           <Route path="/api-docs" component={ApiDocsPage} />
+          
+          {/* Public Documentation Pages */}
+          <Route path="/docs/getting-started" component={GettingStarted} />
+          <Route path="/docs/platform-overview" component={PlatformOverview} />
+          <Route path="/docs/organization-setup" component={OrganizationSetup} />
+          <Route path="/docs/user-account-configuration" component={UserAccountConfiguration} />
+          <Route path="/docs/initial-system-configuration" component={InitialSystemConfiguration} />
+          <Route path="/docs/first-patient-registration" component={FirstPatientRegistration} />
+          <Route path="/docs/role-based-access-setup" component={RoleBasedAccessSetup} />
+          
+          {/* Training Materials - Public Access */}
+          <Route path="/docs/comprehensive-user-training" component={ComprehensiveUserTraining} />
+          <Route path="/docs/system-admin-training" component={SystemAdminTraining} />
+          <Route path="/docs/workflow-training-modules" component={WorkflowTrainingModules} />
+          <Route path="/docs/troubleshooting-guide" component={TroubleshootingGuide} />
+          <Route path="/docs/quick-reference-guide" component={QuickReferenceGuide} />
           {/* Supplier routes handled by direct HTML pages */}
           <Route path="/patient-portal-public" component={PatientPortalPublic} />
           <Route path="/patient-login" component={PatientLogin} />
