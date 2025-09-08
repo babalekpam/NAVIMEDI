@@ -1,0 +1,145 @@
+8:56:53 AM
+
+Enter a valid URL
+
+smartphone
+Mobile
+
+computer
+Desktop
+
+Discover what your real users are experiencing
+No Data
+
+Diagnose performance issues
+66
+Performance
+82
+Accessibility
+78
+Best Practices
+92
+SEO
+66
+FCP
++10
+LCP
++20
+TBT
++21
+CLS
++7
+SI
++8
+Performance
+Values are estimated and may vary. The performance score is calculated directly from these metrics.See calculator.
+0–49
+50–89
+90–100
+Final Screenshot
+
+METRICS
+Expand view
+First Contentful Paint
+0.8 s
+Largest Contentful Paint
+1.5 s
+Total Blocking Time
+240 ms
+Cumulative Layout Shift
+0.368
+Speed Index
+1.7 s
+Captured at Sep 8, 2025 at 8:56 AM CDT
+Emulated Desktop with Lighthouse 12.8.2
+Single page session
+Initial page load
+Custom throttling
+Using HeadlessChromium 137.0.7151.119 with lr
+View Treemap
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Later this year, insights will replace performance audits. Learn more and provide feedback here.
+Go back to audits
+Show audits relevant to:
+
+All
+
+FCP
+
+LCP
+
+TBT
+
+CLS
+INSIGHTS
+Use efficient cache lifetimes Est savings of 210 KiB
+Improve image delivery Est savings of 176 KiB
+Render blocking requests Est savings of 80 ms
+Layout shift culprits
+LCP request discovery
+Network dependency tree
+LCP breakdown
+3rd parties
+These insights are also available in the Chrome DevTools Performance Panel - record a trace to view more detailed information.
+DIAGNOSTICS
+Reduce unused JavaScript Est savings of 492 KiB
+Minify JavaScript Est savings of 65 KiB
+Avoid serving legacy JavaScript to modern browsers Est savings of 0 KiB
+Reduce unused CSS Est savings of 37 KiB
+Avoid long main-thread tasks 3 long tasks found
+User Timing marks and measures 1 user timing
+More information about the performance of your application. These numbers don't directly affect the Performance score.
+PASSED AUDITS (16)
+Show
+82
+Accessibility
+These checks highlight opportunities to improve the accessibility of your web app. Automatic detection can only detect a subset of issues and does not guarantee the accessibility of your web app, so manual testing is also encouraged.
+NAMES AND LABELS
+Buttons do not have an accessible name
+Image elements have [alt] attributes that are redundant text.
+These are opportunities to improve the semantics of the controls in your application. This may enhance the experience for users of assistive technology, like a screen reader.
+BEST PRACTICES
+[user-scalable="no"] is used in the <meta name="viewport"> element or the [maximum-scale] attribute is less than 5.
+Touch targets do not have sufficient size or spacing.
+These items highlight common accessibility best practices.
+NAVIGATION
+Heading elements are not in a sequentially-descending order
+These are opportunities to improve keyboard navigation in your application.
+ADDITIONAL ITEMS TO MANUALLY CHECK (10)
+Show
+These items address areas which an automated testing tool cannot cover. Learn more in our guide on conducting an accessibility review.
+PASSED AUDITS (20)
+Show
+NOT APPLICABLE (32)
+Show
+78
+Best Practices
+GENERAL
+Uses deprecated APIs 1 warning found
+Browser errors were logged to the console
+Missing source maps for large first-party JavaScript
+TRUST AND SAFETY
+Ensure CSP is effective against XSS attacks
+Mitigate DOM-based XSS with Trusted Types
+PASSED AUDITS (11)
+Show
+NOT APPLICABLE (6)
+Show
+92
+SEO
+These checks ensure that your page is following basic search engine optimization advice. There are many additional factors Lighthouse does not score here that may affect your search ranking, including performance on Core Web Vitals. Learn more about Google Search Essentials.
+CRAWLING AND INDEXING
+robots.txt is not valid Request for robots.txt returned HTTP status: 500
+To appear in search results, crawlers need access to your app.
+ADDITIONAL ITEMS TO MANUALLY CHECK (1)
+Show
+Run these additional validators on your site to check additional SEO best practices.
+PASSED AUDITS (9)
+Show
