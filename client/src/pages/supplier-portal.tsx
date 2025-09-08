@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,14 +10,45 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Building2, Users, LogIn, UserPlus, Globe, Phone, Mail, MapPin } from "lucide-react";
+import { Building2, Users, LogIn, UserPlus, Globe, Phone, Mail, MapPin, LogOut, Package, TrendingUp, ShoppingCart } from "lucide-react";
 
 export default function SupplierPortal() {
   const { toast } = useToast();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [supplierData, setSupplierData] = useState(null);
   const [loginData, setLoginData] = useState({
     contactEmail: "",
     password: ""
   });
+
+  // Check if supplier is already logged in
+  React.useEffect(() => {
+    const supplierToken = localStorage.getItem('supplierToken');
+    const storedSupplierData = localStorage.getItem('supplierData');
+    
+    if (supplierToken && storedSupplierData) {
+      try {
+        const parsedData = JSON.parse(storedSupplierData);
+        setSupplierData(parsedData);
+        setIsLoggedIn(true);
+      } catch (error) {
+        // Clear invalid data
+        localStorage.removeItem('supplierToken');
+        localStorage.removeItem('supplierData');
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('supplierToken');
+    localStorage.removeItem('supplierData');
+    setIsLoggedIn(false);
+    setSupplierData(null);
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+  };
 
   const [signupData, setSignupData] = useState({
     companyName: "",
@@ -234,6 +265,118 @@ export default function SupplierPortal() {
     signupMutation.mutate(signupData);
   };
 
+  // If logged in, show supplier dashboard
+  if (isLoggedIn && supplierData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-blue-100 py-8 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <Card className="shadow-xl border-0 mb-6">
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-t-lg">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <Building2 className="w-8 h-8" />
+                  <div>
+                    <CardTitle className="text-2xl font-bold">{supplierData.companyName}</CardTitle>
+                    <CardDescription className="text-blue-100">Supplier Dashboard</CardDescription>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={handleLogout}
+                  className="bg-transparent border-white text-white hover:bg-white hover:text-blue-600"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+            </CardHeader>
+          </Card>
+
+          {/* Dashboard Content */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {/* Stats Cards */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center">
+                  <Package className="w-8 h-8 text-blue-500 mr-3" />
+                  <div className="text-2xl font-bold">24</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center">
+                  <ShoppingCart className="w-8 h-8 text-green-500 mr-3" />
+                  <div className="text-2xl font-bold">156</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Revenue (YTD)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center">
+                  <TrendingUp className="w-8 h-8 text-yellow-500 mr-3" />
+                  <div className="text-2xl font-bold">$342K</div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Welcome Message */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Welcome back, {supplierData.companyName}!</CardTitle>
+              <CardDescription>
+                Your supplier account is active and ready to receive orders from healthcare institutions.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-gray-600 space-y-2">
+                <p><strong>Status:</strong> <span className="text-green-600 font-medium">{supplierData.status || 'Active'}</span></p>
+                <p><strong>Email:</strong> {supplierData.email}</p>
+                {supplierData.tenantId && <p><strong>Tenant ID:</strong> {supplierData.tenantId}</p>}
+              </div>
+              
+              <div className="mt-6">
+                <h4 className="font-semibold mb-3">Quick Actions</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                  <Button variant="outline" className="justify-start">
+                    <Package className="w-4 h-4 mr-2" />
+                    Manage Products
+                  </Button>
+                  <Button variant="outline" className="justify-start">
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    View Orders
+                  </Button>
+                  <Button variant="outline" className="justify-start">
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    Analytics
+                  </Button>
+                  <Button variant="outline" className="justify-start">
+                    <Building2 className="w-4 h-4 mr-2" />
+                    Company Settings
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // If not logged in, show login/signup form
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-4xl">
