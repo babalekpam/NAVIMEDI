@@ -88,6 +88,10 @@ const BillingInsurance = React.lazy(() => import("@/pages/docs/billing-insurance
 const SecurityCompliance = React.lazy(() => import("@/pages/docs/security-compliance").then(m => ({ default: m.SecurityCompliance })));
 const PlatformOverview = React.lazy(() => import("@/pages/docs/platform-overview").then(m => ({ default: m.PlatformOverview })));
 const OrganizationSetup = React.lazy(() => import("@/pages/docs/organization-setup").then(m => ({ default: m.OrganizationSetup })));
+const UserAccountConfiguration = React.lazy(() => import("@/pages/docs/user-account-configuration").then(m => ({ default: m.UserAccountConfiguration })));
+const InitialSystemConfiguration = React.lazy(() => import("@/pages/docs/initial-system-configuration").then(m => ({ default: m.InitialSystemConfiguration })));
+const FirstPatientRegistration = React.lazy(() => import("@/pages/docs/first-patient-registration").then(m => ({ default: m.FirstPatientRegistration })));
+const RoleBasedAccessSetup = React.lazy(() => import("@/pages/docs/role-based-access-setup").then(m => ({ default: m.RoleBasedAccessSetup })));
 const ElectronicHealthRecords = React.lazy(() => import("@/pages/docs/electronic-health-records").then(m => ({ default: m.ElectronicHealthRecords })));
 const PrescriptionManagement = React.lazy(() => import("@/pages/docs/prescription-management").then(m => ({ default: m.PrescriptionManagement })));
 const LaboratoryOrderProcessing = React.lazy(() => import("@/pages/docs/laboratory-order-processing").then(m => ({ default: m.LaboratoryOrderProcessing })));
@@ -845,6 +849,10 @@ function AppContent() {
         <Route path="/docs/getting-started" component={GettingStarted} />
         <Route path="/docs/platform-overview" component={PlatformOverview} />
         <Route path="/docs/organization-setup" component={OrganizationSetup} />
+        <Route path="/docs/user-account-configuration" component={UserAccountConfiguration} />
+        <Route path="/docs/initial-system-configuration" component={InitialSystemConfiguration} />
+        <Route path="/docs/first-patient-registration" component={FirstPatientRegistration} />
+        <Route path="/docs/role-based-access-setup" component={RoleBasedAccessSetup} />
         <Route path="/docs/patient-management" component={PatientManagement} />
         <Route path="/docs/appointment-scheduling" component={AppointmentScheduling} />
         <Route path="/docs/electronic-health-records" component={ElectronicHealthRecords} />

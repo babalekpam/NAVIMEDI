@@ -13,12 +13,12 @@ export default function Documentation() {
       title: "Getting Started",
       description: "Quick start guides and initial setup",
       docs: [
-        { title: "Platform Overview", description: "Complete introduction to NAVIMED healthcare platform features and capabilities", readTime: "10 min" },
-        { title: "Organization Setup", description: "Step-by-step guide to setting up your healthcare organization", readTime: "15 min" },
-        { title: "User Account Configuration", description: "Creating and configuring user accounts for your team members", readTime: "8 min" },
-        { title: "Initial System Configuration", description: "Essential settings and configurations for new installations", readTime: "20 min" },
-        { title: "First Patient Registration", description: "Complete walkthrough of registering your first patient", readTime: "12 min" },
-        { title: "Role-Based Access Setup", description: "Configuring permissions for doctors, nurses, and administrative staff", readTime: "18 min" }
+        { title: "Platform Overview", description: "Complete introduction to NAVIMED healthcare platform features and capabilities", readTime: "10 min", href: "/docs/platform-overview" },
+        { title: "Organization Setup", description: "Step-by-step guide to setting up your healthcare organization", readTime: "15 min", href: "/docs/organization-setup" },
+        { title: "User Account Configuration", description: "Creating and configuring user accounts for your team members", readTime: "8 min", href: "/docs/user-account-configuration" },
+        { title: "Initial System Configuration", description: "Essential settings and configurations for new installations", readTime: "20 min", href: "/docs/initial-system-configuration" },
+        { title: "First Patient Registration", description: "Complete walkthrough of registering your first patient", readTime: "12 min", href: "/docs/first-patient-registration" },
+        { title: "Role-Based Access Setup", description: "Configuring permissions for doctors, nurses, and administrative staff", readTime: "18 min", href: "/docs/role-based-access-setup" }
       ]
     },
     {
