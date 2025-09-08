@@ -56,10 +56,6 @@ Allow: /docs/system-admin-training
 Allow: /docs/workflow-training-modules
 Allow: /docs/troubleshooting-guide
 Allow: /docs/quick-reference-guide
-Allow: /docs/patient-management
-Allow: /docs/appointment-scheduling
-Allow: /docs/billing-insurance
-Allow: /docs/security-compliance
 
 # Allow support pages
 Allow: /support/
@@ -83,4 +79,4 @@ Allow: /google*.html
 Crawl-delay: 1
 
 # Sitemap location
-Sitemap: https://navimedi.com/sitemap.xml
+Sitemap: https://navimedi.org/sitemap.xml
