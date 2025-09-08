@@ -131,7 +131,7 @@ export default function Documentation() {
                           <div key={idx} className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <Link href={`/docs/${doc.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                                <Link href={doc.href || `/docs/${doc.title.toLowerCase().replace(/\s+/g, '-')}`}>
                                   <button className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer text-left">
                                     {doc.title}
                                   </button>
@@ -142,7 +142,7 @@ export default function Documentation() {
                                   <span className="text-xs text-gray-500">{doc.readTime}</span>
                                 </div>
                               </div>
-                              <Link href={`/docs/${doc.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                              <Link href={doc.href || `/docs/${doc.title.toLowerCase().replace(/\s+/g, '-')}`}>
                                 <Button variant="ghost" size="sm">
                                   <FileText className="w-4 h-4" />
                                 </Button>
