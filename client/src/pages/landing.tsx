@@ -231,23 +231,39 @@ export default function LandingPage() {
               HIPAA Compliant • SOC 2 Type II • FDA 21 CFR Part 11
             </Badge>
             
-            {/* Main Headline */}
-            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-8 tracking-tight">
+            {/* Main Headline - Benefit-Focused */}
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 tracking-tight">
               <span className="bg-gradient-to-r from-slate-900 via-emerald-600 to-blue-600 bg-clip-text text-transparent">
-                Transform
+                Reduce Healthcare
               </span>
               <br />
-              <span className="text-slate-900">Healthcare Delivery</span>
+              <span className="text-slate-900">Admin Burden by 40%</span>
             </h1>
             
             {/* Subheading */}
-            <p className="text-xl md:text-2xl text-slate-600 mb-12 leading-relaxed max-w-3xl mx-auto">
-              Enterprise-grade healthcare management platform with real-time multilingual translation, 
-              complete tenant isolation, and intelligent workflow automation.
+            <p className="text-xl md:text-2xl text-slate-600 mb-8 leading-relaxed max-w-3xl mx-auto">
+              Streamline hospital operations with NaviMED's complete healthcare management platform. 
+              HIPAA-compliant solution trusted by 200+ healthcare facilities worldwide.
             </p>
+
+            {/* Social Proof Numbers */}
+            <div className="grid grid-cols-3 gap-8 mb-12 max-w-2xl mx-auto">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-emerald-600 mb-2">200+</div>
+                <div className="text-sm text-slate-600">Healthcare facilities</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600 mb-2">50,000+</div>
+                <div className="text-sm text-slate-600">Patient records daily</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-emerald-600 mb-2">99.9%</div>
+                <div className="text-sm text-slate-600">Uptime guarantee</div>
+              </div>
+            </div>
             
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
+            {/* Multiple CTA Options */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Link href="/register">
                 <Button size="lg" className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 shadow-xl shadow-emerald-600/25 px-8 py-4 text-lg">
                   <Play className="w-5 h-5 mr-2" />
@@ -256,18 +272,36 @@ export default function LandingPage() {
                 </Button>
               </Link>
               
+              <Button size="lg" variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50 px-8 py-4 text-lg">
+                <Calendar className="w-5 h-5 mr-2" />
+                Book a Demo
+              </Button>
 
-              
+              <Button size="lg" variant="ghost" className="text-slate-600 hover:text-slate-800 px-8 py-4 text-lg">
+                <Monitor className="w-5 h-5 mr-2" />
+                See Platform Tour
+              </Button>
+            </div>
+
+            {/* Urgency Element */}
+            <div className="mb-8">
+              <Badge className="bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 px-4 py-2">
+                <Clock className="w-4 h-4 mr-2" />
+                Limited Time: Free implementation for next 10 sign-ups
+              </Badge>
+            </div>
+
+            {/* Secondary CTAs */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 text-sm">
               <Link href="/login">
-                <Button size="lg" variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50 px-8 py-4 text-lg">
-                  <Monitor className="w-5 h-5 mr-2" />
+                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-800">
+                  <Monitor className="w-4 h-4 mr-2" />
                   Provider Login
                 </Button>
               </Link>
-
               <Link href="/patient-login">
-                <Button size="lg" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50 px-8 py-4 text-lg">
-                  <User className="w-5 h-5 mr-2" />
+                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-800">
+                  <User className="w-4 h-4 mr-2" />
                   Patient Portal
                 </Button>
               </Link>
