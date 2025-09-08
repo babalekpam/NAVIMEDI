@@ -51,7 +51,8 @@ import {
   Megaphone,
   ShoppingCart,
   Package,
-  Laptop
+  Laptop,
+  BookOpen
 } from "lucide-react";
 
 // Professional healthcare platform branding
