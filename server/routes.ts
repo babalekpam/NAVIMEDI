@@ -364,6 +364,149 @@ sectigo.com
     }
   });
 
+  // Marketplace endpoints to display supplier products (public access)
+  app.get('/api/marketplace/products', async (req, res) => {
+    try {
+      // For now, return sample marketplace products that suppliers would post
+      // In production, this would query a database of supplier products
+      const marketplaceProducts = [
+        {
+          id: '1',
+          name: 'Digital X-Ray Machine',
+          category: 'Radiology Equipment',
+          price: 45000,
+          description: 'High-resolution digital X-ray system with advanced imaging capabilities',
+          supplierName: 'I2A Medical Equipment Ltd.',
+          supplierId: 'i2a_medical',
+          status: 'active',
+          images: ['/api/placeholder-image/xray-machine.jpg'],
+          specifications: {
+            power: '50kW',
+            resolution: '4096 x 4096',
+            warranty: '2 years'
+          }
+        },
+        {
+          id: '2', 
+          name: 'Hospital Bed - Electric',
+          category: 'Patient Care',
+          price: 2800,
+          description: 'Fully electric hospital bed with side rails and patient controls',
+          supplierName: 'I2A Medical Equipment Ltd.',
+          supplierId: 'i2a_medical',
+          status: 'active',
+          images: ['/api/placeholder-image/hospital-bed.jpg'],
+          specifications: {
+            capacity: '500 lbs',
+            height: 'Adjustable 14"-26"',
+            warranty: '5 years'
+          }
+        },
+        {
+          id: '3',
+          name: 'Surgical Instruments Kit',
+          category: 'Surgical Equipment', 
+          price: 1200,
+          description: 'Complete surgical instrument set for general procedures',
+          supplierName: 'I2A Medical Equipment Ltd.',
+          supplierId: 'i2a_medical',
+          status: 'active',
+          images: ['/api/placeholder-image/surgical-kit.jpg'],
+          specifications: {
+            pieces: '45 instruments',
+            material: 'Stainless steel',
+            sterilization: 'Autoclave compatible'
+          }
+        },
+        {
+          id: '4',
+          name: 'Patient Monitor',
+          category: 'Monitoring Equipment',
+          price: 3200,
+          description: 'Multi-parameter patient monitoring system',
+          supplierName: 'I2A Medical Equipment Ltd.',
+          supplierId: 'i2a_medical', 
+          status: 'active',
+          images: ['/api/placeholder-image/patient-monitor.jpg'],
+          specifications: {
+            parameters: 'ECG, Blood Pressure, SpO2, Temperature',
+            display: '15" Touch Screen',
+            battery: '4-hour backup'
+          }
+        },
+        {
+          id: '5',
+          name: 'MRI Scanner - 1.5T',
+          category: 'Radiology Equipment',
+          price: 1500000,
+          description: 'Advanced 1.5 Tesla MRI scanner with latest imaging technology',
+          supplierName: 'Advanced Medical Systems Corp.',
+          supplierId: 'ams_corp',
+          status: 'active',
+          images: ['/api/placeholder-image/mri-scanner.jpg'],
+          specifications: {
+            fieldStrength: '1.5 Tesla',
+            bore: '70cm',
+            installation: 'Full installation included'
+          }
+        }
+      ];
+      
+      res.json(marketplaceProducts);
+    } catch (error) {
+      console.error('Error fetching marketplace products:', error);
+      res.status(500).json({ error: 'Failed to fetch marketplace products' });
+    }
+  });
+
+  // Quote request endpoint for marketplace
+  app.post('/api/marketplace/quote-requests', async (req, res) => {
+    try {
+      const { productId, companyName, contactName, email, phone, quantity, message } = req.body;
+      
+      // Basic validation
+      if (!productId || !companyName || !contactName || !email || !quantity) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      // Log quote request (in production, save to database)
+      console.log('Quote request received:', {
+        productId,
+        companyName,
+        contactName,
+        email,
+        phone,
+        quantity,
+        message,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({ 
+        message: 'Quote request submitted successfully',
+        quoteId: `QUOTE-${Date.now()}`,
+        status: 'pending'
+      });
+    } catch (error) {
+      console.error('Error processing quote request:', error);
+      res.status(500).json({ error: 'Failed to process quote request' });
+    }
+  });
+
+  // Placeholder image endpoint for marketplace
+  app.get('/api/placeholder-image/:imageName', (req, res) => {
+    const imageName = req.params.imageName;
+    // Return a simple SVG placeholder
+    const svg = `<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100%" height="100%" fill="#f0f0f0"/>
+      <text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="#666">
+        ${imageName.replace('.jpg', '').replace('-', ' ')}
+      </text>
+    </svg>`;
+    
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.send(svg);
+  });
+
   // Health check endpoints (no auth required)
   app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -1407,7 +1550,7 @@ sectigo.com
 
   // Apply authentication middleware to all /api routes except public ones
   app.use('/api', (req, res, next) => {
-    const publicRoutes = ['/api/auth/login', '/api/register-organization', '/api/create-setup-intent', '/api/health', '/api/healthz', '/api/status', '/api/ping', '/api/platform/stats', '/api/test-post', '/api/insurance-claims-test'];
+    const publicRoutes = ['/api/auth/login', '/api/register-organization', '/api/create-setup-intent', '/api/health', '/api/healthz', '/api/status', '/api/ping', '/api/platform/stats', '/api/test-post', '/api/insurance-claims-test', '/api/marketplace/products', '/api/marketplace/quote-requests', '/api/placeholder-image/'];
     
     
     // Debug logging for insurance claims requests

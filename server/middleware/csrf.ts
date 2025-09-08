@@ -64,7 +64,10 @@ export const csrfProtection = (req: CSRFRequest, res: Response, next: NextFuncti
     '/public/',
     '/.well-known/',
     '/api/platform/stats',
-    '/api/csrf-token'
+    '/api/csrf-token',
+    '/api/marketplace/products',
+    '/api/marketplace/quote-requests',
+    '/api/placeholder-image/'
   ];
 
   const isPublicPath = publicPaths.some(path => req.path.startsWith(path));

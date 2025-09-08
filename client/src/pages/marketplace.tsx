@@ -17,21 +17,16 @@ import { PublicHeader } from "@/components/layout/public-header";
 interface Product {
   id: string;
   name: string;
-  sku: string;
   description: string;
   category: string;
   price: number;
-  stockQuantity: number;
   status: string;
-  imageUrls: string[];
+  images?: string[];
   supplierName: string;
-  supplierContact: {
-    email: string;
-    phone: string;
-    address: string;
+  supplierId: string;
+  specifications?: {
+    [key: string]: string;
   };
-  rating: number;
-  reviews: number;
 }
 
 export default function MarketplacePage() {
@@ -306,9 +301,9 @@ export default function MarketplacePage() {
             {filteredProducts.map((product: Product) => (
               <Card key={product.id} className="group hover:shadow-lg transition-all duration-200 cursor-pointer">
                 <div className="relative">
-                  {product.imageUrls && product.imageUrls.length > 0 ? (
+                  {product.images && product.images.length > 0 ? (
                     <img
-                      src={product.imageUrls[0]}
+                      src={product.images[0]}
                       alt={product.name}
                       className="w-full h-48 object-cover rounded-t-lg"
                     />
@@ -318,10 +313,10 @@ export default function MarketplacePage() {
                     </div>
                   )}
                   <Badge
-                    variant={product.stockQuantity > 0 ? "default" : "destructive"}
+                    variant="default"
                     className="absolute top-2 right-2"
                   >
-                    {product.stockQuantity > 0 ? "In Stock" : "Out of Stock"}
+                    Available
                   </Badge>
                 </div>
 
@@ -340,30 +335,12 @@ export default function MarketplacePage() {
                     {product.description}
                   </p>
                   
-                  <div className="flex items-center mb-3">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${
-                            i < Math.floor(product.rating || 4.5)
-                              ? "text-yellow-400 fill-current"
-                              : "text-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-sm text-gray-600 dark:text-gray-300 ml-2">
-                      ({product.reviews || 12} reviews)
-                    </span>
-                  </div>
-                  
                   <div className="flex items-center justify-between mb-3">
                     <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                       ${product.price.toLocaleString()}
                     </div>
-                    <div className="text-sm text-gray-500">
-                      Stock: {product.stockQuantity}
+                    <div className="text-sm text-gray-500 bg-green-100 text-green-700 px-2 py-1 rounded">
+                      Available
                     </div>
                   </div>
                   
@@ -393,9 +370,9 @@ export default function MarketplacePage() {
                         </DialogHeader>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
-                            {product.imageUrls && product.imageUrls.length > 0 ? (
+                            {product.images && product.images.length > 0 ? (
                               <img
-                                src={product.imageUrls[0]}
+                                src={product.images[0]}
                                 alt={product.name}
                                 className="w-full h-64 object-cover rounded-lg"
                               />
