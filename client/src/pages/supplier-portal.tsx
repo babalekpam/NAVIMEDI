@@ -21,10 +21,13 @@ interface SupplierData {
   role?: string;
 }
 
+type DashboardSection = 'overview' | 'products' | 'orders' | 'analytics' | 'settings';
+
 export default function SupplierPortal() {
   const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [supplierData, setSupplierData] = useState<SupplierData | null>(null);
+  const [activeSection, setActiveSection] = useState<DashboardSection>('overview');
   const [loginData, setLoginData] = useState({
     contactEmail: "",
     password: ""
@@ -348,7 +351,7 @@ export default function SupplierPortal() {
             </Card>
           </div>
 
-          {/* Welcome Message */}
+          {/* Navigation Tabs */}
           <Card>
             <CardHeader>
               <CardTitle>Welcome back, {supplierData.companyName}!</CardTitle>
@@ -357,61 +360,199 @@ export default function SupplierPortal() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-sm text-gray-600 space-y-2">
+              <div className="text-sm text-gray-600 space-y-2 mb-6">
                 <p><strong>Status:</strong> <span className="text-green-600 font-medium">{supplierData.status || 'Active'}</span></p>
                 <p><strong>Email:</strong> {supplierData.email}</p>
                 {supplierData.tenantId && <p><strong>Tenant ID:</strong> {supplierData.tenantId}</p>}
               </div>
               
-              <div className="mt-6">
-                <h4 className="font-semibold mb-3">Quick Actions</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="mb-6">
+                <h4 className="font-semibold mb-3">Dashboard Sections</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
                   <Button 
-                    variant="outline" 
+                    variant={activeSection === 'overview' ? 'default' : 'outline'} 
                     className="justify-start"
-                    onClick={() => toast({
-                      title: "Manage Products",
-                      description: "Product management feature coming soon!",
-                    })}
+                    onClick={() => setActiveSection('overview')}
+                  >
+                    <Building2 className="w-4 h-4 mr-2" />
+                    Overview
+                  </Button>
+                  <Button 
+                    variant={activeSection === 'products' ? 'default' : 'outline'} 
+                    className="justify-start"
+                    onClick={() => setActiveSection('products')}
                   >
                     <Package className="w-4 h-4 mr-2" />
-                    Manage Products
+                    Products
                   </Button>
                   <Button 
-                    variant="outline" 
+                    variant={activeSection === 'orders' ? 'default' : 'outline'} 
                     className="justify-start"
-                    onClick={() => toast({
-                      title: "View Orders",
-                      description: "Order management feature coming soon!",
-                    })}
+                    onClick={() => setActiveSection('orders')}
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    View Orders
+                    Orders
                   </Button>
                   <Button 
-                    variant="outline" 
+                    variant={activeSection === 'analytics' ? 'default' : 'outline'} 
                     className="justify-start"
-                    onClick={() => toast({
-                      title: "Analytics",
-                      description: "Analytics dashboard coming soon!",
-                    })}
+                    onClick={() => setActiveSection('analytics')}
                   >
                     <TrendingUp className="w-4 h-4 mr-2" />
                     Analytics
                   </Button>
                   <Button 
-                    variant="outline" 
+                    variant={activeSection === 'settings' ? 'default' : 'outline'} 
                     className="justify-start"
-                    onClick={() => toast({
-                      title: "Company Settings",
-                      description: "Company settings management coming soon!",
-                    })}
+                    onClick={() => setActiveSection('settings')}
                   >
                     <Building2 className="w-4 h-4 mr-2" />
-                    Company Settings
+                    Settings
                   </Button>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Dynamic Content Area */}
+          <Card>
+            <CardContent className="p-6">
+              {activeSection === 'overview' && (
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">Company Overview</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <h4 className="font-medium text-blue-800">Business Profile</h4>
+                      <p className="text-sm text-blue-600 mt-1">
+                        Medical equipment supplier serving healthcare institutions globally
+                      </p>
+                    </div>
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <h4 className="font-medium text-green-800">Account Status</h4>
+                      <p className="text-sm text-green-600 mt-1">
+                        Active and approved for marketplace transactions
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeSection === 'products' && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-semibold">Product Management</h3>
+                    <Button>Add New Product</Button>
+                  </div>
+                  <div className="space-y-3">
+                    {['Digital X-Ray Machine', 'Hospital Bed - Electric', 'Surgical Instruments Kit', 'Patient Monitor'].map((product, index) => (
+                      <div key={index} className="p-4 border rounded-lg flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{product}</h4>
+                          <p className="text-sm text-gray-600">Category: Medical Equipment</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm">Edit</Button>
+                          <Button variant="outline" size="sm">View</Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeSection === 'orders' && (
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">Order Management</h3>
+                  <div className="space-y-3">
+                    {[
+                      { id: 'ORD-001', hospital: 'Saint Paul Hospital', product: 'Digital X-Ray Machine', status: 'Processing', amount: '$45,000' },
+                      { id: 'ORD-002', hospital: 'City Medical Center', product: 'Hospital Bed - Electric', status: 'Shipped', amount: '$2,800' },
+                      { id: 'ORD-003', hospital: 'Regional Healthcare', product: 'Patient Monitor', status: 'Delivered', amount: '$3,200' }
+                    ].map((order, index) => (
+                      <div key={index} className="p-4 border rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium">{order.id}</h4>
+                            <p className="text-sm text-gray-600">{order.hospital}</p>
+                            <p className="text-sm text-gray-600">{order.product}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">{order.amount}</p>
+                            <span className={`text-xs px-2 py-1 rounded ${
+                              order.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
+                              order.status === 'Shipped' ? 'bg-blue-100 text-blue-800' :
+                              'bg-green-100 text-green-800'
+                            }`}>
+                              {order.status}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeSection === 'analytics' && (
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">Sales Analytics</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="p-4 border rounded-lg text-center">
+                      <h4 className="text-2xl font-bold text-blue-600">$124K</h4>
+                      <p className="text-sm text-gray-600">Total Revenue</p>
+                    </div>
+                    <div className="p-4 border rounded-lg text-center">
+                      <h4 className="text-2xl font-bold text-green-600">87</h4>
+                      <p className="text-sm text-gray-600">Orders Completed</p>
+                    </div>
+                    <div className="p-4 border rounded-lg text-center">
+                      <h4 className="text-2xl font-bold text-purple-600">12</h4>
+                      <p className="text-sm text-gray-600">Active Partners</p>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h4 className="font-medium mb-2">Performance Trends</h4>
+                    <p className="text-sm text-gray-600">📈 Revenue increased by 23% this quarter</p>
+                    <p className="text-sm text-gray-600">🎯 Customer satisfaction: 4.8/5 stars</p>
+                    <p className="text-sm text-gray-600">⚡ Average delivery time: 3.2 days</p>
+                  </div>
+                </div>
+              )}
+
+              {activeSection === 'settings' && (
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">Company Settings</h3>
+                  <div className="space-y-4">
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium mb-2">Business Information</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="company-name">Company Name</Label>
+                          <Input id="company-name" value={supplierData.companyName} readOnly />
+                        </div>
+                        <div>
+                          <Label htmlFor="contact-email">Contact Email</Label>
+                          <Input id="contact-email" value={supplierData.email} readOnly />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium mb-2">Account Preferences</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="notifications">Email Notifications</Label>
+                          <Checkbox id="notifications" defaultChecked />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="auto-accept">Auto-Accept Small Orders</Label>
+                          <Checkbox id="auto-accept" />
+                        </div>
+                      </div>
+                    </div>
+                    <Button className="w-full">Save Settings</Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
