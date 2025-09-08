@@ -295,12 +295,22 @@ export default function LandingPage() {
               </Button>
             </Link>
             
-            <Button size="lg" variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50 px-8 py-4 text-lg">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-slate-300 text-slate-700 hover:bg-slate-50 px-8 py-4 text-lg"
+              aria-label="Schedule a product demo with our team"
+            >
               <Calendar className="w-5 h-5 mr-2" />
               Book a Demo
             </Button>
 
-            <Button size="lg" variant="ghost" className="text-slate-600 hover:text-slate-800 px-8 py-4 text-lg">
+            <Button 
+              size="lg" 
+              variant="ghost" 
+              className="text-slate-600 hover:text-slate-800 px-8 py-4 text-lg"
+              aria-label="View interactive platform tour"
+            >
               <Monitor className="w-5 h-5 mr-2" />
               See Platform Tour
             </Button>
@@ -406,7 +416,7 @@ export default function LandingPage() {
                     <Building2 className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900">Dr. Sarah Chen</h4>
+                    <h3 className="font-bold text-slate-900">Dr. Sarah Chen</h3>
                     <p className="text-sm text-slate-600">CIO, Metro General Hospital</p>
                   </div>
                 </div>
@@ -428,7 +438,7 @@ export default function LandingPage() {
                     <Pill className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900">Michael Rodriguez</h4>
+                    <h3 className="font-bold text-slate-900">Michael Rodriguez</h3>
                     <p className="text-sm text-slate-600">Director, MediCare Pharmacy</p>
                   </div>
                 </div>
@@ -450,7 +460,7 @@ export default function LandingPage() {
                     <TestTube className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900">Dr. Priya Patel</h4>
+                    <h3 className="font-bold text-slate-900">Dr. Priya Patel</h3>
                     <p className="text-sm text-slate-600">Lab Director, Advanced Diagnostics</p>
                   </div>
                 </div>
@@ -706,9 +716,24 @@ export default function LandingPage() {
               <h3 className="text-xl font-bold mb-4">{brandName}</h3>
               <p className="text-gray-400 mb-4">{tagline}</p>
               <div className="flex space-x-4">
-                <MessageCircle className="w-5 h-5 hover:text-blue-400 cursor-pointer" />
-                <Phone className="w-5 h-5 hover:text-green-400 cursor-pointer" />
-                <Mail className="w-5 h-5 hover:text-red-400 cursor-pointer" />
+                <button 
+                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                  aria-label="Contact us via live chat"
+                >
+                  <MessageCircle className="w-5 h-5 hover:text-blue-400" />
+                </button>
+                <button 
+                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                  aria-label="Call our support team"
+                >
+                  <Phone className="w-5 h-5 hover:text-green-400" />
+                </button>
+                <button 
+                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                  aria-label="Send us an email"
+                >
+                  <Mail className="w-5 h-5 hover:text-red-400" />
+                </button>
               </div>
             </div>
             <div>
