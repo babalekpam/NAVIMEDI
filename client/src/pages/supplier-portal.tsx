@@ -118,7 +118,7 @@ export default function SupplierPortal() {
     setSelectedProduct(null);
   };
 
-  const handleImageUpload = (imageUrl: string) => {
+  const handleImageUpload = async (file: File) => {
     const currentImages = productForm.images || [];
     if (currentImages.length >= 5) {
       toast({
@@ -128,11 +128,55 @@ export default function SupplierPortal() {
       });
       return;
     }
-    
-    setProductForm({
-      ...productForm,
-      images: [...currentImages, imageUrl]
-    });
+
+    try {
+      // Get upload URL from server
+      const response = await fetch('/api/objects/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('supplierToken')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to get upload URL');
+      }
+      
+      const { uploadURL } = await response.json();
+      
+      // Upload file directly to object storage
+      const uploadResponse = await fetch(uploadURL, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type
+        }
+      });
+      
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image');
+      }
+      
+      // Create object path for accessing the image
+      const objectPath = `/objects/${uploadURL.split('/').pop()?.split('?')[0]}`;
+      
+      setProductForm({
+        ...productForm,
+        images: [...currentImages, objectPath]
+      });
+
+      toast({
+        title: "Image Uploaded",
+        description: `${file.name} uploaded successfully`,
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleRemoveImage = (index: number) => {
@@ -658,10 +702,20 @@ export default function SupplierPortal() {
                             <Label>Product Images (JPEG only, max 5)</Label>
                             <div className="space-y-3">
                               {/* Current Images */}
-                              {(productForm.images || []).map((image, index) => (
+                              {(productForm.images || []).map((imagePath, index) => (
                                 <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
-                                  <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
-                                    <span className="text-xs text-gray-500">IMG {index + 1}</span>
+                                  <div className="w-16 h-16 bg-gray-100 rounded overflow-hidden">
+                                    <img 
+                                      src={imagePath} 
+                                      alt={`Product image ${index + 1}`}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        // Fallback to placeholder if image fails to load
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        target.parentElement!.innerHTML = `<span class="text-xs text-gray-500">IMG ${index + 1}</span>`;
+                                      }}
+                                    />
                                   </div>
                                   <div className="flex-1">
                                     <p className="text-sm font-medium">Image {index + 1}</p>
@@ -689,13 +743,7 @@ export default function SupplierPortal() {
                                       const file = e.target.files?.[0];
                                       if (file) {
                                         if (file.type === 'image/jpeg' || file.type === 'image/jpg') {
-                                          // Simulate upload success
-                                          const mockImageUrl = `/uploads/${Date.now()}_${file.name}`;
-                                          handleImageUpload(mockImageUrl);
-                                          toast({
-                                            title: "Image Added",
-                                            description: `${file.name} added successfully`,
-                                          });
+                                          handleImageUpload(file);
                                         } else {
                                           toast({
                                             title: "Invalid Format",
