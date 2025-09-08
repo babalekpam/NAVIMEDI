@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 
-export function TroubleshootingGuide() {
+export default function TroubleshootingGuide() {
   const troubleshootingCategories = [
     {
       category: "Login & Authentication",

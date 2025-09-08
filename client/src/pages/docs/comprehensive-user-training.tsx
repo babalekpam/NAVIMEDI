@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
 
-export function ComprehensiveUserTraining() {
+export default function ComprehensiveUserTraining() {
   const trainingModules = [
     {
       id: "foundation",

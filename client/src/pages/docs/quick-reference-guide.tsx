@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
 
-export function QuickReferenceGuide() {
+export default function QuickReferenceGuide() {
   const keyboardShortcuts = [
     { action: "Quick Search", shortcut: "Ctrl + K", description: "Open global search dialog" },
     { action: "New Patient", shortcut: "Ctrl + N", description: "Create new patient record" },

@@ -673,6 +673,91 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Training & Documentation Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4 text-gray-900">Comprehensive Training & Support</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Get your team up and running quickly with our extensive training programs, documentation, and 24/7 support.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="p-6 hover:shadow-lg transition-all duration-300 border-2 hover:border-blue-200">
+              <CardContent className="text-center p-0">
+                <BookOpen className="w-12 h-12 mx-auto mb-4 text-blue-600" />
+                <h3 className="font-semibold mb-2 text-lg">User Training Programs</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Foundation, Intermediate, and Advanced training levels for all healthcare staff with role-specific modules.
+                </p>
+                <Link href="/docs/comprehensive-user-training">
+                  <Button variant="outline" className="w-full">
+                    Start Training
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+            
+            <Card className="p-6 hover:shadow-lg transition-all duration-300 border-2 hover:border-green-200">
+              <CardContent className="text-center p-0">
+                <FileText className="w-12 h-12 mx-auto mb-4 text-green-600" />
+                <h3 className="font-semibold mb-2 text-lg">Complete Documentation</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Comprehensive guides, API documentation, workflow tutorials, and quick reference materials.
+                </p>
+                <Link href="/support/documentation">
+                  <Button variant="outline" className="w-full">
+                    View Docs
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+            
+            <Card className="p-6 hover:shadow-lg transition-all duration-300 border-2 hover:border-purple-200">
+              <CardContent className="text-center p-0">
+                <Headphones className="w-12 h-12 mx-auto mb-4 text-purple-600" />
+                <h3 className="font-semibold mb-2 text-lg">24/7 Expert Support</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Get instant help from healthcare IT specialists with troubleshooting guides and direct support access.
+                </p>
+                <Link href="/docs/troubleshooting-guide">
+                  <Button variant="outline" className="w-full">
+                    Get Help
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="text-center mt-10">
+            <p className="text-gray-600 mb-4">
+              <strong>Quick Access:</strong> System Admin Training • Workflow Modules • Quick Reference Guides
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/docs/system-admin-training">
+                <Badge variant="outline" className="px-3 py-1 hover:bg-blue-50 cursor-pointer">
+                  Admin Training
+                </Badge>
+              </Link>
+              <Link href="/docs/workflow-training-modules">
+                <Badge variant="outline" className="px-3 py-1 hover:bg-green-50 cursor-pointer">
+                  Workflow Modules
+                </Badge>
+              </Link>
+              <Link href="/docs/quick-reference-guide">
+                <Badge variant="outline" className="px-3 py-1 hover:bg-purple-50 cursor-pointer">
+                  Quick Reference
+                </Badge>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Call to Action */}
       <section className="py-16 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <div className="max-w-4xl mx-auto text-center px-4">
@@ -733,9 +818,9 @@ export default function LandingPage() {
               <h4 className="font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>24/7 Support</li>
-                <li>Documentation</li>
-                <li>Training</li>
-                <li>Contact Us</li>
+                <li><Link href="/support/documentation" className="hover:text-white transition-colors">Documentation</Link></li>
+                <li><Link href="/docs/comprehensive-user-training" className="hover:text-white transition-colors">Training</Link></li>
+                <li><Link href="/support/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
               </ul>
             </div>
           </div>

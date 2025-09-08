@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
 
-export function SystemAdminTraining() {
+export default function SystemAdminTraining() {
   const adminModules = [
     {
       title: "System Setup & Configuration",

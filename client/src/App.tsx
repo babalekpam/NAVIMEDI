@@ -92,11 +92,11 @@ const ElectronicHealthRecords = React.lazy(() => import("@/pages/docs/electronic
 const PrescriptionManagement = React.lazy(() => import("@/pages/docs/prescription-management").then(m => ({ default: m.PrescriptionManagement })));
 const LaboratoryOrderProcessing = React.lazy(() => import("@/pages/docs/laboratory-order-processing").then(m => ({ default: m.LaboratoryOrderProcessing })));
 const ClinicalDocumentation = React.lazy(() => import("@/pages/docs/clinical-documentation").then(m => ({ default: m.ClinicalDocumentation })));
-const ComprehensiveUserTraining = React.lazy(() => import("@/pages/docs/comprehensive-user-training").then(m => ({ default: m.ComprehensiveUserTraining })));
-const SystemAdminTraining = React.lazy(() => import("@/pages/docs/system-admin-training").then(m => ({ default: m.SystemAdminTraining })));
-const WorkflowTrainingModules = React.lazy(() => import("@/pages/docs/workflow-training-modules").then(m => ({ default: m.WorkflowTrainingModules })));
-const TroubleshootingGuide = React.lazy(() => import("@/pages/docs/troubleshooting-guide").then(m => ({ default: m.TroubleshootingGuide })));
-const QuickReferenceGuide = React.lazy(() => import("@/pages/docs/quick-reference-guide").then(m => ({ default: m.QuickReferenceGuide })));
+const ComprehensiveUserTraining = React.lazy(() => import("@/pages/docs/comprehensive-user-training"));
+const SystemAdminTraining = React.lazy(() => import("@/pages/docs/system-admin-training"));
+const WorkflowTrainingModules = React.lazy(() => import("@/pages/docs/workflow-training-modules"));
+const TroubleshootingGuide = React.lazy(() => import("@/pages/docs/troubleshooting-guide"));
+const QuickReferenceGuide = React.lazy(() => import("@/pages/docs/quick-reference-guide"));
 const VideoPlayer = React.lazy(() => import("@/pages/videos/video-player"));
 const VideoIntegrationOptions = React.lazy(() => import("@/pages/videos/video-integration-options"));
 const YoutubeIntegration = React.lazy(() => import("@/pages/videos/youtube-integration"));

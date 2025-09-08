@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
 
-export function WorkflowTrainingModules() {
+export default function WorkflowTrainingModules() {
   const workflows = [
     {
       id: "patient-admission",
