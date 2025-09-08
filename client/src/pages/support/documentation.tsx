@@ -59,6 +59,17 @@ export default function Documentation() {
         { title: "Pediatric Care Protocols", description: "Specialized workflows for pediatric patients and family-centered care", readTime: "32 min" },
         { title: "Mental Health Documentation", description: "Specialized documentation for mental health services and therapy sessions", readTime: "28 min" }
       ]
+    },
+    {
+      title: "Comprehensive Training Programs",
+      description: "Professional training and certification programs",
+      docs: [
+        { title: "Comprehensive User Training", description: "Complete training program with Foundation, Intermediate, and Advanced levels for all healthcare staff", readTime: "20-40 hours" },
+        { title: "System Admin Training", description: "Advanced administrator training covering system setup, security, data management, and integration", readTime: "15-20 hours" },
+        { title: "Workflow Training Modules", description: "Hands-on training for specific healthcare workflows including patient admission and clinical documentation", readTime: "4-8 hours per workflow" },
+        { title: "Troubleshooting Guide", description: "Complete troubleshooting reference with common issues, error codes, and FAQ for quick problem resolution", readTime: "Quick Reference" },
+        { title: "Quick Reference Guide", description: "Printable quick reference materials including keyboard shortcuts, common actions, and medical codes", readTime: "Quick Reference" }
+      ]
     }
   ];
 
