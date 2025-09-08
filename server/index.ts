@@ -423,6 +423,10 @@ async function initializePlatform() {
     });
     
     // Serve supplier portal routes directly to React app
+    app.get("/supplier-login", (req, res) => {
+      res.sendFile(path.resolve(distPath, "index.html"));
+    });
+    
     app.get("/supplier-login-direct", (req, res) => {
       res.sendFile(path.resolve(distPath, "index.html"));
     });
