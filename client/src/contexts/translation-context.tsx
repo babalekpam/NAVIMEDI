@@ -76,6 +76,41 @@ const translations = {
     'first-name': 'First Name',
     'last-name': 'Last Name',
     
+    // Landing Page
+    'next-generation-healthcare': 'Next-Generation Healthcare Management Platform',
+    'healthcare-team-meeting': 'Healthcare Team Meeting',
+    'professional-healthcare-team': 'Professional Healthcare Team',
+    'collaborative-healthcare': 'Collaborative healthcare professionals working together for better patient outcomes',
+    'medical-imaging-analysis': 'Medical Imaging Analysis',
+    'advanced-medical-imaging': 'Advanced Medical Imaging',
+    'cutting-edge-diagnostic': 'Cutting-edge diagnostic technology with brain scan analysis and medical expertise',
+    'health-assessment-tech': 'Health Assessment Technology',
+    'digital-health-assessment': 'Digital Health Assessment',
+    'comprehensive-health-monitoring': 'Comprehensive health monitoring and assessment through advanced digital platforms',
+    'healthcare-management-system': 'Healthcare Management System',
+    'healthcare-management-solutions': 'Healthcare Management Solutions',
+    'integrated-healthcare-management': 'Integrated healthcare management icons and comprehensive system overview',
+    'healthcare-security-compliance': 'Healthcare Security & Compliance',
+    'secure-healthcare-platform': 'Secure Healthcare Platform',
+    'advanced-security-measures': 'Advanced security measures and compliance protocols for healthcare data protection',
+    'medical-supply-warehouse': 'Medical Supply Warehouse',
+    'medical-supply-management': 'Medical Supply Management',
+    'state-of-art-medical-equipment': 'State-of-the-art medical equipment warehouse and inventory management systems',
+    
+    // Call-to-Action Buttons
+    'get-started-today': 'Get Started Today',
+    'explore-features': 'Explore Features',
+    'request-demo': 'Request Demo',
+    'contact-sales': 'Contact Sales',
+    'learn-more': 'Learn More',
+    'join-thousands': 'Join Thousands of Healthcare Professionals',
+    
+    // Feature Headings
+    'comprehensive-solution': 'Comprehensive Healthcare Solution',
+    'all-in-one-platform': 'All-in-One Platform for Modern Healthcare',
+    'powerful-features': 'Powerful Features for Every Healthcare Professional',
+    'enterprise-ready': 'Enterprise-Ready Healthcare Platform',
+    
     // Dashboard specific
     'physician-dashboard': 'Physician Dashboard',
     'nurse-dashboard': 'Nurse Dashboard', 
@@ -227,6 +262,41 @@ const translations = {
     // Forms and Actions
     'first-name': 'Nombre',
     'last-name': 'Apellido',
+    
+    // Landing Page
+    'next-generation-healthcare': 'Plataforma de Gestión Sanitaria de Nueva Generación',
+    'healthcare-team-meeting': 'Reunión del Equipo de Salud',
+    'professional-healthcare-team': 'Equipo de Salud Profesional',
+    'collaborative-healthcare': 'Profesionales de la salud colaborativos trabajando juntos para mejores resultados de los pacientes',
+    'medical-imaging-analysis': 'Análisis de Imágenes Médicas',
+    'advanced-medical-imaging': 'Imágenes Médicas Avanzadas',
+    'cutting-edge-diagnostic': 'Tecnología de diagnóstico de vanguardia con análisis de escáner cerebral y experiencia médica',
+    'health-assessment-tech': 'Tecnología de Evaluación de Salud',
+    'digital-health-assessment': 'Evaluación Digital de Salud',
+    'comprehensive-health-monitoring': 'Monitoreo y evaluación integral de salud a través de plataformas digitales avanzadas',
+    'healthcare-management-system': 'Sistema de Gestión Sanitaria',
+    'healthcare-management-solutions': 'Soluciones de Gestión Sanitaria',
+    'integrated-healthcare-management': 'Iconos de gestión sanitaria integrada y vista general completa del sistema',
+    'healthcare-security-compliance': 'Seguridad y Cumplimiento Sanitario',
+    'secure-healthcare-platform': 'Plataforma Sanitaria Segura',
+    'advanced-security-measures': 'Medidas de seguridad avanzadas y protocolos de cumplimiento para la protección de datos sanitarios',
+    'medical-supply-warehouse': 'Almacén de Suministros Médicos',
+    'medical-supply-management': 'Gestión de Suministros Médicos',
+    'state-of-art-medical-equipment': 'Almacén de equipos médicos de última generación y sistemas de gestión de inventario',
+    
+    // Call-to-Action Buttons
+    'get-started-today': 'Comenzar Hoy',
+    'explore-features': 'Explorar Características',
+    'request-demo': 'Solicitar Demo',
+    'contact-sales': 'Contactar Ventas',
+    'learn-more': 'Saber Más',
+    'join-thousands': 'Únete a Miles de Profesionales de la Salud',
+    
+    // Feature Headings
+    'comprehensive-solution': 'Solución Sanitaria Integral',
+    'all-in-one-platform': 'Plataforma Todo-en-Uno para la Salud Moderna',
+    'powerful-features': 'Características Poderosas para Cada Profesional de la Salud',
+    'enterprise-ready': 'Plataforma Sanitaria Lista para Empresas',
     
     // Dashboard specific
     'physician-dashboard': 'Panel de Médico',
@@ -380,6 +450,41 @@ const translations = {
     'first-name': 'Prénom',
     'last-name': 'Nom de Famille',
     
+    // Landing Page
+    'next-generation-healthcare': 'Plateforme de Gestion de Santé de Nouvelle Génération',
+    'healthcare-team-meeting': 'Réunion d\'Équipe Médicale',
+    'professional-healthcare-team': 'Équipe Médicale Professionnelle',
+    'collaborative-healthcare': 'Professionnels de santé collaboratifs travaillant ensemble pour de meilleurs résultats patients',
+    'medical-imaging-analysis': 'Analyse d\'Imagerie Médicale',
+    'advanced-medical-imaging': 'Imagerie Médicale Avancée',
+    'cutting-edge-diagnostic': 'Technologie de diagnostic de pointe avec analyse de scanner cérébral et expertise médicale',
+    'health-assessment-tech': 'Technologie d\'Évaluation de Santé',
+    'digital-health-assessment': 'Évaluation Numérique de Santé',
+    'comprehensive-health-monitoring': 'Surveillance et évaluation complètes de santé via des plateformes numériques avancées',
+    'healthcare-management-system': 'Système de Gestion de Santé',
+    'healthcare-management-solutions': 'Solutions de Gestion de Santé',
+    'integrated-healthcare-management': 'Icônes de gestion de santé intégrée et vue d\'ensemble complète du système',
+    'healthcare-security-compliance': 'Sécurité et Conformité de Santé',
+    'secure-healthcare-platform': 'Plateforme de Santé Sécurisée',
+    'advanced-security-measures': 'Mesures de sécurité avancées et protocoles de conformité pour la protection des données de santé',
+    'medical-supply-warehouse': 'Entrepôt de Fournitures Médicales',
+    'medical-supply-management': 'Gestion des Fournitures Médicales',
+    'state-of-art-medical-equipment': 'Entrepôt d\'équipement médical de pointe et systèmes de gestion d\'inventaire',
+    
+    // Call-to-Action Buttons
+    'get-started-today': 'Commencer Aujourd\'hui',
+    'explore-features': 'Explorer les Fonctionnalités',
+    'request-demo': 'Demander une Démo',
+    'contact-sales': 'Contacter les Ventes',
+    'learn-more': 'En Savoir Plus',
+    'join-thousands': 'Rejoignez des Milliers de Professionnels de Santé',
+    
+    // Feature Headings
+    'comprehensive-solution': 'Solution de Santé Complète',
+    'all-in-one-platform': 'Plateforme Tout-en-Un pour la Santé Moderne',
+    'powerful-features': 'Fonctionnalités Puissantes pour Chaque Professionnel de Santé',
+    'enterprise-ready': 'Plateforme de Santé Prête pour l\'Entreprise',
+    
     // Dashboard specific
     'physician-dashboard': 'Tableau de Bord Médecin',
     'nurse-dashboard': 'Tableau de Bord Infirmière', 
@@ -532,6 +637,41 @@ const translations = {
     'first-name': 'Vorname',
     'last-name': 'Nachname',
     
+    // Landing Page
+    'next-generation-healthcare': 'Gesundheitsmanagement-Plattform der Nächsten Generation',
+    'healthcare-team-meeting': 'Gesundheitsteam-Besprechung',
+    'professional-healthcare-team': 'Professionelles Gesundheitsteam',
+    'collaborative-healthcare': 'Kollaborative Gesundheitsfachkräfte arbeiten zusammen für bessere Patientenergebnisse',
+    'medical-imaging-analysis': 'Medizinische Bildanalyse',
+    'advanced-medical-imaging': 'Erweiterte Medizinische Bildgebung',
+    'cutting-edge-diagnostic': 'Modernste Diagnosetechnologie mit Gehirnscan-Analyse und medizinischer Expertise',
+    'health-assessment-tech': 'Gesundheitsbewertungstechnologie',
+    'digital-health-assessment': 'Digitale Gesundheitsbewertung',
+    'comprehensive-health-monitoring': 'Umfassende Gesundheitsüberwachung und -bewertung durch fortschrittliche digitale Plattformen',
+    'healthcare-management-system': 'Gesundheitsmanagementsystem',
+    'healthcare-management-solutions': 'Gesundheitsmanagement-Lösungen',
+    'integrated-healthcare-management': 'Integrierte Gesundheitsmanagement-Symbole und umfassende Systemübersicht',
+    'healthcare-security-compliance': 'Gesundheitssicherheit & Compliance',
+    'secure-healthcare-platform': 'Sichere Gesundheitsplattform',
+    'advanced-security-measures': 'Erweiterte Sicherheitsmaßnahmen und Compliance-Protokolle zum Schutz von Gesundheitsdaten',
+    'medical-supply-warehouse': 'Medizinisches Versorgungslager',
+    'medical-supply-management': 'Medizinische Versorgungsverwaltung',
+    'state-of-art-medical-equipment': 'Hochmoderne medizinische Ausrüstungslager und Inventarverwaltungssysteme',
+    
+    // Call-to-Action Buttons
+    'get-started-today': 'Heute Beginnen',
+    'explore-features': 'Funktionen Erkunden',
+    'request-demo': 'Demo Anfordern',
+    'contact-sales': 'Vertrieb Kontaktieren',
+    'learn-more': 'Mehr Erfahren',
+    'join-thousands': 'Schließen Sie sich Tausenden von Gesundheitsfachkräften an',
+    
+    // Feature Headings
+    'comprehensive-solution': 'Umfassende Gesundheitslösung',
+    'all-in-one-platform': 'All-in-One-Plattform für Moderne Gesundheitsversorgung',
+    'powerful-features': 'Leistungsstarke Funktionen für Jede Gesundheitsfachkraft',
+    'enterprise-ready': 'Unternehmenstaugliche Gesundheitsplattform',
+    
     // Dashboard specific
     'physician-dashboard': 'Arzt-Dashboard',
     'nurse-dashboard': 'Krankenpfleger-Dashboard', 
@@ -681,8 +821,8 @@ export const TranslationProvider = ({ children }: TranslationProviderProps) => {
 
   // Sync server language preference with local state when available
   useEffect(() => {
-    if (serverLanguageData?.languagePreference && !isLoadingServerLanguage) {
-      const serverLanguage = serverLanguageData.languagePreference;
+    if (serverLanguageData && typeof serverLanguageData === 'object' && 'languagePreference' in serverLanguageData && !isLoadingServerLanguage) {
+      const serverLanguage = (serverLanguageData as any).languagePreference;
       if (serverLanguage !== currentLanguage) {
         console.log(`[LANGUAGE_SYNC] 📥 Syncing from server: ${serverLanguage}`);
         setCurrentLanguage(serverLanguage);
