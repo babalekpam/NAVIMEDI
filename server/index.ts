@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import compression from "compression";
 import { registerRoutes } from "./routes";
 import { registerSimpleTestRoutes } from "./simple-test-routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -11,15 +12,83 @@ import { trialSuspensionService } from "./trial-suspension-service";
 import { createTestHospital } from "./create-test-hospital";
 
 const app = express();
+
+// IONOS OPTIMIZATION 1: Enable selective gzip compression
+// Compress static assets and non-sensitive content while protecting sensitive endpoints
+app.use(compression({
+  // Only compress responses larger than 1KB
+  threshold: 1024,
+  // Compress text-based content types
+  filter: (req: Request, res: Response) => {
+    // Never compress sensitive API endpoints (BREACH protection)
+    const sensitiveEndpoints = [
+      '/api/auth', '/api/patients', '/api/prescriptions', 
+      '/api/billing', '/api/lab-orders', '/api/lab-results', 
+      '/api/admin', '/api/platform'
+    ];
+    
+    if (sensitiveEndpoints.some(endpoint => req.path.startsWith(endpoint))) {
+      return false;
+    }
+    
+    // Never compress if response contains sensitive headers
+    const sensitiveHeaders = ['authorization', 'x-auth-token', 'x-api-key'];
+    if (sensitiveHeaders.some(header => req.headers[header] || res.get(header))) {
+      return false;
+    }
+    
+    // Compress static assets, public content, and non-sensitive APIs
+    const compressiblePaths = [
+      '/assets/', '/css/', '/js/', '/images/', '/fonts/',
+      '/api/public/', '/api/marketplace/', '/api/countries/', 
+      '/health', '/status', '/ping'
+    ];
+    
+    // Compress if it's a compressible path or static content
+    if (compressiblePaths.some(path => req.path.startsWith(path))) {
+      return true;
+    }
+    
+    // Compress based on content type for other requests
+    return compression.filter(req, res);
+  },
+  // Compression level (1=fastest, 9=best compression)
+  level: 6
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Add cache control headers to prevent browser caching for API endpoints
+// Add cache control headers for API endpoints while enabling compression for static assets
 app.use('/api', (req, res, next) => {
+  // Only disable caching for sensitive endpoints
+  const sensitiveEndpoints = [
+    '/api/auth', '/api/patients', '/api/prescriptions', 
+    '/api/billing', '/api/lab-orders', '/api/lab-results', 
+    '/api/admin', '/api/platform'
+  ];
+  
+  if (sensitiveEndpoints.some(endpoint => req.path.startsWith(endpoint))) {
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+  } else {
+    // Allow some caching for non-sensitive API endpoints
+    res.set({
+      'Cache-Control': 'public, max-age=300', // 5 minutes cache
+    });
+  }
+  next();
+});
+
+// IONOS OPTIMIZATION 2: Add static asset optimization headers
+app.use('/assets', (req, res, next) => {
+  // Enable long-term caching for static assets (fonts, images, CSS, JS)
   res.set({
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
+    'Cache-Control': 'public, max-age=31536000, immutable', // 1 year cache
+    'Expires': new Date(Date.now() + 31536000000).toUTCString(),
   });
   next();
 });
