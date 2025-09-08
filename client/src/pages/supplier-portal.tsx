@@ -120,6 +120,8 @@ export default function SupplierPortal() {
       }
     },
     onSuccess: (data) => {
+      console.log('Login successful, data:', data);
+      
       toast({
         title: "Login Successful",
         description: "Welcome back! Redirecting to your dashboard...",
@@ -128,6 +130,10 @@ export default function SupplierPortal() {
       // Store token for supplier authentication
       localStorage.setItem('supplierToken', data.token);
       localStorage.setItem('supplierData', JSON.stringify(data.supplier));
+      
+      // Set state to trigger dashboard view immediately
+      setSupplierData(data.supplier);
+      setIsLoggedIn(true);
       
       // Check if super admin - redirect to main dashboard with supplier management access
       if (data.supplier.role === 'super_admin') {
