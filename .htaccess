@@ -1,19 +1,29 @@
+# NaviMED Healthcare Platform - Passenger Node.js Configuration
+# Enable Passenger for Node.js applications
+PassengerEnabled on
+PassengerNodejs /usr/bin/node
+PassengerAppType node
+PassengerStartupFile app.js
+PassengerAppRoot /var/www/vhosts/navimedi.org/httpdocs
+
+# Passenger environment and performance settings
+PassengerAppEnv production
+PassengerMinInstances 1
+PassengerMaxRequestQueueSize 100
+PassengerStartTimeout 60
+PassengerFriendlyErrorPages on
+
+# URL rewriting for Node.js application
 RewriteEngine On
 
-# Handle Angular/React Router - redirect all requests to index.html
-# unless they are for real files (like assets) or API endpoints
+# Serve static files directly (bypass Node.js for performance)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^(public/.*|.*\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|pdf|zip))$ - [L]
 
-# If the request is for a real file or directory, serve it
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
-
-# If the request is for an API endpoint, let it through
-RewriteCond %{REQUEST_URI} ^/api/
-RewriteRule ^ - [L]
-
-# For all other requests (SPA routes), serve index.html
-RewriteRule ^ index.html [L]
+# All other requests go to the Node.js application
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ app.js [QSA,L]
 
 # Security headers
 <IfModule mod_headers.c>
