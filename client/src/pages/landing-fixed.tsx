@@ -10,8 +10,7 @@ import medicalImaging from "@assets/image_1754352599331.png";
 import healthAssessment from "@assets/image_1754352626174.png";
 import healthcareManagement from "@assets/image_1754352650858.png";
 import healthcareSecurity from "@assets/image_1754352725355.png";
-// Removed massive 6.6MB image to optimize bundle size
-// import medicalSupply from "@assets/image_1754352767570.png";
+import medicalSupply from "@assets/image_1754352767570.png";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { 
@@ -112,13 +111,12 @@ function ImageCarousel() {
       title: "Secure Healthcare Platform",
       description: "Advanced security measures and compliance protocols for healthcare data protection"
     },
-    // Removed medicalSupply image (6.6MB) for better performance
-    // {
-    //   url: medicalSupply,
-    //   alt: "Medical Supply Warehouse", 
-    //   title: "Medical Supply Management",
-    //   description: "State-of-the-art medical equipment warehouse and inventory management systems"
-    // }
+    {
+      url: medicalSupply,
+      alt: "Medical Supply Warehouse",
+      title: "Medical Supply Management",
+      description: "State-of-the-art medical equipment warehouse and inventory management systems"
+    }
   ];
 
   // Image loading is now handled by OptimizedImage component
@@ -177,12 +175,11 @@ function ImageCarousel() {
 
       {/* Navigation Dots */}
       <div className="flex justify-center mt-6 space-x-3">
-        {healthcareImages.map((image, index) => (
+        {healthcareImages.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentImageIndex(index)}
-            aria-label={`View ${image.title} - Image ${index + 1} of ${healthcareImages.length}`}
-            className={`w-5 h-5 rounded-full transition-all duration-300 ${
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
               index === currentImageIndex 
                 ? 'bg-blue-600 scale-125' 
                 : 'bg-gray-300 hover:bg-gray-400'
@@ -196,20 +193,18 @@ function ImageCarousel() {
         onClick={() => setCurrentImageIndex((prev) => 
           prev === 0 ? healthcareImages.length - 1 : prev - 1
         )}
-        aria-label="View previous healthcare image"
-        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110"
+        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-3 shadow-lg transition-all duration-300 hover:scale-110"
       >
-        <ArrowRight className="w-6 h-6 rotate-180 text-gray-700" />
+        <ArrowRight className="w-5 h-5 rotate-180 text-gray-700" />
       </button>
       
       <button
         onClick={() => setCurrentImageIndex((prev) => 
           (prev + 1) % healthcareImages.length
         )}
-        aria-label="View next healthcare image"
-        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110"
+        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-3 shadow-lg transition-all duration-300 hover:scale-110"
       >
-        <ArrowRight className="w-6 h-6 text-gray-700" />
+        <ArrowRight className="w-5 h-5 text-gray-700" />
       </button>
     </div>
   );
@@ -300,22 +295,12 @@ export default function LandingPage() {
               </Button>
             </Link>
             
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="border-slate-300 text-slate-700 hover:bg-slate-50 px-8 py-4 text-lg"
-              aria-label="Schedule a product demo with our team"
-            >
+            <Button size="lg" variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50 px-8 py-4 text-lg">
               <Calendar className="w-5 h-5 mr-2" />
               Book a Demo
             </Button>
 
-            <Button 
-              size="lg" 
-              variant="ghost" 
-              className="text-slate-600 hover:text-slate-800 px-8 py-4 text-lg"
-              aria-label="View interactive platform tour"
-            >
+            <Button size="lg" variant="ghost" className="text-slate-600 hover:text-slate-800 px-8 py-4 text-lg">
               <Monitor className="w-5 h-5 mr-2" />
               See Platform Tour
             </Button>
@@ -421,7 +406,7 @@ export default function LandingPage() {
                     <Building2 className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900">Dr. Sarah Chen</h3>
+                    <h4 className="font-bold text-slate-900">Dr. Sarah Chen</h4>
                     <p className="text-sm text-slate-600">CIO, Metro General Hospital</p>
                   </div>
                 </div>
@@ -443,7 +428,7 @@ export default function LandingPage() {
                     <Pill className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900">Michael Rodriguez</h3>
+                    <h4 className="font-bold text-slate-900">Michael Rodriguez</h4>
                     <p className="text-sm text-slate-600">Director, MediCare Pharmacy</p>
                   </div>
                 </div>
@@ -465,7 +450,7 @@ export default function LandingPage() {
                     <TestTube className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900">Dr. Priya Patel</h3>
+                    <h4 className="font-bold text-slate-900">Dr. Priya Patel</h4>
                     <p className="text-sm text-slate-600">Lab Director, Advanced Diagnostics</p>
                   </div>
                 </div>
@@ -721,24 +706,9 @@ export default function LandingPage() {
               <h3 className="text-xl font-bold mb-4">{brandName}</h3>
               <p className="text-gray-400 mb-4">{tagline}</p>
               <div className="flex space-x-4">
-                <button 
-                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-                  aria-label="Contact us via live chat"
-                >
-                  <MessageCircle className="w-5 h-5 hover:text-blue-400" />
-                </button>
-                <button 
-                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-                  aria-label="Call our support team"
-                >
-                  <Phone className="w-5 h-5 hover:text-green-400" />
-                </button>
-                <button 
-                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-                  aria-label="Send us an email"
-                >
-                  <Mail className="w-5 h-5 hover:text-red-400" />
-                </button>
+                <MessageCircle className="w-5 h-5 hover:text-blue-400 cursor-pointer" />
+                <Phone className="w-5 h-5 hover:text-green-400 cursor-pointer" />
+                <Mail className="w-5 h-5 hover:text-red-400 cursor-pointer" />
               </div>
             </div>
             <div>
