@@ -90,10 +90,28 @@ app.use('/api', (req, res, next) => {
 // IONOS OPTIMIZATION 2: Add static asset optimization headers
 app.use('/assets', (req, res, next) => {
   // Enable long-term caching for static assets (fonts, images, CSS, JS)
-  res.set({
-    'Cache-Control': 'public, max-age=31536000, immutable', // 1 year cache
-    'Expires': new Date(Date.now() + 31536000000).toUTCString(),
-  });
+  const extension = req.path.split('.').pop()?.toLowerCase();
+  
+  if (['js', 'css', 'woff', 'woff2', 'ttf', 'otf'].includes(extension || '')) {
+    // JavaScript, CSS, and fonts - 1 year cache with immutable
+    res.set({
+      'Cache-Control': 'public, max-age=31536000, immutable',
+      'Expires': new Date(Date.now() + 31536000000).toUTCString(),
+    });
+  } else if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'avif'].includes(extension || '')) {
+    // Images - 6 months cache for optimization
+    res.set({
+      'Cache-Control': 'public, max-age=15768000, stale-while-revalidate=604800',
+      'Expires': new Date(Date.now() + 15768000000).toUTCString(),
+    });
+  } else {
+    // Default static asset caching
+    res.set({
+      'Cache-Control': 'public, max-age=31536000, immutable',
+      'Expires': new Date(Date.now() + 31536000000).toUTCString(),
+    });
+  }
+  
   next();
 });
 

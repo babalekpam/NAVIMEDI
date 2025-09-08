@@ -37,6 +37,8 @@ export function OptimizedImage({
         {...(priority && { fetchpriority: "high" })}
         onLoad={() => setIsLoaded(true)}
         onError={() => setHasError(true)}
+        // Add responsive image hints for better performance
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
       />
       
       {hasError && (
