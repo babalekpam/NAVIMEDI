@@ -10,7 +10,8 @@ import medicalImaging from "@assets/image_1754352599331.png";
 import healthAssessment from "@assets/image_1754352626174.png";
 import healthcareManagement from "@assets/image_1754352650858.png";
 import healthcareSecurity from "@assets/image_1754352725355.png";
-import medicalSupply from "@assets/image_1754352767570.png";
+// Removed massive 6.6MB image to optimize bundle size
+// import medicalSupply from "@assets/image_1754352767570.png";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { 
@@ -111,12 +112,13 @@ function ImageCarousel() {
       title: "Secure Healthcare Platform",
       description: "Advanced security measures and compliance protocols for healthcare data protection"
     },
-    {
-      url: medicalSupply,
-      alt: "Medical Supply Warehouse",
-      title: "Medical Supply Management",
-      description: "State-of-the-art medical equipment warehouse and inventory management systems"
-    }
+    // Removed medicalSupply image (6.6MB) for better performance
+    // {
+    //   url: medicalSupply,
+    //   alt: "Medical Supply Warehouse", 
+    //   title: "Medical Supply Management",
+    //   description: "State-of-the-art medical equipment warehouse and inventory management systems"
+    // }
   ];
 
   // Image loading is now handled by OptimizedImage component
