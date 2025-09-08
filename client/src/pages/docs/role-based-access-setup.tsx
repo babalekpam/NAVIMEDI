@@ -480,7 +480,7 @@ export function RoleBasedAccessSetup() {
         </div>
       </section>
       
-      <style jsx>{`
+      <style>{`
         @media print {
           @page {
             margin: 1in;

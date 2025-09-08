@@ -25,39 +25,39 @@ export default function Documentation() {
       title: "User Guides",
       description: "Comprehensive guides for daily operations",
       docs: [
-        { title: "Patient Management System", description: "Complete guide to managing patient records, medical history, and care plans", readTime: "25 min" },
-        { title: "Appointment Scheduling", description: "Advanced scheduling features, conflict resolution, and calendar management", readTime: "20 min" },
-        { title: "Electronic Health Records", description: "Creating, updating, and managing comprehensive patient health records", readTime: "30 min" },
-        { title: "Prescription Management", description: "Digital prescription creation, routing, and pharmacy integration", readTime: "22 min" },
-        { title: "Laboratory Order Processing", description: "Ordering lab tests, tracking results, and clinical decision support", readTime: "18 min" },
-        { title: "Insurance Claims Processing", description: "Filing insurance claims, tracking payments, and managing denials", readTime: "35 min" },
-        { title: "Billing and Revenue Cycle", description: "Complete billing workflow from service delivery to payment collection", readTime: "40 min" },
-        { title: "Clinical Documentation", description: "Best practices for clinical notes, consultation records, and care documentation", readTime: "28 min" }
+        { title: "Patient Management System", description: "Complete guide to managing patient records, medical history, and care plans", readTime: "25 min", href: "/docs/patient-management" },
+        { title: "Appointment Scheduling", description: "Advanced scheduling features, conflict resolution, and calendar management", readTime: "20 min", href: "/docs/appointment-scheduling" },
+        { title: "Electronic Health Records", description: "Creating, updating, and managing comprehensive patient health records", readTime: "30 min", href: "/docs/electronic-health-records" },
+        { title: "Prescription Management", description: "Digital prescription creation, routing, and pharmacy integration", readTime: "22 min", href: "/docs/prescription-management" },
+        { title: "Laboratory Order Processing", description: "Ordering lab tests, tracking results, and clinical decision support", readTime: "18 min", href: "/docs/laboratory-order-processing" },
+        { title: "Insurance Claims Processing", description: "Filing insurance claims, tracking payments, and managing denials", readTime: "35 min", href: "/docs/billing-insurance" },
+        { title: "Billing and Revenue Cycle", description: "Complete billing workflow from service delivery to payment collection", readTime: "40 min", href: "/docs/billing-insurance" },
+        { title: "Clinical Documentation", description: "Best practices for clinical notes, consultation records, and care documentation", readTime: "28 min", href: "/docs/clinical-documentation" }
       ]
     },
     {
       title: "Administrator Guides",
       description: "System administration and advanced configuration",
       docs: [
-        { title: "System Administration Panel", description: "Complete overview of administrative functions and system management", readTime: "30 min" },
-        { title: "User Role and Permission Management", description: "Advanced user management, custom roles, and granular permissions", readTime: "25 min" },
-        { title: "Security and Compliance Settings", description: "HIPAA compliance, data encryption, and security policy configuration", readTime: "45 min" },
-        { title: "Data Backup and Recovery", description: "Automated backup configuration, disaster recovery, and data restoration", readTime: "35 min" },
-        { title: "Integration Management", description: "Connecting external systems, APIs, and third-party healthcare applications", readTime: "50 min" },
-        { title: "Performance Monitoring", description: "System performance metrics, monitoring dashboards, and optimization", readTime: "40 min" },
-        { title: "Audit Log Management", description: "Comprehensive audit trails, compliance reporting, and log analysis", readTime: "30 min" }
+        { title: "System Administration Panel", description: "Complete overview of administrative functions and system management", readTime: "30 min", href: "/docs/system-admin-training" },
+        { title: "User Role and Permission Management", description: "Advanced user management, custom roles, and granular permissions", readTime: "25 min", href: "/docs/role-based-access-setup" },
+        { title: "Security and Compliance Settings", description: "HIPAA compliance, data encryption, and security policy configuration", readTime: "45 min", href: "/docs/security-compliance" },
+        { title: "Data Backup and Recovery", description: "Automated backup configuration, disaster recovery, and data restoration", readTime: "35 min", href: "/docs/system-admin-training" },
+        { title: "Integration Management", description: "Connecting external systems, APIs, and third-party healthcare applications", readTime: "50 min", href: "/docs/system-admin-training" },
+        { title: "Performance Monitoring", description: "System performance metrics, monitoring dashboards, and optimization", readTime: "40 min", href: "/docs/system-admin-training" },
+        { title: "Audit Log Management", description: "Comprehensive audit trails, compliance reporting, and log analysis", readTime: "30 min", href: "/docs/system-admin-training" }
       ]
     },
     {
       title: "Specialty Workflows",
       description: "Guides for specific healthcare specialties",
       docs: [
-        { title: "Emergency Department Workflow", description: "Optimized workflows for emergency care, triage, and critical patient management", readTime: "35 min" },
-        { title: "Pharmacy Operations", description: "Prescription processing, inventory management, and medication dispensing", readTime: "40 min" },
-        { title: "Laboratory Information System", description: "Lab workflow optimization, result reporting, and quality control", readTime: "45 min" },
-        { title: "Surgical Suite Management", description: "Pre-operative planning, surgical scheduling, and post-operative care", readTime: "38 min" },
-        { title: "Pediatric Care Protocols", description: "Specialized workflows for pediatric patients and family-centered care", readTime: "32 min" },
-        { title: "Mental Health Documentation", description: "Specialized documentation for mental health services and therapy sessions", readTime: "28 min" }
+        { title: "Emergency Department Workflow", description: "Optimized workflows for emergency care, triage, and critical patient management", readTime: "35 min", href: "/docs/workflow-training-modules" },
+        { title: "Pharmacy Operations", description: "Prescription processing, inventory management, and medication dispensing", readTime: "40 min", href: "/docs/workflow-training-modules" },
+        { title: "Laboratory Information System", description: "Lab workflow optimization, result reporting, and quality control", readTime: "45 min", href: "/docs/workflow-training-modules" },
+        { title: "Surgical Suite Management", description: "Pre-operative planning, surgical scheduling, and post-operative care", readTime: "38 min", href: "/docs/workflow-training-modules" },
+        { title: "Pediatric Care Protocols", description: "Specialized workflows for pediatric patients and family-centered care", readTime: "32 min", href: "/docs/workflow-training-modules" },
+        { title: "Mental Health Documentation", description: "Specialized documentation for mental health services and therapy sessions", readTime: "28 min", href: "/docs/workflow-training-modules" }
       ]
     },
     {
