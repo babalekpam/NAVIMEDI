@@ -178,7 +178,7 @@ export class ReportGenerator {
     const headers = this.getExcelHeaders(reportData.type);
     const data = this.getSampleData(reportData.type);
 
-    const csvWriter = createCsvWriter.createObjectWriter({
+    const csvWriter = createCsvWriter.createObjectCsvWriter({
       path: filePath,
       header: headers.map((header, index) => ({
         id: `col${index}`,
@@ -321,7 +321,7 @@ export class ReportGenerator {
   private generateFileName(title: string, format: string): string {
     const cleanTitle = title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_');
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-    const extension = format === 'excel' ? 'xlsx' : format;
+    const extension = format === 'excel' || format === 'xlsx' ? 'xlsx' : format;
     return `${cleanTitle}_${timestamp}.${extension}`;
   }
 }
