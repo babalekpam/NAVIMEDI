@@ -123,7 +123,7 @@ export default function Reports() {
         : "/api/reports";
       return await apiRequest(endpoint, {
         method: "POST",
-        body: JSON.stringify(reportData)
+        body: reportData
       });
     },
     onSuccess: () => {
