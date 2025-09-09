@@ -224,19 +224,40 @@ export default function Reports() {
     }
 
     try {
-      const downloadUrl = `/api/reports/download/${report.id}/${report.fileName}`;
+      const downloadUrl = `/api/reports/download/${report.id}/${encodeURIComponent(report.fileName)}`;
+      console.log('🔗 Attempting download from:', downloadUrl);
       
-      // Create a temporary link to trigger download
+      // Use fetch with proper authentication headers for download
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(downloadUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      console.log('📥 Download response:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Download failed:', errorText);
+        throw new Error(`Download failed: ${response.status}`);
+      }
+
+      // Get the blob and create download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = downloadUrl;
+      link.href = url;
       link.download = report.fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
       toast({
-        title: "Download Started",
-        description: `Downloading ${report.title}`,
+        title: "Download Completed",
+        description: `${report.title} downloaded successfully`,
       });
     } catch (error) {
       console.error('Download error:', error);

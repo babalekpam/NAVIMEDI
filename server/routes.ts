@@ -3964,23 +3964,33 @@ to the patient and authorized healthcare providers.
   });
 
   // Download report file endpoint
-  app.get("/api/reports/download/:reportId/:fileName", authenticateToken, async (req, res) => {
+  app.get("/api/reports/download/:reportId/:fileName(*)", authenticateToken, async (req, res) => {
+    console.log('🎯 Download request received:', { reportId: req.params.reportId, fileName: req.params.fileName });
+    console.log('👤 User details:', { userId: req.user?.id, role: req.user?.role, tenantId: req.user?.tenant_id });
+    
     try {
       const { reportId, fileName } = req.params;
       const { tenantId } = req.user as any;
       const isSuperAdmin = req.user?.role === 'super_admin';
       
+      console.log('🔎 Searching for report:', { reportId, isSuperAdmin });
+      
       // Find the report to get the correct file URL
       let report = null;
       if (isSuperAdmin) {
         const platformReports = global.platformReports || [];
+        console.log('📊 Platform reports available:', platformReports.map(r => ({ id: r.id, fileName: r.fileName })));
         report = platformReports.find(r => r.id === reportId);
       } else {
         const tenantReports = global.tenantReports || [];
+        console.log('🏥 Tenant reports available:', tenantReports.map(r => ({ id: r.id, fileName: r.fileName })));
         report = tenantReports.find(r => r.id === reportId && r.tenantId === tenantId);
       }
       
+      console.log('📋 Found report:', report ? { id: report.id, fileUrl: report.fileUrl } : 'Not found');
+      
       if (!report || !report.fileUrl) {
+        console.log('❌ Report not found or missing fileUrl');
         return res.status(404).json({ message: 'Report not found' });
       }
       
