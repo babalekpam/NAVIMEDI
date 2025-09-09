@@ -3,6 +3,7 @@ import ExcelJS from 'exceljs';
 import * as createCsvWriter from 'csv-writer';
 import { ObjectStorageService } from './objectStorage';
 import { promises as fs } from 'fs';
+import * as fsSync from 'fs';
 import path from 'path';
 import os from 'os';
 
@@ -63,7 +64,7 @@ export class ReportGenerator {
     return new Promise((resolve, reject) => {
       try {
         const doc = new PDFDocument({ margin: 50 });
-        const stream = require('fs').createWriteStream(filePath);
+        const stream = fsSync.createWriteStream(filePath);
         doc.pipe(stream);
 
         // Header
@@ -293,8 +294,13 @@ export class ReportGenerator {
       throw new Error(`Failed to upload file: ${response.statusText}`);
     }
 
-    // Return the object URL for downloading
-    const objectPath = `/objects/uploads/${fileName}`;
+    // Extract the file name from the upload URL to get the correct object path
+    const url = new URL(uploadUrl);
+    const pathParts = url.pathname.split('/');
+    const objectFileName = pathParts[pathParts.length - 1];
+    
+    // Return the object URL for downloading using the actual object file name
+    const objectPath = `/objects/uploads/${objectFileName}`;
     return objectPath;
   }
 

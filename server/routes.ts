@@ -3808,6 +3808,13 @@ to the patient and authorized healthcare providers.
         fileUrl,
         fileName
       };
+
+      // Store the report record for later retrieval
+      // In a real implementation, this would be saved to the database
+      if (!global.tenantReports) {
+        global.tenantReports = [];
+      }
+      global.tenantReports.push(reportRecord);
       
       res.json({ message: 'Report generated successfully', report: reportRecord });
     } catch (error) {
@@ -3821,8 +3828,12 @@ to the patient and authorized healthcare providers.
     try {
       const { tenantId } = req.user as any;
       
-      // Return mock reports for now - in real implementation, fetch from database
-      const reports = [
+      // Get stored tenant reports for this tenant
+      const allStoredReports = global.tenantReports || [];
+      const tenantStoredReports = allStoredReports.filter(report => report.tenantId === tenantId);
+      
+      // Include sample reports if no actual reports exist
+      const sampleReports = tenantStoredReports.length === 0 ? [
         {
           id: 'report_1',
           tenantId,
@@ -3834,7 +3845,9 @@ to the patient and authorized healthcare providers.
           completedAt: new Date(Date.now() - 86400000 + 60000),
           generatedBy: req.user?.id || 'system'
         }
-      ];
+      ] : [];
+      
+      const reports = [...tenantStoredReports, ...sampleReports];
       
       res.json(reports);
     } catch (error) {
@@ -3886,6 +3899,13 @@ to the patient and authorized healthcare providers.
         fileUrl,
         fileName
       };
+
+      // Store the report record for later retrieval
+      // In a real implementation, this would be saved to the database
+      if (!global.platformReports) {
+        global.platformReports = [];
+      }
+      global.platformReports.push(reportRecord);
       
       const isPlatformWide = targetTenantId === 'platform' || !targetTenantId;
       const successMessage = isPlatformWide 
@@ -3902,8 +3922,11 @@ to the patient and authorized healthcare providers.
   // Get platform reports for super admin
   app.get("/api/platform/reports", authenticateToken, requireRole(['super_admin']), async (req, res) => {
     try {
-      // Return mock platform reports for now
-      const reports = [
+      // Get stored platform reports
+      const storedReports = global.platformReports || [];
+      
+      // Combine with some sample reports if no reports exist
+      const sampleReports = storedReports.length === 0 ? [
         {
           id: 'platform_report_1',
           tenantId: 'platform',
@@ -3926,7 +3949,9 @@ to the patient and authorized healthcare providers.
           completedAt: new Date(Date.now() - 86400000 + 180000),
           generatedBy: 'super_admin'
         }
-      ];
+      ] : [];
+      
+      const reports = [...storedReports, ...sampleReports];
       
       res.json(reports);
     } catch (error) {
@@ -3942,15 +3967,26 @@ to the patient and authorized healthcare providers.
       const { tenantId } = req.user as any;
       const isSuperAdmin = req.user?.role === 'super_admin';
       
-      // Construct the object path for the report file
-      const objectPath = `/objects/uploads/${fileName}`;
+      // Find the report to get the correct file URL
+      let report = null;
+      if (isSuperAdmin) {
+        const platformReports = global.platformReports || [];
+        report = platformReports.find(r => r.id === reportId);
+      } else {
+        const tenantReports = global.tenantReports || [];
+        report = tenantReports.find(r => r.id === reportId && r.tenantId === tenantId);
+      }
+      
+      if (!report || !report.fileUrl) {
+        return res.status(404).json({ message: 'Report not found' });
+      }
       
       // Import ObjectStorageService
       const { ObjectStorageService } = await import('./objectStorage');
       const objectStorageService = new ObjectStorageService();
       
       try {
-        const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
+        const objectFile = await objectStorageService.getObjectEntityFile(report.fileUrl);
         
         // Set appropriate headers for file download
         const mimeType = fileName.endsWith('.pdf') ? 'application/pdf' : 
