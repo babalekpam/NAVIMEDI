@@ -3935,6 +3935,44 @@ to the patient and authorized healthcare providers.
     }
   });
 
+  // Download report file endpoint
+  app.get("/api/reports/download/:reportId/:fileName", authenticateToken, async (req, res) => {
+    try {
+      const { reportId, fileName } = req.params;
+      const { tenantId } = req.user as any;
+      const isSuperAdmin = req.user?.role === 'super_admin';
+      
+      // Construct the object path for the report file
+      const objectPath = `/objects/uploads/${fileName}`;
+      
+      // Import ObjectStorageService
+      const { ObjectStorageService } = await import('./objectStorage');
+      const objectStorageService = new ObjectStorageService();
+      
+      try {
+        const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
+        
+        // Set appropriate headers for file download
+        const mimeType = fileName.endsWith('.pdf') ? 'application/pdf' : 
+                         fileName.endsWith('.xlsx') ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
+                         fileName.endsWith('.csv') ? 'text/csv' : 'application/octet-stream';
+        
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        
+        // Stream the file to the response
+        await objectStorageService.downloadObject(objectFile, res);
+        
+      } catch (error) {
+        console.error('Error downloading report file:', error);
+        res.status(404).json({ message: 'Report file not found' });
+      }
+    } catch (error) {
+      console.error('Error in download endpoint:', error);
+      res.status(500).json({ message: 'Failed to download report' });
+    }
+  });
+
   app.post('/api/admin/tenants', async (req, res) => {
     try {
       const tenant = await storage.createTenant(req.body);

@@ -213,6 +213,41 @@ export default function Reports() {
     });
   };
 
+  const handleDownloadReport = async (report: any) => {
+    if (!report.fileName) {
+      toast({
+        title: "Download Error",
+        description: "Report file not available for download",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const downloadUrl = `/api/reports/download/${report.id}/${report.fileName}`;
+      
+      // Create a temporary link to trigger download
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = report.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Download Started",
+        description: `Downloading ${report.title}`,
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download the report file",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
@@ -422,7 +457,9 @@ export default function Reports() {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => downloadReport(report.fileUrl!, report.title, report.format)}
+                        onClick={() => handleDownloadReport(report)}
+                        disabled={report.status !== 'completed' || !report.fileName}
+                        data-testid={`button-download-${report.id}`}
                       >
                         <Download className="h-4 w-4 mr-2" />
                         Download
