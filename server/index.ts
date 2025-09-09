@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
+import path from "path";
 import { registerRoutes } from "./routes";
 import { registerSimpleTestRoutes } from "./simple-test-routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -123,6 +124,24 @@ app.get('/ping', (req, res) => {
 // Additional health endpoints commonly used by deployment systems
 app.get('/ready', (req, res) => {
   res.status(200).send('OK');
+});
+
+// CRITICAL: robots.txt endpoint for search engines (must be accessible)
+app.get('/robots.txt', (req, res) => {
+  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+  res.setHeader('Access-Control-Allow-Origin', '*'); // Allow cross-origin access
+  res.removeHeader('X-Frame-Options'); // Remove restrictive headers for robots.txt
+  res.sendFile(path.resolve(import.meta.dirname, '..', 'client', 'public', 'robots.txt'));
+});
+
+// CRITICAL: sitemap.xml endpoint for search engines (must be accessible)
+app.get('/sitemap.xml', (req, res) => {
+  res.setHeader('Content-Type', 'application/xml');
+  res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+  res.setHeader('Access-Control-Allow-Origin', '*'); // Allow cross-origin access
+  res.removeHeader('X-Frame-Options'); // Remove restrictive headers for sitemap
+  res.sendFile(path.resolve(import.meta.dirname, '..', 'client', 'public', 'sitemap.xml'));
 });
 
 app.get('/alive', (req, res) => {

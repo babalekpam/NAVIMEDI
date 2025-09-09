@@ -79,4 +79,4 @@ Allow: /google*.html
 Crawl-delay: 1
 
 # Sitemap location
-Sitemap: https://navimedi.org/sitemap.xml
+Sitemap: https://navimedi.com/sitemap.xml
