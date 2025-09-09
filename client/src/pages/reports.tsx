@@ -108,24 +108,13 @@ export default function Reports() {
 
   // Get all tenants for super admin
   const { data: tenants = [], isLoading: tenantsLoading, isSuccess: tenantsSuccess, error: tenantsError } = useQuery<Tenant[]>({
-    queryKey: ["/api/tenants"],
+    queryKey: ["/api/admin/tenants"],
     enabled: !!user && isSuperAdmin,
     retry: 1,
   });
 
-  // Debug the tenants data
-  console.log('🔍 Tenants debug:', {
-    isSuperAdmin,
-    userRole: user?.role,
-    userExists: !!user,
-    queryEnabled: !!user && isSuperAdmin,
-    tenantsCount: tenants.length,
-    tenantsLoading,
-    tenantsSuccess,
-    tenantsError: tenantsError?.message,
-    firstTenant: tenants[0],
-    sampleTenants: tenants.slice(0, 2)
-  });
+  // Remove debug after fixing
+  // console.log('🔍 Tenants debug:', { ... });
 
   const generateReportMutation = useMutation({
     mutationFn: async (reportData: { type: string; format: string; title: string; targetTenantId?: string }) => {
