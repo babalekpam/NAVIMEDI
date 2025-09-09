@@ -45,7 +45,8 @@ app.use(compression({
     const compressiblePaths = [
       '/assets/', '/css/', '/js/', '/images/', '/fonts/',
       '/api/public/', '/api/marketplace/', '/api/countries/', 
-      '/health', '/status', '/ping'
+      '/health', '/status', '/ping', '/', '/index.html',
+      '/favicon.ico', '/robots.txt', '/sitemap.xml'
     ];
     
     // Compress if it's a compressible path or static content
