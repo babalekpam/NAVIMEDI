@@ -3830,14 +3830,16 @@ to the patient and authorized healthcare providers.
     try {
       const { targetTenantId, type, format, title } = req.body;
       
-      if (!targetTenantId || targetTenantId.trim() === '') {
+      // Platform-wide reports don't need specific tenant ID (except for cross-tenant analysis)
+      if (type === 'operational' && (!targetTenantId || targetTenantId.trim() === '')) {
         return res.status(400).json({ message: "Target tenant ID is required for cross-tenant reports" });
       }
       
-      // Create cross-tenant report record
+      // Create platform report record
+      const reportId = `platform_report_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const reportData = {
-        id: `platform_report_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-        tenantId: targetTenantId,
+        id: reportId,
+        tenantId: targetTenantId === 'platform' ? 'platform' : targetTenantId,
         title,
         type,
         format,
@@ -3846,10 +3848,15 @@ to the patient and authorized healthcare providers.
         createdAt: new Date(),
         completedAt: new Date(),
         generatedBy: req.user?.id || 'super_admin',
-        fileUrl: `/platform-reports/${reportData.id}.${format}`
+        fileUrl: `/platform-reports/${reportId}.${format}`
       };
       
-      res.json({ message: 'Cross-tenant report generated successfully', report: reportData });
+      const isPlatformWide = targetTenantId === 'platform' || !targetTenantId;
+      const successMessage = isPlatformWide 
+        ? 'Platform report generated successfully'
+        : 'Cross-tenant report generated successfully';
+      
+      res.json({ message: successMessage, report: reportData });
     } catch (error) {
       console.error('Error generating cross-tenant report:', error);
       res.status(500).json({ message: 'Failed to generate cross-tenant report' });
@@ -3863,13 +3870,24 @@ to the patient and authorized healthcare providers.
       const reports = [
         {
           id: 'platform_report_1',
-          tenantId: 'multiple',
-          title: 'Cross-Tenant Analytics - ' + new Date().toLocaleDateString(),
-          type: 'operational',
+          tenantId: 'platform',
+          title: 'Platform Analytics - ' + new Date().toLocaleDateString(),
+          type: 'platform',
           format: 'pdf',
           status: 'completed',
           createdAt: new Date(Date.now() - 172800000), // 2 days ago
           completedAt: new Date(Date.now() - 172800000 + 120000),
+          generatedBy: 'super_admin'
+        },
+        {
+          id: 'platform_report_2',
+          tenantId: 'platform',
+          title: 'Subscription Revenue Report - ' + new Date().toLocaleDateString(),
+          type: 'subscriptions',
+          format: 'pdf',
+          status: 'completed',
+          createdAt: new Date(Date.now() - 86400000), // 1 day ago
+          completedAt: new Date(Date.now() - 86400000 + 180000),
           generatedBy: 'super_admin'
         }
       ];
