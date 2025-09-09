@@ -252,13 +252,7 @@ export default function Reports() {
                   <SelectContent>
                     {tenants.map((tenant) => (
                       <SelectItem key={tenant.id} value={tenant.id}>
-                        <div className="flex items-center space-x-2">
-                          <Building2 className="h-4 w-4" />
-                          <span>{tenant.name}</span>
-                          <Badge variant={tenant.isActive ? "default" : "secondary"}>
-                            {tenant.type}
-                          </Badge>
-                        </div>
+                        {tenant.name} ({tenant.type})
                       </SelectItem>
                     ))}
                   </SelectContent>
