@@ -3775,9 +3775,26 @@ to the patient and authorized healthcare providers.
       const { type, format, title } = req.body;
       const { tenantId } = req.user as any;
       
-      // Create a basic report record
+      // Import ReportGenerator
+      const { ReportGenerator } = await import('./reportGenerator');
+      const reportGenerator = new ReportGenerator();
+      
       const reportId = `report_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const generatedBy = req.user?.id || 'system';
+      
+      // Generate the actual report file
       const reportData = {
+        title,
+        type,
+        generatedBy,
+        createdAt: new Date(),
+        data: [], // This would be populated with actual data in a real implementation
+        metadata: { tenantId, organization: 'Healthcare Organization' }
+      };
+      
+      const { fileUrl, fileName } = await reportGenerator.generateReport(reportData, format);
+      
+      const reportRecord = {
         id: reportId,
         tenantId,
         title,
@@ -3787,11 +3804,12 @@ to the patient and authorized healthcare providers.
         parameters: { type, format },
         createdAt: new Date(),
         completedAt: new Date(),
-        generatedBy: req.user?.id || 'system',
-        fileUrl: `/reports/${reportId}.${format}`
+        generatedBy,
+        fileUrl,
+        fileName
       };
       
-      res.json({ message: 'Report generated successfully', report: reportData });
+      res.json({ message: 'Report generated successfully', report: reportRecord });
     } catch (error) {
       console.error('Error generating report:', error);
       res.status(500).json({ message: 'Failed to create report' });
@@ -3835,9 +3853,26 @@ to the patient and authorized healthcare providers.
         return res.status(400).json({ message: "Target tenant ID is required for cross-tenant reports" });
       }
       
-      // Create platform report record
+      // Import ReportGenerator
+      const { ReportGenerator } = await import('./reportGenerator');
+      const reportGenerator = new ReportGenerator();
+      
       const reportId = `platform_report_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const generatedBy = req.user?.id || 'super_admin';
+      
+      // Generate the actual report file
       const reportData = {
+        title,
+        type,
+        generatedBy,
+        createdAt: new Date(),
+        data: [], // This would be populated with actual data in a real implementation
+        metadata: { targetTenantId, platform: 'NaviMED' }
+      };
+      
+      const { fileUrl, fileName } = await reportGenerator.generateReport(reportData, format);
+      
+      const reportRecord = {
         id: reportId,
         tenantId: targetTenantId === 'platform' ? 'platform' : targetTenantId,
         title,
@@ -3847,8 +3882,9 @@ to the patient and authorized healthcare providers.
         parameters: { type, format, targetTenantId },
         createdAt: new Date(),
         completedAt: new Date(),
-        generatedBy: req.user?.id || 'super_admin',
-        fileUrl: `/platform-reports/${reportId}.${format}`
+        generatedBy,
+        fileUrl,
+        fileName
       };
       
       const isPlatformWide = targetTenantId === 'platform' || !targetTenantId;
@@ -3856,7 +3892,7 @@ to the patient and authorized healthcare providers.
         ? 'Platform report generated successfully'
         : 'Cross-tenant report generated successfully';
       
-      res.json({ message: successMessage, report: reportData });
+      res.json({ message: successMessage, report: reportRecord });
     } catch (error) {
       console.error('Error generating cross-tenant report:', error);
       res.status(500).json({ message: 'Failed to generate cross-tenant report' });

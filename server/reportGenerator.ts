@@ -1,6 +1,6 @@
 import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
-import createCsvWriter from 'csv-writer';
+import * as createCsvWriter from 'csv-writer';
 import { ObjectStorageService } from './objectStorage';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -166,7 +166,7 @@ export class ReportGenerator {
     });
 
     // Auto-fit columns
-    worksheet.columns.forEach(column => {
+    worksheet.columns.forEach((column: any) => {
       column.width = 15;
     });
 
