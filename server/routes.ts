@@ -3883,7 +3883,9 @@ to the patient and authorized healthcare providers.
         metadata: { targetTenantId, platform: 'NaviMED' }
       };
       
+      console.log('🏗️ Generating platform report:', { type, format, title });
       const { fileUrl, fileName } = await reportGenerator.generateReport(reportData, format);
+      console.log('📄 Report generated:', { fileUrl, fileName });
       
       const reportRecord = {
         id: reportId,
@@ -3906,6 +3908,7 @@ to the patient and authorized healthcare providers.
         global.platformReports = [];
       }
       global.platformReports.push(reportRecord);
+      console.log('💾 Report record stored:', reportRecord.id);
       
       const isPlatformWide = targetTenantId === 'platform' || !targetTenantId;
       const successMessage = isPlatformWide 
@@ -3986,7 +3989,9 @@ to the patient and authorized healthcare providers.
       const objectStorageService = new ObjectStorageService();
       
       try {
+        console.log('🔍 Looking for file at path:', report.fileUrl);
         const objectFile = await objectStorageService.getObjectEntityFile(report.fileUrl);
+        console.log('📁 Object file found, preparing download...');
         
         // Set appropriate headers for file download
         const mimeType = fileName.endsWith('.pdf') ? 'application/pdf' : 
@@ -3996,12 +4001,15 @@ to the patient and authorized healthcare providers.
         res.setHeader('Content-Type', mimeType);
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
         
+        console.log('📤 Streaming file to client...');
         // Stream the file to the response
         await objectStorageService.downloadObject(objectFile, res);
+        console.log('✅ Download completed successfully');
         
       } catch (error) {
-        console.error('Error downloading report file:', error);
-        res.status(404).json({ message: 'Report file not found' });
+        console.error('❌ Error downloading report file:', error);
+        console.error('📋 Report details:', { reportId, fileName, fileUrl: report.fileUrl });
+        res.status(404).json({ message: 'Report file not found', details: error.message });
       }
     } catch (error) {
       console.error('Error in download endpoint:', error);

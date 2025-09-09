@@ -275,11 +275,15 @@ export class ReportGenerator {
   }
 
   private async uploadToStorage(filePath: string, fileName: string): Promise<string> {
+    console.log('📁 Starting file upload:', fileName);
+    
     // Read the file
     const fileBuffer = await fs.readFile(filePath);
+    console.log('📊 File size:', fileBuffer.length, 'bytes');
     
     // Get upload URL from object storage service
     const uploadUrl = await this.objectStorageService.getObjectEntityUploadURL();
+    console.log('🔗 Upload URL obtained:', uploadUrl.substring(0, 50) + '...');
     
     // Upload the file
     const response = await fetch(uploadUrl, {
@@ -290,8 +294,12 @@ export class ReportGenerator {
       },
     });
 
+    console.log('📤 Upload response status:', response.status);
+    
     if (!response.ok) {
-      throw new Error(`Failed to upload file: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('❌ Upload failed:', response.status, response.statusText, errorText);
+      throw new Error(`Failed to upload file: ${response.status} ${response.statusText}`);
     }
 
     // Extract the file name from the upload URL to get the correct object path
@@ -299,8 +307,11 @@ export class ReportGenerator {
     const pathParts = url.pathname.split('/');
     const objectFileName = pathParts[pathParts.length - 1];
     
+    console.log('✅ File uploaded successfully as:', objectFileName);
+    
     // Return the object URL for downloading using the actual object file name
     const objectPath = `/objects/uploads/${objectFileName}`;
+    console.log('🔗 Download path will be:', objectPath);
     return objectPath;
   }
 
