@@ -145,9 +145,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply sensitive data protection
   app.use(securityMiddleware.breach.sensitiveDataProtection);
   
-  // Apply compression control for BREACH mitigation
-  app.use(compressionMitigation.control);
-  app.use(compressionMitigation.antiNoise);
+  // Compression control is handled in main server configuration (server/index.ts)
+  // to allow static assets and main page to be compressed while protecting sensitive APIs
   
   // IMMEDIATE TEST - FIRST ENDPOINT REGISTERED
   app.post('/api/immediate-test', (req, res) => {
