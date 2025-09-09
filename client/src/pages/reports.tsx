@@ -107,9 +107,24 @@ export default function Reports() {
   });
 
   // Get all tenants for super admin
-  const { data: tenants = [], isLoading: tenantsLoading } = useQuery<Tenant[]>({
+  const { data: tenants = [], isLoading: tenantsLoading, isSuccess: tenantsSuccess, error: tenantsError } = useQuery<Tenant[]>({
     queryKey: ["/api/tenants"],
     enabled: !!user && isSuperAdmin,
+    retry: 1,
+  });
+
+  // Debug the tenants data
+  console.log('🔍 Tenants debug:', {
+    isSuperAdmin,
+    userRole: user?.role,
+    userExists: !!user,
+    queryEnabled: !!user && isSuperAdmin,
+    tenantsCount: tenants.length,
+    tenantsLoading,
+    tenantsSuccess,
+    tenantsError: tenantsError?.message,
+    firstTenant: tenants[0],
+    sampleTenants: tenants.slice(0, 2)
   });
 
   const generateReportMutation = useMutation({
@@ -255,7 +270,11 @@ export default function Reports() {
                   </SelectTrigger>
                   <SelectContent>
                     {tenantsLoading ? (
-                      <SelectItem value="loading" disabled>Loading...</SelectItem>
+                      <SelectItem value="loading" disabled>Loading organizations...</SelectItem>
+                    ) : tenantsError ? (
+                      <SelectItem value="error" disabled>Error loading organizations</SelectItem>
+                    ) : !tenantsSuccess ? (
+                      <SelectItem value="not-ready" disabled>Data not ready</SelectItem>
                     ) : tenants.length === 0 ? (
                       <SelectItem value="empty" disabled>No organizations found</SelectItem>
                     ) : (
