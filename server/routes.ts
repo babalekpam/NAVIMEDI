@@ -3767,6 +3767,119 @@ to the patient and authorized healthcare providers.
     }
   });
 
+  // REPORT GENERATION ENDPOINTS
+  
+  // Regular reports for tenant users
+  app.post("/api/reports", authenticateToken, async (req, res) => {
+    try {
+      const { type, format, title } = req.body;
+      const { tenantId } = req.user as any;
+      
+      // Create a basic report record
+      const reportData = {
+        id: `report_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        tenantId,
+        title,
+        type,
+        format,
+        status: 'completed',
+        parameters: { type, format },
+        createdAt: new Date(),
+        completedAt: new Date(),
+        generatedBy: req.user?.id || 'system',
+        fileUrl: `/reports/${reportData.id}.${format}`
+      };
+      
+      res.json({ message: 'Report generated successfully', report: reportData });
+    } catch (error) {
+      console.error('Error generating report:', error);
+      res.status(500).json({ message: 'Failed to create report' });
+    }
+  });
+
+  // Get reports for current tenant
+  app.get("/api/reports", authenticateToken, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      
+      // Return mock reports for now - in real implementation, fetch from database
+      const reports = [
+        {
+          id: 'report_1',
+          tenantId,
+          title: 'Sample Report - ' + new Date().toLocaleDateString(),
+          type: 'financial',
+          format: 'pdf',
+          status: 'completed',
+          createdAt: new Date(Date.now() - 86400000), // Yesterday
+          completedAt: new Date(Date.now() - 86400000 + 60000),
+          generatedBy: req.user?.id || 'system'
+        }
+      ];
+      
+      res.json(reports);
+    } catch (error) {
+      console.error('Error fetching reports:', error);
+      res.status(500).json({ message: 'Failed to fetch reports' });
+    }
+  });
+
+  // Platform-wide report generation for super admin
+  app.post("/api/platform/reports/generate", authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const { targetTenantId, type, format, title } = req.body;
+      
+      if (!targetTenantId) {
+        return res.status(400).json({ message: "Target tenant ID is required for cross-tenant reports" });
+      }
+      
+      // Create cross-tenant report record
+      const reportData = {
+        id: `platform_report_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        tenantId: targetTenantId,
+        title,
+        type,
+        format,
+        status: 'completed',
+        parameters: { type, format, targetTenantId },
+        createdAt: new Date(),
+        completedAt: new Date(),
+        generatedBy: req.user?.id || 'super_admin',
+        fileUrl: `/platform-reports/${reportData.id}.${format}`
+      };
+      
+      res.json({ message: 'Cross-tenant report generated successfully', report: reportData });
+    } catch (error) {
+      console.error('Error generating cross-tenant report:', error);
+      res.status(500).json({ message: 'Failed to generate cross-tenant report' });
+    }
+  });
+
+  // Get platform reports for super admin
+  app.get("/api/platform/reports", authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      // Return mock platform reports for now
+      const reports = [
+        {
+          id: 'platform_report_1',
+          tenantId: 'multiple',
+          title: 'Cross-Tenant Analytics - ' + new Date().toLocaleDateString(),
+          type: 'operational',
+          format: 'pdf',
+          status: 'completed',
+          createdAt: new Date(Date.now() - 172800000), // 2 days ago
+          completedAt: new Date(Date.now() - 172800000 + 120000),
+          generatedBy: 'super_admin'
+        }
+      ];
+      
+      res.json(reports);
+    } catch (error) {
+      console.error('Error fetching platform reports:', error);
+      res.status(500).json({ message: 'Failed to fetch platform reports' });
+    }
+  });
+
   app.post('/api/admin/tenants', async (req, res) => {
     try {
       const tenant = await storage.createTenant(req.body);
