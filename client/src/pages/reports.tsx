@@ -247,14 +247,24 @@ export default function Reports() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Target Organization</label>
                 <Select value={selectedTenant} onValueChange={setSelectedTenant}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select organization" />
+                    <SelectValue placeholder={
+                      tenantsLoading ? "Loading organizations..." : 
+                      tenants.length === 0 ? "No organizations available" :
+                      "Select organization"
+                    } />
                   </SelectTrigger>
                   <SelectContent>
-                    {tenants.map((tenant) => (
-                      <SelectItem key={tenant.id} value={tenant.id}>
-                        {tenant.name} ({tenant.type})
-                      </SelectItem>
-                    ))}
+                    {tenantsLoading ? (
+                      <SelectItem value="loading" disabled>Loading...</SelectItem>
+                    ) : tenants.length === 0 ? (
+                      <SelectItem value="empty" disabled>No organizations found</SelectItem>
+                    ) : (
+                      tenants.map((tenant) => (
+                        <SelectItem key={tenant.id} value={tenant.id}>
+                          {tenant.name} ({tenant.type})
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
