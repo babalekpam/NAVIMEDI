@@ -3655,6 +3655,17 @@ to the patient and authorized healthcare providers.
     }
   });
 
+  // Get all suppliers for super admin
+  app.get('/api/admin/suppliers', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const suppliers = await storage.getAllMedicalSuppliers();
+      res.json(suppliers);
+    } catch (error) {
+      console.error('Error fetching suppliers:', error);
+      res.status(500).json({ message: 'Failed to fetch suppliers' });
+    }
+  });
+
   app.post('/api/admin/tenants', async (req, res) => {
     try {
       const tenant = await storage.createTenant(req.body);
