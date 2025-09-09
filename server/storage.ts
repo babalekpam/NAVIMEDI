@@ -5400,9 +5400,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Medical Suppliers Management
-  async createMedicalSupplier(supplier: any): Promise<MedicalSupplier> {
+  async createMedicalSupplier(supplierData: any): Promise<MedicalSupplier> {
     // Generate base organization slug from company name
-    const baseSlug = supplier.companyName
+    const baseSlug = supplierData.companyName
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '-')
       .replace(/-+/g, '-')
@@ -5426,11 +5426,35 @@ export class DatabaseStorage implements IStorage {
       counter++;
     }
 
+    // Hash password
+    const bcrypt = await import('bcrypt');
+    const passwordHash = await bcrypt.hash(supplierData.password, 10);
+
     const [created] = await db.insert(medicalSuppliers)
       .values({
-        ...supplier,
+        companyName: supplierData.companyName,
         organizationSlug,
-        status: 'pending_review'
+        businessType: supplierData.businessType,
+        contactPersonName: supplierData.contactPersonName,
+        contactEmail: supplierData.contactEmail,
+        contactPhone: supplierData.contactPhone,
+        websiteUrl: supplierData.websiteUrl || null,
+        businessAddress: supplierData.businessAddress,
+        city: supplierData.city,
+        state: supplierData.state,
+        country: supplierData.country,
+        zipCode: supplierData.zipCode,
+        businessDescription: supplierData.businessDescription,
+        productCategories: supplierData.productCategories || [],
+        yearsInBusiness: supplierData.yearsInBusiness,
+        numberOfEmployees: supplierData.numberOfEmployees,
+        annualRevenue: supplierData.annualRevenue,
+        certifications: supplierData.certifications || [],
+        username: supplierData.username,
+        passwordHash,
+        status: 'pending_review',
+        termsAccepted: supplierData.termsAccepted,
+        marketingConsent: supplierData.marketingConsent || false,
       })
       .returning();
     return created;

@@ -211,13 +211,13 @@ sectigo.com
         contactEmail: req.body.contactEmail,
         contactPhone: req.body.contactPhone,
         websiteUrl: req.body.website || null,
-        businessAddress: req.body.address,
+        businessAddress: req.body.businessAddress,
         city: req.body.city,
         state: req.body.state,
         country: req.body.country || 'USA',
         zipCode: req.body.zipCode,
-        businessDescription: req.body.description,
-        productCategories: req.body.specialties ? [req.body.specialties] : [],
+        businessDescription: req.body.businessDescription,
+        productCategories: req.body.productCategories || [],
         yearsInBusiness: req.body.yearsInBusiness || "1-2",
         numberOfEmployees: req.body.numberOfEmployees || "1-10",
         annualRevenue: req.body.annualRevenue || "Under $1M",
@@ -3663,6 +3663,107 @@ to the patient and authorized healthcare providers.
     } catch (error) {
       console.error('Error fetching suppliers:', error);
       res.status(500).json({ message: 'Failed to fetch suppliers' });
+    }
+  });
+
+  // Get platform stats for super admin
+  app.get('/api/admin/platform-stats', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const tenants = await storage.getAllTenants();
+      const users = await storage.getAllUsers();
+      const suppliers = await storage.getAllMedicalSuppliers();
+      
+      const tenantsByType = tenants.reduce((acc: Record<string, number>, tenant) => {
+        acc[tenant.type] = (acc[tenant.type] || 0) + 1;
+        return acc;
+      }, {});
+
+      const stats = {
+        totalTenants: tenants.length,
+        totalUsers: users.length,
+        totalSuppliers: suppliers.length,
+        tenantsByType,
+        activeTenants: tenants.filter(t => t.isActive).length,
+        inactiveTenants: tenants.filter(t => !t.isActive).length,
+        pendingSuppliers: suppliers.filter(s => s.status === 'pending_review').length,
+        approvedSuppliers: suppliers.filter(s => s.status === 'approved').length
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching platform stats:', error);
+      res.status(500).json({ message: 'Failed to fetch platform stats' });
+    }
+  });
+
+  // Approve supplier
+  app.put('/api/admin/suppliers/:id/approve', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { userId } = req.user as any;
+      
+      const supplier = await storage.approveMedicalSupplier(id, userId);
+      if (!supplier) {
+        return res.status(404).json({ message: 'Supplier not found' });
+      }
+      
+      res.json({ message: 'Supplier approved successfully', supplier });
+    } catch (error) {
+      console.error('Error approving supplier:', error);
+      res.status(500).json({ message: 'Failed to approve supplier' });
+    }
+  });
+
+  // Reject supplier
+  app.put('/api/admin/suppliers/:id/reject', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      
+      const supplier = await storage.updateMedicalSupplierStatus(id, 'rejected', reason);
+      if (!supplier) {
+        return res.status(404).json({ message: 'Supplier not found' });
+      }
+      
+      res.json({ message: 'Supplier rejected successfully', supplier });
+    } catch (error) {
+      console.error('Error rejecting supplier:', error);
+      res.status(500).json({ message: 'Failed to reject supplier' });
+    }
+  });
+
+  // Suspend supplier
+  app.put('/api/admin/suppliers/:id/suspend', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      
+      const supplier = await storage.updateMedicalSupplierStatus(id, 'suspended', reason);
+      if (!supplier) {
+        return res.status(404).json({ message: 'Supplier not found' });
+      }
+      
+      res.json({ message: 'Supplier suspended successfully', supplier });
+    } catch (error) {
+      console.error('Error suspending supplier:', error);
+      res.status(500).json({ message: 'Failed to suspend supplier' });
+    }
+  });
+
+  // Activate supplier
+  app.put('/api/admin/suppliers/:id/activate', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const supplier = await storage.updateMedicalSupplierStatus(id, 'approved');
+      if (!supplier) {
+        return res.status(404).json({ message: 'Supplier not found' });
+      }
+      
+      res.json({ message: 'Supplier activated successfully', supplier });
+    } catch (error) {
+      console.error('Error activating supplier:', error);
+      res.status(500).json({ message: 'Failed to activate supplier' });
     }
   });
 
