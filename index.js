@@ -84,12 +84,37 @@ app.get('/api/platform/stats', (req, res) => {
   });
 });
 
-// Security headers
+// HTTPS enforcement and security headers
 app.use((req, res, next) => {
+  // CRITICAL: Force HTTPS for all requests
+  if (req.header('x-forwarded-proto') !== 'https' && process.env.NODE_ENV === 'production') {
+    return res.redirect(301, `https://${req.header('host')}${req.url}`);
+  }
+  
+  // HSTS: Force HTTPS for 1 year (required by Google)
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  
+  // Content Security Policy with HTTPS enforcement
+  res.setHeader('Content-Security-Policy', 
+    "default-src 'self' https:; " +
+    "script-src 'self' 'unsafe-inline' https:; " +
+    "style-src 'self' 'unsafe-inline' https:; " +
+    "img-src 'self' data: https:; " +
+    "connect-src 'self' https: wss:; " +
+    "font-src 'self' https:; " +
+    "frame-src 'self' https:; " +
+    "upgrade-insecure-requests; " +
+    "block-all-mixed-content"
+  );
+  
+  // Additional security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  
   next();
 });
 
@@ -130,13 +155,15 @@ app.get('*', (req, res) => {
       }
     }
     
-    // Fallback: serve minimal working HTML
+    // Fallback: serve minimal working HTML with HTTPS enforcement
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.status(200).send(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <link rel="canonical" href="https://navimedi.org/" />
   <title>NaviMED - Healthcare Platform for Hospitals & Pharmacies</title>
   <meta name="description" content="Transform your healthcare practice with NaviMED - the leading multi-tenant platform for hospitals, pharmacies & laboratories. HIPAA compliant, multilingual support, real-time patient management.">
   <style>
