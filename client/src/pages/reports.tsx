@@ -137,10 +137,12 @@ export default function Reports() {
       setSelectedType("");
       setSelectedTenant("");
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Report generation error:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to generate report. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to generate report. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -156,8 +158,23 @@ export default function Reports() {
   ];
 
   const handleGenerateReport = () => {
-    if (!selectedType) return;
-    if (isSuperAdmin && !selectedTenant && !tenant) return;
+    if (!selectedType) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a report type.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (isSuperAdmin && (!selectedTenant || selectedTenant.trim() === '') && !tenant) {
+      toast({
+        title: "Missing Information", 
+        description: "Please select a target organization.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const reportType = reportTypes.find(type => type.value === selectedType);
     if (!reportType) return;
@@ -174,7 +191,7 @@ export default function Reports() {
       type: selectedType,
       format: selectedFormat,
       title: `${reportType.label}${titleSuffix}`,
-      targetTenantId: isSuperAdmin ? selectedTenant : undefined
+      targetTenantId: isSuperAdmin && selectedTenant && selectedTenant.trim() !== '' ? selectedTenant : undefined
     });
   };
 

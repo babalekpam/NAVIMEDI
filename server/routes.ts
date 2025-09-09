@@ -3829,7 +3829,7 @@ to the patient and authorized healthcare providers.
     try {
       const { targetTenantId, type, format, title } = req.body;
       
-      if (!targetTenantId) {
+      if (!targetTenantId || targetTenantId.trim() === '') {
         return res.status(400).json({ message: "Target tenant ID is required for cross-tenant reports" });
       }
       
