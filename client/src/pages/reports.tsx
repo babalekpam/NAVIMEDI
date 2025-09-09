@@ -118,7 +118,8 @@ export default function Reports() {
 
   const generateReportMutation = useMutation({
     mutationFn: async (reportData: { type: string; format: string; title: string; targetTenantId?: string }) => {
-      const endpoint = isSuperAdmin && reportData.targetTenantId 
+      // Use platform endpoint for super admin, regular endpoint for tenants
+      const endpoint = isSuperAdmin 
         ? "/api/platform/reports/generate" 
         : "/api/reports";
       return await apiRequest(endpoint, {
@@ -148,7 +149,17 @@ export default function Reports() {
     },
   });
 
-  const reportTypes = [
+  const superAdminReportTypes = [
+    { value: "platform", label: "Platform Analytics", description: "Overall platform usage, performance metrics, and system health", key: "platform_analytics" },
+    { value: "tenants", label: "Tenant Management Report", description: "All organizations on platform: active, inactive, subscription status", key: "tenant_management" },
+    { value: "subscriptions", label: "Subscription Revenue Report", description: "Subscription analytics, revenue breakdown, billing cycles", key: "subscription_revenue" },
+    { value: "usage", label: "Platform Usage Statistics", description: "User activity, feature adoption, storage usage across all tenants", key: "platform_usage" },
+    { value: "compliance", label: "Platform Compliance Audit", description: "System-wide security, HIPAA compliance, and audit logs", key: "platform_compliance" },
+    { value: "financial", label: "Platform Financial Report", description: "Total revenue, payment processing, subscription trends", key: "platform_financial" },
+    { value: "operational", label: "Cross-Tenant Analytics", description: "Compare metrics across different healthcare organizations", key: "cross_tenant" },
+  ];
+
+  const tenantReportTypes = [
     { value: "clinical", label: "Patient Summary Report", description: "Overview of all patient records and demographics", key: "patient_summary" },
     { value: "operational", label: "Appointment Analytics", description: "Appointment trends, no-shows, and scheduling patterns", key: "appointment_analytics" },
     { value: "clinical", label: "Prescription Report", description: "Prescription volumes, popular medications, and pharmacy data", key: "prescription_report" },
@@ -156,6 +167,8 @@ export default function Reports() {
     { value: "clinical", label: "Lab Results Report", description: "Laboratory testing volumes and result patterns", key: "lab_results" },
     { value: "compliance", label: "Compliance Audit", description: "HIPAA compliance and security audit trail", key: "compliance_audit" },
   ];
+
+  const reportTypes = isSuperAdmin ? superAdminReportTypes : tenantReportTypes;
 
   const handleGenerateReport = () => {
     if (!selectedType) {
@@ -167,10 +180,12 @@ export default function Reports() {
       return;
     }
     
-    if (isSuperAdmin && (!selectedTenant || selectedTenant.trim() === '') && !tenant) {
+    // For platform-wide reports, super admin doesn't need to select a target tenant
+    // Only cross-tenant reports need specific tenant selection
+    if (isSuperAdmin && selectedType === 'operational' && (!selectedTenant || selectedTenant.trim() === '') && !tenant) {
       toast({
         title: "Missing Information", 
-        description: "Please select a target organization.",
+        description: "Please select a target organization for cross-tenant analysis.",
         variant: "destructive",
       });
       return;
@@ -179,7 +194,7 @@ export default function Reports() {
     const reportType = reportTypes.find(type => type.value === selectedType);
     if (!reportType) return;
 
-    const targetTenant = isSuperAdmin && selectedTenant 
+    const targetTenant = isSuperAdmin && selectedType === 'operational' && selectedTenant 
       ? tenants.find(t => t.id === selectedTenant) 
       : null;
 
@@ -187,11 +202,14 @@ export default function Reports() {
       ? ` - ${targetTenant.name} - ${new Date().toLocaleDateString()}`
       : ` - ${new Date().toLocaleDateString()}`;
 
+    // For platform-wide super admin reports, don't send targetTenantId
+    const isPlatformReport = isSuperAdmin && selectedType !== 'operational';
+
     generateReportMutation.mutate({
       type: selectedType,
       format: selectedFormat,
       title: `${reportType.label}${titleSuffix}`,
-      targetTenantId: isSuperAdmin && selectedTenant && selectedTenant.trim() !== '' ? selectedTenant : undefined
+      targetTenantId: isPlatformReport ? 'platform' : (selectedTenant && selectedTenant.trim() !== '' ? selectedTenant : undefined)
     });
   };
 
@@ -229,7 +247,7 @@ export default function Reports() {
           </h1>
           <p className="text-gray-600 mt-1">
             {isSuperAdmin 
-              ? "Generate comprehensive reports for any healthcare organization on the platform"
+              ? "Generate platform-wide analytics including tenant management, subscriptions, and cross-organization metrics"
               : "Generate comprehensive reports for your healthcare organization"
             }
           </p>
@@ -262,8 +280,8 @@ export default function Reports() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className={`grid grid-cols-1 gap-4 mb-6 ${isSuperAdmin ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
-            {isSuperAdmin && (
+          <div className={`grid grid-cols-1 gap-4 mb-6 ${isSuperAdmin && selectedType === 'operational' ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
+            {isSuperAdmin && selectedType === 'operational' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Target Organization</label>
                 <Select value={selectedTenant} onValueChange={setSelectedTenant}>
@@ -328,7 +346,7 @@ export default function Reports() {
             <div className="flex items-end">
               <Button 
                 onClick={handleGenerateReport}
-                disabled={!selectedType || (isSuperAdmin && !selectedTenant && !tenant) || generateReportMutation.isPending}
+                disabled={!selectedType || (isSuperAdmin && selectedType === 'operational' && !selectedTenant && !tenant) || generateReportMutation.isPending}
                 className="w-full"
               >
                 {generateReportMutation.isPending ? (
