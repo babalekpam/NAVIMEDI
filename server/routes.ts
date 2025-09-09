@@ -3776,8 +3776,9 @@ to the patient and authorized healthcare providers.
       const { tenantId } = req.user as any;
       
       // Create a basic report record
+      const reportId = `report_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const reportData = {
-        id: `report_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        id: reportId,
         tenantId,
         title,
         type,
@@ -3787,7 +3788,7 @@ to the patient and authorized healthcare providers.
         createdAt: new Date(),
         completedAt: new Date(),
         generatedBy: req.user?.id || 'system',
-        fileUrl: `/reports/${reportData.id}.${format}`
+        fileUrl: `/reports/${reportId}.${format}`
       };
       
       res.json({ message: 'Report generated successfully', report: reportData });
