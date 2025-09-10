@@ -25,7 +25,7 @@ import Stripe from "stripe";
 let stripe: Stripe | null = null;
 if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_')) {
   stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2023-10-16",
+    apiVersion: "2025-07-30.basil",
   });
   console.log("✅ Stripe initialized successfully");
 } else {
@@ -52,16 +52,16 @@ Status: ${claim.status?.toUpperCase() || 'SUBMITTED'}
 
 PATIENT INFORMATION
 ------------------
-Patient Name: ${claim.patientFirstName || 'N/A'} ${claim.patientLastName || 'N/A'}
-Patient MRN: ${claim.patientMrn || 'N/A'}
+Patient Name: N/A
+Patient MRN: N/A
 Patient ID: ${claim.patientId}
 
 MEDICATION DETAILS
 -----------------
-Medication Name: ${claim.medicationName || 'N/A'}
-Dosage: ${claim.dosage || 'N/A'}
-Quantity: ${claim.quantity || 'N/A'}
-Days Supply: ${claim.daysSupply || 'N/A'}
+Primary Diagnosis: ${claim.primaryDiagnosisDescription || 'N/A'}
+Diagnosis Code: ${claim.primaryDiagnosisCode || 'N/A'}
+Treatment: ${claim.treatmentProvided || 'N/A'}
+Clinical Findings: ${claim.clinicalFindings || 'N/A'}
 
 FINANCIAL INFORMATION
 --------------------
@@ -610,19 +610,8 @@ sectigo.com
         }
       }
 
-      let query = db.select({
-        id: countryMedicalCodes.id,
-        countryId: countryMedicalCodes.countryId,
-        codeType: countryMedicalCodes.codeType,
-        code: countryMedicalCodes.code,
-        description: countryMedicalCodes.description,
-        category: countryMedicalCodes.category,
-        amount: countryMedicalCodes.amount,
-        source: countryMedicalCodes.source,
-        uploadedBy: countryMedicalCodes.uploadedBy,
-        createdAt: countryMedicalCodes.createdAt,
-        isActive: countryMedicalCodes.isActive
-      }).from(countryMedicalCodes).where(eq(countryMedicalCodes.isActive, true));
+      // Build WHERE conditions array
+      const whereConditions = [eq(countryMedicalCodes.isActive, true)];
       
       // STRICT COUNTRY FILTERING - Always filter by country unless explicitly requesting all
       if (req.query.countryId && req.query.countryId !== 'all-countries') {
@@ -639,18 +628,18 @@ sectigo.com
           });
         }
         
-        query = query.where(eq(countryMedicalCodes.countryId, req.query.countryId as string));
+        whereConditions.push(eq(countryMedicalCodes.countryId, req.query.countryId as string));
         console.log(`🔒 Filtering medical codes for country: ${req.query.countryId}`);
       }
       
       // Additional filters (code type, search)
       if (req.query.codeType && req.query.codeType !== 'ALL') {
-        query = query.where(eq(countryMedicalCodes.codeType, req.query.codeType as string));
+        whereConditions.push(eq(countryMedicalCodes.codeType, req.query.codeType as string));
       }
       
       if (req.query.search) {
         const searchTerm = `%${req.query.search}%`;
-        query = query.where(
+        whereConditions.push(
           or(
             sql`${countryMedicalCodes.code} ILIKE ${searchTerm}`,
             sql`${countryMedicalCodes.description} ILIKE ${searchTerm}`
@@ -658,7 +647,21 @@ sectigo.com
         );
       }
       
-      const codes = await query.limit(1000); // Prevent too many results
+      const codes = await db.select({
+        id: countryMedicalCodes.id,
+        countryId: countryMedicalCodes.countryId,
+        codeType: countryMedicalCodes.codeType,
+        code: countryMedicalCodes.code,
+        description: countryMedicalCodes.description,
+        category: countryMedicalCodes.category,
+        amount: countryMedicalCodes.amount,
+        source: countryMedicalCodes.source,
+        uploadedBy: countryMedicalCodes.uploadedBy,
+        createdAt: countryMedicalCodes.createdAt,
+        isActive: countryMedicalCodes.isActive
+      }).from(countryMedicalCodes)
+      .where(and(...whereConditions))
+      .limit(1000); // Prevent too many results
       
       // Log access for audit trail
       console.log(`📊 Medical codes access: ${codes.length} codes returned for country ${req.query.countryId || 'ALL'}`);
@@ -688,22 +691,20 @@ sectigo.com
         });
       }
 
-      // Build country-specific query
-      let query = db.select()
-        .from(countryMedicalCodes)
-        .where(and(
-          eq(countryMedicalCodes.countryId, countryId),
-          eq(countryMedicalCodes.isActive, true)
-        ));
+      // Build WHERE conditions array
+      const whereConditions = [
+        eq(countryMedicalCodes.countryId, countryId),
+        eq(countryMedicalCodes.isActive, true)
+      ];
 
       // Apply additional filters
       if (req.query.codeType && req.query.codeType !== 'ALL') {
-        query = query.where(eq(countryMedicalCodes.codeType, req.query.codeType as string));
+        whereConditions.push(eq(countryMedicalCodes.codeType, req.query.codeType as string));
       }
       
       if (req.query.search) {
         const searchTerm = `%${req.query.search}%`;
-        query = query.where(
+        whereConditions.push(
           or(
             sql`${countryMedicalCodes.code} ILIKE ${searchTerm}`,
             sql`${countryMedicalCodes.description} ILIKE ${searchTerm}`
@@ -711,7 +712,10 @@ sectigo.com
         );
       }
 
-      const codes = await query.limit(1000);
+      const codes = await db.select()
+        .from(countryMedicalCodes)
+        .where(and(...whereConditions))
+        .limit(1000);
       
       console.log(`🏥 Country-specific access: ${codes.length} medical codes for ${country[0].name} (${countryId})`);
       
@@ -1275,7 +1279,7 @@ sectigo.com
       console.log('✅ User found:', user.id, user.email, 'has password:', !!user.password);
       
       // Handle both password field names for compatibility
-      const storedPasswordHash = user.passwordHash || user.password;
+      const storedPasswordHash = user.password;
       if (!storedPasswordHash) {
         console.log('❌ No password hash found');
         return res.status(401).json({ message: 'Invalid credentials' });
@@ -1303,7 +1307,7 @@ sectigo.com
           userId: user.id, 
           tenantId: user.tenantId,
           role: user.role,
-          tenantType: tenant.type
+          tenantType: tenant?.type || 'platform'
         },
         process.env.JWT_SECRET || 'fallback-secret',
         { expiresIn: '24h' }
@@ -1319,12 +1323,12 @@ sectigo.com
           lastName: user.lastName,
           role: user.role,
           tenantId: user.tenantId,
-          tenantType: tenant.type
+          tenantType: tenant?.type || 'platform'
         },
         tenant: {
-          id: tenant.id,
-          name: tenant.name,
-          type: tenant.type
+          id: tenant?.id || '',
+          name: tenant?.name || '',
+          type: tenant?.type || 'platform'
         }
       });
 
@@ -2863,7 +2867,7 @@ sectigo.com
       }
 
       // Check if user has a password set (handle both field names for compatibility)
-      const storedPasswordHash = user.passwordHash || (user as any).password;
+      const storedPasswordHash = user.password;
       if (!storedPasswordHash) {
         return res.status(400).json({ 
           message: 'No password is currently set for this user. Please contact support.' 
@@ -2884,7 +2888,7 @@ sectigo.com
 
       // Update password in database using consistent field name
       await storage.updateUser(userId, { 
-        passwordHash: newPasswordHash,
+        password: newPasswordHash,
         mustChangePassword: false, // Clear any forced password change flags
         isTemporaryPassword: false
       });

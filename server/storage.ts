@@ -656,6 +656,11 @@ export interface IStorage {
   createProductReview(review: InsertProductReview): Promise<ProductReview>;
   getProductReviews(productId: string, filters: { limit: number; offset: number; approvedOnly: boolean }): Promise<ProductReview[]>;
   hasUserPurchasedProduct(userId: string, productId: string): Promise<boolean>;
+  
+  // Missing methods for TypeScript compatibility
+  getHospitalDashboardStats(tenantId: string): Promise<any>;
+  getBilling(tenantId: string): Promise<any>;
+  getTenantById(id: string): Promise<Tenant | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -6286,6 +6291,75 @@ export class DatabaseStorage implements IStorage {
       .where(eq(medicalCodeUploads.id, id))
       .returning();
     return upload;
+  }
+  
+  // Missing methods implementation for TypeScript compatibility
+  async getHospitalDashboardStats(tenantId: string): Promise<any> {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const todayAppointments = await db.select({ count: sql`count(*)::int` })
+        .from(appointments)
+        .where(and(
+          eq(appointments.tenantId, tenantId),
+          gte(appointments.appointmentDate, today),
+          lt(appointments.appointmentDate, tomorrow)
+        ));
+      
+      const pendingPrescriptions = await db.select({ count: sql`count(*)::int` })
+        .from(prescriptions)
+        .where(and(
+          eq(prescriptions.tenantId, tenantId),
+          eq(prescriptions.status, 'prescribed')
+        ));
+      
+      const totalPatients = await db.select({ count: sql`count(*)::int` })
+        .from(patients)
+        .where(eq(patients.tenantId, tenantId));
+      
+      return {
+        todayAppointments: todayAppointments[0]?.count || 0,
+        pendingPrescriptions: pendingPrescriptions[0]?.count || 0,
+        totalPatients: totalPatients[0]?.count || 0,
+        pendingLabResults: 0,
+        monthlyClaimsTotal: 0
+      };
+    } catch (error) {
+      console.error('Error getting hospital dashboard stats:', error);
+      return { todayAppointments: 0, pendingPrescriptions: 0, totalPatients: 0, pendingLabResults: 0, monthlyClaimsTotal: 0 };
+    }
+  }
+  
+  async getBilling(tenantId: string): Promise<any> {
+    try {
+      const bills = await db.select()
+        .from(patientBills)
+        .where(eq(patientBills.tenantId, tenantId))
+        .orderBy(desc(patientBills.createdAt))
+        .limit(100);
+      
+      return {
+        bills,
+        totalBills: bills.length,
+        totalAmount: bills.reduce((sum, bill) => sum + parseFloat(bill.totalAmount), 0)
+      };
+    } catch (error) {
+      console.error('Error getting billing data:', error);
+      return { bills: [], totalBills: 0, totalAmount: 0 };
+    }
+  }
+  
+  async getTenantById(id: string): Promise<Tenant | undefined> {
+    try {
+      const [tenant] = await db.select().from(tenants).where(eq(tenants.id, id));
+      return tenant;
+    } catch (error) {
+      console.error('Error getting tenant by ID:', error);
+      return undefined;
+    }
   }
 }
 
