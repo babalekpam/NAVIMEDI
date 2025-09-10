@@ -516,8 +516,8 @@ function PatientLoginForm({ onLogin, isLoading }) {
         <button
           type="button"
           onClick={() => {
-            setFormData({ email: 'john.patient@example.com', password: 'password123' });
-            setTimeout(() => onLogin('john.patient@example.com', 'password123'), 100);
+            setFormData({ email: 'amara.mwangi@email.com', password: 'password123' });
+            setTimeout(() => onLogin('amara.mwangi@email.com', 'password123'), 100);
           }}
           className="text-xs text-blue-600 underline"
         >
