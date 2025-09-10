@@ -100,11 +100,21 @@ function App() {
 
 ## 🛠 Integration Guide
 
-### Step 1: Set up API Connection
+### Step 1: Get your NaviMED API Key
+1. **Log into your NaviMED platform** as an admin user
+2. **Go to Profile Settings** (click your profile/user icon)
+3. **Scroll down to the "API Keys" section**
+4. **Click "Create New API Key"**
+5. **Name it**: `Mobile Patient Portal`
+6. **Copy the generated API key** (you won't see it again!)
+
+### Step 2: Set up API Connection
 ```javascript
-// Configure API base URL
+// Configure API base URL and API Key
 const API_BASE_URL = 'https://navimedi.org/api';
-const patientAPI = new NaviMEDPatientAPI(API_BASE_URL);
+const YOUR_API_KEY = 'pk_1234567890abcdef...'; // Your actual API key
+
+const patientAPI = new NaviMEDPatientAPI(API_BASE_URL, YOUR_API_KEY);
 ```
 
 ### Step 2: Implement Authentication

@@ -37,6 +37,9 @@ export default function PatientPortalMobile() {
   // Mobile API base URL - connects to NaviMED platform
   const API_BASE_URL = 'https://navimedi.org/api';
   
+  // API Key for mobile app authentication
+  const MOBILE_API_KEY = 'YOUR_API_KEY_HERE'; // Replace with your actual API key
+  
   // Initialize patient session
   useEffect(() => {
     initializePatientSession();
@@ -67,6 +70,7 @@ export default function PatientPortalMobile() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
         'X-Mobile-App': 'NaviMED-Patient-Portal',
+        'X-Mobile-API-Key': MOBILE_API_KEY,
         'X-App-Version': '1.0.0',
         ...options.headers
       }

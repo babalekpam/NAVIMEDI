@@ -4,8 +4,9 @@
  */
 
 class NaviMEDPatientAPI {
-  constructor(baseURL = 'https://navimedi.org/api') {
+  constructor(baseURL = 'https://navimedi.org/api', apiKey = null) {
     this.baseURL = baseURL;
+    this.apiKey = apiKey;
     this.token = null;
     this.user = null;
     
@@ -59,6 +60,11 @@ class NaviMEDPatientAPI {
         ...options.headers
       }
     };
+
+    // Add API key if provided
+    if (this.apiKey) {
+      defaultOptions.headers['X-Mobile-API-Key'] = this.apiKey;
+    }
 
     // Add authorization header if token exists
     if (this.token) {
