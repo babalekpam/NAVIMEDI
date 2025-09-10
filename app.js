@@ -212,7 +212,7 @@ process.on('SIGTERM', () => {
 // Log startup information
 console.log('✅ NaviMED Healthcare Platform initialized');
 console.log(`📁 Static files: ${fs.existsSync(distPath) ? 'Found' : 'Missing'}`);
-console.log(`🏥 Built server: ${fs.existsSync(builtServerPath) ? 'Found' : 'Missing'}`);
+console.log(`🏥 Built files: ${fs.existsSync(path.resolve(__dirname, 'dist')) ? 'Found' : 'Missing'}`);
 console.log('🚀 Ready for Passenger deployment');
 
 // Export the Express app for Passenger (CommonJS style)

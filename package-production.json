@@ -3,7 +3,7 @@
   "version": "2.1.0",
   "description": "NaviMED Healthcare Platform - Production Build for Passenger",
   "main": "app.js",
-  "type": "module",
+  "type": "commonjs",
   "engines": {
     "node": ">=18.0.0"
   },
