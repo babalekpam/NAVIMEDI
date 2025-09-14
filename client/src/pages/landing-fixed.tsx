@@ -55,6 +55,7 @@ import {
   BookOpen
 } from "lucide-react";
 import { useTranslation } from "@/contexts/translation-context";
+import { SEOHead } from "@/components/seo-head";
 
 // Professional healthcare platform branding
 const brandName = "NAVIMED";
@@ -223,6 +224,56 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+      <SEOHead 
+        title="NAVIMED - Complete Healthcare Management Platform | Reduce Admin Burden by 40%"
+        description="Transform your healthcare facility with NAVIMED's HIPAA-compliant SaaS platform. Trusted by 200+ healthcare organizations worldwide. Free 14-day trial."
+        canonicalUrl="https://navimedi.org/"
+        keywords="healthcare management software, hospital management system, pharmacy management, laboratory management, HIPAA compliant, medical software, EHR system"
+      />
+      
+      {/* Schema.org structured data for Organization */}
+      <script 
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "NAVIMED Healthcare Platform",
+            "alternateName": "NAVIMED",
+            "url": "https://navimedi.org",
+            "logo": "https://navimedi.org/favicon.ico",
+            "description": "Next-generation healthcare management platform providing HIPAA-compliant SaaS solutions for hospitals, pharmacies, and laboratories worldwide.",
+            "foundingDate": "2023",
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "telephone": "+1-800-628-4633",
+              "contactType": "customer service",
+              "areaServed": "Worldwide",
+              "availableLanguage": ["English", "Spanish", "French", "German", "Italian"]
+            },
+            "sameAs": [
+              "https://www.facebook.com/profile.php?id=61573739589044"
+            ],
+            "address": {
+              "@type": "PostalAddress",
+              "addressCountry": "US"
+            },
+            "offers": [
+              {
+                "@type": "Offer",
+                "name": "Healthcare Management Platform",
+                "description": "Complete healthcare management solution with EHR, pharmacy, and laboratory management",
+                "url": "https://navimedi.org/pricing"
+              }
+            ],
+            "serviceArea": {
+              "@type": "Place",
+              "name": "Worldwide"
+            }
+          })
+        }}
+      />
+      
       <PublicHeader />
       
       {/* Hero Section with Professional Healthcare Carousel */}

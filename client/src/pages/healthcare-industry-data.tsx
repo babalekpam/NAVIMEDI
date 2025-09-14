@@ -41,6 +41,48 @@ export default function HealthcareIndustryDataPage() {
         keywords="healthcare statistics, medical industry data, healthcare technology trends, HIPAA compliance rates, digital health adoption, healthcare costs 2025"
         canonicalUrl="https://navimedi.org/healthcare-industry-data"
       />
+      
+      {/* Schema.org structured data for Dataset */}
+      <script 
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Dataset",
+            "name": "2025 Healthcare Industry Statistics & Data",
+            "description": "Comprehensive healthcare industry statistics and trends for 2025, covering EHR adoption, digital transformation, telehealth usage, and market analysis across various healthcare sectors.",
+            "url": "https://navimedi.org/healthcare-industry-data",
+            "keywords": ["healthcare statistics", "EHR adoption", "digital health", "telehealth", "healthcare technology", "medical industry data"],
+            "creator": {
+              "@type": "Organization",
+              "name": "NAVIMED Healthcare Platform",
+              "url": "https://navimedi.org"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "NAVIMED Healthcare Platform",
+              "url": "https://navimedi.org"
+            },
+            "datePublished": "2024-12-01",
+            "dateModified": "2025-01-01",
+            "license": "https://creativecommons.org/licenses/by/4.0/",
+            "distribution": [
+              {
+                "@type": "DataDownload",
+                "encodingFormat": "text/html",
+                "contentUrl": "#download-section",
+                "name": "2025 Healthcare Industry Statistics"
+              }
+            ],
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "NAVIMED Healthcare Platform",
+              "url": "https://navimedi.org"
+            }
+          })
+        }}
+      />
+      
       <PublicHeader />
       
       {/* Hero Section */}
