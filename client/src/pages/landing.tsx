@@ -305,6 +305,12 @@ export default function LandingPage() {
                   Patient Portal
                 </Button>
               </Link>
+              <Link href="/support/documentation">
+                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-800">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Documentation
+                </Button>
+              </Link>
             </div>
             
             {/* Stats - Connected to Backend */}
@@ -377,9 +383,12 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900">Medical Equipment</h3>
                 </div>
-                <p className="text-slate-600 leading-relaxed text-lg">
+                <p className="text-slate-600 leading-relaxed text-lg mb-4">
                   Browse advanced diagnostic equipment, surgical instruments, and cutting-edge medical technology from certified vendors.
                 </p>
+                <Link href="/solutions/hospitals" className="text-emerald-600 hover:text-emerald-700 text-sm font-medium inline-flex items-center">
+                  Learn more about hospital solutions <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
               </CardContent>
             </Card>
 
@@ -391,9 +400,12 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900">Healthcare Services</h3>
                 </div>
-                <p className="text-slate-600 leading-relaxed text-lg">
+                <p className="text-slate-600 leading-relaxed text-lg mb-4">
                   Connect with specialized healthcare service providers, consultants, and professional support services.
                 </p>
+                <Link href="/solutions/clinics" className="text-blue-600 hover:text-blue-700 text-sm font-medium inline-flex items-center">
+                  Explore clinic management <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
               </CardContent>
             </Card>
 
@@ -405,11 +417,25 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900">Innovation Hub</h3>
                 </div>
-                <p className="text-slate-600 leading-relaxed text-lg">
+                <p className="text-slate-600 leading-relaxed text-lg mb-4">
                   Discover the latest healthcare innovations, research partnerships, and technology solutions for modern medicine.
                 </p>
+                <Link href="/integrations" className="text-emerald-600 hover:text-emerald-700 text-sm font-medium inline-flex items-center">
+                  View available integrations <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Marketplace CTA */}
+          <div className="text-center">
+            <Link href="/marketplace">
+              <Button size="lg" className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 shadow-xl shadow-emerald-600/25 px-8 py-4 text-lg">
+                <ShoppingCart className="w-5 h-5 mr-2" />
+                Browse Full Marketplace
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
           </div>
 
 
@@ -1298,6 +1324,174 @@ export default function LandingPage() {
                   <Calendar className="w-5 h-5 ml-2" />
                 </Button>
               </form>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Explore Platform Section - Strategic Internal Links */}
+      <section className="py-24 bg-slate-50">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900">
+              Explore Our <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Complete Platform</span>
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              Discover comprehensive resources, documentation, and specialized solutions designed for healthcare professionals
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Solutions Hub */}
+            <Card className="group border-emerald-200 hover:border-emerald-300 transition-all duration-300 hover:shadow-lg">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
+                  <Building2 className="w-6 h-6 text-emerald-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-3">Healthcare Solutions</h3>
+                <div className="space-y-2 text-sm text-slate-600 mb-4">
+                  <Link href="/solutions/hospitals" className="block hover:text-emerald-600 transition-colors">
+                    → Hospital Management Systems
+                  </Link>
+                  <Link href="/solutions/clinics" className="block hover:text-emerald-600 transition-colors">
+                    → Clinic Operations
+                  </Link>
+                  <Link href="/solutions/pharmacies" className="block hover:text-emerald-600 transition-colors">
+                    → Pharmacy Solutions  
+                  </Link>
+                  <Link href="/solutions/laboratories" className="block hover:text-emerald-600 transition-colors">
+                    → Laboratory Management
+                  </Link>
+                </div>
+                <Link href="/solutions" className="text-emerald-600 hover:text-emerald-700 font-medium text-sm inline-flex items-center">
+                  View All Solutions <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Documentation Hub */}
+            <Card className="group border-blue-200 hover:border-blue-300 transition-all duration-300 hover:shadow-lg">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                  <FileText className="w-6 h-6 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-3">Documentation Center</h3>
+                <div className="space-y-2 text-sm text-slate-600 mb-4">
+                  <Link href="/docs/getting-started" className="block hover:text-blue-600 transition-colors">
+                    → Getting Started Guide
+                  </Link>
+                  <Link href="/docs/platform-overview" className="block hover:text-blue-600 transition-colors">
+                    → Platform Overview
+                  </Link>
+                  <Link href="/api-docs" className="block hover:text-blue-600 transition-colors">
+                    → API Documentation
+                  </Link>
+                  <Link href="/docs/troubleshooting-guide" className="block hover:text-blue-600 transition-colors">
+                    → Troubleshooting Guide
+                  </Link>
+                </div>
+                <Link href="/support/documentation" className="text-blue-600 hover:text-blue-700 font-medium text-sm inline-flex items-center">
+                  Browse All Docs <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Security & Compliance */}
+            <Card className="group border-purple-200 hover:border-purple-300 transition-all duration-300 hover:shadow-lg">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                  <Shield className="w-6 h-6 text-purple-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-3">Security & Compliance</h3>
+                <div className="space-y-2 text-sm text-slate-600 mb-4">
+                  <Link href="/security" className="block hover:text-purple-600 transition-colors">
+                    → Security Overview
+                  </Link>
+                  <Link href="/docs/security-compliance" className="block hover:text-purple-600 transition-colors">
+                    → HIPAA Compliance Guide
+                  </Link>
+                  <div className="block text-slate-500">→ SOC 2 Type II Certified</div>
+                  <div className="block text-slate-500">→ Enterprise-Grade Encryption</div>
+                </div>
+                <Link href="/security" className="text-purple-600 hover:text-purple-700 font-medium text-sm inline-flex items-center">
+                  Learn About Security <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Support Resources */}
+            <Card className="group border-green-200 hover:border-green-300 transition-all duration-300 hover:shadow-lg">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                  <Headphones className="w-6 h-6 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-3">Support Resources</h3>
+                <div className="space-y-2 text-sm text-slate-600 mb-4">
+                  <Link href="/support/help-center" className="block hover:text-green-600 transition-colors">
+                    → Help Center
+                  </Link>
+                  <Link href="/support/contact" className="block hover:text-green-600 transition-colors">
+                    → Contact Support
+                  </Link>
+                  <Link href="/support/status" className="block hover:text-green-600 transition-colors">
+                    → System Status
+                  </Link>
+                  <Link href="/docs/comprehensive-user-training" className="block hover:text-green-600 transition-colors">
+                    → Training Resources
+                  </Link>
+                </div>
+                <Link href="/support/help-center" className="text-green-600 hover:text-green-700 font-medium text-sm inline-flex items-center">
+                  Get Support <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Additional Quick Links Row */}
+          <div className="mt-16 grid md:grid-cols-3 gap-8">
+            <Card className="text-center hover:shadow-lg transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Activity className="w-8 h-8 text-emerald-600" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3">Feature Overview</h3>
+                <p className="text-slate-600 mb-4">
+                  Explore our comprehensive feature set including patient management, scheduling, and clinical workflows.
+                </p>
+                <Link href="/features" className="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center">
+                  Discover Features <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center hover:shadow-lg transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ShoppingCart className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3">Medical Marketplace</h3>
+                <p className="text-slate-600 mb-4">
+                  Browse medical devices, healthcare services, and connect with trusted vendors in our marketplace.
+                </p>
+                <Link href="/marketplace" className="text-blue-600 hover:text-blue-700 font-medium inline-flex items-center">
+                  Browse Marketplace <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center hover:shadow-lg transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Zap className="w-8 h-8 text-purple-600" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3">Integration Hub</h3>
+                <p className="text-slate-600 mb-4">
+                  Connect NaviMED with your existing systems through our robust API and integration ecosystem.
+                </p>
+                <Link href="/integrations" className="text-purple-600 hover:text-purple-700 font-medium inline-flex items-center">
+                  View Integrations <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
+              </CardContent>
             </Card>
           </div>
         </div>

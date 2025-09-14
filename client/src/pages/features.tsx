@@ -56,6 +56,11 @@ export default function FeaturesPage() {
             
             <p className="text-xl text-slate-600 mb-12 leading-relaxed max-w-3xl mx-auto">
               Comprehensive suite of healthcare management tools designed to streamline operations, improve patient care, and ensure compliance.
+              <br />
+              <span className="text-sm mt-4 block">
+                Explore our <Link href="/solutions" className="text-emerald-600 hover:text-emerald-700 font-medium">specialized solutions</Link> or 
+                browse <Link href="/support/documentation" className="text-blue-600 hover:text-blue-700 font-medium">detailed documentation</Link> to learn more.
+              </span>
             </p>
           </div>
         </div>
@@ -83,7 +88,7 @@ export default function FeaturesPage() {
                 <p className="text-slate-600 mb-4">
                   Complete patient records, medical history, and comprehensive care coordination.
                 </p>
-                <ul className="space-y-2 text-sm text-slate-600">
+                <ul className="space-y-2 text-sm text-slate-600 mb-4">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-emerald-500" />
                     Electronic Health Records (EHR)
@@ -97,6 +102,9 @@ export default function FeaturesPage() {
                     Allergy & Medication Management
                   </li>
                 </ul>
+                <Link href="/solutions/hospitals" className="text-emerald-600 hover:text-emerald-700 text-sm font-medium inline-flex items-center">
+                  Explore hospital solutions <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
               </CardContent>
             </Card>
 
@@ -139,7 +147,7 @@ export default function FeaturesPage() {
                 <p className="text-slate-600 mb-4">
                   Digital prescriptions with pharmacy integration and medication tracking.
                 </p>
-                <ul className="space-y-2 text-sm text-slate-600">
+                <ul className="space-y-2 text-sm text-slate-600 mb-4">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-purple-500" />
                     E-Prescribing
@@ -153,6 +161,9 @@ export default function FeaturesPage() {
                     Drug Interaction Alerts
                   </li>
                 </ul>
+                <Link href="/solutions/pharmacies" className="text-purple-600 hover:text-purple-700 text-sm font-medium inline-flex items-center">
+                  View pharmacy solutions <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
               </CardContent>
             </Card>
 
@@ -167,7 +178,7 @@ export default function FeaturesPage() {
                 <p className="text-slate-600 mb-4">
                   Seamless lab order management with automated result integration.
                 </p>
-                <ul className="space-y-2 text-sm text-slate-600">
+                <ul className="space-y-2 text-sm text-slate-600 mb-4">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-500" />
                     Digital Lab Orders
@@ -181,6 +192,9 @@ export default function FeaturesPage() {
                     Critical Value Alerts
                   </li>
                 </ul>
+                <Link href="/solutions/laboratories" className="text-green-600 hover:text-green-700 text-sm font-medium inline-flex items-center">
+                  Discover lab management <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
               </CardContent>
             </Card>
 
