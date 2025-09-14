@@ -96,6 +96,8 @@ import SecurityPage from "@/pages/security";
 import ContactPage from "@/pages/contact";
 import HealthcareIndustryDataPage from "@/pages/healthcare-industry-data";
 import ResourcesPage from "@/pages/resources";
+import BlogPage from "@/pages/blog";
+import BlogPostPage from "@/pages/blog-post";
 const Integrations = React.lazy(() => import("@/pages/integrations"));
 const ApiDocs = React.lazy(() => import("@/pages/api-docs"));
 const HospitalSolutions = React.lazy(() => import("@/pages/solutions/hospitals"));
@@ -856,6 +858,8 @@ function AppContent() {
         <Route path="/solutions" component={SolutionsPage} />
         <Route path="/security" component={SecurityPage} />
         <Route path="/contact" component={ContactPage} />
+        <Route path="/blog" component={BlogPage} />
+        <Route path="/blog/:id" component={BlogPostPage} />
         <Route path="/integrations" component={Integrations} />
         <Route path="/api-docs" component={ApiDocsPage} />
         
@@ -980,6 +984,8 @@ function Router() {
             <Route path="/solutions" component={SolutionsPage} />
             <Route path="/security" component={SecurityPage} />
             <Route path="/contact" component={ContactPage} />
+            <Route path="/blog" component={BlogPage} />
+            <Route path="/blog/:id" component={BlogPostPage} />
             <Route path="/pricing" component={PricingPage} />
             <Route path="/healthcare-industry-data" component={HealthcareIndustryDataPage} />
             <Route path="/resources" component={ResourcesPage} />
