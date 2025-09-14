@@ -50,7 +50,8 @@ import {
   Megaphone,
   ShoppingCart,
   Package,
-  Laptop
+  Laptop,
+  BarChart3
 } from "lucide-react";
 
 // Professional healthcare platform branding
@@ -1482,15 +1483,21 @@ export default function LandingPage() {
             <Card className="text-center hover:shadow-lg transition-all duration-300">
               <CardContent className="p-6">
                 <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Zap className="w-8 h-8 text-purple-600" />
+                  <BarChart3 className="w-8 h-8 text-purple-600" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">Integration Hub</h3>
+                <h3 className="text-xl font-semibold mb-3">Industry Data & Research</h3>
                 <p className="text-slate-600 mb-4">
-                  Connect NaviMED with your existing systems through our robust API and integration ecosystem.
+                  Access comprehensive healthcare industry statistics, technology adoption trends, and market insights from our 2025 research.
                 </p>
-                <Link href="/integrations" className="text-purple-600 hover:text-purple-700 font-medium inline-flex items-center">
-                  View Integrations <ArrowRight className="w-4 h-4 ml-1" />
+                <Link href="/healthcare-industry-data" className="text-purple-600 hover:text-purple-700 font-medium inline-flex items-center">
+                  View Healthcare Statistics <ArrowRight className="w-4 h-4 ml-1" />
                 </Link>
+                <div className="mt-3 pt-3 border-t border-purple-100">
+                  <Link href="/healthcare-industry-data" className="text-purple-600 hover:text-purple-700 font-medium inline-flex items-center text-sm">
+                    <BarChart3 className="w-4 h-4 mr-1" />
+                    Healthcare Industry Statistics 2025
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           </div>

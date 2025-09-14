@@ -94,6 +94,7 @@ import FeaturesPage from "@/pages/features";
 import SolutionsPage from "@/pages/solutions";
 import SecurityPage from "@/pages/security";
 import ContactPage from "@/pages/contact";
+import HealthcareIndustryDataPage from "@/pages/healthcare-industry-data";
 const Integrations = React.lazy(() => import("@/pages/integrations"));
 const ApiDocs = React.lazy(() => import("@/pages/api-docs"));
 const HospitalSolutions = React.lazy(() => import("@/pages/solutions/hospitals"));
@@ -979,6 +980,7 @@ function Router() {
             <Route path="/security" component={SecurityPage} />
             <Route path="/contact" component={ContactPage} />
             <Route path="/pricing" component={PricingPage} />
+            <Route path="/healthcare-industry-data" component={HealthcareIndustryDataPage} />
             <Route path="/laboratory-registration" component={LaboratoryRegistration} />
   
             {/* Support and documentation pages */}
