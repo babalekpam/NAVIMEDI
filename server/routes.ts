@@ -3655,7 +3655,39 @@ to the patient and authorized healthcare providers.
   app.get('/api/admin/tenants', async (req, res) => {
     try {
       const tenants = await storage.getAllTenants();
-      res.json(tenants);
+      
+      // Calculate user and patient counts for each tenant
+      const tenantsWithStats = await Promise.all(tenants.map(async (tenant) => {
+        try {
+          // Get user count for this tenant
+          const users = await storage.getUsersByTenant(tenant.id);
+          const userCount = users.length;
+          
+          // Get patient count for this tenant (using default limit to get all)
+          const patients = await storage.getPatientsByTenant(tenant.id, 10000);
+          const patientCount = patients.length;
+          
+          return {
+            ...tenant,
+            stats: {
+              userCount,
+              patientCount
+            }
+          };
+        } catch (error) {
+          console.error(`Error calculating stats for tenant ${tenant.id}:`, error);
+          // Return tenant with zero stats if calculation fails
+          return {
+            ...tenant,
+            stats: {
+              userCount: 0,
+              patientCount: 0
+            }
+          };
+        }
+      }));
+      
+      res.json(tenantsWithStats);
     } catch (error) {
       console.error('Error fetching tenants:', error);
       res.status(500).json({ message: 'Failed to fetch tenants' });
