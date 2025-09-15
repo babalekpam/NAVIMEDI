@@ -1551,19 +1551,22 @@ sectigo.com
     }
   });
 
+
   // Apply authentication middleware to all /api routes except public ones
   app.use('/api', (req, res, next) => {
     const publicRoutes = ['/api/auth/login', '/api/register-organization', '/api/create-setup-intent', '/api/health', '/api/healthz', '/api/status', '/api/ping', '/api/platform/stats', '/api/test-post', '/api/insurance-claims-test', '/api/marketplace/products', '/api/marketplace/quote-requests', '/api/placeholder-image/'];
     
+    // Construct full path since req.path is relative to mount point
+    const fullPath = (req.baseUrl || '') + (req.path || '');
     
     // Debug logging for insurance claims requests
-    if (req.path.includes('/api/insurance-claims')) {
-      console.log(`🔐 AUTH CHECK - ${req.method} ${req.path}`);
+    if (fullPath.includes('/api/insurance-claims')) {
+      console.log(`🔐 AUTH CHECK - ${req.method} ${fullPath}`);
       console.log('🔐 Headers:', req.headers.authorization ? 'Token present' : 'No token');
       console.log('🔐 User agent:', req.headers['user-agent']);
     }
     
-    if (publicRoutes.some(route => req.path.startsWith(route))) {
+    if (publicRoutes.some(route => fullPath.startsWith(route))) {
       return next();
     }
     return authenticateToken(req, res, next);
@@ -1577,6 +1580,7 @@ sectigo.com
     console.log('🚀 QUICK TEST - POST received');
     res.json({ success: true, message: 'Quick test works' });
   });
+
 
 
   // AUTHENTICATED ROUTES
