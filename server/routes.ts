@@ -1511,7 +1511,7 @@ sectigo.com
         firstName: adminFirstName || 'Admin',
         lastName: adminLastName || 'User',
         role: 'tenant_admin',
-        passwordHash,
+        password: passwordHash,
         isActive: true,
         stripeCustomerId: stripeCustomerId
       };
