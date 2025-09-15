@@ -491,6 +491,19 @@ sectigo.com
     }
   });
 
+  // Advertisement Management Endpoints
+  app.get('/api/advertisements', async (req, res) => {
+    try {
+      console.log('📢 Fetching all active advertisements...');
+      const advertisements = await storage.getAllAdvertisements();
+      console.log(`📢 Found ${advertisements.length} active advertisements`);
+      res.json(advertisements);
+    } catch (error) {
+      console.error('Error fetching advertisements:', error);
+      res.status(500).json({ error: 'Failed to fetch advertisements' });
+    }
+  });
+
   // Placeholder image endpoint for marketplace
   app.get('/api/placeholder-image/:imageName', (req, res) => {
     const imageName = req.params.imageName;
@@ -1554,7 +1567,7 @@ sectigo.com
 
   // Apply authentication middleware to all /api routes except public ones
   app.use('/api', (req, res, next) => {
-    const publicRoutes = ['/api/auth/login', '/api/register-organization', '/api/create-setup-intent', '/api/health', '/api/healthz', '/api/status', '/api/ping', '/api/platform/stats', '/api/test-post', '/api/insurance-claims-test', '/api/marketplace/products', '/api/marketplace/quote-requests', '/api/placeholder-image/'];
+    const publicRoutes = ['/api/auth/login', '/api/register-organization', '/api/create-setup-intent', '/api/health', '/api/healthz', '/api/status', '/api/ping', '/api/platform/stats', '/api/test-post', '/api/insurance-claims-test', '/api/marketplace/products', '/api/marketplace/quote-requests', '/api/advertisements', '/api/placeholder-image/'];
     
     // Construct full path since req.path is relative to mount point
     const fullPath = (req.baseUrl || '') + (req.path || '');
