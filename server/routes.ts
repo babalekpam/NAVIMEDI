@@ -18,7 +18,7 @@ import csv from "csv-parser";
 import { Readable } from "stream";
 import { db } from "./db";
 import { tenants, users, pharmacies, prescriptions, insuranceClaims, insertLabResultSchema, type InsuranceClaim, labOrders, appointments, patients, countries, countryMedicalCodes, medicalCodeUploads } from "@shared/schema";
-import { eq, and, desc, or, sql } from "drizzle-orm";
+import { eq, and, desc, or, sql, ilike } from "drizzle-orm";
 import Stripe from "stripe";
 
 // Initialize Stripe - only if secret key is properly configured
@@ -1253,7 +1253,7 @@ sectigo.com
       } else if (tenantId) {
         // Regular tenant user login
         console.log('Looking for tenant:', tenantId);
-        const [tenantResult] = await db.select().from(tenants).where(eq(tenants.name, tenantId));
+        const [tenantResult] = await db.select().from(tenants).where(ilike(tenants.name, tenantId));
         if (!tenantResult) {
           console.log('❌ Tenant not found:', tenantId);
           return res.status(401).json({ message: 'Invalid credentials' });
