@@ -1522,6 +1522,7 @@ export default function LandingPage() {
               <h4 className="font-semibold text-white mb-4">Platform</h4>
               <ul className="space-y-2">
                 <li><a href="/features" className="hover:text-emerald-400 transition-colors">Features</a></li>
+                <li><a href="/blog" className="hover:text-emerald-400 transition-colors">Blog</a></li>
                 <li><a href="/security" className="hover:text-emerald-400 transition-colors">Security</a></li>
                 <li><a href="/integrations" className="hover:text-emerald-400 transition-colors">Integrations</a></li>
                 <li><a href="/api-docs" className="hover:text-emerald-400 transition-colors">API Docs</a></li>
