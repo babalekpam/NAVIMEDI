@@ -692,25 +692,9 @@ export default function PatientMedicalRecords() {
                       </Card>
 
                       {/* Right: Health Metrics Cards */}
-                      <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-                        {/* Sleep Card */}
-                        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
-                          <CardContent className="p-6">
-                            <div className="flex items-center justify-between mb-4">
-                              <Moon className="h-8 w-8 text-white/80" />
-                              <button className="text-white/60 hover:text-white">
-                                <TrendingUp className="h-5 w-5" />
-                              </button>
-                            </div>
-                            <div>
-                              <p className="text-white/80 text-sm mb-1">Sleep</p>
-                              <p className="text-3xl font-bold">7h 33m</p>
-                            </div>
-                          </CardContent>
-                        </Card>
-
-                        {/* Weight Card */}
-                        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+                      <div className="lg:col-span-2 flex justify-center">
+                        {/* Weight Card - Only keeping this one */}
+                        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg max-w-sm">
                           <CardContent className="p-6">
                             <div className="flex items-center justify-between mb-4">
                               <Weight className="h-8 w-8 text-gray-600" />
@@ -719,34 +703,6 @@ export default function PatientMedicalRecords() {
                             <div>
                               <p className="text-gray-600 text-sm mb-1">Weight</p>
                               <p className="text-3xl font-bold text-gray-900">87 kg</p>
-                            </div>
-                          </CardContent>
-                        </Card>
-
-                        {/* Steps Card */}
-                        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
-                          <CardContent className="p-6">
-                            <div className="flex items-center justify-between mb-4">
-                              <Footprints className="h-8 w-8 text-gray-600" />
-                              <TrendingUp className="h-5 w-5 text-gray-400" />
-                            </div>
-                            <div>
-                              <p className="text-gray-600 text-sm mb-1">Steps</p>
-                              <p className="text-3xl font-bold text-gray-900">3,315</p>
-                            </div>
-                          </CardContent>
-                        </Card>
-
-                        {/* Calories Card */}
-                        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
-                          <CardContent className="p-6">
-                            <div className="flex items-center justify-between mb-4">
-                              <Flame className="h-8 w-8 text-orange-500" />
-                              <TrendingUp className="h-5 w-5 text-gray-400" />
-                            </div>
-                            <div>
-                              <p className="text-gray-600 text-sm mb-1">Burn</p>
-                              <p className="text-3xl font-bold text-gray-900">2,587 kcal</p>
                             </div>
                           </CardContent>
                         </Card>
