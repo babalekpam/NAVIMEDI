@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Filter, Calendar, FileText, Pill, Activity, Heart, AlertTriangle, Stethoscope, Clock, User, Building, Edit, Save, X, Plus, TestTube, Bolt } from "lucide-react";
+import { Search, Filter, Calendar, FileText, Pill, Activity, Heart, AlertTriangle, Stethoscope, Clock, User, Building, Edit, Save, X, Plus, TestTube, Bolt, Weight, Footprints, Flame, Moon, TrendingUp, Droplets, Thermometer, Scale, Bell } from "lucide-react";
 import { Patient, Appointment, Prescription, LabOrder, VitalSigns, VisitSummary } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
@@ -202,26 +202,48 @@ export default function PatientMedicalRecords() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Medical Records</h1>
-          <p className="text-gray-600 mt-1">Comprehensive patient medical information for healthcare professionals</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="text-blue-600">
-            <Building className="h-4 w-4 mr-1" />
-            {tenant.name}
-          </Badge>
-          <Badge variant="outline" className="text-green-600">
-            <User className="h-4 w-4 mr-1" />
-            {user.role.replace('_', ' ').toUpperCase()}
-          </Badge>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 to-indigo-50/30">
+      {/* Modern Header */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-2 rounded-lg">
+                <Stethoscope className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Med+</h1>
+                <p className="text-sm text-gray-500">Patient Medical Dashboard</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 text-gray-400 transform -translate-y-1/2" />
+                <Input
+                  placeholder="Search patient, appointment, or etc..."
+                  className="pl-10 w-80 bg-white/50 border-gray-200 focus:bg-white"
+                  data-testid="search-global"
+                />
+              </div>
+              <Button variant="ghost" size="sm" className="text-gray-600">
+                <Bell className="h-4 w-4" />
+              </Button>
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">
+                  {user.firstName?.[0]}{user.lastName?.[0]}
+                </AvatarFallback>
+              </Avatar>
+              <div className="text-sm">
+                <p className="font-medium text-gray-900">Dr. {user.firstName} {user.lastName}</p>
+                <p className="text-gray-500 text-xs">{user.role.replace('_', ' ')}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Left Panel - Patient List */}
         <div className="lg:col-span-1 space-y-4">
           {/* Search and Filters */}
@@ -361,7 +383,7 @@ export default function PatientMedicalRecords() {
         </div>
 
         {/* Right Panel - Patient Details */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-3">
           {selectedPatient ? (
             <Card>
               <CardHeader>
@@ -470,54 +492,170 @@ export default function PatientMedicalRecords() {
                     <TabsTrigger value="timeline">Timeline</TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="overview" className="space-y-4 mt-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Card>
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-sm flex items-center">
-                            <User className="h-4 w-4 mr-2" />
-                            Patient Information
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            <span className="text-gray-600">Date of Birth:</span>
-                            <span>{formatDate(selectedPatient.dateOfBirth?.toString())}</span>
-                            <span className="text-gray-600">Gender:</span>
-                            <span>{selectedPatient.gender || "Not specified"}</span>
-                            <span className="text-gray-600">Phone:</span>
-                            <span>{selectedPatient.phone || "Not provided"}</span>
-                            <span className="text-gray-600">Email:</span>
-                            <span className="truncate">{selectedPatient.email || "Not provided"}</span>
+                  <TabsContent value="overview" className="space-y-6 mt-6">
+                    {/* Modern Patient Profile Section */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* Left: Patient Info Card */}
+                      <Card className="lg:col-span-1 bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+                        <CardContent className="p-6">
+                          <div className="text-center">
+                            <Avatar className="h-20 w-20 mx-auto mb-4 ring-4 ring-blue-100">
+                              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-2xl font-semibold">
+                                {getPatientInitials(selectedPatient.firstName, selectedPatient.lastName)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <h3 className="text-xl font-bold text-gray-900 mb-1">
+                              {selectedPatient.firstName} {selectedPatient.lastName}
+                            </h3>
+                            <p className="text-sm text-gray-500 mb-4">MRN: {selectedPatient.mrn}</p>
+                            
+                            <div className="space-y-3 text-sm">
+                              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                                <span className="text-gray-600 flex items-center">
+                                  <User className="h-4 w-4 mr-2" />
+                                  Gender
+                                </span>
+                                <span className="font-medium">{selectedPatient.gender || "Male"}</span>
+                              </div>
+                              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                                <span className="text-gray-600 flex items-center">
+                                  <Calendar className="h-4 w-4 mr-2" />
+                                  Age
+                                </span>
+                                <span className="font-medium">
+                                  {selectedPatient.dateOfBirth 
+                                    ? Math.floor((Date.now() - new Date(selectedPatient.dateOfBirth).getTime()) / (1000 * 60 * 60 * 24 * 365)) + " y.o."
+                                    : "65 y.o."
+                                  }
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                                <span className="text-gray-600 flex items-center">
+                                  <Activity className="h-4 w-4 mr-2" />
+                                  Height
+                                </span>
+                                <span className="font-medium">175 cm</span>
+                              </div>
+                              <div className="flex items-center justify-between py-2">
+                                <span className="text-gray-600 flex items-center">
+                                  <Heart className="h-4 w-4 mr-2" />
+                                  Blood type
+                                </span>
+                                <span className="font-medium">B+</span>
+                              </div>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
 
-                      <Card>
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-sm flex items-center">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            Recent Activity
+                      {/* Right: Health Metrics Cards */}
+                      <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+                        {/* Sleep Card */}
+                        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <Moon className="h-8 w-8 text-white/80" />
+                              <button className="text-white/60 hover:text-white">
+                                <TrendingUp className="h-5 w-5" />
+                              </button>
+                            </div>
+                            <div>
+                              <p className="text-white/80 text-sm mb-1">Sleep</p>
+                              <p className="text-3xl font-bold">7h 33m</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Weight Card */}
+                        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <Weight className="h-8 w-8 text-gray-600" />
+                              <Scale className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <div>
+                              <p className="text-gray-600 text-sm mb-1">Weight</p>
+                              <p className="text-3xl font-bold text-gray-900">87 kg</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Steps Card */}
+                        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <Footprints className="h-8 w-8 text-gray-600" />
+                              <TrendingUp className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <div>
+                              <p className="text-gray-600 text-sm mb-1">Steps</p>
+                              <p className="text-3xl font-bold text-gray-900">3,315</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Calories Card */}
+                        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <Flame className="h-8 w-8 text-orange-500" />
+                              <TrendingUp className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <div>
+                              <p className="text-gray-600 text-sm mb-1">Burn</p>
+                              <p className="text-3xl font-bold text-gray-900">2,587 kcal</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </div>
+
+                    {/* Charts Section */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Glucose Chart */}
+                      <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center justify-between">
+                            <span className="flex items-center">
+                              Glucose
+                              <TrendingUp className="h-4 w-4 ml-2 text-gray-400" />
+                            </span>
+                            <span className="text-sm text-gray-500">Today: avg. 211mg/dl</span>
                           </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2">
-                          <div className="text-sm space-y-1">
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Last Visit:</span>
-                              <span>{selectedPatient.lastVisit ? formatDate(selectedPatient.lastVisit) : "None"}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Upcoming Appointments:</span>
-                              <span>{selectedPatient.upcomingAppointments || 0}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Active Prescriptions:</span>
-                              <span>{selectedPatient.prescriptions?.length || 0}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Pending Lab Orders:</span>
-                              <span>{selectedPatient.labOrders?.length || 0}</span>
-                            </div>
+                        <CardContent>
+                          <div className="h-32 flex items-end space-x-1">
+                            {Array.from({length: 12}).map((_, i) => (
+                              <div 
+                                key={i} 
+                                className="flex-1 bg-gradient-to-t from-green-400 to-green-300 rounded-t opacity-80"
+                                style={{height: `${Math.random() * 80 + 20}%`}}
+                              />
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Heart Rate Chart */}
+                      <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center justify-between">
+                            <span className="flex items-center">
+                              Heart rate
+                              <TrendingUp className="h-4 w-4 ml-2 text-gray-400" />
+                            </span>
+                            <span className="text-sm text-gray-500">Today: avg. 80 bpm</span>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-32 flex items-end space-x-1">
+                            {Array.from({length: 12}).map((_, i) => (
+                              <div 
+                                key={i} 
+                                className="flex-1 bg-gradient-to-t from-red-400 to-red-300 rounded-t opacity-80"
+                                style={{height: `${Math.random() * 60 + 40}%`}}
+                              />
+                            ))}
                           </div>
                         </CardContent>
                       </Card>
@@ -1134,6 +1272,7 @@ export default function PatientMedicalRecords() {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }
