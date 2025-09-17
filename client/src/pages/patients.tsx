@@ -325,7 +325,7 @@ export default function Patients() {
                   <Stethoscope className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Med+</h1>
+                  <h1 className="text-2xl font-bold text-gray-900">NaviMED</h1>
                   <p className="text-sm text-gray-500">Electronic Health Record</p>
                 </div>
               </div>
@@ -675,6 +675,11 @@ export default function Patients() {
                       <Button 
                         variant="outline"
                         className="bg-white/60 backdrop-blur-sm border-0 shadow-sm hover:shadow-md"
+                        onClick={() => {
+                          // Close EHR modal and navigate to medical records page
+                          setIsEHROpen(false);
+                          setLocation(`/patient-medical-records?patientId=${selectedPatient?.id}&patientName=${encodeURIComponent(selectedPatient?.firstName + ' ' + selectedPatient?.lastName)}`);
+                        }}
                       >
                         <Edit className="h-4 w-4 mr-2" />
                         Edit EHR
