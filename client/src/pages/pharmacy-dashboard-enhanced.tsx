@@ -6,6 +6,29 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  type ChartConfig
+} from '@/components/ui/chart';
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer
+} from 'recharts';
+import { 
   Pill, 
   Users, 
   DollarSign, 
@@ -246,6 +269,94 @@ export default function PharmacyDashboardEnhanced() {
     }
   });
 
+  // Chart data structures
+  const revenueData = [
+    { month: 'Jan', revenue: 12500, prescriptions: 180 },
+    { month: 'Feb', revenue: 13200, prescriptions: 195 },
+    { month: 'Mar', revenue: 14100, prescriptions: 210 },
+    { month: 'Apr', revenue: 13800, prescriptions: 205 },
+    { month: 'May', revenue: 15240, prescriptions: 247 },
+    { month: 'Jun', revenue: 16200, prescriptions: 265 }
+  ];
+
+  const completionRateData = [
+    { day: 'Mon', completed: 42, target: 50 },
+    { day: 'Tue', completed: 38, target: 50 },
+    { day: 'Wed', completed: 45, target: 50 },
+    { day: 'Thu', completed: 48, target: 50 },
+    { day: 'Fri', completed: 52, target: 50 },
+    { day: 'Sat', completed: 35, target: 40 },
+    { day: 'Sun', completed: 28, target: 35 }
+  ];
+
+  // Calculate prescription status distribution
+  const prescriptionStatusData = [
+    { 
+      status: 'New', 
+      count: localPrescriptions.filter(p => p.status === 'new').length,
+      fill: '#3b82f6' 
+    },
+    { 
+      status: 'Processing', 
+      count: localPrescriptions.filter(p => p.status === 'processing').length,
+      fill: '#f59e0b' 
+    },
+    { 
+      status: 'Ready', 
+      count: localPrescriptions.filter(p => p.status === 'ready').length,
+      fill: '#10b981' 
+    },
+    { 
+      status: 'Dispensed', 
+      count: localPrescriptions.filter(p => p.status === 'dispensed').length,
+      fill: '#6b7280' 
+    }
+  ];
+
+  // Inventory alerts data
+  const inventoryAlertsData = localInventoryItems.map(item => ({
+    name: item.name.split(' ')[0], // First word of name for compact display
+    currentStock: item.currentStock,
+    minStock: item.minStock,
+    status: item.status,
+    fill: item.status === 'out_of_stock' ? '#ef4444' : 
+          item.status === 'low_stock' ? '#f59e0b' : '#10b981'
+  }));
+
+  // Chart configurations
+  const revenueChartConfig: ChartConfig = {
+    revenue: {
+      label: 'Revenue',
+      color: '#3b82f6'
+    },
+    prescriptions: {
+      label: 'Prescriptions',
+      color: '#10b981'
+    }
+  };
+
+  const completionChartConfig: ChartConfig = {
+    completed: {
+      label: 'Completed',
+      color: '#10b981'
+    },
+    target: {
+      label: 'Target',
+      color: '#e5e7eb'
+    }
+  };
+
+  const inventoryChartConfig: ChartConfig = {
+    currentStock: {
+      label: 'Current Stock',
+      color: '#3b82f6'
+    },
+    minStock: {
+      label: 'Minimum Stock',
+      color: '#ef4444'
+    }
+  };
+
   // Quick Actions for Enhanced Dashboard
   const quickActions = [
     { 
@@ -301,75 +412,108 @@ export default function PharmacyDashboardEnhanced() {
         </div>
       </div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Pill className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Prescriptions</p>
-                <p className="text-2xl font-bold text-gray-900">{stats?.totalPrescriptions}</p>
-              </div>
-            </div>
+      {/* Enhanced Stats Overview with Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Revenue Trend Chart */}
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+              Revenue Trend (6 Months)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={revenueChartConfig} className="h-[300px]">
+              <LineChart data={revenueData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="month" 
+                  className="text-muted-foreground"
+                  fontSize={12}
+                />
+                <YAxis 
+                  className="text-muted-foreground"
+                  fontSize={12}
+                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  formatter={(value, name) => [
+                    name === 'revenue' ? `$${value.toLocaleString()}` : value,
+                    name === 'revenue' ? 'Revenue' : 'Prescriptions'
+                  ]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="var(--color-revenue)"
+                  strokeWidth={3}
+                  dot={{ fill: "var(--color-revenue)", strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: "var(--color-revenue)", strokeWidth: 2 }}
+                />
+              </LineChart>
+            </ChartContainer>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Clock className="h-8 w-8 text-yellow-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">{stats?.pendingPrescriptions}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <TrendingUp className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Completed Today</p>
-                <p className="text-2xl font-bold text-gray-900">{stats?.completedToday}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <DollarSign className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">${stats?.revenue.toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <AlertTriangle className="h-8 w-8 text-red-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Inventory Alerts</p>
-                <p className="text-2xl font-bold text-gray-900">{stats?.inventoryAlerts}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Users className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Patients</p>
-                <p className="text-2xl font-bold text-gray-900">{stats?.activePatients}</p>
+        {/* Prescription Status Distribution */}
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Pill className="h-5 w-5 text-blue-600" />
+              Prescription Status Distribution
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={prescriptionStatusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="count"
+                  >
+                    {prescriptionStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip 
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
+                            <p className="font-medium">{data.status}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {data.count} prescription{data.count !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              {/* Legend */}
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+                <div className="flex flex-wrap justify-center gap-4 text-sm">
+                  {prescriptionStatusData.map((item) => (
+                    <div key={item.status} className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: item.fill }}
+                      />
+                      <span className="text-muted-foreground">
+                        {item.status} ({item.count})
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </CardContent>
@@ -387,70 +531,162 @@ export default function PharmacyDashboardEnhanced() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Recent Prescriptions */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Inventory Alerts Bar Chart */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Pill className="h-5 w-5" />
-                  Recent Prescriptions
+                  <Package className="h-5 w-5 text-orange-600" />
+                  Inventory Stock Levels
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {localPrescriptions.slice(0, 5).map((prescription) => (
-                    <div key={prescription.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{prescription.patientName}</p>
-                        <p className="text-sm text-gray-600">{prescription.medicationName}</p>
-                      </div>
-                      <Badge 
-                        variant="secondary" 
-                        className={
-                          prescription.status === 'new' ? 'bg-blue-100 text-blue-800' :
-                          prescription.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
-                          prescription.status === 'ready' ? 'bg-green-100 text-green-800' :
-                          prescription.status === 'dispensed' ? 'bg-gray-100 text-gray-800' :
-                          'bg-red-100 text-red-800'
+                <ChartContainer config={inventoryChartConfig} className="h-[300px]">
+                  <BarChart data={inventoryAlertsData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis 
+                      dataKey="name" 
+                      className="text-muted-foreground"
+                      fontSize={11}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis 
+                      className="text-muted-foreground"
+                      fontSize={12}
+                    />
+                    <ChartTooltip 
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
+                              <p className="font-medium">{label}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Current: {data.currentStock} units
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Minimum: {data.minStock} units
+                              </p>
+                              <p className="text-sm capitalize">
+                                Status: {data.status.replace('_', ' ')}
+                              </p>
+                            </div>
+                          );
                         }
-                      >
-                        {prescription.status.toUpperCase()}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
+                        return null;
+                      }}
+                    />
+                    <Bar 
+                      dataKey="currentStock" 
+                      fill="var(--color-currentStock)"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="minStock" 
+                      fill="var(--color-minStock)"
+                      radius={[4, 4, 0, 0]}
+                      opacity={0.3}
+                    />
+                  </BarChart>
+                </ChartContainer>
               </CardContent>
             </Card>
 
-            {/* Inventory Alerts */}
+            {/* Daily Completion Rate Area Chart */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Inventory Alerts
+                  <Activity className="h-5 w-5 text-green-600" />
+                  Daily Completion Rate
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {localInventoryItems.filter(item => item.status !== 'in_stock').map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-sm text-gray-600">{item.strength} {item.form}</p>
-                        <p className="text-xs text-gray-500">Stock: {item.currentStock} units</p>
-                      </div>
-                      <Badge 
-                        variant="secondary" 
-                        className={
-                          item.status === 'low_stock' ? 'bg-yellow-100 text-yellow-800' :
-                          item.status === 'out_of_stock' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }
-                      >
-                        {item.status.replace('_', ' ').toUpperCase()}
-                      </Badge>
-                    </div>
-                  ))}
+                <ChartContainer config={completionChartConfig} className="h-[300px]">
+                  <AreaChart data={completionRateData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis 
+                      dataKey="day" 
+                      className="text-muted-foreground"
+                      fontSize={12}
+                    />
+                    <YAxis 
+                      className="text-muted-foreground"
+                      fontSize={12}
+                    />
+                    <ChartTooltip 
+                      content={<ChartTooltipContent />}
+                      formatter={(value, name) => [
+                        value,
+                        name === 'completed' ? 'Completed' : 'Target'
+                      ]}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="target"
+                      stackId="1"
+                      stroke="var(--color-target)"
+                      fill="var(--color-target)"
+                      fillOpacity={0.3}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="completed"
+                      stackId="2"
+                      stroke="var(--color-completed)"
+                      fill="var(--color-completed)"
+                      fillOpacity={0.6}
+                    />
+                  </AreaChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Quick Stats Summary */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Pill className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total Prescriptions</p>
+                    <p className="text-lg font-bold">{stats?.totalPrescriptions}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-5 w-5 text-yellow-600" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Pending</p>
+                    <p className="text-lg font-bold">{stats?.pendingPrescriptions}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <DollarSign className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Revenue</p>
+                    <p className="text-lg font-bold">${stats?.revenue.toLocaleString()}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Users className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Active Patients</p>
+                    <p className="text-lg font-bold">{stats?.activePatients}</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
