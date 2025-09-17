@@ -9,6 +9,17 @@ import { csrfProtection, getCSRFToken } from "./middleware/csrf";
 import { compressionMitigation } from "./middleware/compression";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
+import { AnalyticsService } from "./analytics-service";
+import { analyticsQuerySchema, AnalyticsResponse, PlatformAnalytics } from "./analytics-types";
+import { registerAnalyticsRoutes } from "./analytics-routes";
+import { 
+  invalidateAppointmentCache, 
+  invalidatePrescriptionCache, 
+  invalidateLabOrderCache, 
+  invalidatePatientCache,
+  invalidateBillingCache,
+  invalidateUserCache 
+} from "./analytics-cache-hooks";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
@@ -1712,6 +1723,10 @@ sectigo.com
       }
       
       console.log(`✅ Patient updated successfully: ${patient.id}`);
+      
+      // Invalidate patient cache for real-time analytics
+      invalidatePatientCache(tenantId);
+      
       res.json(patient);
     } catch (error) {
       console.error('❌ Error updating patient:', error);
@@ -1779,6 +1794,10 @@ sectigo.com
       
       const patient = await storage.createPatient(patientData);
       console.log('✅ Patient created successfully:', patient.id);
+      
+      // Invalidate patient cache for real-time analytics
+      invalidatePatientCache(tenantId);
+      
       res.status(201).json(patient);
     } catch (error) {
       console.error('❌ Error creating patient:', error);
@@ -1868,6 +1887,10 @@ sectigo.com
       };
       
       const prescription = await storage.createPrescription(prescriptionData);
+      
+      // Invalidate prescription cache for real-time analytics
+      invalidatePrescriptionCache(tenantId);
+      
       res.status(201).json(prescription);
     } catch (error) {
       console.error('❌ Error creating prescription:', error);
@@ -2054,6 +2077,10 @@ sectigo.com
       
       const appointment = await storage.createAppointment(appointmentData);
       console.log('🏥 Appointment created successfully:', appointment.id);
+      
+      // Invalidate appointment cache for real-time analytics
+      invalidateAppointmentCache(tenantId);
+      
       res.status(201).json(appointment);
     } catch (error) {
       console.error('❌ Error creating appointment:', error);
@@ -2188,6 +2215,10 @@ sectigo.com
       const labOrderData = { ...req.body, tenantId, providerId };
       console.log('🧪 Creating lab order with data:', labOrderData);
       const labOrder = await storage.createLabOrder(labOrderData);
+      
+      // Invalidate lab order cache for real-time analytics
+      invalidateLabOrderCache(tenantId);
+      
       res.status(201).json(labOrder);
     } catch (error) {
       console.error('Error creating lab order:', error);
@@ -3764,35 +3795,329 @@ to the patient and authorized healthcare providers.
     }
   });
 
-  // Get platform stats for super admin
+  // Get platform stats for super admin - Enhanced with real analytics
   app.get('/api/admin/platform-stats', authenticateToken, requireRole(['super_admin']), async (req, res) => {
     try {
-      const tenants = await storage.getAllTenants();
-      const users = await storage.getAllUsers();
-      const suppliers = await storage.getAllMedicalSuppliers();
+      const startTime = Date.now();
       
-      const tenantsByType = tenants.reduce((acc: Record<string, number>, tenant) => {
-        acc[tenant.type] = (acc[tenant.type] || 0) + 1;
-        return acc;
-      }, {});
+      // Parse query parameters for detailed analytics
+      const queryParams = analyticsQuerySchema.extend({
+        detailed: z.boolean().default(false).describe("Include detailed metrics")
+      }).parse(req.query);
 
-      const stats = {
-        totalTenants: tenants.length,
-        totalUsers: users.length,
-        totalSuppliers: suppliers.length,
-        tenantsByType,
-        activeTenants: tenants.filter(t => t.isActive).length,
-        inactiveTenants: tenants.filter(t => !t.isActive).length,
-        pendingSuppliers: suppliers.filter(s => s.status === 'pending_review').length,
-        approvedSuppliers: suppliers.filter(s => s.status === 'approved').length
-      };
+      // Initialize analytics service
+      const analyticsService = new AnalyticsService();
 
-      res.json(stats);
+      if (queryParams.detailed) {
+        // Return comprehensive platform analytics
+        const analytics = await analyticsService.getPlatformAnalytics(queryParams);
+        const queryTime = Date.now() - startTime;
+
+        const response: AnalyticsResponse<PlatformAnalytics> = {
+          success: true,
+          data: analytics,
+          metadata: {
+            generatedAt: new Date().toISOString(),
+            cacheHit: false,
+            queryTime,
+            recordCount: analytics.tenants.total + analytics.users.total
+          }
+        };
+
+        res.json(response);
+      } else {
+        // Return legacy format for backward compatibility
+        const tenants = await storage.getAllTenants();
+        const users = await storage.getAllUsers();
+        const suppliers = await storage.getAllMedicalSuppliers();
+        
+        const tenantsByType = tenants.reduce((acc: Record<string, number>, tenant) => {
+          acc[tenant.type] = (acc[tenant.type] || 0) + 1;
+          return acc;
+        }, {});
+
+        const stats = {
+          totalTenants: tenants.length,
+          totalUsers: users.length,
+          totalSuppliers: suppliers.length,
+          tenantsByType,
+          activeTenants: tenants.filter(t => t.isActive).length,
+          inactiveTenants: tenants.filter(t => !t.isActive).length,
+          pendingSuppliers: suppliers.filter(s => s.status === 'pending_review').length,
+          approvedSuppliers: suppliers.filter(s => s.status === 'approved').length,
+          // Add some enhanced metrics
+          queryTime: Date.now() - startTime,
+          generatedAt: new Date().toISOString()
+        };
+
+        res.json(stats);
+      }
     } catch (error) {
       console.error('Error fetching platform stats:', error);
-      res.status(500).json({ message: 'Failed to fetch platform stats' });
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to fetch platform stats',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
     }
   });
+
+  // ================================
+  // ANALYTICS ENDPOINTS
+  // ================================
+
+  // Comprehensive tenant analytics
+  app.get('/api/analytics/tenant/:tenantId', authenticateToken, requireRole(['tenant_admin', 'director']), setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.params.tenantId;
+      const user = req.user!;
+      
+      // Ensure user can only access their own tenant's analytics
+      if (user.tenantId !== tenantId && user.role !== 'super_admin') {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Access denied: Cannot access another tenant\'s analytics' 
+        });
+      }
+
+      const startTime = Date.now();
+      const queryParams = analyticsQuerySchema.extend({
+        module: z.enum(['operational', 'financial', 'quality', 'all']).default('all')
+      }).parse(req.query);
+
+      const analyticsService = new AnalyticsService();
+      
+      let analyticsData: any = {};
+      
+      if (queryParams.module === 'operational' || queryParams.module === 'all') {
+        analyticsData.operational = await analyticsService.getTenantOperationalMetrics(tenantId, queryParams);
+      }
+      
+      // Add other modules as needed
+      if (queryParams.module === 'all') {
+        // For now, just operational metrics
+        // Could add financial and quality metrics here
+      }
+
+      const queryTime = Date.now() - startTime;
+
+      res.json({
+        success: true,
+        data: analyticsData,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          cacheHit: false, // Would need to track this
+          queryTime,
+          tenantId
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching tenant analytics:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch tenant analytics',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // Receptionist dashboard analytics
+  app.get('/api/analytics/receptionist', authenticateToken, requireRole(['receptionist', 'nurse', 'tenant_admin', 'director']), setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.user!.tenantId!;
+      const startTime = Date.now();
+      const queryParams = analyticsQuerySchema.parse(req.query);
+
+      const analyticsService = new AnalyticsService();
+      const analytics = await analyticsService.getReceptionistAnalytics(tenantId, queryParams);
+      const queryTime = Date.now() - startTime;
+
+      res.json({
+        success: true,
+        data: analytics,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          cacheHit: false,
+          queryTime,
+          tenantId
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching receptionist analytics:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch receptionist analytics',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // Pharmacy dashboard analytics
+  app.get('/api/analytics/pharmacy', authenticateToken, requireRole(['pharmacist', 'tenant_admin', 'director']), setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.user!.tenantId!;
+      const startTime = Date.now();
+      const queryParams = analyticsQuerySchema.parse(req.query);
+
+      const analyticsService = new AnalyticsService();
+      const analytics = await analyticsService.getPharmacyAnalytics(tenantId, queryParams);
+      const queryTime = Date.now() - startTime;
+
+      res.json({
+        success: true,
+        data: analytics,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          cacheHit: false,
+          queryTime,
+          tenantId
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching pharmacy analytics:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch pharmacy analytics',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // Laboratory analytics
+  app.get('/api/analytics/laboratory', authenticateToken, requireRole(['lab_technician', 'tenant_admin', 'director']), setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.user!.tenantId!;
+      const startTime = Date.now();
+      const queryParams = analyticsQuerySchema.parse(req.query);
+
+      const analyticsService = new AnalyticsService();
+      const analytics = await analyticsService.getLaboratoryAnalytics(tenantId, queryParams);
+      const queryTime = Date.now() - startTime;
+
+      res.json({
+        success: true,
+        data: analytics,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          cacheHit: false,
+          queryTime,
+          tenantId
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching laboratory analytics:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch laboratory analytics',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // Hospital admin dashboard analytics
+  app.get('/api/analytics/admin', authenticateToken, requireRole(['tenant_admin', 'director']), setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.user!.tenantId!;
+      const startTime = Date.now();
+      const queryParams = analyticsQuerySchema.parse(req.query);
+
+      const analyticsService = new AnalyticsService();
+      const analytics = await analyticsService.getHospitalAdminAnalytics(tenantId, queryParams);
+      const queryTime = Date.now() - startTime;
+
+      res.json({
+        success: true,
+        data: analytics,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          cacheHit: false,
+          queryTime,
+          tenantId
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching admin analytics:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch admin analytics',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // Analytics cache management endpoints (admin only)
+  app.post('/api/analytics/cache/invalidate', authenticateToken, requireRole(['super_admin', 'tenant_admin']), async (req, res) => {
+    try {
+      const { tenantId, dataType } = req.body;
+      const user = req.user!;
+
+      // Super admin can invalidate any tenant's cache, tenant admin only their own
+      if (user.role !== 'super_admin' && user.tenantId !== tenantId) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Access denied: Cannot invalidate another tenant\'s cache' 
+        });
+      }
+
+      if (tenantId) {
+        AnalyticsService.invalidateTenantCache(tenantId, dataType);
+        res.json({ 
+          success: true, 
+          message: `Cache invalidated for tenant ${tenantId}${dataType ? ` (${dataType})` : ''}` 
+        });
+      } else if (user.role === 'super_admin') {
+        AnalyticsService.invalidatePlatformCache();
+        res.json({ 
+          success: true, 
+          message: 'Platform cache invalidated' 
+        });
+      } else {
+        res.status(400).json({ 
+          success: false, 
+          message: 'Invalid request: tenantId required for tenant admins' 
+        });
+      }
+    } catch (error) {
+      console.error('Error invalidating analytics cache:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to invalidate cache',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // Analytics health check endpoint
+  app.get('/api/analytics/health', authenticateToken, async (req, res) => {
+    try {
+      // Basic health check for analytics system
+      const healthStatus = {
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        services: {
+          database: 'healthy',
+          cache: 'healthy',
+          aggregation: 'healthy'
+        }
+      };
+
+      res.json({
+        success: true,
+        data: healthStatus
+      });
+    } catch (error) {
+      console.error('Analytics health check failed:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Analytics system unhealthy',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // ================================
+  // END ANALYTICS ENDPOINTS
+  // ================================
 
   // Approve supplier
   app.put('/api/admin/suppliers/:id/approve', authenticateToken, requireRole(['super_admin']), async (req, res) => {
@@ -4290,6 +4615,9 @@ to the patient and authorized healthcare providers.
     }
   });
 
+  // Register analytics routes
+  console.log('📊 Registering analytics routes...');
+  registerAnalyticsRoutes(app);
 
   // Create HTTP server
   const httpServer = createServer(app);

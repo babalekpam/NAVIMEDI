@@ -167,64 +167,11 @@ export function registerAnalyticsRoutes(app: Express): void {
   const analyticsService = new AnalyticsService();
 
   // ================================
-  // ENHANCED PLATFORM STATS
+  // ENHANCED PLATFORM STATS - NOTE: Duplicate endpoint removed
   // ================================
-  app.get('/api/admin/platform-stats', 
-    authenticateToken, 
-    requireRole(['super_admin']), 
-    async (req, res) => {
-      try {
-        const queryParams = extendedPlatformStatsSpec.querySchema.parse(req.query);
-        const cacheKey = AnalyticsCacheKey.platform('stats', queryParams);
-        
-        // Check cache first
-        let cachedResult = performanceCache.get(cacheKey);
-        if (cachedResult) {
-          return res.json({
-            success: true,
-            data: cachedResult,
-            metadata: {
-              generatedAt: new Date().toISOString(),
-              cacheHit: true,
-              queryTime: 0
-            }
-          } as AnalyticsResponse<PlatformAnalytics>);
-        }
-
-        // Generate analytics
-        const startTime = Date.now();
-        const analytics = await analyticsService.getPlatformAnalytics(queryParams);
-        const queryTime = Date.now() - startTime;
-
-        // Cache the result
-        performanceCache.set(cacheKey, analytics, extendedPlatformStatsSpec.cacheTime);
-
-        res.json({
-          success: true,
-          data: analytics,
-          metadata: {
-            generatedAt: new Date().toISOString(),
-            cacheHit: false,
-            queryTime
-          }
-        } as AnalyticsResponse<PlatformAnalytics>);
-
-      } catch (error) {
-        console.error('Platform stats analytics error:', error);
-        res.status(500).json({
-          success: false,
-          error: {
-            code: 'ANALYTICS_ERROR',
-            message: 'Failed to generate platform analytics'
-          },
-          metadata: {
-            timestamp: new Date().toISOString(),
-            requestId: req.headers['x-request-id'] || 'unknown'
-          }
-        });
-      }
-    }
-  );
+  // The enhanced platform stats endpoint is already handled in routes.ts at /api/admin/platform-stats
+  // This avoids duplicate route registration conflicts
+  console.log('📊 Skipping duplicate platform-stats registration (exists in routes.ts)');
 
   // ================================
   // TENANT ANALYTICS

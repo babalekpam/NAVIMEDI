@@ -247,6 +247,52 @@ export class AppointmentAggregator {
     performanceCache.set(cacheKey, metrics, 60);
     return metrics;
   }
+
+  /**
+   * Get hourly appointment schedule for today
+   */
+  static async getHourlySchedule(tenantId: string): Promise<TimeSeriesPoint[]> {
+    const cacheKey = `appointments:hourly:${tenantId}`;
+    let cached = performanceCache.get(cacheKey);
+    if (cached) return cached;
+
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
+
+    const result = await db
+      .select({
+        hour: sql`EXTRACT(HOUR FROM ${appointments.appointmentDate})`,
+        count: count(appointments.id)
+      })
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.tenantId, tenantId),
+          gte(appointments.appointmentDate, startOfDay),
+          lte(appointments.appointmentDate, endOfDay)
+        )
+      )
+      .groupBy(sql`EXTRACT(HOUR FROM ${appointments.appointmentDate})`)
+      .orderBy(sql`EXTRACT(HOUR FROM ${appointments.appointmentDate})`);
+
+    // Create full 24-hour schedule with zeros for empty hours
+    const schedule: TimeSeriesPoint[] = [];
+    for (let hour = 0; hour < 24; hour++) {
+      const hourData = result.find(r => Number(r.hour) === hour);
+      const date = new Date(startOfDay);
+      date.setHours(hour);
+      
+      schedule.push({
+        timestamp: date.toISOString(),
+        value: hourData ? Number(hourData.count) : 0
+      });
+    }
+
+    // Cache for 5 minutes
+    performanceCache.set(cacheKey, schedule, 300);
+    return schedule;
+  }
 }
 
 /**
@@ -365,12 +411,420 @@ export class PrescriptionAggregator {
     performanceCache.set(cacheKey, timeSeries, 300);
     return timeSeries;
   }
+  /**
+   * Get prescription status distribution
+   */
+  static async getStatusDistribution(tenantId: string): Promise<StatusDistribution[]> {
+    const cacheKey = `prescriptions:status:${tenantId}`;
+    let cached = performanceCache.get(cacheKey);
+    if (cached) return cached;
+
+    const result = await db
+      .select({
+        status: prescriptions.status,
+        count: count(prescriptions.id)
+      })
+      .from(prescriptions)
+      .where(eq(prescriptions.tenantId, tenantId))
+      .groupBy(prescriptions.status);
+
+    const total = result.reduce((sum, row) => sum + Number(row.count), 0);
+    const distribution = result.map(row => ({
+      name: row.status || 'unknown',
+      value: Number(row.count),
+      percentage: total > 0 ? Number(((Number(row.count) / total) * 100).toFixed(1)) : 0
+    }));
+
+    // Cache for 3 minutes
+    performanceCache.set(cacheKey, distribution, 180);
+    return distribution;
+  }
+
+  /**
+   * Get today's prescription metrics for pharmacy dashboard
+   */
+  static async getTodayMetrics(tenantId: string): Promise<{
+    received: number;
+    inProgress: number;
+    readyForPickup: number;
+    dispensed: number;
+    averageProcessingTime: number;
+    insuranceVerifications: number;
+  }> {
+    const metrics = await this.getWorkflowMetrics(tenantId);
+    
+    // Add insurance verifications (mock for now)
+    return {
+      ...metrics,
+      insuranceVerifications: Math.floor(metrics.received * 0.8) // Mock: 80% require verification
+    };
+  }
+}
+
+/**
+ * Patient Analytics Aggregator
+ */
+export class PatientAggregator {
+  /**
+   * Get patient registration time series
+   */
+  static async getVolumeTimeSeries(
+    tenantId: string,
+    params: AnalyticsQueryParams
+  ): Promise<TimeSeriesPoint[]> {
+    const { from, to } = DateRangeBuilder.build(params);
+    const cacheKey = `patients:volume:${tenantId}:${from.toISOString()}:${to.toISOString()}:${params.interval}`;
+    
+    let cached = performanceCache.get(cacheKey);
+    if (cached) return cached;
+
+    const intervalSql = params.interval === 'hour' ? 'hour' :
+                       params.interval === 'day' ? 'day' :
+                       params.interval === 'week' ? 'week' :
+                       params.interval === 'month' ? 'month' : 'day';
+
+    const result = await db
+      .select({
+        timestamp: sql`DATE_TRUNC(${intervalSql}, ${patients.createdAt})`,
+        value: count(patients.id)
+      })
+      .from(patients)
+      .where(
+        and(
+          eq(patients.tenantId, tenantId),
+          gte(patients.createdAt, from),
+          lte(patients.createdAt, to)
+        )
+      )
+      .groupBy(sql`DATE_TRUNC(${intervalSql}, ${patients.createdAt})`)
+      .orderBy(sql`DATE_TRUNC(${intervalSql}, ${patients.createdAt})`);
+
+    const timeSeries = result.map(row => ({
+      timestamp: new Date(row.timestamp as string | number | Date).toISOString(),
+      value: Number(row.value)
+    }));
+
+    // Cache for 5 minutes
+    performanceCache.set(cacheKey, timeSeries, 300);
+    return timeSeries;
+  }
+
+  /**
+   * Get patient demographics distribution
+   */
+  static async getDemographicsDistribution(tenantId: string): Promise<{
+    ageGroups: StatusDistribution[];
+    genderDistribution: StatusDistribution[];
+  }> {
+    const cacheKey = `patients:demographics:${tenantId}`;
+    let cached = performanceCache.get(cacheKey);
+    if (cached) return cached;
+
+    // Get all patients for this tenant
+    const patientsData = await db
+      .select({
+        dateOfBirth: patients.dateOfBirth,
+        gender: patients.gender
+      })
+      .from(patients)
+      .where(eq(patients.tenantId, tenantId));
+
+    // Calculate age groups
+    const now = new Date();
+    const ageGroups = {
+      '0-18': 0,
+      '19-35': 0,
+      '36-55': 0,
+      '56-75': 0,
+      '75+': 0
+    };
+
+    // Gender distribution
+    const genderGroups = {
+      'Male': 0,
+      'Female': 0,
+      'Other': 0,
+      'Unknown': 0
+    };
+
+    patientsData.forEach(patient => {
+      // Age calculation
+      if (patient.dateOfBirth) {
+        const age = Math.floor((now.getTime() - new Date(patient.dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+        if (age <= 18) ageGroups['0-18']++;
+        else if (age <= 35) ageGroups['19-35']++;
+        else if (age <= 55) ageGroups['36-55']++;
+        else if (age <= 75) ageGroups['56-75']++;
+        else ageGroups['75+']++;
+      }
+
+      // Gender distribution
+      const gender = patient.gender || 'Unknown';
+      if (gender in genderGroups) {
+        (genderGroups as any)[gender]++;
+      } else {
+        genderGroups['Unknown']++;
+      }
+    });
+
+    const totalPatients = patientsData.length;
+
+    const ageGroupsDistribution = Object.entries(ageGroups).map(([group, count]) => ({
+      name: group,
+      value: count,
+      percentage: totalPatients > 0 ? Number(((count / totalPatients) * 100).toFixed(1)) : 0
+    }));
+
+    const genderDistribution = Object.entries(genderGroups).map(([gender, count]) => ({
+      name: gender,
+      value: count,
+      percentage: totalPatients > 0 ? Number(((count / totalPatients) * 100).toFixed(1)) : 0
+    }));
+
+    const demographics = {
+      ageGroups: ageGroupsDistribution,
+      genderDistribution
+    };
+
+    // Cache for 15 minutes (demographics change slowly)
+    performanceCache.set(cacheKey, demographics, 900);
+    return demographics;
+  }
+}
+
+/**
+ * User Analytics Aggregator
+ */
+export class UserAggregator {
+  /**
+   * Get user activity time series
+   */
+  static async getActivityTimeSeries(
+    tenantId: string,
+    params: AnalyticsQueryParams
+  ): Promise<TimeSeriesPoint[]> {
+    const { from, to } = DateRangeBuilder.build(params);
+    const cacheKey = `users:activity:${tenantId}:${from.toISOString()}:${to.toISOString()}:${params.interval}`;
+    
+    let cached = performanceCache.get(cacheKey);
+    if (cached) return cached;
+
+    const intervalSql = params.interval === 'hour' ? 'hour' :
+                       params.interval === 'day' ? 'day' :
+                       params.interval === 'week' ? 'week' :
+                       params.interval === 'month' ? 'month' : 'day';
+
+    // For now, use user creation as activity proxy
+    // In a real system, you'd track login/activity logs
+    const result = await db
+      .select({
+        timestamp: sql`DATE_TRUNC(${intervalSql}, ${users.createdAt})`,
+        value: count(users.id)
+      })
+      .from(users)
+      .where(
+        and(
+          eq(users.tenantId, tenantId),
+          gte(users.createdAt, from),
+          lte(users.createdAt, to)
+        )
+      )
+      .groupBy(sql`DATE_TRUNC(${intervalSql}, ${users.createdAt})`)
+      .orderBy(sql`DATE_TRUNC(${intervalSql}, ${users.createdAt})`);
+
+    const timeSeries = result.map(row => ({
+      timestamp: new Date(row.timestamp as string | number | Date).toISOString(),
+      value: Number(row.value)
+    }));
+
+    // Cache for 10 minutes
+    performanceCache.set(cacheKey, timeSeries, 600);
+    return timeSeries;
+  }
+
+  /**
+   * Get user role distribution
+   */
+  static async getRoleDistribution(tenantId: string): Promise<StatusDistribution[]> {
+    const cacheKey = `users:roles:${tenantId}`;
+    let cached = performanceCache.get(cacheKey);
+    if (cached) return cached;
+
+    const result = await db
+      .select({
+        role: users.role,
+        count: count(users.id)
+      })
+      .from(users)
+      .where(eq(users.tenantId, tenantId))
+      .groupBy(users.role);
+
+    const total = result.reduce((sum, row) => sum + Number(row.count), 0);
+    const distribution = result.map(row => ({
+      name: row.role || 'unknown',
+      value: Number(row.count),
+      percentage: total > 0 ? Number(((Number(row.count) / total) * 100).toFixed(1)) : 0
+    }));
+
+    // Cache for 10 minutes
+    performanceCache.set(cacheKey, distribution, 600);
+    return distribution;
+  }
+}
+
+/**
+ * Tenant Analytics Aggregator  
+ */
+export class TenantAggregator {
+  /**
+   * Get tenant growth metrics
+   */
+  static async getGrowthMetrics(params: AnalyticsQueryParams): Promise<{
+    newTenants: TimeSeriesPoint[];
+    activeTenants: TimeSeriesPoint[];
+    typeDistribution: StatusDistribution[];
+  }> {
+    const { from, to } = DateRangeBuilder.build(params);
+    const cacheKey = `tenants:growth:${from.toISOString()}:${to.toISOString()}:${params.interval}`;
+    
+    let cached = performanceCache.get(cacheKey);
+    if (cached) return cached;
+
+    const intervalSql = params.interval === 'hour' ? 'hour' :
+                       params.interval === 'day' ? 'day' :
+                       params.interval === 'week' ? 'week' :
+                       params.interval === 'month' ? 'month' : 'day';
+
+    // New tenants over time
+    const newTenantsResult = await db
+      .select({
+        timestamp: sql`DATE_TRUNC(${intervalSql}, ${tenants.createdAt})`,
+        value: count(tenants.id)
+      })
+      .from(tenants)
+      .where(
+        and(
+          gte(tenants.createdAt, from),
+          lte(tenants.createdAt, to)
+        )
+      )
+      .groupBy(sql`DATE_TRUNC(${intervalSql}, ${tenants.createdAt})`)
+      .orderBy(sql`DATE_TRUNC(${intervalSql}, ${tenants.createdAt})`);
+
+    const newTenants = newTenantsResult.map(row => ({
+      timestamp: new Date(row.timestamp as string | number | Date).toISOString(),
+      value: Number(row.value)
+    }));
+
+    // Type distribution
+    const typeResult = await db
+      .select({
+        type: tenants.type,
+        count: count(tenants.id)
+      })
+      .from(tenants)
+      .groupBy(tenants.type);
+
+    const totalTenants = typeResult.reduce((sum, row) => sum + Number(row.count), 0);
+    const typeDistribution = typeResult.map(row => ({
+      name: row.type || 'unknown',
+      value: Number(row.count),
+      percentage: totalTenants > 0 ? Number(((Number(row.count) / totalTenants) * 100).toFixed(1)) : 0
+    }));
+
+    // For now, use creation date as active proxy
+    // In real system, you'd track last activity/login
+    const activeTenants = newTenants; // Simplified
+
+    const metrics = {
+      newTenants,
+      activeTenants,
+      typeDistribution
+    };
+
+    // Cache for 10 minutes
+    performanceCache.set(cacheKey, metrics, 600);
+    return metrics;
+  }
 }
 
 /**
  * Laboratory Analytics Aggregator
  */
 export class LaboratoryAggregator {
+  /**
+   * Get lab order volume time series
+   */
+  static async getVolumeTimeSeries(
+    tenantId: string,
+    params: AnalyticsQueryParams
+  ): Promise<TimeSeriesPoint[]> {
+    const { from, to } = DateRangeBuilder.build(params);
+    const cacheKey = `lab:volume:${tenantId}:${from.toISOString()}:${to.toISOString()}:${params.interval}`;
+    
+    let cached = performanceCache.get(cacheKey);
+    if (cached) return cached;
+
+    const intervalSql = params.interval === 'hour' ? 'hour' :
+                       params.interval === 'day' ? 'day' :
+                       params.interval === 'week' ? 'week' :
+                       params.interval === 'month' ? 'month' : 'day';
+
+    const result = await db
+      .select({
+        timestamp: sql`DATE_TRUNC(${intervalSql}, ${labOrders.createdAt})`,
+        value: count(labOrders.id)
+      })
+      .from(labOrders)
+      .where(
+        and(
+          eq(labOrders.tenantId, tenantId),
+          gte(labOrders.createdAt, from),
+          lte(labOrders.createdAt, to)
+        )
+      )
+      .groupBy(sql`DATE_TRUNC(${intervalSql}, ${labOrders.createdAt})`)
+      .orderBy(sql`DATE_TRUNC(${intervalSql}, ${labOrders.createdAt})`);
+
+    const timeSeries = result.map(row => ({
+      timestamp: new Date(row.timestamp as string | number | Date).toISOString(),
+      value: Number(row.value)
+    }));
+
+    // Cache for 5 minutes
+    performanceCache.set(cacheKey, timeSeries, 300);
+    return timeSeries;
+  }
+
+  /**
+   * Get lab order status distribution
+   */
+  static async getStatusDistribution(tenantId: string): Promise<StatusDistribution[]> {
+    const cacheKey = `lab:status:${tenantId}`;
+    let cached = performanceCache.get(cacheKey);
+    if (cached) return cached;
+
+    const result = await db
+      .select({
+        status: labOrders.status,
+        count: count(labOrders.id)
+      })
+      .from(labOrders)
+      .where(eq(labOrders.tenantId, tenantId))
+      .groupBy(labOrders.status);
+
+    const total = result.reduce((sum, row) => sum + Number(row.count), 0);
+    const distribution = result.map(row => ({
+      name: row.status || 'unknown',
+      value: Number(row.count),
+      percentage: total > 0 ? Number(((Number(row.count) / total) * 100).toFixed(1)) : 0
+    }));
+
+    // Cache for 3 minutes
+    performanceCache.set(cacheKey, distribution, 180);
+    return distribution;
+  }
+
   /**
    * Get lab order processing metrics
    */
