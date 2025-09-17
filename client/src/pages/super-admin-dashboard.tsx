@@ -332,56 +332,6 @@ export default function SuperAdminDashboard() {
     }
   });
 
-  if (tenantsLoading || statsLoading || suppliersLoading) {
-    return (
-      <div className="p-6">
-        <h1 className="text-3xl font-bold mb-6 flex items-center gap-3">
-          <Crown className="h-8 w-8 text-yellow-500" />
-          Super Admin Dashboard
-        </h1>
-        <div className="text-center">Loading platform overview...</div>
-      </div>
-    );
-  }
-
-  const getTenantTypeColor = (type: string) => {
-    switch (type) {
-      case 'hospital': return 'bg-blue-100 text-blue-800';
-      case 'pharmacy': return 'bg-green-100 text-green-800';
-      case 'laboratory': return 'bg-purple-100 text-purple-800';
-      case 'clinic': return 'bg-orange-100 text-orange-800';
-      case 'platform': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending_review':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3 mr-1" />Pending Review</Badge>;
-      case 'approved':
-        return <Badge variant="default" className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Approved</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive" className="bg-red-100 text-red-800"><XCircle className="w-3 h-3 mr-1" />Rejected</Badge>;
-      case 'suspended':
-        return <Badge variant="destructive" className="bg-orange-100 text-orange-800"><XCircle className="w-3 h-3 mr-1" />Suspended</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-
-  const getTenantStatusBadge = (tenant: any) => {
-    if (tenant.suspendedAt) {
-      return <Badge variant="destructive" className="bg-orange-100 text-orange-800"><XCircle className="w-3 h-3 mr-1" />Suspended</Badge>;
-    }
-    if (!tenant.isActive) {
-      return <Badge variant="destructive" className="bg-red-100 text-red-800"><XCircle className="w-3 h-3 mr-1" />Inactive</Badge>;
-    }
-    return <Badge variant="default" className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Active</Badge>;
-  };
-
-  const pendingSuppliers = suppliers?.filter(s => s.status === 'pending_review') || [];
-
   // Mock data for charts - in real app, this would come from APIs
   const platformGrowthData = useMemo(() => [
     { month: "Jan", tenants: 8, users: 156, newTenants: 2, activeUsers: 142 },
@@ -580,6 +530,57 @@ export default function SuperAdminDashboard() {
       color: "hsl(220, 98%, 61%)",
     },
   } satisfies ChartConfig;
+
+  // Helper functions
+  const getTenantTypeColor = (type: string) => {
+    switch (type) {
+      case 'hospital': return 'bg-blue-100 text-blue-800';
+      case 'pharmacy': return 'bg-green-100 text-green-800';
+      case 'laboratory': return 'bg-purple-100 text-purple-800';
+      case 'clinic': return 'bg-orange-100 text-orange-800';
+      case 'platform': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending_review':
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3 mr-1" />Pending Review</Badge>;
+      case 'approved':
+        return <Badge variant="default" className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Approved</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive" className="bg-red-100 text-red-800"><XCircle className="w-3 h-3 mr-1" />Rejected</Badge>;
+      case 'suspended':
+        return <Badge variant="destructive" className="bg-orange-100 text-orange-800"><XCircle className="w-3 h-3 mr-1" />Suspended</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
+  const getTenantStatusBadge = (tenant: any) => {
+    if (tenant.suspendedAt) {
+      return <Badge variant="destructive" className="bg-orange-100 text-orange-800"><XCircle className="w-3 h-3 mr-1" />Suspended</Badge>;
+    }
+    if (!tenant.isActive) {
+      return <Badge variant="destructive" className="bg-red-100 text-red-800"><XCircle className="w-3 h-3 mr-1" />Inactive</Badge>;
+    }
+    return <Badge variant="default" className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Active</Badge>;
+  };
+
+  const pendingSuppliers = suppliers?.filter(s => s.status === 'pending_review') || [];
+
+  if (tenantsLoading || statsLoading || suppliersLoading) {
+    return (
+      <div className="p-6">
+        <h1 className="text-3xl font-bold mb-6 flex items-center gap-3">
+          <Crown className="h-8 w-8 text-yellow-500" />
+          Super Admin Dashboard
+        </h1>
+        <div className="text-center">Loading platform overview...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
