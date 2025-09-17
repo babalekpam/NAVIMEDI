@@ -3802,7 +3802,7 @@ to the patient and authorized healthcare providers.
       
       // Parse query parameters for detailed analytics
       const queryParams = analyticsQuerySchema.extend({
-        detailed: z.boolean().default(false).describe("Include detailed metrics")
+        detailed: z.coerce.boolean().default(false).describe("Include detailed metrics")
       }).parse(req.query);
 
       // Initialize analytics service
