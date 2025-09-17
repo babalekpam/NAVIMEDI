@@ -40,6 +40,12 @@ export default function Patients() {
     enabled: !!user && !!tenant,
   });
 
+  // Fetch latest vital signs for selected patient
+  const { data: patientVitalSigns } = useQuery({
+    queryKey: ["/api/patients", selectedPatient?.id, "vital-signs"],
+    enabled: !!selectedPatient,
+  });
+
   const createPatientMutation = useMutation({
     mutationFn: async (patientData: any) => {
       const response = await fetch("/api/patients", {
@@ -75,12 +81,6 @@ export default function Patients() {
     setSelectedPatient(patient);
     setIsEHROpen(true);
   };
-
-  // Fetch latest vital signs for selected patient
-  const { data: patientVitalSigns } = useQuery({
-    queryKey: ["/api/patients", selectedPatient?.id, "vital-signs"],
-    enabled: !!selectedPatient,
-  });
 
   const handleScheduleAppointment = (patient: Patient) => {
     // Navigate to appointment creation with pre-filled patient info
