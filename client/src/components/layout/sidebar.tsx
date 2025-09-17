@@ -161,7 +161,7 @@ const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
   { id: "achievements", label: "Laboratory Achievements", icon: Trophy, path: "/achievements", roles: ["lab_technician", "tenant_admin", "director"] },
   
   // Pharmacy Section - Comprehensive Navigation for Pharmacy Tenants
-  { id: "pharmacy-dashboard", label: "Dashboard", icon: BarChart3, path: "/dashboard", roles: ["pharmacist", "tenant_admin", "director"] },
+  { id: "pharmacy-dashboard", label: "Dashboard", icon: BarChart3, path: "/pharmacy-dashboard-enhanced", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "prescription-management", label: "💊 Prescription Management", icon: Pill, path: "/prescriptions", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "pharmacy-inventory", label: "📦 Inventory", icon: Package, path: "/pharmacy-inventory", roles: ["pharmacist", "tenant_admin", "director"] },
   { id: "health-wellness", label: "🛒 Health & Wellness", icon: Heart, path: "/pharmacy-inventory", roles: ["pharmacist", "tenant_admin", "director"] },
@@ -285,7 +285,7 @@ export const Sidebar = () => {
     
     // Core Operations
     const coreOperationsItems = [
-      { id: "lab-dashboard", label: "📊 Dashboard Overview", icon: BarChart3, path: "/dashboard", roles: ["lab_technician", "tenant_admin", "director"] },
+      { id: "lab-dashboard", label: "📊 Dashboard Overview", icon: BarChart3, path: "/laboratory-dashboard", roles: ["lab_technician", "tenant_admin", "director"] },
       { id: "sample-management", label: "📋 Sample Management", icon: TestTube, path: "/lab/sample-management", roles: ["lab_technician", "tenant_admin", "director"] },
       { id: "test-management", label: "🧪 Test Management", icon: FlaskConical, path: "/lab/test-management", roles: ["lab_technician", "tenant_admin", "director"] },
       { id: "results-reporting", label: "📊 Results & Reporting", icon: FileBarChart, path: "/lab/results-reporting", roles: ["lab_technician", "tenant_admin", "director"] }
