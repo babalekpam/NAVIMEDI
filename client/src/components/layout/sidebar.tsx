@@ -138,9 +138,15 @@ interface SidebarItem {
   roles: string[];
 }
 
-const getSidebarItems = (t: (key: string) => string): SidebarItem[] => [
+const getSidebarItems = (t: (key: string) => string, isHospitalTenant: boolean = false): SidebarItem[] => [
   // Clinical Section (only for tenant users)
-  { id: "dashboard", label: t("dashboard"), icon: BarChart3, path: "/dashboard", roles: ["physician", "nurse", "lab_technician", "receptionist", "billing_staff", "tenant_admin", "director"] },
+  { 
+    id: "dashboard", 
+    label: t("dashboard"), 
+    icon: BarChart3, 
+    path: isHospitalTenant ? "/lab-analytics-dashboard" : "/dashboard", 
+    roles: ["physician", "nurse", "lab_technician", "receptionist", "billing_staff", "tenant_admin", "director"] 
+  },
   { id: "super-admin-dashboard", label: t("dashboard"), icon: BarChart3, path: "/super-admin-dashboard", roles: ["super_admin"] },
   { id: "supplier-management", label: "Supplier Management", icon: Building2, path: "/supplier-management", roles: ["super_admin"] },
   { id: "counter-reset", label: "Counter Reset", icon: RotateCcw, path: "/admin/counter-reset", roles: ["super_admin"] },
@@ -208,7 +214,14 @@ export const Sidebar = () => {
 
   if (!user) return null;
 
-  const sidebarItems = getSidebarItems(t);
+  // Check if this is a hospital tenant by checking tenant type and name  
+  const isHospitalTenant = currentTenant?.type === "hospital" || 
+                          currentTenant?.type === "clinic" ||
+                          currentTenant?.name?.toLowerCase().includes('hospital') || 
+                          currentTenant?.name?.toLowerCase().includes('medical') ||
+                          currentTenant?.name?.toLowerCase().includes('health');
+
+  const sidebarItems = getSidebarItems(t, isHospitalTenant);
   const filteredItems = sidebarItems.filter(item => {
     return item.roles.includes(user.role);
   });
@@ -521,7 +534,6 @@ export const Sidebar = () => {
   }
 
   // For hospital users - include receptionist billing access
-  const isHospitalTenant = currentTenant?.type === "hospital" || currentTenant?.type === "clinic";
   
   // For regular tenant users (excluding pharmacists, receptionists only exist in hospitals/clinics)
   const clinicalItems = filteredItems.filter(item => {
