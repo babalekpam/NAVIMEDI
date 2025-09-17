@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { useAuth } from "@/contexts/auth-context";
-// import { useTenant } from "@/contexts/tenant-context";
+import { useTenant } from "@/contexts/tenant-context";
 import { useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -11,9 +11,7 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
   const { user, isLoading: authLoading } = useAuth();
-  // Temporarily disable tenant loading to fix routing issues
-  const tenant = { id: 'temp', name: 'Temporary', type: 'pharmacy' };
-  const tenantLoading = false;
+  const { tenant, isLoading: tenantLoading } = useTenant();
   const [, setLocation] = useLocation();
 
   // Always call useEffect hook
@@ -54,11 +52,18 @@ export const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps)
     );
   }
 
-  // Temporarily bypass tenant check while debugging API routing issues
-  if (!tenant && user) {
-    console.log('ProtectedRoute: User exists but no tenant data - proceeding with temporary bypass');
-    console.log('ProtectedRoute: User:', user);
-    // Return children directly to bypass tenant requirement temporarily
+  // Properly handle tenant context
+  if (!tenant && user && !tenantLoading) {
+    console.log('ProtectedRoute: User exists but no tenant data available');
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">No Tenant Access</h2>
+          <p className="text-gray-600">Unable to load organization data.</p>
+          <p className="text-sm text-gray-500 mt-2">Please contact your system administrator.</p>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;
