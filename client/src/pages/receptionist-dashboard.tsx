@@ -112,6 +112,29 @@ type Patient = {
   isActive: boolean;
 };
 
+type VitalSigns = {
+  id: string;
+  systolicBp: number;
+  diastolicBp: number;
+  heartRate: number;
+  temperature: number;
+  temperatureUnit: 'F' | 'C';
+  oxygenSaturation: number;
+  weight: number;
+  weightUnit: 'lbs' | 'kg';
+  height: number;
+  heightUnit: 'inches' | 'cm';
+  respiratoryRate: number;
+  bloodType: string;
+  painLevel: number;
+  glucoseLevel?: number;
+  bmi?: number;
+  allergies?: string;
+  currentMedications?: string;
+  notes?: string;
+  recordedAt: string;
+};
+
 type CheckIn = {
   id: string;
   patientId: string;
@@ -121,6 +144,43 @@ type CheckIn = {
   priorityLevel: string;
   status: string;
   patient: Patient;
+  vitalSigns?: VitalSigns;
+};
+
+type Appointment = {
+  id: string;
+  patientId: string;
+  physicianId: string;
+  appointmentDate: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  reasonForVisit: string;
+  patient: Patient;
+  physician: Physician;
+};
+
+type Physician = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  specialty: string;
+  department: string;
+  availability: {
+    [key: string]: string[];
+  };
+};
+
+type InsuranceInfo = {
+  id: string;
+  patientId: string;
+  insuranceProviderName: string;
+  policyNumber: string;
+  groupNumber?: string;
+  coveragePercentage: number;
+  verificationStatus: 'pending' | 'verified' | 'denied';
+  effectiveDate: string;
+  expirationDate: string;
 };
 
 export default function ReceptionistDashboard() {
@@ -195,29 +255,29 @@ export default function ReceptionistDashboard() {
   });
 
   // Queries
-  const { data: todayCheckIns = [], isLoading: loadingCheckIns } = useQuery({
+  const { data: todayCheckIns = [], isLoading: loadingCheckIns } = useQuery<CheckIn[]>({
     queryKey: ['/api/patient-check-ins/today'],
   });
 
-  const { data: waitingPatients = [], isLoading: loadingWaiting } = useQuery({
+  const { data: waitingPatients = [], isLoading: loadingWaiting } = useQuery<CheckIn[]>({
     queryKey: ['/api/patient-check-ins/waiting'],
   });
 
-  const { data: todayAppointments = [], isLoading: loadingAppointments } = useQuery({
+  const { data: todayAppointments = [], isLoading: loadingAppointments } = useQuery<Appointment[]>({
     queryKey: ['/api/appointments/date', new Date().toISOString().split('T')[0]],
   });
 
-  const { data: recentPatients = [], isLoading: loadingPatients } = useQuery({
+  const { data: recentPatients = [], isLoading: loadingPatients } = useQuery<Patient[]>({
     queryKey: ['/api/patients'],
   });
 
   // Fetch available physicians for appointment booking
-  const { data: availablePhysicians = [], isLoading: loadingPhysicians } = useQuery({
+  const { data: availablePhysicians = [], isLoading: loadingPhysicians } = useQuery<Physician[]>({
     queryKey: ['/api/available-physicians'],
   });
 
   // Query for insurance info for selected patient
-  const { data: patientInsurance, isLoading: insuranceLoading } = useQuery({
+  const { data: patientInsurance, isLoading: insuranceLoading } = useQuery<InsuranceInfo>({
     queryKey: ["/api/hospital-patient-insurance", selectedPatientForInsurance?.id],
     enabled: !!selectedPatientForInsurance?.id,
   });
@@ -1321,7 +1381,7 @@ export default function ReceptionistDashboard() {
                 value={appointmentPatient?.id || ''}
                 onChange={(e) => {
                   const patient = recentPatients.find((p: Patient) => p.id === e.target.value);
-                  setAppointmentPatient(patient);
+                  setAppointmentPatient(patient || null);
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required

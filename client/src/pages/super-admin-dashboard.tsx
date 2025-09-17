@@ -8,13 +8,31 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Users, Activity, Database, CheckCircle, XCircle, Clock, Mail, Phone, MapPin, Calendar, Crown, Edit3 } from "lucide-react";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
+import { Building2, Users, Activity, Database, CheckCircle, XCircle, Clock, Mail, Phone, MapPin, Calendar, Crown, Edit3, TrendingUp, BarChart3, PieChart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  RadialBarChart,
+  RadialBar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer
+} from "recharts";
 
 interface TenantWithStats {
   id: string;
@@ -364,6 +382,205 @@ export default function SuperAdminDashboard() {
 
   const pendingSuppliers = suppliers?.filter(s => s.status === 'pending_review') || [];
 
+  // Mock data for charts - in real app, this would come from APIs
+  const platformGrowthData = useMemo(() => [
+    { month: "Jan", tenants: 8, users: 156, newTenants: 2, activeUsers: 142 },
+    { month: "Feb", tenants: 9, users: 178, newTenants: 1, activeUsers: 165 },
+    { month: "Mar", tenants: 10, users: 203, newTenants: 1, activeUsers: 187 },
+    { month: "Apr", tenants: 11, users: 234, newTenants: 1, activeUsers: 218 },
+    { month: "May", users: 267, tenants: 12, newTenants: 1, activeUsers: 245 },
+    { month: "Jun", tenants: platformStats?.totalTenants || 12, users: platformStats?.totalUsers || 285, newTenants: 0, activeUsers: 265 }
+  ], [platformStats]);
+
+  const activityData = useMemo(() => [
+    { period: "00:00", logins: 12, transactions: 8, apiCalls: 245 },
+    { period: "04:00", logins: 18, transactions: 14, apiCalls: 312 },
+    { period: "08:00", logins: 89, transactions: 67, apiCalls: 1247 },
+    { period: "12:00", logins: 134, transactions: 98, apiCalls: 1856 },
+    { period: "16:00", logins: 156, transactions: 112, apiCalls: 2134 },
+    { period: "20:00", logins: 98, transactions: 73, apiCalls: 1567 }
+  ], []);
+
+  const tenantEngagementData = useMemo(() => {
+    if (!tenants) return [];
+    return tenants.slice(0, 8).map(tenant => ({
+      name: tenant.name.length > 15 ? tenant.name.substring(0, 15) + '...' : tenant.name,
+      users: tenant.stats.userCount,
+      patients: tenant.stats.patientCount,
+      type: tenant.type,
+      engagement: Math.round((tenant.stats.userCount + tenant.stats.patientCount / 10) * 2.5)
+    }));
+  }, [tenants]);
+
+  const tenantDistributionData = useMemo(() => {
+    if (!platformStats?.tenantsByType) return [];
+    return Object.entries(platformStats.tenantsByType).map(([type, count]) => ({
+      name: type.charAt(0).toUpperCase() + type.slice(1),
+      value: count,
+      color: type === 'hospital' ? 'hsl(220, 98%, 61%)' :
+             type === 'pharmacy' ? 'hsl(142, 76%, 36%)' :
+             type === 'laboratory' ? 'hsl(271, 91%, 65%)' :
+             type === 'clinic' ? 'hsl(35, 91%, 62%)' : 'hsl(210, 40%, 50%)'
+    }));
+  }, [platformStats]);
+
+  const systemHealthData = useMemo(() => [
+    { name: 'Database', value: 98, color: 'hsl(142, 76%, 36%)' },
+    { name: 'API', value: 99, color: 'hsl(220, 98%, 61%)' },
+    { name: 'Storage', value: 97, color: 'hsl(271, 91%, 65%)' },
+    { name: 'Network', value: 96, color: 'hsl(35, 91%, 62%)' }
+  ], []);
+
+  // Chart configurations
+  const growthChartConfig = {
+    tenants: {
+      label: "Total Tenants",
+      color: "hsl(220, 98%, 61%)",
+    },
+    users: {
+      label: "Total Users",
+      color: "hsl(142, 76%, 36%)",
+    },
+  } satisfies ChartConfig;
+
+  const activityChartConfig = {
+    logins: {
+      label: "User Logins",
+      color: "hsl(220, 98%, 61%)",
+    },
+    transactions: {
+      label: "Transactions",
+      color: "hsl(142, 76%, 36%)",
+    },
+    apiCalls: {
+      label: "API Calls",
+      color: "hsl(271, 91%, 65%)",
+    },
+  } satisfies ChartConfig;
+
+  const engagementChartConfig = {
+    users: {
+      label: "Active Users",
+      color: "hsl(220, 98%, 61%)",
+    },
+    patients: {
+      label: "Patients",
+      color: "hsl(142, 76%, 36%)",
+    },
+  } satisfies ChartConfig;
+
+  const distributionChartConfig = {
+    hospital: {
+      label: "Hospitals",
+      color: "hsl(220, 98%, 61%)",
+    },
+    pharmacy: {
+      label: "Pharmacies",
+      color: "hsl(142, 76%, 36%)",
+    },
+    laboratory: {
+      label: "Laboratories",
+      color: "hsl(271, 91%, 65%)",
+    },
+    clinic: {
+      label: "Clinics",
+      color: "hsl(35, 91%, 62%)",
+    },
+  } satisfies ChartConfig;
+
+  // Advanced Analytics Data
+  const revenueGrowthData = useMemo(() => [
+    { quarter: "Q1 2024", revenue: 45200, subscriptions: 8, averageRevenue: 5650, growth: 12.5 },
+    { quarter: "Q2 2024", revenue: 52800, subscriptions: 9, averageRevenue: 5867, growth: 16.8 },
+    { quarter: "Q3 2024", revenue: 61500, subscriptions: 11, averageRevenue: 5591, growth: 16.5 },
+    { quarter: "Q4 2024", revenue: 73200, subscriptions: 12, averageRevenue: 6100, growth: 19.0 },
+  ], []);
+
+  const performanceMetricsData = useMemo(() => [
+    { metric: "Response Time", current: 285, target: 300, previous: 320, unit: "ms", status: "good" },
+    { metric: "Uptime", current: 99.8, target: 99.5, previous: 99.2, unit: "%", status: "excellent" },
+    { metric: "Error Rate", current: 0.12, target: 0.5, previous: 0.18, unit: "%", status: "excellent" },
+    { metric: "Throughput", current: 1247, target: 1000, previous: 1158, unit: "req/min", status: "excellent" },
+  ], []);
+
+  const supplierAnalyticsData = useMemo(() => {
+    if (!suppliers) return [];
+    const statusCounts = suppliers.reduce((acc, supplier) => {
+      acc[supplier.status] = (acc[supplier.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    return Object.entries(statusCounts).map(([status, count]) => ({
+      status: status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      count,
+      color: status === 'approved' ? 'hsl(142, 76%, 36%)' :
+             status === 'pending_review' ? 'hsl(35, 91%, 62%)' :
+             status === 'rejected' ? 'hsl(0, 85%, 60%)' :
+             'hsl(25, 95%, 53%)'
+    }));
+  }, [suppliers]);
+
+  const geographicData = useMemo(() => [
+    { region: "North America", tenants: 7, users: 189, revenue: 45200 },
+    { region: "Europe", tenants: 3, users: 67, revenue: 18300 },
+    { region: "Asia Pacific", tenants: 2, users: 29, revenue: 9700 }
+  ], []);
+
+  const monthlyTrendData = useMemo(() => [
+    { month: "Jan", newTenants: 2, churnTenants: 0, netGrowth: 2, satisfaction: 4.2 },
+    { month: "Feb", newTenants: 1, churnTenants: 0, netGrowth: 1, satisfaction: 4.3 },
+    { month: "Mar", newTenants: 1, churnTenants: 0, netGrowth: 1, satisfaction: 4.4 },
+    { month: "Apr", newTenants: 1, churnTenants: 0, netGrowth: 1, satisfaction: 4.5 },
+    { month: "May", newTenants: 1, churnTenants: 0, netGrowth: 1, satisfaction: 4.4 },
+    { month: "Jun", newTenants: 0, churnTenants: 0, netGrowth: 0, satisfaction: 4.6 }
+  ], []);
+
+  // Advanced Analytics Chart Configs
+  const revenueChartConfig = {
+    revenue: {
+      label: "Revenue ($)",
+      color: "hsl(142, 76%, 36%)",
+    },
+    subscriptions: {
+      label: "Active Subscriptions",
+      color: "hsl(220, 98%, 61%)",
+    },
+    growth: {
+      label: "Growth %",
+      color: "hsl(271, 91%, 65%)",
+    },
+  } satisfies ChartConfig;
+
+  const performanceChartConfig = {
+    current: {
+      label: "Current",
+      color: "hsl(220, 98%, 61%)",
+    },
+    target: {
+      label: "Target",
+      color: "hsl(142, 76%, 36%)",
+    },
+    previous: {
+      label: "Previous",
+      color: "hsl(210, 40%, 70%)",
+    },
+  } satisfies ChartConfig;
+
+  const trendChartConfig = {
+    newTenants: {
+      label: "New Tenants",
+      color: "hsl(142, 76%, 36%)",
+    },
+    churnTenants: {
+      label: "Churned Tenants",
+      color: "hsl(0, 85%, 60%)",
+    },
+    netGrowth: {
+      label: "Net Growth",
+      color: "hsl(220, 98%, 61%)",
+    },
+  } satisfies ChartConfig;
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -375,8 +592,9 @@ export default function SuperAdminDashboard() {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground w-full max-w-2xl">
+        <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground w-full max-w-3xl">
           <TabsTrigger value="overview">Platform Overview</TabsTrigger>
+          <TabsTrigger value="analytics">Advanced Analytics</TabsTrigger>
           <TabsTrigger value="suppliers" className="relative">
             Supplier Approvals
             {pendingSuppliers.length > 0 && (
@@ -391,7 +609,7 @@ export default function SuperAdminDashboard() {
         <TabsContent value="overview" className="space-y-6">
           {/* Platform Statistics */}
           {platformStats && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Tenants</CardTitle>
@@ -445,6 +663,461 @@ export default function SuperAdminDashboard() {
               </Card>
             </div>
           )}
+
+          {/* Platform Analytics Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Platform Growth Trends */}
+            <Card data-testid="card-platform-growth">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                  Platform Growth Trends
+                </CardTitle>
+                <CardDescription>
+                  Tenant and user growth over the last 6 months
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ChartContainer config={growthChartConfig}>
+                    <LineChart data={platformGrowthData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis yAxisId="left" />
+                      <YAxis yAxisId="right" orientation="right" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <ChartLegend content={<ChartLegendContent />} />
+                      <Line 
+                        yAxisId="left"
+                        type="monotone" 
+                        dataKey="tenants" 
+                        stroke="var(--color-tenants)" 
+                        strokeWidth={3}
+                        dot={{ fill: "var(--color-tenants)", strokeWidth: 2, r: 4 }}
+                      />
+                      <Line 
+                        yAxisId="right"
+                        type="monotone" 
+                        dataKey="users" 
+                        stroke="var(--color-users)" 
+                        strokeWidth={3}
+                        dot={{ fill: "var(--color-users)", strokeWidth: 2, r: 4 }}
+                      />
+                    </LineChart>
+                  </ChartContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tenant Distribution */}
+            <Card data-testid="card-tenant-distribution">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChart className="h-5 w-5 text-purple-600" />
+                  Tenant Type Distribution
+                </CardTitle>
+                <CardDescription>
+                  Breakdown of organizations by type
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ChartContainer config={distributionChartConfig}>
+                    <RechartsPieChart>
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Pie
+                        data={tenantDistributionData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                      >
+                        {tenantDistributionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <ChartLegend content={<ChartLegendContent />} />
+                    </RechartsPieChart>
+                  </ChartContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Activity Metrics and Engagement */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* User Activity Trends */}
+            <Card data-testid="card-activity-trends">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-green-600" />
+                  24-Hour Activity Trends
+                </CardTitle>
+                <CardDescription>
+                  Platform activity throughout the day
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ChartContainer config={activityChartConfig}>
+                    <AreaChart data={activityData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="period" />
+                      <YAxis />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Area 
+                        type="monotone" 
+                        dataKey="logins" 
+                        stackId="1" 
+                        stroke="var(--color-logins)" 
+                        fill="var(--color-logins)"
+                        fillOpacity={0.6}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="transactions" 
+                        stackId="1" 
+                        stroke="var(--color-transactions)" 
+                        fill="var(--color-transactions)"
+                        fillOpacity={0.6}
+                      />
+                    </AreaChart>
+                  </ChartContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tenant Engagement */}
+            <Card data-testid="card-tenant-engagement">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-orange-600" />
+                  Tenant Engagement Metrics
+                </CardTitle>
+                <CardDescription>
+                  Active users and patients per tenant
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ChartContainer config={engagementChartConfig}>
+                    <BarChart data={tenantEngagementData} margin={{ left: 20, right: 20, top: 10, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="name" 
+                        tick={{ fontSize: 12 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="users" fill="var(--color-users)" radius={[2, 2, 0, 0]} />
+                      <Bar dataKey="patients" fill="var(--color-patients)" radius={[2, 2, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* System Health */}
+          <div className="grid grid-cols-1 gap-6">
+            <Card data-testid="card-system-health">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5 text-blue-600" />
+                  System Health Overview
+                </CardTitle>
+                <CardDescription>
+                  Real-time system performance metrics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {systemHealthData.map((system, index) => (
+                    <div key={index} className="text-center space-y-2">
+                      <div className="relative w-20 h-20 mx-auto">
+                        <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
+                          <path
+                            className="text-gray-300"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          />
+                          <path
+                            className="text-blue-600"
+                            fill="none"
+                            stroke={system.color}
+                            strokeWidth="3"
+                            strokeDasharray={`${system.value}, 100`}
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-sm font-bold">{system.value}%</span>
+                        </div>
+                      </div>
+                      <p className="text-sm font-medium">{system.name}</p>
+                      <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
+                        system.value >= 98 ? 'bg-green-100 text-green-800' :
+                        system.value >= 95 ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {system.value >= 98 ? 'Excellent' :
+                         system.value >= 95 ? 'Good' : 'Needs Attention'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          {/* Revenue & Growth Analysis */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <Card data-testid="card-revenue-growth">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  Revenue Growth Analysis
+                </CardTitle>
+                <CardDescription>
+                  Quarterly revenue and subscription trends
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ChartContainer config={revenueChartConfig}>
+                    <LineChart data={revenueGrowthData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="quarter" />
+                      <YAxis yAxisId="revenue" orientation="left" />
+                      <YAxis yAxisId="subscriptions" orientation="right" />
+                      <ChartTooltip 
+                        content={<ChartTooltipContent />}
+                        formatter={(value, name) => [
+                          name === 'revenue' ? `$${value.toLocaleString()}` : value,
+                          name === 'revenue' ? 'Revenue' :
+                          name === 'subscriptions' ? 'Subscriptions' : 'Growth %'
+                        ]}
+                      />
+                      <ChartLegend content={<ChartLegendContent />} />
+                      <Line 
+                        yAxisId="revenue"
+                        type="monotone" 
+                        dataKey="revenue" 
+                        stroke="var(--color-revenue)" 
+                        strokeWidth={3}
+                        dot={{ fill: "var(--color-revenue)", strokeWidth: 2, r: 4 }}
+                      />
+                      <Line 
+                        yAxisId="subscriptions"
+                        type="monotone" 
+                        dataKey="subscriptions" 
+                        stroke="var(--color-subscriptions)" 
+                        strokeWidth={3}
+                        dot={{ fill: "var(--color-subscriptions)", strokeWidth: 2, r: 4 }}
+                      />
+                    </LineChart>
+                  </ChartContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card data-testid="card-supplier-analytics">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-purple-600" />
+                  Supplier Status Distribution
+                </CardTitle>
+                <CardDescription>
+                  Current supplier registration status breakdown
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ChartContainer config={{}}>
+                    <RechartsPieChart>
+                      <ChartTooltip 
+                        content={<ChartTooltipContent />}
+                        formatter={(value, name) => [value, name]}
+                      />
+                      <Pie
+                        data={supplierAnalyticsData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="count"
+                        nameKey="status"
+                        label={({ status, count, percent }) => 
+                          `${status}: ${count} (${(percent * 100).toFixed(0)}%)`
+                        }
+                      >
+                        {supplierAnalyticsData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </RechartsPieChart>
+                  </ChartContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Performance Metrics & Geographic Distribution */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <Card data-testid="card-performance-metrics">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                  System Performance Metrics
+                </CardTitle>
+                <CardDescription>
+                  Current vs target performance indicators
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {performanceMetricsData.map((metric, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{metric.metric}</span>
+                        <div className="text-right">
+                          <span className="text-lg font-bold">
+                            {metric.current}{metric.unit}
+                          </span>
+                          <div className={`text-xs ${
+                            metric.status === 'excellent' ? 'text-green-600' :
+                            metric.status === 'good' ? 'text-blue-600' : 'text-yellow-600'
+                          }`}>
+                            Target: {metric.target}{metric.unit}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full ${
+                            metric.status === 'excellent' ? 'bg-green-500' :
+                            metric.status === 'good' ? 'bg-blue-500' : 'bg-yellow-500'
+                          }`}
+                          style={{ 
+                            width: `${Math.min(100, (metric.current / metric.target) * 100)}%` 
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card data-testid="card-geographic-distribution">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-orange-600" />
+                  Geographic Distribution
+                </CardTitle>
+                <CardDescription>
+                  Tenant and user distribution by region
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ChartContainer config={engagementChartConfig}>
+                    <BarChart data={geographicData} margin={{ top: 10, right: 20, left: 20, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="region" tick={{ fontSize: 12 }} />
+                      <YAxis />
+                      <ChartTooltip 
+                        content={<ChartTooltipContent />}
+                        formatter={(value, name) => [
+                          name === 'revenue' ? `$${value.toLocaleString()}` : value,
+                          name === 'tenants' ? 'Tenants' :
+                          name === 'users' ? 'Users' : 'Revenue'
+                        ]}
+                      />
+                      <Bar dataKey="tenants" fill="hsl(220, 98%, 61%)" radius={[2, 2, 0, 0]} />
+                      <Bar dataKey="users" fill="hsl(142, 76%, 36%)" radius={[2, 2, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Trends Analysis */}
+          <div className="grid grid-cols-1 gap-6">
+            <Card data-testid="card-trends-analysis">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-indigo-600" />
+                  Monthly Trends Analysis
+                </CardTitle>
+                <CardDescription>
+                  Tenant acquisition, churn, and satisfaction trends
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="h-[300px]">
+                    <h4 className="text-sm font-medium mb-3">Tenant Growth vs Churn</h4>
+                    <ChartContainer config={trendChartConfig}>
+                      <AreaChart data={monthlyTrendData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Area 
+                          type="monotone" 
+                          dataKey="newTenants" 
+                          stackId="1" 
+                          stroke="var(--color-newTenants)" 
+                          fill="var(--color-newTenants)"
+                          fillOpacity={0.7}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="churnTenants" 
+                          stackId="2" 
+                          stroke="var(--color-churnTenants)" 
+                          fill="var(--color-churnTenants)"
+                          fillOpacity={0.7}
+                        />
+                      </AreaChart>
+                    </ChartContainer>
+                  </div>
+                  <div className="h-[300px]">
+                    <h4 className="text-sm font-medium mb-3">Customer Satisfaction Trends</h4>
+                    <ChartContainer config={{ satisfaction: { label: "Satisfaction (5.0)", color: "hsl(142, 76%, 36%)" } }}>
+                      <LineChart data={monthlyTrendData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis domain={[4.0, 5.0]} />
+                        <ChartTooltip 
+                          content={<ChartTooltipContent />}
+                          formatter={(value) => [`${value}/5.0`, "Satisfaction"]}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="satisfaction" 
+                          stroke="hsl(142, 76%, 36%)" 
+                          strokeWidth={3}
+                          dot={{ fill: "hsl(142, 76%, 36%)", strokeWidth: 2, r: 4 }}
+                        />
+                      </LineChart>
+                    </ChartContainer>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="suppliers" className="space-y-6">

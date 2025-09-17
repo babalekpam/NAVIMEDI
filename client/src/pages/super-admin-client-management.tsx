@@ -62,7 +62,7 @@ export default function SuperAdminClientManagement() {
     customCss: ""
   });
 
-  const { data: clients = [], isLoading } = useQuery({
+  const { data: clients = [], isLoading } = useQuery<Client[]>({
     queryKey: ['/api/admin/clients'],
     refetchInterval: 30000 // Refresh every 30 seconds
   });
