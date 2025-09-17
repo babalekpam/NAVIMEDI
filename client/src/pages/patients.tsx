@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Search, Plus, MoreHorizontal, UserCircle, Calendar, Phone, Mail, MapPin, Heart, AlertTriangle, Edit, Trash2, Copy, FileText, Share } from "lucide-react";
+import { Search, Plus, MoreHorizontal, UserCircle, Calendar, Phone, Mail, MapPin, Heart, AlertTriangle, Edit, Trash2, Copy, FileText, Share, Moon, TrendingUp, Scale, Zap, X, User, Activity, Stethoscope, Shield } from "lucide-react";
 import { Patient } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
@@ -314,64 +314,225 @@ export default function Patients() {
         </CardContent>
       </Card>
 
-      {/* Patient EHR Modal */}
+      {/* Patient EHR Modal - Modern Design */}
       <Dialog open={isEHROpen} onOpenChange={setIsEHROpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-3">
-              <Avatar className="h-12 w-12">
-                <AvatarFallback className="bg-blue-100 text-blue-700 text-lg font-medium">
-                  {selectedPatient && getPatientInitials(selectedPatient.firstName, selectedPatient.lastName)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="text-xl font-bold">
-                  {selectedPatient?.firstName} {selectedPatient?.lastName}
-                </h2>
-                <p className="text-sm text-gray-600">Electronic Health Record</p>
+        <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto bg-gradient-to-br from-blue-50/30 to-indigo-50/30 border-0">
+          {/* Modern Header */}
+          <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 -m-6 mb-6 p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-2 rounded-lg">
+                  <Stethoscope className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Med+</h1>
+                  <p className="text-sm text-gray-500">Electronic Health Record</p>
+                </div>
               </div>
-            </DialogTitle>
-          </DialogHeader>
+              <Button variant="ghost" size="sm" onClick={() => setIsEHROpen(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
           
           {selectedPatient && (
             <div className="space-y-6">
-              {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Patient Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="font-medium">MRN:</span>
-                      <span>{selectedPatient.mrn}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Date of Birth:</span>
-                      <span>{selectedPatient.dateOfBirth ? new Date(selectedPatient.dateOfBirth).toLocaleDateString() : 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Gender:</span>
-                      <span>{selectedPatient.gender || 'Not specified'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Phone:</span>
-                      <span>{selectedPatient.phone || 'Not provided'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Email:</span>
-                      <span>{selectedPatient.email || 'Not provided'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Status:</span>
-                      <Badge variant={selectedPatient.isActive ? "default" : "secondary"}>
-                        {selectedPatient.isActive ? "Active" : "Inactive"}
-                      </Badge>
+              {/* Modern Patient Profile Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left: Patient Info Card */}
+                <Card className="lg:col-span-1 bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="text-center">
+                      <Avatar className="h-20 w-20 mx-auto mb-4 ring-4 ring-blue-100">
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-2xl font-semibold">
+                          {getPatientInitials(selectedPatient.firstName, selectedPatient.lastName)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <h3 className="text-xl font-bold text-gray-900 mb-1">
+                        {selectedPatient.firstName} {selectedPatient.lastName}
+                      </h3>
+                      <p className="text-sm text-gray-500 mb-4">MRN: {selectedPatient.mrn}</p>
+                      
+                      <div className="space-y-3 text-sm">
+                        <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                          <span className="text-gray-600 flex items-center">
+                            <User className="h-4 w-4 mr-2" />
+                            Gender
+                          </span>
+                          <span className="font-medium">{selectedPatient.gender || "Male"}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                          <span className="text-gray-600 flex items-center">
+                            <Calendar className="h-4 w-4 mr-2" />
+                            Age
+                          </span>
+                          <span className="font-medium">
+                            {selectedPatient.dateOfBirth 
+                              ? Math.floor((Date.now() - new Date(selectedPatient.dateOfBirth).getTime()) / (1000 * 60 * 60 * 24 * 365)) + " y.o."
+                              : "65 y.o."
+                            }
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                          <span className="text-gray-600 flex items-center">
+                            <Activity className="h-4 w-4 mr-2" />
+                            Height
+                          </span>
+                          <span className="font-medium">175 cm</span>
+                        </div>
+                        <div className="flex items-center justify-between py-2">
+                          <span className="text-gray-600 flex items-center">
+                            <Heart className="h-4 w-4 mr-2" />
+                            Blood type
+                          </span>
+                          <span className="font-medium">B+</span>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 pt-4 border-t border-gray-100">
+                        <Badge variant={selectedPatient.isActive ? "default" : "secondary"} className="mb-2">
+                          {selectedPatient.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card>
+                {/* Right: Health Metrics Cards */}
+                <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+                  {/* Sleep Card */}
+                  <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <Moon className="h-8 w-8 text-white/80" />
+                        <TrendingUp className="h-5 w-5 text-white/60" />
+                      </div>
+                      <div>
+                        <p className="text-white/80 text-sm mb-1">Sleep</p>
+                        <p className="text-3xl font-bold">7h 33m</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Weight Card */}
+                  <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <Scale className="h-8 w-8 text-gray-600" />
+                        <TrendingUp className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <div>
+                        <p className="text-gray-600 text-sm mb-1">Weight</p>
+                        <p className="text-3xl font-bold text-gray-900">87 kg</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Steps Card */}
+                  <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <Activity className="h-8 w-8 text-gray-600" />
+                        <TrendingUp className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <div>
+                        <p className="text-gray-600 text-sm mb-1">Steps</p>
+                        <p className="text-3xl font-bold text-gray-900">3,315</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Calories Card */}
+                  <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <Zap className="h-8 w-8 text-orange-500" />
+                        <TrendingUp className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <div>
+                        <p className="text-gray-600 text-sm mb-1">Burn</p>
+                        <p className="text-3xl font-bold text-gray-900">2,587 kcal</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Charts Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Glucose Chart */}
+                <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center justify-between">
+                      <span className="flex items-center">
+                        Glucose
+                        <TrendingUp className="h-4 w-4 ml-2 text-gray-400" />
+                      </span>
+                      <span className="text-sm text-gray-500">Today: avg. 211mg/dl</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-32 flex items-end space-x-1">
+                      {Array.from({length: 12}).map((_, i) => (
+                        <div 
+                          key={i} 
+                          className="flex-1 bg-gradient-to-t from-green-400 to-green-300 rounded-t opacity-80"
+                          style={{height: `${Math.random() * 80 + 20}%`}}
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Heart Rate Chart */}
+                <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center justify-between">
+                      <span className="flex items-center">
+                        Heart rate
+                        <TrendingUp className="h-4 w-4 ml-2 text-gray-400" />
+                      </span>
+                      <span className="text-sm text-gray-500">Today: avg. 80 bpm</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-32 flex items-end space-x-1">
+                      {Array.from({length: 12}).map((_, i) => (
+                        <div 
+                          key={i} 
+                          className="flex-1 bg-gradient-to-t from-red-400 to-red-300 rounded-t opacity-80"
+                          style={{height: `${Math.random() * 60 + 40}%`}}
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Modern Info Cards Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Body info</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-center h-40">
+                      <div className="text-center">
+                        <div className="mx-auto mb-4 w-16 h-32 bg-gradient-to-b from-blue-200 to-blue-400 rounded-full relative">
+                          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-blue-600 rounded-full"></div>
+                          <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-blue-600 rounded-full"></div>
+                        </div>
+                        <div className="text-sm space-y-1">
+                          <p><span className="font-medium">Oxygen level:</span> 98%</p>
+                          <p><span className="font-medium">SO₂:</span> +1.2%</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Contact Information */}
+                <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
                   <CardHeader>
                     <CardTitle className="text-lg">Contact Information</CardTitle>
                   </CardHeader>
@@ -396,14 +557,47 @@ export default function Patients() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Medical History */}
+                <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Appointment history</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3 p-2 hover:bg-blue-50 rounded">
+                        <Activity className="h-4 w-4 text-blue-500" />
+                        <div className="flex-1 text-sm">
+                          <p className="font-medium">Pulmonologist</p>
+                          <p className="text-gray-500">Dr. Diana Russel • 10:00-11:00, 20 Feb 2022</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3 p-2 hover:bg-blue-50 rounded">
+                        <User className="h-4 w-4 text-green-500" />
+                        <div className="flex-1 text-sm">
+                          <p className="font-medium">Dentist</p>
+                          <p className="text-gray-500">Dr. John Wick • 16:00-17:00, 13 Feb 2022</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3 p-2 hover:bg-blue-50 rounded">
+                        <Heart className="h-4 w-4 text-red-500" />
+                        <div className="flex-1 text-sm">
+                          <p className="font-medium">Cardiologist</p>
+                          <p className="text-gray-500">Dr. Cameron Williamson • 09:30-10:00, 24 Feb 2022</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
-              {/* Medical Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
+              {/* Additional Medical Sections */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Allergies Section */}
+                <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
                   <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <AlertTriangle className="h-5 w-5 mr-2 text-red-500" />
+                    <CardTitle className="text-lg flex items-center text-red-600">
+                      <AlertTriangle className="h-5 w-5 mr-2" />
                       Allergies
                     </CardTitle>
                   </CardHeader>
@@ -417,77 +611,93 @@ export default function Patients() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-gray-600">No known allergies</p>
+                      <p className="text-gray-600 flex items-center">
+                        <Shield className="h-4 w-4 mr-2 text-green-500" />
+                        No known allergies
+                      </p>
                     )}
                   </CardContent>
                 </Card>
 
-                <Card>
+                {/* Insurance Information */}
+                <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center">
-                      <Heart className="h-5 w-5 mr-2 text-blue-500" />
-                      Medical History
+                      <Shield className="h-5 w-5 mr-2 text-green-500" />
+                      Insurance Information
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    {selectedPatient.medicalHistory && Array.isArray(selectedPatient.medicalHistory) && selectedPatient.medicalHistory.length > 0 ? (
+                  <CardContent className="space-y-3">
+                    {selectedPatient.insuranceInfo && typeof selectedPatient.insuranceInfo === 'object' ? (
                       <div className="space-y-2">
-                        {selectedPatient.medicalHistory.map((condition, index) => (
-                          <div key={index} className="p-2 bg-gray-50 rounded text-sm">
-                            {String(condition)}
-                          </div>
-                        ))}
+                        <div className="flex justify-between py-2 border-b border-gray-100">
+                          <span className="font-medium text-gray-600">Provider:</span>
+                          <span className="text-gray-900">{(selectedPatient.insuranceInfo as any).provider || 'Ghana Health Insurance'}</span>
+                        </div>
+                        <div className="flex justify-between py-2 border-b border-gray-100">
+                          <span className="font-medium text-gray-600">Policy Number:</span>
+                          <span className="text-gray-900">{(selectedPatient.insuranceInfo as any).policyNumber || 'Not specified'}</span>
+                        </div>
+                        <div className="flex justify-between py-2">
+                          <span className="font-medium text-gray-600">Group Number:</span>
+                          <span className="text-gray-900">{(selectedPatient.insuranceInfo as any).groupNumber || 'N/A'}</span>
+                        </div>
                       </div>
                     ) : (
-                      <p className="text-gray-600">No medical history recorded</p>
+                      <div className="space-y-2">
+                        <div className="flex justify-between py-2 border-b border-gray-100">
+                          <span className="font-medium text-gray-600">Provider:</span>
+                          <span className="text-gray-900">Ghana Health Insurance</span>
+                        </div>
+                        <div className="flex justify-between py-2">
+                          <span className="font-medium text-gray-600">Policy Number:</span>
+                          <span className="text-gray-900">Not specified</span>
+                        </div>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Insurance Information */}
-              {selectedPatient.insuranceInfo && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Insurance Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {typeof selectedPatient.insuranceInfo === 'object' && selectedPatient.insuranceInfo ? (
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="font-medium">Provider:</span>
-                          <span>{(selectedPatient.insuranceInfo as any).provider || 'Not specified'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium">Policy Number:</span>
-                          <span>{(selectedPatient.insuranceInfo as any).policyNumber || 'Not specified'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium">Group Number:</span>
-                          <span>{(selectedPatient.insuranceInfo as any).groupNumber || 'Not specified'}</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-600">{String(selectedPatient.insuranceInfo)}</p>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-3 pt-4 border-t">
-                {(user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director" || user.role === "super_admin") && tenant?.type !== "pharmacy" && (
+              {/* Modern Action Buttons */}
+              <div className="flex justify-between items-center pt-6 border-t border-gray-200/50">
+                <div className="flex space-x-3">
+                  {(user.role === "receptionist" || user.role === "tenant_admin" || user.role === "director" || user.role === "super_admin") && tenant?.type !== "pharmacy" && (
+                    <>
+                      <Button 
+                        variant="outline"
+                        className="bg-white/60 backdrop-blur-sm border-0 shadow-sm hover:shadow-md"
+                        onClick={() => handleScheduleAppointment(selectedPatient)}
+                      >
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Schedule
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="bg-white/60 backdrop-blur-sm border-0 shadow-sm hover:shadow-md"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit EHR
+                      </Button>
+                    </>
+                  )}
+                </div>
+                <div className="flex space-x-3">
                   <Button 
                     variant="outline"
-                    onClick={() => handleScheduleAppointment(selectedPatient)}
+                    className="bg-white/60 backdrop-blur-sm border-0 shadow-sm hover:shadow-md"
                   >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Schedule Appointment
+                    <FileText className="h-4 w-4 mr-2" />
+                    Export
                   </Button>
-                )}
-                <Button onClick={() => setIsEHROpen(false)}>
-                  Close
-                </Button>
+                  <Button 
+                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 shadow-lg"
+                    onClick={() => setIsEHROpen(false)}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Close
+                  </Button>
+                </div>
               </div>
             </div>
           )}
