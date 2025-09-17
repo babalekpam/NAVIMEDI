@@ -1690,6 +1690,37 @@ sectigo.com
     }
   });
 
+  // Update patient information
+  app.patch('/api/patients/:id', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { tenantId } = req.user as any;
+      const updates = req.body;
+      
+      console.log(`📝 PATIENT UPDATE - ID: ${id}, Updates:`, updates);
+      
+      // Convert dateOfBirth string to Date if provided
+      if (updates.dateOfBirth && typeof updates.dateOfBirth === 'string') {
+        updates.dateOfBirth = new Date(updates.dateOfBirth);
+      }
+      
+      const patient = await storage.updatePatient(id, updates, tenantId);
+      
+      if (!patient) {
+        return res.status(404).json({ message: 'Patient not found' });
+      }
+      
+      console.log(`✅ Patient updated successfully: ${patient.id}`);
+      res.json(patient);
+    } catch (error) {
+      console.error('❌ Error updating patient:', error);
+      res.status(500).json({ 
+        message: 'Failed to update patient',
+        error: error.message
+      });
+    }
+  });
+
   app.post('/api/patients', async (req, res) => {
     try {
       const { tenantId } = req.user as any;

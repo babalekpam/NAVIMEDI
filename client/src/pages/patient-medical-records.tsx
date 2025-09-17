@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Filter, Calendar, FileText, Pill, Activity, Heart, AlertTriangle, Stethoscope, Clock, User, Building, Edit, Save, X, Plus, TestTube, Bolt, Weight, Footprints, Flame, Moon, TrendingUp, Droplets, Thermometer, Scale, Bell } from "lucide-react";
+import { Search, Filter, Calendar, FileText, Pill, Activity, Heart, AlertTriangle, Stethoscope, Clock, User, Building, Edit, Save, X, Plus, TestTube, Bolt, Weight, Footprints, Flame, Moon, TrendingUp, Droplets, Thermometer, Scale, Bell, Phone, Mail } from "lucide-react";
 import { Patient, Appointment, Prescription, LabOrder, VitalSigns, VisitSummary } from "@shared/schema";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
@@ -37,9 +37,18 @@ export default function PatientMedicalRecords() {
   const [editingMedicalHistory, setEditingMedicalHistory] = useState(false);
   const [editingMedications, setEditingMedications] = useState(false);
   const [editingAllergies, setEditingAllergies] = useState(false);
+  const [editingBasicInfo, setEditingBasicInfo] = useState(false);
   const [newMedicalCondition, setNewMedicalCondition] = useState("");
   const [newMedication, setNewMedication] = useState("");
   const [newAllergy, setNewAllergy] = useState("");
+  
+  // Basic patient information editing states
+  const [editingFirstName, setEditingFirstName] = useState("");
+  const [editingLastName, setEditingLastName] = useState("");
+  const [editingPhone, setEditingPhone] = useState("");
+  const [editingEmail, setEditingEmail] = useState("");
+  const [editingGender, setEditingGender] = useState("");
+  const [editingDateOfBirth, setEditingDateOfBirth] = useState("");
   const { user } = useAuth();
   const { tenant } = useTenant();
   const { t } = useTranslation();
@@ -84,13 +93,19 @@ export default function PatientMedicalRecords() {
     enabled: !!selectedPatient,
   });
 
-  // Mutation for updating patient medical information
+  // Mutation for updating patient information (medical + basic info)
   const updatePatientMutation = useMutation({
     mutationFn: async (updateData: { 
       patientId: string; 
       medicalHistory?: string[]; 
       medications?: string[]; 
-      allergies?: string[]; 
+      allergies?: string[];
+      firstName?: string;
+      lastName?: string;
+      phone?: string;
+      email?: string;
+      gender?: string;
+      dateOfBirth?: string;
     }) => {
       const token = localStorage.getItem("auth_token");
       const response = await fetch(`/api/patients/${updateData.patientId}`, {
@@ -99,11 +114,7 @@ export default function PatientMedicalRecords() {
           "Content-Type": "application/json",
           ...(token ? { "Authorization": `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({
-          medicalHistory: updateData.medicalHistory,
-          medications: updateData.medications,
-          allergies: updateData.allergies,
-        }),
+        body: JSON.stringify(updateData),
       });
 
       if (!response.ok) {
@@ -127,6 +138,7 @@ export default function PatientMedicalRecords() {
       setEditingMedicalHistory(false);
       setEditingMedications(false);
       setEditingAllergies(false);
+      setEditingBasicInfo(false);
     },
     onError: (error) => {
       console.error("Update failed:", error);
@@ -495,7 +507,7 @@ export default function PatientMedicalRecords() {
                   <TabsContent value="overview" className="space-y-6 mt-6">
                     {/* Modern Patient Profile Section */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      {/* Left: Patient Info Card */}
+                      {/* Left: Patient Info Card - Now Editable */}
                       <Card className="lg:col-span-1 bg-white/60 backdrop-blur-sm border-0 shadow-lg">
                         <CardContent className="p-6">
                           <div className="text-center">
@@ -504,45 +516,175 @@ export default function PatientMedicalRecords() {
                                 {getPatientInitials(selectedPatient.firstName, selectedPatient.lastName)}
                               </AvatarFallback>
                             </Avatar>
-                            <h3 className="text-xl font-bold text-gray-900 mb-1">
-                              {selectedPatient.firstName} {selectedPatient.lastName}
-                            </h3>
-                            <p className="text-sm text-gray-500 mb-4">MRN: {selectedPatient.mrn}</p>
                             
-                            <div className="space-y-3 text-sm">
-                              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                                <span className="text-gray-600 flex items-center">
-                                  <User className="h-4 w-4 mr-2" />
-                                  Gender
-                                </span>
-                                <span className="font-medium">{selectedPatient.gender || "Male"}</span>
+                            {editingBasicInfo ? (
+                              /* Editing Mode */
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <Input
+                                    placeholder="First Name"
+                                    value={editingFirstName}
+                                    onChange={(e) => setEditingFirstName(e.target.value)}
+                                    className="text-center text-sm"
+                                  />
+                                  <Input
+                                    placeholder="Last Name"
+                                    value={editingLastName}
+                                    onChange={(e) => setEditingLastName(e.target.value)}
+                                    className="text-center text-sm"
+                                  />
+                                </div>
+                                <p className="text-sm text-gray-500">MRN: {selectedPatient.mrn}</p>
                               </div>
-                              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                                <span className="text-gray-600 flex items-center">
-                                  <Calendar className="h-4 w-4 mr-2" />
-                                  Age
-                                </span>
-                                <span className="font-medium">
-                                  {selectedPatient.dateOfBirth 
-                                    ? Math.floor((Date.now() - new Date(selectedPatient.dateOfBirth).getTime()) / (1000 * 60 * 60 * 24 * 365)) + " y.o."
-                                    : "65 y.o."
-                                  }
-                                </span>
+                            ) : (
+                              /* Display Mode */
+                              <div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-1">
+                                  {selectedPatient.firstName} {selectedPatient.lastName}
+                                </h3>
+                                <p className="text-sm text-gray-500 mb-4">MRN: {selectedPatient.mrn}</p>
                               </div>
-                              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                                <span className="text-gray-600 flex items-center">
-                                  <Activity className="h-4 w-4 mr-2" />
-                                  Height
-                                </span>
-                                <span className="font-medium">175 cm</span>
-                              </div>
-                              <div className="flex items-center justify-between py-2">
-                                <span className="text-gray-600 flex items-center">
-                                  <Heart className="h-4 w-4 mr-2" />
-                                  Blood type
-                                </span>
-                                <span className="font-medium">B+</span>
-                              </div>
+                            )}
+                            
+                            <div className="space-y-3 text-sm mt-4">
+                              {editingBasicInfo ? (
+                                /* Editing Form Fields */
+                                <>
+                                  <div className="space-y-3">
+                                    <div>
+                                      <label className="text-gray-600 text-xs block mb-1">Gender</label>
+                                      <Select value={editingGender} onValueChange={setEditingGender}>
+                                        <SelectTrigger className="w-full h-8">
+                                          <SelectValue placeholder="Select gender" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="male">Male</SelectItem>
+                                          <SelectItem value="female">Female</SelectItem>
+                                          <SelectItem value="other">Other</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div>
+                                      <label className="text-gray-600 text-xs block mb-1">Date of Birth</label>
+                                      <Input
+                                        type="date"
+                                        value={editingDateOfBirth}
+                                        onChange={(e) => setEditingDateOfBirth(e.target.value)}
+                                        className="w-full h-8 text-xs"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-gray-600 text-xs block mb-1">Phone</label>
+                                      <Input
+                                        placeholder="Phone number"
+                                        value={editingPhone}
+                                        onChange={(e) => setEditingPhone(e.target.value)}
+                                        className="w-full h-8 text-xs"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-gray-600 text-xs block mb-1">Email</label>
+                                      <Input
+                                        placeholder="Email address"
+                                        type="email"
+                                        value={editingEmail}
+                                        onChange={(e) => setEditingEmail(e.target.value)}
+                                        className="w-full h-8 text-xs"
+                                      />
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex space-x-2 mt-4">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        const updates: any = { patientId: selectedPatient.id };
+                                        if (editingFirstName !== selectedPatient.firstName) updates.firstName = editingFirstName;
+                                        if (editingLastName !== selectedPatient.lastName) updates.lastName = editingLastName;
+                                        if (editingPhone !== selectedPatient.phone) updates.phone = editingPhone;
+                                        if (editingEmail !== selectedPatient.email) updates.email = editingEmail;
+                                        if (editingGender !== selectedPatient.gender) updates.gender = editingGender;
+                                        if (editingDateOfBirth) {
+                                          const currentDateStr = selectedPatient.dateOfBirth ? new Date(selectedPatient.dateOfBirth).toISOString().split('T')[0] : '';
+                                          if (editingDateOfBirth !== currentDateStr) updates.dateOfBirth = editingDateOfBirth;
+                                        }
+                                        updatePatientMutation.mutate(updates);
+                                      }}
+                                      disabled={updatePatientMutation.isPending}
+                                      className="flex-1 h-8"
+                                    >
+                                      <Save className="h-3 w-3 mr-1" />
+                                      Save
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => setEditingBasicInfo(false)}
+                                      className="flex-1 h-8"
+                                    >
+                                      <X className="h-3 w-3 mr-1" />
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </>
+                              ) : (
+                                /* Display Mode Fields */
+                                <>
+                                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                                    <span className="text-gray-600 flex items-center">
+                                      <User className="h-4 w-4 mr-2" />
+                                      Gender
+                                    </span>
+                                    <span className="font-medium">{selectedPatient.gender || "Not specified"}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                                    <span className="text-gray-600 flex items-center">
+                                      <Calendar className="h-4 w-4 mr-2" />
+                                      Age
+                                    </span>
+                                    <span className="font-medium">
+                                      {selectedPatient.dateOfBirth 
+                                        ? Math.floor((Date.now() - new Date(selectedPatient.dateOfBirth).getTime()) / (1000 * 60 * 60 * 24 * 365)) + " y.o."
+                                        : "Not specified"
+                                      }
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                                    <span className="text-gray-600 flex items-center">
+                                      <Phone className="h-4 w-4 mr-2" />
+                                      Phone
+                                    </span>
+                                    <span className="font-medium">{selectedPatient.phone || "Not provided"}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                                    <span className="text-gray-600 flex items-center">
+                                      <Mail className="h-4 w-4 mr-2" />
+                                      Email
+                                    </span>
+                                    <span className="font-medium">{selectedPatient.email || "Not provided"}</span>
+                                  </div>
+                                  
+                                  {(user?.role === "tenant_admin" || user?.role === "receptionist" || user?.role === "director") && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setEditingFirstName(selectedPatient.firstName || "");
+                                        setEditingLastName(selectedPatient.lastName || "");
+                                        setEditingPhone(selectedPatient.phone || "");
+                                        setEditingEmail(selectedPatient.email || "");
+                                        setEditingGender(selectedPatient.gender || "");
+                                        setEditingDateOfBirth(selectedPatient.dateOfBirth ? new Date(selectedPatient.dateOfBirth).toISOString().split('T')[0] : "");
+                                        setEditingBasicInfo(true);
+                                      }}
+                                      className="w-full mt-2 h-8"
+                                    >
+                                      <Edit className="h-3 w-3 mr-2" />
+                                      Edit Patient Info
+                                    </Button>
+                                  )}
+                                </>
+                              )}
                             </div>
                           </div>
                         </CardContent>
