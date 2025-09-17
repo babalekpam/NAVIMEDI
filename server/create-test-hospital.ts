@@ -44,7 +44,7 @@ export async function createTestHospital() {
         password: hashedPassword,
         firstName: 'Sarah',
         lastName: 'Johnson',
-        role: 'tenant_admin',
+        role: 'tenant_admin' as const,
         isActive: true
       });
       
@@ -66,7 +66,7 @@ export async function createTestHospital() {
         password: hashedPassword,
         firstName: 'Maria',
         lastName: 'Rodriguez',
-        role: 'receptionist',
+        role: 'receptionist' as const,
         isActive: true
       });
       
@@ -88,7 +88,7 @@ export async function createTestHospital() {
         password: hashedPassword,
         firstName: 'Michael',
         lastName: 'Smith',
-        role: 'physician',
+        role: 'physician' as const,
         isActive: true
       });
       
@@ -110,7 +110,7 @@ export async function createTestHospital() {
         password: hashedPassword,
         firstName: 'Jennifer',
         lastName: 'Davis',
-        role: 'nurse',
+        role: 'nurse' as const,
         isActive: true
       });
       
@@ -171,7 +171,7 @@ export async function createTestHospital() {
           password: hashedPassword,
           firstName: doctor.firstName,
           lastName: doctor.lastName,
-          role: 'physician',
+          role: 'physician' as const,
           isActive: true
         });
         
@@ -186,7 +186,7 @@ export async function createTestHospital() {
     
     const samplePatients = await storage.getPatientsByTenant(hospitalTenant.id);
     const samplePatient = samplePatients.find(p => p.email === "sarah.johnson@email.com");
-    const sampleDoctor = await storage.getUserByUsername("dr.smith@metrogeneral.com");
+    const sampleDoctor = await storage.getUserByEmail("dr.smith@metrogeneral.com");
     
     if (samplePatient && sampleDoctor) {
       try {
@@ -194,7 +194,6 @@ export async function createTestHospital() {
           tenantId: hospitalTenant.id,
           patientId: samplePatient.id,
           senderId: sampleDoctor.id,
-          subject: "Welcome to Metro General Hospital",
           message: "Welcome to our patient portal! You can now view your medical records, schedule appointments, and communicate with your care team securely through this platform. If you have any questions, please don't hesitate to reach out.",
           type: "general_message",
           priority: "normal",
@@ -202,7 +201,7 @@ export async function createTestHospital() {
           isFromPatient: false
         });
         console.log("✓ Sample medical communication created");
-      } catch (error) {
+      } catch (error: any) {
         console.log("✓ Sample medical communication already exists or creation failed:", error.message);
       }
     }

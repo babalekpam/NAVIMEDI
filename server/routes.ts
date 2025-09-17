@@ -652,12 +652,13 @@ sectigo.com
       
       if (req.query.search) {
         const searchTerm = `%${req.query.search}%`;
-        whereConditions.push(
-          or(
-            sql`${countryMedicalCodes.code} ILIKE ${searchTerm}`,
-            sql`${countryMedicalCodes.description} ILIKE ${searchTerm}`
-          )
+        const searchCondition = or(
+          sql`${countryMedicalCodes.code} ILIKE ${searchTerm}`,
+          sql`${countryMedicalCodes.description} ILIKE ${searchTerm}`
         );
+        if (searchCondition) {
+          whereConditions.push(searchCondition);
+        }
       }
       
       const codes = await db.select({
@@ -717,12 +718,13 @@ sectigo.com
       
       if (req.query.search) {
         const searchTerm = `%${req.query.search}%`;
-        whereConditions.push(
-          or(
-            sql`${countryMedicalCodes.code} ILIKE ${searchTerm}`,
-            sql`${countryMedicalCodes.description} ILIKE ${searchTerm}`
-          )
+        const searchCondition = or(
+          sql`${countryMedicalCodes.code} ILIKE ${searchTerm}`,
+          sql`${countryMedicalCodes.description} ILIKE ${searchTerm}`
         );
+        if (searchCondition) {
+          whereConditions.push(searchCondition);
+        }
       }
 
       const codes = await db.select()
@@ -1068,14 +1070,13 @@ sectigo.com
               // Insert medical code
               const medicalCodeData = {
                 countryId,
-                codeType: codeType.toUpperCase(),
+                codeType: codeType.toUpperCase() as 'CPT' | 'ICD10' | 'PHARMACEUTICAL',
                 code: code.trim(),
                 description: description.trim(),
                 category: category?.trim() || null,
                 amount: amount ? parseFloat(amount) : null,
                 source: 'csv_upload',
-                uploadedBy: (req as any).user.id,
-                uploadedAt: sql`CURRENT_TIMESTAMP`
+                uploadedBy: (req as any).user.id
               };
 
               await db.insert(countryMedicalCodes).values(medicalCodeData);
@@ -1523,7 +1524,7 @@ sectigo.com
         email: adminEmail,
         firstName: adminFirstName || 'Admin',
         lastName: adminLastName || 'User',
-        role: 'tenant_admin',
+        role: 'tenant_admin' as const,
         password: passwordHash,
         isActive: true,
         stripeCustomerId: stripeCustomerId
