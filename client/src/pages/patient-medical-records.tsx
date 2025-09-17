@@ -47,10 +47,10 @@ export default function PatientMedicalRecords() {
   const queryClient = useQueryClient();
 
   const { data: allPatients = [], isLoading } = useQuery<PatientMedicalRecord[]>({
-    queryKey: ["/api/patients/medical-records"],
+    queryKey: ["/api/patients"],
     queryFn: async () => {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch("/api/patients/medical-records", {
+      const response = await fetch("/api/patients", {
         headers: {
           ...(token ? { "Authorization": `Bearer ${token}` } : {}),
         },
@@ -122,7 +122,7 @@ export default function PatientMedicalRecords() {
       });
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["/api/patients", selectedPatient?.id, "complete-record"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/patients/medical-records"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
       // Reset editing states
       setEditingMedicalHistory(false);
       setEditingMedications(false);
