@@ -212,8 +212,8 @@ export default function PatientMedicalRecords() {
                 <Stethoscope className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Med+</h1>
-                <p className="text-sm text-gray-500">Patient Medical Dashboard</p>
+                <h1 className="text-2xl font-bold text-gray-900">NaviMED</h1>
+                <p className="text-sm text-gray-500">Electronic Health Record</p>
               </div>
             </div>
             <div className="flex items-center space-x-3">
