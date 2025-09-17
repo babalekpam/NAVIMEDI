@@ -36,7 +36,7 @@ export default function AdminMedicalCodesSimple() {
   console.log("AdminMedicalCodesSimple component rendering...");
   
   const [activeTab, setActiveTab] = useState("countries");
-  const [selectedCountry, setSelectedCountry] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState("all-countries");
   const [selectedCodeType, setSelectedCodeType] = useState("ALL");
   const [searchTerm, setSearchTerm] = useState("");
   const [editingCountry, setEditingCountry] = useState<Country | null>(null);
@@ -234,14 +234,16 @@ export default function AdminMedicalCodesSimple() {
     queryKey: ["/api/admin/medical-codes", selectedCountry, selectedCodeType, searchTerm],
     queryFn: () => {
       const params = new URLSearchParams();
-      if (selectedCountry && selectedCountry !== "all-countries") {
+      if (selectedCountry === "all-countries") {
+        params.append("countryId", "all-countries");
+      } else if (selectedCountry) {
         params.append("countryId", selectedCountry);
       }
       if (selectedCodeType !== "ALL") params.append("codeType", selectedCodeType);
       if (searchTerm) params.append("search", searchTerm);
       return apiRequest(`/api/admin/medical-codes?${params}`);
     },
-    enabled: countries.length > 0, // Only load after countries are available
+    enabled: countries.length > 0 && selectedCountry !== "", // Only load after countries are available and country is selected
     retry: false // Don't retry to avoid blank pages
   });
 
