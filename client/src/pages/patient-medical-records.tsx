@@ -108,13 +108,14 @@ export default function PatientMedicalRecords() {
       dateOfBirth?: string;
     }) => {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch(`/api/patients/${updateData.patientId}`, {
+      const { patientId, ...updates } = updateData; // Extract patientId, send rest as body
+      const response = await fetch(`/api/patients/${patientId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { "Authorization": `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify(updateData),
+        body: JSON.stringify(updates),
       });
 
       if (!response.ok) {
