@@ -51,11 +51,15 @@ export default function LaboratoryDashboard() {
   const { t } = useTranslation();
   const [currentTab, setCurrentTab] = useState("overview");
 
-  // Fetch real laboratory analytics data from API
+  // Fetch real laboratory analytics data from API with optimized polling  
   const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
     queryKey: ['/api/analytics/laboratory'],
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 30 * 1000, // 30 seconds
+    staleTime: 60 * 1000, // 1 minute - test status changes regularly
+    refetchInterval: 45 * 1000, // 45 seconds - lab processing needs timely updates
+    refetchIntervalInBackground: false, // Don't poll when tab inactive
+    retry: 3, // Important for test result accuracy
+    refetchOnWindowFocus: true, // Refresh when returning to lab dashboard
+    refetchOnReconnect: true, // Critical after network issues
   });
 
   // Transform API response to dashboard format

@@ -43,11 +43,15 @@ import {
 export default function PharmacyDashboard() {
   const { user, tenant } = useAuth();
 
-  // Fetch real pharmacy analytics data from API
+  // Fetch real pharmacy analytics data from API with optimized polling
   const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
     queryKey: ['/api/analytics/pharmacy'],
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 30 * 1000, // 30 seconds
+    staleTime: 60 * 1000, // 1 minute - prescription status changes regularly
+    refetchInterval: 45 * 1000, // 45 seconds - balanced frequency for prescription workflow
+    refetchIntervalInBackground: false, // Don't poll when tab inactive
+    retry: 3, // Important for medication management
+    refetchOnWindowFocus: true, // Refresh on return
+    refetchOnReconnect: true, // Critical after network reconnection
   });
 
   // Transform API response to dashboard format

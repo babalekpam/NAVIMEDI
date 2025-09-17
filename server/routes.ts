@@ -1937,6 +1937,10 @@ sectigo.com
           .returning();
 
         console.log(`✅ PHARMACY STATUS UPDATE - Updated prescription ${prescriptionId} to ${status}`);
+        
+        // Invalidate prescription cache for real-time analytics
+        invalidatePrescriptionCache(tenantId);
+        
         res.json(updatedPrescription);
       } else {
         // For hospitals: can only update prescriptions they created
@@ -1950,6 +1954,9 @@ sectigo.com
           return res.status(404).json({ message: 'Prescription not found or access denied' });
         }
 
+        // Invalidate prescription cache for real-time analytics  
+        invalidatePrescriptionCache(tenantId);
+        
         res.json(updatedPrescription);
       }
     } catch (error) {
@@ -2116,6 +2123,9 @@ sectigo.com
       if (!updatedAppointment) {
         return res.status(404).json({ message: 'Appointment not found or access denied' });
       }
+      
+      // Invalidate appointment cache for real-time analytics
+      invalidateAppointmentCache(tenantId);
 
       res.json(updatedAppointment);
     } catch (error) {
@@ -2672,6 +2682,9 @@ sectigo.com
         sentToPharmacyDate: new Date(),
         lastStatusUpdate: new Date()
       });
+      
+      // Invalidate prescription cache for real-time analytics
+      invalidatePrescriptionCache(tenantId);
 
       res.json({
         message: 'Prescription successfully sent to pharmacy',
@@ -3166,6 +3179,9 @@ sectigo.com
       
       console.log(`🧪 LAB BILL CREATED - Bill ${savedLabBill.billNumber} created for patient ${patientId}`);
       
+      // Invalidate billing cache for real-time analytics
+      invalidateBillingCache(tenantId);
+      
       res.status(201).json({ 
         success: true,
         message: 'Laboratory bill created successfully',
@@ -3287,6 +3303,9 @@ Please attach all required supporting documentation.
       }
       
       console.log(`🧪 LAB BILL UPDATED - Bill ${billId} updated successfully`);
+      
+      // Invalidate billing cache for real-time analytics
+      invalidateBillingCache(tenantId);
       
       res.json({
         success: true,

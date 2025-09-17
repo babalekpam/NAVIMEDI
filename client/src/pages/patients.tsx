@@ -15,6 +15,7 @@ import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
 import { PatientForm } from "@/components/forms/patient-form";
 import { useLocation } from "wouter";
+import { useCreatePatientMutation } from "@/lib/enhanced-mutations";
 
 export default function Patients() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,24 +47,19 @@ export default function Patients() {
     enabled: !!selectedPatient,
   });
 
-  const createPatientMutation = useMutation({
-    mutationFn: async (patientData: any) => {
-      const response = await fetch("/api/patients", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
-        },
-        body: JSON.stringify(patientData)
-      });
-      if (!response.ok) throw new Error("Failed to create patient");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
-      setIsFormOpen(false);
-    }
-  });
+  // Enhanced patient creation with real-time dashboard updates
+  const createPatientMutation = useCreatePatientMutation();
+  
+  // Override success handler to also close form
+  const originalMutate = createPatientMutation.mutate;
+  createPatientMutation.mutate = (data) => {
+    return originalMutate(data, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+        setIsFormOpen(false);
+      }
+    });
+  };
 
   if (!user || !tenant) {
     return <div>{t('loading')}</div>;

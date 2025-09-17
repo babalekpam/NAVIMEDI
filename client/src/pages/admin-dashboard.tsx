@@ -145,7 +145,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
   const [currentTab, setCurrentTab] = useState(activeTab);
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
 
-  // Real analytics data from API endpoints
+  // Real analytics data from API endpoints with optimized polling
   const {
     data: adminAnalytics,
     isLoading: isLoadingAdmin,
@@ -153,8 +153,12 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
   } = useQuery({
     queryKey: ['/api/analytics/admin', { tenantId: tenant?.id }],
     enabled: !!tenant?.id && !!user && ['tenant_admin', 'director', 'super_admin'].includes(user.role),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2
+    staleTime: 2 * 60 * 1000, // 2 minutes - admin data changes moderately
+    refetchInterval: 2 * 60 * 1000, // 2 minutes - moderate frequency polling for management insights
+    refetchIntervalInBackground: false, // Don't poll when tab inactive
+    retry: 3, // More retries for critical admin data
+    refetchOnWindowFocus: true, // Refresh when returning to tab
+    refetchOnReconnect: true, // Refresh after reconnection
   });
 
   const {
@@ -164,8 +168,12 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
   } = useQuery({
     queryKey: ['/api/analytics/tenant', tenant?.id, { operational: true, financial: true }],
     enabled: !!tenant?.id && !!user && ['tenant_admin', 'director', 'super_admin'].includes(user.role),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2
+    staleTime: 2 * 60 * 1000, // 2 minutes - tenant operational data
+    refetchInterval: 90 * 1000, // 90 seconds - slightly more frequent for tenant operations
+    refetchIntervalInBackground: false, // Don't poll when tab inactive
+    retry: 3, // Important for operational metrics
+    refetchOnWindowFocus: true, // Refresh when returning
+    refetchOnReconnect: true, // Critical after network issues
   });
 
   // Show toast notifications for errors

@@ -351,10 +351,15 @@ export default function ReceptionistDashboard() {
   });
 
   // Fetch real analytics data from API
+  // Real-time analytics for receptionist operations with high-frequency polling
   const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
     queryKey: ['/api/analytics/receptionist'],
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 30 * 1000, // 30 seconds
+    staleTime: 30 * 1000, // 30 seconds - appointment data changes frequently
+    refetchInterval: 20 * 1000, // 20 seconds - high frequency for real-time patient flow
+    refetchIntervalInBackground: false, // Don't poll when tab inactive
+    retry: 3, // Robust retries for operational data
+    refetchOnWindowFocus: true, // Immediate refresh when returning
+    refetchOnReconnect: true, // Critical to refresh after network issues
   });
 
   // Transform API response to dashboard format

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { MapPin, Phone, Clock, Truck, Shield, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useRoutePrescriptionMutation } from "@/lib/enhanced-mutations";
 
 interface Pharmacy {
   id: string;
@@ -50,30 +51,20 @@ export function PharmacySelector({ prescriptionId, onPrescriptionSent, isOpen, o
     enabled: isOpen
   });
 
-  const sendPrescriptionMutation = useMutation({
-    mutationFn: async ({ pharmacyTenantId, notes }: { pharmacyTenantId: string; notes: string }) => {
-      return apiRequest(`/api/prescriptions/${prescriptionId}/send-to-pharmacy`, {
-        method: "POST",
-        body: { pharmacyTenantId, routingNotes: notes }
-      });
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Prescription sent successfully",
-        description: `Prescription has been sent to ${data.pharmacy.name}`,
-      });
-      onPrescriptionSent?.(selectedPharmacy!);
-      onClose();
-      queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error sending prescription",
-        description: error.message || "Failed to send prescription to pharmacy",
-        variant: "destructive"
-      });
-    }
-  });
+  // Enhanced prescription routing with real-time dashboard updates  
+  const sendPrescriptionMutation = useRoutePrescriptionMutation();
+  
+  // Override success handler to include local component logic
+  const originalMutate = sendPrescriptionMutation.mutate;
+  sendPrescriptionMutation.mutate = (data) => {
+    return originalMutate(data, {
+      onSuccess: (response) => {
+        onPrescriptionSent?.(selectedPharmacy!);
+        onClose();
+        queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
+      }
+    });
+  };
 
   const handleSendPrescription = () => {
     if (!selectedPharmacy) {
@@ -86,8 +77,9 @@ export function PharmacySelector({ prescriptionId, onPrescriptionSent, isOpen, o
     }
 
     sendPrescriptionMutation.mutate({
+      prescriptionId,
       pharmacyTenantId: selectedPharmacy.tenantId,
-      notes: routingNotes
+      routingNotes: routingNotes
     });
   };
 
