@@ -1676,6 +1676,20 @@ sectigo.com
     }
   });
 
+  // Get vital signs for a patient
+  app.get('/api/patients/:patientId/vital-signs', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const { tenantId } = req.user as any;
+      
+      const vitalSigns = await storage.getVitalSignsByPatient(patientId, tenantId);
+      res.json(vitalSigns);
+    } catch (error) {
+      console.error('Error fetching vital signs:', error);
+      res.status(500).json({ error: 'Failed to fetch vital signs' });
+    }
+  });
+
   app.post('/api/patients', async (req, res) => {
     try {
       const { tenantId } = req.user as any;

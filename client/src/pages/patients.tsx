@@ -76,6 +76,12 @@ export default function Patients() {
     setIsEHROpen(true);
   };
 
+  // Fetch latest vital signs for selected patient
+  const { data: patientVitalSigns } = useQuery({
+    queryKey: ["/api/patients", selectedPatient?.id, "vital-signs"],
+    enabled: !!selectedPatient,
+  });
+
   const handleScheduleAppointment = (patient: Patient) => {
     // Navigate to appointment creation with pre-filled patient info
     setLocation(`/appointments?patientId=${patient.id}&patientName=${encodeURIComponent(patient.firstName + ' ' + patient.lastName)}`);
@@ -359,7 +365,7 @@ export default function Patients() {
                             <User className="h-4 w-4 mr-2" />
                             Gender
                           </span>
-                          <span className="font-medium">{selectedPatient.gender || "Male"}</span>
+                          <span className="font-medium">{selectedPatient.gender || "Not specified"}</span>
                         </div>
                         <div className="flex items-center justify-between py-2 border-b border-gray-100">
                           <span className="text-gray-600 flex items-center">
@@ -369,7 +375,7 @@ export default function Patients() {
                           <span className="font-medium">
                             {selectedPatient.dateOfBirth 
                               ? Math.floor((Date.now() - new Date(selectedPatient.dateOfBirth).getTime()) / (1000 * 60 * 60 * 24 * 365)) + " y.o."
-                              : "65 y.o."
+                              : "Not specified"
                             }
                           </span>
                         </div>
@@ -378,14 +384,19 @@ export default function Patients() {
                             <Activity className="h-4 w-4 mr-2" />
                             Height
                           </span>
-                          <span className="font-medium">175 cm</span>
+                          <span className="font-medium">
+                            {patientVitalSigns && patientVitalSigns.length > 0 && patientVitalSigns[0].height 
+                              ? `${Math.round(patientVitalSigns[0].height * 2.54)} cm`
+                              : "Not recorded"
+                            }
+                          </span>
                         </div>
                         <div className="flex items-center justify-between py-2">
                           <span className="text-gray-600 flex items-center">
                             <Heart className="h-4 w-4 mr-2" />
-                            Blood type
+                            Phone
                           </span>
-                          <span className="font-medium">B+</span>
+                          <span className="font-medium">{selectedPatient.phone || "Not provided"}</span>
                         </div>
                       </div>
                       
@@ -400,16 +411,21 @@ export default function Patients() {
 
                 {/* Right: Health Metrics Cards */}
                 <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-                  {/* Sleep Card */}
-                  <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
+                  {/* Heart Rate Card */}
+                  <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0 shadow-lg">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <Moon className="h-8 w-8 text-white/80" />
+                        <Heart className="h-8 w-8 text-white/80" />
                         <TrendingUp className="h-5 w-5 text-white/60" />
                       </div>
                       <div>
-                        <p className="text-white/80 text-sm mb-1">Sleep</p>
-                        <p className="text-3xl font-bold">7h 33m</p>
+                        <p className="text-white/80 text-sm mb-1">Heart Rate</p>
+                        <p className="text-3xl font-bold">
+                          {patientVitalSigns && patientVitalSigns.length > 0 && patientVitalSigns[0].heart_rate 
+                            ? `${patientVitalSigns[0].heart_rate} bpm`
+                            : "No data"
+                          }
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
@@ -423,35 +439,50 @@ export default function Patients() {
                       </div>
                       <div>
                         <p className="text-gray-600 text-sm mb-1">Weight</p>
-                        <p className="text-3xl font-bold text-gray-900">87 kg</p>
+                        <p className="text-3xl font-bold text-gray-900">
+                          {patientVitalSigns && patientVitalSigns.length > 0 && patientVitalSigns[0].weight 
+                            ? `${Math.round(patientVitalSigns[0].weight * 0.453592)} kg`
+                            : "Not recorded"
+                          }
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
 
-                  {/* Steps Card */}
+                  {/* Temperature Card */}
                   <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <Activity className="h-8 w-8 text-gray-600" />
+                        <Activity className="h-8 w-8 text-blue-600" />
                         <TrendingUp className="h-5 w-5 text-gray-400" />
                       </div>
                       <div>
-                        <p className="text-gray-600 text-sm mb-1">Steps</p>
-                        <p className="text-3xl font-bold text-gray-900">3,315</p>
+                        <p className="text-gray-600 text-sm mb-1">Temperature</p>
+                        <p className="text-3xl font-bold text-gray-900">
+                          {patientVitalSigns && patientVitalSigns.length > 0 && patientVitalSigns[0].temperature 
+                            ? `${patientVitalSigns[0].temperature}°${patientVitalSigns[0].temperature_unit || 'F'}`
+                            : "Not recorded"
+                          }
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
 
-                  {/* Calories Card */}
+                  {/* Oxygen Saturation Card */}
                   <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <Zap className="h-8 w-8 text-orange-500" />
+                        <Zap className="h-8 w-8 text-green-500" />
                         <TrendingUp className="h-5 w-5 text-gray-400" />
                       </div>
                       <div>
-                        <p className="text-gray-600 text-sm mb-1">Burn</p>
-                        <p className="text-3xl font-bold text-gray-900">2,587 kcal</p>
+                        <p className="text-gray-600 text-sm mb-1">Oxygen Sat</p>
+                        <p className="text-3xl font-bold text-gray-900">
+                          {patientVitalSigns && patientVitalSigns.length > 0 && patientVitalSigns[0].oxygen_saturation 
+                            ? `${patientVitalSigns[0].oxygen_saturation}%`
+                            : "Not recorded"
+                          }
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
@@ -468,7 +499,12 @@ export default function Patients() {
                         Glucose
                         <TrendingUp className="h-4 w-4 ml-2 text-gray-400" />
                       </span>
-                      <span className="text-sm text-gray-500">Today: avg. 211mg/dl</span>
+                      <span className="text-sm text-gray-500">
+                        Latest: {patientVitalSigns && patientVitalSigns.length > 0 && patientVitalSigns[0].glucose_level 
+                          ? `${patientVitalSigns[0].glucose_level}mg/dl`
+                          : "No data"
+                        }
+                      </span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -492,7 +528,12 @@ export default function Patients() {
                         Heart rate
                         <TrendingUp className="h-4 w-4 ml-2 text-gray-400" />
                       </span>
-                      <span className="text-sm text-gray-500">Today: avg. 80 bpm</span>
+                      <span className="text-sm text-gray-500">
+                        Blood Pressure: {patientVitalSigns && patientVitalSigns.length > 0 && patientVitalSigns[0].blood_pressure_systolic 
+                          ? `${patientVitalSigns[0].blood_pressure_systolic}/${patientVitalSigns[0].blood_pressure_diastolic}`
+                          : "No data"
+                        }
+                      </span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -523,8 +564,14 @@ export default function Patients() {
                           <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-blue-600 rounded-full"></div>
                         </div>
                         <div className="text-sm space-y-1">
-                          <p><span className="font-medium">Oxygen level:</span> 98%</p>
-                          <p><span className="font-medium">SO₂:</span> +1.2%</p>
+                          <p><span className="font-medium">Oxygen level:</span> {patientVitalSigns && patientVitalSigns.length > 0 && patientVitalSigns[0].oxygen_saturation 
+                            ? `${patientVitalSigns[0].oxygen_saturation}%`
+                            : "No data"
+                          }</p>
+                          <p><span className="font-medium">BMI:</span> {patientVitalSigns && patientVitalSigns.length > 0 && patientVitalSigns[0].body_mass_index 
+                            ? `${patientVitalSigns[0].body_mass_index}`
+                            : "Not calculated"
+                          }</p>
                         </div>
                       </div>
                     </div>
