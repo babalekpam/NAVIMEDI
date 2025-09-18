@@ -612,7 +612,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="total-metric">
-                  {tenantAnalytics.operational.volumeData[tenantAnalytics.operational.volumeData.length - 1]?.value.toLocaleString() || 0}
+                  {tenantAnalytics?.operational?.volumeData?.[tenantAnalytics.operational.volumeData.length - 1]?.value?.toLocaleString() || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   +12% from last period
@@ -627,7 +627,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="revenue-metric">
-                  ${tenantAnalytics.financial.revenueData[tenantAnalytics.financial.revenueData.length - 1]?.revenue.toLocaleString() || 0}
+                  ${tenantAnalytics?.financial?.revenueData?.[tenantAnalytics.financial.revenueData?.length - 1]?.revenue?.toLocaleString() || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   +8% from last month
@@ -642,10 +642,10 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="efficiency-metric">
-                  {tenantAnalytics.performance.metrics[0]?.current}%
+                  {tenantAnalytics?.performance?.metrics?.[0]?.current || 0}%
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Above target of {tenantAnalytics.performance.metrics[0]?.target}%
+                  Above target of {tenantAnalytics?.performance?.metrics?.[0]?.target || 0}%
                 </p>
               </CardContent>
             </Card>
@@ -660,7 +660,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="activity-metric">
-                  {tenantAnalytics.performance.completionRates[tenantAnalytics.performance.completionRates.length - 1]?.value || 0}
+                  {tenantAnalytics?.performance?.completionRates?.[tenantAnalytics.performance?.completionRates?.length - 1]?.value || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Today's activity
@@ -686,7 +686,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
                   config={chartConfigs[organizationType as keyof typeof chartConfigs] || chartConfigs.hospital} 
                   className="h-[300px]"
                 >
-                  <AreaChart data={tenantAnalytics.operational.volumeData}>
+                  <AreaChart data={tenantAnalytics?.operational?.volumeData || []}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis 
                       dataKey="period" 
@@ -732,7 +732,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={tenantAnalytics.operational.statusDistribution}
+                        data={tenantAnalytics?.operational?.statusDistribution || []}
                         cx="50%"
                         cy="50%"
                         innerRadius={60}
@@ -740,7 +740,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
                         paddingAngle={5}
                         dataKey="value"
                       >
-                        {tenantAnalytics.operational.statusDistribution.map((entry, index) => (
+                        {(tenantAnalytics?.operational?.statusDistribution || []).map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
@@ -765,7 +765,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
                   {/* Legend */}
                   <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
                     <div className="flex flex-wrap justify-center gap-3 text-sm">
-                      {tenantAnalytics.operational.statusDistribution.map((item) => (
+                      {(tenantAnalytics?.operational?.statusDistribution || []).map((item) => (
                         <div key={item.name} className="flex items-center gap-2">
                           <div 
                             className="w-3 h-3 rounded-full" 
@@ -795,7 +795,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
                 <CardDescription>Key performance indicators</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {tenantAnalytics.performance.metrics.map((metric, index) => {
+                {(tenantAnalytics?.performance?.metrics || []).map((metric, index) => {
                   const percentage = (metric.current / metric.target) * 100;
                   const isGood = metric.trend === 'up' ? metric.current >= metric.target : metric.current <= metric.target;
                   
@@ -839,7 +839,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
                   config={chartConfigs[organizationType as keyof typeof chartConfigs] || chartConfigs.hospital} 
                   className="h-[300px]"
                 >
-                  <BarChart data={tenantAnalytics.resources.staffUtilization}>
+                  <BarChart data={tenantAnalytics?.resources?.staffUtilization || []}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis 
                       dataKey="resource" 
@@ -905,7 +905,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
                   config={chartConfigs[organizationType as keyof typeof chartConfigs] || chartConfigs.hospital} 
                   className="h-[300px]"
                 >
-                  <LineChart data={tenantAnalytics.financial.revenueData}>
+                  <LineChart data={tenantAnalytics?.financial?.revenueData || []}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis 
                       dataKey="period" 
@@ -1076,7 +1076,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
                   config={chartConfigs[organizationType as keyof typeof chartConfigs] || chartConfigs.hospital} 
                   className="h-[300px]"
                 >
-                  <LineChart data={tenantAnalytics.performance.completionRates}>
+                  <LineChart data={tenantAnalytics?.performance?.completionRates || []}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis 
                       dataKey="period" 
@@ -1123,7 +1123,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
                   config={chartConfigs[organizationType as keyof typeof chartConfigs] || chartConfigs.hospital} 
                   className="h-[300px]"
                 >
-                  <BarChart data={tenantAnalytics.resources.departmentMetrics}>
+                  <BarChart data={tenantAnalytics?.resources?.departmentMetrics || []}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis 
                       dataKey="period" 
@@ -1171,14 +1171,14 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={tenantAnalytics.financial.costAnalysis}
+                        data={tenantAnalytics?.financial?.costAnalysis || []}
                         cx="50%"
                         cy="50%"
                         outerRadius={100}
                         paddingAngle={2}
                         dataKey="value"
                       >
-                        {tenantAnalytics.financial.costAnalysis.map((entry, index) => (
+                        {(tenantAnalytics?.financial?.costAnalysis || []).map((entry, index) => (
                           <Cell 
                             key={`cell-${index}`} 
                             fill={`hsl(${220 + index * 40}, 70%, ${60 - index * 5}%)`} 
@@ -1206,7 +1206,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
                   {/* Legend */}
                   <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
                     <div className="flex flex-wrap justify-center gap-3 text-sm">
-                      {tenantAnalytics.financial.costAnalysis.map((item, index) => (
+                      {(tenantAnalytics?.financial?.costAnalysis || []).map((item, index) => (
                         <div key={item.period} className="flex items-center gap-2">
                           <div 
                             className="w-3 h-3 rounded-full" 
@@ -1233,7 +1233,7 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
                 <CardDescription>Utilization vs. capacity analysis</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {tenantAnalytics.resources.staffUtilization.map((resource, index) => (
+                {(tenantAnalytics?.resources?.staffUtilization || []).map((resource, index) => (
                   <div key={index} className="space-y-2" data-testid={`resource-${resource.resource.toLowerCase().replace(/\s+/g, '-')}`}>
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium text-gray-700">{resource.resource}</span>
