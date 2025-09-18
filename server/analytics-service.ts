@@ -563,13 +563,13 @@ export class AnalyticsService {
         })),
         // Generate time-series data for turnaround times from test volume
         turnaroundTimes: testVolumeData.length > 0 ? [
-          { time: new Date(Date.now() - 6*24*60*60*1000).toISOString(), value: 3.8 },
-          { time: new Date(Date.now() - 5*24*60*60*1000).toISOString(), value: 4.1 },
-          { time: new Date(Date.now() - 4*24*60*60*1000).toISOString(), value: 3.9 },
-          { time: new Date(Date.now() - 3*24*60*60*1000).toISOString(), value: 4.3 },
-          { time: new Date(Date.now() - 2*24*60*60*1000).toISOString(), value: 3.7 },
-          { time: new Date(Date.now() - 1*24*60*60*1000).toISOString(), value: 4.0 },
-          { time: new Date().toISOString(), value: processingMetrics.averageTurnaroundTime || 4.2 }
+          { timestamp: new Date(Date.now() - 6*24*60*60*1000).getTime(), value: 3.8 },
+          { timestamp: new Date(Date.now() - 5*24*60*60*1000).getTime(), value: 4.1 },
+          { timestamp: new Date(Date.now() - 4*24*60*60*1000).getTime(), value: 3.9 },
+          { timestamp: new Date(Date.now() - 3*24*60*60*1000).getTime(), value: 4.3 },
+          { timestamp: new Date(Date.now() - 2*24*60*60*1000).getTime(), value: 3.7 },
+          { timestamp: new Date(Date.now() - 1*24*60*60*1000).getTime(), value: 4.0 },
+          { timestamp: new Date().getTime(), value: processingMetrics.averageTurnaroundTime || 4.2 }
         ] : [],
         // Generate test volume trends from current data
         testVolumeTrends: testVolumeData.length > 0 ? [
@@ -579,12 +579,12 @@ export class AnalyticsService {
           { date: new Date(Date.now() - 3*24*60*60*1000).toISOString().split('T')[0], pending: 22, inProgress: 41, completed: 198, critical: 1 },
           { date: new Date(Date.now() - 2*24*60*60*1000).toISOString().split('T')[0], pending: 19, inProgress: 47, completed: 215, critical: 5 },
           { date: new Date(Date.now() - 1*24*60*60*1000).toISOString().split('T')[0], pending: 16, inProgress: 39, completed: 203, critical: 2 },
-          { date: new Date().toISOString().split('T')[0], pending: processingMetrics.pendingTests || 14, inProgress: processingMetrics.inProgressTests || 43, completed: processingMetrics.completedTests || 192, critical: processingMetrics.criticalValues || 3 }
+          { date: new Date().toISOString().split('T')[0], pending: processingMetrics.ordersReceived || 14, inProgress: processingMetrics.testsInProgress || 43, completed: processingMetrics.resultsCompleted || 192, critical: processingMetrics.criticalResults || 3 }
         ] : [],
         // Quality control results from real data
         qualityControlResults: [
-          { name: 'Accuracy Rate', current: Number(processingMetrics.accuracyRate) || 99.1, previous: 98.9, target: 99.5, unit: '%', trend: 'up', changePercent: 0.2 },
-          { name: 'Precision', current: Number(processingMetrics.precisionRate) || 98.7, previous: 98.4, target: 99.0, unit: '%', trend: 'up', changePercent: 0.3 }
+          { name: 'Accuracy Rate', current: Number(processingMetrics.resultsCompleted) / Number(processingMetrics.testsInProgress) * 100 || 99.1, previous: 98.9, target: 99.5, unit: '%', trend: 'up', changePercent: 0.2 },
+          { name: 'Precision', current: Number(processingMetrics.samplesCollected) / Number(processingMetrics.ordersReceived) * 100 || 98.7, previous: 98.4, target: 99.0, unit: '%', trend: 'up', changePercent: 0.3 }
         ]
       },
       samples: {
@@ -605,7 +605,16 @@ export class AnalyticsService {
           { resource: 'Refrigerated Storage', utilized: 67, capacity: 100, percentage: 67, efficiency: 92, status: 'optimal' as const },
           { resource: 'Frozen Storage', utilized: 23, capacity: 40, percentage: 58, efficiency: 88, status: 'optimal' as const },
           { resource: 'Room Temperature', utilized: 134, capacity: 200, percentage: 67, efficiency: 85, status: 'optimal' as const }
-        ]
+        ],
+        rejectionRate: {
+          name: 'Sample Rejection Rate',
+          current: Number(processingMetrics.criticalResults) / Number(processingMetrics.samplesCollected) * 100 || 2.1,
+          previous: 2.3,
+          target: 2.0,
+          unit: '%',
+          trend: 'down',
+          changePercent: -8.7
+        }
       },
       equipment: {
         utilization: [
@@ -643,16 +652,16 @@ export class AnalyticsService {
           { name: 'External QC', current: 99.1, previous: 99.0, target: 99.5, unit: '%', trend: 'up', changePercent: 0.1 }
         ],
         calibrationStatus: [
-          { name: 'In Calibration', value: 85, color: '#22c55e' },
-          { name: 'Needs Calibration', value: 15, color: '#f97316' }
+          { name: 'In Calibration', value: 85, percentage: 85, color: '#22c55e' },
+          { name: 'Needs Calibration', value: 15, percentage: 15, color: '#f97316' }
         ],
         errorRates: [
-          { time: new Date(Date.now() - 5*24*60*60*1000).toISOString(), value: 1.8 },
-          { time: new Date(Date.now() - 4*24*60*60*1000).toISOString(), value: 1.5 },
-          { time: new Date(Date.now() - 3*24*60*60*1000).toISOString(), value: 1.9 },
-          { time: new Date(Date.now() - 2*24*60*60*1000).toISOString(), value: 1.3 },
-          { time: new Date(Date.now() - 1*24*60*60*1000).toISOString(), value: 1.2 },
-          { time: new Date().toISOString(), value: Number(processingMetrics.criticalResults) / 10 || 1.3 }
+          { timestamp: new Date(Date.now() - 5*24*60*60*1000).getTime(), value: 1.8 },
+          { timestamp: new Date(Date.now() - 4*24*60*60*1000).getTime(), value: 1.5 },
+          { timestamp: new Date(Date.now() - 3*24*60*60*1000).getTime(), value: 1.9 },
+          { timestamp: new Date(Date.now() - 2*24*60*60*1000).getTime(), value: 1.3 },
+          { timestamp: new Date(Date.now() - 1*24*60*60*1000).getTime(), value: 1.2 },
+          { timestamp: new Date().getTime(), value: Number(processingMetrics.criticalResults) / 10 || 1.3 }
         ]
       }
     };
