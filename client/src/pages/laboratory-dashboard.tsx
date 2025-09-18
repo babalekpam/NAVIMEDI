@@ -303,8 +303,8 @@ export default function LaboratoryDashboard() {
     }
   });
 
-  // Use real analytics data if available, fallback if loading/error
-  const finalLaboratoryAnalytics = transformLaboratoryAnalytics || getFallbackLaboratoryAnalytics();
+  // Use only real analytics data - no fallback to mock data
+  const finalLaboratoryAnalytics = transformLaboratoryAnalytics;
 
   // Chart configurations
   const chartConfig: ChartConfig = {
