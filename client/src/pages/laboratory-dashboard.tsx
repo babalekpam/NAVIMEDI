@@ -303,8 +303,15 @@ export default function LaboratoryDashboard() {
     }
   });
 
-  // Use only real analytics data - no fallback to mock data
+  // Use real analytics data when available, show loading when null
   const finalLaboratoryAnalytics = transformLaboratoryAnalytics;
+
+  // Define chart data variables from analytics
+  const testVolumeData = finalLaboratoryAnalytics?.testing?.testVolumeTrends || [];
+  const statusDistributionData = finalLaboratoryAnalytics?.testing?.ordersByType || [];
+  const testTypeData = finalLaboratoryAnalytics?.testing?.ordersByType || [];
+  const performanceData = finalLaboratoryAnalytics?.testing?.qualityControlResults || [];
+  const recentActivityData = finalLaboratoryAnalytics?.samples?.sampleQuality || [];
 
   // Chart configurations
   const chartConfig: ChartConfig = {
