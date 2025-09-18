@@ -169,10 +169,13 @@ export default function LabResultsReporting() {
   const generateReportMutation = useMutation({
     mutationFn: async (data: ReportFormData) => {
       const { apiRequest } = await import("@/lib/queryClient");
-      return apiRequest("POST", "/api/reports", {
-        type: data.reportType,
-        format: data.format,
-        title: `Laboratory ${data.reportType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Report - ${format(data.dateFrom, 'MMM dd')} to ${format(data.dateTo, 'MMM dd, yyyy')}`
+      return apiRequest("/api/reports", {
+        method: "POST",
+        body: {
+          type: data.reportType,
+          format: data.format,
+          title: `Laboratory ${data.reportType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Report - ${format(data.dateFrom, 'MMM dd')} to ${format(data.dateTo, 'MMM dd, yyyy')}`
+        }
       });
     },
     onSuccess: (data) => {
