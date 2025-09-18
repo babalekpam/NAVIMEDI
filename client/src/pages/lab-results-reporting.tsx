@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -117,6 +117,21 @@ interface DistributionLog {
   operator: string;
 }
 
+interface GeneratedReport {
+  id: string;
+  tenantId: string;
+  title: string;
+  type: string;
+  format: "pdf" | "excel" | "csv";
+  status: string;
+  parameters: any;
+  createdAt: string | Date;
+  completedAt: string | Date;
+  generatedBy: string;
+  fileUrl: string;
+  fileName: string;
+}
+
 export default function LabResultsReporting() {
   const { user } = useAuth();
   const { tenant } = useTenant();
@@ -127,9 +142,17 @@ export default function LabResultsReporting() {
   const [selectedResult, setSelectedResult] = useState<LabResult | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<ReportTemplate | null>(null);
   const [showReportDialog, setShowReportDialog] = useState(false);
+  const [newlyGeneratedReport, setNewlyGeneratedReport] = useState<GeneratedReport | null>(null);
+  const [showDownloadBanner, setShowDownloadBanner] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch existing reports
+  const { data: reports = [], isLoading: isLoadingReports } = useQuery<GeneratedReport[]>({
+    queryKey: ['/api/reports'],
+    staleTime: 30000, // Consider data fresh for 30 seconds
+  });
 
   // Report generation form schema
   const reportFormSchema = z.object({
@@ -158,11 +181,13 @@ export default function LabResultsReporting() {
   const reportForm = useForm<ReportFormData>({
     resolver: zodResolver(reportFormSchema),
     defaultValues: {
-      reportType: "laboratory_summary",
-      format: "pdf",
+      reportType: "laboratory_summary" as const,
+      format: "pdf" as const,
       includePatientData: false,
       includeTestResults: true,
-      includeStatistics: false
+      includeStatistics: false,
+      dateFrom: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+      dateTo: new Date() // today
     }
   });
 
@@ -179,6 +204,11 @@ export default function LabResultsReporting() {
       });
     },
     onSuccess: (data) => {
+      // Capture the generated report data from API response
+      const reportData = data.report;
+      setNewlyGeneratedReport(reportData);
+      setShowDownloadBanner(true);
+      
       toast({
         title: "Report Generated Successfully",
         description: "Your report has been generated and is ready for download.",
@@ -186,7 +216,7 @@ export default function LabResultsReporting() {
       });
       setShowReportDialog(false);
       reportForm.reset();
-      // Invalidate related queries
+      // Invalidate related queries to refresh the reports list
       queryClient.invalidateQueries({ queryKey: ['/api/reports'] });
     },
     onError: (error: any) => {
@@ -200,6 +230,41 @@ export default function LabResultsReporting() {
 
   const onSubmitReport = (data: ReportFormData) => {
     generateReportMutation.mutate(data);
+  };
+
+  // Helper function to handle report downloads
+  const handleDownloadReport = (report: GeneratedReport) => {
+    if (report.fileUrl && report.fileName) {
+      // Construct the correct download URL for the backend endpoint
+      // Backend expects: /api/reports/download/:reportId/:fileName
+      const downloadUrl = `/api/reports/download/${report.id}/${report.fileName}`;
+      
+      // Create a download link
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = report.fileName;
+      // Add authentication headers by setting credentials
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Download Started",
+        description: `Downloading ${report.title}`,
+        variant: "default"
+      });
+    } else {
+      toast({
+        title: "Download Error",
+        description: "Report file URL or filename not available",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const formatDate = (date: string | Date) => {
+    return format(new Date(date), 'MMM dd, yyyy HH:mm');
   };
 
   // Mock data for demonstration
@@ -467,6 +532,46 @@ export default function LabResultsReporting() {
         </Card>
       </div>
 
+      {/* Download Banner for newly generated reports */}
+      {showDownloadBanner && newlyGeneratedReport && (
+        <Card className="bg-green-50 border-green-200" data-testid="download-banner">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="p-2 bg-green-100 rounded-full">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-green-900" data-testid="text-report-ready">
+                    Your report is ready!
+                  </h3>
+                  <p className="text-green-700" data-testid="text-report-title">
+                    {newlyGeneratedReport.title} ({newlyGeneratedReport.format.toUpperCase()})
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Button
+                  onClick={() => handleDownloadReport(newlyGeneratedReport)}
+                  className="bg-green-600 hover:bg-green-700"
+                  data-testid="button-download-report"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Report
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDownloadBanner(false)}
+                  data-testid="button-dismiss-banner"
+                >
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Main Content */}
       <Tabs defaultValue="pending" className="space-y-6">
         <TabsList>
@@ -489,6 +594,10 @@ export default function LabResultsReporting() {
           <TabsTrigger value="analytics" className="flex items-center">
             <BarChart3 className="w-4 h-4 mr-2" />
             Analytics
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="flex items-center">
+            <FileBarChart className="w-4 h-4 mr-2" />
+            Recent Reports
           </TabsTrigger>
         </TabsList>
 
@@ -594,6 +703,114 @@ export default function LabResultsReporting() {
                   </TableBody>
                 </Table>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Recent Reports Tab */}
+        <TabsContent value="reports" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Reports</CardTitle>
+              <CardDescription>View and download your generated laboratory reports</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingReports ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading reports...</p>
+                  </div>
+                </div>
+              ) : reports.length === 0 ? (
+                <div className="text-center py-8" data-testid="no-reports-message">
+                  <FileBarChart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No reports generated yet</h3>
+                  <p className="text-gray-600 mb-4">Generate your first laboratory report to see it here.</p>
+                  <Button 
+                    onClick={() => setShowReportDialog(true)}
+                    className="bg-green-600 hover:bg-green-700"
+                    data-testid="button-generate-first-report"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Generate Report
+                  </Button>
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Report Title</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Format</TableHead>
+                        <TableHead>Generated Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {reports.map((report) => (
+                        <TableRow key={report.id} data-testid={`row-report-${report.id}`}>
+                          <TableCell className="font-medium" data-testid={`text-report-title-${report.id}`}>
+                            {report.title}
+                          </TableCell>
+                          <TableCell data-testid={`text-report-type-${report.id}`}>
+                            <Badge variant="outline">
+                              {report.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </Badge>
+                          </TableCell>
+                          <TableCell data-testid={`text-report-format-${report.id}`}>
+                            <Badge variant="secondary">
+                              {report.format.toUpperCase()}
+                            </Badge>
+                          </TableCell>
+                          <TableCell data-testid={`text-report-date-${report.id}`}>
+                            {formatDate(report.createdAt)}
+                          </TableCell>
+                          <TableCell data-testid={`text-report-status-${report.id}`}>
+                            <Badge 
+                              variant={report.status === 'completed' ? 'default' : 'secondary'}
+                              className={report.status === 'completed' ? 'bg-green-100 text-green-800' : ''}
+                            >
+                              {report.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDownloadReport(report)}
+                                disabled={!report.fileUrl}
+                                data-testid={`button-download-${report.id}`}
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                Download
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  // View report details
+                                  toast({
+                                    title: "Report Details",
+                                    description: `Report ID: ${report.id}\nGenerated by: ${report.generatedBy}`,
+                                    variant: "default"
+                                  });
+                                }}
+                                data-testid={`button-view-details-${report.id}`}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
