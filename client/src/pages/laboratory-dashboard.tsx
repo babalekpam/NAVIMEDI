@@ -1005,7 +1005,7 @@ export default function LaboratoryDashboard() {
                   return (
                     <div key={index} className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium text-gray-700">{metric.metric}</span>
+                        <span className="font-medium text-gray-700">{metric.name}</span>
                         <span className={`font-bold ${
                           isGood ? 'text-green-600' : 'text-orange-600'
                         }`}>
@@ -1016,7 +1016,7 @@ export default function LaboratoryDashboard() {
                         <Progress 
                           value={Math.min(percentage, 100)} 
                           className="h-2"
-                          data-testid={`progress-${metric.metric.toLowerCase().replace(/\s+/g, '-')}`}
+                          data-testid={`progress-${(metric.name || 'metric').toLowerCase().replace(/\s+/g, '-')}`}
                         />
                         <div className="flex justify-between text-xs text-gray-500">
                           <span>Target: {metric.target}{metric.unit}</span>
