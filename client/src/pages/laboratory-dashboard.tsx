@@ -54,8 +54,8 @@ export default function LaboratoryDashboard() {
   // Fetch real laboratory analytics data from API with optimized polling  
   const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
     queryKey: ['/test-lab-data'],
-    staleTime: 60 * 1000, // 1 minute - test status changes regularly
-    refetchInterval: 45 * 1000, // 45 seconds - lab processing needs timely updates
+    staleTime: 1 * 1000, // 1 second - force immediate update for testing
+    refetchInterval: 2 * 1000, // 2 seconds - force frequent updates for testing
     refetchIntervalInBackground: false, // Don't poll when tab inactive
     retry: 3, // Important for test result accuracy
     refetchOnWindowFocus: true, // Refresh when returning to lab dashboard
@@ -64,12 +64,13 @@ export default function LaboratoryDashboard() {
 
   // Transform API response to dashboard format
   const transformLaboratoryAnalytics = useMemo(() => {
-    if (!analyticsData) return null;
+    if (!analyticsData?.success || !analyticsData?.data) return null;
 
     try {
+      const realData = analyticsData.data;
       // Transform test processing data
       const testing = {
-        ordersByType: (analyticsData.testing?.ordersByType || []).map((item: any, index: number) => {
+        ordersByType: (realData.testing?.ordersByType || []).map((item: any, index: number) => {
           const colors = ["#22c55e", "#3b82f6", "#f97316", "#ef4444", "#8b5cf6", "#06b6d4"];
           return {
             name: item.name || item.type || '',
@@ -78,20 +79,20 @@ export default function LaboratoryDashboard() {
             color: item.color || colors[index % colors.length]
           };
         }),
-        turnaroundTimes: (analyticsData.testing?.turnaroundTimes || []).map((item: any) => ({
+        turnaroundTimes: (realData.testing?.turnaroundTimes || []).map((item: any) => ({
           timestamp: item.timestamp || item.period || '',
           value: Number(item.value) || Number(item.hours) || 0,
           target: Number(item.target) || 24,
           metadata: item.metadata || {}
         })),
-        testVolumeTrends: (analyticsData.testing?.testVolumeTrends || []).map((item: any) => ({
+        testVolumeTrends: (realData.testing?.testVolumeTrends || []).map((item: any) => ({
           date: item.timestamp || item.period || '',
           pending: Number(item.pending) || 0,
           inProgress: Number(item.inProgress) || Number(item.processing) || 0,
           completed: Number(item.completed) || Number(item.finished) || 0,
           critical: Number(item.critical) || Number(item.urgent) || 0
         })),
-        qualityControlResults: (analyticsData.testing?.qualityControlResults || []).map((item: any) => ({
+        qualityControlResults: (realData.testing?.qualityControlResults || []).map((item: any) => ({
           name: item.name || item.metric || '',
           current: Number(item.current) || 0,
           previous: Number(item.previous) || 0,
@@ -106,14 +107,14 @@ export default function LaboratoryDashboard() {
       const samples = {
         collectionEfficiency: {
           name: 'Collection Efficiency',
-          current: Number(analyticsData.samples?.collectionEfficiency?.current) || 0,
-          previous: Number(analyticsData.samples?.collectionEfficiency?.previous) || 0,
-          target: Number(analyticsData.samples?.collectionEfficiency?.target) || 95,
+          current: Number(realData.samples?.collectionEfficiency?.current) || 0,
+          previous: Number(realData.samples?.collectionEfficiency?.previous) || 0,
+          target: Number(realData.samples?.collectionEfficiency?.target) || 95,
           unit: '%',
-          trend: analyticsData.samples?.collectionEfficiency?.trend || 'stable',
-          changePercent: Number(analyticsData.samples?.collectionEfficiency?.changePercent) || 0
+          trend: realData.samples?.collectionEfficiency?.trend || 'stable',
+          changePercent: Number(realData.samples?.collectionEfficiency?.changePercent) || 0
         },
-        sampleQuality: (analyticsData.samples?.sampleQuality || []).map((item: any) => ({
+        sampleQuality: (realData.samples?.sampleQuality || []).map((item: any) => ({
           name: item.name || item.metric || '',
           current: Number(item.current) || 0,
           previous: Number(item.previous) || 0,
@@ -122,7 +123,7 @@ export default function LaboratoryDashboard() {
           trend: item.trend || 'stable',
           changePercent: Number(item.changePercent) || 0
         })),
-        storageUtilization: (analyticsData.samples?.storageUtilization || []).map((item: any) => ({
+        storageUtilization: (realData.samples?.storageUtilization || []).map((item: any) => ({
           resource: item.resource || item.name || '',
           utilized: Number(item.utilized) || Number(item.used) || 0,
           capacity: Number(item.capacity) || Number(item.total) || 0,
@@ -130,18 +131,18 @@ export default function LaboratoryDashboard() {
         })),
         rejectionRate: {
           name: 'Sample Rejection Rate',
-          current: Number(analyticsData.samples?.rejectionRate?.current) || 0,
-          previous: Number(analyticsData.samples?.rejectionRate?.previous) || 0,
-          target: Number(analyticsData.samples?.rejectionRate?.target) || 2,
+          current: Number(realData.samples?.rejectionRate?.current) || 0,
+          previous: Number(realData.samples?.rejectionRate?.previous) || 0,
+          target: Number(realData.samples?.rejectionRate?.target) || 2,
           unit: '%',
-          trend: analyticsData.samples?.rejectionRate?.trend || 'stable',
-          changePercent: Number(analyticsData.samples?.rejectionRate?.changePercent) || 0
+          trend: realData.samples?.rejectionRate?.trend || 'stable',
+          changePercent: Number(realData.samples?.rejectionRate?.changePercent) || 0
         }
       };
 
       // Transform equipment data
       const equipment = {
-        utilization: (analyticsData.equipment?.utilization || []).map((item: any) => ({
+        utilization: (realData.equipment?.utilization || []).map((item: any) => ({
           resource: item.resource || item.equipment || '',
           utilized: Number(item.utilized) || Number(item.uptime) || 0,
           capacity: Number(item.capacity) || 100,
