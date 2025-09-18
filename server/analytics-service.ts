@@ -113,9 +113,12 @@ export class AnalyticsService {
                        interval === 'week' ? 'week' :
                        interval === 'month' ? 'month' : 'day';
 
+    // Use alias to ensure consistent column references
+    const timestampAlias = sql`DATE_TRUNC('${sql.raw(intervalSql)}', "tenants"."created_at")`.as('timestamp_bucket');
+    
     const growthResult = await db
       .select({
-        timestamp: sql`DATE_TRUNC(${intervalSql}, ${tenants.createdAt})`,
+        timestamp: timestampAlias,
         value: count(tenants.id)
       })
       .from(tenants)
@@ -125,8 +128,8 @@ export class AnalyticsService {
           lte(tenants.createdAt, to)
         )
       )
-      .groupBy(sql`DATE_TRUNC(${intervalSql}, ${tenants.createdAt})`)
-      .orderBy(sql`DATE_TRUNC(${intervalSql}, ${tenants.createdAt})`);
+      .groupBy(timestampAlias)
+      .orderBy(timestampAlias);
 
     const growthTrends: TimeSeriesPoint[] = growthResult.map(row => ({
       timestamp: new Date(row.timestamp as string | number | Date).toISOString(),
@@ -189,9 +192,12 @@ export class AnalyticsService {
                        interval === 'week' ? 'week' :
                        interval === 'month' ? 'month' : 'day';
 
+    // Use alias to ensure consistent column references
+    const userTimestampAlias = sql`DATE_TRUNC('${sql.raw(intervalSql)}', "users"."created_at")`.as('user_timestamp_bucket');
+    
     const activityResult = await db
       .select({
-        timestamp: sql`DATE_TRUNC(${intervalSql}, ${users.createdAt})`,
+        timestamp: userTimestampAlias,
         value: count(users.id)
       })
       .from(users)
@@ -201,8 +207,8 @@ export class AnalyticsService {
           lte(users.createdAt, to)
         )
       )
-      .groupBy(sql`DATE_TRUNC(${intervalSql}, ${users.createdAt})`)
-      .orderBy(sql`DATE_TRUNC(${intervalSql}, ${users.createdAt})`);
+      .groupBy(userTimestampAlias)
+      .orderBy(userTimestampAlias);
 
     const loginActivity: TimeSeriesPoint[] = activityResult.map(row => ({
       timestamp: new Date(row.timestamp as string | number | Date).toISOString(),
