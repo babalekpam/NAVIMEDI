@@ -55,7 +55,7 @@ import {
   Clipboard,
   Database
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
 import { useToast } from "@/hooks/use-toast";
@@ -133,7 +133,7 @@ interface GeneratedReport {
 }
 
 export default function LabResultsReporting() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { tenant } = useTenant();
   const { t } = useTranslation();
 
@@ -232,32 +232,101 @@ export default function LabResultsReporting() {
     generateReportMutation.mutate(data);
   };
 
-  // Helper function to handle report downloads
-  const handleDownloadReport = (report: GeneratedReport) => {
-    if (report.fileUrl && report.fileName) {
+  // Helper function to handle report downloads with authentication
+  const handleDownloadReport = async (report: GeneratedReport) => {
+    if (!report.fileUrl || !report.fileName) {
+      toast({
+        title: "Download Error",
+        description: "Report file URL or filename not available",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!user || !token) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to download reports",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Show loading toast
+      const loadingToast = toast({
+        title: "Starting Download",
+        description: `Preparing ${report.title} for download...`,
+        variant: "default"
+      });
+
       // Construct the correct download URL for the backend endpoint
       // Backend expects: /api/reports/download/:reportId/:fileName
       const downloadUrl = `/api/reports/download/${report.id}/${report.fileName}`;
       
-      // Create a download link
+      // Make authenticated request to download the file
+      const response = await fetch(downloadUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast({
+            title: "Authentication Failed",
+            description: "Your session has expired. Please log in again.",
+            variant: "destructive"
+          });
+          return;
+        } else if (response.status === 403) {
+          toast({
+            title: "Access Denied",
+            description: "You don't have permission to download this report.",
+            variant: "destructive"
+          });
+          return;
+        } else if (response.status === 404) {
+          toast({
+            title: "Report Not Found",
+            description: "The requested report could not be found.",
+            variant: "destructive"
+          });
+          return;
+        } else {
+          throw new Error(`Server error: ${response.status}`);
+        }
+      }
+
+      // Get the file blob from response
+      const blob = await response.blob();
+      
+      // Create download link and trigger download
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = downloadUrl;
+      link.href = url;
       link.download = report.fileName;
-      // Add authentication headers by setting credentials
       link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
+      // Clean up the object URL
+      window.URL.revokeObjectURL(url);
+      
       toast({
         title: "Download Started",
-        description: `Downloading ${report.title}`,
+        description: `Successfully downloading ${report.title}`,
         variant: "default"
       });
-    } else {
+      
+    } catch (error: any) {
+      console.error('Download error:', error);
       toast({
-        title: "Download Error",
-        description: "Report file URL or filename not available",
+        title: "Download Failed",
+        description: error?.message || "An error occurred while downloading the report. Please try again.",
         variant: "destructive"
       });
     }
