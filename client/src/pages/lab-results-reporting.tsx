@@ -59,7 +59,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -169,21 +168,19 @@ export default function LabResultsReporting() {
 
   const generateReportMutation = useMutation({
     mutationFn: async (data: ReportFormData) => {
-      return apiRequest('/api/reports', {
-        method: 'POST',
-        body: JSON.stringify({
-          type: data.reportType,
-          dateRange: {
-            from: format(data.dateFrom, 'yyyy-MM-dd'),
-            to: format(data.dateTo, 'yyyy-MM-dd')
-          },
-          format: data.format,
-          options: {
-            includePatientData: data.includePatientData,
-            includeTestResults: data.includeTestResults,
-            includeStatistics: data.includeStatistics
-          }
-        })
+      const { apiRequest } = await import("@/lib/queryClient");
+      return apiRequest("POST", "/api/reports", {
+        type: data.reportType,
+        dateRange: {
+          from: format(data.dateFrom, 'yyyy-MM-dd'),
+          to: format(data.dateTo, 'yyyy-MM-dd')
+        },
+        format: data.format,
+        options: {
+          includePatientData: data.includePatientData,
+          includeTestResults: data.includeTestResults,
+          includeStatistics: data.includeStatistics
+        }
       });
     },
     onSuccess: (data) => {
