@@ -561,10 +561,37 @@ export class AnalyticsService {
         }]
       },
       patients: {
-        totalActivePatients: 1247,
-        newPatientsToday: 23,
-        prescriptionHistory: [],
-        patientDemographics: []
+        consultations: [
+          { timestamp: new Date(Date.now() - 5*24*60*60*1000).toISOString(), value: 45 },
+          { timestamp: new Date(Date.now() - 4*24*60*60*1000).toISOString(), value: 52 },
+          { timestamp: new Date(Date.now() - 3*24*60*60*1000).toISOString(), value: 48 },
+          { timestamp: new Date(Date.now() - 2*24*60*60*1000).toISOString(), value: 61 },
+          { timestamp: new Date(Date.now() - 1*24*60*60*1000).toISOString(), value: 55 },
+          { timestamp: new Date().toISOString(), value: 58 }
+        ],
+        medicationAdherence: [{
+          name: 'Medication Adherence',
+          current: 87.3,
+          previous: 85.1,
+          target: 90.0,
+          unit: '%',
+          trend: 'up',
+          changePercent: 2.6
+        }],
+        patientSatisfaction: {
+          name: 'Patient Satisfaction',
+          current: 92.1,
+          previous: 90.7,
+          target: 95.0,
+          unit: '%',
+          trend: 'up',
+          changePercent: 1.5
+        },
+        loyaltyProgram: {
+          activeMembers: 1247,
+          pointsRedeemed: 8542,
+          engagementRate: 78.5
+        }
       }
     };
 
@@ -671,22 +698,6 @@ export class AnalyticsService {
           { timestamp: new Date(Date.now() - 2*24*60*60*1000).toISOString(), value: 1.9 },
           { timestamp: new Date(Date.now() - 1*24*60*60*1000).toISOString(), value: 2.0 },
           { timestamp: new Date().toISOString(), value: 1.7 }
-        ]
-      },
-      financial: {
-        revenueData: testVolumeData.length > 0 ? [
-          { period: 'Jan', revenue: 125000, costs: 89000, profit: 36000 },
-          { period: 'Feb', revenue: 132000, costs: 91000, profit: 41000 },
-          { period: 'Mar', revenue: 128000, costs: 87000, profit: 41000 },
-          { period: 'Apr', revenue: 135000, costs: 93000, profit: 42000 },
-          { period: 'May', revenue: 140000, costs: 95000, profit: 45000 },
-          { period: 'Jun', revenue: Number(processingMetrics.resultsCompleted) * 50 || 127450, costs: 88000, profit: 39450 }
-        ] : [],
-        costAnalysis: [
-          { period: 'Personnel', value: 45, color: '#22c55e' },
-          { period: 'Equipment', value: 30, color: '#3b82f6' },
-          { period: 'Reagents', value: 15, color: '#f97316' },
-          { period: 'Maintenance', value: 10, color: '#ef4444' }
         ]
       },
       quality: {
@@ -817,17 +828,87 @@ export class AnalyticsService {
       },
       quality,
       executive: {
-        kpiSummary: [
-          { name: 'Patient Satisfaction', current: 88.5, previous: 87.2, target: 90.0, unit: '%', trend: 'up', changePercent: 1.5 },
-          { name: 'Staff Productivity', current: 92.1, previous: 89.8, target: 95.0, unit: '%', trend: 'up', changePercent: 2.6 }
+        totalPatients: 1247,
+        bedOccupancy: {
+          name: 'Bed Occupancy',
+          current: 85.7,
+          previous: 82.3,
+          target: 88.0,
+          unit: '%',
+          trend: 'up',
+          changePercent: 4.1
+        },
+        averageStayDuration: {
+          name: 'Average Stay Duration',
+          current: 4.2,
+          previous: 4.7,
+          target: 3.8,
+          unit: 'days',
+          trend: 'down',
+          changePercent: -10.6
+        },
+        patientSatisfaction: {
+          name: 'Patient Satisfaction',
+          current: 88.5,
+          previous: 87.2,
+          target: 90.0,
+          unit: '%',
+          trend: 'up',
+          changePercent: 1.5
+        },
+        financialPerformance: {
+          name: 'Financial Performance',
+          current: 92.1,
+          previous: 89.8,
+          target: 95.0,
+          unit: '%',
+          trend: 'up',
+          changePercent: 2.6
+        }
+      },
+      departments: [{
+        departmentId: "dept-001",
+        name: "General Operations",
+        patientVolume: [
+          { timestamp: new Date(Date.now() - 5*24*60*60*1000).toISOString(), value: 145 },
+          { timestamp: new Date().toISOString(), value: 161 }
         ],
-        strategicInitiatives: []
-      },
-      departments: {
-        performance: [],
-        staffing: [],
-        budgets: []
-      },
+        efficiency: {
+          name: 'Department Efficiency',
+          current: 88.7,
+          previous: 85.2,
+          target: 90.0,
+          unit: '%',
+          trend: 'up',
+          changePercent: 4.1
+        },
+        revenue: {
+          name: 'Department Revenue',
+          current: 125450,
+          previous: 118200,
+          target: 130000,
+          unit: '$',
+          trend: 'up',
+          changePercent: 6.1
+        },
+        staffUtilization: {
+          resource: 'Medical Staff',
+          utilized: 78,
+          capacity: 90,
+          percentage: 86.7,
+          efficiency: 92.1,
+          status: 'optimal' as const
+        },
+        qualityScore: {
+          name: 'Quality Score',
+          current: 94.2,
+          previous: 91.8,
+          target: 95.0,
+          unit: '%',
+          trend: 'up',
+          changePercent: 2.6
+        }
+      }],
       insights: {
         growthOpportunities: [
           'Expand telemedicine services',
