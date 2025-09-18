@@ -1,4 +1,8 @@
 import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -10,6 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { 
   FileBarChart, 
   Plus, 
@@ -19,7 +27,7 @@ import {
   CheckCircle, 
   XCircle,
   AlertTriangle,
-  Calendar,
+  Calendar as CalendarIcon,
   Download,
   Upload,
   Send,
@@ -50,7 +58,10 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface LabResult {
   id: string;
@@ -116,6 +127,88 @@ export default function LabResultsReporting() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedResult, setSelectedResult] = useState<LabResult | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<ReportTemplate | null>(null);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Report generation form schema
+  const reportFormSchema = z.object({
+    reportType: z.enum(["laboratory_summary", "critical_values", "quality_control", "performance_metrics"], {
+      required_error: "Please select a report type"
+    }),
+    dateFrom: z.date({
+      required_error: "Start date is required"
+    }),
+    dateTo: z.date({
+      required_error: "End date is required"
+    }),
+    format: z.enum(["pdf", "excel", "csv"], {
+      required_error: "Please select a format"
+    }),
+    includePatientData: z.boolean().default(false),
+    includeTestResults: z.boolean().default(true),
+    includeStatistics: z.boolean().default(false)
+  }).refine((data) => data.dateTo >= data.dateFrom, {
+    message: "End date must be after start date",
+    path: ["dateTo"]
+  });
+
+  type ReportFormData = z.infer<typeof reportFormSchema>;
+
+  const reportForm = useForm<ReportFormData>({
+    resolver: zodResolver(reportFormSchema),
+    defaultValues: {
+      reportType: "laboratory_summary",
+      format: "pdf",
+      includePatientData: false,
+      includeTestResults: true,
+      includeStatistics: false
+    }
+  });
+
+  const generateReportMutation = useMutation({
+    mutationFn: async (data: ReportFormData) => {
+      return apiRequest('/api/reports', {
+        method: 'POST',
+        body: JSON.stringify({
+          type: data.reportType,
+          dateRange: {
+            from: format(data.dateFrom, 'yyyy-MM-dd'),
+            to: format(data.dateTo, 'yyyy-MM-dd')
+          },
+          format: data.format,
+          options: {
+            includePatientData: data.includePatientData,
+            includeTestResults: data.includeTestResults,
+            includeStatistics: data.includeStatistics
+          }
+        })
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Report Generated Successfully",
+        description: "Your report has been generated and is ready for download.",
+        variant: "default"
+      });
+      setShowReportDialog(false);
+      reportForm.reset();
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['/api/reports'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Report Generation Failed",
+        description: error?.message || "An error occurred while generating the report. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const onSubmitReport = (data: ReportFormData) => {
+    generateReportMutation.mutate(data);
+  };
 
   // Mock data for demonstration
   const mockResults: LabResult[] = [
@@ -318,6 +411,7 @@ export default function LabResultsReporting() {
         <div className="flex items-center space-x-3">
           <Button 
             className="bg-green-600 hover:bg-green-700"
+            onClick={() => setShowReportDialog(true)}
             data-testid="button-generate-report"
           >
             <FileText className="h-4 w-4 mr-2" />
@@ -584,7 +678,7 @@ export default function LabResultsReporting() {
                               result.status === "abnormal" ? "bg-yellow-100 text-yellow-800" :
                               "bg-red-100 text-red-800"
                             }>
-                              {result.flag && result.flag !== "normal" ? result.flag.toUpperCase() : result.status}
+                              {result.flag ? result.flag.toUpperCase() : result.status}
                             </Badge>
                           </TableCell>
                         </TableRow>
@@ -627,6 +721,254 @@ export default function LabResultsReporting() {
               Approve & Send
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Generation Dialog */}
+      <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Generate Laboratory Report</DialogTitle>
+            <DialogDescription>
+              Configure your report parameters and generate comprehensive laboratory reports
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...reportForm}>
+            <form onSubmit={reportForm.handleSubmit(onSubmitReport)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Report Type */}
+                <FormField
+                  control={reportForm.control}
+                  name="reportType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Report Type</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-report-type">
+                            <SelectValue placeholder="Select report type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="laboratory_summary">Laboratory Summary</SelectItem>
+                          <SelectItem value="critical_values">Critical Values</SelectItem>
+                          <SelectItem value="quality_control">Quality Control</SelectItem>
+                          <SelectItem value="performance_metrics">Performance Metrics</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Format */}
+                <FormField
+                  control={reportForm.control}
+                  name="format"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Format</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-report-format">
+                            <SelectValue placeholder="Select format" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="pdf">PDF</SelectItem>
+                          <SelectItem value="excel">Excel</SelectItem>
+                          <SelectItem value="csv">CSV</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Date Range */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={reportForm.control}
+                  name="dateFrom"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>From Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                              data-testid="input-date-from"
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={reportForm.control}
+                  name="dateTo"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>To Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                              data-testid="input-date-to"
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Include Options */}
+              <div className="space-y-4">
+                <Label className="text-base font-medium">Include Options</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={reportForm.control}
+                    name="includePatientData"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            data-testid="checkbox-patient-data"
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Patient Data</FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={reportForm.control}
+                    name="includeTestResults"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            data-testid="checkbox-test-results"
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Test Results</FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={reportForm.control}
+                    name="includeStatistics"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            data-testid="checkbox-statistics"
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Statistics</FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowReportDialog(false)}
+                  data-testid="button-cancel-report"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={generateReportMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                  data-testid="button-submit-report"
+                >
+                  {generateReportMutation.isPending ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Generate Report
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
