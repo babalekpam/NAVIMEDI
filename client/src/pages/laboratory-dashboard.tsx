@@ -5,7 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { 
   TestTube, 
   FlaskConical, 
@@ -23,8 +28,17 @@ import {
   Target,
   DollarSign,
   PieChart as PieChartIcon,
-  Shield
+  Shield,
+  Download,
+  RefreshCw,
+  Calendar,
+  X
 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { useTranslation } from "@/contexts/translation-context";
@@ -48,11 +62,36 @@ import {
 // Utility function for safe value clamping
 const clamp = (value: number, min: number, max: number): number => Math.min(Math.max(value, min), max);
 
+// Report generation form schema
+const reportGenerationSchema = z.object({
+  title: z.string().min(1, "Report title is required").min(3, "Title must be at least 3 characters"),
+  type: z.enum(["laboratory", "quality", "compliance", "performance", "financial"], {
+    required_error: "Please select a report type"
+  }),
+  format: z.enum(["pdf", "excel", "csv"], {
+    required_error: "Please select a format"
+  })
+});
+
+type ReportGenerationForm = z.infer<typeof reportGenerationSchema>;
+
 export default function LaboratoryDashboard() {
   const { user } = useAuth();
   const { tenant } = useTenant();
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [currentTab, setCurrentTab] = useState("overview");
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+
+  // Report generation form
+  const reportForm = useForm<ReportGenerationForm>({
+    resolver: zodResolver(reportGenerationSchema),
+    defaultValues: {
+      title: "",
+      type: "laboratory",
+      format: "pdf"
+    }
+  });
 
   // Fetch real laboratory analytics data from API with optimized polling  
   const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
@@ -64,6 +103,50 @@ export default function LaboratoryDashboard() {
     refetchOnWindowFocus: true, // Refresh when returning to lab dashboard
     refetchOnReconnect: true, // Critical after network issues
   });
+
+  // Fetch reports for current tenant
+  const { data: reports, isLoading: reportsLoading, refetch: refetchReports } = useQuery({
+    queryKey: ['/api/reports'],
+    staleTime: 30 * 1000, // 30 seconds cache
+    enabled: currentTab === "reports", // Only load when reports tab is active
+  });
+
+  // Report generation mutation
+  const createReportMutation = useMutation({
+    mutationFn: (data: ReportGenerationForm) => apiRequest('/api/reports', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+    onSuccess: () => {
+      toast({
+        title: "Report Generation Started",
+        description: "Your report is being generated. You'll be able to download it once it's ready.",
+      });
+      setIsReportDialogOpen(false);
+      reportForm.reset();
+      // Invalidate and refetch reports
+      queryClient.invalidateQueries({ queryKey: ['/api/reports'] });
+      refetchReports();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to create report. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle form submission
+  const handleCreateReport = (data: ReportGenerationForm) => {
+    createReportMutation.mutate(data);
+  };
+
+  // Handle report download
+  const handleDownloadReport = (reportId: string, fileName: string) => {
+    const downloadUrl = `/api/reports/download/${reportId}/${fileName}`;
+    window.open(downloadUrl, '_blank');
+  };
 
   // Transform API response to dashboard format
   const transformLaboratoryAnalytics = useMemo(() => {
@@ -1837,6 +1920,261 @@ export default function LaboratoryDashboard() {
                     View Detailed Analytics
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Report Generation Section */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Generate New Report</h3>
+                <p className="text-sm text-gray-600">Create laboratory reports for analysis and compliance</p>
+              </div>
+              <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button data-testid="button-generate-report">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Generate New Report
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md" data-testid="dialog-generate-report">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Generate Laboratory Report
+                    </DialogTitle>
+                    <DialogDescription>
+                      Create a new report for your laboratory operations. Select the report type and format below.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Form {...reportForm}>
+                    <form onSubmit={reportForm.handleSubmit(handleCreateReport)} className="space-y-4">
+                      <FormField
+                        control={reportForm.control}
+                        name="title"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Report Title</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                placeholder="Enter report title..."
+                                data-testid="input-report-title"
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Provide a descriptive title for your report
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={reportForm.control}
+                        name="type"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Report Type</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-report-type">
+                                  <SelectValue placeholder="Select report type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="laboratory">Laboratory Performance</SelectItem>
+                                <SelectItem value="quality">Quality Control</SelectItem>
+                                <SelectItem value="compliance">Compliance & Audit</SelectItem>
+                                <SelectItem value="performance">Performance Metrics</SelectItem>
+                                <SelectItem value="financial">Financial Analysis</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              Choose the type of report to generate
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={reportForm.control}
+                        name="format"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Format</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-report-format">
+                                  <SelectValue placeholder="Select format" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="pdf">PDF Document</SelectItem>
+                                <SelectItem value="excel">Excel Spreadsheet</SelectItem>
+                                <SelectItem value="csv">CSV Data File</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              Choose the output format for your report
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <DialogFooter className="gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsReportDialogOpen(false)}
+                          data-testid="button-cancel-report"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={createReportMutation.isPending}
+                          data-testid="button-submit-report"
+                        >
+                          {createReportMutation.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <FileText className="h-4 w-4 mr-2" />
+                              Generate Report
+                            </>
+                          )}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+
+          {/* Existing Reports List */}
+          <div className="mb-6">
+            <Card data-testid="card-existing-reports">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Generated Reports
+                    </CardTitle>
+                    <CardDescription>View and download your laboratory reports</CardDescription>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => refetchReports()}
+                    disabled={reportsLoading}
+                    data-testid="button-refresh-reports"
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${reportsLoading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {reportsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                    <span>Loading reports...</span>
+                  </div>
+                ) : reports && Array.isArray(reports) && reports.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Format</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {reports.map((report: any) => (
+                          <TableRow key={report.id} data-testid={`row-report-${report.id}`}>
+                            <TableCell className="font-medium" data-testid={`text-report-title-${report.id}`}>
+                              {report.title}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" data-testid={`badge-report-type-${report.id}`}>
+                                {report.type?.charAt(0).toUpperCase() + report.type?.slice(1) || 'Unknown'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell data-testid={`text-report-format-${report.id}`}>
+                              {report.format?.toUpperCase() || 'PDF'}
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={
+                                  report.status === 'completed' ? 'default' :
+                                  report.status === 'generating' ? 'secondary' :
+                                  report.status === 'failed' ? 'destructive' : 'outline'
+                                }
+                                data-testid={`badge-report-status-${report.id}`}
+                              >
+                                {report.status === 'completed' && <CheckCircle className="h-3 w-3 mr-1" />}
+                                {report.status === 'generating' && <Clock className="h-3 w-3 mr-1" />}
+                                {report.status === 'failed' && <AlertTriangle className="h-3 w-3 mr-1" />}
+                                {report.status?.charAt(0).toUpperCase() + report.status?.slice(1) || 'Unknown'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell data-testid={`text-report-date-${report.id}`}>
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : 'N/A'}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {report.status === 'completed' ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDownloadReport(report.id, report.fileName || `${report.title}.${report.format || 'pdf'}`)}
+                                  data-testid={`button-download-${report.id}`}
+                                >
+                                  <Download className="h-3 w-3 mr-1" />
+                                  Download
+                                </Button>
+                              ) : report.status === 'generating' ? (
+                                <div className="flex items-center justify-end text-sm text-gray-500">
+                                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                  Processing...
+                                </div>
+                              ) : (
+                                <div className="text-sm text-gray-400">Not available</div>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Reports Yet</h3>
+                    <p className="text-gray-600 mb-4">
+                      You haven't generated any reports yet. Click "Generate New Report" to create your first laboratory report.
+                    </p>
+                    <Button 
+                      onClick={() => setIsReportDialogOpen(true)}
+                      data-testid="button-create-first-report"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Your First Report
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
