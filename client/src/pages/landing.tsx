@@ -218,13 +218,24 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Animated Background with Healthcare Gradients */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/40 to-emerald-50/40">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-teal-500/5 to-emerald-600/5 animate-pulse"></div>
-        {/* Floating orbs for visual interest */}
-        <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-blue-400/20 to-teal-400/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-40 right-20 w-96 h-96 bg-gradient-to-r from-emerald-400/15 to-blue-400/15 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
-        <div className="absolute bottom-40 left-1/4 w-64 h-64 bg-gradient-to-r from-teal-400/10 to-emerald-400/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '4s'}}></div>
+      {/* Enhanced Animated Background with Healthcare Gradients */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/60 to-emerald-50/60">
+        {/* Dynamic gradient overlay */}
+        <div className="absolute inset-0 gradient-healthcare animate-gradient-diagonal opacity-80"></div>
+        
+        {/* Enhanced floating orbs with morphing */}
+        <div className="absolute top-20 left-10 w-80 h-80 gradient-orb animate-morph animate-float opacity-60 blur-3xl"></div>
+        <div className="absolute top-40 right-20 w-96 h-96 bg-gradient-to-r from-emerald-400/25 to-blue-500/20 rounded-full blur-3xl animate-float-slow animate-rotate-slow" style={{animationDelay: '2s'}}></div>
+        <div className="absolute bottom-40 left-1/4 w-72 h-72 bg-gradient-to-r from-teal-400/20 to-emerald-500/25 rounded-full blur-3xl animate-float-reverse animate-morph" style={{animationDelay: '4s'}}></div>
+        
+        {/* Additional floating elements */}
+        <div className="absolute top-1/3 right-1/3 w-48 h-48 bg-gradient-to-r from-blue-500/15 to-teal-500/20 rounded-full blur-2xl animate-float animate-scale-pulse" style={{animationDelay: '1s'}}></div>
+        <div className="absolute bottom-1/3 right-10 w-56 h-56 bg-gradient-to-r from-emerald-500/20 to-blue-400/15 rounded-full blur-3xl animate-float-slow" style={{animationDelay: '3s'}}></div>
+        
+        {/* Subtle animated particles */}
+        <div className="absolute top-1/4 left-1/3 w-2 h-2 bg-emerald-400/60 rounded-full animate-float" style={{animationDelay: '0.5s'}}></div>
+        <div className="absolute top-3/4 right-1/4 w-3 h-3 bg-blue-400/60 rounded-full animate-float-reverse" style={{animationDelay: '2.5s'}}></div>
+        <div className="absolute bottom-1/4 left-1/2 w-2 h-2 bg-teal-400/60 rounded-full animate-float" style={{animationDelay: '1.5s'}}></div>
       </div>
       
       <div className="relative z-10">
@@ -233,10 +244,10 @@ export default function LandingPage() {
         {/* Modern Hero Section */}
         <section className="pt-32 pb-20 px-6 relative">
           <div className="container mx-auto">
-            <div className="text-center max-w-5xl mx-auto relative">
-              {/* Glassmorphism backdrop */}
-              <div className="absolute inset-0 bg-white/30 backdrop-blur-sm rounded-3xl border border-white/20 shadow-2xl -m-8" style={{transform: 'translate(0, 20px)'}}></div>
-              <div className="relative z-10 p-8">
+            <div className="text-center max-w-6xl mx-auto relative">
+              {/* Enhanced Glassmorphism backdrop with better effects */}
+              <div className="glass-hero rounded-4xl -m-12 shadow-2xl" style={{transform: 'translate(0, 20px)'}}></div>
+              <div className="relative z-10 p-12">
               {/* Modern Trust Badge with glassmorphism */}
               <div className="mb-8 animate-fade-in-up">
                 <Badge className="bg-white/60 backdrop-blur-md text-emerald-700 border border-emerald-200/50 hover:bg-white/70 hover:shadow-lg px-6 py-3 text-sm font-medium shadow-lg transition-all duration-300 hover:scale-105">
@@ -244,84 +255,84 @@ export default function LandingPage() {
               HIPAA Compliant • SOC 2 Type II • FDA 21 CFR Part 11
             </Badge>
             
-              {/* Enhanced Main Headline with modern typography */}
-              <div className="animate-fade-in-up" style={{animationDelay: '0.2s'}}>
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 tracking-tight leading-tight">
-                  <span className="bg-gradient-to-r from-slate-900 via-emerald-600 to-blue-600 bg-clip-text text-transparent animate-gradient-x bg-[length:200%_auto]">
+              {/* Enhanced Main Headline with advanced gradient effects */}
+              <div className="animate-fade-in-up animate-stagger-2">
+                <h1 className="text-6xl md:text-7xl lg:text-8xl font-black mb-10 tracking-tight leading-tight">
+                  <span className="bg-gradient-to-r from-slate-900 via-emerald-600 via-teal-500 to-blue-600 bg-clip-text text-transparent animate-gradient-diagonal bg-[length:400%_400%] animate-text-glow">
                     Reduce Healthcare
                   </span>
                   <br />
-                  <span className="text-slate-900 drop-shadow-sm">Admin Burden by 40%</span>
+                  <span className="bg-gradient-to-r from-emerald-700 via-blue-700 to-slate-900 bg-clip-text text-transparent drop-shadow-xl">Admin Burden by 40%</span>
                 </h1>
               </div>
             
-              {/* Enhanced Subheading */}
-              <div className="animate-fade-in-up" style={{animationDelay: '0.4s'}}>
-                <p className="text-xl md:text-2xl text-slate-600 mb-8 leading-relaxed max-w-3xl mx-auto font-medium">
+              {/* Enhanced Subheading with better styling */}
+              <div className="animate-fade-in-up animate-stagger-3">
+                <p className="text-2xl md:text-3xl text-slate-700 mb-10 leading-relaxed max-w-4xl mx-auto font-semibold">
                   Streamline hospital operations with NaviMED's complete healthcare management platform. 
-                  <span className="text-emerald-600 font-semibold">HIPAA-compliant</span> solution trusted by <span className="text-blue-600 font-semibold">200+</span> healthcare facilities worldwide.
+                  <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent font-bold">HIPAA-compliant</span> solution trusted by <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold">200+</span> healthcare facilities worldwide.
                 </p>
               </div>
 
-              {/* Modernized Social Proof with glassmorphism cards */}
-              <div className="animate-fade-in-up" style={{animationDelay: '0.6s'}}>
-                <div className="grid grid-cols-3 gap-6 mb-12 max-w-2xl mx-auto">
-                  <div className="group bg-white/50 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/60">
-                    <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform duration-300">200+</div>
-                    <div className="text-sm text-slate-600 font-medium">Healthcare facilities</div>
+              {/* Enhanced Social Proof with advanced glassmorphism cards */}
+              <div className="animate-fade-in-up animate-stagger-4">
+                <div className="grid grid-cols-3 gap-8 mb-16 max-w-4xl mx-auto">
+                  <div className="glass-card rounded-3xl p-8 hover-lift hover-glow group transform transition-all duration-500">
+                    <div className="text-4xl font-black bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500 bg-clip-text text-transparent mb-3 group-hover:scale-110 transition-transform duration-300 animate-text-glow">200+</div>
+                    <div className="text-base text-slate-700 font-semibold">Healthcare facilities</div>
                   </div>
-                  <div className="group bg-white/50 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/60">
-                    <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform duration-300">50,000+</div>
-                    <div className="text-sm text-slate-600 font-medium">Patient records daily</div>
+                  <div className="glass-card rounded-3xl p-8 hover-lift hover-glow group transform transition-all duration-500">
+                    <div className="text-4xl font-black bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-500 bg-clip-text text-transparent mb-3 group-hover:scale-110 transition-transform duration-300 animate-text-glow">50,000+</div>
+                    <div className="text-base text-slate-700 font-semibold">Patient records daily</div>
                   </div>
-                  <div className="group bg-white/50 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/60">
-                    <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform duration-300">99.9%</div>
-                    <div className="text-sm text-slate-600 font-medium">Uptime guarantee</div>
+                  <div className="glass-card rounded-3xl p-8 hover-lift hover-glow group transform transition-all duration-500">
+                    <div className="text-4xl font-black bg-gradient-to-br from-emerald-600 via-blue-500 to-teal-600 bg-clip-text text-transparent mb-3 group-hover:scale-110 transition-transform duration-300 animate-text-glow">99.9%</div>
+                    <div className="text-base text-slate-700 font-semibold">Uptime guarantee</div>
                   </div>
                 </div>
               </div>
             
-              {/* Modern CTA Buttons with enhanced effects */}
-              <div className="animate-fade-in-up" style={{animationDelay: '0.8s'}}>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+              {/* Enhanced Modern CTA Buttons with advanced effects */}
+              <div className="animate-fade-in-up animate-stagger-5">
+                <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
                   <Link href="/register">
                     <Button 
                       size="lg" 
-                      className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 shadow-2xl shadow-emerald-600/30 px-8 py-4 text-lg font-semibold group transform hover:scale-105 transition-all duration-300 hover:shadow-emerald-500/40"
+                      className="gradient-medical text-white hover:shadow-2xl shadow-emerald-600/40 px-10 py-6 text-xl font-bold group transform hover:scale-110 transition-all duration-500 rounded-2xl hover-lift animate-pulse-glow relative overflow-hidden"
                       data-testid="button-start-trial"
                     >
-                      <Play className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+                      <div className="absolute inset-0 animate-shimmer opacity-30"></div>
+                      <Play className="w-6 h-6 mr-3 group-hover:scale-125 transition-transform duration-300" />
                       Start Free Trial
-                      <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform duration-300" />
                     </Button>
                   </Link>
                   
                   <Button 
                     size="lg" 
-                    variant="outline" 
-                    className="bg-white/60 backdrop-blur-md border-2 border-slate-200/50 text-slate-700 hover:bg-white/80 hover:border-slate-300/60 hover:shadow-lg px-8 py-4 text-lg font-semibold transition-all duration-300 hover:scale-105"
+                    className="glass-button text-slate-800 hover:text-slate-900 px-10 py-6 text-xl font-bold transition-all duration-500 rounded-2xl hover-lift group"
                     data-testid="button-book-demo"
                   >
-                    <Calendar className="w-5 h-5 mr-2" />
+                    <Calendar className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform duration-300" />
                     Book a Demo
                   </Button>
 
                   <Button 
                     size="lg" 
                     variant="ghost" 
-                    className="text-slate-600 hover:text-slate-800 hover:bg-white/40 backdrop-blur-sm px-8 py-4 text-lg font-medium transition-all duration-300 hover:scale-105 rounded-xl"
+                    className="glass-button text-slate-700 hover:text-slate-900 px-10 py-6 text-xl font-semibold transition-all duration-500 rounded-2xl hover-lift group"
                     data-testid="button-platform-tour"
                   >
-                    <Monitor className="w-5 h-5 mr-2" />
+                    <Monitor className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform duration-300" />
                     See Platform Tour
                   </Button>
                 </div>
               </div>
 
-            {/* Urgency Element */}
-            <div className="mb-8">
-              <Badge className="bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 px-4 py-2">
-                <Clock className="w-4 h-4 mr-2" />
+            {/* Enhanced Urgency Element */}
+            <div className="mb-12 animate-fade-in-up animate-stagger-6">
+              <Badge className="glass-card bg-gradient-to-r from-orange-50 to-amber-50 text-orange-800 border-orange-300/50 hover:shadow-lg px-6 py-3 text-lg font-semibold animate-pulse-glow hover-lift">
+                <Clock className="w-5 h-5 mr-2 animate-scale-pulse" />
                 Limited Time: Free implementation for next 10 sign-ups
               </Badge>
             </div>
@@ -1027,63 +1038,71 @@ export default function LandingPage() {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Lock className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
+            <div className="glass-card rounded-3xl p-8 text-center hover-lift hover-glow transition-all duration-500 animate-fade-in-up animate-stagger-1">
+              <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                <Lock className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">End-to-End Encryption</h3>
-              <p className="text-slate-600 dark:text-slate-300">256-bit AES encryption for all data at rest and in transit</p>
+              <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-emerald-700 to-emerald-600 bg-clip-text text-transparent">End-to-End Encryption</h3>
+              <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed">256-bit AES encryption for all data at rest and in transit</p>
             </div>
             
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                <UserCheck className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            <div className="glass-card rounded-3xl p-8 text-center hover-lift hover-glow transition-all duration-500 animate-fade-in-up animate-stagger-2">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                <UserCheck className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">Role-Based Access</h3>
-              <p className="text-slate-600 dark:text-slate-300">Granular permissions and healthcare-specific role management</p>
+              <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent">Role-Based Access</h3>
+              <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed">Granular permissions and healthcare-specific role management</p>
             </div>
             
-            <div className="text-center">
-              <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileText className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+            <div className="glass-card rounded-3xl p-8 text-center hover-lift hover-glow transition-all duration-500 animate-fade-in-up animate-stagger-3">
+              <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                <FileText className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">Audit Trails</h3>
-              <p className="text-slate-600 dark:text-slate-300">Complete activity logging for HIPAA compliance and forensics</p>
+              <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-emerald-700 to-teal-600 bg-clip-text text-transparent">Audit Trails</h3>
+              <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed">Complete activity logging for HIPAA compliance and forensics</p>
             </div>
             
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            <div className="glass-card rounded-3xl p-8 text-center hover-lift hover-glow transition-all duration-500 animate-fade-in-up animate-stagger-4">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                <Shield className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">Compliance Ready</h3>
-              <p className="text-slate-600 dark:text-slate-300">HIPAA, HITECH, and international healthcare standards</p>
+              <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-blue-700 to-indigo-600 bg-clip-text text-transparent">Compliance Ready</h3>
+              <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed">HIPAA, HITECH, and international healthcare standards</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-emerald-600 to-blue-600">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-4 text-white">
-            Ready to Transform Your Healthcare Organization?
-          </h2>
-          <p className="text-xl text-emerald-100 mb-8 max-w-3xl mx-auto">
-            Join leading healthcare organizations using NAVIMED to deliver better patient care 
-            with secure, multilingual, and compliant healthcare management.
-          </p>
+      {/* Enhanced CTA Section */}
+      <section className="py-32 gradient-medical animate-gradient-diagonal relative overflow-hidden">
+        {/* Floating elements for visual interest */}
+        <div className="absolute top-10 left-10 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-10 right-10 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-float-reverse"></div>
+        
+        <div className="container mx-auto px-6 text-center relative z-10">
+          <div className="animate-fade-in-up">
+            <h2 className="text-6xl md:text-7xl font-black mb-8 text-white animate-text-glow leading-tight">
+              Ready to Transform Your Healthcare Organization?
+            </h2>
+          </div>
+          <div className="animate-fade-in-up animate-stagger-2">
+            <p className="text-2xl text-emerald-100 mb-16 max-w-5xl mx-auto font-semibold leading-relaxed">
+              Join leading healthcare organizations using NAVIMED to deliver better patient care 
+              with secure, multilingual, and compliant healthcare management.
+            </p>
+          </div>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-8 justify-center animate-fade-in-up animate-stagger-3">
             <Link href="/login">
-              <Button size="lg" className="bg-white text-emerald-600 hover:bg-emerald-50 px-8">
-                <Heart className="w-5 h-5 mr-2" />
+              <Button size="lg" className="glass-button text-slate-800 hover:text-slate-900 px-12 py-6 text-xl font-bold rounded-2xl hover-lift group">
+                <Heart className="w-6 h-6 mr-3 group-hover:scale-125 transition-transform duration-300" />
                 Start Free Trial
               </Button>
             </Link>
             <a href="#contact" className="inline-block">
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
-                <Users className="w-5 h-5 mr-2" />
+              <Button size="lg" className="glass-button text-white hover:text-slate-800 px-12 py-6 text-xl font-bold rounded-2xl hover-lift group">
+                <Users className="w-6 h-6 mr-3 group-hover:scale-125 transition-transform duration-300" />
                 Schedule Demo
               </Button>
             </a>
@@ -1119,13 +1138,13 @@ export default function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <Card className="border-green-200 hover:border-green-300 transition-all duration-300 hover:shadow-lg bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 bg-green-100 dark:bg-green-900 rounded-xl">
-                    <TestTube className="w-8 h-8 text-green-600 dark:text-green-400" />
+            <Card className="glass-card rounded-3xl hover-lift hover-glow transition-all duration-500 bg-gradient-to-br from-green-50/80 to-emerald-50/80 dark:from-green-900/30 dark:to-emerald-900/30">
+              <CardContent className="p-10">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="p-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl shadow-xl">
+                    <TestTube className="w-10 h-10 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Laboratory Services</h3>
+                  <h3 className="text-3xl font-bold bg-gradient-to-r from-green-700 to-emerald-600 bg-clip-text text-transparent">Laboratory Services</h3>
                 </div>
                 <p className="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
                   Join as an independent diagnostic laboratory with comprehensive testing capabilities and seamless result integration with healthcare providers across the network.
@@ -1154,13 +1173,13 @@ export default function LandingPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-purple-200 hover:border-purple-300 transition-all duration-300 hover:shadow-lg bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-xl">
-                    <Pill className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+            <Card className="glass-card rounded-3xl hover-lift hover-glow transition-all duration-500 bg-gradient-to-br from-purple-50/80 to-violet-50/80 dark:from-purple-900/30 dark:to-violet-900/30">
+              <CardContent className="p-10">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="p-4 bg-gradient-to-br from-purple-500 to-violet-600 rounded-3xl shadow-xl">
+                    <Pill className="w-10 h-10 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Pharmacy Services</h3>
+                  <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-700 to-violet-600 bg-clip-text text-transparent">Pharmacy Services</h3>
                 </div>
                 <p className="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
                   Register as an independent pharmacy to receive prescriptions from healthcare providers and manage patient medication needs with complete insurance processing and delivery management.
@@ -1296,59 +1315,73 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Professional CTA Section */}
-      <section className="py-24 bg-gradient-to-br from-emerald-600 via-blue-600 to-emerald-700">
-        <div className="container mx-auto px-6">
-          <div className="text-center max-w-4xl mx-auto">
-            <h2 className="text-5xl md:text-6xl font-bold mb-8 text-white">
-              Ready to Transform Your Healthcare Operations?
-            </h2>
-            <p className="text-xl text-emerald-50 mb-12 leading-relaxed">
-              Join the future of healthcare management with our enterprise-grade platform. 
-              Start your 14-day free trial today - no credit card required.
-            </p>
+      {/* Enhanced Professional CTA Section */}
+      <section className="py-32 gradient-medical animate-gradient-diagonal relative overflow-hidden">
+        {/* Advanced floating elements */}
+        <div className="absolute top-20 left-20 w-96 h-96 gradient-orb animate-morph animate-float-slow opacity-30 blur-3xl"></div>
+        <div className="absolute bottom-20 right-20 w-72 h-72 bg-gradient-to-r from-white/20 to-white/10 rounded-full blur-3xl animate-float animate-scale-pulse"></div>
+        
+        <div className="container mx-auto px-8 relative z-10">
+          <div className="text-center max-w-6xl mx-auto">
+            <div className="animate-fade-in-up">
+              <h2 className="text-7xl md:text-8xl font-black mb-12 text-white animate-text-glow leading-tight">
+                Ready to Transform Your Healthcare Operations?
+              </h2>
+            </div>
+            <div className="animate-fade-in-up animate-stagger-2">
+              <p className="text-3xl text-emerald-50 mb-16 leading-relaxed font-semibold">
+                Join the future of healthcare management with our enterprise-grade platform. 
+                Start your 14-day free trial today - no credit card required.
+              </p>
+            </div>
             
-            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
+            <div className="flex flex-col sm:flex-row gap-8 justify-center mb-16 animate-fade-in-up animate-stagger-3">
               <Link href="/register">
-                <Button size="lg" className="bg-white text-emerald-600 hover:bg-emerald-50 shadow-xl px-8 py-4 text-lg font-semibold">
-                  <Rocket className="w-5 h-5 mr-2" />
+                <Button size="lg" className="glass-button text-slate-800 hover:text-slate-900 px-12 py-6 text-2xl font-bold rounded-3xl hover-lift group transition-all duration-500 shadow-2xl">
+                  <Rocket className="w-7 h-7 mr-3 group-hover:scale-125 transition-transform duration-300" />
                   Start Free Trial
-                  <ArrowRight className="w-5 h-5 ml-2" />
+                  <ArrowRight className="w-7 h-7 ml-3 group-hover:translate-x-2 transition-transform duration-300" />
                 </Button>
               </Link>
-              <a href="#contact" className="px-8 py-4 text-lg font-semibold text-white border-2 border-white hover:bg-white hover:text-emerald-600 transition-all duration-300 rounded-lg inline-flex items-center">
-                <MessageCircle className="w-5 h-5 mr-2" />
+              <a href="#contact" className="glass-button px-12 py-6 text-2xl font-bold text-white hover:text-slate-800 transition-all duration-500 rounded-3xl inline-flex items-center hover-lift group shadow-2xl">
+                <MessageCircle className="w-7 h-7 mr-3 group-hover:scale-125 transition-transform duration-300" />
                 Schedule Demo
               </a>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8 text-white/90">
-              <div className="flex items-center justify-center gap-3">
-                <CheckCircle className="w-6 h-6 text-emerald-200" />
-                <span className="font-medium">14-Day Free Trial</span>
+            <div className="grid md:grid-cols-3 gap-12 text-white animate-fade-in-up animate-stagger-4">
+              <div className="glass-card rounded-2xl p-6 flex items-center justify-center gap-4 hover-lift group">
+                <CheckCircle className="w-8 h-8 text-emerald-200 group-hover:scale-125 transition-transform duration-300" />
+                <span className="font-bold text-xl">14-Day Free Trial</span>
               </div>
-              <div className="flex items-center justify-center gap-3">
-                <CheckCircle className="w-6 h-6 text-emerald-200" />
-                <span className="font-medium">No Credit Card Required</span>
+              <div className="glass-card rounded-2xl p-6 flex items-center justify-center gap-4 hover-lift group">
+                <CheckCircle className="w-8 h-8 text-emerald-200 group-hover:scale-125 transition-transform duration-300" />
+                <span className="font-bold text-xl">No Credit Card Required</span>
               </div>
-              <div className="flex items-center justify-center gap-3">
-                <CheckCircle className="w-6 h-6 text-emerald-200" />
-                <span className="font-medium">Cancel Anytime</span>
+              <div className="glass-card rounded-2xl p-6 flex items-center justify-center gap-4 hover-lift group">
+                <CheckCircle className="w-8 h-8 text-emerald-200 group-hover:scale-125 transition-transform duration-300" />
+                <span className="font-bold text-xl">Cancel Anytime</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section id="contact" className="py-24 bg-slate-900 text-white">
-        <div className="container mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <h2 className="text-4xl font-bold mb-6">
+      {/* Enhanced Contact Section */}
+      <section id="contact" className="py-32 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+        {/* Modern background elements */}
+        <div className="absolute top-0 left-0 w-full h-full">
+          <div className="absolute top-20 left-10 w-80 h-80 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full blur-3xl animate-float-reverse"></div>
+        </div>
+        
+        <div className="container mx-auto px-8 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-20 items-center">
+            <div className="animate-fade-in-left">
+              <h2 className="text-6xl font-black mb-8 bg-gradient-to-r from-white via-emerald-200 to-blue-200 bg-clip-text text-transparent animate-text-glow">
                 Let's Build the Future of Healthcare Together
               </h2>
-              <p className="text-xl text-slate-300 mb-8 leading-relaxed">
+              <p className="text-2xl text-slate-300 mb-12 leading-relaxed font-medium">
                 Our healthcare technology experts are ready to help you implement 
                 the perfect solution for your organization's unique needs.
               </p>
