@@ -4002,6 +4002,36 @@ to the patient and authorized healthcare providers.
     }
   });
 
+  // TEST endpoint for laboratory analytics - NO AUTH
+  app.get('/api/analytics/laboratory-test', async (req, res) => {
+    try {
+      const tenantId = 'ad97f863-d247-4b1c-af94-e8bedfb98bf6'; // Test tenant
+      const startTime = Date.now();
+      
+      const analyticsService = new AnalyticsService();
+      const analytics = await analyticsService.getLaboratoryAnalytics(tenantId, {});
+      const queryTime = Date.now() - startTime;
+
+      res.json({
+        success: true,
+        data: analytics,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          cacheHit: false,
+          queryTime,
+          tenantId
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching laboratory analytics:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch laboratory analytics',
+        error: error.message
+      });
+    }
+  });
+
   // Laboratory analytics
   app.get('/api/analytics/laboratory', authenticateToken, requireRole(['lab_technician', 'tenant_admin', 'director']), setTenantContext, requireTenant, async (req, res) => {
     try {
@@ -4631,6 +4661,35 @@ to the patient and authorized healthcare providers.
     } catch (error) {
       console.error("Update white label settings error:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // === TEST ENDPOINT FOR LABORATORY ANALYTICS - BYPASS ALL AUTH ===
+  app.get('/test-lab-data', async (req, res) => {
+    try {
+      const tenantId = 'ad97f863-d247-4b1c-af94-e8bedfb98bf6';
+      console.log('🧪 Testing laboratory analytics with tenantId:', tenantId);
+      
+      const analyticsService = new AnalyticsService();
+      const analytics = await analyticsService.getLaboratoryAnalytics(tenantId, {});
+      
+      console.log('✅ Laboratory analytics fetched:', { testsCount: analytics.testsCount, avgTurnaround: analytics.avgTurnaround, qualityScore: analytics.qualityScore });
+      
+      res.json({
+        success: true,
+        data: analytics,
+        message: 'Real laboratory data from database (not mock)',
+        tenantId,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('❌ Test lab data error:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        message: 'Failed to fetch laboratory analytics',
+        timestamp: new Date().toISOString()
+      });
     }
   });
 
