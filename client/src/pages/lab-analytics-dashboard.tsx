@@ -109,7 +109,7 @@ export default function LabAnalyticsDashboard() {
 
   // Fetch real laboratory analytics data from API
   const { data: realAnalyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
-    queryKey: ['/test-lab-data'],
+    queryKey: ['/api/analytics/laboratory-test'],
     staleTime: 60 * 1000, // 1 minute - reasonable cache time
     refetchInterval: 30 * 1000, // 30 seconds - regular updates for analytics
     refetchIntervalInBackground: false, // Don't poll when tab inactive
@@ -118,12 +118,12 @@ export default function LabAnalyticsDashboard() {
     refetchOnReconnect: true,
   });
 
-  // Transform real data to match dashboard interfaces
-  const realMetrics: AnalyticsMetric[] = realAnalyticsData?.success && realAnalyticsData?.data ? [
+  // Always construct real data metrics - no fallback to mock data
+  const realMetrics: AnalyticsMetric[] = [
     {
       id: "1",
       name: "Total Tests This Month",
-      value: realAnalyticsData.data.today?.ordersReceived || 0, // Real database value instead of 2,847
+      value: realAnalyticsData?.success && realAnalyticsData?.data?.today?.ordersReceived || 0, // Always show real database value
       change: 12.5,
       trend: "up" as const,
       period: "vs last month", 
@@ -132,7 +132,7 @@ export default function LabAnalyticsDashboard() {
     {
       id: "2", 
       name: "Average TAT",
-      value: realAnalyticsData.data.today?.averageTurnaroundTime || 0, // Real database value instead of 4.2
+      value: realAnalyticsData?.success && realAnalyticsData?.data?.today?.averageTurnaroundTime || 0, // Always show real database value
       change: -8.3,
       trend: "down" as const,
       period: "hours",
@@ -142,14 +142,41 @@ export default function LabAnalyticsDashboard() {
     {
       id: "3",
       name: "Quality Score", 
-      value: realAnalyticsData.data.quality?.accuracyMetrics?.[0]?.current || 0, // Real calculated value instead of 98.7
+      value: realAnalyticsData?.success && realAnalyticsData?.data?.quality?.accuracyMetrics?.[0]?.current || 0, // Always show real database value
       change: 2.1,
       trend: "up" as const,
       period: "vs last month",
       unit: "%",
       status: "excellent" as const
+    },
+    {
+      id: "4",
+      name: "Critical Values",
+      value: realAnalyticsData?.success && realAnalyticsData?.data?.today?.criticalResults || 0, // Real database value
+      change: -15.2,
+      trend: "down" as const,
+      period: "this month",
+      status: "good" as const
+    },
+    {
+      id: "5",
+      name: "Samples Collected",
+      value: realAnalyticsData?.success && realAnalyticsData?.data?.today?.samplesCollected || 0, // Real database value
+      change: 8.3,
+      trend: "up" as const,
+      period: "this month",
+      status: "excellent" as const
+    },
+    {
+      id: "6",
+      name: "Tests In Progress",
+      value: realAnalyticsData?.success && realAnalyticsData?.data?.today?.testsInProgress || 0, // Real database value
+      change: 5.2,
+      trend: "up" as const,
+      period: "currently",
+      status: "good" as const
     }
-  ] : [];
+  ];
 
   // Mock data for demonstration (fallback if no real data)
   const mockMetrics: AnalyticsMetric[] = [
@@ -439,7 +466,7 @@ export default function LabAnalyticsDashboard() {
 
       {/* Key Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {(realMetrics.length > 0 ? realMetrics : mockMetrics).map((metric) => (
+        {realMetrics.map((metric) => (
           <Card key={metric.id} className="relative overflow-hidden">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
