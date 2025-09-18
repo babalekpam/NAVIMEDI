@@ -53,7 +53,7 @@ export default function LaboratoryDashboard() {
 
   // Fetch real laboratory analytics data from API with optimized polling  
   const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
-    queryKey: ['/api/analytics/laboratory'],
+    queryKey: ['/test-lab-data'],
     staleTime: 60 * 1000, // 1 minute - test status changes regularly
     refetchInterval: 45 * 1000, // 45 seconds - lab processing needs timely updates
     refetchIntervalInBackground: false, // Don't poll when tab inactive
