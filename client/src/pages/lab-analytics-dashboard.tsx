@@ -110,8 +110,8 @@ export default function LabAnalyticsDashboard() {
   // Fetch real laboratory analytics data from API
   const { data: realAnalyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
     queryKey: ['/test-lab-data'],
-    staleTime: 1 * 1000, // 1 second - force immediate update for testing
-    refetchInterval: 5 * 1000, // 5 seconds - frequent updates for testing
+    staleTime: 60 * 1000, // 1 minute - reasonable cache time
+    refetchInterval: 30 * 1000, // 30 seconds - regular updates for analytics
     refetchIntervalInBackground: false, // Don't poll when tab inactive
     retry: 3,
     refetchOnWindowFocus: true,

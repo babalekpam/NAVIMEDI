@@ -4664,34 +4664,6 @@ to the patient and authorized healthcare providers.
     }
   });
 
-  // === TEST ENDPOINT FOR LABORATORY ANALYTICS - BYPASS ALL AUTH ===
-  app.get('/test-lab-data', async (req, res) => {
-    try {
-      const tenantId = 'ad97f863-d247-4b1c-af94-e8bedfb98bf6';
-      console.log('🧪 Testing laboratory analytics with tenantId:', tenantId);
-      
-      const analyticsService = new AnalyticsService();
-      const analytics = await analyticsService.getLaboratoryAnalytics(tenantId, {});
-      
-      console.log('✅ Laboratory analytics fetched:', { testsCount: analytics.testsCount, avgTurnaround: analytics.avgTurnaround, qualityScore: analytics.qualityScore });
-      
-      res.json({
-        success: true,
-        data: analytics,
-        message: 'Real laboratory data from database (not mock)',
-        tenantId,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('❌ Test lab data error:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message,
-        message: 'Failed to fetch laboratory analytics',
-        timestamp: new Date().toISOString()
-      });
-    }
-  });
 
   // Register analytics routes
   console.log('📊 Registering analytics routes...');
