@@ -901,6 +901,21 @@ export const auditLogs = pgTable("audit_logs", {
   timestamp: timestamp("timestamp").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// Password Reset Rollback Table for secure password reset operations
+export const passwordResetRollback = pgTable("password_reset_rollback", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  operationId: uuid("operation_id").notNull(), // Groups related rollback entries
+  userId: varchar("user_id").notNull(), // VARCHAR to match users.id type
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  previousPasswordHash: text("previous_password_hash"), // Nullable for edge cases where password recovery isn't possible
+  operationType: text("operation_type").notNull().default('bulk_password_reset'),
+  affectedUserCount: integer("affected_user_count"),
+  operationDetails: jsonb("operation_details"),
+  executedBy: text("executed_by").notNull(), // System identifier or admin
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  expiresAt: timestamp("expires_at").default(sql`CURRENT_TIMESTAMP + INTERVAL '7 days'`) // 7-day retention
+});
+
 export const subscriptions = pgTable("subscriptions", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
