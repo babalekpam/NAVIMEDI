@@ -62,15 +62,52 @@ import {
 // Utility function for safe value clamping
 const clamp = (value: number, min: number, max: number): number => Math.min(Math.max(value, min), max);
 
-// Report generation form schema
+// Analytics data interfaces
+interface AnalyticsResponse {
+  success: boolean;
+  data?: any;
+}
+
+interface OrdersByTypeItem {
+  name: string;
+  value: number;
+  percentage: number;
+  color: string;
+}
+
+interface TurnaroundTimeItem {
+  timestamp: string;
+  value: number;
+  target: number;
+  metadata: any;
+}
+
+interface TestVolumeItem {
+  date: string;
+  pending: number;
+  inProgress: number;
+  completed: number;
+  critical: number;
+}
+
+interface QualityControlItem {
+  name: string;
+  current: number;
+  previous: number;
+  target: number;
+  unit: string;
+  trend: string;
+  changePercent: number;
+}
+
+// Unified report generation form schema that handles both tenant and platform reports
 const reportGenerationSchema = z.object({
   title: z.string().min(1, "Report title is required").min(3, "Title must be at least 3 characters"),
-  type: z.enum(["laboratory", "quality", "compliance", "performance", "financial"], {
-    required_error: "Please select a report type"
-  }),
+  type: z.string().min(1, "Please select a report type"),
   format: z.enum(["pdf", "excel", "csv"], {
     required_error: "Please select a format"
-  })
+  }),
+  targetTenantId: z.string().optional()
 });
 
 type ReportGenerationForm = z.infer<typeof reportGenerationSchema>;
@@ -83,10 +120,18 @@ export default function LaboratoryDashboard() {
   const [currentTab, setCurrentTab] = useState("overview");
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 
-  // Report generation form
+  // Check if user is super admin
+  const isSuperAdmin = user?.role === 'super_admin';
+
+  // Report generation form - unified schema with conditional defaults
   const reportForm = useForm<ReportGenerationForm>({
     resolver: zodResolver(reportGenerationSchema),
-    defaultValues: {
+    defaultValues: isSuperAdmin ? {
+      title: "",
+      type: "subscription",
+      format: "pdf",
+      targetTenantId: "platform"
+    } : {
       title: "",
       type: "laboratory",
       format: "pdf"
@@ -94,7 +139,7 @@ export default function LaboratoryDashboard() {
   });
 
   // Fetch real laboratory analytics data from API with optimized polling  
-  const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
+  const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery<AnalyticsResponse>({
     queryKey: ['/api/analytics/laboratory-test'],
     staleTime: 60 * 1000, // 60 seconds - reasonable cache time for laboratory data
     refetchInterval: 60 * 1000, // 60 seconds - balanced polling for real-time needs
@@ -104,28 +149,42 @@ export default function LaboratoryDashboard() {
     refetchOnReconnect: true, // Critical after network issues
   });
 
-  // Fetch reports for current tenant
+  // Fetch reports based on user role - platform reports for super admin, tenant reports for others
+  const reportsEndpoint = isSuperAdmin ? '/api/platform/reports' : '/api/reports';
   const { data: reports, isLoading: reportsLoading, refetch: refetchReports } = useQuery({
-    queryKey: ['/api/reports'],
+    queryKey: [reportsEndpoint],
     staleTime: 30 * 1000, // 30 seconds cache
     enabled: currentTab === "reports", // Only load when reports tab is active
   });
 
-  // Report generation mutation
+  // Report generation mutation - use different endpoint based on user role
   const createReportMutation = useMutation({
-    mutationFn: (data: ReportGenerationForm) => apiRequest('/api/reports', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
+    mutationFn: (data: ReportGenerationForm) => {
+      const endpoint = isSuperAdmin ? '/api/platform/reports/generate' : '/api/reports';
+      return apiRequest(endpoint, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
     onSuccess: () => {
+      const reportType = isSuperAdmin ? "Platform report" : "Report";
       toast({
-        title: "Report Generation Started",
-        description: "Your report is being generated. You'll be able to download it once it's ready.",
+        title: `${reportType} Generation Started`,
+        description: `Your ${reportType.toLowerCase()} is being generated. You'll be able to download it once it's ready.`,
       });
       setIsReportDialogOpen(false);
-      reportForm.reset();
+      reportForm.reset(isSuperAdmin ? {
+        title: "",
+        type: "subscription",
+        format: "pdf",
+        targetTenantId: "platform"
+      } : {
+        title: "",
+        type: "laboratory",
+        format: "pdf"
+      });
       // Invalidate and refetch reports
-      queryClient.invalidateQueries({ queryKey: ['/api/reports'] });
+      queryClient.invalidateQueries({ queryKey: [reportsEndpoint] });
       refetchReports();
     },
     onError: (error: any) => {
@@ -156,7 +215,7 @@ export default function LaboratoryDashboard() {
       const realData = analyticsData.data;
       // Transform test processing data
       const testing = {
-        ordersByType: (realData.testing?.ordersByType || []).map((item: any, index: number) => {
+        ordersByType: (realData.testing?.ordersByType || []).map((item: any, index: number): OrdersByTypeItem => {
           const colors = ["#22c55e", "#3b82f6", "#f97316", "#ef4444", "#8b5cf6", "#06b6d4"];
           return {
             name: item.name || item.type || '',
@@ -165,20 +224,20 @@ export default function LaboratoryDashboard() {
             color: item.color || colors[index % colors.length]
           };
         }),
-        turnaroundTimes: (realData.testing?.turnaroundTimes || []).map((item: any) => ({
+        turnaroundTimes: (realData.testing?.turnaroundTimes || []).map((item: any): TurnaroundTimeItem => ({
           timestamp: item.timestamp || item.period || '',
           value: Number(item.value) || Number(item.hours) || 0,
           target: Number(item.target) || 24,
           metadata: item.metadata || {}
         })),
-        testVolumeTrends: (realData.testing?.testVolumeTrends || []).map((item: any) => ({
+        testVolumeTrends: (realData.testing?.testVolumeTrends || []).map((item: any): TestVolumeItem => ({
           date: item.timestamp || item.period || '',
           pending: Number(item.pending) || 0,
           inProgress: Number(item.inProgress) || Number(item.processing) || 0,
           completed: Number(item.completed) || Number(item.finished) || 0,
           critical: Number(item.critical) || Number(item.urgent) || 0
         })),
-        qualityControlResults: (realData.testing?.qualityControlResults || []).map((item: any) => ({
+        qualityControlResults: (realData.testing?.qualityControlResults || []).map((item: any): QualityControlItem => ({
           name: item.name || item.metric || '',
           current: Number(item.current) || 0,
           previous: Number(item.previous) || 0,
@@ -200,7 +259,7 @@ export default function LaboratoryDashboard() {
           trend: realData.samples?.collectionEfficiency?.trend || 'stable',
           changePercent: Number(realData.samples?.collectionEfficiency?.changePercent) || 0
         },
-        sampleQuality: (realData.samples?.sampleQuality || []).map((item: any) => ({
+        sampleQuality: (realData.samples?.sampleQuality || []).map((item: any): QualityControlItem => ({
           name: item.name || item.metric || '',
           current: Number(item.current) || 0,
           previous: Number(item.previous) || 0,
@@ -209,7 +268,7 @@ export default function LaboratoryDashboard() {
           trend: item.trend || 'stable',
           changePercent: Number(item.changePercent) || 0
         })),
-        storageUtilization: (realData.samples?.storageUtilization || []).map((item: any) => ({
+        storageUtilization: (realData.samples?.storageUtilization || []).map((item: any): any => ({
           resource: item.resource || item.name || '',
           utilized: Number(item.utilized) || Number(item.used) || 0,
           capacity: Number(item.capacity) || Number(item.total) || 0,
@@ -228,7 +287,7 @@ export default function LaboratoryDashboard() {
 
       // Transform equipment data
       const equipment = {
-        utilization: (realData.equipment?.utilization || []).map((item: any) => ({
+        utilization: (realData.equipment?.utilization || []).map((item: any): any => ({
           resource: item.resource || item.equipment || '',
           utilized: Number(item.utilized) || Number(item.uptime) || 0,
           capacity: Number(item.capacity) || 100,
@@ -654,7 +713,7 @@ export default function LaboratoryDashboard() {
                   dataKey="value"
                   label={({ name, percentage }) => `${name}: ${typeof percentage === 'number' && isFinite(percentage) ? percentage : 0}%`}
                 >
-                  {finalLaboratoryAnalytics.testing?.ordersByType?.map((entry, index) => (
+                  {finalLaboratoryAnalytics.testing?.ordersByType?.map((entry: OrdersByTypeItem, index: number) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -714,7 +773,7 @@ export default function LaboratoryDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {(finalLaboratoryAnalytics.equipment?.utilization || []).slice(0, 6).map((item, index) => {
+              {(finalLaboratoryAnalytics.equipment?.utilization || []).slice(0, 6).map((item: any, index: number) => {
                 // Safe efficiency calculation with finite check and clamping
                 const eff = (typeof item.efficiency === 'number' && isFinite(item.efficiency)) ? clamp(item.efficiency, 0, 100) : 0;
                 
@@ -754,7 +813,7 @@ export default function LaboratoryDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {(finalLaboratoryAnalytics.testing?.qualityControlResults || []).map((metric, index) => (
+              {(finalLaboratoryAnalytics.testing?.qualityControlResults || []).map((metric: QualityControlItem, index: number) => (
                 <div key={index} className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">{metric.name}</span>
@@ -850,7 +909,7 @@ export default function LaboratoryDashboard() {
               {/* Storage Utilization */}
               <div className="space-y-3">
                 <span className="text-sm font-medium text-gray-900">Storage Utilization</span>
-                {(finalLaboratoryAnalytics.samples?.storageUtilization || []).slice(0, 3).map((storage, index) => (
+                {(finalLaboratoryAnalytics.samples?.storageUtilization || []).slice(0, 3).map((storage: any, index: number) => (
                   <div key={index} className="space-y-1">
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-medium">{storage.resource}</span>
@@ -1013,7 +1072,7 @@ export default function LaboratoryDashboard() {
                       paddingAngle={5}
                       dataKey="value"
                     >
-                      {statusDistributionData.map((entry, index) => (
+                      {statusDistributionData.map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -1081,7 +1140,7 @@ export default function LaboratoryDashboard() {
                 <CardDescription>Laboratory efficiency indicators</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {performanceData.map((metric, index) => {
+                {performanceData.map((metric: any, index: number) => {
                   // Calculate percentage and determine if performance is good based on goal direction
                   let percentage, isGood;
                   
@@ -1135,7 +1194,7 @@ export default function LaboratoryDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentActivityData.map((activity, index) => (
+                  {recentActivityData.map((activity: any, index: number) => (
                     <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg" data-testid={`activity-${index}`}>
                       <div className="flex-shrink-0 w-2 h-2 mt-2 bg-blue-500 rounded-full"></div>
                       <div className="flex-1 min-w-0">
@@ -1227,7 +1286,7 @@ export default function LaboratoryDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-orange-600">
-                  {(finalLaboratoryAnalytics?.testing?.testVolumeTrends || []).reduce((sum, item) => sum + (item.pending || 0), 0)}
+                  {(finalLaboratoryAnalytics?.testing?.testVolumeTrends || []).reduce((sum: number, item: TestVolumeItem) => sum + (item.pending || 0), 0)}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Awaiting processing</p>
               </CardContent>
@@ -1240,7 +1299,7 @@ export default function LaboratoryDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
-                  {(finalLaboratoryAnalytics?.testing?.testVolumeTrends || []).reduce((sum, item) => sum + (item.inProgress || 0), 0)}
+                  {(finalLaboratoryAnalytics?.testing?.testVolumeTrends || []).reduce((sum: number, item: TestVolumeItem) => sum + (item.inProgress || 0), 0)}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Currently processing</p>
               </CardContent>
@@ -1253,7 +1312,7 @@ export default function LaboratoryDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  {(finalLaboratoryAnalytics?.testing?.testVolumeTrends || []).reduce((sum, item) => sum + (item.completed || 0), 0)}
+                  {(finalLaboratoryAnalytics?.testing?.testVolumeTrends || []).reduce((sum: number, item: TestVolumeItem) => sum + (item.completed || 0), 0)}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Results available</p>
               </CardContent>
@@ -1266,7 +1325,7 @@ export default function LaboratoryDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">
-                  {((finalLaboratoryAnalytics?.testing?.turnaroundTimes || []).reduce((sum, item) => sum + (item.value || 0), 0) / Math.max((finalLaboratoryAnalytics?.testing?.turnaroundTimes || []).length, 1)).toFixed(1)}h
+                  {((finalLaboratoryAnalytics?.testing?.turnaroundTimes || []).reduce((sum: number, item: TurnaroundTimeItem) => sum + (item.value || 0), 0) / Math.max((finalLaboratoryAnalytics?.testing?.turnaroundTimes || []).length, 1)).toFixed(1)}h
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Processing time</p>
               </CardContent>
@@ -1296,7 +1355,7 @@ export default function LaboratoryDashboard() {
                       dataKey="value"
                       label={({ name, percentage }) => `${name}: ${typeof percentage === 'number' && isFinite(percentage) ? percentage : 0}%`}
                     >
-                      {(finalLaboratoryAnalytics?.testing?.ordersByType || []).map((entry, index) => (
+                      {(finalLaboratoryAnalytics?.testing?.ordersByType || []).map((entry: OrdersByTypeItem, index: number) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -1402,7 +1461,7 @@ export default function LaboratoryDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {(finalLaboratoryAnalytics?.equipment?.utilization || []).slice(0, 5).map((item, index) => (
+                  {(finalLaboratoryAnalytics?.equipment?.utilization || []).slice(0, 5).map((item: any, index: number) => (
                     <div key={index} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium">{item.resource}</span>
@@ -1487,7 +1546,7 @@ export default function LaboratoryDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
-                  {((finalLaboratoryAnalytics?.samples?.storageUtilization || []).reduce((sum, item) => sum + (item.efficiency || 0), 0) / Math.max((finalLaboratoryAnalytics?.samples?.storageUtilization || []).length, 1)).toFixed(1)}%
+                  {((finalLaboratoryAnalytics?.samples?.storageUtilization || []).reduce((sum: number, item: any) => sum + (item.efficiency || 0), 0) / Math.max((finalLaboratoryAnalytics?.samples?.storageUtilization || []).length, 1)).toFixed(1)}%
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Average utilization</p>
               </CardContent>
@@ -1500,7 +1559,7 @@ export default function LaboratoryDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">
-                  {((finalLaboratoryAnalytics?.samples?.sampleQuality || []).reduce((sum, item) => sum + (item.current || 0), 0) / Math.max((finalLaboratoryAnalytics?.samples?.sampleQuality || []).length, 1)).toFixed(1)}%
+                  {((finalLaboratoryAnalytics?.samples?.sampleQuality || []).reduce((sum: number, item: QualityControlItem) => sum + (item.current || 0), 0) / Math.max((finalLaboratoryAnalytics?.samples?.sampleQuality || []).length, 1)).toFixed(1)}%
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Quality index</p>
               </CardContent>
@@ -1607,7 +1666,7 @@ export default function LaboratoryDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {(finalLaboratoryAnalytics?.samples?.sampleQuality || []).map((metric, index) => (
+                  {(finalLaboratoryAnalytics?.samples?.sampleQuality || []).map((metric: QualityControlItem, index: number) => (
                     <div key={index} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium">{metric.name}</span>
@@ -1651,7 +1710,7 @@ export default function LaboratoryDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {(finalLaboratoryAnalytics?.samples?.storageUtilization || []).map((storage, index) => (
+                  {(finalLaboratoryAnalytics?.samples?.storageUtilization || []).map((storage: any, index: number) => (
                     <div key={index} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium">{storage.resource}</span>
@@ -1689,7 +1748,7 @@ export default function LaboratoryDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  {((finalLaboratoryAnalytics?.testing?.qualityControlResults || []).reduce((sum, item) => sum + (item.current || 0), 0) / Math.max((finalLaboratoryAnalytics?.testing?.qualityControlResults || []).length, 1)).toFixed(1)}%
+                  {((finalLaboratoryAnalytics?.testing?.qualityControlResults || []).reduce((sum: number, item: QualityControlItem) => sum + (item.current || 0), 0) / Math.max((finalLaboratoryAnalytics?.testing?.qualityControlResults || []).length, 1)).toFixed(1)}%
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Quality metrics avg</p>
               </CardContent>
@@ -1742,7 +1801,7 @@ export default function LaboratoryDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {(finalLaboratoryAnalytics?.testing?.qualityControlResults || []).map((metric, index) => (
+                  {(finalLaboratoryAnalytics?.testing?.qualityControlResults || []).map((metric: QualityControlItem, index: number) => (
                     <div key={index} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium">{metric.name}</span>
@@ -1942,10 +2001,12 @@ export default function LaboratoryDashboard() {
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                       <FileText className="h-5 w-5" />
-                      Generate Laboratory Report
+                      {isSuperAdmin ? 'Generate Platform Report' : 'Generate Laboratory Report'}
                     </DialogTitle>
                     <DialogDescription>
-                      Create a new report for your laboratory operations. Select the report type and format below.
+                      {isSuperAdmin 
+                        ? 'Create a platform-wide analytics report. Select the report type and format below.' 
+                        : 'Create a new report for your laboratory operations. Select the report type and format below.'}
                     </DialogDescription>
                   </DialogHeader>
                   <Form {...reportForm}>
@@ -1983,20 +2044,60 @@ export default function LaboratoryDashboard() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="laboratory">Laboratory Performance</SelectItem>
-                                <SelectItem value="quality">Quality Control</SelectItem>
-                                <SelectItem value="compliance">Compliance & Audit</SelectItem>
-                                <SelectItem value="performance">Performance Metrics</SelectItem>
-                                <SelectItem value="financial">Financial Analysis</SelectItem>
+                                {isSuperAdmin ? (
+                                  <>
+                                    <SelectItem value="subscription">Subscription Analytics</SelectItem>
+                                    <SelectItem value="revenue">Revenue Reports</SelectItem>
+                                    <SelectItem value="tenant-analytics">Multi-Tenant Comparisons</SelectItem>
+                                    <SelectItem value="platform-usage">Platform Performance</SelectItem>
+                                    <SelectItem value="comparative-analysis">Comparative Analysis</SelectItem>
+                                  </>
+                                ) : (
+                                  <>
+                                    <SelectItem value="laboratory">Laboratory Performance</SelectItem>
+                                    <SelectItem value="quality">Quality Control</SelectItem>
+                                    <SelectItem value="compliance">Compliance & Audit</SelectItem>
+                                    <SelectItem value="performance">Performance Metrics</SelectItem>
+                                    <SelectItem value="financial">Financial Analysis</SelectItem>
+                                  </>
+                                )}
                               </SelectContent>
                             </Select>
                             <FormDescription>
-                              Choose the type of report to generate
+                              {isSuperAdmin 
+                                ? 'Choose the type of platform analytics report to generate' 
+                                : 'Choose the type of laboratory report to generate'}
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+                      {isSuperAdmin && (
+                        <FormField
+                          control={reportForm.control}
+                          name="targetTenantId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Target Scope</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger data-testid="select-target-tenant">
+                                    <SelectValue placeholder="Select scope" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="platform">Platform-Wide Analytics</SelectItem>
+                                  <SelectItem value="operational">Cross-Tenant Analysis</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormDescription>
+                                Choose the scope of the platform report
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
                       <FormField
                         control={reportForm.control}
                         name="format"
@@ -2064,9 +2165,13 @@ export default function LaboratoryDashboard() {
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="h-5 w-5" />
-                      Generated Reports
+                      {isSuperAdmin ? 'Platform Reports' : 'Generated Reports'}
                     </CardTitle>
-                    <CardDescription>View and download your laboratory reports</CardDescription>
+                    <CardDescription>
+                      {isSuperAdmin 
+                        ? 'View and download platform analytics and business intelligence reports' 
+                        : 'View and download your laboratory reports'}
+                    </CardDescription>
                   </div>
                   <Button 
                     variant="outline" 

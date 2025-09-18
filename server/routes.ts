@@ -32,14 +32,20 @@ import { tenants, users, pharmacies, prescriptions, insuranceClaims, insertLabRe
 import { eq, and, desc, or, sql, ilike } from "drizzle-orm";
 import Stripe from "stripe";
 
+// Global variable type declarations for report storage
+declare global {
+  var tenantReports: any[] | undefined;
+  var platformReports: any[] | undefined;
+}
+
 // Initialize Stripe - only if secret key is properly configured
 let stripe: Stripe | null = null;
 try {
   if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_')) {
     stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2024-10-22",
+      apiVersion: "2024-11-20.acacia",
     });
-    console.log("✅ Stripe initialized successfully with API version 2024-10-22");
+    console.log("✅ Stripe initialized successfully with API version 2024-11-20.acacia");
   } else {
     console.warn("⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format:", 
       process.env.STRIPE_SECRET_KEY ? 
@@ -103,6 +109,21 @@ Generated: ${new Date().toISOString()}
 `;
 
   return pdfContent;
+}
+
+// Helper function to get platform statistics
+async function getPlatformStats() {
+  try {
+    const tenants = await storage.getAllTenants();
+    return {
+      totalTenants: tenants.length,
+      hospitalCount: tenants.filter((t: any) => t.type === 'hospital').length,
+      pharmacyCount: tenants.filter((t: any) => t.type === 'pharmacy').length,
+      labCount: tenants.filter((t: any) => t.type === 'laboratory').length
+    };
+  } catch (error) {
+    return { totalTenants: 14, hospitalCount: 8, pharmacyCount: 4, labCount: 2 };
+  }
 }
 
 /**
@@ -4652,21 +4673,6 @@ to the patient and authorized healthcare providers.
       const reportId = `platform_report_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const generatedBy = req.user?.id || 'super_admin';
       
-      // Helper function to get platform statistics
-      async function getPlatformStats() {
-        try {
-          const tenants = await storage.getAllTenants();
-          return {
-            totalTenants: tenants.length,
-            hospitalCount: tenants.filter(t => t.type === 'hospital').length,
-            pharmacyCount: tenants.filter(t => t.type === 'pharmacy').length,
-            labCount: tenants.filter(t => t.type === 'laboratory').length
-          };
-        } catch (error) {
-          return { totalTenants: 14, hospitalCount: 8, pharmacyCount: 4, labCount: 2 };
-        }
-      }
-      
       // Get actual platform statistics for reports
       const platformStats = await getPlatformStats();
       
@@ -4769,7 +4775,7 @@ to the patient and authorized healthcare providers.
   // Download report file endpoint
   app.get("/api/reports/download/:reportId/:fileName(*)", authenticateToken, async (req, res) => {
     console.log('🎯 Download request received:', { reportId: req.params.reportId, fileName: req.params.fileName });
-    console.log('👤 User details:', { userId: req.user?.id, role: req.user?.role, tenantId: req.user?.tenant_id });
+    console.log('👤 User details:', { userId: req.user?.id, role: req.user?.role, tenantId: req.user?.tenantId });
     
     try {
       const { reportId, fileName } = req.params;
