@@ -38,19 +38,7 @@ declare global {
   }
 }
 
-export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  // TEMPORARY: Allow laboratory analytics without auth for testing
-  if (req.path === '/api/analytics/laboratory') {
-    req.user = { 
-      id: 'test-user', 
-      tenantId: 'ad97f863-d247-4b1c-af94-e8bedfb98bf6',
-      role: 'tenant_admin',
-      username: 'test-user'
-    };
-    req.userId = 'test-user';
-    req.tenantId = 'ad97f863-d247-4b1c-af94-e8bedfb98bf6';
-    return next();
-  }
+export const authenticateToken = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
 
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN

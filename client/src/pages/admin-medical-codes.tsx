@@ -720,7 +720,7 @@ export default function AdminMedicalCodes() {
                       <SelectValue placeholder="All Countries" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Countries</SelectItem>
+                      <SelectItem value="none">All Countries</SelectItem>
                       {countries.map((country: Country) => (
                         <SelectItem key={country.id} value={country.id}>
                           {country.name}

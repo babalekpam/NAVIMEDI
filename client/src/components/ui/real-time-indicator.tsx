@@ -247,6 +247,10 @@ export function LiveDataIndicator({
   useEffect(() => {
     if (!isLive) return;
     
+    // Don't run pulse animation if user is not authenticated
+    const token = localStorage.getItem('auth_token');
+    if (!token || token === 'null' || token === 'undefined') return;
+    
     const interval = setInterval(() => {
       setPulse(true);
       setTimeout(() => setPulse(false), 200);

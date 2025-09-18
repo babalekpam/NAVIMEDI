@@ -181,9 +181,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply BREACH protection headers
   app.use(securityMiddleware.breach.headers);
   
-  // Apply rate limiting
+  // CRITICAL FIX: Handle HEAD /api requests BEFORE rate limiting to stop flooding
+  app.head('/api', (req, res) => res.sendStatus(204));
+  
+  // Apply rate limiting AFTER HEAD handler - SKIP HEAD requests to prevent loop
   app.use('/api/auth', securityMiddleware.rateLimit.auth);
-  app.use('/api', securityMiddleware.rateLimit.api);
+  app.use('/api', (req, res, next) => {
+    // Skip rate limiting for HEAD requests to /api
+    if (req.method === 'HEAD' && req.path === '/api') {
+      return res.sendStatus(204);
+    }
+    // Apply rate limiting for all other requests
+    securityMiddleware.rateLimit.api(req, res, next);
+  });
   
   // Apply sensitive data protection
   app.use(securityMiddleware.breach.sensitiveDataProtection);

@@ -31,7 +31,18 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
   const { user, token } = useAuth();
 
   useEffect(() => {
-    // Wait for auth context to fully load
+    // Wait for auth context to fully load first
+    if (!token && !user) {
+      console.log('Tenant context: No auth data, skipping tenant fetch');
+      startTransition(() => {
+        setIsLoading(false);
+        setTenant(null);
+        setAvailableTenants([]);
+      });
+      return;
+    }
+
+    // Additional validation - don't make requests without proper auth
     const storedToken = localStorage.getItem('auth_token');
     const effectiveToken = token || storedToken;
     
@@ -41,7 +52,6 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
         hasUser: !!user, 
         hasStoredToken: !!storedToken 
       });
-      // Set loading to false to prevent infinite loading
       startTransition(() => {
         setIsLoading(false);
         setTenant(null);

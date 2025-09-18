@@ -111,7 +111,7 @@ export default function ForgotPasswordPage() {
                         <SelectValue placeholder="Select your organization (optional)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No specific organization</SelectItem>
+                        <SelectItem value="none">No specific organization</SelectItem>
                         <SelectItem value="argilette-health">Argilette Health</SelectItem>
                         <SelectItem value="cityview-medical">CityView Medical Center</SelectItem>
                         <SelectItem value="riverside-clinic">Riverside Clinic</SelectItem>
