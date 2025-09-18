@@ -582,4 +582,50 @@
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2;
   }
+
+  /* Accessibility: Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    /* Disable morphing and floating animations specifically */
+    .animate-morph,
+    .animate-float,
+    .animate-float-slow,
+    .animate-float-reverse,
+    .animate-rotate-slow,
+    .animate-scale-pulse,
+    .animate-gradient-diagonal,
+    .animate-pulse-glow,
+    .animate-shimmer,
+    .animate-text-glow {
+      animation: none !important;
+    }
+
+    /* Reduce blur effects for better performance on low-end devices */
+    .blur-3xl {
+      filter: blur(8px) !important;
+    }
+    
+    .blur-2xl {
+      filter: blur(4px) !important;
+    }
+  }
+
+  /* Performance optimization: Reduce blur intensity on smaller screens */
+  @media (max-width: 768px) {
+    .blur-3xl {
+      filter: blur(12px);
+    }
+    
+    .blur-2xl {
+      filter: blur(6px);
+    }
+  }
 }

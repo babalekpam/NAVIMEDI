@@ -82,13 +82,13 @@ function ImageCarousel() {
   // Professional healthcare photographs provided by the user
   const healthcareImages = [
     {
-      url: "/src/assets/image_1754352574197.png",
+      url: healthcareTeam,
       alt: "Healthcare Team Meeting",
       title: "Professional Healthcare Team",
       description: "Collaborative healthcare professionals working together for better patient outcomes"
     },
     {
-      url: "/src/assets/image_1754352599331.png",
+      url: medicalImaging,
       alt: "Medical Imaging Analysis",
       title: "Advanced Medical Imaging",
       description: "Cutting-edge diagnostic technology with brain scan analysis and medical expertise"
@@ -139,6 +139,9 @@ function ImageCarousel() {
               src={image.url}
               alt={image.alt}
               className="w-full h-full object-cover"
+              loading={index === 0 ? "eager" : "lazy"}
+              width={800}
+              height={400}
             />
             {/* Overlay with gradient and text */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end">
@@ -182,6 +185,9 @@ function ImageCarousel() {
               src={image.url}
               alt={image.alt}
               className="w-full h-full object-cover"
+              loading="lazy"
+              width={100}
+              height={80}
             />
             <div className={`absolute inset-0 transition-opacity ${
               index === currentImageIndex ? 'bg-emerald-600/20' : 'bg-black/20'
@@ -246,7 +252,7 @@ export default function LandingPage() {
           <div className="container mx-auto">
             <div className="text-center max-w-6xl mx-auto relative">
               {/* Enhanced Glassmorphism backdrop with better effects */}
-              <div className="glass-hero rounded-4xl -m-12 shadow-2xl" style={{transform: 'translate(0, 20px)'}}></div>
+              <div className="glass-hero rounded-3xl -m-12 shadow-2xl" style={{transform: 'translate(0, 20px)'}}></div>
               <div className="relative z-10 p-12">
               {/* Modern Trust Badge with glassmorphism */}
               <div className="mb-8 animate-fade-in-up">
@@ -1650,7 +1656,14 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <img src={navimedLogo} alt="NaviMed" className="h-10 w-10 rounded-lg object-contain" />
+                <img 
+                  src={navimedLogo} 
+                  alt="NaviMed" 
+                  className="h-10 w-10 rounded-lg object-contain"
+                  loading="lazy"
+                  width={40}
+                  height={40}
+                />
                 <span className="text-xl font-bold text-white">{brandName}</span>
               </div>
               <p className="text-slate-400">
