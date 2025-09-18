@@ -19,6 +19,8 @@ import LandingPage from "@/pages/landing-fixed";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import RegisterOrganization from "@/pages/register-organization";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
 
 // Loading component
 const LoadingPage = () => (
@@ -959,6 +961,8 @@ function Router() {
             {/* Public routes - always accessible */}
             <Route path="/" component={LandingPage} />
             <Route path="/login" component={Login} />
+            <Route path="/forgot-password" component={ForgotPassword} />
+            <Route path="/reset-password" component={ResetPassword} />
             <Route path="/marketplace" component={MarketplacePage} />
             <Route path="/supplier-signup" component={SupplierSignupPage} />
             <Route path="/supplier-portal" component={SupplierPortal} />

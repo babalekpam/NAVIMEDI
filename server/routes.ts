@@ -24,6 +24,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { nanoid } from "nanoid";
+import crypto from "crypto";
+import { sendEmail } from "./email-service";
 import multer from "multer";
 import csv from "csv-parser";
 import { Readable } from "stream";
@@ -1390,6 +1392,239 @@ sectigo.com
     } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Password reset request endpoint - SECURITY: Healthcare-grade password reset
+  app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+      const { email, tenantId } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: 'Please provide a valid email address' });
+      }
+
+      // Always return 200 to prevent user enumeration attacks
+      // This is a security best practice for healthcare applications
+      res.status(200).json({ 
+        message: 'If an account with that email exists, a password reset link has been sent.' 
+      });
+
+      // Find user by email and optional tenant
+      let user;
+      if (tenantId) {
+        user = await storage.getUserByEmail(email, tenantId);
+      } else {
+        // For users without tenantId (like super admins), search across all tenants
+        const allUsers = await storage.getAllUsers();
+        user = allUsers.find(u => u.email === email);
+      }
+
+      if (!user || !user.isActive) {
+        // Don't reveal if user exists - just log for security monitoring
+        console.log(`[SECURITY] Password reset requested for non-existent/inactive user: ${email}`);
+        return;
+      }
+
+      // Generate secure 32-byte token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+      
+      // Token expires in 30 minutes (healthcare compliance standard)
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+      
+      // Clean up any existing tokens for this user
+      await storage.cleanupExpiredPasswordResetTokens();
+
+      // Create password reset token record
+      await storage.createPasswordResetToken({
+        userId: user.id,
+        tenantId: user.tenantId,
+        tokenHash,
+        expiresAt,
+        requestedIp: req.ip || req.connection.remoteAddress || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown'
+      });
+
+      // Send password reset email
+      const resetUrl = `${process.env.FRONTEND_URL || 'https://navimed-healthcare.replit.app'}/reset-password?token=${resetToken}`;
+      
+      await sendEmail({
+        to: user.email!,
+        from: 'noreply@navimedi.org',
+        subject: 'NaviMED - Password Reset Request',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>NaviMED Password Reset</title>
+              <style>
+                  body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+                  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                  .header { background: linear-gradient(135deg, #2563eb, #10b981); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+                  .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+                  .security-notice { background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 20px 0; }
+                  .button { background: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; font-weight: bold; }
+                  .footer { text-align: center; color: #6b7280; font-size: 14px; margin-top: 30px; }
+                  .logo { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <div class="header">
+                      <div class="logo">🏥 NAVIMED</div>
+                      <h1 style="margin: 0;">Password Reset Request</h1>
+                  </div>
+                  
+                  <div class="content">
+                      <h2 style="color: #2563eb; margin-top: 0;">Hello ${user.firstName || 'User'},</h2>
+                      <p>We received a request to reset your password for your NaviMED Healthcare Platform account.</p>
+                      
+                      <div style="text-align: center; margin: 30px 0;">
+                          <a href="${resetUrl}" class="button">Reset Your Password</a>
+                      </div>
+                      
+                      <div class="security-notice">
+                          <h4 style="color: #856404; margin-top: 0;">🔒 Security Notice</h4>
+                          <ul style="margin: 0; padding-left: 20px;">
+                              <li>This link will expire in <strong>30 minutes</strong></li>
+                              <li>The link can only be used <strong>once</strong></li>
+                              <li>If you didn't request this reset, please ignore this email</li>
+                              <li>Your account remains secure until you use this link</li>
+                          </ul>
+                      </div>
+                      
+                      <p>If the button doesn't work, copy and paste this link into your browser:</p>
+                      <p style="word-break: break-all; background: #e5e7eb; padding: 15px; border-radius: 4px; font-family: monospace;">${resetUrl}</p>
+                      
+                      <p>If you didn't request a password reset, please ignore this email or contact your system administrator if you have concerns.</p>
+                      
+                      <p>Best regards,<br>
+                      The NaviMED Security Team</p>
+                  </div>
+                  
+                  <div class="footer">
+                      <p>This is an automated security notification from NaviMED Healthcare Platform</p>
+                      <p style="font-size: 12px; color: #9ca3af;">© 2025 NaviMED by ARGILETTE Lab. All rights reserved.</p>
+                  </div>
+              </div>
+          </body>
+          </html>
+        `,
+        text: `
+NaviMED Password Reset Request
+
+Hello ${user.firstName || 'User'},
+
+We received a request to reset your password for your NaviMED Healthcare Platform account.
+
+To reset your password, click the following link:
+${resetUrl}
+
+SECURITY NOTICE:
+- This link will expire in 30 minutes
+- The link can only be used once  
+- If you didn't request this reset, please ignore this email
+- Your account remains secure until you use this link
+
+If you didn't request a password reset, please ignore this email or contact your system administrator if you have concerns.
+
+Best regards,
+The NaviMED Security Team
+
+© 2025 NaviMED by ARGILETTE Lab. All rights reserved.
+        `
+      });
+
+      console.log(`[SECURITY] Password reset email sent to: ${email} (User ID: ${user.id})`);
+
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      // Always return success to prevent information leakage
+      res.status(200).json({ 
+        message: 'If an account with that email exists, a password reset link has been sent.' 
+      });
+    }
+  });
+
+  // Password reset completion endpoint - SECURITY: Secure token validation and password update
+  app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+      const { token, newPassword } = req.body;
+      
+      if (!token || !newPassword) {
+        return res.status(400).json({ message: 'Token and new password are required' });
+      }
+
+      // Enhanced password validation for healthcare compliance
+      if (newPassword.length < 12) {
+        return res.status(400).json({ 
+          message: 'Password must be at least 12 characters long for security compliance' 
+        });
+      }
+
+      // Password complexity requirements
+      const hasUpperCase = /[A-Z]/.test(newPassword);
+      const hasLowerCase = /[a-z]/.test(newPassword);
+      const hasNumbers = /\d/.test(newPassword);
+      const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
+
+      if (!hasUpperCase || !hasLowerCase || !hasNumbers || !hasSpecialChar) {
+        return res.status(400).json({ 
+          message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character' 
+        });
+      }
+
+      // Hash the token to compare with stored hash
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      
+      // Find and validate the reset token
+      const resetTokenRecord = await storage.getPasswordResetTokenByHash(tokenHash);
+      
+      if (!resetTokenRecord) {
+        return res.status(400).json({ 
+          message: 'Invalid or expired password reset token' 
+        });
+      }
+
+      // Mark token as used
+      await storage.markPasswordResetTokenAsUsed(resetTokenRecord.id);
+
+      // Hash the new password
+      const saltRounds = 12; // Higher salt rounds for healthcare security
+      const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+
+      // Update user password and set passwordChangedAt
+      const updatedUser = await storage.updateUserPassword(
+        resetTokenRecord.userId, 
+        newPasswordHash, 
+        resetTokenRecord.tenantId || undefined
+      );
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Invalidate all existing sessions for security
+      await storage.invalidateUserSessions(resetTokenRecord.userId, new Date());
+
+      console.log(`[SECURITY] Password successfully reset for user: ${resetTokenRecord.userId}`);
+
+      res.status(200).json({ 
+        message: 'Password has been successfully reset. Please log in with your new password.' 
+      });
+
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ message: 'Failed to reset password. Please try again.' });
     }
   });
 

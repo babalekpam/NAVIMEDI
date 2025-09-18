@@ -1,6 +1,7 @@
 import { 
   tenants, 
   users, 
+  passwordResetTokens,
   patients, 
   crossTenantPatients,
   appointments, 
@@ -86,6 +87,8 @@ import {
   type User, 
   type InsertUser,
   type UpsertUser,
+  type PasswordResetToken,
+  type InsertPasswordResetToken,
   type Patient,
   type InsertPatient,
   type CrossTenantPatient,
@@ -201,6 +204,14 @@ export interface IStorage {
   
   // Replit Auth specific methods
   upsertUser(user: UpsertUser): Promise<User>;
+
+  // Password reset management - SECURITY: Enhanced with healthcare-grade security
+  createPasswordResetToken(token: InsertPasswordResetToken): Promise<PasswordResetToken>;
+  getPasswordResetTokenByHash(tokenHash: string): Promise<PasswordResetToken | undefined>;
+  markPasswordResetTokenAsUsed(id: string): Promise<PasswordResetToken | undefined>;
+  cleanupExpiredPasswordResetTokens(): Promise<number>;
+  updateUserPassword(userId: string, passwordHash: string, tenantId?: string): Promise<User | undefined>;
+  invalidateUserSessions(userId: string, passwordChangedAt: Date): Promise<void>;
 
   // Tenant management
   getTenant(id: string): Promise<Tenant | undefined>;
@@ -767,6 +778,61 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user || undefined;
+  }
+
+  // Password reset management - SECURITY: Healthcare-grade password reset implementation
+  async createPasswordResetToken(token: InsertPasswordResetToken): Promise<PasswordResetToken> {
+    const [passwordResetToken] = await db.insert(passwordResetTokens).values(token).returning();
+    return passwordResetToken;
+  }
+
+  async getPasswordResetTokenByHash(tokenHash: string): Promise<PasswordResetToken | undefined> {
+    const [token] = await db.select().from(passwordResetTokens).where(
+      and(
+        eq(passwordResetTokens.tokenHash, tokenHash),
+        gt(passwordResetTokens.expiresAt, sql`CURRENT_TIMESTAMP`),
+        isNull(passwordResetTokens.usedAt)
+      )
+    );
+    return token || undefined;
+  }
+
+  async markPasswordResetTokenAsUsed(id: string): Promise<PasswordResetToken | undefined> {
+    const [token] = await db.update(passwordResetTokens)
+      .set({ usedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(passwordResetTokens.id, id))
+      .returning();
+    return token || undefined;
+  }
+
+  async cleanupExpiredPasswordResetTokens(): Promise<number> {
+    const result = await db.delete(passwordResetTokens)
+      .where(lt(passwordResetTokens.expiresAt, sql`CURRENT_TIMESTAMP`));
+    return result.rowCount || 0;
+  }
+
+  async updateUserPassword(userId: string, passwordHash: string, tenantId?: string): Promise<User | undefined> {
+    const whereClause = tenantId 
+      ? and(eq(users.id, userId), eq(users.tenantId, tenantId))
+      : eq(users.id, userId);
+
+    const [user] = await db.update(users)
+      .set({ 
+        password: passwordHash,
+        passwordChangedAt: sql`CURRENT_TIMESTAMP`,
+        isTemporaryPassword: false,
+        mustChangePassword: false,
+        updatedAt: sql`CURRENT_TIMESTAMP` 
+      })
+      .where(whereClause)
+      .returning();
+    return user || undefined;
+  }
+
+  async invalidateUserSessions(userId: string, passwordChangedAt: Date): Promise<void> {
+    // This method is used by auth middleware to check if JWT tokens are still valid
+    // The actual invalidation is handled by checking passwordChangedAt against JWT token issue time
+    console.log(`[SECURITY] Sessions invalidated for user ${userId} at ${passwordChangedAt.toISOString()}`);
   }
 
   async getUsersByTenant(tenantId: string): Promise<User[]> {

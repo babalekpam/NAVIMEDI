@@ -487,6 +487,7 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").default(true),
   isTemporaryPassword: boolean("is_temporary_password").default(false),
   mustChangePassword: boolean("must_change_password").default(false),
+  passwordChangedAt: timestamp("password_changed_at"),
   languagePreference: text("language_preference").default("en"),
   lastLogin: timestamp("last_login"),
   // Stripe integration fields
@@ -495,6 +496,26 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
+
+// Password Reset Tokens - for secure password reset functionality
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  tenantId: uuid("tenant_id").references(() => tenants.id), // Nullable for cross-tenant users
+  tokenHash: text("token_hash").notNull(), // SHA-256 hash of the actual token
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"), // Nullable - set when token is consumed
+  requestedIp: text("requested_ip"), // IP address of the reset request
+  userAgent: text("user_agent"), // User agent of the reset request
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  // Index for efficient token lookups
+  tokenHashIdx: index("password_reset_tokens_token_hash_idx").on(table.tokenHash),
+  // Index for cleanup of expired tokens
+  expiresAtIdx: index("password_reset_tokens_expires_at_idx").on(table.expiresAt),
+  // Index for user lookups
+  userIdIdx: index("password_reset_tokens_user_id_idx").on(table.userId)
+}));
 
 export const patients = pgTable("patients", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -2795,6 +2816,11 @@ export const insertUserSchema = createInsertSchema(users).omit({
   lastLogin: true
 });
 
+export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({
+  id: true,
+  createdAt: true
+});
+
 export const insertPatientSchema = createInsertSchema(patients).omit({
   id: true,
   tenantPatientId: true, // Auto-generated per tenant
@@ -3077,6 +3103,9 @@ export type InsertTenant = z.infer<typeof insertTenantSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpsertUser = typeof users.$inferInsert;
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
 
 export type Patient = typeof patients.$inferSelect;
 export type InsertPatient = z.infer<typeof insertPatientSchema>;

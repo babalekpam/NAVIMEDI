@@ -69,6 +69,40 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
       console.error("Token expired at:", new Date(decoded.exp * 1000));
       return res.status(401).json({ message: "Token expired", code: "TOKEN_EXPIRED" });
     }
+
+    // SECURITY: Check if token was issued before password change
+    // This invalidates all existing sessions when password is reset
+    try {
+      const { storage } = await import("../storage");
+      const user = await storage.getUser(decoded.userId, decoded.tenantId);
+      
+      if (!user) {
+        console.error("[SECURITY] User not found during token validation:", decoded.userId);
+        return res.status(401).json({ message: "User not found", code: "USER_NOT_FOUND" });
+      }
+
+      if (!user.isActive) {
+        console.error("[SECURITY] Inactive user attempted access:", decoded.userId);
+        return res.status(401).json({ message: "Account is inactive", code: "ACCOUNT_INACTIVE" });
+      }
+
+      // Check if password was changed after token was issued
+      if (user.passwordChangedAt) {
+        const passwordChangedTimestamp = Math.floor(new Date(user.passwordChangedAt).getTime() / 1000);
+        const tokenIssuedAt = decoded.iat || 0; // JWT "iat" (issued at) claim
+        
+        if (passwordChangedTimestamp > tokenIssuedAt) {
+          console.log(`[SECURITY] Token invalidated - password changed after token issue. User: ${decoded.userId}`);
+          return res.status(401).json({ 
+            message: "Session expired due to password change. Please log in again.", 
+            code: "PASSWORD_CHANGED" 
+          });
+        }
+      }
+    } catch (storageError) {
+      console.error("[SECURITY] Error checking user during token validation:", storageError);
+      return res.status(401).json({ message: "Authentication validation failed", code: "AUTH_ERROR" });
+    }
     
     req.user = {
       id: decoded.userId,
