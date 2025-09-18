@@ -171,16 +171,8 @@ export default function LabResultsReporting() {
       const { apiRequest } = await import("@/lib/queryClient");
       return apiRequest("POST", "/api/reports", {
         type: data.reportType,
-        dateRange: {
-          from: format(data.dateFrom, 'yyyy-MM-dd'),
-          to: format(data.dateTo, 'yyyy-MM-dd')
-        },
         format: data.format,
-        options: {
-          includePatientData: data.includePatientData,
-          includeTestResults: data.includeTestResults,
-          includeStatistics: data.includeStatistics
-        }
+        title: `Laboratory ${data.reportType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Report - ${format(data.dateFrom, 'MMM dd')} to ${format(data.dateTo, 'MMM dd, yyyy')}`
       });
     },
     onSuccess: (data) => {
