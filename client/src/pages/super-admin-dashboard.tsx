@@ -160,6 +160,63 @@ interface PlatformStats {
   inactiveTenants: number;
 }
 
+// Stripe Revenue Data Types
+interface StripeRevenueTrend {
+  timestamp: string;
+  value: number;
+  target?: number;
+  monthKey?: string; // Add monthKey for YYYY-MM data joining
+}
+
+interface StripeMrrData {
+  current: number;
+  previous: number;
+  growthPercent: number;
+  trend: 'up' | 'down' | 'stable';
+  trends: StripeRevenueTrend[];
+}
+
+interface StripeSubscriptionData {
+  active: number;
+  total: number;
+  growthPercent: number;
+  trends: StripeRevenueTrend[];
+}
+
+interface StripeRevenueData {
+  success: boolean;
+  message?: string; // Add message property for error cases
+  data: {
+    mrr: StripeMrrData;
+    totalRevenue: {
+      amount: number;
+      trends: StripeRevenueTrend[];
+    };
+    subscriptions: StripeSubscriptionData;
+    customers: {
+      total: number;
+      arpu: number;
+      ltv: number;
+    };
+    churn: {
+      rate: number;
+      churned: number;
+    };
+    plans: {
+      distribution: Record<string, number>;
+    };
+  };
+  metadata: {
+    generatedAt: string;
+    queryTime: number;
+    recordCount: number;
+    dateRange: {
+      start: string;
+      end: string;
+    };
+  };
+}
+
 // Edit organization form schema
 const editOrganizationSchema = z.object({
   name: z.string().min(1, "Organization name is required"),
@@ -216,6 +273,13 @@ export default function SuperAdminDashboard() {
 
   const { data: suppliers, isLoading: suppliersLoading } = useQuery<MedicalSupplier[]>({
     queryKey: ['/api/admin/suppliers']
+  });
+
+  // Get Stripe subscription revenue data
+  const { data: stripeRevenue, isLoading: stripeRevenueLoading } = useQuery<StripeRevenueData>({
+    queryKey: ['/api/admin/stripe-revenue'],
+    retry: 1,
+    retryOnMount: false
   });
 
   // Edit organization mutation
@@ -718,6 +782,53 @@ export default function SuperAdminDashboard() {
     }];
   }, [platformAnalytics]);
 
+  // Process Stripe revenue data for charts
+  const stripeMrrChartData = useMemo(() => {
+    if (stripeRevenue?.data?.mrr?.trends?.length) {
+      return stripeRevenue.data.mrr.trends.map((point) => {
+        const date = new Date(point.timestamp);
+        const monthName = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        // Fix: Use YYYY-MM key for accurate data joining instead of month-only
+        const monthKey = point.monthKey || `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        return {
+          month: monthName,
+          monthKey: monthKey, // Add monthKey for debugging
+          mrr: Math.round(point.value),
+          target: Math.round(point.target || point.value * 1.1),
+          subscriptions: stripeRevenue.data.subscriptions.trends.find(s => 
+            (s.monthKey && s.monthKey === monthKey) || 
+            (!s.monthKey && new Date(s.timestamp).getMonth() === date.getMonth() && new Date(s.timestamp).getFullYear() === date.getFullYear())
+          )?.value || 0
+        };
+      });
+    }
+    return [];
+  }, [stripeRevenue]);
+
+  const stripeRevenueMetrics = useMemo(() => {
+    if (!stripeRevenue?.data) {
+      return {
+        currentMrr: 0,
+        mrrGrowth: 0,
+        totalRevenue: 0,
+        activeSubscriptions: 0,
+        arpu: 0,
+        churnRate: 0
+      };
+    }
+
+    const data = stripeRevenue.data;
+    return {
+      currentMrr: Math.round(data.mrr.current),
+      mrrGrowth: Math.round(data.mrr.growthPercent * 10) / 10,
+      totalRevenue: Math.round(data.totalRevenue.amount),
+      activeSubscriptions: data.subscriptions.active,
+      arpu: Math.round(data.customers.arpu),
+      churnRate: Math.round(data.churn.rate * 10) / 10
+    };
+  }, [stripeRevenue]);
+
   // Advanced Analytics Chart Configs
   const revenueChartConfig = {
     revenue: {
@@ -725,7 +836,7 @@ export default function SuperAdminDashboard() {
       color: "hsl(142, 76%, 36%)",
     },
     subscriptions: {
-      label: "Active Subscriptions",
+      label: "New Subscriptions",
       color: "hsl(220, 98%, 61%)",
     },
     growth: {
@@ -760,6 +871,22 @@ export default function SuperAdminDashboard() {
     },
     netGrowth: {
       label: "Net Growth",
+      color: "hsl(220, 98%, 61%)",
+    },
+  } satisfies ChartConfig;
+
+  // Stripe MRR Chart Config
+  const stripeMrrChartConfig = {
+    mrr: {
+      label: "Monthly Recurring Revenue ($)",
+      color: "hsl(142, 76%, 36%)",
+    },
+    target: {
+      label: "Target ($)",
+      color: "hsl(210, 40%, 70%)",
+    },
+    subscriptions: {
+      label: "New Subscriptions",
       color: "hsl(220, 98%, 61%)",
     },
   } satisfies ChartConfig;
@@ -1164,6 +1291,160 @@ export default function SuperAdminDashboard() {
               </CardContent>
             </Card>
 
+            {/* Stripe Subscription Revenue Chart */}
+            <Card data-testid="card-stripe-revenue">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-green-600" />
+                  Subscription Revenue (Stripe)
+                </CardTitle>
+                <CardDescription>
+                  Monthly Recurring Revenue trends and subscription metrics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {stripeRevenueLoading ? (
+                  <div className="h-[300px] flex items-center justify-center">
+                    <div className="text-sm text-muted-foreground">Loading subscription data...</div>
+                  </div>
+                ) : !stripeRevenue?.success ? (
+                  <div className="h-[300px] flex items-center justify-center">
+                    <div className="text-sm text-muted-foreground">
+                      {stripeRevenue?.message || "Stripe integration not available"}
+                    </div>
+                  </div>
+                ) : stripeMrrChartData.length > 0 ? (
+                  <div className="h-[300px]">
+                    <ChartContainer config={stripeMrrChartConfig}>
+                      <LineChart data={stripeMrrChartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis yAxisId="mrr" orientation="left" />
+                        <YAxis yAxisId="subscriptions" orientation="right" />
+                        <ChartTooltip 
+                          content={<ChartTooltipContent />}
+                          formatter={(value, name) => [
+                            name === 'mrr' ? `$${value.toLocaleString()}` : 
+                            name === 'target' ? `$${value.toLocaleString()}` : value,
+                            name === 'mrr' ? 'MRR' :
+                            name === 'target' ? 'Target' : 'Subscriptions'
+                          ]}
+                        />
+                        <ChartLegend content={<ChartLegendContent />} />
+                        <Line
+                          yAxisId="mrr"
+                          type="monotone" 
+                          dataKey="mrr" 
+                          stroke="var(--color-mrr)" 
+                          strokeWidth={3}
+                          dot={{ fill: "var(--color-mrr)", strokeWidth: 2, r: 4 }}
+                        />
+                        <Line
+                          yAxisId="mrr"
+                          type="monotone" 
+                          dataKey="target" 
+                          stroke="var(--color-target)" 
+                          strokeWidth={2}
+                          strokeDasharray="5 5"
+                          dot={{ fill: "var(--color-target)", strokeWidth: 2, r: 3 }}
+                        />
+                        <Line
+                          yAxisId="subscriptions"
+                          type="monotone" 
+                          dataKey="subscriptions" 
+                          stroke="var(--color-subscriptions)" 
+                          strokeWidth={2}
+                          dot={{ fill: "var(--color-subscriptions)", strokeWidth: 2, r: 3 }}
+                        />
+                      </LineChart>
+                    </ChartContainer>
+                  </div>
+                ) : (
+                  <div className="h-[300px] flex items-center justify-center">
+                    <div className="text-sm text-muted-foreground">No subscription data available</div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Stripe Subscription Metrics Cards */}
+          {stripeRevenue?.success && (
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+              <Card data-testid="card-mrr-current">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Current MRR</CardTitle>
+                  <TrendingUp className={`h-4 w-4 ${stripeRevenueMetrics.mrrGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${stripeRevenueMetrics.currentMrr.toLocaleString()}</div>
+                  <p className={`text-xs ${stripeRevenueMetrics.mrrGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {stripeRevenueMetrics.mrrGrowth >= 0 ? '+' : ''}{stripeRevenueMetrics.mrrGrowth}% from last month
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card data-testid="card-total-revenue">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                  <BarChart3 className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${stripeRevenueMetrics.totalRevenue.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground">All-time revenue</p>
+                </CardContent>
+              </Card>
+
+              <Card data-testid="card-active-subscriptions">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Subscriptions</CardTitle>
+                  <Users className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stripeRevenueMetrics.activeSubscriptions}</div>
+                  <p className="text-xs text-muted-foreground">Currently active</p>
+                </CardContent>
+              </Card>
+
+              <Card data-testid="card-arpu">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">ARPU</CardTitle>
+                  <Activity className="h-4 w-4 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${stripeRevenueMetrics.arpu}</div>
+                  <p className="text-xs text-muted-foreground">Avg revenue per user</p>
+                </CardContent>
+              </Card>
+
+              <Card data-testid="card-churn-rate">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Churn Rate</CardTitle>
+                  <XCircle className={`h-4 w-4 ${stripeRevenueMetrics.churnRate > 5 ? 'text-red-600' : 'text-green-600'}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stripeRevenueMetrics.churnRate}%</div>
+                  <p className="text-xs text-muted-foreground">Monthly churn rate</p>
+                </CardContent>
+              </Card>
+
+              <Card data-testid="card-revenue-per-tenant">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Revenue/Tenant</CardTitle>
+                  <Building2 className="h-4 w-4 text-orange-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    ${Math.round(stripeRevenueMetrics.currentMrr / Math.max(1, platformStats?.totalTenants || 1)).toLocaleString()}
+                  </div>
+                  <p className="text-xs text-muted-foreground">MRR per tenant</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Revenue & Growth Analysis */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <Card data-testid="card-supplier-analytics">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

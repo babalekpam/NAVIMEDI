@@ -34,13 +34,22 @@ import Stripe from "stripe";
 
 // Initialize Stripe - only if secret key is properly configured
 let stripe: Stripe | null = null;
-if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_')) {
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-07-30.basil",
-  });
-  console.log("✅ Stripe initialized successfully");
-} else {
-  console.warn("⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'");
+try {
+  if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_')) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2024-10-22",
+    });
+    console.log("✅ Stripe initialized successfully with API version 2024-10-22");
+  } else {
+    console.warn("⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format:", 
+      process.env.STRIPE_SECRET_KEY ? 
+        `${process.env.STRIPE_SECRET_KEY.substring(0, 7)}...` : 
+        'undefined'
+    );
+  }
+} catch (error) {
+  console.error("❌ Failed to initialize Stripe:", error);
+  stripe = null;
 }
 
 // Document Generation Function for Insurance Claims
@@ -3877,6 +3886,296 @@ to the patient and authorized healthcare providers.
         success: false,
         message: 'Failed to fetch platform stats',
         error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // Get Stripe subscription revenue data for super admin dashboard
+  app.get('/api/admin/stripe-revenue', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+    try {
+      const startTime = Date.now();
+      
+      if (!stripe) {
+        return res.status(503).json({ 
+          success: false,
+          message: "Stripe integration not available",
+          data: null
+        });
+      }
+
+      // Get date range from query params (default to last 12 months)
+      const { start, end } = req.query;
+      const endDate = end ? new Date(end as string) : new Date();
+      const startDate = start ? new Date(start as string) : new Date(endDate.getTime() - (365 * 24 * 60 * 60 * 1000));
+      
+      // Use auto-pagination to get ALL subscriptions (fixes pagination issue)
+      // Remove created filter to include all subscriptions regardless of creation date
+      // MRR calculation will determine which were active in each month
+      const allSubscriptions: any[] = [];
+      for await (const subscription of stripe.subscriptions.list({
+        status: 'all',
+        expand: ['data.latest_invoice', 'data.customer']
+        // No created filter - include all subscriptions for accurate MRR calculation
+      }).autoPagingEach()) {
+        allSubscriptions.push(subscription);
+      }
+
+      // Use auto-pagination to get ALL customers (fixes pagination issue)
+      const allCustomers: any[] = [];
+      for await (const customer of stripe.customers.list().autoPagingEach()) {
+        allCustomers.push(customer);
+      }
+
+      // Get ALL invoices for accurate revenue calculation (fixes revenue misattribution)
+      const allInvoices: any[] = [];
+      for await (const invoice of stripe.invoices.list({
+        created: { 
+          gte: Math.floor(startDate.getTime() / 1000),
+          lte: Math.floor(endDate.getTime() / 1000)
+        },
+        status: 'paid'
+      }).autoPagingEach()) {
+        allInvoices.push(invoice);
+      }
+
+      // Initialize data structures with YYYY-MM keys (fixes client-side data join bug)
+      const mrrByMonth: Record<string, number> = {};
+      const activeCustomersByMonth: Record<string, number> = {};
+      const newSubscriptionsByMonth: Record<string, number> = {};
+      const canceledSubscriptionsByMonth: Record<string, number> = {};
+      const revenueByMonth: Record<string, number> = {};
+      
+      // Create all month keys for the date range
+      const monthKeys: string[] = [];
+      for (let d = new Date(startDate); d <= endDate; d.setMonth(d.getMonth() + 1)) {
+        const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        monthKeys.push(monthKey);
+        mrrByMonth[monthKey] = 0;
+        activeCustomersByMonth[monthKey] = 0;
+        newSubscriptionsByMonth[monthKey] = 0;
+        canceledSubscriptionsByMonth[monthKey] = 0;
+        revenueByMonth[monthKey] = 0;
+      }
+
+      // Process revenue from invoices (grouped by paid_at date, not creation date)
+      for (const invoice of allInvoices) {
+        if (invoice.amount_paid && invoice.status_transitions?.paid_at) {
+          const paidDate = new Date(invoice.status_transitions.paid_at * 1000);
+          const monthKey = `${paidDate.getFullYear()}-${String(paidDate.getMonth() + 1).padStart(2, '0')}`;
+          
+          if (revenueByMonth[monthKey] !== undefined) {
+            revenueByMonth[monthKey] += invoice.amount_paid / 100; // Convert cents to dollars
+          }
+        }
+      }
+
+      // Process subscriptions for MRR calculation (fixes MRR calculation)
+      let totalActiveSubscriptions = 0;
+      let totalChurnedInPeriod = 0;
+      const subscriptionsByStatus: Record<string, number> = {};
+
+      for (const subscription of allSubscriptions) {
+        // Calculate normalized monthly amount with proper quantity and interval_count handling
+        const monthlyAmount = subscription.items.data.reduce((sum: number, item: any) => {
+          const price = item.price;
+          if (!price?.recurring) return sum;
+          
+          const unitAmount = price.unit_amount || 0;
+          const quantity = item.quantity || 1; // Handle quantity
+          const interval = price.recurring.interval;
+          const intervalCount = price.recurring.interval_count || 1; // Handle interval_count
+          
+          let monthlyRate = 0;
+          if (interval === 'month') {
+            monthlyRate = unitAmount / intervalCount; // e.g., every 3 months = /3
+          } else if (interval === 'year') {
+            monthlyRate = unitAmount / (12 * intervalCount); // e.g., every 2 years = /24
+          } else if (interval === 'week') {
+            monthlyRate = (unitAmount * 4.33) / intervalCount; // ~4.33 weeks per month
+          } else if (interval === 'day') {
+            monthlyRate = (unitAmount * 30.44) / intervalCount; // ~30.44 days per month
+          }
+          
+          return sum + (monthlyRate * quantity);
+        }, 0) / 100; // Convert from cents to dollars
+
+        // Track subscription by status
+        subscriptionsByStatus[subscription.status] = (subscriptionsByStatus[subscription.status] || 0) + 1;
+
+        // For each month, check if subscription was active
+        for (const monthKey of monthKeys) {
+          const monthStart = new Date(monthKey + '-01');
+          const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
+          
+          const subscriptionStart = new Date(subscription.created * 1000);
+          const subscriptionEnd = subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null;
+          
+          // Check if subscription was active during this month
+          const wasActiveInMonth = subscriptionStart <= monthEnd && 
+            (!subscriptionEnd || subscriptionEnd >= monthStart) &&
+            ['active', 'trialing', 'past_due'].includes(subscription.status);
+            
+          if (wasActiveInMonth) {
+            mrrByMonth[monthKey] += monthlyAmount;
+            activeCustomersByMonth[monthKey]++;
+          }
+        }
+
+        // Track new subscriptions by creation month
+        const createdDate = new Date(subscription.created * 1000);
+        const createdMonthKey = `${createdDate.getFullYear()}-${String(createdDate.getMonth() + 1).padStart(2, '0')}`;
+        if (newSubscriptionsByMonth[createdMonthKey] !== undefined) {
+          newSubscriptionsByMonth[createdMonthKey]++;
+        }
+
+        // Track canceled subscriptions by cancellation month
+        if (subscription.canceled_at) {
+          const canceledDate = new Date(subscription.canceled_at * 1000);
+          const canceledMonthKey = `${canceledDate.getFullYear()}-${String(canceledDate.getMonth() + 1).padStart(2, '0')}`;
+          if (canceledSubscriptionsByMonth[canceledMonthKey] !== undefined) {
+            canceledSubscriptionsByMonth[canceledMonthKey]++;
+          }
+          
+          // Count churn in period
+          if (canceledDate >= startDate && canceledDate <= endDate) {
+            totalChurnedInPeriod++;
+          }
+        }
+
+        // Count total active subscriptions
+        if (['active', 'trialing', 'past_due'].includes(subscription.status)) {
+          totalActiveSubscriptions++;
+        }
+      }
+
+      // Create time series data with YYYY-MM keys for consistent joining
+      const mrrTrends: any[] = [];
+      const revenueTrends: any[] = [];
+      const subscriptionTrends: any[] = [];
+      
+      for (const monthKey of monthKeys) {
+        const [year, month] = monthKey.split('-');
+        const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+        
+        mrrTrends.push({
+          timestamp: date.toISOString(),
+          monthKey: monthKey, // Add YYYY-MM key for client joining
+          value: Math.round(mrrByMonth[monthKey] || 0),
+          target: Math.max(mrrByMonth[monthKey] || 0, 10000) // Dynamic target
+        });
+        
+        revenueTrends.push({
+          timestamp: date.toISOString(),
+          monthKey: monthKey, // Add YYYY-MM key for client joining
+          value: Math.round(revenueByMonth[monthKey] || 0)
+        });
+        
+        subscriptionTrends.push({
+          timestamp: date.toISOString(),
+          monthKey: monthKey, // Add YYYY-MM key for client joining
+          value: newSubscriptionsByMonth[monthKey] || 0
+        });
+      }
+
+      // Calculate accurate business metrics
+      const currentMrr = mrrTrends[mrrTrends.length - 1]?.value || 0;
+      const previousMrr = mrrTrends[mrrTrends.length - 2]?.value || 0;
+      const mrrGrowthPercent = previousMrr > 0 ? ((currentMrr - previousMrr) / previousMrr) * 100 : 0;
+      
+      const currentActiveSubs = activeCustomersByMonth[monthKeys[monthKeys.length - 1]] || 0;
+      const previousActiveSubs = activeCustomersByMonth[monthKeys[monthKeys.length - 2]] || 0;
+      const subscriptionGrowthPercent = previousActiveSubs > 0 ? ((currentActiveSubs - previousActiveSubs) / previousActiveSubs) * 100 : 0;
+
+      // Fix churn rate calculation: cancellations in period / active at period start
+      const activeAtPeriodStart = activeCustomersByMonth[monthKeys[0]] || 0;
+      const churnRate = activeAtPeriodStart > 0 ? (totalChurnedInPeriod / activeAtPeriodStart) * 100 : 0;
+
+      // Fix ARPU calculation: MRR / active customers
+      const arpu = currentActiveSubs > 0 ? currentMrr / currentActiveSubs : 0;
+      
+      // Fix LTV calculation with div-by-zero guard: ARPU / (churn rate / 100)
+      const monthlyChurnRate = churnRate / 100;
+      const ltv = monthlyChurnRate > 0 ? arpu / monthlyChurnRate : (arpu * 24); // fallback to 24 months
+
+      const totalRevenue = Object.values(revenueByMonth).reduce((sum, amount) => sum + amount, 0);
+
+      const response = {
+        success: true,
+        data: {
+          mrr: {
+            current: currentMrr,
+            previous: previousMrr,
+            growthPercent: mrrGrowthPercent,
+            trend: mrrGrowthPercent > 0 ? 'up' : mrrGrowthPercent < 0 ? 'down' : 'stable',
+            trends: mrrTrends
+          },
+          totalRevenue: {
+            amount: totalRevenue,
+            trends: revenueTrends
+          },
+          subscriptions: {
+            active: totalActiveSubscriptions,
+            total: allSubscriptions.length,
+            growthPercent: subscriptionGrowthPercent,
+            trends: subscriptionTrends,
+            byStatus: subscriptionsByStatus
+          },
+          customers: {
+            total: allCustomers.length,
+            arpu: Math.round(arpu * 100) / 100, // Round to 2 decimal places
+            ltv: Math.round(ltv * 100) / 100
+          },
+          churn: {
+            rate: Math.round(churnRate * 100) / 100,
+            churned: totalChurnedInPeriod
+          },
+          plans: {
+            distribution: allSubscriptions.reduce((acc: Record<string, number>, sub) => {
+              const planName = sub.items.data[0]?.price?.nickname || 'Unknown Plan';
+              acc[planName] = (acc[planName] || 0) + 1;
+              return acc;
+            }, {})
+          }
+        },
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          queryTime: Date.now() - startTime,
+          recordCount: allSubscriptions.length,
+          dateRange: {
+            start: startDate.toISOString(),
+            end: endDate.toISOString()
+          }
+        }
+      };
+
+      res.json(response);
+    } catch (error: any) {
+      console.error('❌ Error fetching Stripe revenue data:', {
+        message: error.message,
+        type: error.type,
+        code: error.code,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
+      
+      // Provide specific error messages for common Stripe issues
+      let errorMessage = 'Failed to fetch subscription revenue data';
+      if (error.type === 'StripeAuthenticationError') {
+        errorMessage = 'Stripe authentication failed - check API key configuration';
+      } else if (error.type === 'StripeAPIError') {
+        errorMessage = 'Stripe API error - the service may be temporarily unavailable';
+      } else if (error.type === 'StripeRateLimitError') {
+        errorMessage = 'Stripe rate limit exceeded - please try again later';
+      }
+      
+      res.status(500).json({ 
+        success: false,
+        message: errorMessage,
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+        metadata: {
+          timestamp: new Date().toISOString(),
+          errorType: error.type || 'Unknown',
+          stripeInitialized: stripe !== null
+        }
       });
     }
   });
