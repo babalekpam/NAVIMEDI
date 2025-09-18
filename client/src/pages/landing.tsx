@@ -217,72 +217,106 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-emerald-50/30">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Animated Background with Healthcare Gradients */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/40 to-emerald-50/40">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-teal-500/5 to-emerald-600/5 animate-pulse"></div>
+        {/* Floating orbs for visual interest */}
+        <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-blue-400/20 to-teal-400/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-40 right-20 w-96 h-96 bg-gradient-to-r from-emerald-400/15 to-blue-400/15 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+        <div className="absolute bottom-40 left-1/4 w-64 h-64 bg-gradient-to-r from-teal-400/10 to-emerald-400/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '4s'}}></div>
+      </div>
+      
+      <div className="relative z-10">
+        <PublicHeader />
 
-
-      <PublicHeader />
-
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6">
-        <div className="container mx-auto">
-          <div className="text-center max-w-5xl mx-auto">
-            {/* Trust Badge */}
-            <Badge className="mb-8 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 px-4 py-2">
+        {/* Modern Hero Section */}
+        <section className="pt-32 pb-20 px-6 relative">
+          <div className="container mx-auto">
+            <div className="text-center max-w-5xl mx-auto relative">
+              {/* Glassmorphism backdrop */}
+              <div className="absolute inset-0 bg-white/30 backdrop-blur-sm rounded-3xl border border-white/20 shadow-2xl -m-8" style={{transform: 'translate(0, 20px)'}}></div>
+              <div className="relative z-10 p-8">
+              {/* Modern Trust Badge with glassmorphism */}
+              <div className="mb-8 animate-fade-in-up">
+                <Badge className="bg-white/60 backdrop-blur-md text-emerald-700 border border-emerald-200/50 hover:bg-white/70 hover:shadow-lg px-6 py-3 text-sm font-medium shadow-lg transition-all duration-300 hover:scale-105">
               <Award className="w-4 h-4 mr-2" />
               HIPAA Compliant • SOC 2 Type II • FDA 21 CFR Part 11
             </Badge>
             
-            {/* Main Headline - Benefit-Focused */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 tracking-tight">
-              <span className="bg-gradient-to-r from-slate-900 via-emerald-600 to-blue-600 bg-clip-text text-transparent">
-                Reduce Healthcare
-              </span>
-              <br />
-              <span className="text-slate-900">Admin Burden by 40%</span>
-            </h1>
+              {/* Enhanced Main Headline with modern typography */}
+              <div className="animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 tracking-tight leading-tight">
+                  <span className="bg-gradient-to-r from-slate-900 via-emerald-600 to-blue-600 bg-clip-text text-transparent animate-gradient-x bg-[length:200%_auto]">
+                    Reduce Healthcare
+                  </span>
+                  <br />
+                  <span className="text-slate-900 drop-shadow-sm">Admin Burden by 40%</span>
+                </h1>
+              </div>
             
-            {/* Subheading */}
-            <p className="text-xl md:text-2xl text-slate-600 mb-8 leading-relaxed max-w-3xl mx-auto">
-              Streamline hospital operations with NaviMED's complete healthcare management platform. 
-              HIPAA-compliant solution trusted by 200+ healthcare facilities worldwide.
-            </p>
+              {/* Enhanced Subheading */}
+              <div className="animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+                <p className="text-xl md:text-2xl text-slate-600 mb-8 leading-relaxed max-w-3xl mx-auto font-medium">
+                  Streamline hospital operations with NaviMED's complete healthcare management platform. 
+                  <span className="text-emerald-600 font-semibold">HIPAA-compliant</span> solution trusted by <span className="text-blue-600 font-semibold">200+</span> healthcare facilities worldwide.
+                </p>
+              </div>
 
-            {/* Social Proof Numbers */}
-            <div className="grid grid-cols-3 gap-8 mb-12 max-w-2xl mx-auto">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-emerald-600 mb-2">200+</div>
-                <div className="text-sm text-slate-600">Healthcare facilities</div>
+              {/* Modernized Social Proof with glassmorphism cards */}
+              <div className="animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+                <div className="grid grid-cols-3 gap-6 mb-12 max-w-2xl mx-auto">
+                  <div className="group bg-white/50 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/60">
+                    <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform duration-300">200+</div>
+                    <div className="text-sm text-slate-600 font-medium">Healthcare facilities</div>
+                  </div>
+                  <div className="group bg-white/50 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/60">
+                    <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform duration-300">50,000+</div>
+                    <div className="text-sm text-slate-600 font-medium">Patient records daily</div>
+                  </div>
+                  <div className="group bg-white/50 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/60">
+                    <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform duration-300">99.9%</div>
+                    <div className="text-sm text-slate-600 font-medium">Uptime guarantee</div>
+                  </div>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-2">50,000+</div>
-                <div className="text-sm text-slate-600">Patient records daily</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-emerald-600 mb-2">99.9%</div>
-                <div className="text-sm text-slate-600">Uptime guarantee</div>
-              </div>
-            </div>
             
-            {/* Multiple CTA Options */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <Link href="/register">
-                <Button size="lg" className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 shadow-xl shadow-emerald-600/25 px-8 py-4 text-lg">
-                  <Play className="w-5 h-5 mr-2" />
-                  Start Free Trial
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-              
-              <Button size="lg" variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50 px-8 py-4 text-lg">
-                <Calendar className="w-5 h-5 mr-2" />
-                Book a Demo
-              </Button>
+              {/* Modern CTA Buttons with enhanced effects */}
+              <div className="animate-fade-in-up" style={{animationDelay: '0.8s'}}>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+                  <Link href="/register">
+                    <Button 
+                      size="lg" 
+                      className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 shadow-2xl shadow-emerald-600/30 px-8 py-4 text-lg font-semibold group transform hover:scale-105 transition-all duration-300 hover:shadow-emerald-500/40"
+                      data-testid="button-start-trial"
+                    >
+                      <Play className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+                      Start Free Trial
+                      <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
+                  
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="bg-white/60 backdrop-blur-md border-2 border-slate-200/50 text-slate-700 hover:bg-white/80 hover:border-slate-300/60 hover:shadow-lg px-8 py-4 text-lg font-semibold transition-all duration-300 hover:scale-105"
+                    data-testid="button-book-demo"
+                  >
+                    <Calendar className="w-5 h-5 mr-2" />
+                    Book a Demo
+                  </Button>
 
-              <Button size="lg" variant="ghost" className="text-slate-600 hover:text-slate-800 px-8 py-4 text-lg">
-                <Monitor className="w-5 h-5 mr-2" />
-                See Platform Tour
-              </Button>
-            </div>
+                  <Button 
+                    size="lg" 
+                    variant="ghost" 
+                    className="text-slate-600 hover:text-slate-800 hover:bg-white/40 backdrop-blur-sm px-8 py-4 text-lg font-medium transition-all duration-300 hover:scale-105 rounded-xl"
+                    data-testid="button-platform-tour"
+                  >
+                    <Monitor className="w-5 h-5 mr-2" />
+                    See Platform Tour
+                  </Button>
+                </div>
+              </div>
 
             {/* Urgency Element */}
             <div className="mb-8">
@@ -314,339 +348,412 @@ export default function LandingPage() {
               </Link>
             </div>
             
-            {/* Stats - Connected to Backend */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-              <div className="space-y-3">
-                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-                  {isLoading ? "..." : stats.uptime}
+              {/* Enhanced Stats with Modern Glassmorphism Cards */}
+              <div className="animate-fade-in-up" style={{animationDelay: '1.0s'}}>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                  <div className="group bg-white/40 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl hover:shadow-2xl hover:bg-white/50 transition-all duration-300 hover:scale-105">
+                    <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300" data-testid="text-uptime-stat">
+                      {isLoading ? "..." : stats.uptime}
+                    </div>
+                    <div className="text-slate-600 font-medium mt-2">Uptime SLA</div>
+                  </div>
+                  <div className="group bg-white/40 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl hover:shadow-2xl hover:bg-white/50 transition-all duration-300 hover:scale-105">
+                    <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300" data-testid="text-languages-stat">
+                      {isLoading ? "..." : `${stats.languages}+`}
+                    </div>
+                    <div className="text-slate-600 font-medium mt-2">Languages</div>
+                  </div>
+                  <div className="group bg-white/40 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl hover:shadow-2xl hover:bg-white/50 transition-all duration-300 hover:scale-105">
+                    <div className="text-4xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300" data-testid="text-response-stat">
+                      {isLoading ? "..." : stats.responseTime}
+                    </div>
+                    <div className="text-slate-600 font-medium mt-2">Response Time</div>
+                  </div>
+                  <div className="group bg-white/40 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl hover:shadow-2xl hover:bg-white/50 transition-all duration-300 hover:scale-105">
+                    <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300" data-testid="text-support-stat">
+                      {isLoading ? "..." : stats.support}
+                    </div>
+                    <div className="text-slate-600 font-medium mt-2">Expert Support</div>
+                  </div>
                 </div>
-                <div className="text-slate-600 font-medium">Uptime SLA</div>
               </div>
-              <div className="space-y-3">
-                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-                  {isLoading ? "..." : `${stats.languages}+`}
+            
+              {/* Enhanced Live Platform Status */}
+              {platformData && (
+                <div className="animate-fade-in-up mt-12" style={{animationDelay: '1.2s'}}>
+                  <div className="flex items-center justify-center gap-3 text-sm">
+                    <div className="flex items-center gap-2 px-6 py-3 bg-white/60 backdrop-blur-md text-emerald-700 rounded-full border border-emerald-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                      <span className="font-medium">Platform Status: {platformData.status}</span>
+                    </div>
+                    <div className="text-slate-500 font-medium bg-white/40 backdrop-blur-sm px-4 py-2 rounded-full">
+                      {stats.organizations} organizations • {stats.users} users active
+                    </div>
+                  </div>
                 </div>
-                <div className="text-slate-600 font-medium">Languages</div>
+              )}
+          </div>
+        </div>
+      </section>
+
+        {/* Modern Advertisement Marketplace Section */}
+        <section className="py-20 relative overflow-hidden">
+          {/* Animated background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 via-teal-50/60 to-emerald-50/80">
+            <div className="absolute top-20 right-10 w-64 h-64 bg-gradient-to-r from-blue-400/10 to-teal-400/10 rounded-full blur-3xl animate-float"></div>
+            <div className="absolute bottom-20 left-20 w-80 h-80 bg-gradient-to-r from-emerald-400/10 to-blue-400/10 rounded-full blur-3xl animate-float" style={{animationDelay: '3s'}}></div>
+          </div>
+          
+          <div className="container mx-auto px-6 relative z-10">
+            <div className="text-center mb-16 animate-fade-in-up">
+              <Badge className="mb-6 bg-white/60 backdrop-blur-md text-emerald-700 border border-emerald-200/50 hover:bg-white/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3">
+                <Megaphone className="w-4 h-4 mr-2" />
+                New Feature Launch
+              </Badge>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900 leading-tight">
+                Medical Device <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Advertisement Marketplace</span>
+              </h2>
+              <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-medium">
+                Discover and showcase cutting-edge medical devices, healthcare services, and innovative solutions 
+                from trusted vendors and service providers.
+              </p>
+            </div>
+
+            {/* Modern Glassmorphism Cards */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+              <div className="animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-emerald-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden" data-testid="card-medical-equipment">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-emerald-400/20 to-blue-400/20 rounded-full blur-xl"></div>
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className="p-4 bg-gradient-to-br from-emerald-100/80 to-emerald-200/60 group-hover:from-emerald-200/90 group-hover:to-emerald-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                        <Stethoscope className="w-7 h-7 text-emerald-600 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">Medical Equipment</h3>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed text-lg mb-6 font-medium">
+                      Browse advanced diagnostic equipment, surgical instruments, and cutting-edge medical technology from certified vendors.
+                    </p>
+                    <Link href="/solutions/hospitals" className="text-emerald-600 hover:text-emerald-700 text-sm font-semibold inline-flex items-center group-hover:translate-x-1 transition-all">
+                      Learn more about hospital solutions <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </CardContent>
+                </Card>
               </div>
-              <div className="space-y-3">
-                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-                  {isLoading ? "..." : stats.responseTime}
-                </div>
-                <div className="text-slate-600 font-medium">Response Time</div>
+
+              <div className="animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-blue-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden" data-testid="card-healthcare-services">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-teal-400/20 rounded-full blur-xl"></div>
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className="p-4 bg-gradient-to-br from-blue-100/80 to-blue-200/60 group-hover:from-blue-200/90 group-hover:to-blue-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                        <Users className="w-7 h-7 text-blue-600 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-blue-700 transition-colors">Healthcare Services</h3>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed text-lg mb-6 font-medium">
+                      Connect with specialized healthcare service providers, consultants, and professional support services.
+                    </p>
+                    <Link href="/solutions/clinics" className="text-blue-600 hover:text-blue-700 text-sm font-semibold inline-flex items-center group-hover:translate-x-1 transition-all">
+                      Explore clinic management <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </CardContent>
+                </Card>
               </div>
-              <div className="space-y-3">
-                <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-                  {isLoading ? "..." : stats.support}
-                </div>
-                <div className="text-slate-600 font-medium">Expert Support</div>
+
+              <div className="animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-emerald-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden" data-testid="card-innovation-hub">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-emerald-400/20 to-yellow-400/20 rounded-full blur-xl"></div>
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className="p-4 bg-gradient-to-br from-yellow-100/80 to-emerald-200/60 group-hover:from-yellow-200/90 group-hover:to-emerald-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                        <Zap className="w-7 h-7 text-emerald-600 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">Innovation Hub</h3>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed text-lg mb-6 font-medium">
+                      Discover the latest healthcare innovations, research partnerships, and technology solutions for modern medicine.
+                    </p>
+                    <Link href="/integrations" className="text-emerald-600 hover:text-emerald-700 text-sm font-semibold inline-flex items-center group-hover:translate-x-1 transition-all">
+                      View available integrations <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </CardContent>
+                </Card>
               </div>
             </div>
-            
-            {/* Live Platform Status Indicator */}
-            {platformData && (
-              <div className="mt-12 flex items-center justify-center gap-3 text-sm">
-                <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                  <span className="font-medium">Platform Status: {platformData.status}</span>
-                </div>
-                <div className="text-slate-500">
-                  {stats.organizations} organizations • {stats.users} users active
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
 
-      {/* Advertisement Marketplace Section */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-emerald-50">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <Badge className="mb-6 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
-              <Megaphone className="w-4 h-4 mr-2" />
-              New Feature Launch
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900">
-              Medical Device <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Advertisement Marketplace</span>
-            </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-              Discover and showcase cutting-edge medical devices, healthcare services, and innovative solutions 
-              from trusted vendors and service providers.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-            <Card className="group border-emerald-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-500 bg-white hover:bg-gradient-to-br hover:from-emerald-50 hover:to-blue-50">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="p-3 bg-emerald-100 group-hover:bg-emerald-200 rounded-xl transition-colors">
-                    <Stethoscope className="w-7 h-7 text-emerald-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900">Medical Equipment</h3>
-                </div>
-                <p className="text-slate-600 leading-relaxed text-lg mb-4">
-                  Browse advanced diagnostic equipment, surgical instruments, and cutting-edge medical technology from certified vendors.
-                </p>
-                <Link href="/solutions/hospitals" className="text-emerald-600 hover:text-emerald-700 text-sm font-medium inline-flex items-center">
-                  Learn more about hospital solutions <ArrowRight className="w-4 h-4 ml-1" />
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="group border-blue-200 hover:border-blue-400 hover:shadow-2xl transition-all duration-500 bg-white hover:bg-gradient-to-br hover:from-blue-50 hover:to-emerald-50">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="p-3 bg-blue-100 group-hover:bg-blue-200 rounded-xl transition-colors">
-                    <Users className="w-7 h-7 text-blue-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900">Healthcare Services</h3>
-                </div>
-                <p className="text-slate-600 leading-relaxed text-lg mb-4">
-                  Connect with specialized healthcare service providers, consultants, and professional support services.
-                </p>
-                <Link href="/solutions/clinics" className="text-blue-600 hover:text-blue-700 text-sm font-medium inline-flex items-center">
-                  Explore clinic management <ArrowRight className="w-4 h-4 ml-1" />
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="group border-emerald-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-500 bg-white hover:bg-gradient-to-br hover:from-emerald-50 hover:to-blue-50">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="p-3 bg-emerald-100 group-hover:bg-emerald-200 rounded-xl transition-colors">
-                    <Zap className="w-7 h-7 text-emerald-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900">Innovation Hub</h3>
-                </div>
-                <p className="text-slate-600 leading-relaxed text-lg mb-4">
-                  Discover the latest healthcare innovations, research partnerships, and technology solutions for modern medicine.
-                </p>
-                <Link href="/integrations" className="text-emerald-600 hover:text-emerald-700 text-sm font-medium inline-flex items-center">
-                  View available integrations <ArrowRight className="w-4 h-4 ml-1" />
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Marketplace CTA */}
-          <div className="text-center">
-            <Link href="/marketplace">
-              <Button size="lg" className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 shadow-xl shadow-emerald-600/25 px-8 py-4 text-lg">
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                Browse Full Marketplace
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </Link>
-          </div>
+            {/* Enhanced Marketplace CTA */}
+            <div className="text-center animate-fade-in-up" style={{animationDelay: '0.8s'}}>
+              <Link href="/marketplace">
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 shadow-2xl shadow-emerald-600/30 px-10 py-5 text-lg font-semibold group transform hover:scale-105 transition-all duration-300 rounded-2xl"
+                  data-testid="button-browse-marketplace"
+                >
+                  <ShoppingCart className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+                  Browse Full Marketplace
+                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+            </div>
 
 
         </div>
       </section>
 
-      {/* Professional Image Carousel */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900">
-              Trusted by Healthcare <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Professionals Worldwide</span>
-            </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              See how healthcare organizations are transforming patient care with our platform
-            </p>
+        {/* Modern Professional Image Carousel */}
+        <section className="py-20 relative overflow-hidden">
+          {/* Subtle animated background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+            <div className="absolute top-32 left-10 w-72 h-72 bg-gradient-to-r from-emerald-400/5 to-blue-400/5 rounded-full blur-3xl animate-float"></div>
+            <div className="absolute bottom-20 right-20 w-96 h-96 bg-gradient-to-r from-blue-400/5 to-teal-400/5 rounded-full blur-3xl animate-float" style={{animationDelay: '4s'}}></div>
           </div>
+          
+          <div className="container mx-auto px-6 relative z-10">
+            <div className="text-center mb-16 animate-fade-in-up">
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900 leading-tight">
+                Trusted by Healthcare <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Professionals Worldwide</span>
+              </h2>
+              <p className="text-xl text-slate-600 max-w-3xl mx-auto font-medium">
+                See how healthcare organizations are transforming patient care with our platform
+              </p>
+            </div>
           
           <ImageCarousel />
         </div>
       </section>
 
-      {/* Key Features */}
-      <section id="features" className="py-24 bg-slate-50">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-20">
-            <Badge className="mb-6 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100">
-              <Brain className="w-4 h-4 mr-2" />
-              Powered by Advanced AI
-            </Badge>
-            <h2 className="text-5xl md:text-6xl font-bold mb-6 text-slate-900">
-              Enterprise-Grade <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Healthcare Platform</span>
-            </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-              Complete healthcare management ecosystem with AI-powered insights, real-time translation, 
-              and military-grade security for modern healthcare organizations.
-            </p>
+        {/* Modern Key Features Section */}
+        <section id="features" className="py-24 relative overflow-hidden">
+          {/* Enhanced background with floating elements */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-50/90 via-blue-50/50 to-emerald-50/40">
+            <div className="absolute top-20 right-16 w-80 h-80 bg-gradient-to-r from-blue-400/8 to-teal-400/8 rounded-full blur-3xl animate-float"></div>
+            <div className="absolute bottom-32 left-16 w-64 h-64 bg-gradient-to-r from-emerald-400/8 to-blue-400/8 rounded-full blur-3xl animate-float" style={{animationDelay: '2s'}}></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-teal-400/5 to-emerald-400/5 rounded-full blur-3xl animate-pulse"></div>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="group border-emerald-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-500 bg-white hover:bg-gradient-to-br hover:from-emerald-50 hover:to-blue-50">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="p-3 bg-emerald-100 group-hover:bg-emerald-200 rounded-xl transition-colors">
-                    <Languages className="w-7 h-7 text-emerald-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900">Serve diverse communities in 25+ languages</h3>
-                </div>
-                <p className="text-slate-600 leading-relaxed text-lg">
-                  Break down language barriers with instant multilingual support and AI-powered medical terminology translation for global healthcare delivery.
-                </p>
-              </CardContent>
-            </Card>
+          <div className="container mx-auto px-6 relative z-10">
+            <div className="text-center mb-20 animate-fade-in-up">
+              <Badge className="mb-6 bg-white/60 backdrop-blur-md text-blue-700 border border-blue-200/50 hover:bg-white/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3">
+                <Brain className="w-4 h-4 mr-2" />
+                Powered by Advanced AI
+              </Badge>
+              <h2 className="text-5xl md:text-6xl font-bold mb-6 text-slate-900 leading-tight">
+                Enterprise-Grade <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent animate-gradient-x bg-[length:200%_auto]">Healthcare Platform</span>
+              </h2>
+              <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-medium">
+                Complete healthcare management ecosystem with AI-powered insights, real-time translation, 
+                and military-grade security for modern healthcare organizations.
+              </p>
+            </div>
+          
+            {/* Modern Glassmorphism Feature Cards */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-emerald-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden" data-testid="card-multilingual-support">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-400/20 to-blue-400/20 rounded-full blur-xl"></div>
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className="p-4 bg-gradient-to-br from-emerald-100/80 to-emerald-200/60 group-hover:from-emerald-200/90 group-hover:to-emerald-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                        <Languages className="w-7 h-7 text-emerald-600 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors leading-tight">Serve diverse communities in 25+ languages</h3>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed text-lg font-medium">
+                      Break down language barriers with instant multilingual support and AI-powered medical terminology translation for global healthcare delivery.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
 
-            <Card className="group border-blue-200 hover:border-blue-400 hover:shadow-2xl transition-all duration-500 bg-white hover:bg-gradient-to-br hover:from-blue-50 hover:to-emerald-50">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="p-3 bg-blue-100 group-hover:bg-blue-200 rounded-xl transition-colors">
-                    <Shield className="w-7 h-7 text-blue-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900">Bank-level encryption for patient data</h3>
-                </div>
-                <p className="text-slate-600 leading-relaxed text-lg">
-                  Military-grade security with complete tenant isolation, HIPAA compliance, and comprehensive audit trails for ultimate data protection.
-                </p>
-              </CardContent>
-            </Card>
+              <div className="animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-blue-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden" data-testid="card-security">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-400/20 to-teal-400/20 rounded-full blur-xl"></div>
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className="p-4 bg-gradient-to-br from-blue-100/80 to-blue-200/60 group-hover:from-blue-200/90 group-hover:to-blue-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                        <Shield className="w-7 h-7 text-blue-600 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-blue-700 transition-colors leading-tight">Bank-level encryption for patient data</h3>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed text-lg font-medium">
+                      Military-grade security with complete tenant isolation, HIPAA compliance, and comprehensive audit trails for ultimate data protection.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
 
-            <Card className="group border-emerald-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-500 bg-white hover:bg-gradient-to-br hover:from-emerald-50 hover:to-blue-50">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="p-3 bg-emerald-100 group-hover:bg-emerald-200 rounded-xl transition-colors">
-                    <Brain className="w-7 h-7 text-emerald-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900">AI-Powered Insights</h3>
-                </div>
-                <p className="text-slate-600 leading-relaxed text-lg">
-                  Advanced analytics and predictive insights for patient care optimization, resource planning, and clinical decision support.
-                </p>
-              </CardContent>
-            </Card>
+              <div className="animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-emerald-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden" data-testid="card-ai-insights">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-400/20 to-emerald-400/20 rounded-full blur-xl"></div>
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className="p-4 bg-gradient-to-br from-purple-100/80 to-emerald-200/60 group-hover:from-purple-200/90 group-hover:to-emerald-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                        <Brain className="w-7 h-7 text-emerald-600 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">AI-Powered Insights</h3>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed text-lg font-medium">
+                      Advanced analytics and predictive insights for patient care optimization, resource planning, and clinical decision support.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
 
-            <Card className="group border-blue-200 hover:border-blue-400 hover:shadow-2xl transition-all duration-500 bg-white hover:bg-gradient-to-br hover:from-blue-50 hover:to-emerald-50">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="p-3 bg-blue-100 group-hover:bg-blue-200 rounded-xl transition-colors">
-                    <Stethoscope className="w-7 h-7 text-blue-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900">Complete EHR/EMR</h3>
-                </div>
-                <p className="text-slate-600 leading-relaxed text-lg">
-                  Comprehensive electronic health records with patient management, clinical workflows, and seamless provider collaboration.
-                </p>
-              </CardContent>
-            </Card>
+              <div className="animate-fade-in-up" style={{animationDelay: '0.8s'}}>
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-blue-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden" data-testid="card-ehr-emr">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-400/20 to-teal-400/20 rounded-full blur-xl"></div>
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className="p-4 bg-gradient-to-br from-blue-100/80 to-blue-200/60 group-hover:from-blue-200/90 group-hover:to-blue-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                        <Stethoscope className="w-7 h-7 text-blue-600 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-blue-700 transition-colors">Complete EHR/EMR</h3>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed text-lg font-medium">
+                      Comprehensive electronic health records with patient management, clinical workflows, and seamless provider collaboration.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
 
-            <Card className="group border-emerald-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-500 bg-white hover:bg-gradient-to-br hover:from-emerald-50 hover:to-blue-50">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="p-3 bg-emerald-100 group-hover:bg-emerald-200 rounded-xl transition-colors">
-                    <Cloud className="w-7 h-7 text-emerald-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900">Scale securely as you grow</h3>
-                </div>
-                <p className="text-slate-600 leading-relaxed text-lg">
-                  Cloud-native architecture with 99.9% uptime SLA, automatic backups, and disaster recovery for seamless expansion.
-                </p>
-              </CardContent>
-            </Card>
+              <div className="animate-fade-in-up" style={{animationDelay: '1.0s'}}>
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-emerald-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden" data-testid="card-scalability">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-400/20 to-blue-400/20 rounded-full blur-xl"></div>
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className="p-4 bg-gradient-to-br from-emerald-100/80 to-emerald-200/60 group-hover:from-emerald-200/90 group-hover:to-emerald-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                        <Cloud className="w-7 h-7 text-emerald-600 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">Scale securely as you grow</h3>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed text-lg font-medium">
+                      Cloud-native architecture with 99.9% uptime SLA, automatic backups, and disaster recovery for seamless expansion.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
 
-            <Card className="group border-blue-200 hover:border-blue-400 hover:shadow-2xl transition-all duration-500 bg-white hover:bg-gradient-to-br hover:from-blue-50 hover:to-emerald-50">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="p-3 bg-blue-100 group-hover:bg-blue-200 rounded-xl transition-colors">
-                    <Smartphone className="w-7 h-7 text-blue-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900">Mobile-First Design</h3>
-                </div>
-                <p className="text-slate-600 leading-relaxed text-lg">
-                  Responsive design optimized for all devices with offline capabilities and real-time synchronization.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+              <div className="animate-fade-in-up" style={{animationDelay: '1.2s'}}>
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-blue-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden" data-testid="card-mobile-design">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-xl"></div>
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className="p-4 bg-gradient-to-br from-blue-100/80 to-purple-200/60 group-hover:from-blue-200/90 group-hover:to-purple-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                        <Smartphone className="w-7 h-7 text-blue-600 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-blue-700 transition-colors">Mobile-First Design</h3>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed text-lg font-medium">
+                      Responsive design optimized for all devices with offline capabilities and real-time synchronization.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
         </div>
       </section>
 
-      {/* Customer Success Stories */}
-      <section className="py-24 bg-gradient-to-br from-emerald-50 to-blue-50">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <Badge className="mb-6 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Success Stories
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900">
-              Real Results from Healthcare <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Leaders</span>
-            </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              See how healthcare organizations achieved measurable improvements with NaviMED
-            </p>
+        {/* Modern Customer Success Stories */}
+        <section className="py-24 relative overflow-hidden">
+          {/* Enhanced animated background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/70 via-blue-50/50 to-teal-50/60">
+            <div className="absolute top-28 right-12 w-72 h-72 bg-gradient-to-r from-emerald-400/8 to-blue-400/8 rounded-full blur-3xl animate-float"></div>
+            <div className="absolute bottom-24 left-16 w-80 h-80 bg-gradient-to-r from-blue-400/8 to-teal-400/8 rounded-full blur-3xl animate-float" style={{animationDelay: '3s'}}></div>
+            <div className="absolute top-1/2 right-1/4 w-64 h-64 bg-gradient-to-r from-teal-400/6 to-emerald-400/6 rounded-full blur-3xl animate-pulse"></div>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Testimonial 1 */}
-            <Card className="group border-emerald-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-500 bg-white">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <Building2 className="w-6 h-6 text-emerald-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900">Dr. Sarah Chen</h4>
-                    <p className="text-sm text-slate-600">CIO, Metro General Hospital</p>
-                  </div>
-                </div>
-                <blockquote className="text-slate-700 italic mb-4">
-                  "NaviMED reduced our prescription processing time by 60% and eliminated medication errors completely. The multi-language support has been a game-changer for our diverse patient community."
-                </blockquote>
-                <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">
-                  <TrendingUp className="w-4 h-4" />
-                  60% faster processing • Zero medication errors
-                </div>
-              </CardContent>
-            </Card>
+          <div className="container mx-auto px-6 relative z-10">
+            <div className="text-center mb-16 animate-fade-in-up">
+              <Badge className="mb-6 bg-white/60 backdrop-blur-md text-emerald-700 border border-emerald-200/50 hover:bg-white/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Success Stories
+              </Badge>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900 leading-tight">
+                Real Results from Healthcare <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent animate-gradient-x bg-[length:200%_auto]">Leaders</span>
+              </h2>
+              <p className="text-xl text-slate-600 max-w-3xl mx-auto font-medium">
+                See how healthcare organizations achieved measurable improvements with NaviMED
+              </p>
+            </div>
+          
+            {/* Modern Testimonial Cards with Glassmorphism */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* Testimonial 1 - Enhanced */}
+              <div className="animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-emerald-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden" data-testid="testimonial-sarah-chen">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-emerald-400/20 to-blue-400/20 rounded-full blur-xl"></div>
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className="w-14 h-14 bg-gradient-to-br from-emerald-100/90 to-emerald-200/70 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg backdrop-blur-sm">
+                        <Building2 className="w-6 h-6 text-emerald-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">Dr. Sarah Chen</h4>
+                        <p className="text-sm text-slate-600 font-medium">CIO, Metro General Hospital</p>
+                      </div>
+                    </div>
+                    <blockquote className="text-slate-700 italic mb-6 text-lg leading-relaxed">
+                      "NaviMED reduced our prescription processing time by 60% and eliminated medication errors completely. The multi-language support has been a game-changer for our diverse patient community."
+                    </blockquote>
+                    <div className="flex items-center gap-2 text-emerald-600 text-sm font-semibold bg-emerald-50/50 backdrop-blur-sm rounded-full px-4 py-2">
+                      <TrendingUp className="w-4 h-4" />
+                      60% faster processing • Zero medication errors
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
 
-            {/* Testimonial 2 */}
-            <Card className="group border-blue-200 hover:border-blue-400 hover:shadow-2xl transition-all duration-500 bg-white">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Pill className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900">Michael Rodriguez</h4>
-                    <p className="text-sm text-slate-600">Director, MediCare Pharmacy</p>
-                  </div>
-                </div>
-                <blockquote className="text-slate-700 italic mb-4">
-                  "The unified platform streamlined our entire workflow. We're now serving 40% more patients with the same staff, and patient satisfaction scores increased to 98%."
-                </blockquote>
-                <div className="flex items-center gap-2 text-blue-600 text-sm font-medium">
-                  <Users className="w-4 h-4" />
-                  40% more capacity • 98% satisfaction
-                </div>
-              </CardContent>
-            </Card>
+              {/* Testimonial 2 - Enhanced */}
+              <div className="animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-blue-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden" data-testid="testimonial-michael-rodriguez">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-teal-400/20 rounded-full blur-xl"></div>
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className="w-14 h-14 bg-gradient-to-br from-blue-100/90 to-blue-200/70 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg backdrop-blur-sm">
+                        <Pill className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 group-hover:text-blue-700 transition-colors">Michael Rodriguez</h4>
+                        <p className="text-sm text-slate-600 font-medium">Director, MediCare Pharmacy</p>
+                      </div>
+                    </div>
+                    <blockquote className="text-slate-700 italic mb-6 text-lg leading-relaxed">
+                      "The unified platform streamlined our entire workflow. We're now serving 40% more patients with the same staff, and patient satisfaction scores increased to 98%."
+                    </blockquote>
+                    <div className="flex items-center gap-2 text-blue-600 text-sm font-semibold bg-blue-50/50 backdrop-blur-sm rounded-full px-4 py-2">
+                      <Users className="w-4 h-4" />
+                      40% more capacity • 98% satisfaction
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
 
-            {/* Testimonial 3 */}
-            <Card className="group border-emerald-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-500 bg-white">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <TestTube className="w-6 h-6 text-emerald-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900">Dr. Priya Patel</h4>
-                    <p className="text-sm text-slate-600">Lab Director, Advanced Diagnostics</p>
-                  </div>
-                </div>
-                <blockquote className="text-slate-700 italic mb-4">
-                  "Lab result turnaround time dropped from 3 days to 8 hours. The real-time notifications and automated reporting saved us countless hours of manual work."
-                </blockquote>
-                <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">
-                  <Clock className="w-4 h-4" />
-                  8-hour turnaround • Automated reporting
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              {/* Testimonial 3 - Enhanced */}
+              <div className="animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-emerald-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden" data-testid="testimonial-priya-patel">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-full blur-xl"></div>
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className="w-14 h-14 bg-gradient-to-br from-teal-100/90 to-emerald-200/70 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg backdrop-blur-sm">
+                        <TestTube className="w-6 h-6 text-emerald-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">Dr. Priya Patel</h4>
+                        <p className="text-sm text-slate-600 font-medium">Lab Director, Advanced Diagnostics</p>
+                      </div>
+                    </div>
+                    <blockquote className="text-slate-700 italic mb-6 text-lg leading-relaxed">
+                      "Lab result turnaround time dropped from 3 days to 8 hours. The real-time notifications and automated reporting saved us countless hours of manual work."
+                    </blockquote>
+                    <div className="flex items-center gap-2 text-emerald-600 text-sm font-semibold bg-emerald-50/50 backdrop-blur-sm rounded-full px-4 py-2">
+                      <Clock className="w-4 h-4" />
+                      8-hour turnaround • Automated reporting
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
         </div>
       </section>
 
