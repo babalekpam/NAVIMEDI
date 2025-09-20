@@ -1,20 +1,246 @@
 # NaviMED Healthcare Platform - Developer Guide
 
 ## Table of Contents
-1. [System Architecture Overview](#system-architecture-overview)
-2. [Development Guidelines](#development-guidelines)
-3. [Database Management](#database-management)
-4. [Security Implementation](#security-implementation)
-5. [API Development](#api-development)
-6. [Frontend Development](#frontend-development)
-7. [Email System Integration](#email-system-integration)
-8. [Multi-tenant Development](#multi-tenant-development)
-9. [Common Issues & Solutions](#common-issues--solutions)
-10. [Future Development](#future-development)
+1. [Technology Stack Overview](#technology-stack-overview)
+2. [System Architecture Overview](#system-architecture-overview)
+3. [Development Guidelines](#development-guidelines)
+4. [Database Management](#database-management)
+5. [Security Implementation](#security-implementation)
+6. [API Development](#api-development)
+7. [Frontend Development](#frontend-development)
+8. [Email System Integration](#email-system-integration)
+9. [Multi-tenant Development](#multi-tenant-development)
+10. [Common Issues & Solutions](#common-issues--solutions)
+11. [Future Development](#future-development)
 
 ---
 
-## 1. System Architecture Overview
+## 1. Technology Stack Overview
+
+### Core Technologies & Versions
+
+#### Backend Stack
+```json
+{
+  "runtime": "Node.js 20+",
+  "framework": "Express.js 4.x",
+  "language": "TypeScript 5.x",
+  "orm": "Drizzle ORM 0.30+",
+  "database": "PostgreSQL 15+",
+  "authentication": "JWT (jsonwebtoken 9.x)",
+  "validation": "Zod 3.x",
+  "email": "SendGrid Mail API 8.x",
+  "payments": "Stripe 14.x",
+  "security": "bcrypt 5.x, helmet 7.x"
+}
+```
+
+#### Frontend Stack
+```json
+{
+  "framework": "React 18.x",
+  "bundler": "Vite 5.x",
+  "language": "TypeScript 5.x",
+  "routing": "Wouter 3.x",
+  "state": "TanStack Query v5",
+  "forms": "React Hook Form 7.x",
+  "validation": "@hookform/resolvers with Zod",
+  "ui": "shadcn/ui + Radix UI",
+  "styling": "Tailwind CSS 3.x",
+  "icons": "Lucide React + React Icons"
+}
+```
+
+#### Development Tools
+```json
+{
+  "package_manager": "npm",
+  "type_checking": "TypeScript strict mode",
+  "linting": "ESLint",
+  "schema_management": "Drizzle Kit",
+  "api_client": "Custom fetch wrapper",
+  "testing": "data-testid attributes"
+}
+```
+
+### Infrastructure & Deployment
+
+#### Database Technology
+- **Primary Database**: PostgreSQL 15+
+- **ORM**: Drizzle ORM with type-safe queries
+- **Connection**: Native PostgreSQL driver
+- **Schema Management**: Drizzle Kit migrations
+- **Data Validation**: Drizzle-Zod integration
+
+#### Email Services
+- **Primary**: SendGrid API
+- **Alternatives**: AWS SES, Postmark, Resend, Mailgun
+- **Development**: Console logging fallback
+- **Templates**: HTML + Text format support
+
+#### Security Technologies
+- **Authentication**: JWT with RS256/HS256 signing
+- **Password Hashing**: bcrypt with 12+ salt rounds
+- **Token Security**: SHA-256 hashing for reset tokens
+- **Rate Limiting**: Express-rate-limit
+- **CSRF Protection**: csurf middleware
+- **Headers**: Helmet.js security headers
+
+### Package Dependencies
+
+#### Critical Backend Dependencies
+```bash
+# Core Framework
+express                    # Web framework
+typescript                 # Type safety
+tsx                        # TypeScript execution
+
+# Database & ORM
+drizzle-orm               # Type-safe database ORM
+drizzle-zod              # Schema validation integration
+@neondatabase/serverless  # PostgreSQL driver
+
+# Authentication & Security
+jsonwebtoken             # JWT token management
+bcrypt                   # Password hashing
+helmet                   # Security headers
+express-rate-limit       # Rate limiting
+csurf                    # CSRF protection
+
+# Validation & Types
+zod                      # Runtime validation
+zod-validation-error     # Enhanced error messages
+
+# Email & Communications
+@sendgrid/mail          # Email service
+```
+
+#### Critical Frontend Dependencies
+```bash
+# Core Framework
+react                    # UI framework
+react-dom               # DOM rendering
+typescript              # Type safety
+vite                    # Build tool
+
+# Routing & Navigation
+wouter                  # Client-side routing
+
+# State Management & API
+@tanstack/react-query   # Server state management
+react-hook-form         # Form handling
+@hookform/resolvers     # Form validation integration
+
+# UI Components & Styling
+tailwindcss            # Utility-first CSS
+@radix-ui/*           # Headless UI components
+lucide-react          # Icon library
+react-icons           # Additional icons
+tailwind-merge        # Conditional styling
+class-variance-authority # Component variants
+
+# Utilities
+date-fns              # Date manipulation
+nanoid                # ID generation
+```
+
+### Architecture Patterns
+
+#### Backend Patterns
+- **Layered Architecture**: Routes → Storage → Database
+- **Dependency Injection**: Storage interface abstraction
+- **Middleware Pipeline**: Authentication → Authorization → Business Logic
+- **Error Handling**: Centralized error responses
+- **Data Validation**: Zod schemas at API boundaries
+
+#### Frontend Patterns
+- **Component-Based**: Reusable React components
+- **Hook-Based State**: Custom hooks for logic
+- **Form Management**: React Hook Form with validation
+- **API Layer**: TanStack Query for server state
+- **Route-Based Code Splitting**: Dynamic imports
+
+#### Security Patterns
+- **Multi-Tenant Isolation**: Tenant ID in all queries
+- **Role-Based Access Control**: Middleware-enforced permissions
+- **Token-Based Authentication**: JWT with expiration
+- **Secure Password Reset**: Cryptographic token generation
+- **Rate Limiting**: Per-endpoint protection
+
+### Development Environment
+
+#### Required Tools
+```bash
+Node.js 20+             # JavaScript runtime
+npm 10+                 # Package manager
+PostgreSQL 15+          # Database server
+Git                     # Version control
+TypeScript 5+           # Language compiler
+```
+
+#### Optional Tools
+```bash
+Redis                   # Caching (future)
+Docker                  # Containerization
+Postman/Insomnia       # API testing
+pgAdmin/TablePlus      # Database GUI
+VSCode                 # Recommended IDE
+```
+
+### External Services Integration
+
+#### Email Service Providers
+- **SendGrid**: Primary email delivery
+- **AWS SES**: Alternative email service
+- **Postmark**: Transactional email alternative
+- **Mailgun**: Email API alternative
+
+#### Payment Processing
+- **Stripe**: Payment processing and subscriptions
+- **Webhook Handling**: Secure payment event processing
+
+#### Authentication Services
+- **JWT**: Self-managed token authentication
+- **OAuth**: Future integration capability
+- **Session Management**: Token-based stateless auth
+
+### Performance Considerations
+
+#### Database Optimization
+- **Indexing Strategy**: Tenant ID + frequently queried fields
+- **Connection Pooling**: PostgreSQL connection management
+- **Query Optimization**: Drizzle ORM efficient queries
+- **Data Pagination**: Large result set handling
+
+#### Frontend Optimization
+- **Code Splitting**: Route-based lazy loading
+- **Bundle Optimization**: Vite build optimizations
+- **Caching Strategy**: TanStack Query cache management
+- **Asset Optimization**: Image and static file handling
+
+#### API Performance
+- **Rate Limiting**: Prevent abuse and ensure availability
+- **Response Compression**: Gzip compression middleware
+- **Efficient Serialization**: JSON response optimization
+- **Caching Headers**: Browser cache optimization
+
+### Scalability Architecture
+
+#### Horizontal Scaling
+- **Stateless Design**: JWT-based authentication
+- **Database Scaling**: Read replicas capability
+- **Load Balancing**: Multi-instance deployment ready
+- **Microservices Ready**: Modular architecture
+
+#### Monitoring & Observability
+- **Health Checks**: Application health endpoints
+- **Error Tracking**: Comprehensive error logging
+- **Performance Metrics**: Response time monitoring
+- **Audit Logging**: Healthcare compliance tracking
+
+---
+
+## 2. System Architecture Overview
 
 ### Multi-Tenant Architecture
 NaviMED uses a **strict multi-tenant architecture** with complete data isolation between organizations (hospitals, pharmacies, laboratories).
