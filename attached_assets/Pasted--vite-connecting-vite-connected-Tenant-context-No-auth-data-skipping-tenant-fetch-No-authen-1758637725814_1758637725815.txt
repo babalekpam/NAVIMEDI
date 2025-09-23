@@ -1,0 +1,38 @@
+[vite] connecting...
+[vite] connected.
+Tenant context: No auth data, skipping tenant fetch
+No authentication found, displaying public routes
+[vite] hot updated: /src/pages/pricing.tsx
+[vite] hot updated: /src/index.css?v=WIcoWrU2grM6iKYfhhpnw
+No authentication found, displaying public routes
+Warning: Invalid prop &#x60;data-replit-metadata&#x60; supplied to &#x60;React.Fragment&#x60;. React.Fragment can only have &#x60;key&#x60; and &#x60;children&#x60; props.
+    at PricingPage (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/src/pages/pricing.tsx?t=1758637281387:160:35)
+    at Route (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=84d75b3b:206:16)
+    at Switch (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=84d75b3b:262:17)
+    at Suspense
+    at div
+    at Router (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/src/App.tsx?v=WIcoWrU2grM6iKYfhhpnw:2515:38)
+    at TenantProvider (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/src/contexts/tenant-context.tsx:30:34)
+    at TranslationProvider (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/src/contexts/translation-context.tsx:749:39)
+    at AuthProvider (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/src/contexts/auth-context.tsx:29:32)
+    at Provider (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=84d75b3b:38:15)
+    at TooltipProvider (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=84d75b3b:65:5)
+    at QueryClientProvider (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=84d75b3b:2805:3)
+    at App
+at PricingPage (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/src/pages/pricing.tsx?t=1758637281387:160:35)
+at Route (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=84d75b3b:206:16)
+at Switch (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=84d75b3b:262:17)
+at Suspense
+at div
+at Router (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/src/App.tsx?v=WIcoWrU2grM6iKYfhhpnw:2515:38)
+at TenantProvider (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/src/contexts/tenant-context.tsx:30:34)
+at TranslationProvider (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/src/contexts/translation-context.tsx:749:39)
+at AuthProvider (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/src/contexts/auth-context.tsx:29:32)
+at Provider (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=84d75b3b:38:15)
+at TooltipProvider (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=84d75b3b:65:5)
+at QueryClientProvider (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=84d75b3b:2805:3)
+at App
+at t.value (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://942dd837-7012-47ef-8574-574ac5ab89f8-00-2gel21gszwmqv.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
