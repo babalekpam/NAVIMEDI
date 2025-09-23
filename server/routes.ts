@@ -46,7 +46,7 @@ try {
     stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: "2025-07-30.basil",
     });
-    console.log("✅ Stripe initialized successfully with API version 2024-11-20.acacia");
+    console.log("✅ Stripe initialized successfully with API version 2025-07-30.basil");
   } else {
     console.warn("⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format:", 
       process.env.STRIPE_SECRET_KEY ? 
