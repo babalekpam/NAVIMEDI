@@ -24,7 +24,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import crypto from "crypto";
 import { sendEmail } from "./email-service";
 import multer from "multer";
 import csv from "csv-parser";
@@ -45,7 +44,7 @@ let stripe: Stripe | null = null;
 try {
   if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_')) {
     stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2024-11-20.acacia",
+      apiVersion: "2025-07-30.basil",
     });
     console.log("✅ Stripe initialized successfully with API version 2024-11-20.acacia");
   } else {
@@ -5215,9 +5214,52 @@ to the patient and authorized healthcare providers.
   });
 
 
+  // Add comprehensive health check endpoints for Google crawling
+  app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  app.get('/healthz', (req, res) => {
+    res.status(200).json({ status: 'healthy' });
+  });
+
+  app.get('/status', (req, res) => {
+    res.status(200).json({ 
+      status: 'operational', 
+      service: 'NaviMED Healthcare Platform',
+      version: '1.0.0'
+    });
+  });
+
+  app.get('/ping', (req, res) => {
+    res.status(200).send('pong');
+  });
+
   // Register analytics routes
   console.log('📊 Registering analytics routes...');
   registerAnalyticsRoutes(app);
+
+  // Global error handler middleware (must be after all routes)
+  app.use((err: any, req: any, res: any, next: any) => {
+    console.error('Unhandled error:', err);
+    
+    // Don't send error details in production to prevent information disclosure
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    res.status(err.status || 500).json({
+      message: isDevelopment ? err.message : 'Internal server error',
+      ...(isDevelopment && { stack: err.stack }),
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // Handle 404s for missing pages (must be last)
+  app.use('*', (req, res) => {
+    res.status(404).json({
+      message: 'Page not found',
+      path: req.originalUrl,
+      timestamp: new Date().toISOString()
+    });
+  });
 
   // Create HTTP server
   const httpServer = createServer(app);
