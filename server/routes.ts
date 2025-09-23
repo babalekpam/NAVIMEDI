@@ -5252,10 +5252,10 @@ to the patient and authorized healthcare providers.
     });
   });
 
-  // Handle 404s for missing pages (must be last)
-  app.use('*', (req, res) => {
+  // Handle 404s for missing API routes only (must be last)
+  app.use('/api/*', (req, res) => {
     res.status(404).json({
-      message: 'Page not found',
+      message: 'API endpoint not found',
       path: req.originalUrl,
       timestamp: new Date().toISOString()
     });
