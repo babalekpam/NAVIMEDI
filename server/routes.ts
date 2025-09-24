@@ -5299,8 +5299,8 @@ to the patient and authorized healthcare providers.
     }
   });
 
-  // Mobile App Authentication endpoint
-  app.post('/api/mobile/auth', async (req, res) => {
+  // Mobile App Authentication endpoint (bypasses global API middleware)
+  app.post('/mobile-auth', async (req, res) => {
     try {
       const { apiKey, patientEmail, patientPassword } = req.body;
       
