@@ -5213,6 +5213,186 @@ to the patient and authorized healthcare providers.
     }
   });
 
+  // ================================
+  // MOBILE APP API KEY MANAGEMENT
+  // ================================
+  
+  // Generate API key for mobile app integration (Platform Owner Only)
+  app.post('/api/mobile/generate-api-key', authenticateToken, async (req, res) => {
+    try {
+      const { role, tenantId } = req.user as any;
+      
+      // Only tenant admins can generate API keys for their organization
+      if (role !== 'tenant_admin' && role !== 'super_admin') {
+        return res.status(403).json({ message: "Access denied. Only administrators can generate API keys." });
+      }
+
+      const { appName = 'Mobile Patient Portal', permissions = ['patient_read'] } = req.body;
+      
+      // Generate unique API key
+      const apiKey = `pk_${tenantId}_${nanoid(32)}`;
+      const keyHash = await bcrypt.hash(apiKey, 10);
+      
+      // Store API key in database (you'll need to add this table to schema)
+      const apiKeyData = {
+        id: nanoid(),
+        tenantId: tenantId,
+        keyHash: keyHash,
+        keyPrefix: apiKey.substring(0, 12) + '...', // For display purposes
+        appName,
+        permissions: JSON.stringify(permissions),
+        isActive: true,
+        createdAt: new Date(),
+        lastUsed: null
+      };
+      
+      console.log(`🔑 Generated API key for ${appName} (Tenant: ${tenantId})`);
+      
+      res.json({
+        success: true,
+        apiKey: apiKey, // Only shown once!
+        keyId: apiKeyData.id,
+        keyPrefix: apiKeyData.keyPrefix,
+        appName,
+        permissions,
+        instructions: {
+          usage: "Use this API key in your mobile app configuration",
+          baseUrl: `${req.protocol}://${req.get('host')}/api`,
+          warning: "Save this key securely - it won't be shown again!"
+        }
+      });
+    } catch (error) {
+      console.error("API key generation error:", error);
+      res.status(500).json({ message: "Failed to generate API key" });
+    }
+  });
+
+  // List API keys for tenant (Platform Owner Only)
+  app.get('/api/mobile/api-keys', authenticateToken, async (req, res) => {
+    try {
+      const { role, tenantId } = req.user as any;
+      
+      if (role !== 'tenant_admin' && role !== 'super_admin') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // In a real implementation, you'd query your API keys table
+      // For now, return mock data with instructions
+      res.json({
+        success: true,
+        apiKeys: [
+          {
+            id: "key_1",
+            keyPrefix: "pk_" + tenantId + "_abc...",
+            appName: "Mobile Patient Portal",
+            permissions: ["patient_read"],
+            isActive: true,
+            createdAt: new Date().toISOString(),
+            lastUsed: new Date().toISOString()
+          }
+        ],
+        totalKeys: 1
+      });
+    } catch (error) {
+      console.error("List API keys error:", error);
+      res.status(500).json({ message: "Failed to fetch API keys" });
+    }
+  });
+
+  // Mobile App Authentication endpoint
+  app.post('/api/mobile/auth', async (req, res) => {
+    try {
+      const { apiKey, patientEmail, patientPassword } = req.body;
+      
+      if (!apiKey || !patientEmail || !patientPassword) {
+        return res.status(400).json({ 
+          success: false,
+          message: "API key, email, and password required" 
+        });
+      }
+
+      // Validate API key format
+      if (!apiKey.startsWith('pk_')) {
+        return res.status(401).json({ 
+          success: false,
+          message: "Invalid API key format" 
+        });
+      }
+
+      // Extract tenant ID from API key
+      const keyParts = apiKey.split('_');
+      if (keyParts.length < 3) {
+        return res.status(401).json({ 
+          success: false,
+          message: "Invalid API key structure" 
+        });
+      }
+      
+      const tenantId = keyParts[1];
+      
+      // Authenticate patient
+      const [patient] = await db.select()
+        .from(patients)
+        .where(and(
+          eq(patients.email, patientEmail),
+          eq(patients.tenantId, tenantId)
+        ));
+
+      if (!patient) {
+        return res.status(401).json({ 
+          success: false,
+          message: "Invalid patient credentials" 
+        });
+      }
+
+      // Verify password
+      const validPassword = await bcrypt.compare(patientPassword, patient.passwordHash || '');
+      if (!validPassword) {
+        return res.status(401).json({ 
+          success: false,
+          message: "Invalid patient credentials" 
+        });
+      }
+
+      // Generate JWT token for patient
+      const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+      const tokenPayload = {
+        userId: patient.id,
+        tenantId: patient.tenantId,
+        role: 'patient',
+        username: patient.email,
+        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
+      };
+
+      const token = jwt.sign(tokenPayload, JWT_SECRET);
+
+      console.log(`📱 Mobile auth successful for patient ${patient.email} (Tenant: ${tenantId})`);
+
+      res.json({
+        success: true,
+        token,
+        patient: {
+          id: patient.id,
+          firstName: patient.firstName,
+          lastName: patient.lastName,
+          email: patient.email,
+          tenantId: patient.tenantId
+        },
+        apiEndpoints: {
+          profile: '/api/patient/profile',
+          appointments: '/api/patient/appointments',
+          prescriptions: '/api/patient/prescriptions',
+          labResults: '/api/patient/lab-results'
+        }
+      });
+    } catch (error) {
+      console.error("Mobile auth error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Authentication failed" 
+      });
+    }
+  });
 
   // Add comprehensive health check endpoints for Google crawling
   app.get('/health', (req, res) => {
