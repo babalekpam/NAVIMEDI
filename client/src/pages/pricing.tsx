@@ -151,7 +151,7 @@ export default function PricingPage() {
         title="NaviMED Pricing - Healthcare Management Software Plans | Start Free Trial"
         description="Flexible pricing for healthcare management software. Plans starting at $49.99/month for hospitals, pharmacies & laboratories. HIPAA compliant with 14-day free trial. Compare features and choose your plan."
         keywords="healthcare software pricing, medical practice management cost, hospital management system pricing, pharmacy software plans, laboratory management pricing, healthcare SaaS pricing, medical software subscription"
-        canonicalUrl="https://navimedi.com/pricing"
+        canonicalUrl="https://navimedi.org/pricing"
         ogImage="https://navimedi.com/images/navimed-pricing-og.jpg"
       />
       <PublicHeader />

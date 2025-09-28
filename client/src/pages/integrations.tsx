@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
+import { SEOHead } from "@/components/seo-head";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 
 export default function Integrations() {
@@ -98,6 +99,13 @@ export default function Integrations() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50">
+      <SEOHead
+        title="NaviMED Integrations - Connect Your Healthcare Ecosystem | API Documentation"
+        description="Connect NaviMED with 200+ healthcare applications. HL7 FHIR, Epic, Cerner, Stripe payments, lab systems, and more. Comprehensive API documentation and developer tools."
+        keywords="healthcare integrations, HL7 FHIR, Epic MyChart, Cerner integration, healthcare API, medical software integration, EHR connectivity, payment processing, lab system integration"
+        canonicalUrl="https://navimedi.org/integrations"
+        ogImage="https://navimedi.org/images/navimed-integrations-og.jpg"
+      />
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-6 py-4">

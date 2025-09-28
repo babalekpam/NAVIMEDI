@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
+import { SEOHead } from "@/components/seo-head";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 
 export default function HelpCenter() {
@@ -38,6 +39,13 @@ export default function HelpCenter() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50">
+      <SEOHead
+        title="NaviMED Help Center - Support & FAQ | Healthcare Software Documentation"
+        description="Get help with NaviMED healthcare platform. Find answers to common questions, troubleshooting guides, billing support, and technical documentation for hospitals and pharmacies."
+        keywords="NaviMED help, healthcare software support, medical platform FAQ, technical support, billing help, user documentation, troubleshooting guide"
+        canonicalUrl="https://navimedi.org/support/help-center"
+        ogImage="https://navimedi.org/images/navimed-support-og.jpg"
+      />
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
