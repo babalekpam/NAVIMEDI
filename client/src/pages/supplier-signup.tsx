@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Building2, ArrowRight, CheckCircle } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
+import { SEOHead } from "@/components/seo-head";
 
 const supplierSignupSchema = z.object({
   companyName: z.string().min(2, "Company name must be at least 2 characters"),
@@ -125,6 +126,13 @@ export default function SupplierSignupPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4">
+      <SEOHead
+        title="Supplier Signup - Join NaviMED Healthcare Network | Medical Supply Partners"
+        description="Register as a medical supplier on NaviMED marketplace. Connect with hospitals, pharmacies, and laboratories. Expand your healthcare business reach and manage products efficiently."
+        keywords="medical supplier registration, healthcare supplier network, join NaviMED, medical marketplace signup, supplier partnership, healthcare products"
+        canonicalUrl="https://navimedi.org/supplier-signup"
+        ogImage="https://navimedi.org/images/navimed-supplier-og.jpg"
+      />
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">

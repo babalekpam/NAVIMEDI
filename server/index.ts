@@ -18,6 +18,26 @@ const app = express();
 // This fixes express-rate-limit ValidationError about X-Forwarded-For headers
 app.set('trust proxy', 1);
 
+// Domain and WWW Redirect Middleware (SEO optimization)
+app.use((req, res, next) => {
+  const host = req.headers.host || '';
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  
+  // Redirect argilette.org to navimedi.org (fix Google Search Console redirect issues)
+  if (host.includes('argilette.org')) {
+    const cleanPath = req.url;
+    return res.redirect(301, `https://navimedi.org${cleanPath}`);
+  }
+  
+  // Redirect www.navimedi.org to navimedi.org (fix Google 404 errors)
+  if (host.startsWith('www.')) {
+    const nonWwwHost = host.replace('www.', '');
+    return res.redirect(301, `${protocol}://${nonWwwHost}${req.url}`);
+  }
+  
+  next();
+});
+
 // IONOS OPTIMIZATION 1: Enable selective gzip compression
 // Compress static assets and non-sensitive content while protecting sensitive endpoints
 app.use(compression({
