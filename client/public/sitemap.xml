@@ -272,6 +272,58 @@
     <mobile:mobile/>
   </url>
   
+  <!-- Blog Section -->
+  <url>
+    <loc>https://navimedi.org/blog</loc>
+    <lastmod>2025-10-06T00:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <mobile:mobile/>
+  </url>
+  
+  <!-- Blog Posts -->
+  <url>
+    <loc>https://navimedi.org/blog/ai-healthcare-transformation-2025</loc>
+    <lastmod>2025-09-10T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://navimedi.org/blog/hipaa-compliance-2025-update</loc>
+    <lastmod>2025-09-05T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://navimedi.org/blog/telehealth-adoption-study</loc>
+    <lastmod>2025-09-01T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://navimedi.org/blog/pharmacy-automation-roi</loc>
+    <lastmod>2025-08-28T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://navimedi.org/blog/patient-portal-engagement-metrics</loc>
+    <lastmod>2025-08-25T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://navimedi.org/blog/ehr-interoperability-challenges</loc>
+    <lastmod>2025-08-20T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
   <!-- Health Check Endpoints -->
   <url>
     <loc>https://navimedi.org/health</loc>
