@@ -66,7 +66,7 @@ export default function Contact() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-lg font-semibold">support@navimedi.com</p>
+                    <p className="text-lg font-semibold">support@navimedi.org</p>
                     <p className="text-gray-600">Response within 2 hours</p>
                   </CardContent>
                 </Card>
@@ -76,14 +76,30 @@ export default function Contact() {
                     <div className="flex items-center gap-4">
                       <Mail className="w-8 h-8 text-blue-600" />
                       <div>
-                        <CardTitle>General Information</CardTitle>
-                        <CardDescription>Sales and general inquiries</CardDescription>
+                        <CardTitle>Sales Inquiries</CardTitle>
+                        <CardDescription>Enterprise sales and partnerships</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-lg font-semibold">info@navimedi.com</p>
+                    <p className="text-lg font-semibold">sales@navimedi.org</p>
                     <p className="text-gray-600">Response within 4 hours</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <Mail className="w-8 h-8 text-emerald-600" />
+                      <div>
+                        <CardTitle>Billing & Payments</CardTitle>
+                        <CardDescription>Invoicing and subscription questions</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-lg font-semibold">billing@navimedi.org</p>
+                    <p className="text-gray-600">Response within 24 hours</p>
                   </CardContent>
                 </Card>
 
