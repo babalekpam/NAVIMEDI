@@ -1466,7 +1466,7 @@ sectigo.com
       
       await sendEmail({
         to: user.email!,
-        from: 'noreply@navimedi.org',
+        from: 'no-reply@navimedi.org',
         subject: 'NaviMED - Password Reset Request',
         html: `
           <!DOCTYPE html>
