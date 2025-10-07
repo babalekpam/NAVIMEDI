@@ -1,0 +1,65 @@
+up to date, audited 544 packages in 816ms
+
+55 packages are looking for funding
+  run `npm fund` for details
+
+7 vulnerabilities (1 low, 2 moderate, 3 high, 1 critical)
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.
+zsh: command not found: #
+npm error Missing script: "build"
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run
+npm error A complete log of this run can be found in: /Users/lekpamnkawula/.npm/_logs/2025-10-07T21_05_03_976Z-debug-0.log
+zsh: doubled sort specifier
+
+added 133 packages in 6s
+
+13 packages are looking for funding
+  run `npm fund` for details
+zsh: command not found: #
+
+                        -------------
+
+__/\\\\\\\\\\\\\____/\\\\____________/\\\\____/\\\\\\\\\_____
+ _\/\\\/////////\\\_\/\\\\\\________/\\\\\\__/\\\///////\\\___
+  _\/\\\_______\/\\\_\/\\\//\\\____/\\\//\\\_\///______\//\\\__
+   _\/\\\\\\\\\\\\\/__\/\\\\///\\\/\\\/_\/\\\___________/\\\/___
+    _\/\\\/////////____\/\\\__\///\\\/___\/\\\________/\\\//_____
+     _\/\\\_____________\/\\\____\///_____\/\\\_____/\\\//________
+      _\/\\\_____________\/\\\_____________\/\\\___/\\\/___________
+       _\/\\\_____________\/\\\_____________\/\\\__/\\\\\\\\\\\\\\\_
+        _\///______________\///______________\///__\///////////////__
+
+
+                          Runtime Edition
+
+        PM2 is a Production Process Manager for Node.js applications
+                     with a built-in Load Balancer.
+
+                Start and Daemonize any application:
+                $ pm2 start app.js
+
+                Load Balance 4 instances of api.js:
+                $ pm2 start api.js -i 4
+
+                Monitor in production:
+                $ pm2 monitor
+
+                Make pm2 auto-boot at server restart:
+                $ pm2 startup
+
+                To go further checkout:
+                http://pm2.io/
+
+
+                        -------------
+
+[PM2] Spawning PM2 daemon with pm2_home=/Users/lekpamnkawula/.pm2
+[PM2] PM2 Successfully daemonized
+[PM2][ERROR] Script not found: /Users/lekpamnkawula/dist/index.js
+(base) lekpamnkawula@MacBookPro ~ % 
