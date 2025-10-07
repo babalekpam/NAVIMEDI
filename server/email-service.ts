@@ -1,15 +1,40 @@
-import { MailService } from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
 
-let mailService: MailService | null = null;
+let mailTransporter: Transporter | null = null;
 
-// Only initialize SendGrid if we have a valid API key
-if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.startsWith('SG.')) {
-  mailService = new MailService();
-  mailService.setApiKey(process.env.SENDGRID_API_KEY);
-} else if (process.env.SENDGRID_API_KEY && !process.env.SENDGRID_API_KEY.startsWith('SG.')) {
-  console.warn("Invalid SENDGRID_API_KEY format. API key must start with 'SG.' - Email functionality will be disabled.");
+// Initialize SMTP transporter with IONOS settings
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  try {
+    mailTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+      tls: {
+        rejectUnauthorized: false // Accept self-signed certificates
+      }
+    });
+    
+    // Verify connection
+    mailTransporter.verify((error, success) => {
+      if (error) {
+        console.error('SMTP connection error:', error);
+        mailTransporter = null;
+      } else {
+        console.log('✅ SMTP server ready to send emails');
+      }
+    });
+  } catch (error) {
+    console.error('Error initializing SMTP transporter:', error);
+    mailTransporter = null;
+  }
 } else {
-  console.warn("SENDGRID_API_KEY environment variable not set. Email functionality will be disabled.");
+  console.warn("SMTP environment variables not set. Email functionality will be disabled.");
+  console.warn("Required: SMTP_HOST, SMTP_USER, SMTP_PASS");
 }
 
 interface EmailParams {
@@ -21,8 +46,8 @@ interface EmailParams {
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  if (!mailService) {
-    console.log('Email would be sent (SendGrid not configured):', {
+  if (!mailTransporter) {
+    console.log('Email would be sent (SMTP not configured):', {
       to: params.to,
       from: params.from,
       subject: params.subject
@@ -31,19 +56,19 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
   }
 
   try {
-    const emailData: any = {
-      to: params.to,
+    const mailOptions = {
       from: params.from,
+      to: params.to,
       subject: params.subject,
+      text: params.text,
+      html: params.html,
     };
     
-    if (params.text) emailData.text = params.text;
-    if (params.html) emailData.html = params.html;
-    
-    await mailService.send(emailData);
+    const info = await mailTransporter.sendMail(mailOptions);
+    console.log('✅ Email sent successfully:', info.messageId);
     return true;
   } catch (error) {
-    console.error('SendGrid email error:', error);
+    console.error('SMTP email error:', error);
     return false;
   }
 }
@@ -63,7 +88,7 @@ export async function sendRegistrationConfirmationEmail(
   userEmail: string, 
   userName: string, 
   organizationName: string,
-  loginUrl: string = 'https://navimed-healthcare.replit.app/login'
+  loginUrl: string = 'https://navimedi.org/login'
 ): Promise<boolean> {
   
   const confirmationHtml = `
