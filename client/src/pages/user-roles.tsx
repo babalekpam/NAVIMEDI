@@ -1235,7 +1235,7 @@ export default function UserRoles() {
                     <ul className="text-xs space-y-1">
                       <li>• User will receive an email with these credentials</li>
                       <li>• Temporary password must be changed on first login</li>
-                      <li>• Email sent from info@navimedi.com</li>
+                      <li>• Email sent from info@navimedi.org</li>
                     </ul>
                   </div>
                 </div>

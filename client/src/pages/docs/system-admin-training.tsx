@@ -153,7 +153,7 @@ export default function SystemAdminTraining() {
                       <h4 className="font-semibold text-yellow-900 mb-2">Important Notice</h4>
                       <p className="text-yellow-800 text-sm">
                         System administration training requires a dedicated training environment. 
-                        Contact support@navimedi.com to schedule access to a sandbox environment 
+                        Contact support@navimedi.org to schedule access to a sandbox environment 
                         before beginning this training program.
                       </p>
                     </div>
@@ -212,7 +212,7 @@ ENCRYPTION_KEY=your-256-bit-encryption-key
 
 # Email Configuration  
 SENDGRID_API_KEY=your-sendgrid-api-key
-EMAIL_FROM=noreply@navimedi.com
+EMAIL_FROM=noreply@navimedi.org
 
 # Security Settings
 SESSION_TIMEOUT=30

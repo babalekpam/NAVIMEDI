@@ -136,7 +136,7 @@ export default function TroubleshootingGuide() {
     },
     {
       question: "How do I report a system bug or issue?",
-      answer: "Use the built-in feedback system (Help → Report Issue) or email support@navimedi.com with detailed description, screenshots, and steps to reproduce the issue."
+      answer: "Use the built-in feedback system (Help → Report Issue) or email support@navimedi.org with detailed description, screenshots, and steps to reproduce the issue."
     },
     {
       question: "What browsers are supported?",
@@ -381,7 +381,7 @@ export default function TroubleshootingGuide() {
                           </div>
                           <div>
                             <h5 className="font-medium text-sm">Technical Support</h5>
-                            <p className="text-xs text-gray-600">support@navimedi.com</p>
+                            <p className="text-xs text-gray-600">support@navimedi.org</p>
                           </div>
                         </div>
                         
@@ -391,7 +391,7 @@ export default function TroubleshootingGuide() {
                           </div>
                           <div>
                             <h5 className="font-medium text-sm">Training Support</h5>
-                            <p className="text-xs text-gray-600">training@navimedi.com</p>
+                            <p className="text-xs text-gray-600">training@navimedi.org</p>
                           </div>
                         </div>
                         
@@ -401,7 +401,7 @@ export default function TroubleshootingGuide() {
                           </div>
                           <div>
                             <h5 className="font-medium text-sm">General Inquiries</h5>
-                            <p className="text-xs text-gray-600">info@navimedi.com</p>
+                            <p className="text-xs text-gray-600">info@navimedi.org</p>
                           </div>
                         </div>
                       </div>

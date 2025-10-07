@@ -466,8 +466,8 @@ export default function SupplierSignupPage() {
             By registering, you agree to our terms of service and privacy policy.
             <br />
             Need help? Contact our support team at{" "}
-            <a href="mailto:suppliers@navimed.com" className="text-blue-600 dark:text-blue-400 hover:underline">
-              suppliers@navimed.com
+            <a href="mailto:suppliers@navimedi.org" className="text-blue-600 dark:text-blue-400 hover:underline">
+              suppliers@navimedi.org
             </a>
           </p>
         </div>

@@ -319,8 +319,8 @@ export function InitialSystemConfiguration() {
                   <h5 className="font-medium text-blue-900 mb-1">📧 Email Setup</h5>
                   <p className="text-blue-700 text-sm">
                     Configure NAVIMED to use your organization's email settings:
-                    <br />• Primary: <strong>info@navimedi.com</strong>
-                    <br />• Support: <strong>support@navimedi.com</strong>
+                    <br />• Primary: <strong>info@navimedi.org</strong>
+                    <br />• Support: <strong>support@navimedi.org</strong>
                   </p>
                 </div>
               </CardContent>
@@ -411,7 +411,7 @@ export function InitialSystemConfiguration() {
                     </Button>
                   </Link>
                   <Button variant="outline" className="gap-2">
-                    Technical Support: support@navimedi.com
+                    Technical Support: support@navimedi.org
                   </Button>
                 </div>
               </CardContent>

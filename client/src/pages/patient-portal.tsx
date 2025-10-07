@@ -2507,7 +2507,7 @@ Report ID: ${labOrder.id}
                 </div>
                 <div className="flex items-center text-sm">
                   <Mail className="h-4 w-4 mr-2 text-blue-600" />
-                  <span>support@navimedi.com</span>
+                  <span>support@navimedi.org</span>
                 </div>
                 <p className="text-xs text-gray-500">
                   Available Mon-Fri, 8 AM - 6 PM

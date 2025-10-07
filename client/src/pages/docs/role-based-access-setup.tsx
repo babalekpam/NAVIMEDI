@@ -447,7 +447,7 @@ export function RoleBasedAccessSetup() {
                     </Button>
                   </Link>
                   <Button variant="outline" className="gap-2">
-                    RBAC Support: support@navimedi.com
+                    RBAC Support: support@navimedi.org
                   </Button>
                 </div>
               </CardContent>

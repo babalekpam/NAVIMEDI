@@ -317,7 +317,7 @@ export function UserAccountConfiguration() {
                     </Button>
                   </Link>
                   <Button variant="outline" className="gap-2">
-                    Contact Support: support@navimedi.com
+                    Contact Support: support@navimedi.org
                   </Button>
                 </div>
               </CardContent>
