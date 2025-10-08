@@ -1,0 +1,36 @@
+p((s,r)=>e.jsxs("div",{className:"border-b pb-4 last:border-b-0",children:[e.jsx("h4",{className:"font-medium text-gra
+,e.jsx("p",{className:"text-gray-600 text-sm",children:s.answer})]},r))}),e.jsxs("div",{className:"mt-6 p-4 bg-yelloww-200",children:[e.jsx("h4",{className:"font-medium text-yellow-800 mb-2",children:"Can't Find Your Question?"}),e.jsx
+text-sm mb-3",children:"Our knowledge base is constantly growing. If you have a question that's not covered here, plea
+it to help future users."}),e.jsx(n,{size:"sm",variant:"outline",className:"border-yellow-300 text-yellow-700",childre
+e.jsx(l,{value:"contact",className:"space-y-8",children:e.jsxs(a,{children:[e.jsxs(c,{children:[e.jsx(d,{children:"Get
+dren:"Multiple ways to get the support you need"})]}),e.jsxs(i,{children:[e.jsxs("div",{className:"grid md:grid-cols-2
+lassName:"space-y-4",children:[e.jsx("h4",{className:"font-medium",children:"Support Channels"}),e.jsxs("div",{classNa
+div",{className:"flex items-center gap-3 p-3 border rounded-lg",children:[e.jsx("div",{className:"w-8 h-8 bg-blue-100
+ify-center",children:e.jsx(g,{className:"w-4 h-4 text-blue-600"})}),e.jsxs("div",{children:[e.jsx("h5",{className:"fon
+ical Support"}),e.jsx("p",{className:"text-xs text-gray-600",children:"support@navimedi.com"})]})]}),e.jsxs("div",{cla
+-3 border rounded-lg",children:[e.jsx("div",{className:"w-8 h-8 bg-green-100 rounded-lg flex items-center justify-cent
+w-4 h-4 text-green-600"})}),e.jsxs("div",{children:[e.jsx("h5",{className:"font-medium text-sm",children:"Training Sup
+t-xs text-gray-600",children:"training@navimedi.com"})]})]}),e.jsxs("div",{className:"flex items-center gap-3 p-3 bord
+iv",{className:"w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center",children:e.jsx(j,{className:"w-4 hv",{children:[e.jsx("h5",{className:"font-medium text-sm",children:"General Inquiries"}),e.jsx("p",{className:"text-xs
+vimedi.com"})]})]})]})]}),e.jsxs("div",{className:"space-y-4",children:[e.jsx("h4",{className:"font-medium",children:"
+assName:"space-y-2 text-sm",children:[e.jsxs("div",{className:"flex justify-between",children:[e.jsx("span",{children:
+,{children:"8:00 AM - 6:00 PM EST"})]}),e.jsxs("div",{className:"flex justify-between",children:[e.jsx("span",{childre
+ldren:"9:00 AM - 2:00 PM EST"})]}),e.jsxs("div",{className:"flex justify-between",children:[e.jsx("span",{children:"Su
+Emergency support only"})]})]}),e.jsxs("div",{className:"p-3 bg-red-50 rounded-lg border border-red-200",children:[e.j
+ext-red-800 mb-1",children:"Emergency Support"}),e.jsx("p",{className:"text-red-700 text-sm",children:"For critical sy
+re, call emergency hotline: (555) 123-4567"})]})]})]}),e.jsxs("div",{className:"mt-6 p-4 bg-gray-50 rounded-lg",childr
+edium mb-2",children:"Before Contacting Support"}),e.jsxs("div",{className:"text-sm text-gray-600 space-y-1",children:
+ the following information ready:"}),e.jsxs("ul",{className:"list-disc list-inside ml-4 space-y-1",children:[e.jsx("li
+ganization"}),e.jsx("li",{children:"Description of the issue and steps to reproduce"}),e.jsx("li",{children:"Any error
+{children:"Browser type and version"}),e.jsx("li",{children:"Screenshots if applicable"})]})]})]})]})]})})]})]})})})}e ❌ Still has .com
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬─────
+│ id │ name │ namespace │ version │ mode │ pid │ uptime │ ↺ │ status │ cpu │ mem │ use
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼─────
+│ 0 │ navimed │ default │ 1.0.0 │ fork │ 1046519 │ 0s │ 3 │ online │ 0% │ 14.4mb │ roo
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴─────
+[PM2] Saving current process list...
+[PM2] Successfully saved in /root/.pm2/dump.pm2
+[root@wizardly-swirles NaviMed]# 
