@@ -29,7 +29,7 @@
   "database": "PostgreSQL 15+",
   "authentication": "JWT (jsonwebtoken 9.x)",
   "validation": "Zod 3.x",
-  "email": "SendGrid Mail API 8.x",
+  "email": "Nodemailer (SMTP)",
   "payments": "Stripe 14.x",
   "security": "bcrypt 5.x, helmet 7.x"
 }
@@ -73,8 +73,8 @@
 - **Data Validation**: Drizzle-Zod integration
 
 #### Email Services
-- **Primary**: SendGrid API
-- **Alternatives**: AWS SES, Postmark, Resend, Mailgun
+- **Primary**: SMTP via Nodemailer
+- **IONOS SMTP**: navimedi.org (port 465 SSL)
 - **Development**: Console logging fallback
 - **Templates**: HTML + Text format support
 
@@ -112,7 +112,7 @@ zod                      # Runtime validation
 zod-validation-error     # Enhanced error messages
 
 # Email & Communications
-@sendgrid/mail          # Email service
+nodemailer              # SMTP email service
 ```
 
 #### Critical Frontend Dependencies
@@ -190,7 +190,7 @@ VSCode                 # Recommended IDE
 ### External Services Integration
 
 #### Email Service Providers
-- **SendGrid**: Primary email delivery
+- **SMTP (Nodemailer)**: Primary email delivery via IONOS
 - **AWS SES**: Alternative email service
 - **Postmark**: Transactional email alternative
 - **Mailgun**: Email API alternative
@@ -262,7 +262,7 @@ if (user.role === 'super_admin') {
 - **Database**: PostgreSQL with Drizzle ORM
 - **Frontend**: React, TypeScript, Tailwind CSS, Vite
 - **Authentication**: JWT with role-based access control
-- **Email**: SendGrid integration with fallbacks
+- **Email**: SMTP (Nodemailer) via IONOS with fallbacks
 
 ### Key Files Structure
 ```
@@ -1003,52 +1003,60 @@ export const useTenant = () => {
 
 ## 7. Email System Integration
 
-### SendGrid Configuration
+### SMTP Email Configuration
 
 #### Environment Setup
 ```bash
-# Required environment variable
-SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# Required SMTP environment variables
+SMTP_HOST=navimedi.org
+SMTP_PORT=465
+SMTP_USER=no-reply@navimedi.org
+SMTP_PASS=your_smtp_password
 ```
 
 #### Email Service Implementation
 ```typescript
-// server/email-service.ts
-import { MailService } from '@sendgrid/mail';
+// server/email-service.js
+const nodemailer = require('nodemailer');
 
-let mailService: MailService | null = null;
+let transporter = null;
 
-// Initialize SendGrid with validation
-if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.startsWith('SG.')) {
-  mailService = new MailService();
-  mailService.setApiKey(process.env.SENDGRID_API_KEY);
-  console.log('✅ SendGrid email service initialized');
+// Initialize SMTP transporter
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT) || 465,
+    secure: parseInt(process.env.SMTP_PORT) === 465, // true for 465, false for other ports
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    },
+    tls: {
+      rejectUnauthorized: false
+    }
+  });
+  console.log('✅ SMTP email service initialized successfully');
 } else {
-  console.warn('⚠️  SendGrid API key invalid or missing. Email functionality disabled.');
+  console.warn('⚠️ SMTP configuration incomplete. Email functionality will be disabled.');
 }
 
 // Email sending function with fallback
-export async function sendPasswordResetEmail(params: {
-  userEmail: string;
-  resetToken: string;
-  firstName: string;
-  lastName: string;
-}) {
+async function sendPasswordResetEmail(params) {
   const resetLink = `${process.env.FRONTEND_URL}/reset-password/${params.resetToken}`;
   
-  if (mailService) {
-    // Send via SendGrid
+  if (transporter) {
+    // Send via SMTP
     try {
-      await mailService.send({
+      await transporter.sendMail({
+        from: 'no-reply@navimedi.org',
         to: params.userEmail,
-        from: 'noreply@navimed-healthcare.com',
         subject: 'Password Reset - NaviMED Healthcare',
         html: generatePasswordResetHTML(params, resetLink),
         text: generatePasswordResetText(params, resetLink)
       });
       console.log(`✅ Password reset email sent to ${params.userEmail}`);
     } catch (error) {
-      console.error('SendGrid email error:', error);
+      console.error('❌ SMTP email error:', error);
       throw new Error('Failed to send email');
     }
   } else {
@@ -1336,7 +1344,7 @@ if (error.message === "Token expired") {
 #### Issue: Password Reset Not Working
 ```typescript
 // Debug checklist:
-1. Check SENDGRID_API_KEY format (must start with 'SG.')
+1. Check SMTP configuration (SMTP_HOST, SMTP_USER, SMTP_PASS)
 2. Verify email service initialization in logs
 3. Check token expiration (30 minutes)
 4. Ensure token hasn't been used already
@@ -1409,18 +1417,18 @@ app.use('/api/auth', rateLimiter);
 
 ### Email Service Issues
 
-#### Issue: SendGrid Key Validation
+#### Issue: SMTP Configuration Validation
 ```typescript
-// Validate SendGrid API key format
-const isValidSendGridKey = (key: string): boolean => {
-  return key && key.startsWith('SG.') && key.length > 20;
+// Validate SMTP configuration
+const isValidSMTPConfig = (): boolean => {
+  return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 };
 
 // Enhanced initialization
-if (isValidSendGridKey(process.env.SENDGRID_API_KEY)) {
-  // Initialize SendGrid
+if (isValidSMTPConfig()) {
+  // Initialize SMTP transporter
 } else {
-  console.warn('Invalid SendGrid API key format. Expected: SG.xxx...');
+  console.warn('⚠️ SMTP configuration incomplete. Required: SMTP_HOST, SMTP_USER, SMTP_PASS');
 }
 ```
 
@@ -1430,7 +1438,7 @@ if (isValidSendGridKey(process.env.SENDGRID_API_KEY)) {
 async function sendEmailWithRetry(emailData: EmailData, maxRetries = 3): Promise<void> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      await mailService.send(emailData);
+      await transporter.sendMail(emailData);
       return; // Success
     } catch (error) {
       console.error(`Email attempt ${attempt} failed:`, error);

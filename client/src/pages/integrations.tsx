@@ -66,7 +66,7 @@ export default function Integrations() {
       description: "Enhance patient and provider communication",
       integrations: [
         { name: "Twilio", type: "SMS", description: "SMS and voice messaging" },
-        { name: "SendGrid", type: "Email", description: "Email delivery service" },
+        { name: "SMTP Email", type: "Email", description: "Direct SMTP email delivery" },
         { name: "Zoom", type: "Video", description: "Telehealth video calls" },
         { name: "Microsoft Teams", type: "Video", description: "Healthcare collaboration" },
         { name: "Slack", type: "Chat", description: "Team communication" },

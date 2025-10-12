@@ -53,7 +53,10 @@ NODE_ENV=production
 PORT=5000
 DATABASE_URL=your_postgresql_connection_string
 JWT_SECRET=your_jwt_secret_key_here
-SENDGRID_API_KEY=your_sendgrid_key
+SMTP_HOST=navimedi.org
+SMTP_PORT=465
+SMTP_USER=no-reply@navimedi.org
+SMTP_PASS=your_smtp_password
 STRIPE_SECRET_KEY=your_stripe_key
 ```
 

@@ -64,8 +64,11 @@ Ensure these are set in Plesk Node.js environment:
 NODE_ENV=production
 DATABASE_URL=your_postgresql_connection
 JWT_SECRET=your_jwt_secret
+SMTP_HOST=navimedi.org
+SMTP_PORT=465
+SMTP_USER=no-reply@navimedi.org
+SMTP_PASS=your_smtp_password
 STRIPE_SECRET_KEY=your_stripe_key
-SENDGRID_API_KEY=your_sendgrid_key
 ```
 
 ### Check 3: Log Files

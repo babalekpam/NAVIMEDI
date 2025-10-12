@@ -210,8 +210,11 @@ DATABASE_URL=postgresql://user:password@localhost:5432/navimed
 JWT_SECRET=your-secure-jwt-secret
 ENCRYPTION_KEY=your-256-bit-encryption-key
 
-# Email Configuration  
-SENDGRID_API_KEY=your-sendgrid-api-key
+# Email Configuration (SMTP)
+SMTP_HOST=navimedi.org
+SMTP_PORT=465
+SMTP_USER=no-reply@navimedi.org
+SMTP_PASS=your-smtp-password
 EMAIL_FROM=noreply@navimedi.org
 
 # Security Settings
