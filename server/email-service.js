@@ -1,20 +1,30 @@
-const { MailService } = require('@sendgrid/mail');
+const nodemailer = require('nodemailer');
 
-let mailService = null;
+let transporter = null;
 
-// Only initialize SendGrid if we have a valid API key
-if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.startsWith('SG.')) {
-  mailService = new MailService();
-  mailService.setApiKey(process.env.SENDGRID_API_KEY);
-} else if (process.env.SENDGRID_API_KEY && !process.env.SENDGRID_API_KEY.startsWith('SG.')) {
-  console.warn("Invalid SENDGRID_API_KEY format. API key must start with 'SG.' - Email functionality will be disabled.");
+// Initialize SMTP transporter
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT) || 465,
+    secure: parseInt(process.env.SMTP_PORT) === 465, // true for 465, false for other ports
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    },
+    tls: {
+      rejectUnauthorized: false
+    }
+  });
+  console.log('✅ SMTP email service initialized successfully');
 } else {
-  console.warn("SENDGRID_API_KEY environment variable not set. Email functionality will be disabled.");
+  console.warn("⚠️ SMTP configuration incomplete. Email functionality will be disabled.");
+  console.warn("Required: SMTP_HOST, SMTP_USER, SMTP_PASS");
 }
 
 async function sendEmail(params) {
-  if (!mailService) {
-    console.log('Email would be sent (SendGrid not configured):', {
+  if (!transporter) {
+    console.log('Email would be sent (SMTP not configured):', {
       to: params.to,
       from: params.from,
       subject: params.subject
@@ -24,18 +34,19 @@ async function sendEmail(params) {
 
   try {
     const emailData = {
-      to: params.to,
       from: params.from,
+      to: params.to,
       subject: params.subject,
     };
     
     if (params.text) emailData.text = params.text;
     if (params.html) emailData.html = params.html;
     
-    await mailService.send(emailData);
+    await transporter.sendMail(emailData);
+    console.log(`✅ Email sent successfully to ${params.to}`);
     return true;
   } catch (error) {
-    console.error('SendGrid email error:', error);
+    console.error('❌ SMTP email error:', error);
     return false;
   }
 }
@@ -102,7 +113,7 @@ async function sendWelcomeEmail(params) {
 
   return await sendEmail({
     to: params.userEmail,
-    from: 'noreply@navimed-healthcare.com',
+    from: params.from || 'no-reply@navimedi.org',
     subject: `Welcome to NaviMED Healthcare Platform - ${params.organizationName}`,
     html: welcomeHtml,
     text: `Welcome ${params.firstName} ${params.lastName} to NaviMED Healthcare Platform!\n\nYour account for ${params.organizationName} has been created.\n\nLogin credentials:\nUsername: ${params.username}\nEmail: ${params.userEmail}\nTemporary Password: ${params.temporaryPassword}\n\nPlease login at: ${params.loginUrl}\n\nImportant: Change your password after first login.`
