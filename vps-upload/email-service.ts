@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
 let transporter = null;
 
@@ -173,7 +173,7 @@ function generateTemporaryPassword() {
   return result;
 }
 
-module.exports = {
+export {
   sendEmail,
   sendWelcomeEmail,
   sendRegistrationConfirmationEmail,
