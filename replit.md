@@ -77,7 +77,7 @@ The platform integrates with the following key external components and services:
 -   **PostgreSQL**: Primary relational database.
 -   **JWT (JSON Web Tokens)**: For authentication and authorization.
 -   **Drizzle ORM**: For database interactions.
--   **OpenAI API**: Powers NaviMED AI for intelligent health analysis and recommendations.
+-   **ARGILETTE Technology**: Powers ARGILETTE LAB PRODUCT for comprehensive health analysis and personalized recommendations.
 -   **SMTP (Nodemailer)**: Email service using IONOS SMTP server (@navimedi.org addresses).
 -   **Custom API Endpoints**: For cross-tenant data synchronization (patient insurance, billing, messaging, directory, medical history).
 -   **Payment Gateways**: For payment processing.

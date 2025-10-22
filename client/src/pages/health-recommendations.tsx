@@ -351,7 +351,7 @@ export default function HealthRecommendations() {
                 <CardContent className="flex flex-col items-center justify-center h-32 text-center">
                   <Activity className="h-12 w-12 text-muted-foreground mb-2" />
                   <p className="text-muted-foreground">
-                    No health analysis available. Generate an AI analysis to get comprehensive health insights based on vital signs, appointments, and lab results.
+                    No health analysis available. Generate a health analysis to get comprehensive health insights based on vital signs, appointments, and lab results.
                   </p>
                 </CardContent>
               </Card>
