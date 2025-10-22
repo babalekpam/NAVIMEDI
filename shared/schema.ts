@@ -3206,7 +3206,7 @@ export type InsertPatientBill = z.infer<typeof insertPatientBillSchema>;
 export type PatientPayment = typeof patientPayments.$inferSelect;
 export type InsertPatientPayment = z.infer<typeof insertPatientPaymentSchema>;
 
-// AI Health Recommendations Types
+// ARGILETTE LAB Health Recommendations Types
 export type HealthRecommendation = typeof healthRecommendations.$inferSelect;
 export type InsertHealthRecommendation = z.infer<typeof insertHealthRecommendationSchema>;
 
