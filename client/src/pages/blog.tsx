@@ -43,7 +43,7 @@ const blogPosts: BlogPost[] = [
   {
     id: "ai-healthcare-transformation-2025",
     title: "AI in Healthcare: How Machine Learning is Reducing Medical Errors by 47% in 2025",
-    excerpt: "New research from 200+ healthcare facilities shows AI-powered diagnostic tools are dramatically improving patient safety and reducing costs. Our comprehensive analysis reveals the technologies making the biggest impact.",
+    excerpt: "New research from 200+ healthcare facilities shows Advanced diagnostic tools are dramatically improving patient safety and reducing costs. Our comprehensive analysis reveals the technologies making the biggest impact.",
     content: "Full analysis of AI implementation across healthcare systems...",
     category: "AI & Technology",
     author: "Dr. Elena Rodriguez",

@@ -713,7 +713,7 @@ export default function LandingPage() {
               <CardContent className="text-center p-0">
                 <Languages className="w-12 h-12 mx-auto mb-4 text-purple-600" />
                 <h3 className="font-semibold mb-2">Serve diverse communities in 25+ languages</h3>
-                <p className="text-sm text-gray-600">Real-time translation with AI-powered medical terminology</p>
+                <p className="text-sm text-gray-600">Real-time translation with Advanced medical terminology</p>
               </CardContent>
             </Card>
             <Card className="p-6 hover:shadow-lg transition-all duration-300">

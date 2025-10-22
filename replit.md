@@ -32,7 +32,7 @@ NaviMED is a multi-tenant healthcare platform connecting independent pharmacies 
 - **DASHBOARD UPGRADE PROJECT COMPLETED:** Successfully upgraded all dashboards from mock data to real database connections - fixed laboratory analytics dashboard regression that was showing hardcoded values (2,847 tests, 4.2h turnaround) instead of authentic database values, ensuring all healthcare data displays real operational metrics (Sep 18, 2025)
 - **APPOINTMENTS PAGE MODERNIZED:** Completely transformed appointments interface with contemporary healthcare design featuring professional gradients, modern card layouts, enhanced typography, improved spacing, and sophisticated visual hierarchy while preserving all functionality (Sep 18, 2025)
 - **PRESCRIPTION MANAGEMENT MODERNIZED:** Completely redesigned prescription management page with contemporary healthcare styling featuring professional gradient backgrounds, modern statistics cards with hover animations, enhanced typography, improved spacing, and sophisticated visual hierarchy while maintaining full prescription workflow functionality including Process, View Details, and New Prescription dialogs (Sep 18, 2025)
-- **NAVIMED AI INTEGRATION:** Implemented NaviMED AI powered by OpenAI (GPT-4o) for intelligent health analysis and personalized patient recommendations - replaced all previous AI services (Gemini, generic analyzers) with unified, branded AI assistant that analyzes vital signs, lab results, medical history and provides evidence-based health recommendations with risk factor assessment (Oct 22, 2025)
+- **ARGILETTE LAB INTEGRATION:** Implemented ARGILETTE LAB health analysis system for comprehensive health analysis and personalized patient recommendations - replaced all previous analysis services with unified ARGILETTE LAB PRODUCT that analyzes vital signs, lab results, medical history and provides evidence-based health recommendations with risk factor assessment (Oct 22, 2025)
 - **VPS DEPLOYMENT COMPLETE:** Successfully deployed NaviMED platform to IONOS VPS (74.208.166.77) at navimedi.org with SSL certificates, PostgreSQL database, PM2 process management, and complete SMTP email integration using @navimedi.org domain addresses (Oct 22, 2025)
 
 ## System Architecture
@@ -43,7 +43,7 @@ The platform is built on a modern stack for scalability, security, and maintaina
 -   **Backend**: Node.js, Express.js, TypeScript
 -   **Database**: PostgreSQL via Drizzle ORM
 -   **Authentication**: JWT for secure user authentication and granular Role-Based Access Control (RBAC).
--   **AI Services**: NaviMED AI powered by OpenAI GPT-4o for intelligent health analysis and patient recommendations.
+-   **Health Analysis**: ARGILETTE LAB PRODUCT for comprehensive health analysis and patient recommendations - Powered by ARGILETTE.
 
 **Key Architectural Decisions & Features:**
 -   **Multi-tenancy**: Strict data isolation per organization (hospital, pharmacy, laboratory) with controlled cross-tenant interactions for prescription routing and lab orders. Super admin capabilities oversee the system.

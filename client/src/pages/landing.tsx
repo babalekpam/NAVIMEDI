@@ -559,7 +559,7 @@ export default function LandingPage() {
                 Enterprise-Grade <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent animate-gradient-x bg-[length:200%_auto]">Healthcare Platform</span>
               </h2>
               <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-medium">
-                Complete healthcare management ecosystem with AI-powered insights, real-time translation, 
+                Complete healthcare management ecosystem with Advanced insights, real-time translation, 
                 and military-grade security for modern healthcare organizations.
               </p>
             </div>
@@ -577,7 +577,7 @@ export default function LandingPage() {
                       <h3 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors leading-tight">Serve diverse communities in 25+ languages</h3>
                     </div>
                     <p className="text-slate-600 leading-relaxed text-lg font-medium">
-                      Break down language barriers with instant multilingual support and AI-powered medical terminology translation for global healthcare delivery.
+                      Break down language barriers with instant multilingual support and Advanced medical terminology translation for global healthcare delivery.
                     </p>
                   </CardContent>
                 </Card>

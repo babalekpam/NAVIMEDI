@@ -1261,7 +1261,7 @@ Report ID: ${labOrder.id}
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold mb-2">Health Tracking</h2>
-        <p className="text-gray-600">Monitor your vital signs, track health goals, and view AI-powered health insights</p>
+        <p className="text-gray-600">Monitor your vital signs, track health goals, and view Advanced health insights</p>
       </div>
 
       {/* Health Score Card */}
