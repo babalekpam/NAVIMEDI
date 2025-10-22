@@ -143,15 +143,14 @@ PATIENT PROFILE:
 
 CURRENT VITAL SIGNS:
 ${latestVitals ? `
-- Blood Pressure: ${latestVitals.systolicBp}/${latestVitals.diastolicBp} mmHg
-- Heart Rate: ${latestVitals.heartRate} bpm
-- Temperature: ${latestVitals.temperature}°F
-- Oxygen Saturation: ${latestVitals.oxygenSaturation}%
-- Respiratory Rate: ${latestVitals.respiratoryRate} breaths/min
-- Weight: ${latestVitals.weight} kg
-- Height: ${latestVitals.height} cm
-- BMI: ${this.calculateBMI(latestVitals.weight, latestVitals.height)}
-- Pain Scale: ${latestVitals.painScale}/10
+- Blood Pressure: ${latestVitals.systolicBp ?? 'N/A'}/${latestVitals.diastolicBp ?? 'N/A'} mmHg
+- Heart Rate: ${latestVitals.heartRate ?? 'N/A'} bpm
+- Temperature: ${latestVitals.temperature ?? 'N/A'}°F
+- Oxygen Saturation: ${latestVitals.oxygenSaturation ?? 'N/A'}%
+- Respiratory Rate: ${latestVitals.respiratoryRate ?? 'N/A'} breaths/min
+- Weight: ${latestVitals.weight ?? 'N/A'} kg
+- Height: ${latestVitals.height ?? 'N/A'} cm
+- BMI: ${this.calculateBMI(parseFloat(latestVitals.weight || '0'), parseFloat(latestVitals.height || '0'))}
 ` : "No recent vital signs available"}
 
 VITAL SIGNS TRENDS:
@@ -160,7 +159,7 @@ ${vitalSigns.length > 1 ? this.calculateVitalsTrends(vitalSigns) : "Insufficient
 RECENT APPOINTMENTS:
 ${recentAppointments.length > 0 ? 
   recentAppointments.map(apt => 
-    `- ${new Date(apt.appointmentDate).toLocaleDateString()}: ${apt.appointmentType} - ${apt.chiefComplaint || 'Routine visit'} (${apt.status})`
+    `- ${new Date(apt.appointmentDate).toLocaleDateString()}: ${apt.type} - ${apt.chiefComplaint || 'Routine visit'} (${apt.status})`
   ).join('\n') : "No recent appointments on record"}
 
 LABORATORY RESULTS:
@@ -196,27 +195,29 @@ Provide specific, actionable recommendations that the patient can implement imme
     
     const trends = [];
     
-    if (latest.systolicBp !== previous.systolicBp) {
+    if (latest.systolicBp != null && previous.systolicBp != null && latest.systolicBp !== previous.systolicBp) {
       const change = latest.systolicBp - previous.systolicBp;
       trends.push(`Systolic BP ${change > 0 ? 'increased' : 'decreased'} by ${Math.abs(change)} mmHg`);
     }
     
-    if (latest.heartRate !== previous.heartRate) {
+    if (latest.heartRate != null && previous.heartRate != null && latest.heartRate !== previous.heartRate) {
       const change = latest.heartRate - previous.heartRate;
       trends.push(`Heart rate ${change > 0 ? 'increased' : 'decreased'} by ${Math.abs(change)} bpm`);
     }
     
-    if (latest.weight !== previous.weight) {
-      const change = latest.weight - previous.weight;
+    if (latest.weight != null && previous.weight != null && latest.weight !== previous.weight) {
+      const latestWeight = parseFloat(latest.weight);
+      const previousWeight = parseFloat(previous.weight);
+      const change = latestWeight - previousWeight;
       trends.push(`Weight ${change > 0 ? 'increased' : 'decreased'} by ${Math.abs(change).toFixed(1)} kg`);
     }
     
     return trends.length > 0 ? trends.join(', ') : "Vital signs stable";
   }
 
-  private calculateAge(dateOfBirth: string): number {
+  private calculateAge(dateOfBirth: string | Date): number {
     const today = new Date();
-    const birthDate = new Date(dateOfBirth);
+    const birthDate = typeof dateOfBirth === 'string' ? new Date(dateOfBirth) : dateOfBirth;
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
     

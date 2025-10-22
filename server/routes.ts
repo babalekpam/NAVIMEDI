@@ -25,6 +25,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { sendEmail } from "./email-service";
+import { navimedAI } from "./navimed-ai-service";
 import multer from "multer";
 import csv from "csv-parser";
 import { Readable } from "stream";
@@ -2406,6 +2407,136 @@ The NaviMED Security Team
       console.error('Error updating appointment status:', error);
       res.status(500).json({ 
         message: 'Failed to update appointment status',
+        error: error.message
+      });
+    }
+  });
+
+  // ========================================
+  // NAVIMED AI - HEALTH ANALYSIS ROUTES
+  // ========================================
+  
+  // Generate AI-powered health analysis for a patient
+  app.post('/api/health-analyses/generate/:patientId', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const { patientId } = req.params;
+
+      console.log('🤖 NaviMED AI: Generating health analysis for patient:', patientId);
+
+      // Fetch patient data
+      const patient = await storage.getPatient(patientId, tenantId);
+      if (!patient) {
+        return res.status(404).json({ message: 'Patient not found' });
+      }
+
+      // Fetch vital signs (last 5 readings for trend analysis)
+      const allVitalSigns = await storage.getVitalSignsByPatient(patientId, tenantId);
+      const vitalSigns = allVitalSigns.slice(0, 5);
+      
+      // Fetch recent appointments (last 5)
+      const allAppointments = await storage.getAppointmentsByPatient(patientId, tenantId);
+      const recentAppointments = allAppointments.slice(0, 5);
+      
+      // Fetch lab results (last 10)
+      const allLabResults = await storage.getLabResultsByPatient(patientId, tenantId);
+      const labResults = allLabResults.slice(0, 10);
+
+      // Generate AI analysis
+      const analysisResult = await navimedAI.analyzePatientHealth(
+        patient,
+        vitalSigns,
+        recentAppointments,
+        labResults
+      );
+
+      // Store analysis in database
+      const healthAnalysis = await storage.createHealthAnalysis({
+        patientId,
+        tenantId,
+        overallHealthScore: analysisResult.overallHealthScore,
+        riskFactors: analysisResult.riskFactors,
+        trends: analysisResult.trends,
+        nextAppointmentSuggestion: analysisResult.nextAppointmentSuggestion
+      });
+
+      // Store recommendations
+      for (const rec of analysisResult.recommendations) {
+        await storage.createHealthRecommendation({
+          ...rec,
+          patientId,
+          tenantId,
+          healthAnalysisId: healthAnalysis.id,
+          status: 'active'
+        });
+      }
+
+      console.log('✅ NaviMED AI: Analysis complete - Score:', analysisResult.overallHealthScore);
+
+      res.json({
+        analysis: healthAnalysis,
+        recommendations: analysisResult.recommendations
+      });
+    } catch (error) {
+      console.error('❌ NaviMED AI: Error generating health analysis:', error);
+      res.status(500).json({ 
+        message: 'Failed to generate health analysis',
+        error: error.message
+      });
+    }
+  });
+
+  // Get health recommendations for a patient
+  app.get('/api/health-recommendations/patient/:patientId', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const { patientId } = req.params;
+      
+      const recommendations = await storage.getHealthRecommendationsByPatient(patientId, tenantId);
+      res.json(recommendations);
+    } catch (error) {
+      console.error('Error fetching health recommendations:', error);
+      res.status(500).json({ 
+        message: 'Failed to fetch health recommendations',
+        error: error.message
+      });
+    }
+  });
+
+  // Get latest health analysis for a patient
+  app.get('/api/health-analyses/patient/:patientId/latest', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const { patientId } = req.params;
+      
+      const latestAnalysis = await storage.getLatestHealthAnalysis(patientId, tenantId);
+      res.json(latestAnalysis);
+    } catch (error) {
+      console.error('Error fetching latest health analysis:', error);
+      res.status(500).json({ 
+        message: 'Failed to fetch latest health analysis',
+        error: error.message
+      });
+    }
+  });
+
+  // Acknowledge a health recommendation
+  app.patch('/api/health-recommendations/:id/acknowledge', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { tenantId, id: userId } = req.user as any;
+      const { id } = req.params;
+      
+      const updated = await storage.acknowledgeHealthRecommendation(id, userId, tenantId);
+      
+      if (!updated) {
+        return res.status(404).json({ message: 'Recommendation not found or access denied' });
+      }
+      
+      res.json(updated);
+    } catch (error) {
+      console.error('Error acknowledging health recommendation:', error);
+      res.status(500).json({ 
+        message: 'Failed to acknowledge recommendation',
         error: error.message
       });
     }
