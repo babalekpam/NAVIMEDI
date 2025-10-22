@@ -25,7 +25,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { sendEmail } from "./email-service";
-import { navimedAI } from "./navimed-ai-service";
+import { argiletteLab } from "./argilette-lab-service";
 import multer from "multer";
 import csv from "csv-parser";
 import { Readable } from "stream";
@@ -2413,16 +2413,16 @@ The NaviMED Security Team
   });
 
   // ========================================
-  // NAVIMED AI - HEALTH ANALYSIS ROUTES
+  // ARGILETTE LAB - HEALTH ANALYSIS ROUTES
   // ========================================
   
-  // Generate AI-powered health analysis for a patient
+  // Generate comprehensive health analysis for a patient
   app.post('/api/health-analyses/generate/:patientId', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
     try {
       const { tenantId } = req.user as any;
       const { patientId } = req.params;
 
-      console.log('🤖 NaviMED AI: Generating health analysis for patient:', patientId);
+      console.log('🧪 ARGILETTE LAB: Generating health analysis for patient:', patientId);
 
       // Fetch patient data
       const patient = await storage.getPatient(patientId, tenantId);
@@ -2442,8 +2442,8 @@ The NaviMED Security Team
       const allLabResults = await storage.getLabResultsByPatient(patientId, tenantId);
       const labResults = allLabResults.slice(0, 10);
 
-      // Generate AI analysis
-      const analysisResult = await navimedAI.analyzePatientHealth(
+      // Generate comprehensive health analysis
+      const analysisResult = await argiletteLab.analyzePatientHealth(
         patient,
         vitalSigns,
         recentAppointments,
@@ -2471,14 +2471,14 @@ The NaviMED Security Team
         });
       }
 
-      console.log('✅ NaviMED AI: Analysis complete - Score:', analysisResult.overallHealthScore);
+      console.log('✅ ARGILETTE LAB: Analysis complete - Score:', analysisResult.overallHealthScore);
 
       res.json({
         analysis: healthAnalysis,
         recommendations: analysisResult.recommendations
       });
     } catch (error) {
-      console.error('❌ NaviMED AI: Error generating health analysis:', error);
+      console.error('❌ ARGILETTE LAB: Error generating health analysis:', error);
       res.status(500).json({ 
         message: 'Failed to generate health analysis',
         error: error.message

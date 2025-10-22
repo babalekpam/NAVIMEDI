@@ -1,7 +1,8 @@
 import OpenAI from 'openai';
 import { VitalSigns, Patient, Appointment } from "../shared/schema";
 
-// NaviMED AI - Powered by OpenAI
+// ARGILETTE LAB PRODUCT - Advanced Health Analysis System
+// Powered by ARGILETTE
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
 });
@@ -30,7 +31,7 @@ export interface HealthAnalysisResult {
   nextAppointmentSuggestion?: string;
 }
 
-export class NaviMEDAI {
+export class ArgiletteLabProduct {
   async analyzePatientHealth(
     patient: Patient,
     vitalSigns: VitalSigns[],
@@ -38,10 +39,10 @@ export class NaviMEDAI {
     labResults: any[] = []
   ): Promise<HealthAnalysisResult> {
     try {
-      console.log("🤖 NaviMED AI: Generating comprehensive health analysis...");
+      console.log("🤖 ARGILETTE LAB: Generating comprehensive health analysis...");
       
       if (!process.env.OPENAI_API_KEY) {
-        console.warn("⚠️ NaviMED AI: OpenAI API key not configured, using intelligent fallback");
+        console.warn("⚠️ ARGILETTE LAB: Analysis key not configured, using intelligent fallback");
         return this.generateIntelligentFallback(patient, vitalSigns, recentAppointments, labResults);
       }
 
@@ -52,7 +53,7 @@ export class NaviMEDAI {
         messages: [
           {
             role: "system",
-            content: `You are NaviMED AI, an advanced healthcare intelligence system specializing in preventive medicine and comprehensive health analytics.
+            content: `You are ARGILETTE LAB, an advanced healthcare intelligence system specializing in preventive medicine and comprehensive health analytics.
 
 Your mission is to provide evidence-based, personalized health recommendations that empower patients and healthcare providers.
 
@@ -105,19 +106,19 @@ Respond with valid JSON in this exact format:
       if (analysisResult.recommendations) {
         analysisResult.recommendations = analysisResult.recommendations.map((rec: any, index: number) => ({
           ...rec,
-          id: rec.id || `navimed-ai-rec-${Date.now()}-${index}`,
+          id: rec.id || `argilette-lab-rec-${Date.now()}-${index}`,
           createdAt: new Date()
         }));
       }
       
-      console.log(`✅ NaviMED AI: Analysis complete - Health Score: ${analysisResult.overallHealthScore}/100`);
+      console.log(`✅ ARGILETTE LAB: Analysis complete - Health Score: ${analysisResult.overallHealthScore}/100`);
       
       return analysisResult;
     } catch (error) {
-      console.error("❌ NaviMED AI Error:", error);
+      console.error("❌ ARGILETTE LAB Error:", error);
       
-      // Fallback to intelligent rule-based analysis if OpenAI fails
-      console.log("🔄 NaviMED AI: Switching to intelligent fallback system...");
+      // Fallback to intelligent rule-based analysis if system fails
+      console.log("🔄 ARGILETTE LAB: Switching to intelligent fallback system...");
       return this.generateIntelligentFallback(patient, vitalSigns, recentAppointments, labResults);
     }
   }
@@ -252,7 +253,7 @@ Provide specific, actionable recommendations that the patient can implement imme
         healthScore -= 15;
         riskFactors.push("Elevated blood pressure readings indicating hypertension risk");
         recommendations.push({
-          id: `navimed-ai-bp-${Date.now()}`,
+          id: `argilette-lab-bp-${Date.now()}`,
           type: "medical",
           priority: "high",
           title: "Blood Pressure Management Required",
@@ -289,10 +290,10 @@ Provide specific, actionable recommendations that the patient can implement imme
 
     // Universal wellness optimization
     recommendations.push({
-      id: `navimed-ai-wellness-${Date.now()}`,
+      id: `argilette-lab-wellness-${Date.now()}`,
       type: "lifestyle",
       priority: "low",
-      title: "NaviMED AI Wellness Optimization",
+      title: "Wellness Optimization Program",
       description: "Foundation practices for maintaining and improving overall health",
       recommendations: [
         "Maintain consistent sleep schedule with 7-9 hours nightly",
@@ -328,5 +329,5 @@ Provide specific, actionable recommendations that the patient can implement imme
   }
 }
 
-// Export singleton instance
-export const navimedAI = new NaviMEDAI();
+// Export singleton instance - ARGILETTE LAB PRODUCT
+export const argiletteLab = new ArgiletteLabProduct();
