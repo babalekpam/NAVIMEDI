@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^7.17.0",
-    "@google/genai": "^1.15.0",
     "@hookform/resolvers": "^5.2.1",
     "@jridgewell/trace-mapping": "^0.3.30",
     "@neondatabase/serverless": "^1.0.1",
