@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Scan, CheckCircle, XCircle, Package } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 interface BarcodeScannerProps {
