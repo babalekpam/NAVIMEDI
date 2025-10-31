@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,32 +25,33 @@ import {
 } from "recharts";
 
 export default function AnalyticsDashboard() {
+  const { user, isLoading: authLoading } = useAuth();
   const [timeRange, setTimeRange] = useState("30");
   const [department, setDepartment] = useState("all");
 
   // Fetch real analytics data from backend
   const { data: overview, isLoading: overviewLoading, error: overviewError } = useQuery({
     queryKey: ["/api/analytics/overview"],
-    enabled: true
+    enabled: !!user && !authLoading
   });
 
   const { data: revenueResponse, isLoading: revenueLoading } = useQuery({
     queryKey: ["/api/analytics/revenue", timeRange],
-    enabled: true
+    enabled: !!user && !authLoading
   });
 
   const { data: patientResponse, isLoading: patientLoading } = useQuery({
     queryKey: ["/api/analytics/patients"],
-    enabled: true
+    enabled: !!user && !authLoading
   });
 
   const { data: operationsResponse, isLoading: operationsLoading } = useQuery({
     queryKey: ["/api/analytics/operations"],
-    enabled: true
+    enabled: !!user && !authLoading
   });
 
   // Check if any data is still loading
-  const isLoading = overviewLoading || revenueLoading || patientLoading || operationsLoading;
+  const isLoading = authLoading || overviewLoading || revenueLoading || patientLoading || operationsLoading;
 
   // Extract real data from API responses
   const overviewData = overview?.data || overview;
@@ -147,18 +149,34 @@ export default function AnalyticsDashboard() {
     // Would trigger download
   };
 
+  // Show loading while auth is being determined
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" data-testid="auth-loading">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-lg font-medium text-gray-700">Authenticating...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+      <div className="min-h-screen flex items-center justify-center" data-testid="data-loading">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-lg font-medium text-gray-700">Loading analytics...</p>
+        </div>
       </div>
     );
   }
 
   if (overviewError) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" data-testid="error-state">
         <div className="text-center">
+          <AlertTriangle className="mx-auto h-12 w-12 text-red-600 mb-4" />
           <h2 className="text-2xl font-bold text-red-600 mb-2">Failed to load analytics</h2>
           <p className="text-gray-600">Please try again later or contact support if the problem persists.</p>
         </div>

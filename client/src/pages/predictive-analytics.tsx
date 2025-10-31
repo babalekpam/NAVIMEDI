@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,111 +21,143 @@ import {
   Area
 } from "recharts";
 
+// Type definitions for API responses
+interface ReadmissionPrediction {
+  patientId: string;
+  patientName: string;
+  riskScore: number;
+  riskLevel: 'Low' | 'Moderate' | 'High' | 'Critical';
+  factors: string[];
+  recommendations: string[];
+}
+
+interface NoShowPrediction {
+  appointmentId: string;
+  patientName: string;
+  appointmentDate: Date;
+  department: string;
+  noShowProbability: number;
+  riskLevel: 'Low' | 'Moderate' | 'High';
+  factors: string[];
+  recommendations: string[];
+}
+
+interface InventoryForecast {
+  itemId: string;
+  itemName: string;
+  currentStock: number;
+  predictedDemand: number;
+  reorderPoint: number;
+  suggestedOrder: number;
+  daysUntilStockout: number;
+  trend: 'increasing' | 'decreasing' | 'stable';
+}
+
+interface RevenueForecast {
+  month: string;
+  predictedRevenue: number;
+  confidenceLow: number;
+  confidenceHigh: number;
+  trend: 'up' | 'down' | 'stable';
+  factors: string[];
+}
+
 export default function PredictiveAnalytics() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["/api/analytics/predictions"],
-    enabled: true
+  const { user, isLoading: authLoading } = useAuth();
+
+  // Readmission Risk Query
+  const { data: readmissionData, isLoading: readmissionLoading } = useQuery<{ success: boolean; predictions: ReadmissionPrediction[] }>({
+    queryKey: ['/api/predictive/readmission-risk'],
+    enabled: !!user && !authLoading
   });
 
-  // Mock data for high-risk patients
-  const highRiskPatients = [
-    {
-      id: "P001",
-      name: "John Smith",
-      age: 68,
-      condition: "Heart Failure",
-      riskScore: 87,
-      lastAdmission: "2025-10-15",
-      factors: ["Previous readmission", "Multiple comorbidities", "Age > 65"]
-    },
-    {
-      id: "P002",
-      name: "Mary Johnson",
-      age: 72,
-      condition: "Diabetes",
-      riskScore: 76,
-      lastAdmission: "2025-10-20",
-      factors: ["Poor medication adherence", "Uncontrolled glucose", "Age > 65"]
-    },
-    {
-      id: "P003",
-      name: "Robert Williams",
-      age: 55,
-      condition: "COPD",
-      riskScore: 69,
-      lastAdmission: "2025-10-18",
-      factors: ["Active smoker", "Multiple ED visits", "Low compliance"]
-    }
-  ];
+  // No-Show Predictions Query
+  const { data: noShowData, isLoading: noShowLoading } = useQuery<{ success: boolean; predictions: NoShowPrediction[] }>({
+    queryKey: ['/api/predictive/no-show-probability'],
+    enabled: !!user && !authLoading
+  });
 
-  // No-show predictions
-  const noShowAppointments = [
-    {
-      id: "A001",
-      patientName: "Sarah Davis",
-      appointmentDate: "2025-11-05",
-      department: "Cardiology",
-      noShowProbability: 72,
-      reason: "History of 3 no-shows in last 6 months"
-    },
-    {
-      id: "A002",
-      patientName: "Michael Brown",
-      appointmentDate: "2025-11-06",
-      department: "Orthopedics",
-      noShowProbability: 65,
-      reason: "Long wait time, first-time patient"
-    },
-    {
-      id: "A003",
-      patientName: "Jennifer Wilson",
-      appointmentDate: "2025-11-07",
-      department: "Primary Care",
-      noShowProbability: 58,
-      reason: "Appointment scheduled >30 days out"
-    }
-  ];
+  // Inventory Forecast Query
+  const { data: inventoryData, isLoading: inventoryLoading } = useQuery<{ success: boolean; forecasts: InventoryForecast[] }>({
+    queryKey: ['/api/predictive/inventory-forecast'],
+    enabled: !!user && !authLoading
+  });
 
-  // Inventory demand forecast
-  const inventoryForecast = [
-    { item: "N95 Masks", current: 450, predicted30Day: 2100, reorderPoint: 500, status: "critical" },
-    { item: "Surgical Gloves", current: 3200, predicted30Day: 4500, reorderPoint: 1000, status: "good" },
-    { item: "IV Catheters", current: 850, predicted30Day: 1200, reorderPoint: 500, status: "warning" },
-    { item: "Gauze Pads", current: 1500, predicted30Day: 2000, reorderPoint: 800, status: "good" }
-  ];
+  // Revenue Forecast Query
+  const { data: revenueData, isLoading: revenueLoading } = useQuery<{ success: boolean; forecast: RevenueForecast[] }>({
+    queryKey: ['/api/predictive/revenue-forecast'],
+    enabled: !!user && !authLoading
+  });
 
-  // Revenue forecast data
-  const revenueForecast = [
-    { month: "Nov 2025", actual: 0, predicted: 875000, lowerBound: 825000, upperBound: 925000 },
-    { month: "Dec 2025", actual: 0, predicted: 892000, lowerBound: 840000, upperBound: 945000 },
-    { month: "Jan 2026", actual: 0, predicted: 910000, lowerBound: 855000, upperBound: 965000 },
-    { month: "Feb 2026", actual: 0, predicted: 925000, lowerBound: 868000, upperBound: 982000 },
-    { month: "Mar 2026", actual: 0, predicted: 943000, lowerBound: 882000, upperBound: 1004000 },
-    { month: "Apr 2026", actual: 0, predicted: 960000, lowerBound: 895000, upperBound: 1025000 }
-  ];
+  // Extract data from API responses
+  const highRiskPatients = readmissionData?.predictions || [];
+  const noShowAppointments = noShowData?.predictions || [];
+  const inventoryForecast = inventoryData?.forecasts || [];
+  const revenueForecast = revenueData?.forecast || [];
 
+  // Helper functions
   const getRiskColor = (score: number) => {
     if (score >= 80) return "text-red-600";
     if (score >= 60) return "text-orange-600";
     return "text-yellow-600";
   };
 
-  const getRiskBadge = (score: number) => {
-    if (score >= 80) return <Badge variant="destructive">Critical</Badge>;
-    if (score >= 60) return <Badge className="bg-orange-600">High</Badge>;
-    return <Badge className="bg-yellow-600">Moderate</Badge>;
+  const getRiskBadge = (riskLevel: string) => {
+    if (riskLevel === 'Critical') return <Badge variant="destructive">Critical</Badge>;
+    if (riskLevel === 'High') return <Badge className="bg-orange-600">High</Badge>;
+    if (riskLevel === 'Moderate') return <Badge className="bg-yellow-600">Moderate</Badge>;
+    return <Badge className="bg-green-600">Low</Badge>;
   };
 
-  const getInventoryBadge = (status: string) => {
-    if (status === "critical") return <Badge variant="destructive">Critical</Badge>;
-    if (status === "warning") return <Badge className="bg-orange-600">Warning</Badge>;
+  const getNoShowRiskBadge = (riskLevel: string) => {
+    if (riskLevel === 'High') return <Badge variant="destructive">High Risk</Badge>;
+    if (riskLevel === 'Moderate') return <Badge className="bg-orange-600">Moderate</Badge>;
+    return <Badge className="bg-green-600">Low</Badge>;
+  };
+
+  const getInventoryBadge = (daysUntilStockout: number) => {
+    if (daysUntilStockout < 7) return <Badge variant="destructive">Critical</Badge>;
+    if (daysUntilStockout < 14) return <Badge className="bg-orange-600">Warning</Badge>;
     return <Badge className="bg-green-600">Good</Badge>;
   };
 
+  const getTrendIcon = (trend: string) => {
+    if (trend === 'increasing') return '📈';
+    if (trend === 'decreasing') return '📉';
+    return '➡️';
+  };
+
+  // Calculate summary statistics for revenue
+  const avgForecast = revenueForecast.length > 0
+    ? Math.round(revenueForecast.reduce((sum: number, item: any) => sum + item.predictedRevenue, 0) / revenueForecast.length)
+    : 0;
+  
+  const growthRate = revenueForecast.length >= 2
+    ? (((revenueForecast[revenueForecast.length - 1]?.predictedRevenue - revenueForecast[0]?.predictedRevenue) / revenueForecast[0]?.predictedRevenue) * 100).toFixed(1)
+    : '0.0';
+
+  // Loading states
+  const isLoading = readmissionLoading || noShowLoading || inventoryLoading || revenueLoading;
+
+  // Show loading while auth is being determined
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" data-testid="auth-loading">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-lg font-medium text-gray-700">Authenticating...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+      <div className="min-h-screen flex items-center justify-center" data-testid="data-loading">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-lg font-medium text-gray-700">Loading predictive analytics...</p>
+        </div>
       </div>
     );
   }
@@ -171,65 +204,76 @@ export default function PredictiveAnalytics() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {highRiskPatients.map((patient) => (
-                  <div
-                    key={patient.id}
-                    className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                    data-testid={`patient-${patient.id}`}
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center space-x-3">
-                        <User className="h-10 w-10 text-gray-400" />
-                        <div>
-                          <h4 className="font-semibold text-lg" data-testid={`patient-name-${patient.id}`}>
-                            {patient.name}
-                          </h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {patient.age} years • {patient.condition}
+              {highRiskPatients.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <AlertTriangle className="mx-auto h-12 w-12 mb-4 opacity-30" />
+                  <p>No high-risk patients identified</p>
+                  <p className="text-sm mt-2">This is good news! Continue monitoring patient health.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {highRiskPatients.map((patient: any) => (
+                    <div
+                      key={patient.patientId}
+                      className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                      data-testid={`patient-${patient.patientId}`}
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center space-x-3">
+                          <User className="h-10 w-10 text-gray-400" />
+                          <div>
+                            <h4 className="font-semibold text-lg" data-testid={`patient-name-${patient.patientId}`}>
+                              {patient.patientName}
+                            </h4>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {getRiskBadge(patient.riskLevel)}
+                          <p className={`text-2xl font-bold mt-1 ${getRiskColor(patient.riskScore)}`}>
+                            {patient.riskScore}%
                           </p>
+                          <p className="text-xs text-gray-500">Risk Score</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        {getRiskBadge(patient.riskScore)}
-                        <p className={`text-2xl font-bold mt-1 ${getRiskColor(patient.riskScore)}`}>
-                          {patient.riskScore}%
-                        </p>
-                        <p className="text-xs text-gray-500">Risk Score</p>
+                      
+                      <div className="mb-3">
+                        <Progress value={patient.riskScore} className="h-2" />
                       </div>
-                    </div>
-                    
-                    <div className="mb-3">
-                      <Progress value={patient.riskScore} className="h-2" />
-                    </div>
 
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">Risk Factors:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {patient.factors.map((factor, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">
-                            {factor}
-                          </Badge>
-                        ))}
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Risk Factors:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {patient.factors.map((factor: string, idx: number) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {factor}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="flex justify-between items-center mt-4 pt-4 border-t">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Last admission: {new Date(patient.lastAdmission).toLocaleDateString()}
-                      </p>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" data-testid={`button-view-${patient.id}`}>
+                      <div className="space-y-2 mt-3">
+                        <p className="text-sm font-medium">Recommendations:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {patient.recommendations.map((rec: string, idx: number) => (
+                            <Badge key={idx} variant="secondary" className="text-xs">
+                              {rec}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end space-x-2 mt-4 pt-4 border-t">
+                        <Button variant="outline" size="sm" data-testid={`button-view-${patient.patientId}`}>
                           View Details
                         </Button>
-                        <Button size="sm" data-testid={`button-intervene-${patient.id}`}>
+                        <Button size="sm" data-testid={`button-intervene-${patient.patientId}`}>
                           Create Intervention
                         </Button>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -244,49 +288,77 @@ export default function PredictiveAnalytics() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {noShowAppointments.map((appt) => (
-                  <div
-                    key={appt.id}
-                    className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                    data-testid={`appointment-${appt.id}`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <Calendar className="h-5 w-5 text-blue-600" />
-                          <div>
-                            <h4 className="font-semibold" data-testid={`appointment-patient-${appt.id}`}>
-                              {appt.patientName}
-                            </h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {new Date(appt.appointmentDate).toLocaleDateString()} • {appt.department}
-                            </p>
+              {noShowAppointments.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Calendar className="mx-auto h-12 w-12 mb-4 opacity-30" />
+                  <p>No high-risk appointments found</p>
+                  <p className="text-sm mt-2">All upcoming appointments have low no-show probability.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {noShowAppointments.map((appt: any) => (
+                    <div
+                      key={appt.appointmentId}
+                      className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                      data-testid={`appointment-${appt.appointmentId}`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <Calendar className="h-5 w-5 text-blue-600" />
+                            <div>
+                              <h4 className="font-semibold" data-testid={`appointment-patient-${appt.appointmentId}`}>
+                                {appt.patientName}
+                              </h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                {new Date(appt.appointmentDate).toLocaleDateString()} • {appt.department}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mb-2">
+                            <Progress value={appt.noShowProbability} className="h-2" />
+                          </div>
+                          
+                          <div className="space-y-2 mt-3">
+                            <p className="text-sm font-medium">Risk Factors:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {appt.factors.map((factor: string, idx: number) => (
+                                <Badge key={idx} variant="outline" className="text-xs">
+                                  {factor}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2 mt-3">
+                            <p className="text-sm font-medium">Recommendations:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {appt.recommendations.map((rec: string, idx: number) => (
+                                <Badge key={idx} variant="secondary" className="text-xs">
+                                  {rec}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                        <div className="mb-2">
-                          <Progress value={appt.noShowProbability} className="h-2" />
+                        <div className="text-right ml-4">
+                          {getNoShowRiskBadge(appt.riskLevel)}
+                          <p className="text-2xl font-bold text-orange-600 mt-1">{appt.noShowProbability}%</p>
+                          <p className="text-xs text-gray-500">No-Show Risk</p>
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          <span className="font-medium">Reason:</span> {appt.reason}
-                        </p>
                       </div>
-                      <div className="text-right ml-4">
-                        <p className="text-2xl font-bold text-orange-600">{appt.noShowProbability}%</p>
-                        <p className="text-xs text-gray-500">No-Show Risk</p>
+                      <div className="flex justify-end space-x-2 mt-4 pt-4 border-t">
+                        <Button variant="outline" size="sm" data-testid={`button-send-reminder-${appt.appointmentId}`}>
+                          Send Reminder
+                        </Button>
+                        <Button variant="outline" size="sm" data-testid={`button-call-patient-${appt.appointmentId}`}>
+                          Call Patient
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex justify-end space-x-2 mt-4 pt-4 border-t">
-                      <Button variant="outline" size="sm" data-testid={`button-send-reminder-${appt.id}`}>
-                        Send Reminder
-                      </Button>
-                      <Button variant="outline" size="sm" data-testid={`button-call-patient-${appt.id}`}>
-                        Call Patient
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -301,48 +373,68 @@ export default function PredictiveAnalytics() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {inventoryForecast.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="border rounded-lg p-4"
-                    data-testid={`inventory-item-${idx}`}
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h4 className="font-semibold text-lg" data-testid={`item-name-${idx}`}>
-                          {item.item}
-                        </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Current stock: {item.current} units
-                        </p>
+              {inventoryForecast.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Package className="mx-auto h-12 w-12 mb-4 opacity-30" />
+                  <p>No critical inventory items</p>
+                  <p className="text-sm mt-2">All inventory levels are within acceptable ranges.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {inventoryForecast.map((item: any, idx: number) => (
+                    <div
+                      key={item.itemId}
+                      className="border rounded-lg p-4"
+                      data-testid={`inventory-item-${idx}`}
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h4 className="font-semibold text-lg flex items-center gap-2" data-testid={`item-name-${idx}`}>
+                            {item.itemName} <span className="text-sm">{getTrendIcon(item.trend)}</span>
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Current stock: {item.currentStock} units • Trend: {item.trend}
+                          </p>
+                        </div>
+                        {getInventoryBadge(item.daysUntilStockout)}
                       </div>
-                      {getInventoryBadge(item.status)}
+                      <div className="grid grid-cols-4 gap-4 mt-4">
+                        <div>
+                          <p className="text-xs text-gray-500">Current</p>
+                          <p className="text-lg font-semibold">{item.currentStock}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Predicted 30-Day</p>
+                          <p className="text-lg font-semibold">{item.predictedDemand}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Reorder Point</p>
+                          <p className="text-lg font-semibold">{item.reorderPoint}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Days Until Stockout</p>
+                          <p className="text-lg font-semibold">{item.daysUntilStockout}</p>
+                        </div>
+                      </div>
+                      {item.suggestedOrder > 0 && (
+                        <div className={`mt-4 p-3 rounded ${
+                          item.daysUntilStockout < 7 
+                            ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+                            : 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
+                        }`}>
+                          <p className={`text-sm ${
+                            item.daysUntilStockout < 7 
+                              ? 'text-red-800 dark:text-red-200'
+                              : 'text-yellow-800 dark:text-yellow-200'
+                          }`}>
+                            {item.daysUntilStockout < 7 ? '⚠️ Immediate' : '⚠️'} Recommended reorder: {item.suggestedOrder} units
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    <div className="grid grid-cols-3 gap-4 mt-4">
-                      <div>
-                        <p className="text-xs text-gray-500">Current</p>
-                        <p className="text-lg font-semibold">{item.current}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Predicted 30-Day</p>
-                        <p className="text-lg font-semibold">{item.predicted30Day}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Reorder Point</p>
-                        <p className="text-lg font-semibold">{item.reorderPoint}</p>
-                      </div>
-                    </div>
-                    {item.status === "critical" && (
-                      <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                        <p className="text-sm text-red-800 dark:text-red-200">
-                          ⚠️ Recommended immediate reorder: {item.predicted30Day - item.current} units
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -353,58 +445,89 @@ export default function PredictiveAnalytics() {
             <CardHeader>
               <CardTitle>6-Month Revenue Forecast</CardTitle>
               <CardDescription>
-                Predicted revenue with 95% confidence intervals
+                Predicted revenue with 95% confidence intervals based on historical data
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <AreaChart data={revenueForecast}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`} />
-                  <Tooltip formatter={(value) => `$${Number(value).toLocaleString()}`} />
-                  <Legend />
-                  <Area
-                    type="monotone"
-                    dataKey="upperBound"
-                    stackId="1"
-                    stroke="#93c5fd"
-                    fill="#dbeafe"
-                    name="Upper Bound"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="predicted"
-                    stackId="2"
-                    stroke="#3b82f6"
-                    fill="#60a5fa"
-                    name="Predicted"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="lowerBound"
-                    stackId="3"
-                    stroke="#93c5fd"
-                    fill="#dbeafe"
-                    name="Lower Bound"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {revenueForecast.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <DollarSign className="mx-auto h-12 w-12 mb-4 opacity-30" />
+                  <p>Insufficient data for revenue forecast</p>
+                  <p className="text-sm mt-2">More historical data is needed to generate accurate predictions.</p>
+                </div>
+              ) : (
+                <>
+                  <ResponsiveContainer width="100%" height={400}>
+                    <AreaChart data={revenueForecast}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`} />
+                      <Tooltip formatter={(value) => `$${Number(value).toLocaleString()}`} />
+                      <Legend />
+                      <Area
+                        type="monotone"
+                        dataKey="confidenceHigh"
+                        stackId="1"
+                        stroke="#93c5fd"
+                        fill="#dbeafe"
+                        name="Upper Bound (95%)"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="predictedRevenue"
+                        stackId="2"
+                        stroke="#3b82f6"
+                        fill="#60a5fa"
+                        name="Predicted Revenue"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="confidenceLow"
+                        stackId="3"
+                        stroke="#93c5fd"
+                        fill="#dbeafe"
+                        name="Lower Bound (95%)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
 
-              <div className="grid grid-cols-3 gap-4 mt-6">
-                <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Avg Monthly Forecast</p>
-                  <p className="text-2xl font-bold text-blue-600">$917,500</p>
-                </div>
-                <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Growth Rate</p>
-                  <p className="text-2xl font-bold text-green-600">+2.1%</p>
-                </div>
-                <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Confidence</p>
-                  <p className="text-2xl font-bold text-purple-600">95%</p>
-                </div>
-              </div>
+                  <div className="grid grid-cols-3 gap-4 mt-6">
+                    <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Avg Monthly Forecast</p>
+                      <p className="text-2xl font-bold text-blue-600">${(avgForecast / 1000).toFixed(0)}K</p>
+                    </div>
+                    <div className={`text-center p-4 rounded-lg ${
+                      parseFloat(growthRate) >= 0 
+                        ? 'bg-green-50 dark:bg-green-900/20' 
+                        : 'bg-red-50 dark:bg-red-900/20'
+                    }`}>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Growth Rate</p>
+                      <p className={`text-2xl font-bold ${
+                        parseFloat(growthRate) >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {parseFloat(growthRate) >= 0 ? '+' : ''}{growthRate}%
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Confidence</p>
+                      <p className="text-2xl font-bold text-purple-600">95%</p>
+                    </div>
+                  </div>
+
+                  {revenueForecast.length > 0 && revenueForecast[0].factors && (
+                    <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <p className="text-sm font-medium mb-2">Forecast Factors:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {revenueForecast[0].factors.map((factor: string, idx: number) => (
+                          <Badge key={idx} variant="outline" className="text-xs">
+                            {factor}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

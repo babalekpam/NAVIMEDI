@@ -8,17 +8,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Download, FileText, Calendar as CalendarIcon, Plus, Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Download, FileText, Calendar as CalendarIcon, Plus, Clock, CheckCircle, XCircle, Loader2, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function BiReports() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [reportType, setReportType] = useState("financial");
   const [reportFormat, setReportFormat] = useState("json");
   const [reportSchedule, setReportSchedule] = useState("once");
@@ -29,13 +29,13 @@ export default function BiReports() {
   // Fetch existing reports
   const { data: reportsData, isLoading } = useQuery<{ reports: any[] }>({
     queryKey: ["/api/bi/reports"],
-    enabled: !!user
+    enabled: !!user && !authLoading
   });
 
   // Fetch scheduled reports
   const { data: scheduledReportsData, isLoading: scheduledLoading } = useQuery<{ reports: any[] }>({
     queryKey: ["/api/bi/reports/scheduled"],
-    enabled: !!user
+    enabled: !!user && !authLoading
   });
 
   // Extract reports from API response
@@ -140,6 +140,30 @@ export default function BiReports() {
       description: "Your report download has started."
     });
   };
+
+  // Show loading while auth is being determined
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" data-testid="auth-loading">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-lg font-medium text-gray-700">Authenticating...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading while reports are being fetched
+  if (isLoading || scheduledLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" data-testid="data-loading">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-lg font-medium text-gray-700">Loading reports...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6 space-y-6" data-testid="bi-reports-page">

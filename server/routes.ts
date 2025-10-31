@@ -31,6 +31,7 @@ import { inventoryService } from "./inventory-service";
 import { generateOpenAPISpec, apiEndpoints as docEndpoints } from "./api-docs-generator";
 import * as dicomService from "./dicom-service";
 import * as reportGenerator from "./report-generator";
+import * as predictiveAnalytics from "./predictive-analytics";
 import multer from "multer";
 import csv from "csv-parser";
 import { Readable } from "stream";
@@ -5771,6 +5772,105 @@ to the patient and authorized healthcare providers.
       });
     }
   });
+
+  // ===================================
+  // PREDICTIVE ANALYTICS ENDPOINTS
+  // ===================================
+
+  // Readmission Risk Predictions
+  app.get('/api/predictive/readmission-risk', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.user!.tenantId!;
+      const { patientId } = req.query;
+      
+      const predictions = await predictiveAnalytics.predictReadmissionRisk(
+        tenantId, 
+        patientId as string | undefined
+      );
+      
+      res.json({ 
+        success: true,
+        predictions 
+      });
+    } catch (error) {
+      console.error('Error predicting readmission risk:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to predict readmission risk',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // No-Show Probability Predictions
+  app.get('/api/predictive/no-show-probability', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.user!.tenantId!;
+      
+      const predictions = await predictiveAnalytics.predictNoShowProbability(tenantId);
+      
+      res.json({ 
+        success: true,
+        predictions 
+      });
+    } catch (error) {
+      console.error('Error predicting no-show probability:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to predict no-show probability',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // Inventory Demand Forecast
+  app.get('/api/predictive/inventory-forecast', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.user!.tenantId!;
+      
+      const forecasts = await predictiveAnalytics.forecastInventoryDemand(tenantId);
+      
+      res.json({ 
+        success: true,
+        forecasts 
+      });
+    } catch (error) {
+      console.error('Error forecasting inventory demand:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to forecast inventory demand',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // Revenue Forecast
+  app.get('/api/predictive/revenue-forecast', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.user!.tenantId!;
+      const { months } = req.query;
+      
+      const monthsToForecast = months ? parseInt(months as string) : 6;
+      
+      const forecast = await predictiveAnalytics.forecastRevenue(tenantId, monthsToForecast);
+      
+      res.json({ 
+        success: true,
+        forecast 
+      });
+    } catch (error) {
+      console.error('Error forecasting revenue:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to forecast revenue',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // ===================================
+  // END PREDICTIVE ANALYTICS ENDPOINTS
+  // ===================================
 
   // ================================
   // END ANALYTICS ENDPOINTS
