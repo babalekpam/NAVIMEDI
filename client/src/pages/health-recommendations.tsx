@@ -136,9 +136,9 @@ export default function HealthRecommendations() {
         <div className="flex items-center space-x-3">
           <Brain className="h-8 w-8 text-blue-600" />
           <div>
-            <h1 className="text-3xl font-bold">ARGILETTE LAB Health Insights</h1>
+            <h1 className="text-3xl font-bold">AI Health Recommendations</h1>
             <p className="text-muted-foreground">
-              Personalized health insights powered by ARGILETTE using vital signs, appointments, and lab results
+              Personalized AI-powered health insights using vital signs, appointments, and lab results
             </p>
           </div>
         </div>
@@ -171,10 +171,11 @@ export default function HealthRecommendations() {
                 onClick={handleGenerateAnalysis}
                 disabled={generateAnalysisMutation.isPending}
                 className="flex items-center space-x-2"
+                data-testid="button-generate-analysis"
               >
                 <Brain className="h-4 w-4" />
                 <span>
-                  {generateAnalysisMutation.isPending ? "Generating..." : "Generate Health Analysis"}
+                  {generateAnalysisMutation.isPending ? "Generating..." : "Generate AI Analysis"}
                 </span>
               </Button>
             )}
@@ -351,7 +352,7 @@ export default function HealthRecommendations() {
                 <CardContent className="flex flex-col items-center justify-center h-32 text-center">
                   <Activity className="h-12 w-12 text-muted-foreground mb-2" />
                   <p className="text-muted-foreground">
-                    No health analysis available. Generate a health analysis to get comprehensive health insights based on vital signs, appointments, and lab results.
+                    No health analysis available. Generate an AI analysis to get comprehensive health insights based on vital signs, appointments, and lab results.
                   </p>
                 </CardContent>
               </Card>

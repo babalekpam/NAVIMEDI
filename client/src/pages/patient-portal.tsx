@@ -1404,7 +1404,7 @@ Report ID: ${labOrder.id}
           <CardHeader>
             <CardTitle className="flex items-center">
               <Zap className="h-5 w-5 mr-2 text-orange-600" />
-              ARGILETTE LAB Recommendations
+              AI Health Recommendations
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

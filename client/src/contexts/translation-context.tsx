@@ -13,7 +13,7 @@ const translations = {
     'pharmacy-dashboard': 'Pharmacy Dashboard',
     billing: 'Billing',
     'lab-orders': 'Lab Orders',
-    'health-recommendations': 'ARGILETTE LAB Insights',
+    'health-recommendations': 'AI Health Insights',
     'medical-communications': 'Medical Communications',
     'user-roles': 'User Roles',
     'tenant-management': 'Tenant Management',
