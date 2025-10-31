@@ -1950,6 +1950,9 @@ export const reports = pgTable("reports", {
   fileUrl: text("file_url"),
   dateFrom: timestamp("date_from"),
   dateTo: timestamp("date_to"),
+  schedule: text("schedule"),
+  recipients: jsonb("recipients"),
+  isScheduled: boolean("is_scheduled").default(false),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   completedAt: timestamp("completed_at")
 });

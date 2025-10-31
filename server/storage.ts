@@ -444,6 +444,34 @@ export interface IStorage {
   createReport(report: InsertReport): Promise<Report>;
   updateReport(id: string, updates: Partial<Report>, tenantId: string): Promise<Report | undefined>;
   getReportsByTenant(tenantId: string): Promise<Report[]>;
+  
+  // BI Report management
+  createBiReport(report: {
+    tenantId: string;
+    reportName: string;
+    reportType: string;
+    parameters: any;
+    format: string;
+    status: 'pending' | 'generating' | 'completed' | 'failed';
+    requestedBy: string;
+  }): Promise<Report>;
+  getBiReports(tenantId: string, filters?: {
+    reportType?: string;
+    status?: string;
+    limit?: number;
+  }): Promise<Report[]>;
+  getBiReportById(id: string, tenantId: string): Promise<Report | undefined>;
+  updateBiReportStatus(id: string, status: string, data?: any, filePath?: string): Promise<Report | undefined>;
+  scheduleBiReport(report: {
+    tenantId: string;
+    reportName: string;
+    reportType: string;
+    schedule: string;
+    parameters: any;
+    recipients: string[];
+    requestedBy: string;
+  }): Promise<Report>;
+  getScheduledReports(tenantId: string): Promise<Report[]>;
 
   // Dashboard metrics
   getDashboardMetrics(tenantId: string): Promise<{
@@ -3017,6 +3045,124 @@ export class DatabaseStorage implements IStorage {
 
   async getAllReports(): Promise<Report[]> {
     return await db.select().from(reports)
+      .orderBy(desc(reports.createdAt));
+  }
+
+  // BI Report management
+  async createBiReport(report: {
+    tenantId: string;
+    reportName: string;
+    reportType: string;
+    parameters: any;
+    format: string;
+    status: 'pending' | 'generating' | 'completed' | 'failed';
+    requestedBy: string;
+  }): Promise<Report> {
+    const insertData: InsertReport = {
+      tenantId: report.tenantId,
+      generatedBy: report.requestedBy,
+      title: report.reportName,
+      type: report.reportType as 'financial' | 'operational' | 'clinical' | 'compliance',
+      format: report.format,
+      parameters: report.parameters,
+      status: report.status as 'pending' | 'generating' | 'completed' | 'failed',
+      isScheduled: false
+    };
+    
+    const [newReport] = await db.insert(reports).values(insertData).returning();
+    return newReport;
+  }
+
+  async getBiReports(tenantId: string, filters?: {
+    reportType?: string;
+    status?: string;
+    limit?: number;
+  }): Promise<Report[]> {
+    let query = db.select().from(reports)
+      .where(eq(reports.tenantId, tenantId));
+
+    const conditions = [eq(reports.tenantId, tenantId)];
+    
+    if (filters?.reportType) {
+      conditions.push(eq(reports.type, filters.reportType as any));
+    }
+    
+    if (filters?.status) {
+      conditions.push(eq(reports.status, filters.status as any));
+    }
+
+    query = db.select().from(reports)
+      .where(and(...conditions))
+      .orderBy(desc(reports.createdAt));
+
+    if (filters?.limit) {
+      query = query.limit(filters.limit) as any;
+    }
+
+    return await query;
+  }
+
+  async getBiReportById(id: string, tenantId: string): Promise<Report | undefined> {
+    const [report] = await db.select().from(reports).where(
+      and(eq(reports.id, id), eq(reports.tenantId, tenantId))
+    );
+    return report || undefined;
+  }
+
+  async updateBiReportStatus(id: string, status: string, data?: any, filePath?: string): Promise<Report | undefined> {
+    const updates: Partial<Report> = {
+      status: status as 'pending' | 'generating' | 'completed' | 'failed',
+      completedAt: status === 'completed' ? new Date() : undefined
+    };
+    
+    if (data) {
+      updates.data = data;
+    }
+    
+    if (filePath) {
+      updates.fileUrl = filePath;
+    }
+
+    const [report] = await db.update(reports)
+      .set(updates)
+      .where(eq(reports.id, id))
+      .returning();
+    
+    return report || undefined;
+  }
+
+  async scheduleBiReport(report: {
+    tenantId: string;
+    reportName: string;
+    reportType: string;
+    schedule: string;
+    parameters: any;
+    recipients: string[];
+    requestedBy: string;
+  }): Promise<Report> {
+    const insertData: InsertReport = {
+      tenantId: report.tenantId,
+      generatedBy: report.requestedBy,
+      title: report.reportName,
+      type: report.reportType as 'financial' | 'operational' | 'clinical' | 'compliance',
+      format: 'pdf',
+      parameters: report.parameters,
+      status: 'pending',
+      schedule: report.schedule,
+      recipients: report.recipients,
+      isScheduled: true
+    };
+    
+    const [newReport] = await db.insert(reports).values(insertData).returning();
+    return newReport;
+  }
+
+  async getScheduledReports(tenantId: string): Promise<Report[]> {
+    return await db.select().from(reports)
+      .where(and(
+        eq(reports.tenantId, tenantId),
+        eq(reports.isScheduled, true)
+      ))
       .orderBy(desc(reports.createdAt));
   }
 

@@ -30,6 +30,7 @@ import { navimedAI } from "./navimed-ai-service";
 import { inventoryService } from "./inventory-service";
 import { generateOpenAPISpec, apiEndpoints as docEndpoints } from "./api-docs-generator";
 import * as dicomService from "./dicom-service";
+import * as reportGenerator from "./report-generator";
 import multer from "multer";
 import csv from "csv-parser";
 import { Readable } from "stream";
@@ -8172,6 +8173,209 @@ to the patient and authorized healthcare providers.
   });
 
   console.log('✅ DICOM medical imaging routes registered successfully');
+
+  // =================================================================
+  // BI REPORTS ENDPOINTS
+  // =================================================================
+  
+  // GET /api/bi/reports - List BI Reports
+  app.get('/api/bi/reports', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.tenantId;
+      const { reportType, status, limit } = req.query;
+      
+      const reports = await storage.getBiReports(tenantId, {
+        reportType: reportType as string,
+        status: status as string,
+        limit: limit ? parseInt(limit as string) : 50
+      });
+      
+      res.json({ reports });
+    } catch (error) {
+      console.error('Get BI reports error:', error);
+      res.status(500).json({ message: 'Failed to fetch reports' });
+    }
+  });
+
+  // POST /api/bi/reports/generate - Generate New Report
+  app.post('/api/bi/reports/generate', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.tenantId;
+      const userId = req.userId;
+      const { reportName, reportType, parameters, format } = req.body;
+      
+      if (!reportName || !reportType || !parameters) {
+        return res.status(400).json({ message: 'Missing required fields: reportName, reportType, parameters' });
+      }
+
+      // Create report record with pending status
+      const report = await storage.createBiReport({
+        tenantId,
+        reportName,
+        reportType,
+        parameters,
+        format: format || 'json',
+        status: 'generating',
+        requestedBy: userId
+      });
+      
+      // Generate report asynchronously
+      setImmediate(async () => {
+        try {
+          // Update status to generating
+          await storage.updateBiReportStatus(report.id, 'generating');
+
+          // Parse date parameters
+          const reportParams: reportGenerator.ReportParams = {
+            startDate: parameters.startDate ? new Date(parameters.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+            endDate: parameters.endDate ? new Date(parameters.endDate) : new Date(),
+            format: (format || 'json') as any,
+            departments: parameters.departments,
+            reportType: parameters.reportType,
+            complianceArea: parameters.complianceArea
+          };
+
+          let reportData: reportGenerator.ReportData;
+          
+          switch (reportType) {
+            case 'financial':
+              reportData = await reportGenerator.generateFinancialReport(tenantId, reportParams);
+              break;
+            case 'operational':
+              reportData = await reportGenerator.generateOperationalReport(tenantId, reportParams);
+              break;
+            case 'clinical':
+              reportData = await reportGenerator.generateClinicalReport(tenantId, reportParams);
+              break;
+            case 'compliance':
+              reportData = await reportGenerator.generateComplianceReport(tenantId, reportParams);
+              break;
+            default:
+              throw new Error('Unknown report type: ' + reportType);
+          }
+          
+          // Format report data for download
+          const formattedData = reportGenerator.formatReportForDownload(reportData, format || 'json');
+          
+          // Update report with completed status and data
+          await storage.updateBiReportStatus(report.id, 'completed', reportData, `/reports/${report.id}.${format || 'json'}`);
+          
+          console.log(`Report ${report.id} generated successfully`);
+        } catch (error) {
+          console.error('Report generation error:', error);
+          await storage.updateBiReportStatus(report.id, 'failed');
+        }
+      });
+      
+      res.json({ report, message: 'Report generation started' });
+    } catch (error) {
+      console.error('Create report error:', error);
+      res.status(500).json({ message: 'Failed to create report' });
+    }
+  });
+
+  // GET /api/bi/reports/:id - Get Report Details
+  app.get('/api/bi/reports/:id', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.tenantId;
+      
+      const report = await storage.getBiReportById(id, tenantId);
+      
+      if (!report) {
+        return res.status(404).json({ message: 'Report not found' });
+      }
+      
+      res.json({ report });
+    } catch (error) {
+      console.error('Get report details error:', error);
+      res.status(500).json({ message: 'Failed to fetch report details' });
+    }
+  });
+
+  // GET /api/bi/reports/:id/download - Download Report
+  app.get('/api/bi/reports/:id/download', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const tenantId = req.tenantId;
+      
+      const report = await storage.getBiReportById(id, tenantId);
+      
+      if (!report) {
+        return res.status(404).json({ message: 'Report not found' });
+      }
+
+      if (report.status !== 'completed') {
+        return res.status(400).json({ message: 'Report is not ready for download', status: report.status });
+      }
+
+      // Format the report data for download
+      const formattedData = reportGenerator.formatReportForDownload(
+        report.data as reportGenerator.ReportData,
+        report.format || 'json'
+      );
+
+      // Set appropriate content type and headers
+      const contentType = report.format === 'csv' 
+        ? 'text/csv'
+        : report.format === 'html'
+        ? 'text/html'
+        : 'application/json';
+
+      const filename = `${report.title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.${report.format || 'json'}`;
+
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(formattedData);
+    } catch (error) {
+      console.error('Download report error:', error);
+      res.status(500).json({ message: 'Failed to download report' });
+    }
+  });
+
+  // POST /api/bi/reports/schedule - Schedule Report
+  app.post('/api/bi/reports/schedule', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.tenantId;
+      const userId = req.userId;
+      const { reportName, reportType, schedule, parameters, recipients } = req.body;
+
+      if (!reportName || !reportType || !schedule || !parameters) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+      
+      const scheduledReport = await storage.scheduleBiReport({
+        tenantId,
+        reportName,
+        reportType,
+        schedule,
+        parameters,
+        recipients: recipients || [],
+        requestedBy: userId
+      });
+      
+      res.json({ report: scheduledReport, message: 'Report scheduled successfully' });
+    } catch (error) {
+      console.error('Schedule report error:', error);
+      res.status(500).json({ message: 'Failed to schedule report' });
+    }
+  });
+
+  // GET /api/bi/reports/scheduled - Get Scheduled Reports
+  app.get('/api/bi/reports/scheduled', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.tenantId;
+      
+      const scheduledReports = await storage.getScheduledReports(tenantId);
+      
+      res.json({ reports: scheduledReports });
+    } catch (error) {
+      console.error('Get scheduled reports error:', error);
+      res.status(500).json({ message: 'Failed to fetch scheduled reports' });
+    }
+  });
+
+  console.log('✅ BI Reports endpoints registered successfully');
 
   // Global error handler middleware (must be after all routes)
   app.use((err: any, req: any, res: any, next: any) => {
