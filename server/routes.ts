@@ -25,7 +25,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { sendEmail } from "./email-service";
-import { argiletteLab } from "./argilette-lab-service";
+import { navimedAI } from "./navimed-ai-service";
 import multer from "multer";
 import csv from "csv-parser";
 import { Readable } from "stream";
@@ -2413,16 +2413,16 @@ The NaviMED Security Team
   });
 
   // ========================================
-  // ARGILETTE LAB - HEALTH ANALYSIS ROUTES
+  // NAVIMED AI - HEALTH ANALYSIS ROUTES
   // ========================================
   
-  // Generate comprehensive health analysis for a patient
+  // Generate AI-powered health analysis for a patient
   app.post('/api/health-analyses/generate/:patientId', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
     try {
       const { tenantId } = req.user as any;
       const { patientId } = req.params;
 
-      console.log('🧪 ARGILETTE LAB: Generating health analysis for patient:', patientId);
+      console.log('🤖 NaviMED AI: Generating health analysis for patient:', patientId);
 
       // Fetch patient data
       const patient = await storage.getPatient(patientId, tenantId);
@@ -2442,8 +2442,8 @@ The NaviMED Security Team
       const allLabResults = await storage.getLabResultsByPatient(patientId, tenantId);
       const labResults = allLabResults.slice(0, 10);
 
-      // Generate comprehensive health analysis
-      const analysisResult = await argiletteLab.analyzePatientHealth(
+      // Generate AI-powered health analysis
+      const analysisResult = await navimedAI.analyzePatientHealth(
         patient,
         vitalSigns,
         recentAppointments,
@@ -2471,7 +2471,7 @@ The NaviMED Security Team
         });
       }
 
-      console.log('✅ ARGILETTE LAB: Analysis complete - Score:', analysisResult.overallHealthScore);
+      console.log('✅ NaviMED AI: Analysis complete - Score:', analysisResult.overallHealthScore);
 
       res.json({
         analysis: healthAnalysis,
