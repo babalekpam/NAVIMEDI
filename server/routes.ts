@@ -2478,7 +2478,7 @@ The NaviMED Security Team
         recommendations: analysisResult.recommendations
       });
     } catch (error) {
-      console.error('❌ ARGILETTE LAB: Error generating health analysis:', error);
+      console.error('❌ NaviMED AI: Error generating health analysis:', error);
       res.status(500).json({ 
         message: 'Failed to generate health analysis',
         error: error.message
