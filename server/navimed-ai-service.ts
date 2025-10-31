@@ -1,8 +1,8 @@
 import OpenAI from 'openai';
 import { VitalSigns, Patient, Appointment } from "../shared/schema";
 
-// ARGILETTE LAB PRODUCT - Advanced Health Analysis System
-// Powered by ARGILETTE
+// NaviMED AI - Intelligent Health Analysis System
+// Powered by OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
 });
@@ -31,7 +31,7 @@ export interface HealthAnalysisResult {
   nextAppointmentSuggestion?: string;
 }
 
-export class ArgiletteLabProduct {
+export class NaviMEDAI {
   async analyzePatientHealth(
     patient: Patient,
     vitalSigns: VitalSigns[],
@@ -39,10 +39,10 @@ export class ArgiletteLabProduct {
     labResults: any[] = []
   ): Promise<HealthAnalysisResult> {
     try {
-      console.log("🤖 ARGILETTE LAB: Generating comprehensive health analysis...");
+      console.log("🤖 NaviMED AI: Generating comprehensive health analysis...");
       
       if (!process.env.OPENAI_API_KEY) {
-        console.warn("⚠️ ARGILETTE LAB: Analysis key not configured, using intelligent fallback");
+        console.warn("⚠️ NaviMED AI: OpenAI API key not configured, using intelligent fallback");
         return this.generateIntelligentFallback(patient, vitalSigns, recentAppointments, labResults);
       }
 
@@ -53,7 +53,7 @@ export class ArgiletteLabProduct {
         messages: [
           {
             role: "system",
-            content: `You are ARGILETTE LAB, an advanced healthcare intelligence system specializing in preventive medicine and comprehensive health analytics.
+            content: `You are NaviMED AI, an intelligent healthcare assistant specializing in preventive medicine and comprehensive health analytics.
 
 Your mission is to provide evidence-based, personalized health recommendations that empower patients and healthcare providers.
 
@@ -106,19 +106,19 @@ Respond with valid JSON in this exact format:
       if (analysisResult.recommendations) {
         analysisResult.recommendations = analysisResult.recommendations.map((rec: any, index: number) => ({
           ...rec,
-          id: rec.id || `argilette-lab-rec-${Date.now()}-${index}`,
+          id: rec.id || `navimed-ai-rec-${Date.now()}-${index}`,
           createdAt: new Date()
         }));
       }
       
-      console.log(`✅ ARGILETTE LAB: Analysis complete - Health Score: ${analysisResult.overallHealthScore}/100`);
+      console.log(`✅ NaviMED AI: Analysis complete - Health Score: ${analysisResult.overallHealthScore}/100`);
       
       return analysisResult;
     } catch (error) {
-      console.error("❌ ARGILETTE LAB Error:", error);
+      console.error("❌ NaviMED AI Error:", error);
       
-      // Fallback to intelligent rule-based analysis if system fails
-      console.log("🔄 ARGILETTE LAB: Switching to intelligent fallback system...");
+      // Fallback to intelligent rule-based analysis if OpenAI is unavailable
+      console.log("🔄 NaviMED AI: Switching to intelligent fallback system...");
       return this.generateIntelligentFallback(patient, vitalSigns, recentAppointments, labResults);
     }
   }
@@ -329,5 +329,5 @@ Provide specific, actionable recommendations that the patient can implement imme
   }
 }
 
-// Export singleton instance - ARGILETTE LAB PRODUCT
-export const argiletteLab = new ArgiletteLabProduct();
+// Export singleton instance - NaviMED AI
+export const navimedAI = new NaviMEDAI();
