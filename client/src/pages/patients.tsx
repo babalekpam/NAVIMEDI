@@ -16,6 +16,8 @@ import { useTranslation } from "@/contexts/translation-context";
 import { PatientForm } from "@/components/forms/patient-form";
 import { useLocation } from "wouter";
 import { useCreatePatientMutation } from "@/lib/enhanced-mutations";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Patients() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,6 +29,7 @@ export default function Patients() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
   // Check URL parameters to auto-open registration form
   React.useEffect(() => {
@@ -60,6 +63,30 @@ export default function Patients() {
       }
     });
   };
+
+  // Patient activation/deactivation mutation
+  const togglePatientStatusMutation = useMutation({
+    mutationFn: async ({ patientId, isActive }: { patientId: string; isActive: boolean }) => {
+      return await apiRequest(`/api/patients/${patientId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isActive }),
+      });
+    },
+    onSuccess: (_, { isActive }) => {
+      toast({
+        title: "Success",
+        description: `Patient ${isActive ? 'activated' : 'deactivated'} successfully`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update patient status",
+        variant: "destructive",
+      });
+    },
+  });
 
   if (!user || !tenant) {
     return <div>{t('loading')}</div>;
@@ -294,11 +321,14 @@ export default function Patients() {
                               <DropdownMenuItem 
                                 onClick={() => {
                                   if (confirm(`Are you sure you want to ${patient.isActive ? 'deactivate' : 'activate'} this patient?`)) {
-                                    // TODO: Implement patient activation/deactivation
-                                    console.log('Toggle patient status:', patient.id);
+                                    togglePatientStatusMutation.mutate({ 
+                                      patientId: patient.id, 
+                                      isActive: !patient.isActive 
+                                    });
                                   }
                                 }}
                                 className={patient.isActive ? "text-orange-600" : "text-green-600"}
+                                data-testid={`button-${patient.isActive ? 'deactivate' : 'activate'}-patient-${patient.id}`}
                               >
                                 <UserCircle className="h-4 w-4 mr-2" />
                                 {patient.isActive ? 'Deactivate' : 'Activate'} Patient

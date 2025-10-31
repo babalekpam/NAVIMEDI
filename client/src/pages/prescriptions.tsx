@@ -17,6 +17,8 @@ import { useTranslation } from "@/contexts/translation-context";
 import { useToast } from "@/hooks/use-toast";
 import { PrescriptionForm } from "@/components/forms/prescription-form";
 import { Activity, Users, DollarSign, Package, Clock, AlertTriangle, CheckCircle, XCircle, Search, FileText, Download, Pill, Plus, RefreshCw, ArrowLeftRight } from 'lucide-react';
+import ClinicalAlertModal from "@/components/ClinicalAlertModal";
+import { apiRequest } from "@/lib/queryClient";
 
 interface Prescription {
   id: string;
@@ -56,6 +58,11 @@ export default function PrescriptionsPage() {
   const [activeTab, setActiveTab] = useState("new"); // For prescription tabs
   const [showSimpleModal, setShowSimpleModal] = useState(false);
   const [modalContent, setModalContent] = useState("");
+  
+  // CDS (Clinical Decision Support) state
+  const [pendingPrescriptionData, setPendingPrescriptionData] = useState<any>(null);
+  const [cdsCheckResult, setCdsCheckResult] = useState<any>(null);
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
   // Fetch prescriptions for current tenant (hospital or pharmacy)
   const { data: prescriptions = [], isLoading } = useQuery<Prescription[]>({
@@ -105,7 +112,42 @@ export default function PrescriptionsPage() {
     },
   });
 
-  // Create prescription mutation
+  // CDS check prescription mutation
+  const checkPrescriptionMutation = useMutation({
+    mutationFn: async (checkData: any) => {
+      return apiRequest('/api/clinical/check-prescription', {
+        method: 'POST',
+        body: JSON.stringify(checkData)
+      });
+    },
+    onSuccess: (result: any, variables: any) => {
+      console.log('CDS Check Result:', result);
+      
+      if (result.hasAlerts) {
+        // Show alert modal
+        setCdsCheckResult(result);
+        setIsAlertModalOpen(true);
+      } else {
+        // No alerts, proceed directly with prescription creation
+        actuallyCreatePrescription(variables.prescriptionData);
+      }
+    },
+    onError: (error: any) => {
+      console.error('CDS check failed:', error);
+      toast({
+        title: "Warning",
+        description: "Clinical decision support check failed. Prescription can still be created, but please verify manually.",
+        variant: "destructive",
+      });
+      
+      // Still allow prescription creation even if CDS check fails
+      if (pendingPrescriptionData) {
+        actuallyCreatePrescription(pendingPrescriptionData);
+      }
+    },
+  });
+
+  // Create prescription mutation (actual creation)
   const createPrescriptionMutation = useMutation({
     mutationFn: async (prescriptionData: any) => {
       const token = localStorage.getItem('auth_token');
@@ -131,6 +173,8 @@ export default function PrescriptionsPage() {
         description: "Prescription created successfully",
       });
       setIsCreateModalOpen(false);
+      setPendingPrescriptionData(null);
+      setCdsCheckResult(null);
     },
     onError: () => {
       toast({
@@ -140,6 +184,53 @@ export default function PrescriptionsPage() {
       });
     },
   });
+
+  // Helper function to actually create prescription
+  const actuallyCreatePrescription = (prescriptionData: any) => {
+    createPrescriptionMutation.mutate(prescriptionData);
+  };
+
+  // Handle prescription submission with CDS check
+  const handlePrescriptionSubmit = (prescriptionData: any) => {
+    // Store the prescription data for later use
+    setPendingPrescriptionData(prescriptionData);
+    
+    // Perform CDS check
+    checkPrescriptionMutation.mutate({
+      patientId: prescriptionData.patientId,
+      drugName: prescriptionData.medicationName,
+      dosage: prescriptionData.dosage,
+      frequency: prescriptionData.frequency,
+      patientConditions: [], // TODO: Add patient conditions if available
+      prescriptionData: prescriptionData
+    });
+  };
+
+  // Handle CDS alert acknowledgement
+  const handleAlertAcknowledge = (overrideReason: string) => {
+    if (pendingPrescriptionData) {
+      // Add override reason to prescription data
+      const prescriptionWithOverride = {
+        ...pendingPrescriptionData,
+        cdsOverrideReason: overrideReason
+      };
+      
+      actuallyCreatePrescription(prescriptionWithOverride);
+      setIsAlertModalOpen(false);
+    }
+  };
+
+  // Handle CDS alert cancellation
+  const handleAlertCancel = () => {
+    setPendingPrescriptionData(null);
+    setCdsCheckResult(null);
+    setIsAlertModalOpen(false);
+    
+    toast({
+      title: "Prescription Cancelled",
+      description: "Prescription was not created due to clinical alerts."
+    });
+  };
 
   // Filter out dispensed prescriptions for active processing (like pharmacy dashboard)
   const activePrescriptions = prescriptions.filter((prescription) => prescription.status !== 'dispensed');
@@ -847,9 +938,9 @@ export default function PrescriptionsPage() {
             </DialogDescription>
           </DialogHeader>
           <PrescriptionForm
-            onSubmit={(data) => createPrescriptionMutation.mutate(data)}
+            onSubmit={handlePrescriptionSubmit}
             onCancel={() => setIsCreateModalOpen(false)}
-            isLoading={createPrescriptionMutation.isPending}
+            isLoading={checkPrescriptionMutation.isPending || createPrescriptionMutation.isPending}
             patients={(patients as any) || []}
           />
         </DialogContent>
@@ -1133,6 +1224,20 @@ export default function PrescriptionsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Clinical Decision Support Alert Modal */}
+      {cdsCheckResult && (
+        <ClinicalAlertModal
+          isOpen={isAlertModalOpen}
+          onClose={() => setIsAlertModalOpen(false)}
+          alerts={cdsCheckResult.alerts || []}
+          severity={cdsCheckResult.severity || 'none'}
+          canProceed={cdsCheckResult.canProceed !== false}
+          onAcknowledge={handleAlertAcknowledge}
+          onCancel={handleAlertCancel}
+          patientId={pendingPrescriptionData?.patientId}
+        />
+      )}
 
       {/* Simple Custom Modal */}
       {showSimpleModal && (

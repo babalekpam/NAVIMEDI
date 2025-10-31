@@ -1,0 +1,1 @@
+ALTER TABLE "pending_registrations" ALTER COLUMN "id" SET DEFAULT 'pExWS-wJ97YEm4BZvvU3M';

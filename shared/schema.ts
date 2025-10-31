@@ -1,5 +1,5 @@
 import { sql, relations, type InferSelectModel, type InferInsertModel } from "drizzle-orm";
-import { pgTable, text, varchar, uuid, timestamp, boolean, integer, decimal, jsonb, pgEnum, index, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, uuid, timestamp, boolean, integer, decimal, jsonb, pgEnum, index, unique, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { nanoid } from "nanoid";
@@ -328,6 +328,120 @@ export const adBillingTypeEnum = pgEnum("ad_billing_type", [
   "fixed_duration"
 ]);
 
+// Document Management System Enums
+export const documentTypeEnum = pgEnum("document_type", [
+  "medical_record",
+  "consent_form",
+  "prescription",
+  "lab_report",
+  "insurance",
+  "other"
+]);
+
+export const signatureStatusEnum = pgEnum("signature_status", [
+  "pending",
+  "signed",
+  "declined",
+  "expired"
+]);
+
+export const annotationTypeEnum = pgEnum("annotation_type", [
+  "highlight",
+  "note",
+  "draw",
+  "stamp"
+]);
+
+export const documentStatusEnum = pgEnum("document_status", [
+  "draft",
+  "final",
+  "archived"
+]);
+
+// Clinical Decision Support System Enums
+export const severityLevelEnum = pgEnum("severity_level", [
+  "critical",
+  "major",
+  "moderate",
+  "minor"
+]);
+
+export const allergyTypeEnum = pgEnum("allergy_type", [
+  "drug",
+  "food",
+  "environmental"
+]);
+
+export const allergySeverityEnum = pgEnum("allergy_severity", [
+  "life_threatening",
+  "severe",
+  "moderate",
+  "mild"
+]);
+
+export const alertTypeEnum = pgEnum("alert_type", [
+  "drug_interaction",
+  "allergy",
+  "dosage",
+  "duplicate_therapy",
+  "contraindication"
+]);
+
+export const interactionTypeEnum = pgEnum("interaction_type", [
+  "drug_drug",
+  "drug_food",
+  "drug_condition"
+]);
+
+export const patientConditionEnum = pgEnum("patient_condition", [
+  "renal",
+  "hepatic",
+  "pediatric",
+  "geriatric",
+  "pregnancy",
+  "other"
+]);
+
+// Staff Scheduling and Time Tracking Enums
+export const shiftTypeEnum = pgEnum("shift_type", [
+  "morning",
+  "afternoon",
+  "evening",
+  "night",
+  "on_call"
+]);
+
+export const staffShiftStatusEnum = pgEnum("staff_shift_status", [
+  "scheduled",
+  "confirmed",
+  "in_progress",
+  "completed",
+  "cancelled",
+  "no_show"
+]);
+
+export const timeLogStatusEnum = pgEnum("time_log_status", [
+  "clocked_in",
+  "clocked_out",
+  "approved",
+  "disputed"
+]);
+
+export const leaveTypeEnum = pgEnum("leave_type", [
+  "vacation",
+  "sick",
+  "personal",
+  "bereavement",
+  "maternity",
+  "paternity"
+]);
+
+export const leaveStatusEnum = pgEnum("leave_status", [
+  "pending",
+  "approved",
+  "denied"
+]);
+
 // Currency Configuration Table
 export const currencies = pgTable("currencies", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -430,6 +544,62 @@ export const medicalCodeUploads = pgTable("medical_code_uploads", {
   completedAt: timestamp("completed_at")
 });
 
+// Document Management System Tables
+export const documents = pgTable("documents", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").notNull(),
+  patientId: uuid("patient_id"), // Optional - for patient-specific documents
+  userId: uuid("user_id").notNull(), // Uploader
+  documentType: documentTypeEnum("document_type").notNull(),
+  fileName: varchar("file_name", { length: 255 }).notNull(),
+  fileSize: integer("file_size"), // in bytes
+  mimeType: varchar("mime_type", { length: 100 }),
+  storageUrl: text("storage_url"), // URL or path to stored file
+  version: integer("version").default(1).notNull(),
+  status: documentStatusEnum("status").default("draft").notNull(),
+  uploadedAt: timestamp("uploaded_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  metadata: jsonb("metadata").default('{}'), // Additional metadata (tags, description, etc.)
+  isDeleted: boolean("is_deleted").default(false), // Soft delete
+  deletedAt: timestamp("deleted_at"),
+  deletedBy: uuid("deleted_by")
+});
+
+export const documentVersions = pgTable("document_versions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  documentId: uuid("document_id").notNull(),
+  version: integer("version").notNull(),
+  fileName: varchar("file_name", { length: 255 }).notNull(),
+  storageUrl: text("storage_url").notNull(),
+  uploadedAt: timestamp("uploaded_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  uploadedBy: uuid("uploaded_by").notNull(),
+  changeNotes: text("change_notes")
+});
+
+export const eSignatureRequests = pgTable("e_signature_requests", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  documentId: uuid("document_id").notNull(),
+  tenantId: uuid("tenant_id").notNull(),
+  requestedBy: uuid("requested_by").notNull(), // User who requested signature
+  signerUserId: uuid("signer_user_id"), // User to sign (if internal user)
+  signerEmail: varchar("signer_email", { length: 255 }), // Email if external signer
+  status: signatureStatusEnum("status").default("pending").notNull(),
+  signedAt: timestamp("signed_at"),
+  signatureData: jsonb("signature_data"), // JSON with signature image, coordinates, timestamp
+  expiresAt: timestamp("expires_at"),
+  reminderSent: boolean("reminder_sent").default(false),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull()
+});
+
+export const documentAnnotations = pgTable("document_annotations", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  documentId: uuid("document_id").notNull(),
+  userId: uuid("user_id").notNull(), // User who created annotation
+  annotationType: annotationTypeEnum("annotation_type").notNull(),
+  annotationData: jsonb("annotation_data").notNull(), // JSON with annotation details (coordinates, color, text, etc.)
+  pageNumber: integer("page_number"), // For multi-page documents
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull()
+});
+
 // Core Tables
 export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -466,6 +636,11 @@ export const tenants = pgTable("tenants", {
   lastSuspensionCheck: timestamp("last_suspension_check"),
   suspendedAt: timestamp("suspended_at"),
   suspensionReason: text("suspension_reason"),
+  // Stripe integration fields
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  subscriptionPlanId: subscriptionPlanEnum("subscription_plan_id"),
+  subscriptionInterval: billingIntervalEnum("subscription_interval"),
   // Phone and address (moved from top level)
   phoneNumber: text("phone_number"),
   address: text("address"),
@@ -632,6 +807,181 @@ export const prescriptions = pgTable("prescriptions", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
+
+// Clinical Decision Support System Tables
+
+// Drug Interaction Rules - Reference data for drug-drug, drug-food, drug-condition interactions
+export const drugInteractionRules = pgTable("drug_interaction_rules", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  drugName1: text("drug_name_1").notNull(), // First drug (or generic class)
+  drugName2: text("drug_name_2").notNull(), // Second drug (or food/condition)
+  severityLevel: severityLevelEnum("severity_level").notNull(), // critical, major, moderate, minor
+  interactionType: interactionTypeEnum("interaction_type").notNull(), // drug-drug, drug-food, drug-condition
+  description: text("description").notNull(), // What happens when combined
+  clinicalImpact: text("clinical_impact").notNull(), // Potential clinical consequences
+  managementStrategy: text("management_strategy").notNull(), // How to manage the interaction
+  sourceReference: text("source_reference"), // Reference to medical literature or database
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  // Index for quick lookup of drug interactions
+  drug1Idx: index("drug_interaction_drug1_idx").on(table.drugName1),
+  drug2Idx: index("drug_interaction_drug2_idx").on(table.drugName2)
+}));
+
+// Allergy Alerts - Patient-specific allergy records
+export const allergyAlerts = pgTable("allergy_alerts", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  allergen: text("allergen").notNull(), // Drug name, food, or environmental allergen
+  allergyType: allergyTypeEnum("allergy_type").notNull(), // drug, food, environmental
+  reaction: text("reaction").notNull(), // Description of allergic reaction
+  severity: allergySeverityEnum("severity").notNull(), // life-threatening, severe, moderate, mild
+  onsetDate: timestamp("onset_date"), // When allergy was first observed
+  notes: text("notes"), // Additional notes about the allergy
+  reportedBy: uuid("reported_by").references(() => users.id), // Who reported the allergy
+  verifiedBy: uuid("verified_by").references(() => users.id), // Healthcare provider who verified
+  verifiedAt: timestamp("verified_at"), // When it was verified
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  // Index for quick patient allergy lookups
+  patientIdx: index("allergy_alerts_patient_idx").on(table.patientId),
+  allergenIdx: index("allergy_alerts_allergen_idx").on(table.allergen)
+}));
+
+// Dosage Warnings - Reference data for dosage guidelines based on patient conditions
+export const dosageWarnings = pgTable("dosage_warnings", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  drugName: text("drug_name").notNull(), // Medication name or class
+  minDose: decimal("min_dose", { precision: 10, scale: 2 }), // Minimum safe dose
+  maxDose: decimal("max_dose", { precision: 10, scale: 2 }), // Maximum safe dose
+  unit: text("unit").notNull(), // mg, mcg, mL, etc.
+  frequency: text("frequency"), // Daily, BID, TID, etc.
+  patientCondition: patientConditionEnum("patient_condition"), // renal, hepatic, pediatric, geriatric, pregnancy, other
+  warningMessage: text("warning_message").notNull(), // Warning to display
+  adjustmentRecommendation: text("adjustment_recommendation"), // Dosage adjustment guidance
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  // Index for drug and condition lookups
+  drugIdx: index("dosage_warnings_drug_idx").on(table.drugName),
+  conditionIdx: index("dosage_warnings_condition_idx").on(table.patientCondition)
+}));
+
+// Clinical Alerts - Generated alerts for physicians based on CDS checks
+export const clinicalAlerts = pgTable("clinical_alerts", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  prescriptionId: uuid("prescription_id").references(() => prescriptions.id), // Optional - related prescription
+  alertType: alertTypeEnum("alert_type").notNull(), // drug_interaction, allergy, dosage, duplicate_therapy, contraindication
+  severity: severityLevelEnum("severity").notNull(), // critical, major, moderate, minor
+  title: text("title").notNull(), // Alert headline
+  message: text("message").notNull(), // Detailed alert message
+  recommendations: text("recommendations"), // Clinical recommendations
+  triggeredBy: uuid("triggered_by").references(() => users.id), // User who triggered the alert (e.g., prescribing doctor)
+  acknowledgedBy: uuid("acknowledged_by").references(() => users.id), // User who acknowledged the alert
+  acknowledgedAt: timestamp("acknowledged_at"), // When alert was acknowledged
+  dismissedReason: text("dismissed_reason"), // Why alert was dismissed (required for critical alerts)
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  // Indexes for efficient alert queries
+  patientIdx: index("clinical_alerts_patient_idx").on(table.patientId),
+  tenantIdx: index("clinical_alerts_tenant_idx").on(table.tenantId),
+  prescriptionIdx: index("clinical_alerts_prescription_idx").on(table.prescriptionId),
+  createdAtIdx: index("clinical_alerts_created_at_idx").on(table.createdAt)
+}));
+
+// Staff Scheduling and Time Tracking Tables
+
+// Staff Shifts - Employee shift schedules
+export const staffShifts = pgTable("staff_shifts", {
+  id: serial("id").primaryKey(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  shiftType: shiftTypeEnum("shift_type").notNull(), // morning, afternoon, evening, night, on_call
+  shiftDate: timestamp("shift_date").notNull(),
+  startTime: text("start_time").notNull(), // HH:MM format
+  endTime: text("end_time").notNull(), // HH:MM format
+  breakMinutes: integer("break_minutes").default(0),
+  departmentId: uuid("department_id"), // optional reference to departments table
+  status: staffShiftStatusEnum("status").default("scheduled").notNull(), // scheduled, confirmed, in_progress, completed, cancelled, no_show
+  notes: text("notes"),
+  assignedBy: uuid("assigned_by").references(() => users.id), // Who assigned the shift
+  confirmedAt: timestamp("confirmed_at"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  tenantIdx: index("staff_shifts_tenant_idx").on(table.tenantId),
+  userIdx: index("staff_shifts_user_idx").on(table.userId),
+  shiftDateIdx: index("staff_shifts_shift_date_idx").on(table.shiftDate),
+  statusIdx: index("staff_shifts_status_idx").on(table.status)
+}));
+
+// Time Logs - Employee clock in/out records
+export const timeLogs = pgTable("time_logs", {
+  id: serial("id").primaryKey(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  shiftId: integer("shift_id").references(() => staffShifts.id), // optional link to scheduled shift
+  clockInTime: timestamp("clock_in_time").notNull(),
+  clockInLocation: text("clock_in_location"), // optional geolocation data
+  clockOutTime: timestamp("clock_out_time"),
+  clockOutLocation: text("clock_out_location"), // optional geolocation data
+  totalHours: decimal("total_hours", { precision: 5, scale: 2 }),
+  breakMinutes: integer("break_minutes").default(0),
+  overtimeHours: decimal("overtime_hours", { precision: 5, scale: 2 }).default("0"),
+  status: timeLogStatusEnum("status").default("clocked_in").notNull(), // clocked_in, clocked_out, approved, disputed
+  approvedBy: uuid("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  disputeReason: text("dispute_reason"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  tenantIdx: index("time_logs_tenant_idx").on(table.tenantId),
+  userIdx: index("time_logs_user_idx").on(table.userId),
+  clockInTimeIdx: index("time_logs_clock_in_time_idx").on(table.clockInTime),
+  statusIdx: index("time_logs_status_idx").on(table.status)
+}));
+
+// Leave Requests - Employee leave/vacation requests
+export const leaveRequests = pgTable("leave_requests", {
+  id: serial("id").primaryKey(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  leaveType: leaveTypeEnum("leave_type").notNull(), // vacation, sick, personal, bereavement, maternity, paternity
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  totalDays: decimal("total_days", { precision: 4, scale: 1 }).notNull(),
+  reason: text("reason"),
+  status: leaveStatusEnum("status").default("pending").notNull(), // pending, approved, denied
+  requestedAt: timestamp("requested_at").default(sql`CURRENT_TIMESTAMP`),
+  reviewedBy: uuid("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  tenantIdx: index("leave_requests_tenant_idx").on(table.tenantId),
+  userIdx: index("leave_requests_user_idx").on(table.userId),
+  statusIdx: index("leave_requests_status_idx").on(table.status),
+  startDateIdx: index("leave_requests_start_date_idx").on(table.startDate)
+}));
+
+// Schedule Templates - Reusable shift schedule patterns
+export const scheduleTemplates = pgTable("schedule_templates", {
+  id: serial("id").primaryKey(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  templateName: text("template_name").notNull(),
+  departmentId: uuid("department_id"), // optional reference to departments table
+  templateData: jsonb("template_data").notNull(), // Contains weekly schedule pattern
+  isActive: boolean("is_active").default(true),
+  createdBy: uuid("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  tenantIdx: index("schedule_templates_tenant_idx").on(table.tenantId),
+  isActiveIdx: index("schedule_templates_is_active_idx").on(table.isActive)
+}));
 
 // Insurance Providers
 export const insuranceProviders = pgTable("insurance_providers", {
@@ -3957,3 +4307,116 @@ export const insertQuoteRequestSchema = createInsertSchema(quoteRequests).omit({
 
 export type QuoteRequest = typeof quoteRequests.$inferSelect;
 export type InsertQuoteRequest = z.infer<typeof insertQuoteRequestSchema>;
+
+// Document Management Insert Schemas
+export const insertDocumentSchema = createInsertSchema(documents).omit({
+  id: true,
+  uploadedAt: true,
+  isDeleted: true,
+  deletedAt: true,
+  deletedBy: true
+});
+
+export const insertDocumentVersionSchema = createInsertSchema(documentVersions).omit({
+  id: true,
+  uploadedAt: true
+});
+
+export const insertESignatureRequestSchema = createInsertSchema(eSignatureRequests).omit({
+  id: true,
+  createdAt: true,
+  signedAt: true,
+  reminderSent: true
+});
+
+export const insertDocumentAnnotationSchema = createInsertSchema(documentAnnotations).omit({
+  id: true,
+  createdAt: true
+});
+
+// Document Management Types
+export type Document = typeof documents.$inferSelect;
+export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+
+export type DocumentVersion = typeof documentVersions.$inferSelect;
+export type InsertDocumentVersion = z.infer<typeof insertDocumentVersionSchema>;
+
+export type ESignatureRequest = typeof eSignatureRequests.$inferSelect;
+export type InsertESignatureRequest = z.infer<typeof insertESignatureRequestSchema>;
+
+export type DocumentAnnotation = typeof documentAnnotations.$inferSelect;
+export type InsertDocumentAnnotation = z.infer<typeof insertDocumentAnnotationSchema>;
+
+// Clinical Decision Support Insert Schemas
+export const insertDrugInteractionRuleSchema = createInsertSchema(drugInteractionRules).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertAllergyAlertSchema = createInsertSchema(allergyAlerts).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertDosageWarningSchema = createInsertSchema(dosageWarnings).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertClinicalAlertSchema = createInsertSchema(clinicalAlerts).omit({
+  id: true,
+  createdAt: true,
+  acknowledgedAt: true
+});
+
+// Clinical Decision Support Types
+export type DrugInteractionRule = typeof drugInteractionRules.$inferSelect;
+export type InsertDrugInteractionRule = z.infer<typeof insertDrugInteractionRuleSchema>;
+
+export type AllergyAlert = typeof allergyAlerts.$inferSelect;
+export type InsertAllergyAlert = z.infer<typeof insertAllergyAlertSchema>;
+
+export type DosageWarning = typeof dosageWarnings.$inferSelect;
+export type InsertDosageWarning = z.infer<typeof insertDosageWarningSchema>;
+
+export type ClinicalAlert = typeof clinicalAlerts.$inferSelect;
+export type InsertClinicalAlert = z.infer<typeof insertClinicalAlertSchema>;
+
+// Staff Scheduling and Time Tracking Insert Schemas
+export const insertStaffShiftSchema = createInsertSchema(staffShifts).omit({
+  id: true,
+  confirmedAt: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertTimeLogSchema = createInsertSchema(timeLogs).omit({
+  id: true,
+  approvedAt: true,
+  createdAt: true
+});
+
+export const insertLeaveRequestSchema = createInsertSchema(leaveRequests).omit({
+  id: true,
+  requestedAt: true,
+  reviewedAt: true,
+  createdAt: true
+});
+
+export const insertScheduleTemplateSchema = createInsertSchema(scheduleTemplates).omit({
+  id: true,
+  createdAt: true
+});
+
+// Staff Scheduling and Time Tracking Types
+export type StaffShift = typeof staffShifts.$inferSelect;
+export type InsertStaffShift = z.infer<typeof insertStaffShiftSchema>;
+
+export type TimeLog = typeof timeLogs.$inferSelect;
+export type InsertTimeLog = z.infer<typeof insertTimeLogSchema>;
+
+export type LeaveRequest = typeof leaveRequests.$inferSelect;
+export type InsertLeaveRequest = z.infer<typeof insertLeaveRequestSchema>;
+
+export type ScheduleTemplate = typeof scheduleTemplates.$inferSelect;
+export type InsertScheduleTemplate = z.infer<typeof insertScheduleTemplateSchema>;

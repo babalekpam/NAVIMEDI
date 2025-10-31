@@ -14,7 +14,11 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
   : null;
 
-const SubscribeForm = () => {
+interface SubscribeFormProps {
+  selectedPlan: any;
+}
+
+const SubscribeForm = ({ selectedPlan }: SubscribeFormProps) => {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
@@ -172,9 +176,12 @@ export default function Subscribe() {
     });
 
     // Create subscription with selected plan
-    apiRequest("POST", "/api/get-or-create-subscription", {
-      planId,
-      interval
+    apiRequest("/api/get-or-create-subscription", {
+      method: "POST",
+      body: {
+        planId,
+        interval
+      }
     })
       .then((data) => {
         console.log("✅ Subscription created for plan:", planId, "interval:", interval, "amount:", data.amount);
@@ -236,7 +243,7 @@ export default function Subscribe() {
         </div>
         
         <Elements stripe={stripePromise} options={{ clientSecret }}>
-          <SubscribeForm />
+          <SubscribeForm selectedPlan={selectedPlan} />
         </Elements>
       </div>
     </div>

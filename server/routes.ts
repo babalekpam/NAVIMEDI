@@ -30,7 +30,7 @@ import multer from "multer";
 import csv from "csv-parser";
 import { Readable } from "stream";
 import { db } from "./db";
-import { tenants, users, pharmacies, prescriptions, insuranceClaims, insertLabResultSchema, type InsuranceClaim, labOrders, appointments, patients, countries, countryMedicalCodes, medicalCodeUploads } from "@shared/schema";
+import { tenants, users, pharmacies, prescriptions, insuranceClaims, insertLabResultSchema, type InsuranceClaim, labOrders, appointments, patients, countries, countryMedicalCodes, medicalCodeUploads, clinicalAlerts } from "@shared/schema";
 import { eq, and, desc, or, sql, ilike } from "drizzle-orm";
 import Stripe from "stripe";
 
@@ -2012,6 +2012,38 @@ The NaviMED Security Team
     }
   });
 
+  // Update patient status (activation/deactivation)
+  app.patch('/api/patients/:id/status', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { isActive } = req.body;
+      const { tenantId } = req.user as any;
+      
+      if (typeof isActive !== 'boolean') {
+        return res.status(400).json({ message: 'isActive must be a boolean' });
+      }
+      
+      const patient = await storage.updatePatientStatus(id, isActive, tenantId);
+      
+      if (!patient) {
+        return res.status(404).json({ message: 'Patient not found' });
+      }
+      
+      console.log(`✅ Patient status updated: ${patient.id} - Active: ${isActive}`);
+      
+      // Invalidate patient cache for real-time analytics
+      invalidatePatientCache(tenantId);
+      
+      res.json(patient);
+    } catch (error) {
+      console.error('❌ Error updating patient status:', error);
+      res.status(500).json({ 
+        message: 'Failed to update patient status',
+        error: error.message
+      });
+    }
+  });
+
   app.post('/api/patients', async (req, res) => {
     try {
       const { tenantId } = req.user as any;
@@ -2240,6 +2272,201 @@ The NaviMED Security Team
         message: 'Failed to update prescription status',
         error: error.message 
       });
+    }
+  });
+
+  // CLINICAL DECISION SUPPORT SYSTEM ROUTES
+  // Import CDS service
+  const cds = await import('./clinical-decision-service');
+
+  // Check prescription for interactions, allergies, and dosage issues
+  app.post('/api/clinical/check-prescription', async (req, res) => {
+    try {
+      const { tenantId, id: userId } = req.user as any;
+      const { patientId, drugName, dosage, frequency, patientConditions, prescriptionId } = req.body;
+
+      if (!patientId || !drugName || !dosage || !frequency) {
+        return res.status(400).json({ 
+          message: 'Missing required fields: patientId, drugName, dosage, frequency' 
+        });
+      }
+
+      console.log(`🔍 CDS CHECK - Patient: ${patientId}, Drug: ${drugName}, Dose: ${dosage}`);
+
+      const checkResult = await cds.checkPrescription({
+        patientId,
+        tenantId,
+        drugName,
+        dosage,
+        frequency,
+        prescriberId: userId,
+        patientConditions: patientConditions || []
+      });
+
+      // If alerts found, generate them in the database
+      if (checkResult.hasAlerts && prescriptionId) {
+        await cds.generateAlertsFromCheck(
+          patientId,
+          tenantId,
+          checkResult,
+          prescriptionId,
+          userId
+        );
+      }
+
+      console.log(`✅ CDS CHECK - Found ${checkResult.alerts.length} alerts, Severity: ${checkResult.severity}`);
+      res.json(checkResult);
+    } catch (error) {
+      console.error('❌ Error checking prescription:', error);
+      res.status(500).json({ 
+        message: 'Failed to perform clinical decision support check',
+        error: error.message 
+      });
+    }
+  });
+
+  // Get all active alerts for a patient
+  app.get('/api/clinical/alerts/:patientId', async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const { patientId } = req.params;
+      const includeAcknowledged = req.query.includeAcknowledged === 'true';
+
+      const alerts = await storage.getPatientAlerts(patientId, tenantId, includeAcknowledged);
+      res.json(alerts);
+    } catch (error) {
+      console.error('❌ Error fetching patient alerts:', error);
+      res.status(500).json({ message: 'Failed to fetch patient alerts' });
+    }
+  });
+
+  // Acknowledge and optionally dismiss alert with reason
+  app.post('/api/clinical/alerts/:id/acknowledge', async (req, res) => {
+    try {
+      const { tenantId, id: userId } = req.user as any;
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      // Critical alerts require override reason
+      const [alert] = await db.select().from(clinicalAlerts)
+        .where(and(eq(clinicalAlerts.id, id), eq(clinicalAlerts.tenantId, tenantId)));
+
+      if (!alert) {
+        return res.status(404).json({ message: 'Alert not found' });
+      }
+
+      if (alert.severity === 'critical' && !reason) {
+        return res.status(400).json({ 
+          message: 'Critical alerts require an override reason to acknowledge' 
+        });
+      }
+
+      const acknowledgedAlert = await storage.acknowledgeClinicalAlert(id, userId, reason || null, tenantId);
+      
+      console.log(`✅ ALERT ACKNOWLEDGED - Alert: ${id}, User: ${userId}, Reason: ${reason || 'None'}`);
+      res.json(acknowledgedAlert);
+    } catch (error) {
+      console.error('❌ Error acknowledging alert:', error);
+      res.status(500).json({ message: 'Failed to acknowledge alert' });
+    }
+  });
+
+  // Search drug interaction database
+  app.get('/api/clinical/drug-interactions', async (req, res) => {
+    try {
+      const { drugName } = req.query;
+
+      if (!drugName) {
+        return res.status(400).json({ message: 'drugName query parameter is required' });
+      }
+
+      const interactions = await storage.getDrugInteractions(drugName as string);
+      res.json(interactions);
+    } catch (error) {
+      console.error('❌ Error fetching drug interactions:', error);
+      res.status(500).json({ message: 'Failed to fetch drug interactions' });
+    }
+  });
+
+  // Add patient allergy
+  app.post('/api/clinical/allergies', async (req, res) => {
+    try {
+      const { tenantId, id: userId } = req.user as any;
+      
+      const allergyData = {
+        ...req.body,
+        tenantId,
+        reportedBy: userId,
+        verifiedBy: null,
+        verifiedAt: null,
+        isActive: true,
+        createdAt: new Date()
+      };
+
+      const allergy = await storage.createAllergyAlert(allergyData);
+      console.log(`✅ ALLERGY ADDED - Patient: ${allergy.patientId}, Allergen: ${allergy.allergen}`);
+      res.status(201).json(allergy);
+    } catch (error) {
+      console.error('❌ Error creating allergy:', error);
+      res.status(500).json({ message: 'Failed to create allergy' });
+    }
+  });
+
+  // Get patient allergies
+  app.get('/api/clinical/allergies/:patientId', async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const { patientId } = req.params;
+
+      const allergies = await storage.getPatientAllergies(patientId, tenantId);
+      res.json(allergies);
+    } catch (error) {
+      console.error('❌ Error fetching allergies:', error);
+      res.status(500).json({ message: 'Failed to fetch allergies' });
+    }
+  });
+
+  // Update allergy
+  app.patch('/api/clinical/allergies/:id', async (req, res) => {
+    try {
+      const { tenantId, id: userId } = req.user as any;
+      const { id } = req.params;
+      const updates = req.body;
+
+      // If verifying allergy, add verifiedBy and verifiedAt
+      if (updates.verified) {
+        updates.verifiedBy = userId;
+        updates.verifiedAt = new Date();
+      }
+
+      const updatedAllergy = await storage.updateAllergyAlert(id, updates, tenantId);
+
+      if (!updatedAllergy) {
+        return res.status(404).json({ message: 'Allergy not found' });
+      }
+
+      console.log(`✅ ALLERGY UPDATED - ID: ${id}, Verified: ${updates.verified || false}`);
+      res.json(updatedAllergy);
+    } catch (error) {
+      console.error('❌ Error updating allergy:', error);
+      res.status(500).json({ message: 'Failed to update allergy' });
+    }
+  });
+
+  // Get dosage guidance for drug
+  app.get('/api/clinical/dosage-warnings/:drugName', async (req, res) => {
+    try {
+      const { drugName } = req.params;
+      const { condition } = req.query;
+
+      const warnings = condition 
+        ? [await storage.getDosageWarning(drugName, condition as string)].filter(Boolean)
+        : await storage.getDosageWarnings(drugName);
+
+      res.json(warnings);
+    } catch (error) {
+      console.error('❌ Error fetching dosage warnings:', error);
+      res.status(500).json({ message: 'Failed to fetch dosage warnings' });
     }
   });
 
@@ -2641,6 +2868,38 @@ The NaviMED Security Team
     }
   });
 
+  // Cancel lab order
+  app.patch('/api/lab-orders/:id/cancel', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      const { tenantId } = req.user as any;
+      
+      if (!reason || typeof reason !== 'string' || reason.trim().length === 0) {
+        return res.status(400).json({ message: 'Cancellation reason is required' });
+      }
+      
+      const labOrder = await storage.cancelLabOrder(id, reason, tenantId);
+      
+      if (!labOrder) {
+        return res.status(404).json({ message: 'Lab order not found' });
+      }
+      
+      console.log(`✅ Lab order cancelled: ${labOrder.id} - Reason: ${reason}`);
+      
+      // Invalidate lab order cache for real-time analytics
+      invalidateLabOrderCache(tenantId);
+      
+      res.json(labOrder);
+    } catch (error) {
+      console.error('❌ Error cancelling lab order:', error);
+      res.status(500).json({ 
+        message: 'Failed to cancel lab order',
+        error: error.message
+      });
+    }
+  });
+
   // Lab Results Routes
   app.get("/api/lab-results", authenticateToken, requireTenant, async (req, res) => {
     try {
@@ -2722,6 +2981,208 @@ The NaviMED Security Team
     } catch (error) {
       console.error('Error fetching active laboratories:', error);
       res.status(500).json({ message: 'Failed to fetch active laboratories' });
+    }
+  });
+
+  // Document Management System Routes
+  app.post('/api/documents/upload', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const userId = (req.user as any).id || (req.user as any).userId;
+
+      // For now, create placeholder for file storage
+      // In production, this would integrate with object storage
+      console.log('📄 Object storage integration pending - creating document metadata only');
+
+      const documentData = {
+        ...req.body,
+        tenantId,
+        userId,
+        storageUrl: req.body.storageUrl || '/placeholder/document-storage'
+      };
+
+      const document = await storage.createDocument(documentData);
+      res.status(201).json(document);
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      res.status(500).json({ message: 'Failed to upload document' });
+    }
+  });
+
+  app.get('/api/documents', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const { type, patientId, status, search, limit, offset } = req.query;
+
+      const filters = {
+        type: type as string,
+        patientId: patientId as string,
+        status: status as string,
+        search: search as string,
+        limit: limit ? parseInt(limit as string) : 50,
+        offset: offset ? parseInt(offset as string) : 0
+      };
+
+      const documents = await storage.getDocuments(tenantId, filters);
+      res.json(documents);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      res.status(500).json({ message: 'Failed to fetch documents' });
+    }
+  });
+
+  app.get('/api/documents/:id', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const document = await storage.getDocument(req.params.id, tenantId);
+
+      if (!document) {
+        return res.status(404).json({ message: 'Document not found' });
+      }
+
+      res.json(document);
+    } catch (error) {
+      console.error('Error fetching document:', error);
+      res.status(500).json({ message: 'Failed to fetch document' });
+    }
+  });
+
+  app.get('/api/documents/:id/download', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const document = await storage.getDocument(req.params.id, tenantId);
+
+      if (!document) {
+        return res.status(404).json({ message: 'Document not found' });
+      }
+
+      // Placeholder for file download
+      console.log('📄 Object storage integration pending - document download placeholder');
+      res.json({
+        message: 'Object storage integration pending',
+        document,
+        downloadUrl: document.storageUrl
+      });
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      res.status(500).json({ message: 'Failed to download document' });
+    }
+  });
+
+  app.delete('/api/documents/:id', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const deleted = await storage.deleteDocument(req.params.id, tenantId);
+
+      if (!deleted) {
+        return res.status(404).json({ message: 'Document not found' });
+      }
+
+      res.json({ message: 'Document deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      res.status(500).json({ message: 'Failed to delete document' });
+    }
+  });
+
+  app.post('/api/documents/:id/annotate', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const userId = (req.user as any).id || (req.user as any).userId;
+      const documentId = req.params.id;
+
+      // Verify document exists and belongs to tenant
+      const document = await storage.getDocument(documentId, tenantId);
+      if (!document) {
+        return res.status(404).json({ message: 'Document not found' });
+      }
+
+      const annotationData = {
+        documentId,
+        userId,
+        ...req.body
+      };
+
+      const annotation = await storage.createDocumentAnnotation(annotationData);
+      res.status(201).json(annotation);
+    } catch (error) {
+      console.error('Error creating annotation:', error);
+      res.status(500).json({ message: 'Failed to create annotation' });
+    }
+  });
+
+  app.get('/api/documents/:id/annotations', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const annotations = await storage.getDocumentAnnotations(req.params.id, tenantId);
+      res.json(annotations);
+    } catch (error) {
+      console.error('Error fetching annotations:', error);
+      res.status(500).json({ message: 'Failed to fetch annotations' });
+    }
+  });
+
+  app.post('/api/documents/:id/request-signature', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const userId = (req.user as any).id || (req.user as any).userId;
+      const documentId = req.params.id;
+
+      // Verify document exists and belongs to tenant
+      const document = await storage.getDocument(documentId, tenantId);
+      if (!document) {
+        return res.status(404).json({ message: 'Document not found' });
+      }
+
+      const requestData = {
+        documentId,
+        tenantId,
+        requestedBy: userId,
+        ...req.body
+      };
+
+      const signatureRequest = await storage.createSignatureRequest(requestData);
+      res.status(201).json(signatureRequest);
+    } catch (error) {
+      console.error('Error creating signature request:', error);
+      res.status(500).json({ message: 'Failed to create signature request' });
+    }
+  });
+
+  app.patch('/api/documents/:id/sign', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const userId = (req.user as any).id || (req.user as any).userId;
+      const requestId = req.params.id;
+      const { signatureData } = req.body;
+
+      if (!signatureData) {
+        return res.status(400).json({ message: 'Signature data is required' });
+      }
+
+      const signedRequest = await storage.signDocument(requestId, signatureData, userId, tenantId);
+
+      if (!signedRequest) {
+        return res.status(404).json({ message: 'Signature request not found' });
+      }
+
+      res.json(signedRequest);
+    } catch (error) {
+      console.error('Error signing document:', error);
+      res.status(500).json({ message: 'Failed to sign document' });
+    }
+  });
+
+  app.get('/api/signature-requests', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { tenantId } = req.user as any;
+      const userId = (req.user as any).id || (req.user as any).userId;
+
+      const requests = await storage.getPendingSignatureRequests(userId, tenantId);
+      res.json(requests);
+    } catch (error) {
+      console.error('Error fetching signature requests:', error);
+      res.status(500).json({ message: 'Failed to fetch signature requests' });
     }
   });
 
@@ -2840,6 +3301,73 @@ The NaviMED Security Team
     } catch (error) {
       console.error('Error generating PDF:', error);
       res.status(500).json({ message: 'Failed to generate PDF' });
+    }
+  });
+
+  // Record payment for insurance claim
+  app.post('/api/claims/:id/payment', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { amount, method, transactionId, paymentDate, notes } = req.body;
+      const { tenantId } = req.user as any;
+      
+      if (!amount || !method || !paymentDate) {
+        return res.status(400).json({ message: 'Amount, method, and payment date are required' });
+      }
+      
+      const paymentData = {
+        amount: amount.toString(),
+        method,
+        transactionId,
+        paymentDate: new Date(paymentDate),
+        notes
+      };
+      
+      const claim = await storage.recordClaimPayment(id, paymentData, tenantId);
+      
+      if (!claim) {
+        return res.status(404).json({ message: 'Claim not found' });
+      }
+      
+      console.log(`✅ Payment recorded for claim: ${claim.id} - Amount: $${amount}`);
+      
+      // Invalidate billing cache for real-time analytics
+      invalidateBillingCache(tenantId);
+      
+      res.json(claim);
+    } catch (error) {
+      console.error('❌ Error recording claim payment:', error);
+      res.status(500).json({ 
+        message: 'Failed to record payment',
+        error: error.message
+      });
+    }
+  });
+
+  // Delete draft insurance claim
+  app.delete('/api/claims/:id', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { tenantId } = req.user as any;
+      
+      const success = await storage.deleteClaim(id, tenantId);
+      
+      if (!success) {
+        return res.status(404).json({ message: 'Draft claim not found or cannot be deleted' });
+      }
+      
+      console.log(`✅ Draft claim deleted: ${id}`);
+      
+      // Invalidate billing cache for real-time analytics
+      invalidateBillingCache(tenantId);
+      
+      res.json({ success: true, message: 'Draft claim deleted successfully' });
+    } catch (error) {
+      console.error('❌ Error deleting claim:', error);
+      res.status(500).json({ 
+        message: 'Failed to delete claim',
+        error: error.message
+      });
     }
   });
 
@@ -3939,6 +4467,187 @@ Please attach all required supporting documentation.
     } catch (error: any) {
       console.error("Error creating subscription:", error);
       res.status(500).json({ message: "Error creating subscription: " + error.message });
+    }
+  });
+
+  // Stripe Webhook Handler
+  app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!stripe) {
+      console.error('❌ WEBHOOK - Stripe not initialized');
+      return res.status(503).json({ message: 'Stripe not configured' });
+    }
+
+    if (!webhookSecret) {
+      console.error('❌ WEBHOOK - Webhook secret not configured');
+      return res.status(500).json({ message: 'Webhook secret not configured' });
+    }
+
+    if (!sig) {
+      console.error('❌ WEBHOOK - No signature provided');
+      return res.status(400).json({ message: 'No signature provided' });
+    }
+
+    let event: Stripe.Event;
+
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err: any) {
+      console.error(`❌ WEBHOOK - Signature verification failed: ${err.message}`);
+      return res.status(400).json({ message: `Webhook signature verification failed: ${err.message}` });
+    }
+
+    console.log(`🎯 WEBHOOK - Received event: ${event.type}`);
+
+    try {
+      switch (event.type) {
+        case 'customer.subscription.created':
+        case 'customer.subscription.updated': {
+          const subscription = event.data.object as Stripe.Subscription;
+          const tenantId = subscription.metadata.tenantId;
+          const planId = subscription.metadata.planId;
+          const interval = subscription.metadata.interval;
+
+          if (tenantId) {
+            const status = subscription.status === 'active' ? 'active' : 
+                          subscription.status === 'canceled' ? 'cancelled' :
+                          subscription.status === 'past_due' ? 'suspended' : 'trial';
+
+            await db.update(tenants)
+              .set({
+                stripeCustomerId: subscription.customer as string,
+                stripeSubscriptionId: subscription.id,
+                subscriptionStatus: status as any,
+                subscriptionPlanId: planId as any,
+                subscriptionInterval: interval as any,
+                updatedAt: new Date()
+              })
+              .where(eq(tenants.id, tenantId));
+
+            console.log(`✅ WEBHOOK - Updated tenant ${tenantId} subscription: ${event.type}`);
+          }
+          break;
+        }
+
+        case 'customer.subscription.deleted': {
+          const subscription = event.data.object as Stripe.Subscription;
+          const tenantId = subscription.metadata.tenantId;
+
+          if (tenantId) {
+            await db.update(tenants)
+              .set({
+                subscriptionStatus: 'cancelled',
+                stripeSubscriptionId: null,
+                updatedAt: new Date()
+              })
+              .where(eq(tenants.id, tenantId));
+
+            console.log(`✅ WEBHOOK - Cancelled subscription for tenant ${tenantId}`);
+          }
+          break;
+        }
+
+        case 'invoice.payment_succeeded': {
+          const invoice = event.data.object as Stripe.Invoice;
+          const subscriptionId = invoice.subscription as string;
+
+          if (subscriptionId) {
+            const tenant = await db.select()
+              .from(tenants)
+              .where(eq(tenants.stripeSubscriptionId, subscriptionId))
+              .limit(1);
+
+            if (tenant.length > 0) {
+              await db.update(tenants)
+                .set({
+                  subscriptionStatus: 'active',
+                  suspendedAt: null,
+                  suspensionReason: null,
+                  updatedAt: new Date()
+                })
+                .where(eq(tenants.id, tenant[0].id));
+
+              console.log(`✅ WEBHOOK - Payment succeeded for tenant ${tenant[0].id}`);
+            }
+          }
+          break;
+        }
+
+        case 'invoice.payment_failed': {
+          const invoice = event.data.object as Stripe.Invoice;
+          const subscriptionId = invoice.subscription as string;
+
+          if (subscriptionId) {
+            const tenant = await db.select()
+              .from(tenants)
+              .where(eq(tenants.stripeSubscriptionId, subscriptionId))
+              .limit(1);
+
+            if (tenant.length > 0) {
+              await db.update(tenants)
+                .set({
+                  subscriptionStatus: 'suspended',
+                  suspendedAt: new Date(),
+                  suspensionReason: 'Payment failed',
+                  updatedAt: new Date()
+                })
+                .where(eq(tenants.id, tenant[0].id));
+
+              console.log(`⚠️ WEBHOOK - Payment failed for tenant ${tenant[0].id}`);
+            }
+          }
+          break;
+        }
+
+        default:
+          console.log(`ℹ️ WEBHOOK - Unhandled event type: ${event.type}`);
+      }
+
+      res.json({ received: true });
+    } catch (error: any) {
+      console.error(`❌ WEBHOOK - Error processing event: ${error.message}`);
+      res.status(500).json({ message: `Webhook processing failed: ${error.message}` });
+    }
+  });
+
+  // Create Billing Portal Session
+  app.post('/api/create-billing-portal-session', authenticateToken, async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(503).json({ message: 'Stripe not configured' });
+      }
+
+      const user = req.user as any;
+
+      if (!user || !user.tenantId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      // Get tenant to find stripe customer ID
+      const tenant = await db.select()
+        .from(tenants)
+        .where(eq(tenants.id, user.tenantId))
+        .limit(1);
+
+      if (tenant.length === 0 || !tenant[0].stripeCustomerId) {
+        return res.status(404).json({ message: 'No active subscription found' });
+      }
+
+      const returnUrl = `${req.protocol}://${req.get('host')}/billing-management`;
+
+      const session = await stripe.billingPortal.sessions.create({
+        customer: tenant[0].stripeCustomerId,
+        return_url: returnUrl,
+      });
+
+      console.log(`✅ BILLING PORTAL - Created session for tenant ${user.tenantId}`);
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error('❌ BILLING PORTAL - Error creating session:', error);
+      res.status(500).json({ message: 'Error creating billing portal session: ' + error.message });
     }
   });
 
@@ -5544,6 +6253,464 @@ to the patient and authorized healthcare providers.
 
   app.get('/ping', (req, res) => {
     res.status(200).send('pong');
+  });
+
+  // =====================================================================
+  // STAFF SCHEDULING AND TIME TRACKING ENDPOINTS
+  // =====================================================================
+  
+  const {
+    checkShiftConflicts,
+    calculateHours,
+    calculateOvertime,
+    checkStaffingLevels,
+    generateScheduleFromTemplate,
+    validateLeaveRequest,
+    calculateLeaveDays,
+    getOvertimeSummary
+  } = await import('./scheduling-service');
+
+  // Create new shift
+  app.post('/api/scheduling/shifts', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId, userId } = req.user;
+      const shiftData = req.body;
+
+      // Check for shift conflicts
+      const { hasConflict, conflictingShift } = await checkShiftConflicts(
+        shiftData.userId,
+        tenantId,
+        new Date(shiftData.shiftDate),
+        shiftData.startTime,
+        shiftData.endTime
+      );
+
+      if (hasConflict) {
+        return res.status(409).json({
+          message: 'Shift conflict detected',
+          conflictingShift
+        });
+      }
+
+      const shift = await storage.createStaffShift({
+        ...shiftData,
+        tenantId,
+        assignedBy: userId
+      });
+
+      res.status(201).json(shift);
+    } catch (error) {
+      console.error('Create shift error:', error);
+      res.status(500).json({ message: 'Failed to create shift' });
+    }
+  });
+
+  // List shifts with filtering
+  app.get('/api/scheduling/shifts', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId, role } = req.user;
+      const { userId, departmentId, startDate, endDate, status } = req.query;
+
+      const filters: any = {};
+      
+      // Regular staff can only view their own shifts, managers can view all
+      if (role !== 'tenant_admin' && role !== 'director' && userId) {
+        filters.userId = userId;
+      } else if (userId) {
+        filters.userId = userId;
+      }
+
+      if (departmentId) filters.departmentId = departmentId;
+      if (startDate) filters.startDate = new Date(startDate as string);
+      if (endDate) filters.endDate = new Date(endDate as string);
+      if (status) filters.status = status;
+
+      const shifts = await storage.getStaffShifts(tenantId, filters);
+      res.json(shifts);
+    } catch (error) {
+      console.error('List shifts error:', error);
+      res.status(500).json({ message: 'Failed to fetch shifts' });
+    }
+  });
+
+  // Get shift details
+  app.get('/api/scheduling/shifts/:id', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const shiftId = parseInt(req.params.id);
+
+      const shift = await storage.getStaffShift(shiftId, tenantId);
+      
+      if (!shift) {
+        return res.status(404).json({ message: 'Shift not found' });
+      }
+
+      res.json(shift);
+    } catch (error) {
+      console.error('Get shift error:', error);
+      res.status(500).json({ message: 'Failed to fetch shift' });
+    }
+  });
+
+  // Update shift
+  app.patch('/api/scheduling/shifts/:id', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const shiftId = parseInt(req.params.id);
+      const updates = req.body;
+
+      // If updating time/date, check for conflicts
+      if (updates.shiftDate || updates.startTime || updates.endTime) {
+        const existingShift = await storage.getStaffShift(shiftId, tenantId);
+        if (existingShift) {
+          const { hasConflict, conflictingShift } = await checkShiftConflicts(
+            existingShift.userId,
+            tenantId,
+            new Date(updates.shiftDate || existingShift.shiftDate),
+            updates.startTime || existingShift.startTime,
+            updates.endTime || existingShift.endTime,
+            shiftId
+          );
+
+          if (hasConflict) {
+            return res.status(409).json({
+              message: 'Shift conflict detected',
+              conflictingShift
+            });
+          }
+        }
+      }
+
+      const shift = await storage.updateStaffShift(shiftId, updates, tenantId);
+      
+      if (!shift) {
+        return res.status(404).json({ message: 'Shift not found' });
+      }
+
+      res.json(shift);
+    } catch (error) {
+      console.error('Update shift error:', error);
+      res.status(500).json({ message: 'Failed to update shift' });
+    }
+  });
+
+  // Delete shift
+  app.delete('/api/scheduling/shifts/:id', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const shiftId = parseInt(req.params.id);
+
+      await storage.deleteStaffShift(shiftId, tenantId);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Delete shift error:', error);
+      res.status(500).json({ message: 'Failed to delete shift' });
+    }
+  });
+
+  // Create multiple shifts from template
+  app.post('/api/scheduling/shifts/bulk', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId, userId } = req.user;
+      const { templateId, startDate, endDate } = req.body;
+
+      const shifts = await generateScheduleFromTemplate(
+        templateId,
+        tenantId,
+        new Date(startDate),
+        new Date(endDate),
+        userId
+      );
+
+      res.status(201).json({ 
+        message: `Created ${shifts.length} shifts from template`,
+        shifts 
+      });
+    } catch (error) {
+      console.error('Bulk shift creation error:', error);
+      res.status(500).json({ message: 'Failed to create shifts from template' });
+    }
+  });
+
+  // Clock in
+  app.post('/api/scheduling/clock-in', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId, userId } = req.user;
+      const { shiftId, location } = req.body;
+
+      const timeLog = await storage.createTimeLog({
+        tenantId,
+        userId,
+        shiftId: shiftId || null,
+        clockInTime: new Date(),
+        clockInLocation: location || null,
+        status: 'clocked_in'
+      });
+
+      res.status(201).json(timeLog);
+    } catch (error) {
+      console.error('Clock in error:', error);
+      res.status(500).json({ message: 'Failed to clock in' });
+    }
+  });
+
+  // Clock out
+  app.post('/api/scheduling/clock-out', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId, userId } = req.user;
+      const { timeLogId, location, breakMinutes } = req.body;
+
+      const timeLog = await storage.getTimeLog(timeLogId, tenantId);
+      
+      if (!timeLog) {
+        return res.status(404).json({ message: 'Time log not found' });
+      }
+
+      if (timeLog.userId !== userId) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+
+      const clockOutTime = new Date();
+      const totalHours = calculateHours(
+        new Date(timeLog.clockInTime),
+        clockOutTime,
+        breakMinutes || timeLog.breakMinutes || 0
+      );
+      const overtimeHours = calculateOvertime(totalHours, 8);
+
+      const updatedLog = await storage.updateTimeLog(timeLogId, {
+        clockOutTime,
+        clockOutLocation: location || null,
+        breakMinutes: breakMinutes || timeLog.breakMinutes,
+        totalHours: totalHours.toString(),
+        overtimeHours: overtimeHours.toString(),
+        status: 'clocked_out'
+      }, tenantId);
+
+      res.json(updatedLog);
+    } catch (error) {
+      console.error('Clock out error:', error);
+      res.status(500).json({ message: 'Failed to clock out' });
+    }
+  });
+
+  // List time logs
+  app.get('/api/scheduling/time-logs', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId, role, userId: currentUserId } = req.user;
+      const { userId, startDate, endDate, status } = req.query;
+
+      const filters: any = {};
+      
+      // Regular staff can only view their own time logs
+      if (role !== 'tenant_admin' && role !== 'director') {
+        filters.userId = currentUserId;
+      } else if (userId) {
+        filters.userId = userId;
+      }
+
+      if (startDate) filters.startDate = new Date(startDate as string);
+      if (endDate) filters.endDate = new Date(endDate as string);
+      if (status) filters.status = status;
+
+      const timeLogs = await storage.getTimeLogs(tenantId, filters);
+      res.json(timeLogs);
+    } catch (error) {
+      console.error('List time logs error:', error);
+      res.status(500).json({ message: 'Failed to fetch time logs' });
+    }
+  });
+
+  // Approve time log
+  app.patch('/api/scheduling/time-logs/:id/approve', authenticateToken, setTenantContext, requireTenant, requireRole(['tenant_admin', 'director']), async (req: any, res) => {
+    try {
+      const { tenantId, userId } = req.user;
+      const timeLogId = parseInt(req.params.id);
+
+      const timeLog = await storage.approveTimeLog(timeLogId, userId, tenantId);
+      
+      if (!timeLog) {
+        return res.status(404).json({ message: 'Time log not found' });
+      }
+
+      res.json(timeLog);
+    } catch (error) {
+      console.error('Approve time log error:', error);
+      res.status(500).json({ message: 'Failed to approve time log' });
+    }
+  });
+
+  // Submit leave request
+  app.post('/api/scheduling/leave-requests', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId, userId } = req.user;
+      const { leaveType, startDate, endDate, reason } = req.body;
+
+      // Validate leave request
+      const validation = await validateLeaveRequest(
+        userId,
+        tenantId,
+        new Date(startDate),
+        new Date(endDate)
+      );
+
+      if (!validation.isValid) {
+        return res.status(409).json({
+          message: validation.message,
+          conflicts: validation.conflicts
+        });
+      }
+
+      const totalDays = calculateLeaveDays(new Date(startDate), new Date(endDate));
+
+      const leaveRequest = await storage.createLeaveRequest({
+        tenantId,
+        userId,
+        leaveType,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        totalDays: totalDays.toString(),
+        reason,
+        status: 'pending'
+      });
+
+      res.status(201).json(leaveRequest);
+    } catch (error) {
+      console.error('Create leave request error:', error);
+      res.status(500).json({ message: 'Failed to create leave request' });
+    }
+  });
+
+  // List leave requests
+  app.get('/api/scheduling/leave-requests', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId, role, userId: currentUserId } = req.user;
+      const { userId, status, startDate, endDate } = req.query;
+
+      const filters: any = {};
+      
+      // Regular staff can only view their own leave requests
+      if (role !== 'tenant_admin' && role !== 'director') {
+        filters.userId = currentUserId;
+      } else if (userId) {
+        filters.userId = userId;
+      }
+
+      if (status) filters.status = status;
+      if (startDate) filters.startDate = new Date(startDate as string);
+      if (endDate) filters.endDate = new Date(endDate as string);
+
+      const leaveRequests = await storage.getLeaveRequests(tenantId, filters);
+      res.json(leaveRequests);
+    } catch (error) {
+      console.error('List leave requests error:', error);
+      res.status(500).json({ message: 'Failed to fetch leave requests' });
+    }
+  });
+
+  // Approve/deny leave request
+  app.patch('/api/scheduling/leave-requests/:id', authenticateToken, setTenantContext, requireTenant, requireRole(['tenant_admin', 'director']), async (req: any, res) => {
+    try {
+      const { tenantId, userId } = req.user;
+      const requestId = parseInt(req.params.id);
+      const { status, reviewNotes } = req.body;
+
+      const leaveRequest = await storage.updateLeaveRequest(requestId, {
+        status,
+        reviewedBy: userId,
+        reviewedAt: new Date(),
+        reviewNotes
+      }, tenantId);
+      
+      if (!leaveRequest) {
+        return res.status(404).json({ message: 'Leave request not found' });
+      }
+
+      res.json(leaveRequest);
+    } catch (error) {
+      console.error('Update leave request error:', error);
+      res.status(500).json({ message: 'Failed to update leave request' });
+    }
+  });
+
+  // Get user's schedule calendar view
+  app.get('/api/scheduling/calendar/:userId', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const userId = req.params.userId;
+      const { startDate, endDate } = req.query;
+
+      const shifts = await storage.getStaffShifts(tenantId, {
+        userId,
+        startDate: startDate ? new Date(startDate as string) : undefined,
+        endDate: endDate ? new Date(endDate as string) : undefined
+      });
+
+      const leaveRequests = await storage.getLeaveRequests(tenantId, {
+        userId,
+        startDate: startDate ? new Date(startDate as string) : undefined,
+        endDate: endDate ? new Date(endDate as string) : undefined,
+        status: ['approved', 'pending']
+      });
+
+      res.json({ shifts, leaveRequests });
+    } catch (error) {
+      console.error('Get calendar error:', error);
+      res.status(500).json({ message: 'Failed to fetch calendar' });
+    }
+  });
+
+  // Get shift coverage report
+  app.get('/api/scheduling/coverage', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { departmentId, startDate, endDate } = req.query;
+
+      const coverage = await checkStaffingLevels(
+        tenantId,
+        departmentId as string || null,
+        new Date(startDate as string || new Date())
+      );
+
+      res.json(coverage);
+    } catch (error) {
+      console.error('Get coverage error:', error);
+      res.status(500).json({ message: 'Failed to fetch coverage' });
+    }
+  });
+
+  // Create schedule template
+  app.post('/api/scheduling/templates', authenticateToken, setTenantContext, requireTenant, requireRole(['tenant_admin', 'director']), async (req: any, res) => {
+    try {
+      const { tenantId, userId } = req.user;
+      const { templateName, departmentId, templateData } = req.body;
+
+      const template = await storage.createScheduleTemplate({
+        tenantId,
+        templateName,
+        departmentId: departmentId || null,
+        templateData,
+        isActive: true,
+        createdBy: userId
+      });
+
+      res.status(201).json(template);
+    } catch (error) {
+      console.error('Create template error:', error);
+      res.status(500).json({ message: 'Failed to create template' });
+    }
+  });
+
+  // List schedule templates
+  app.get('/api/scheduling/templates', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const templates = await storage.getScheduleTemplates(tenantId);
+      res.json(templates);
+    } catch (error) {
+      console.error('List templates error:', error);
+      res.status(500).json({ message: 'Failed to fetch templates' });
+    }
   });
 
   // Register analytics routes

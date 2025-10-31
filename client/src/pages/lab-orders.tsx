@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const statusColors = {
   ordered: "bg-blue-100 text-blue-800",
@@ -239,6 +240,30 @@ export default function LabOrders() {
   const onCompleteSubmit = (data: LabCompletionForm) => {
     completeLabMutation.mutate(data);
   };
+
+  // Cancel lab order mutation
+  const cancelLabOrderMutation = useMutation({
+    mutationFn: async ({ labOrderId, reason }: { labOrderId: string; reason: string }) => {
+      return await apiRequest(`/api/lab-orders/${labOrderId}/cancel`, {
+        method: 'PATCH',
+        body: JSON.stringify({ reason }),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Lab order cancelled successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/lab-orders"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to cancel lab order",
+        variant: "destructive",
+      });
+    },
+  });
 
   const filteredLabOrders = labOrders.filter(labOrder => {
     const patient = patients.find(p => p.id === labOrder.patientId);
@@ -550,12 +575,16 @@ export default function LabOrders() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
                                 onClick={() => {
-                                  if (confirm('Are you sure you want to cancel this lab order?')) {
-                                    // TODO: Implement cancel lab order functionality
-                                    console.log('Cancel lab order:', labOrder.id);
+                                  const reason = prompt('Please enter a cancellation reason:');
+                                  if (reason && reason.trim()) {
+                                    cancelLabOrderMutation.mutate({ 
+                                      labOrderId: labOrder.id, 
+                                      reason: reason.trim() 
+                                    });
                                   }
                                 }}
                                 className="text-red-600"
+                                data-testid={`button-cancel-order-${labOrder.id}`}
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Cancel Order

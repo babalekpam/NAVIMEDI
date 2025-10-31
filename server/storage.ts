@@ -64,6 +64,30 @@ import {
   countries,
   countryMedicalCodes,
   medicalCodeUploads,
+  documents,
+  documentVersions,
+  eSignatureRequests,
+  documentAnnotations,
+  drugInteractionRules,
+  allergyAlerts,
+  dosageWarnings,
+  clinicalAlerts,
+  type Document,
+  type InsertDocument,
+  type DocumentVersion,
+  type InsertDocumentVersion,
+  type ESignatureRequest,
+  type InsertESignatureRequest,
+  type DocumentAnnotation,
+  type InsertDocumentAnnotation,
+  type DrugInteractionRule,
+  type InsertDrugInteractionRule,
+  type AllergyAlert,
+  type InsertAllergyAlert,
+  type DosageWarning,
+  type InsertDosageWarning,
+  type ClinicalAlert,
+  type InsertClinicalAlert,
   type Advertisement,
   type InsertAdvertisement,
   type AdView,
@@ -179,7 +203,19 @@ import {
   type HospitalBill,
   type InsertHospitalBill,
   type Department,
-  type InsertDepartment
+  type InsertDepartment,
+  type StaffShift,
+  type InsertStaffShift,
+  type TimeLog,
+  type InsertTimeLog,
+  type LeaveRequest,
+  type InsertLeaveRequest,
+  type ScheduleTemplate,
+  type InsertScheduleTemplate,
+  staffShifts,
+  timeLogs,
+  leaveRequests,
+  scheduleTemplates
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or, isNull, gt, ilike, gte, lte, lt, ne, inArray, asc, isNotNull } from "drizzle-orm";
@@ -228,6 +264,7 @@ export interface IStorage {
   getNextPatientNumber(tenantId: string): Promise<number>;
   createPatient(patient: InsertPatient): Promise<Patient>;
   updatePatient(id: string, updates: Partial<Patient>, tenantId: string): Promise<Patient | undefined>;
+  updatePatientStatus(id: string, isActive: boolean, tenantId: string): Promise<Patient | undefined>;
   getPatientsByTenant(tenantId: string, limit?: number, offset?: number): Promise<Patient[]>;
   searchPatients(tenantId: string, query: string): Promise<Patient[]>;
   getAllPatients(limit?: number, offset?: number): Promise<Patient[]>; // SECURITY: Deprecated - throws error
@@ -265,6 +302,7 @@ export interface IStorage {
   getLabOrdersForLaboratory(tenantId: string): Promise<any[]>;
   getLabOrdersByPatientMrn(patientMrn: string): Promise<any[]>;
   getPendingLabOrders(tenantId: string): Promise<LabOrder[]>;
+  cancelLabOrder(id: string, reason: string, tenantId: string): Promise<LabOrder | undefined>;
 
   // Pharmacy management
   getPharmacy(id: string, tenantId: string): Promise<Pharmacy | undefined>;
@@ -280,6 +318,8 @@ export interface IStorage {
   updateInsuranceClaim(id: string, updates: Partial<InsuranceClaim>, tenantId: string): Promise<InsuranceClaim | undefined>;
   getInsuranceClaimsByTenant(tenantId: string): Promise<InsuranceClaim[]>;
   getInsuranceClaimsByPatient(patientId: string, tenantId: string): Promise<InsuranceClaim[]>;
+  recordClaimPayment(id: string, paymentData: { amount: string; method: string; transactionId?: string; paymentDate: Date; notes?: string }, tenantId: string): Promise<InsuranceClaim | undefined>;
+  deleteClaim(id: string, tenantId: string): Promise<boolean>;
   
   // Insurance Provider management
   getInsuranceProviders(tenantId: string): Promise<InsuranceProvider[]>;
@@ -672,6 +712,50 @@ export interface IStorage {
   getHospitalDashboardStats(tenantId: string): Promise<any>;
   getBilling(tenantId: string): Promise<any>;
   getTenantById(id: string): Promise<Tenant | undefined>;
+
+  // Document Management System
+  createDocument(doc: InsertDocument): Promise<Document>;
+  getDocuments(tenantId: string, filters?: { type?: string; patientId?: string; status?: string; search?: string; limit?: number; offset?: number }): Promise<Document[]>;
+  getDocument(id: string, tenantId: string): Promise<Document | undefined>;
+  deleteDocument(id: string, tenantId: string): Promise<boolean>;
+  createDocumentAnnotation(annotation: InsertDocumentAnnotation): Promise<DocumentAnnotation>;
+  getDocumentAnnotations(documentId: string, tenantId: string): Promise<DocumentAnnotation[]>;
+  createSignatureRequest(request: InsertESignatureRequest): Promise<ESignatureRequest>;
+  signDocument(requestId: string, signatureData: any, userId: string, tenantId: string): Promise<ESignatureRequest | undefined>;
+  getPendingSignatureRequests(userId: string, tenantId: string): Promise<ESignatureRequest[]>;
+  createDocumentVersion(version: InsertDocumentVersion): Promise<DocumentVersion>;
+  getDocumentVersions(documentId: string, tenantId: string): Promise<DocumentVersion[]>;
+
+  // Clinical Decision Support System
+  createAllergyAlert(allergy: InsertAllergyAlert): Promise<AllergyAlert>;
+  getPatientAllergies(patientId: string, tenantId: string): Promise<AllergyAlert[]>;
+  updateAllergyAlert(id: string, updates: Partial<AllergyAlert>, tenantId: string): Promise<AllergyAlert | undefined>;
+  checkDrugInteraction(drug1: string, drug2: string): Promise<DrugInteractionRule | undefined>;
+  getDrugInteractions(drugName: string): Promise<DrugInteractionRule[]>;
+  getDosageWarning(drugName: string, condition?: string): Promise<DosageWarning | undefined>;
+  getDosageWarnings(drugName: string): Promise<DosageWarning[]>;
+  createClinicalAlert(alert: InsertClinicalAlert): Promise<ClinicalAlert>;
+  getPatientAlerts(patientId: string, tenantId: string, includeAcknowledged?: boolean): Promise<ClinicalAlert[]>;
+  acknowledgeClinicalAlert(alertId: string, userId: string, reason: string | null, tenantId: string): Promise<ClinicalAlert | undefined>;
+  
+  // Staff Scheduling and Time Tracking
+  createStaffShift(shift: InsertStaffShift): Promise<StaffShift>;
+  getStaffShifts(tenantId: string, filters?: { userId?: string; departmentId?: string | null; startDate?: Date; endDate?: Date; status?: string | string[] }): Promise<StaffShift[]>;
+  getStaffShift(id: number, tenantId: string): Promise<StaffShift | undefined>;
+  updateStaffShift(id: number, updates: Partial<StaffShift>, tenantId: string): Promise<StaffShift | undefined>;
+  deleteStaffShift(id: number, tenantId: string): Promise<boolean>;
+  createTimeLog(log: InsertTimeLog): Promise<TimeLog>;
+  getTimeLogs(tenantId: string, filters?: { userId?: string; startDate?: Date; endDate?: Date; status?: string | string[] }): Promise<TimeLog[]>;
+  getTimeLog(id: number, tenantId: string): Promise<TimeLog | undefined>;
+  updateTimeLog(id: number, updates: Partial<TimeLog>, tenantId: string): Promise<TimeLog | undefined>;
+  approveTimeLog(id: number, approvedBy: string, tenantId: string): Promise<TimeLog | undefined>;
+  createLeaveRequest(request: InsertLeaveRequest): Promise<LeaveRequest>;
+  getLeaveRequests(tenantId: string, filters?: { userId?: string; startDate?: Date; endDate?: Date; status?: string | string[] }): Promise<LeaveRequest[]>;
+  getLeaveRequest(id: number, tenantId: string): Promise<LeaveRequest | undefined>;
+  updateLeaveRequest(id: number, updates: Partial<LeaveRequest>, tenantId: string): Promise<LeaveRequest | undefined>;
+  createScheduleTemplate(template: InsertScheduleTemplate): Promise<ScheduleTemplate>;
+  getScheduleTemplates(tenantId: string): Promise<ScheduleTemplate[]>;
+  getScheduleTemplate(id: number, tenantId: string): Promise<ScheduleTemplate | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1003,6 +1087,14 @@ export class DatabaseStorage implements IStorage {
   async updatePatient(id: string, updates: Partial<Patient>, tenantId: string): Promise<Patient | undefined> {
     const [patient] = await db.update(patients)
       .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(patients.id, id), eq(patients.tenantId, tenantId)))
+      .returning();
+    return patient || undefined;
+  }
+
+  async updatePatientStatus(id: string, isActive: boolean, tenantId: string): Promise<Patient | undefined> {
+    const [patient] = await db.update(patients)
+      .set({ isActive, updatedAt: sql`CURRENT_TIMESTAMP` })
       .where(and(eq(patients.id, id), eq(patients.tenantId, tenantId)))
       .returning();
     return patient || undefined;
@@ -1927,6 +2019,19 @@ export class DatabaseStorage implements IStorage {
     return labOrder || undefined;
   }
 
+  async cancelLabOrder(id: string, reason: string, tenantId: string): Promise<LabOrder | undefined> {
+    const [labOrder] = await db.update(labOrders)
+      .set({ 
+        status: 'cancelled',
+        cancellationReason: reason,
+        cancelledAt: sql`CURRENT_TIMESTAMP`,
+        updatedAt: sql`CURRENT_TIMESTAMP`
+      })
+      .where(and(eq(labOrders.id, id), eq(labOrders.tenantId, tenantId)))
+      .returning();
+    return labOrder || undefined;
+  }
+
   async getLabOrdersByPatient(patientId: string, tenantId?: string): Promise<LabOrder[]> {
     // For patient portal, get all lab orders for this patient regardless of which tenant created them
     const whereConditions = tenantId ? 
@@ -2237,6 +2342,34 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(insuranceClaims.id, id), eq(insuranceClaims.tenantId, tenantId)))
       .returning();
     return claim || undefined;
+  }
+
+  async recordClaimPayment(id: string, paymentData: { amount: string; method: string; transactionId?: string; paymentDate: Date; notes?: string }, tenantId: string): Promise<InsuranceClaim | undefined> {
+    const [claim] = await db.update(insuranceClaims)
+      .set({ 
+        paidAmount: paymentData.amount,
+        paymentMethod: paymentData.method,
+        paymentTransactionId: paymentData.transactionId,
+        paymentDate: paymentData.paymentDate,
+        paymentNotes: paymentData.notes,
+        status: 'paid',
+        processedDate: sql`CURRENT_TIMESTAMP`,
+        updatedAt: sql`CURRENT_TIMESTAMP`
+      })
+      .where(and(eq(insuranceClaims.id, id), eq(insuranceClaims.tenantId, tenantId)))
+      .returning();
+    return claim || undefined;
+  }
+
+  async deleteClaim(id: string, tenantId: string): Promise<boolean> {
+    const result = await db.delete(insuranceClaims)
+      .where(and(
+        eq(insuranceClaims.id, id), 
+        eq(insuranceClaims.tenantId, tenantId),
+        eq(insuranceClaims.status, 'draft')
+      ))
+      .returning();
+    return result.length > 0;
   }
 
   async getInsuranceClaimsByTenant(tenantId: string): Promise<any[]> {
@@ -6426,6 +6559,516 @@ export class DatabaseStorage implements IStorage {
       console.error('Error getting tenant by ID:', error);
       return undefined;
     }
+  }
+
+  // Document Management System Methods
+  async createDocument(doc: InsertDocument): Promise<Document> {
+    const [document] = await db.insert(documents).values(doc).returning();
+    return document;
+  }
+
+  async getDocuments(
+    tenantId: string,
+    filters?: {
+      type?: string;
+      patientId?: string;
+      status?: string;
+      search?: string;
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<Document[]> {
+    let query = db.select().from(documents).where(
+      and(
+        eq(documents.tenantId, tenantId),
+        eq(documents.isDeleted, false)
+      )
+    );
+
+    const conditions: any[] = [
+      eq(documents.tenantId, tenantId),
+      eq(documents.isDeleted, false)
+    ];
+
+    if (filters?.type) {
+      conditions.push(eq(documents.documentType, filters.type as any));
+    }
+
+    if (filters?.patientId) {
+      conditions.push(eq(documents.patientId, filters.patientId));
+    }
+
+    if (filters?.status) {
+      conditions.push(eq(documents.status, filters.status as any));
+    }
+
+    if (filters?.search) {
+      conditions.push(
+        or(
+          ilike(documents.fileName, `%${filters.search}%`),
+          sql`${documents.metadata}::text ILIKE ${'%' + filters.search + '%'}`
+        )
+      );
+    }
+
+    const result = await db.select()
+      .from(documents)
+      .where(and(...conditions))
+      .orderBy(desc(documents.uploadedAt))
+      .limit(filters?.limit || 50)
+      .offset(filters?.offset || 0);
+
+    return result;
+  }
+
+  async getDocument(id: string, tenantId: string): Promise<Document | undefined> {
+    const [document] = await db.select()
+      .from(documents)
+      .where(
+        and(
+          eq(documents.id, id),
+          eq(documents.tenantId, tenantId),
+          eq(documents.isDeleted, false)
+        )
+      );
+    return document;
+  }
+
+  async deleteDocument(id: string, tenantId: string): Promise<boolean> {
+    const result = await db.update(documents)
+      .set({
+        isDeleted: true,
+        deletedAt: new Date()
+      })
+      .where(
+        and(
+          eq(documents.id, id),
+          eq(documents.tenantId, tenantId)
+        )
+      )
+      .returning();
+    return result.length > 0;
+  }
+
+  async createDocumentAnnotation(annotation: InsertDocumentAnnotation): Promise<DocumentAnnotation> {
+    const [result] = await db.insert(documentAnnotations).values(annotation).returning();
+    return result;
+  }
+
+  async getDocumentAnnotations(documentId: string, tenantId: string): Promise<DocumentAnnotation[]> {
+    // First verify the document belongs to the tenant
+    const document = await this.getDocument(documentId, tenantId);
+    if (!document) {
+      return [];
+    }
+
+    const result = await db.select()
+      .from(documentAnnotations)
+      .where(eq(documentAnnotations.documentId, documentId))
+      .orderBy(desc(documentAnnotations.createdAt));
+    return result;
+  }
+
+  async createSignatureRequest(request: InsertESignatureRequest): Promise<ESignatureRequest> {
+    const [result] = await db.insert(eSignatureRequests).values(request).returning();
+    return result;
+  }
+
+  async signDocument(
+    requestId: string,
+    signatureData: any,
+    userId: string,
+    tenantId: string
+  ): Promise<ESignatureRequest | undefined> {
+    const [result] = await db.update(eSignatureRequests)
+      .set({
+        status: 'signed',
+        signedAt: new Date(),
+        signatureData
+      })
+      .where(
+        and(
+          eq(eSignatureRequests.id, requestId),
+          eq(eSignatureRequests.tenantId, tenantId)
+        )
+      )
+      .returning();
+    return result;
+  }
+
+  async getPendingSignatureRequests(userId: string, tenantId: string): Promise<ESignatureRequest[]> {
+    const result = await db.select()
+      .from(eSignatureRequests)
+      .where(
+        and(
+          eq(eSignatureRequests.tenantId, tenantId),
+          or(
+            eq(eSignatureRequests.signerUserId, userId),
+            // For external signers, we'd match by email in a real implementation
+          ),
+          eq(eSignatureRequests.status, 'pending')
+        )
+      )
+      .orderBy(desc(eSignatureRequests.createdAt));
+    return result;
+  }
+
+  async createDocumentVersion(version: InsertDocumentVersion): Promise<DocumentVersion> {
+    const [result] = await db.insert(documentVersions).values(version).returning();
+    return result;
+  }
+
+  async getDocumentVersions(documentId: string, tenantId: string): Promise<DocumentVersion[]> {
+    // First verify the document belongs to the tenant
+    const document = await this.getDocument(documentId, tenantId);
+    if (!document) {
+      return [];
+    }
+
+    const result = await db.select()
+      .from(documentVersions)
+      .where(eq(documentVersions.documentId, documentId))
+      .orderBy(desc(documentVersions.version));
+    return result;
+  }
+
+  // Clinical Decision Support System Methods
+
+  async createAllergyAlert(allergy: InsertAllergyAlert): Promise<AllergyAlert> {
+    const [result] = await db.insert(allergyAlerts).values(allergy).returning();
+    return result;
+  }
+
+  async getPatientAllergies(patientId: string, tenantId: string): Promise<AllergyAlert[]> {
+    const result = await db.select()
+      .from(allergyAlerts)
+      .where(
+        and(
+          eq(allergyAlerts.patientId, patientId),
+          eq(allergyAlerts.tenantId, tenantId),
+          eq(allergyAlerts.isActive, true)
+        )
+      )
+      .orderBy(desc(allergyAlerts.severity), desc(allergyAlerts.createdAt));
+    return result;
+  }
+
+  async updateAllergyAlert(id: string, updates: Partial<AllergyAlert>, tenantId: string): Promise<AllergyAlert | undefined> {
+    const [result] = await db.update(allergyAlerts)
+      .set(updates)
+      .where(
+        and(
+          eq(allergyAlerts.id, id),
+          eq(allergyAlerts.tenantId, tenantId)
+        )
+      )
+      .returning();
+    return result;
+  }
+
+  async checkDrugInteraction(drug1: string, drug2: string): Promise<DrugInteractionRule | undefined> {
+    // Check both directions: drug1-drug2 and drug2-drug1
+    const [result] = await db.select()
+      .from(drugInteractionRules)
+      .where(
+        and(
+          or(
+            and(
+              ilike(drugInteractionRules.drugName1, `%${drug1}%`),
+              ilike(drugInteractionRules.drugName2, `%${drug2}%`)
+            ),
+            and(
+              ilike(drugInteractionRules.drugName1, `%${drug2}%`),
+              ilike(drugInteractionRules.drugName2, `%${drug1}%`)
+            )
+          ),
+          eq(drugInteractionRules.isActive, true)
+        )
+      )
+      .orderBy(desc(drugInteractionRules.severityLevel)) // Return most severe first
+      .limit(1);
+    return result;
+  }
+
+  async getDrugInteractions(drugName: string): Promise<DrugInteractionRule[]> {
+    const results = await db.select()
+      .from(drugInteractionRules)
+      .where(
+        and(
+          or(
+            ilike(drugInteractionRules.drugName1, `%${drugName}%`),
+            ilike(drugInteractionRules.drugName2, `%${drugName}%`)
+          ),
+          eq(drugInteractionRules.isActive, true)
+        )
+      )
+      .orderBy(desc(drugInteractionRules.severityLevel));
+    return results;
+  }
+
+  async getDosageWarning(drugName: string, condition?: string): Promise<DosageWarning | undefined> {
+    const conditions: any[] = [
+      ilike(dosageWarnings.drugName, `%${drugName}%`),
+      eq(dosageWarnings.isActive, true)
+    ];
+
+    if (condition) {
+      conditions.push(eq(dosageWarnings.patientCondition, condition));
+    }
+
+    const [result] = await db.select()
+      .from(dosageWarnings)
+      .where(and(...conditions))
+      .limit(1);
+    return result;
+  }
+
+  async getDosageWarnings(drugName: string): Promise<DosageWarning[]> {
+    const results = await db.select()
+      .from(dosageWarnings)
+      .where(
+        and(
+          ilike(dosageWarnings.drugName, `%${drugName}%`),
+          eq(dosageWarnings.isActive, true)
+        )
+      );
+    return results;
+  }
+
+  async createClinicalAlert(alert: InsertClinicalAlert): Promise<ClinicalAlert> {
+    const [result] = await db.insert(clinicalAlerts).values(alert).returning();
+    return result;
+  }
+
+  async getPatientAlerts(patientId: string, tenantId: string, includeAcknowledged = false): Promise<ClinicalAlert[]> {
+    const conditions: any[] = [
+      eq(clinicalAlerts.patientId, patientId),
+      eq(clinicalAlerts.tenantId, tenantId)
+    ];
+
+    if (!includeAcknowledged) {
+      conditions.push(isNull(clinicalAlerts.acknowledgedBy));
+    }
+
+    const results = await db.select()
+      .from(clinicalAlerts)
+      .where(and(...conditions))
+      .orderBy(desc(clinicalAlerts.severity), desc(clinicalAlerts.createdAt));
+    return results;
+  }
+
+  async acknowledgeClinicalAlert(alertId: string, userId: string, reason: string | null, tenantId: string): Promise<ClinicalAlert | undefined> {
+    const [result] = await db.update(clinicalAlerts)
+      .set({
+        acknowledgedBy: userId,
+        acknowledgedAt: new Date(),
+        dismissedReason: reason
+      })
+      .where(
+        and(
+          eq(clinicalAlerts.id, alertId),
+          eq(clinicalAlerts.tenantId, tenantId)
+        )
+      )
+      .returning();
+    return result;
+  }
+
+  // Staff Scheduling and Time Tracking Implementation
+  async createStaffShift(shift: InsertStaffShift): Promise<StaffShift> {
+    const [result] = await db.insert(staffShifts).values(shift).returning();
+    return result;
+  }
+
+  async getStaffShifts(tenantId: string, filters?: { userId?: string; departmentId?: string | null; startDate?: Date; endDate?: Date; status?: string | string[] }): Promise<StaffShift[]> {
+    const conditions: any[] = [eq(staffShifts.tenantId, tenantId)];
+
+    if (filters?.userId) {
+      conditions.push(eq(staffShifts.userId, filters.userId));
+    }
+
+    if (filters?.departmentId !== undefined) {
+      if (filters.departmentId === null) {
+        conditions.push(isNull(staffShifts.departmentId));
+      } else {
+        conditions.push(eq(staffShifts.departmentId, filters.departmentId));
+      }
+    }
+
+    if (filters?.startDate) {
+      conditions.push(gte(staffShifts.shiftDate, filters.startDate));
+    }
+
+    if (filters?.endDate) {
+      conditions.push(lte(staffShifts.shiftDate, filters.endDate));
+    }
+
+    if (filters?.status) {
+      if (Array.isArray(filters.status)) {
+        conditions.push(inArray(staffShifts.status, filters.status as any));
+      } else {
+        conditions.push(eq(staffShifts.status, filters.status));
+      }
+    }
+
+    const results = await db.select()
+      .from(staffShifts)
+      .where(and(...conditions))
+      .orderBy(staffShifts.shiftDate, staffShifts.startTime);
+    return results;
+  }
+
+  async getStaffShift(id: number, tenantId: string): Promise<StaffShift | undefined> {
+    const [result] = await db.select()
+      .from(staffShifts)
+      .where(and(eq(staffShifts.id, id), eq(staffShifts.tenantId, tenantId)));
+    return result;
+  }
+
+  async updateStaffShift(id: number, updates: Partial<StaffShift>, tenantId: string): Promise<StaffShift | undefined> {
+    const [result] = await db.update(staffShifts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(staffShifts.id, id), eq(staffShifts.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async deleteStaffShift(id: number, tenantId: string): Promise<boolean> {
+    const result = await db.delete(staffShifts)
+      .where(and(eq(staffShifts.id, id), eq(staffShifts.tenantId, tenantId)));
+    return true;
+  }
+
+  async createTimeLog(log: InsertTimeLog): Promise<TimeLog> {
+    const [result] = await db.insert(timeLogs).values(log).returning();
+    return result;
+  }
+
+  async getTimeLogs(tenantId: string, filters?: { userId?: string; startDate?: Date; endDate?: Date; status?: string | string[] }): Promise<TimeLog[]> {
+    const conditions: any[] = [eq(timeLogs.tenantId, tenantId)];
+
+    if (filters?.userId) {
+      conditions.push(eq(timeLogs.userId, filters.userId));
+    }
+
+    if (filters?.startDate) {
+      conditions.push(gte(timeLogs.clockInTime, filters.startDate));
+    }
+
+    if (filters?.endDate) {
+      conditions.push(lte(timeLogs.clockInTime, filters.endDate));
+    }
+
+    if (filters?.status) {
+      if (Array.isArray(filters.status)) {
+        conditions.push(inArray(timeLogs.status, filters.status as any));
+      } else {
+        conditions.push(eq(timeLogs.status, filters.status));
+      }
+    }
+
+    const results = await db.select()
+      .from(timeLogs)
+      .where(and(...conditions))
+      .orderBy(desc(timeLogs.clockInTime));
+    return results;
+  }
+
+  async getTimeLog(id: number, tenantId: string): Promise<TimeLog | undefined> {
+    const [result] = await db.select()
+      .from(timeLogs)
+      .where(and(eq(timeLogs.id, id), eq(timeLogs.tenantId, tenantId)));
+    return result;
+  }
+
+  async updateTimeLog(id: number, updates: Partial<TimeLog>, tenantId: string): Promise<TimeLog | undefined> {
+    const [result] = await db.update(timeLogs)
+      .set(updates)
+      .where(and(eq(timeLogs.id, id), eq(timeLogs.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async approveTimeLog(id: number, approvedBy: string, tenantId: string): Promise<TimeLog | undefined> {
+    const [result] = await db.update(timeLogs)
+      .set({
+        status: 'approved',
+        approvedBy,
+        approvedAt: new Date()
+      })
+      .where(and(eq(timeLogs.id, id), eq(timeLogs.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async createLeaveRequest(request: InsertLeaveRequest): Promise<LeaveRequest> {
+    const [result] = await db.insert(leaveRequests).values(request).returning();
+    return result;
+  }
+
+  async getLeaveRequests(tenantId: string, filters?: { userId?: string; startDate?: Date; endDate?: Date; status?: string | string[] }): Promise<LeaveRequest[]> {
+    const conditions: any[] = [eq(leaveRequests.tenantId, tenantId)];
+
+    if (filters?.userId) {
+      conditions.push(eq(leaveRequests.userId, filters.userId));
+    }
+
+    if (filters?.startDate) {
+      conditions.push(gte(leaveRequests.startDate, filters.startDate));
+    }
+
+    if (filters?.endDate) {
+      conditions.push(lte(leaveRequests.endDate, filters.endDate));
+    }
+
+    if (filters?.status) {
+      if (Array.isArray(filters.status)) {
+        conditions.push(inArray(leaveRequests.status, filters.status as any));
+      } else {
+        conditions.push(eq(leaveRequests.status, filters.status));
+      }
+    }
+
+    const results = await db.select()
+      .from(leaveRequests)
+      .where(and(...conditions))
+      .orderBy(desc(leaveRequests.requestedAt));
+    return results;
+  }
+
+  async getLeaveRequest(id: number, tenantId: string): Promise<LeaveRequest | undefined> {
+    const [result] = await db.select()
+      .from(leaveRequests)
+      .where(and(eq(leaveRequests.id, id), eq(leaveRequests.tenantId, tenantId)));
+    return result;
+  }
+
+  async updateLeaveRequest(id: number, updates: Partial<LeaveRequest>, tenantId: string): Promise<LeaveRequest | undefined> {
+    const [result] = await db.update(leaveRequests)
+      .set(updates)
+      .where(and(eq(leaveRequests.id, id), eq(leaveRequests.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async createScheduleTemplate(template: InsertScheduleTemplate): Promise<ScheduleTemplate> {
+    const [result] = await db.insert(scheduleTemplates).values(template).returning();
+    return result;
+  }
+
+  async getScheduleTemplates(tenantId: string): Promise<ScheduleTemplate[]> {
+    const results = await db.select()
+      .from(scheduleTemplates)
+      .where(eq(scheduleTemplates.tenantId, tenantId))
+      .orderBy(desc(scheduleTemplates.createdAt));
+    return results;
+  }
+
+  async getScheduleTemplate(id: number, tenantId: string): Promise<ScheduleTemplate | undefined> {
+    const [result] = await db.select()
+      .from(scheduleTemplates)
+      .where(and(eq(scheduleTemplates.id, id), eq(scheduleTemplates.tenantId, tenantId)));
+    return result;
   }
 }
 

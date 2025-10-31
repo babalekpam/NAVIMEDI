@@ -62,6 +62,14 @@ export default function Billing() {
   const [selectedClaim, setSelectedClaim] = useState<InsuranceClaim | null>(null);
   const [selectedLineItems, setSelectedLineItems] = useState<ClaimLineItem[]>([]);
   const [isAddServiceDialogOpen, setIsAddServiceDialogOpen] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [paymentFormData, setPaymentFormData] = useState({
+    amount: "",
+    paymentMethod: "",
+    transactionId: "",
+    paymentDate: new Date().toISOString().split('T')[0],
+    notes: "",
+  });
   const [formData, setFormData] = useState({
     patientId: "",
     patientInsuranceId: "",
@@ -371,6 +379,61 @@ export default function Billing() {
       toast({
         title: "Error",
         description: error.message || "Failed to submit insurance claim.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Record payment for insurance claims
+  const recordPaymentMutation = useMutation({
+    mutationFn: async ({ claimId, paymentData }: { claimId: string; paymentData: any }) => {
+      return await apiRequest(`/api/claims/${claimId}/payment`, {
+        method: 'POST',
+        body: paymentData,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Payment recorded successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/insurance-claims"] });
+      setIsPaymentDialogOpen(false);
+      setPaymentFormData({
+        amount: "",
+        paymentMethod: "",
+        transactionId: "",
+        paymentDate: new Date().toISOString().split('T')[0],
+        notes: "",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to record payment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete draft claim
+  const deleteClaimMutation = useMutation({
+    mutationFn: async (claimId: string) => {
+      return await apiRequest(`/api/claims/${claimId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Draft claim deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/insurance-claims"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete claim",
         variant: "destructive",
       });
     },
@@ -1052,10 +1115,20 @@ export default function Billing() {
                               </DropdownMenuItem>
                             )}
                             {claim.status === 'approved' && !claim.paidAmount && (
-                              <DropdownMenuItem onClick={() => {
-                                // TODO: Implement record payment functionality
-                                console.log('Record payment for claim:', claim.id);
-                              }}>
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  setSelectedClaim(claim);
+                                  setPaymentFormData({
+                                    amount: claim.totalAmount.toString(),
+                                    paymentMethod: "",
+                                    transactionId: "",
+                                    paymentDate: new Date().toISOString().split('T')[0],
+                                    notes: "",
+                                  });
+                                  setIsPaymentDialogOpen(true);
+                                }}
+                                data-testid={`button-record-payment-${claim.id}`}
+                              >
                                 <Calculator className="h-4 w-4 mr-2" />
                                 Record Payment
                               </DropdownMenuItem>
@@ -1093,12 +1166,12 @@ export default function Billing() {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
                                   onClick={() => {
-                                    if (confirm('Are you sure you want to delete this draft claim?')) {
-                                      // TODO: Implement delete claim functionality
-                                      console.log('Delete claim:', claim.id);
+                                    if (confirm('Are you sure you want to delete this draft claim? This action cannot be undone.')) {
+                                      deleteClaimMutation.mutate(claim.id);
                                     }
                                   }}
                                   className="text-red-600"
+                                  data-testid={`button-delete-draft-${claim.id}`}
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   Delete Draft
@@ -1205,6 +1278,136 @@ export default function Billing() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Record Payment Dialog */}
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Record Payment</DialogTitle>
+            <DialogDescription>
+              Record payment details for claim {selectedClaim?.claimNumber}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (!selectedClaim) return;
+            
+            const amount = parseFloat(paymentFormData.amount);
+            if (amount > selectedClaim.totalAmount) {
+              toast({
+                title: "Error",
+                description: "Payment amount cannot exceed total claim amount",
+                variant: "destructive",
+              });
+              return;
+            }
+            
+            recordPaymentMutation.mutate({
+              claimId: selectedClaim.id,
+              paymentData: {
+                amount: amount,
+                paymentMethod: paymentFormData.paymentMethod,
+                transactionId: paymentFormData.transactionId,
+                paymentDate: paymentFormData.paymentDate,
+                notes: paymentFormData.notes,
+              },
+            });
+          }} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount Paid</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={paymentFormData.amount}
+                onChange={(e) => setPaymentFormData({ ...paymentFormData, amount: e.target.value })}
+                required
+                data-testid="input-payment-amount"
+              />
+              {selectedClaim && (
+                <p className="text-sm text-gray-500">
+                  Total claim amount: ${parseFloat(selectedClaim.totalAmount).toFixed(2)}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="paymentMethod">Payment Method</Label>
+              <Select
+                value={paymentFormData.paymentMethod}
+                onValueChange={(value) => setPaymentFormData({ ...paymentFormData, paymentMethod: value })}
+              >
+                <SelectTrigger id="paymentMethod" data-testid="select-payment-method">
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="check">Check</SelectItem>
+                  <SelectItem value="eft">Electronic Funds Transfer</SelectItem>
+                  <SelectItem value="wire">Wire Transfer</SelectItem>
+                  <SelectItem value="credit_card">Credit Card</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="transactionId">Transaction ID</Label>
+              <Input
+                id="transactionId"
+                type="text"
+                placeholder="Enter transaction/reference ID"
+                value={paymentFormData.transactionId}
+                onChange={(e) => setPaymentFormData({ ...paymentFormData, transactionId: e.target.value })}
+                data-testid="input-transaction-id"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="paymentDate">Payment Date</Label>
+              <Input
+                id="paymentDate"
+                type="date"
+                value={paymentFormData.paymentDate}
+                onChange={(e) => setPaymentFormData({ ...paymentFormData, paymentDate: e.target.value })}
+                required
+                data-testid="input-payment-date"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Textarea
+                id="notes"
+                placeholder="Add any additional notes about this payment"
+                value={paymentFormData.notes}
+                onChange={(e) => setPaymentFormData({ ...paymentFormData, notes: e.target.value })}
+                rows={3}
+                data-testid="input-payment-notes"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsPaymentDialogOpen(false)}
+                data-testid="button-cancel-payment"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={recordPaymentMutation.isPending}
+                data-testid="button-submit-payment"
+              >
+                {recordPaymentMutation.isPending ? 'Recording...' : 'Record Payment'}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

@@ -69,6 +69,7 @@ import AuditLogs from "@/pages/audit-logs";
 import UserRoles from "@/pages/user-roles";
 import Reports from "@/pages/reports";
 import MedicalCommunications from "@/pages/medical-communications";
+import DocumentManagement from "@/pages/document-management";
 const LaboratoryRegistration = React.lazy(() => import("@/pages/laboratory-registration"));
 const LabSampleManagement = React.lazy(() => import("@/pages/lab-sample-management"));
 const LabTestManagement = React.lazy(() => import("@/pages/lab-test-management"));
@@ -150,6 +151,7 @@ import DoctorCalendar from "@/pages/doctor-calendar";
 const Achievements = React.lazy(() => import("@/pages/achievements"));
 import PatientAccessManagement from "@/pages/patient-access-management";
 const PrescriptionArchives = React.lazy(() => import("@/pages/prescription-archives"));
+import AllergyManagement from "@/pages/allergy-management";
 import LaboratoryDashboard from "@/pages/laboratory-dashboard";
 import PharmacyDashboard from "@/pages/pharmacy-dashboard";
 import PharmacyDashboardEnhanced from "@/pages/pharmacy-dashboard-enhanced";
@@ -160,9 +162,13 @@ const Checkout = React.lazy(() => import("@/pages/checkout"));
 const Subscribe = React.lazy(() => import("@/pages/subscribe"));
 const PaymentSuccess = React.lazy(() => import("@/pages/payment-success"));
 const SubscriptionSuccess = React.lazy(() => import("@/pages/subscription-success"));
+const BillingManagement = React.lazy(() => import("@/pages/billing-management"));
 const PaymentDemo = React.lazy(() => import("@/pages/payment-demo"));
 
-
+// Staff Scheduling and Time Tracking
+import StaffScheduling from "@/pages/staff-scheduling";
+import TimeTracking from "@/pages/time-tracking";
+import LeaveManagement from "@/pages/leave-management";
 
 
 function AppContent() {
@@ -268,6 +274,62 @@ function AppContent() {
           </ProtectedRoute>
         </Route>
 
+        <Route path="/allergy-management">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <AllergyManagement />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
+        <Route path="/staff-scheduling">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <StaffScheduling />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
+        <Route path="/time-tracking">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <TimeTracking />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
+        <Route path="/leave-management">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <LeaveManagement />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
         <Route path="/lab-orders">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
@@ -362,6 +424,19 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <Billing />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/document-management">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <DocumentManagement />
                 </main>
               </div>
             </div>
@@ -868,6 +943,11 @@ function AppContent() {
         <Route path="/subscribe" component={Subscribe} />
         <Route path="/payment-success" component={PaymentSuccess} />
         <Route path="/subscription-success" component={SubscriptionSuccess} />
+        <Route path="/billing-management">
+          <ProtectedRoute>
+            <BillingManagement />
+          </ProtectedRoute>
+        </Route>
         
         {/* Platform Footer Pages */}
         <Route path="/features" component={FeaturesPage} />
