@@ -12,6 +12,7 @@ import { ObjectPermission } from "./objectAcl";
 import { AnalyticsService } from "./analytics-service";
 import { analyticsQuerySchema, AnalyticsResponse, PlatformAnalytics } from "./analytics-types";
 import { registerAnalyticsRoutes } from "./analytics-routes";
+import * as analyticsCalculations from "./analytics-calculations";
 import { 
   invalidateAppointmentCache, 
   invalidatePrescriptionCache, 
@@ -5493,6 +5494,208 @@ to the patient and authorized healthcare providers.
       res.status(500).json({
         success: false,
         message: 'Failed to fetch admin analytics',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // ===================================
+  // ANALYTICS DASHBOARD ENDPOINTS (NEW)
+  // ===================================
+
+  // Analytics Dashboard Overview - Comprehensive metrics for the analytics dashboard
+  app.get('/api/analytics/overview', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.user!.tenantId!;
+      
+      // Calculate date ranges
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      
+      // Fetch all metrics in parallel for better performance
+      const [
+        monthlyRevenue,
+        activePatients,
+        todayAppointments,
+        bedOccupancy,
+        revenueTrend,
+        patientOutcomes,
+        averageWaitTime,
+        staffUtilization,
+        departmentPerformance,
+        prescriptionMetrics,
+        labOrderMetrics
+      ] = await Promise.all([
+        analyticsCalculations.calculateMonthlyRevenue(tenantId, startOfMonth, endOfMonth),
+        analyticsCalculations.calculateActivePatientsCount(tenantId),
+        analyticsCalculations.calculateTodayAppointments(tenantId),
+        analyticsCalculations.calculateBedOccupancyRate(tenantId),
+        analyticsCalculations.getRevenueTrend(tenantId, 6),
+        analyticsCalculations.getPatientOutcomesTrend(tenantId),
+        analyticsCalculations.calculateAverageWaitTime(tenantId),
+        analyticsCalculations.calculateStaffUtilization(tenantId),
+        analyticsCalculations.getDepartmentPerformance(tenantId),
+        analyticsCalculations.getPrescriptionMetrics(tenantId),
+        analyticsCalculations.getLabOrderMetrics(tenantId)
+      ]);
+      
+      const overview = {
+        kpis: {
+          monthlyRevenue,
+          activePatients,
+          todayAppointments,
+          bedOccupancy,
+        },
+        revenueTrend,
+        patientOutcomes,
+        operationalMetrics: {
+          averageWaitTime,
+          staffUtilization,
+        },
+        departmentPerformance,
+        prescriptionMetrics,
+        labOrderMetrics,
+      };
+      
+      res.json({
+        success: true,
+        data: overview,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          tenantId
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching analytics overview:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch analytics overview',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // Revenue Analytics - Detailed revenue metrics
+  app.get('/api/analytics/revenue', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.user!.tenantId!;
+      const { period } = req.query;
+      
+      // Calculate date range based on period (default to current month)
+      const now = new Date();
+      let startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      let endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      
+      if (period === 'year') {
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = new Date(now.getFullYear(), 11, 31);
+      } else if (period === 'quarter') {
+        const quarter = Math.floor(now.getMonth() / 3);
+        startDate = new Date(now.getFullYear(), quarter * 3, 1);
+        endDate = new Date(now.getFullYear(), quarter * 3 + 3, 0);
+      }
+      
+      const [total, byServiceType, byPayer, trend] = await Promise.all([
+        analyticsCalculations.calculateMonthlyRevenue(tenantId, startDate, endDate),
+        analyticsCalculations.calculateRevenueByServiceType(tenantId),
+        analyticsCalculations.calculateRevenueByPayer(tenantId),
+        analyticsCalculations.getRevenueTrend(tenantId, 6)
+      ]);
+      
+      const revenueData = {
+        total,
+        byServiceType,
+        byPayer,
+        trend
+      };
+      
+      res.json({
+        success: true,
+        data: revenueData,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          period: period || 'month',
+          tenantId
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching revenue analytics:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch revenue analytics',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // Patient Analytics - Patient-specific metrics
+  app.get('/api/analytics/patients', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.user!.tenantId!;
+      
+      const [totalActive, readmissionRate, satisfactionScore] = await Promise.all([
+        analyticsCalculations.calculateActivePatientsCount(tenantId),
+        analyticsCalculations.calculateReadmissionRate(tenantId),
+        analyticsCalculations.calculatePatientSatisfactionScore(tenantId)
+      ]);
+      
+      const patientData = {
+        totalActive,
+        readmissionRate,
+        satisfactionScore
+      };
+      
+      res.json({
+        success: true,
+        data: patientData,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          tenantId
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching patient analytics:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch patient analytics',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // Operational Analytics - Operational metrics
+  app.get('/api/analytics/operations', authenticateToken, setTenantContext, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.user!.tenantId!;
+      
+      const [todayAppointments, bedOccupancy, averageWaitTime, staffUtilization] = await Promise.all([
+        analyticsCalculations.calculateTodayAppointments(tenantId),
+        analyticsCalculations.calculateBedOccupancyRate(tenantId),
+        analyticsCalculations.calculateAverageWaitTime(tenantId),
+        analyticsCalculations.calculateStaffUtilization(tenantId)
+      ]);
+      
+      const operationsData = {
+        todayAppointments,
+        bedOccupancy,
+        averageWaitTime,
+        staffUtilization
+      };
+      
+      res.json({
+        success: true,
+        data: operationsData,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          tenantId
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching operational analytics:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch operational analytics',
         error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
       });
     }

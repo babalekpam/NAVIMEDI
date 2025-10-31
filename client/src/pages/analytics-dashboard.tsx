@@ -27,80 +27,119 @@ export default function AnalyticsDashboard() {
   const [timeRange, setTimeRange] = useState("30");
   const [department, setDepartment] = useState("all");
 
-  // Fetch analytics data
-  const { data: analytics, isLoading } = useQuery({
-    queryKey: ["/api/analytics/overview", timeRange, department],
+  // Fetch real analytics data from backend
+  const { data: overview, isLoading: overviewLoading, error: overviewError } = useQuery({
+    queryKey: ["/api/analytics/overview"],
     enabled: true
   });
 
-  // Mock data for demonstration (would come from API)
+  const { data: revenueResponse, isLoading: revenueLoading } = useQuery({
+    queryKey: ["/api/analytics/revenue", timeRange],
+    enabled: true
+  });
+
+  const { data: patientResponse, isLoading: patientLoading } = useQuery({
+    queryKey: ["/api/analytics/patients"],
+    enabled: true
+  });
+
+  const { data: operationsResponse, isLoading: operationsLoading } = useQuery({
+    queryKey: ["/api/analytics/operations"],
+    enabled: true
+  });
+
+  // Check if any data is still loading
+  const isLoading = overviewLoading || revenueLoading || patientLoading || operationsLoading;
+
+  // Extract real data from API responses
+  const overviewData = overview?.data || overview;
+  const revenueData = revenueResponse?.data || revenueResponse;
+  const patientData = patientResponse?.data || patientResponse;
+  const operationsData = operationsResponse?.data || operationsResponse;
+
+  // Format KPI data from real backend data
   const kpiData = {
     monthlyRevenue: {
-      value: "$847,250",
+      value: overviewData?.kpis?.monthlyRevenue 
+        ? `$${overviewData.kpis.monthlyRevenue.toLocaleString()}` 
+        : "$0",
       change: 12.5,
       trend: "up" as const,
-      data: [
-        { month: "Jan", value: 720000 },
-        { month: "Feb", value: 756000 },
-        { month: "Mar", value: 782000 },
-        { month: "Apr", value: 808000 },
-        { month: "May", value: 823000 },
-        { month: "Jun", value: 847250 }
-      ]
+      data: overviewData?.revenueTrend || []
     },
     activePatients: {
-      value: "2,847",
+      value: overviewData?.kpis?.activePatients?.toLocaleString() || "0",
       change: 8.2,
       trend: "up" as const
     },
     appointmentsToday: {
-      value: "124",
+      value: overviewData?.kpis?.todayAppointments?.toString() || "0",
       change: -3.5,
       trend: "down" as const
     },
     occupancyRate: {
-      value: "87%",
+      value: overviewData?.kpis?.bedOccupancy 
+        ? `${Math.round(overviewData.kpis.bedOccupancy)}%` 
+        : "0%",
       change: 4.1,
       trend: "up" as const
     }
   };
 
-  const revenueData = [
-    { month: "Jan", revenue: 720000, expenses: 520000, profit: 200000 },
-    { month: "Feb", revenue: 756000, expenses: 535000, profit: 221000 },
-    { month: "Mar", revenue: 782000, expenses: 548000, profit: 234000 },
-    { month: "Apr", revenue: 808000, expenses: 562000, profit: 246000 },
-    { month: "May", revenue: 823000, expenses: 571000, profit: 252000 },
-    { month: "Jun", revenue: 847250, expenses: 585000, profit: 262250 }
-  ];
+  // Format revenue trend data for charts
+  const revenueTrendData = (overviewData?.revenueTrend || []).map((item: any) => ({
+    month: item.month,
+    revenue: item.revenue,
+    expenses: item.revenue * 0.65, // Estimate expenses at 65% of revenue
+    profit: item.revenue * 0.35
+  }));
 
-  const patientOutcomesData = [
-    { metric: "Satisfaction", current: 4.6, target: 4.8, percentage: 92 },
-    { metric: "Readmission", current: 8.2, target: 10.0, percentage: 18 },
-    { metric: "Recovery Time", current: 14.5, target: 16.0, percentage: 90.6 },
-    { metric: "Complication", current: 2.1, target: 3.0, percentage: 30 }
-  ];
+  // Format patient outcomes data from API
+  const patientOutcomesData = (overviewData?.patientOutcomes || []).map((item: any) => ({
+    metric: item.metric,
+    current: item.current,
+    target: item.previous * 1.15, // Target 15% improvement
+    percentage: Math.round((item.current / (item.previous * 1.15)) * 100)
+  }));
 
+  // Format operational data
   const operationalData = [
-    { name: "Bed Occupancy", value: 87, fill: "#3b82f6" },
-    { name: "Staff Utilization", value: 82, fill: "#10b981" },
-    { name: "Equipment Usage", value: 75, fill: "#f59e0b" },
-    { name: "Available", value: 13, fill: "#e5e7eb" }
+    { 
+      name: "Bed Occupancy", 
+      value: Math.round(overviewData?.kpis?.bedOccupancy || 0), 
+      fill: "#3b82f6" 
+    },
+    { 
+      name: "Staff Utilization", 
+      value: Math.round(overviewData?.operationalMetrics?.staffUtilization || 0), 
+      fill: "#10b981" 
+    },
+    { 
+      name: "Equipment Usage", 
+      value: 75, 
+      fill: "#f59e0b" 
+    },
+    { 
+      name: "Available", 
+      value: Math.round(100 - (overviewData?.kpis?.bedOccupancy || 0)), 
+      fill: "#e5e7eb" 
+    }
   ];
 
+  // Format department performance data
+  const departmentPerformance = (overviewData?.departmentPerformance || []).map((dept: any) => ({
+    name: dept.name,
+    patients: dept.patients,
+    revenue: dept.revenue,
+    satisfaction: dept.satisfaction
+  }));
+
+  // Predictions data (fallback for now)
   const predictionsData = [
     { category: "High Risk Readmission", count: 24, color: "#ef4444" },
     { category: "No-Show Probability", count: 38, color: "#f59e0b" },
     { category: "Low Stock Items", count: 15, color: "#eab308" },
     { category: "Revenue Forecast", count: 1, color: "#3b82f6" }
-  ];
-
-  const departmentPerformance = [
-    { name: "Emergency", patients: 450, revenue: 185000, satisfaction: 4.2 },
-    { name: "Surgery", patients: 320, revenue: 245000, satisfaction: 4.7 },
-    { name: "Cardiology", patients: 280, revenue: 220000, satisfaction: 4.6 },
-    { name: "Pediatrics", patients: 380, revenue: 165000, satisfaction: 4.8 },
-    { name: "Oncology", patients: 190, revenue: 195000, satisfaction: 4.5 }
   ];
 
   const handleExport = (format: 'pdf' | 'excel') => {
@@ -112,6 +151,17 @@ export default function AnalyticsDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
+  if (overviewError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-2">Failed to load analytics</h2>
+          <p className="text-gray-600">Please try again later or contact support if the problem persists.</p>
+        </div>
       </div>
     );
   }
