@@ -77,6 +77,12 @@ const LabResultsReporting = React.lazy(() => import("@/pages/lab-results-reporti
 const LabAnalyticsDashboard = React.lazy(() => import("@/pages/lab-analytics-dashboard"));
 const LabInventoryManagement = React.lazy(() => import("@/pages/lab-inventory-management"));
 import HealthRecommendations from "@/pages/health-recommendations";
+import PatientEducation from "@/pages/patient-education";
+import HealthReminders from "@/pages/health-reminders";
+import HealthSurveys from "@/pages/health-surveys";
+import DeveloperPortal from "@/pages/developer-portal";
+import ApiDocumentation from "@/pages/api-documentation";
+import PWAInstallPrompt from "@/components/pwa-install-prompt";
 import PricingPage from "@/pages/pricing";
 import ServicePricingManagement from "@/pages/service-pricing-management";
 import WhiteLabelSettingsPage from "@/pages/white-label-settings";
@@ -158,6 +164,7 @@ import PharmacyDashboardEnhanced from "@/pages/pharmacy-dashboard-enhanced";
 const PharmacyInventory = React.lazy(() => import("@/pages/pharmacy-inventory"));
 const PharmacyCustomers = React.lazy(() => import("@/pages/pharmacy-customers"));
 const PharmacyBilling = React.lazy(() => import("@/pages/pharmacy-billing"));
+const InventoryAudits = React.lazy(() => import("@/pages/inventory-audits"));
 const Checkout = React.lazy(() => import("@/pages/checkout"));
 const Subscribe = React.lazy(() => import("@/pages/subscribe"));
 const PaymentSuccess = React.lazy(() => import("@/pages/payment-success"));
@@ -588,6 +595,77 @@ function AppContent() {
             </div>
           </ProtectedRoute>
         </Route>
+
+        <Route path="/patient-education">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PatientEducation />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
+        <Route path="/health-reminders">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <HealthReminders />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
+        <Route path="/health-surveys">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <HealthSurveys />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
+        <Route path="/developer-portal">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <DeveloperPortal />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
+        <Route path="/api-documentation">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <ApiDocumentation />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
         <Route path="/laboratory-dashboard">
           <ProtectedRoute>
             <div className="flex flex-col h-screen bg-gray-50">
@@ -680,6 +758,20 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <PharmacyBilling />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
+        <Route path="/inventory-audits">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <InventoryAudits />
                 </main>
               </div>
             </div>
@@ -1180,6 +1272,7 @@ function App() {
             <TenantProvider>
               <Toaster />
               <Router />
+              <PWAInstallPrompt />
             </TenantProvider>
           </TranslationProvider>
         </AuthProvider>

@@ -402,6 +402,26 @@ export const patientConditionEnum = pgEnum("patient_condition", [
   "other"
 ]);
 
+// Inventory Management Enums
+export const inventoryBatchStatusEnum = pgEnum("inventory_batch_status", [
+  "active",
+  "expired",
+  "recalled"
+]);
+
+export const inventoryAuditStatusEnum = pgEnum("inventory_audit_status", [
+  "pending",
+  "completed",
+  "discrepancy"
+]);
+
+export const inventoryAlertTypeEnum = pgEnum("inventory_alert_type", [
+  "low_stock",
+  "expiring_soon",
+  "expired",
+  "recall"
+]);
+
 // Staff Scheduling and Time Tracking Enums
 export const shiftTypeEnum = pgEnum("shift_type", [
   "morning",
@@ -440,6 +460,132 @@ export const leaveStatusEnum = pgEnum("leave_status", [
   "pending",
   "approved",
   "denied"
+]);
+
+// Integration Framework Enums (Phase 7-11)
+export const integrationTypeEnum = pgEnum("integration_type", [
+  "insurance",
+  "eprescribing",
+  "ehr",
+  "iot",
+  "quality"
+]);
+
+export const eligibilityStatusEnum = pgEnum("eligibility_status", [
+  "active",
+  "inactive",
+  "pending"
+]);
+
+export const ePrescriptionStatusEnum = pgEnum("eprescription_status", [
+  "pending",
+  "sent",
+  "accepted",
+  "rejected",
+  "error"
+]);
+
+export const ePrescriptionTransactionTypeEnum = pgEnum("eprescription_transaction_type", [
+  "new_rx",
+  "refill",
+  "cancel",
+  "change"
+]);
+
+export const hl7DirectionEnum = pgEnum("hl7_direction", [
+  "inbound",
+  "outbound"
+]);
+
+export const hl7MessageTypeEnum = pgEnum("hl7_message_type", [
+  "ADT",
+  "ORM",
+  "ORU",
+  "DFT"
+]);
+
+export const deviceTypeEnum = pgEnum("device_type", [
+  "blood_pressure",
+  "glucose",
+  "heart_rate",
+  "pulse_ox",
+  "weight",
+  "temperature"
+]);
+
+export const qualityMetricTypeEnum = pgEnum("quality_metric_type", [
+  "HEDIS",
+  "MIPS",
+  "CMS"
+]);
+
+// Patient Engagement System Enums (Phase 12)
+export const educationCategoryEnum = pgEnum("education_category", [
+  "medication",
+  "condition",
+  "procedure",
+  "wellness",
+  "nutrition",
+  "exercise"
+]);
+
+export const difficultyLevelEnum = pgEnum("difficulty_level", [
+  "beginner",
+  "intermediate",
+  "advanced"
+]);
+
+export const reminderTypeEnum = pgEnum("reminder_type", [
+  "medication",
+  "appointment",
+  "lab",
+  "screening",
+  "follow_up"
+]);
+
+export const reminderStatusEnum = pgEnum("reminder_status", [
+  "pending",
+  "sent",
+  "acknowledged",
+  "expired"
+]);
+
+export const reminderFrequencyEnum = pgEnum("reminder_frequency", [
+  "once",
+  "daily",
+  "weekly",
+  "monthly"
+]);
+
+// API Documentation System Enums (Phase 16)
+export const apiPermissionEnum = pgEnum("api_permission", [
+  "read_patients",
+  "write_patients",
+  "read_appointments",
+  "write_appointments",
+  "read_prescriptions",
+  "write_prescriptions",
+  "read_lab_orders",
+  "write_lab_orders",
+  "read_insurance_claims",
+  "write_insurance_claims",
+  "read_billing",
+  "write_billing",
+  "read_documents",
+  "write_documents",
+  "read_clinical_alerts",
+  "write_clinical_alerts",
+  "read_inventory",
+  "write_inventory",
+  "read_education",
+  "write_education",
+  "read_reminders",
+  "write_reminders",
+  "read_surveys",
+  "write_surveys",
+  "read_health_recommendations",
+  "write_health_recommendations",
+  "admin"
 ]);
 
 // Currency Configuration Table
@@ -981,6 +1127,372 @@ export const scheduleTemplates = pgTable("schedule_templates", {
 }, (table) => ({
   tenantIdx: index("schedule_templates_tenant_idx").on(table.tenantId),
   isActiveIdx: index("schedule_templates_is_active_idx").on(table.isActive)
+}));
+
+// Pharmacy Inventory Management System
+export const inventoryItems = pgTable("inventory_items", {
+  id: serial("id").primaryKey(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  medicationName: text("medication_name").notNull(),
+  genericName: text("generic_name"),
+  strength: text("strength"),
+  form: text("form"), // tablet, capsule, liquid, etc.
+  barcodeNumber: varchar("barcode_number", { length: 255 }),
+  lotNumber: varchar("lot_number", { length: 255 }),
+  expirationDate: timestamp("expiration_date"),
+  currentStock: integer("current_stock").default(0).notNull(),
+  minStockLevel: integer("min_stock_level").default(0),
+  maxStockLevel: integer("max_stock_level"),
+  reorderPoint: integer("reorder_point"),
+  reorderQuantity: integer("reorder_quantity"),
+  unitCost: decimal("unit_cost", { precision: 10, scale: 2 }),
+  supplierId: varchar("supplier_id", { length: 255 }),
+  storageLocation: varchar("storage_location", { length: 255 }),
+  temperatureControlled: boolean("temperature_controlled").default(false),
+  temperatureRange: varchar("temperature_range", { length: 50 }),
+  lastRestocked: timestamp("last_restocked"),
+  lastAudit: timestamp("last_audit"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  tenantIdx: index("inventory_items_tenant_idx").on(table.tenantId),
+  barcodeIdx: index("inventory_items_barcode_idx").on(table.barcodeNumber),
+  expirationIdx: index("inventory_items_expiration_idx").on(table.expirationDate),
+  stockLevelIdx: index("inventory_items_stock_level_idx").on(table.currentStock)
+}));
+
+export const inventoryBatches = pgTable("inventory_batches", {
+  id: serial("id").primaryKey(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  inventoryItemId: integer("inventory_item_id").references(() => inventoryItems.id).notNull(),
+  batchNumber: text("batch_number").notNull(),
+  lotNumber: text("lot_number"),
+  expirationDate: timestamp("expiration_date"),
+  quantity: integer("quantity").notNull(),
+  receivedDate: timestamp("received_date").default(sql`CURRENT_TIMESTAMP`),
+  cost: decimal("cost", { precision: 10, scale: 2 }),
+  supplierName: text("supplier_name"),
+  status: inventoryBatchStatusEnum("status").default("active").notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  tenantIdx: index("inventory_batches_tenant_idx").on(table.tenantId),
+  itemIdx: index("inventory_batches_item_idx").on(table.inventoryItemId),
+  expirationIdx: index("inventory_batches_expiration_idx").on(table.expirationDate),
+  statusIdx: index("inventory_batches_status_idx").on(table.status)
+}));
+
+export const inventoryAudits = pgTable("inventory_audits", {
+  id: serial("id").primaryKey(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  inventoryItemId: integer("inventory_item_id").references(() => inventoryItems.id),
+  auditDate: timestamp("audit_date").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  expectedQuantity: integer("expected_quantity"),
+  actualQuantity: integer("actual_quantity"),
+  variance: integer("variance"),
+  auditedBy: uuid("audited_by").references(() => users.id).notNull(),
+  notes: text("notes"),
+  status: inventoryAuditStatusEnum("status").default("pending").notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  completedAt: timestamp("completed_at")
+}, (table) => ({
+  tenantIdx: index("inventory_audits_tenant_idx").on(table.tenantId),
+  itemIdx: index("inventory_audits_item_idx").on(table.inventoryItemId),
+  statusIdx: index("inventory_audits_status_idx").on(table.status),
+  auditDateIdx: index("inventory_audits_audit_date_idx").on(table.auditDate)
+}));
+
+export const inventoryAlerts = pgTable("inventory_alerts", {
+  id: serial("id").primaryKey(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  inventoryItemId: integer("inventory_item_id").references(() => inventoryItems.id),
+  alertType: inventoryAlertTypeEnum("alert_type").notNull(),
+  severity: priorityLevelEnum("severity").default("normal").notNull(),
+  message: text("message").notNull(),
+  triggeredAt: timestamp("triggered_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  acknowledgedBy: uuid("acknowledged_by").references(() => users.id),
+  acknowledgedAt: timestamp("acknowledged_at"),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  tenantIdx: index("inventory_alerts_tenant_idx").on(table.tenantId),
+  itemIdx: index("inventory_alerts_item_idx").on(table.inventoryItemId),
+  typeIdx: index("inventory_alerts_type_idx").on(table.alertType),
+  triggeredIdx: index("inventory_alerts_triggered_idx").on(table.triggeredAt)
+}));
+
+export const autoReorderRules = pgTable("auto_reorder_rules", {
+  id: serial("id").primaryKey(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  inventoryItemId: integer("inventory_item_id").references(() => inventoryItems.id).notNull(),
+  enabled: boolean("enabled").default(true).notNull(),
+  minQuantity: integer("min_quantity").notNull(),
+  reorderQuantity: integer("reorder_quantity").notNull(),
+  supplierId: varchar("supplier_id", { length: 255 }),
+  lastTriggered: timestamp("last_triggered"),
+  orderCount: integer("order_count").default(0),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  tenantIdx: index("auto_reorder_rules_tenant_idx").on(table.tenantId),
+  itemIdx: index("auto_reorder_rules_item_idx").on(table.inventoryItemId),
+  enabledIdx: index("auto_reorder_rules_enabled_idx").on(table.enabled)
+}));
+
+// ============================================================================
+// PHASE 7-11: INTEGRATION FRAMEWORKS
+// ============================================================================
+
+// Integration Partners - External systems connected to the platform
+export const integrationPartners = pgTable("integration_partners", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(), // Partner name (e.g., "Change Healthcare", "SureScripts")
+  type: integrationTypeEnum("type").notNull(), // insurance/eprescribing/ehr/iot/quality
+  apiUrl: text("api_url"), // API endpoint URL
+  authType: text("auth_type"), // oauth, api_key, basic, etc.
+  status: text("status").default("active").notNull(), // active/inactive
+  credentials: jsonb("credentials"), // Encrypted API credentials/keys
+  lastSync: timestamp("last_sync"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  typeIdx: index("integration_partners_type_idx").on(table.type),
+  statusIdx: index("integration_partners_status_idx").on(table.status)
+}));
+
+// Insurance Eligibility Checks - Track eligibility verification transactions
+export const insuranceEligibilityChecks = pgTable("insurance_eligibility_checks", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  insuranceProviderId: uuid("insurance_provider_id").references(() => insuranceProviders.id),
+  checkDate: timestamp("check_date").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  eligibilityStatus: eligibilityStatusEnum("eligibility_status").default("pending").notNull(),
+  coverageDetails: jsonb("coverage_details"), // Full coverage information
+  copayAmount: decimal("copay_amount", { precision: 10, scale: 2 }),
+  deductibleMet: decimal("deductible_met", { precision: 10, scale: 2 }),
+  outOfPocketMax: decimal("out_of_pocket_max", { precision: 10, scale: 2 }),
+  responseData: jsonb("response_data"), // Raw API response
+  checkedBy: uuid("checked_by").references(() => users.id).notNull()
+}, (table) => ({
+  tenantIdx: index("insurance_eligibility_checks_tenant_idx").on(table.tenantId),
+  patientIdx: index("insurance_eligibility_checks_patient_idx").on(table.patientId),
+  checkDateIdx: index("insurance_eligibility_checks_check_date_idx").on(table.checkDate)
+}));
+
+// E-Prescription Transactions - NCPDP prescription routing
+export const ePrescriptionTransactions = pgTable("eprescription_transactions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  prescriptionId: uuid("prescription_id").references(() => prescriptions.id).notNull(),
+  pharmacyNCPDP: text("pharmacy_ncpdp").notNull(), // NCPDP pharmacy identifier
+  transactionType: ePrescriptionTransactionTypeEnum("transaction_type").notNull(),
+  status: ePrescriptionStatusEnum("status").default("pending").notNull(),
+  sentAt: timestamp("sent_at"),
+  responseAt: timestamp("response_at"),
+  responseData: jsonb("response_data"), // NCPDP response
+  errorMessage: text("error_message")
+}, (table) => ({
+  tenantIdx: index("eprescription_transactions_tenant_idx").on(table.tenantId),
+  prescriptionIdx: index("eprescription_transactions_prescription_idx").on(table.prescriptionId),
+  statusIdx: index("eprescription_transactions_status_idx").on(table.status),
+  sentAtIdx: index("eprescription_transactions_sent_at_idx").on(table.sentAt)
+}));
+
+// HL7 Messages - Interoperability message log
+export const hl7Messages = pgTable("hl7_messages", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  direction: hl7DirectionEnum("direction").notNull(), // inbound/outbound
+  messageType: hl7MessageTypeEnum("message_type").notNull(), // ADT/ORM/ORU/DFT
+  messageData: text("message_data").notNull(), // Raw HL7 message
+  processedAt: timestamp("processed_at"),
+  status: text("status").default("pending").notNull(), // pending/processed/error
+  errorMessage: text("error_message")
+}, (table) => ({
+  tenantIdx: index("hl7_messages_tenant_idx").on(table.tenantId),
+  directionIdx: index("hl7_messages_direction_idx").on(table.direction),
+  messageTypeIdx: index("hl7_messages_message_type_idx").on(table.messageType),
+  statusIdx: index("hl7_messages_status_idx").on(table.status),
+  processedAtIdx: index("hl7_messages_processed_at_idx").on(table.processedAt)
+}));
+
+// Device Readings - IoT medical device data
+export const deviceReadings = pgTable("device_readings", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  deviceId: text("device_id").notNull(), // Unique device identifier
+  deviceType: deviceTypeEnum("device_type").notNull(),
+  readingValue: jsonb("reading_value").notNull(), // Device-specific reading data
+  unit: text("unit"), // mmHg, mg/dL, bpm, etc.
+  timestamp: timestamp("timestamp").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  source: text("source"), // Device manufacturer/platform
+  syncedAt: timestamp("synced_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  tenantIdx: index("device_readings_tenant_idx").on(table.tenantId),
+  patientIdx: index("device_readings_patient_idx").on(table.patientId),
+  deviceTypeIdx: index("device_readings_device_type_idx").on(table.deviceType),
+  timestampIdx: index("device_readings_timestamp_idx").on(table.timestamp)
+}));
+
+// Quality Metrics - HEDIS/MIPS/CMS quality measures
+export const qualityMetrics = pgTable("quality_metrics", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  metricName: text("metric_name").notNull(),
+  metricType: qualityMetricTypeEnum("metric_type").notNull(), // HEDIS/MIPS/CMS
+  category: text("category"), // Prevention, Chronic Care, etc.
+  measurementPeriod: text("measurement_period").notNull(), // e.g., "2025 Q1"
+  numerator: integer("numerator").notNull(), // Patients meeting criteria
+  denominator: integer("denominator").notNull(), // Total eligible patients
+  percentage: decimal("percentage", { precision: 5, scale: 2 }), // Performance percentage
+  target: decimal("target", { precision: 5, scale: 2 }), // Target percentage
+  status: text("status").default("calculated"), // calculated/submitted/approved
+  calculatedAt: timestamp("calculated_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  tenantIdx: index("quality_metrics_tenant_idx").on(table.tenantId),
+  metricTypeIdx: index("quality_metrics_metric_type_idx").on(table.metricType),
+  periodIdx: index("quality_metrics_period_idx").on(table.measurementPeriod),
+  calculatedAtIdx: index("quality_metrics_calculated_at_idx").on(table.calculatedAt)
+}));
+
+// Patient Engagement Tables (Phase 12)
+
+// Education Content - Health education library for patients
+export const educationContent = pgTable("education_content", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  title: text("title").notNull(),
+  category: educationCategoryEnum("category").notNull(),
+  content: text("content").notNull(),
+  mediaUrl: text("media_url"),
+  authorId: text("author_id").references(() => users.id).notNull(),
+  publishedAt: timestamp("published_at").default(sql`CURRENT_TIMESTAMP`),
+  viewCount: integer("view_count").default(0),
+  difficultyLevel: difficultyLevelEnum("difficulty_level").notNull().default("beginner"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  tenantIdx: index("education_content_tenant_idx").on(table.tenantId),
+  categoryIdx: index("education_content_category_idx").on(table.category),
+  authorIdx: index("education_content_author_idx").on(table.authorId),
+  publishedAtIdx: index("education_content_published_at_idx").on(table.publishedAt)
+}));
+
+// Patient Reminders - Medication, appointment, and health reminders
+export const patientReminders = pgTable("patient_reminders", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  reminderType: reminderTypeEnum("reminder_type").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  scheduledFor: timestamp("scheduled_for").notNull(),
+  sentAt: timestamp("sent_at"),
+  status: reminderStatusEnum("status").default("pending").notNull(),
+  frequency: reminderFrequencyEnum("frequency").default("once").notNull(),
+  endDate: timestamp("end_date"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  tenantIdx: index("patient_reminders_tenant_idx").on(table.tenantId),
+  patientIdx: index("patient_reminders_patient_idx").on(table.patientId),
+  scheduledForIdx: index("patient_reminders_scheduled_for_idx").on(table.scheduledFor),
+  statusIdx: index("patient_reminders_status_idx").on(table.status)
+}));
+
+// Health Surveys - Patient health surveys and questionnaires
+export const healthSurveys = pgTable("health_surveys", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  surveyName: text("survey_name").notNull(),
+  description: text("description"),
+  questions: jsonb("questions").notNull(), // Array of question objects
+  targetAudience: text("target_audience"), // All patients, specific conditions, etc.
+  isActive: boolean("is_active").default(true),
+  createdBy: text("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  tenantIdx: index("health_surveys_tenant_idx").on(table.tenantId),
+  createdByIdx: index("health_surveys_created_by_idx").on(table.createdBy),
+  isActiveIdx: index("health_surveys_is_active_idx").on(table.isActive)
+}));
+
+// Survey Responses - Patient responses to health surveys
+export const surveyResponses = pgTable("survey_responses", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  surveyId: uuid("survey_id").references(() => healthSurveys.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  responses: jsonb("responses").notNull(), // Array of answer objects
+  submittedAt: timestamp("submitted_at").default(sql`CURRENT_TIMESTAMP`),
+  score: integer("score")
+}, (table) => ({
+  tenantIdx: index("survey_responses_tenant_idx").on(table.tenantId),
+  surveyIdx: index("survey_responses_survey_idx").on(table.surveyId),
+  patientIdx: index("survey_responses_patient_idx").on(table.patientId),
+  submittedAtIdx: index("survey_responses_submitted_at_idx").on(table.submittedAt)
+}));
+
+// API Documentation System Tables (Phase 16)
+
+// API Keys - For programmatic access to the platform
+export const apiKeys = pgTable("api_keys", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  keyName: varchar("key_name", { length: 255 }).notNull(),
+  keyHash: text("key_hash").notNull(), // bcrypt hashed API key
+  permissions: jsonb("permissions").notNull().default('[]'), // Array of apiPermissionEnum values
+  isActive: boolean("is_active").default(true).notNull(),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  lastUsedAt: timestamp("last_used_at"),
+  expiresAt: timestamp("expires_at"),
+  rateLimit: integer("rate_limit").default(1000).notNull() // Requests per hour
+}, (table) => ({
+  tenantIdx: index("api_keys_tenant_idx").on(table.tenantId),
+  keyHashIdx: index("api_keys_key_hash_idx").on(table.keyHash),
+  isActiveIdx: index("api_keys_is_active_idx").on(table.isActive),
+  expiresAtIdx: index("api_keys_expires_at_idx").on(table.expiresAt)
+}));
+
+// API Usage Logs - Track all API requests for analytics and billing
+export const apiUsageLogs = pgTable("api_usage_logs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  apiKeyId: uuid("api_key_id").references(() => apiKeys.id).notNull(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  endpoint: varchar("endpoint", { length: 500 }).notNull(),
+  method: varchar("method", { length: 10 }).notNull(), // GET, POST, PUT, DELETE, etc.
+  statusCode: integer("status_code").notNull(),
+  responseTime: integer("response_time"), // Response time in milliseconds
+  timestamp: timestamp("timestamp").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  ipAddress: varchar("ip_address", { length: 45 }), // IPv6 compatible
+  userAgent: text("user_agent"),
+  errorMessage: text("error_message") // If request failed
+}, (table) => ({
+  apiKeyIdx: index("api_usage_logs_api_key_idx").on(table.apiKeyId),
+  tenantIdx: index("api_usage_logs_tenant_idx").on(table.tenantId),
+  timestampIdx: index("api_usage_logs_timestamp_idx").on(table.timestamp),
+  endpointIdx: index("api_usage_logs_endpoint_idx").on(table.endpoint)
+}));
+
+// Webhook Endpoints - Event-driven notifications for integrations
+export const webhookEndpoints = pgTable("webhook_endpoints", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  url: text("url").notNull(),
+  events: jsonb("events").notNull().default('[]'), // Array of event types to listen for
+  secret: text("secret").notNull(), // For webhook signature verification
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  lastTriggered: timestamp("last_triggered"),
+  failureCount: integer("failure_count").default(0).notNull(),
+  description: text("description")
+}, (table) => ({
+  tenantIdx: index("webhook_endpoints_tenant_idx").on(table.tenantId),
+  isActiveIdx: index("webhook_endpoints_is_active_idx").on(table.isActive)
 }));
 
 // Insurance Providers
@@ -4420,3 +4932,161 @@ export type InsertLeaveRequest = z.infer<typeof insertLeaveRequestSchema>;
 
 export type ScheduleTemplate = typeof scheduleTemplates.$inferSelect;
 export type InsertScheduleTemplate = z.infer<typeof insertScheduleTemplateSchema>;
+
+// Inventory Management Insert Schemas
+export const insertInventoryItemSchema = createInsertSchema(inventoryItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertInventoryBatchSchema = createInsertSchema(inventoryBatches).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertInventoryAuditSchema = createInsertSchema(inventoryAudits).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true
+});
+
+export const insertInventoryAlertSchema = createInsertSchema(inventoryAlerts).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertAutoReorderRuleSchema = createInsertSchema(autoReorderRules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+// Inventory Management Types
+export type InventoryItem = typeof inventoryItems.$inferSelect;
+export type InsertInventoryItem = z.infer<typeof insertInventoryItemSchema>;
+
+export type InventoryBatch = typeof inventoryBatches.$inferSelect;
+export type InsertInventoryBatch = z.infer<typeof insertInventoryBatchSchema>;
+
+export type InventoryAudit = typeof inventoryAudits.$inferSelect;
+export type InsertInventoryAudit = z.infer<typeof insertInventoryAuditSchema>;
+
+export type InventoryAlert = typeof inventoryAlerts.$inferSelect;
+export type InsertInventoryAlert = z.infer<typeof insertInventoryAlertSchema>;
+
+export type AutoReorderRule = typeof autoReorderRules.$inferSelect;
+export type InsertAutoReorderRule = z.infer<typeof insertAutoReorderRuleSchema>;
+
+// Integration Framework Insert Schemas (Phase 7-11)
+export const insertIntegrationPartnerSchema = createInsertSchema(integrationPartners).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertInsuranceEligibilityCheckSchema = createInsertSchema(insuranceEligibilityChecks).omit({
+  id: true
+});
+
+export const insertEPrescriptionTransactionSchema = createInsertSchema(ePrescriptionTransactions).omit({
+  id: true
+});
+
+export const insertHl7MessageSchema = createInsertSchema(hl7Messages).omit({
+  id: true
+});
+
+export const insertDeviceReadingSchema = createInsertSchema(deviceReadings).omit({
+  id: true
+});
+
+export const insertQualityMetricSchema = createInsertSchema(qualityMetrics).omit({
+  id: true
+});
+
+// Integration Framework Types
+export type IntegrationPartner = typeof integrationPartners.$inferSelect;
+export type InsertIntegrationPartner = z.infer<typeof insertIntegrationPartnerSchema>;
+
+export type InsuranceEligibilityCheck = typeof insuranceEligibilityChecks.$inferSelect;
+export type InsertInsuranceEligibilityCheck = z.infer<typeof insertInsuranceEligibilityCheckSchema>;
+
+export type EPrescriptionTransaction = typeof ePrescriptionTransactions.$inferSelect;
+export type InsertEPrescriptionTransaction = z.infer<typeof insertEPrescriptionTransactionSchema>;
+
+export type Hl7Message = typeof hl7Messages.$inferSelect;
+export type InsertHl7Message = z.infer<typeof insertHl7MessageSchema>;
+
+export type DeviceReading = typeof deviceReadings.$inferSelect;
+export type InsertDeviceReading = z.infer<typeof insertDeviceReadingSchema>;
+
+export type QualityMetric = typeof qualityMetrics.$inferSelect;
+export type InsertQualityMetric = z.infer<typeof insertQualityMetricSchema>;
+
+// Patient Engagement Insert Schemas (Phase 12)
+export const insertEducationContentSchema = createInsertSchema(educationContent).omit({
+  id: true,
+  viewCount: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertPatientReminderSchema = createInsertSchema(patientReminders).omit({
+  id: true,
+  sentAt: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertHealthSurveySchema = createInsertSchema(healthSurveys).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertSurveyResponseSchema = createInsertSchema(surveyResponses).omit({
+  id: true,
+  submittedAt: true
+});
+
+// Patient Engagement Types
+export type EducationContent = typeof educationContent.$inferSelect;
+export type InsertEducationContent = z.infer<typeof insertEducationContentSchema>;
+
+export type PatientReminder = typeof patientReminders.$inferSelect;
+export type InsertPatientReminder = z.infer<typeof insertPatientReminderSchema>;
+
+export type HealthSurvey = typeof healthSurveys.$inferSelect;
+export type InsertHealthSurvey = z.infer<typeof insertHealthSurveySchema>;
+
+export type SurveyResponse = typeof surveyResponses.$inferSelect;
+export type InsertSurveyResponse = z.infer<typeof insertSurveyResponseSchema>;
+
+// API Documentation System Insert Schemas (Phase 16)
+export const insertApiKeySchema = createInsertSchema(apiKeys).omit({
+  id: true,
+  createdAt: true,
+  lastUsedAt: true
+});
+
+export const insertApiUsageLogSchema = createInsertSchema(apiUsageLogs).omit({
+  id: true,
+  timestamp: true
+});
+
+export const insertWebhookEndpointSchema = createInsertSchema(webhookEndpoints).omit({
+  id: true,
+  createdAt: true,
+  lastTriggered: true
+});
+
+// API Documentation System Types
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
+
+export type ApiUsageLog = typeof apiUsageLogs.$inferSelect;
+export type InsertApiUsageLog = z.infer<typeof insertApiUsageLogSchema>;
+
+export type WebhookEndpoint = typeof webhookEndpoints.$inferSelect;
+export type InsertWebhookEndpoint = z.infer<typeof insertWebhookEndpointSchema>;

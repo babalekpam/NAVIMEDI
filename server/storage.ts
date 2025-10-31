@@ -72,6 +72,13 @@ import {
   allergyAlerts,
   dosageWarnings,
   clinicalAlerts,
+  educationContent,
+  patientReminders,
+  healthSurveys,
+  surveyResponses,
+  apiKeys,
+  apiUsageLogs,
+  webhookEndpoints,
   type Document,
   type InsertDocument,
   type DocumentVersion,
@@ -215,7 +222,54 @@ import {
   staffShifts,
   timeLogs,
   leaveRequests,
-  scheduleTemplates
+  scheduleTemplates,
+  inventoryItems,
+  inventoryBatches,
+  inventoryAudits,
+  inventoryAlerts,
+  autoReorderRules,
+  integrationPartners,
+  insuranceEligibilityChecks,
+  ePrescriptionTransactions,
+  hl7Messages,
+  deviceReadings,
+  qualityMetrics,
+  type InventoryItem,
+  type InsertInventoryItem,
+  type InventoryBatch,
+  type InsertInventoryBatch,
+  type InventoryAudit,
+  type InsertInventoryAudit,
+  type InventoryAlert,
+  type InsertInventoryAlert,
+  type AutoReorderRule,
+  type InsertAutoReorderRule,
+  type IntegrationPartner,
+  type InsertIntegrationPartner,
+  type InsuranceEligibilityCheck,
+  type InsertInsuranceEligibilityCheck,
+  type EPrescriptionTransaction,
+  type InsertEPrescriptionTransaction,
+  type Hl7Message,
+  type InsertHl7Message,
+  type DeviceReading,
+  type InsertDeviceReading,
+  type QualityMetric,
+  type InsertQualityMetric,
+  type EducationContent,
+  type InsertEducationContent,
+  type PatientReminder,
+  type InsertPatientReminder,
+  type HealthSurvey,
+  type InsertHealthSurvey,
+  type SurveyResponse,
+  type InsertSurveyResponse,
+  type ApiKey,
+  type InsertApiKey,
+  type ApiUsageLog,
+  type InsertApiUsageLog,
+  type WebhookEndpoint,
+  type InsertWebhookEndpoint
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or, isNull, gt, ilike, gte, lte, lt, ne, inArray, asc, isNotNull } from "drizzle-orm";
@@ -756,6 +810,117 @@ export interface IStorage {
   createScheduleTemplate(template: InsertScheduleTemplate): Promise<ScheduleTemplate>;
   getScheduleTemplates(tenantId: string): Promise<ScheduleTemplate[]>;
   getScheduleTemplate(id: number, tenantId: string): Promise<ScheduleTemplate | undefined>;
+
+  // Inventory Management
+  createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem>;
+  getInventoryItems(tenantId: string): Promise<InventoryItem[]>;
+  getInventoryItem(id: number, tenantId: string): Promise<InventoryItem | undefined>;
+  updateInventoryItem(id: number, updates: Partial<InventoryItem>, tenantId: string): Promise<InventoryItem | undefined>;
+  deleteInventoryItem(id: number, tenantId: string): Promise<boolean>;
+  findInventoryByBarcode(barcode: string, tenantId: string): Promise<InventoryItem | undefined>;
+  createInventoryBatch(batch: InsertInventoryBatch): Promise<InventoryBatch>;
+  getInventoryBatches(itemId: number, tenantId: string): Promise<InventoryBatch[]>;
+  updateInventoryBatch(id: number, updates: Partial<InventoryBatch>, tenantId: string): Promise<InventoryBatch | undefined>;
+  createInventoryAudit(audit: InsertInventoryAudit): Promise<InventoryAudit>;
+  getInventoryAudits(tenantId: string, filters?: { status?: string; startDate?: Date; endDate?: Date }): Promise<InventoryAudit[]>;
+  completeInventoryAudit(id: number, actualQuantity: number, notes: string | null, userId: string, tenantId: string): Promise<InventoryAudit | undefined>;
+  createInventoryAlert(alert: InsertInventoryAlert): Promise<InventoryAlert>;
+  getInventoryAlerts(tenantId: string, filters?: { acknowledged?: boolean; alertType?: string }): Promise<InventoryAlert[]>;
+  acknowledgeInventoryAlert(id: number, userId: string, tenantId: string): Promise<InventoryAlert | undefined>;
+  createAutoReorderRule(rule: InsertAutoReorderRule): Promise<AutoReorderRule>;
+  getAutoReorderRules(tenantId: string): Promise<AutoReorderRule[]>;
+  updateAutoReorderRule(id: number, updates: Partial<AutoReorderRule>, tenantId: string): Promise<AutoReorderRule | undefined>;
+
+  // Integration Framework (Phase 7-11)
+  // Integration Partners
+  createIntegrationPartner(partner: InsertIntegrationPartner): Promise<IntegrationPartner>;
+  getIntegrationPartners(type?: string): Promise<IntegrationPartner[]>;
+  getIntegrationPartner(id: string): Promise<IntegrationPartner | undefined>;
+  updateIntegrationPartner(id: string, updates: Partial<IntegrationPartner>): Promise<IntegrationPartner | undefined>;
+  
+  // Insurance Eligibility Checks
+  createInsuranceEligibilityCheck(check: InsertInsuranceEligibilityCheck): Promise<InsuranceEligibilityCheck>;
+  getInsuranceEligibilityChecks(tenantId: string, patientId?: string): Promise<InsuranceEligibilityCheck[]>;
+  getInsuranceEligibilityCheck(id: string, tenantId: string): Promise<InsuranceEligibilityCheck | undefined>;
+  
+  // E-Prescription Transactions
+  createEPrescriptionTransaction(transaction: InsertEPrescriptionTransaction): Promise<EPrescriptionTransaction>;
+  getEPrescriptionTransactions(tenantId: string, filters?: { prescriptionId?: string; status?: string }): Promise<EPrescriptionTransaction[]>;
+  getEPrescriptionTransaction(id: string, tenantId: string): Promise<EPrescriptionTransaction | undefined>;
+  updateEPrescriptionTransaction(id: string, updates: Partial<EPrescriptionTransaction>, tenantId: string): Promise<EPrescriptionTransaction | undefined>;
+  
+  // HL7 Messages
+  createHl7Message(message: InsertHl7Message): Promise<Hl7Message>;
+  getHl7Messages(tenantId: string, filters?: { direction?: string; messageType?: string; status?: string }): Promise<Hl7Message[]>;
+  getHl7Message(id: string, tenantId: string): Promise<Hl7Message | undefined>;
+  updateHl7Message(id: string, updates: Partial<Hl7Message>, tenantId: string): Promise<Hl7Message | undefined>;
+  
+  // Device Readings
+  createDeviceReading(reading: InsertDeviceReading): Promise<DeviceReading>;
+  getDeviceReadings(tenantId: string, filters?: { patientId?: string; deviceType?: string; startDate?: Date; endDate?: Date }): Promise<DeviceReading[]>;
+  getDeviceReading(id: string, tenantId: string): Promise<DeviceReading | undefined>;
+  getPatientDeviceReadings(patientId: string, tenantId: string, deviceType?: string): Promise<DeviceReading[]>;
+  
+  // Quality Metrics
+  createQualityMetric(metric: InsertQualityMetric): Promise<QualityMetric>;
+  getQualityMetrics(tenantId: string, filters?: { metricType?: string; measurementPeriod?: string }): Promise<QualityMetric[]>;
+  getQualityMetric(id: string, tenantId: string): Promise<QualityMetric | undefined>;
+  updateQualityMetric(id: string, updates: Partial<QualityMetric>, tenantId: string): Promise<QualityMetric | undefined>;
+
+  // Patient Engagement (Phase 12)
+  // Education Content
+  createEducationContent(content: InsertEducationContent): Promise<EducationContent>;
+  getEducationContent(tenantId: string, filters?: { category?: string }): Promise<EducationContent[]>;
+  getEducationContentById(id: string, tenantId: string): Promise<EducationContent | undefined>;
+  incrementEducationViewCount(id: string, tenantId: string): Promise<EducationContent | undefined>;
+  
+  // Patient Reminders
+  createPatientReminder(reminder: InsertPatientReminder): Promise<PatientReminder>;
+  getPatientReminders(patientId: string, tenantId: string): Promise<PatientReminder[]>;
+  getPatientReminderById(id: string, tenantId: string): Promise<PatientReminder | undefined>;
+  updatePatientReminder(id: string, updates: Partial<PatientReminder>, tenantId: string): Promise<PatientReminder | undefined>;
+  acknowledgePatientReminder(id: string, tenantId: string): Promise<PatientReminder | undefined>;
+  deletePatientReminder(id: string, tenantId: string): Promise<boolean>;
+  
+  // Health Surveys
+  createHealthSurvey(survey: InsertHealthSurvey): Promise<HealthSurvey>;
+  getHealthSurveys(tenantId: string, filters?: { isActive?: boolean }): Promise<HealthSurvey[]>;
+  getHealthSurveyById(id: string, tenantId: string): Promise<HealthSurvey | undefined>;
+  
+  // Survey Responses
+  createSurveyResponse(response: InsertSurveyResponse): Promise<SurveyResponse>;
+  getSurveyResponses(surveyId: string, tenantId: string): Promise<SurveyResponse[]>;
+  getPatientSurveyResponses(patientId: string, tenantId: string): Promise<SurveyResponse[]>;
+
+  // API Documentation System (Phase 16)
+  // API Keys Management
+  createApiKey(apiKey: InsertApiKey): Promise<ApiKey>;
+  getApiKeys(tenantId: string): Promise<ApiKey[]>;
+  getApiKeyById(id: string, tenantId: string): Promise<ApiKey | undefined>;
+  getApiKeyByHash(keyHash: string): Promise<ApiKey | undefined>;
+  findApiKeyByValue(keyValue: string): Promise<ApiKey | null>;
+  updateApiKey(id: string, updates: Partial<ApiKey>, tenantId: string): Promise<ApiKey | undefined>;
+  deleteApiKey(id: string, tenantId: string): Promise<boolean>;
+  updateApiKeyLastUsed(id: string): Promise<void>;
+  
+  // API Usage Logs
+  createApiUsageLog(log: InsertApiUsageLog): Promise<ApiUsageLog>;
+  getApiUsageLogs(tenantId: string, filters?: { apiKeyId?: string; startDate?: Date; endDate?: Date; endpoint?: string }): Promise<ApiUsageLog[]>;
+  getApiUsageStats(tenantId: string, apiKeyId?: string): Promise<{
+    totalRequests: number;
+    requestsByEndpoint: { endpoint: string; count: number }[];
+    avgResponseTime: number;
+    errorRate: number;
+  }>;
+  
+  // Webhook Endpoints
+  createWebhookEndpoint(webhook: InsertWebhookEndpoint): Promise<WebhookEndpoint>;
+  getWebhookEndpoints(tenantId: string): Promise<WebhookEndpoint[]>;
+  getWebhookEndpointById(id: string, tenantId: string): Promise<WebhookEndpoint | undefined>;
+  updateWebhookEndpoint(id: string, updates: Partial<WebhookEndpoint>, tenantId: string): Promise<WebhookEndpoint | undefined>;
+  deleteWebhookEndpoint(id: string, tenantId: string): Promise<boolean>;
+  incrementWebhookFailureCount(id: string, tenantId: string): Promise<void>;
+  updateWebhookLastTriggered(id: string, tenantId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -7069,6 +7234,666 @@ export class DatabaseStorage implements IStorage {
       .from(scheduleTemplates)
       .where(and(eq(scheduleTemplates.id, id), eq(scheduleTemplates.tenantId, tenantId)));
     return result;
+  }
+
+  // Inventory Management Methods
+  async createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem> {
+    const [result] = await db.insert(inventoryItems).values(item).returning();
+    return result;
+  }
+
+  async getInventoryItems(tenantId: string): Promise<InventoryItem[]> {
+    const results = await db.select()
+      .from(inventoryItems)
+      .where(eq(inventoryItems.tenantId, tenantId))
+      .orderBy(desc(inventoryItems.createdAt));
+    return results;
+  }
+
+  async getInventoryItem(id: number, tenantId: string): Promise<InventoryItem | undefined> {
+    const [result] = await db.select()
+      .from(inventoryItems)
+      .where(and(eq(inventoryItems.id, id), eq(inventoryItems.tenantId, tenantId)));
+    return result;
+  }
+
+  async updateInventoryItem(id: number, updates: Partial<InventoryItem>, tenantId: string): Promise<InventoryItem | undefined> {
+    const [result] = await db.update(inventoryItems)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(inventoryItems.id, id), eq(inventoryItems.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async deleteInventoryItem(id: number, tenantId: string): Promise<boolean> {
+    const result = await db.delete(inventoryItems)
+      .where(and(eq(inventoryItems.id, id), eq(inventoryItems.tenantId, tenantId)));
+    return true;
+  }
+
+  async findInventoryByBarcode(barcode: string, tenantId: string): Promise<InventoryItem | undefined> {
+    const [result] = await db.select()
+      .from(inventoryItems)
+      .where(and(
+        eq(inventoryItems.barcodeNumber, barcode),
+        eq(inventoryItems.tenantId, tenantId)
+      ));
+    return result;
+  }
+
+  async createInventoryBatch(batch: InsertInventoryBatch): Promise<InventoryBatch> {
+    const [result] = await db.insert(inventoryBatches).values(batch).returning();
+    return result;
+  }
+
+  async getInventoryBatches(itemId: number, tenantId: string): Promise<InventoryBatch[]> {
+    const results = await db.select()
+      .from(inventoryBatches)
+      .where(and(
+        eq(inventoryBatches.inventoryItemId, itemId),
+        eq(inventoryBatches.tenantId, tenantId)
+      ))
+      .orderBy(desc(inventoryBatches.receivedDate));
+    return results;
+  }
+
+  async updateInventoryBatch(id: number, updates: Partial<InventoryBatch>, tenantId: string): Promise<InventoryBatch | undefined> {
+    const [result] = await db.update(inventoryBatches)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(inventoryBatches.id, id), eq(inventoryBatches.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async createInventoryAudit(audit: InsertInventoryAudit): Promise<InventoryAudit> {
+    const [result] = await db.insert(inventoryAudits).values(audit).returning();
+    return result;
+  }
+
+  async getInventoryAudits(tenantId: string, filters?: { status?: string; startDate?: Date; endDate?: Date }): Promise<InventoryAudit[]> {
+    const conditions = [eq(inventoryAudits.tenantId, tenantId)];
+
+    if (filters?.status) {
+      conditions.push(eq(inventoryAudits.status, filters.status));
+    }
+
+    if (filters?.startDate) {
+      conditions.push(gte(inventoryAudits.auditDate, filters.startDate));
+    }
+
+    if (filters?.endDate) {
+      conditions.push(lte(inventoryAudits.auditDate, filters.endDate));
+    }
+
+    const results = await db.select()
+      .from(inventoryAudits)
+      .where(and(...conditions))
+      .orderBy(desc(inventoryAudits.auditDate));
+    return results;
+  }
+
+  async completeInventoryAudit(id: number, actualQuantity: number, notes: string | null, userId: string, tenantId: string): Promise<InventoryAudit | undefined> {
+    const audit = await this.getInventoryAudits(tenantId);
+    const currentAudit = audit.find(a => a.id === id);
+    
+    if (!currentAudit) return undefined;
+
+    const variance = actualQuantity - (currentAudit.expectedQuantity || 0);
+    const status = variance === 0 ? 'completed' : 'discrepancy';
+
+    const [result] = await db.update(inventoryAudits)
+      .set({
+        actualQuantity,
+        variance,
+        status,
+        notes,
+        completedAt: new Date()
+      })
+      .where(and(eq(inventoryAudits.id, id), eq(inventoryAudits.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async createInventoryAlert(alert: InsertInventoryAlert): Promise<InventoryAlert> {
+    const [result] = await db.insert(inventoryAlerts).values(alert).returning();
+    return result;
+  }
+
+  async getInventoryAlerts(tenantId: string, filters?: { acknowledged?: boolean; alertType?: string }): Promise<InventoryAlert[]> {
+    const conditions = [eq(inventoryAlerts.tenantId, tenantId)];
+
+    if (filters?.acknowledged === false) {
+      conditions.push(isNull(inventoryAlerts.acknowledgedAt));
+    }
+
+    if (filters?.alertType) {
+      conditions.push(eq(inventoryAlerts.alertType, filters.alertType));
+    }
+
+    const results = await db.select()
+      .from(inventoryAlerts)
+      .where(and(...conditions))
+      .orderBy(desc(inventoryAlerts.triggeredAt));
+    return results;
+  }
+
+  async acknowledgeInventoryAlert(id: number, userId: string, tenantId: string): Promise<InventoryAlert | undefined> {
+    const [result] = await db.update(inventoryAlerts)
+      .set({
+        acknowledgedBy: userId,
+        acknowledgedAt: new Date()
+      })
+      .where(and(eq(inventoryAlerts.id, id), eq(inventoryAlerts.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async createAutoReorderRule(rule: InsertAutoReorderRule): Promise<AutoReorderRule> {
+    const [result] = await db.insert(autoReorderRules).values(rule).returning();
+    return result;
+  }
+
+  async getAutoReorderRules(tenantId: string): Promise<AutoReorderRule[]> {
+    const results = await db.select()
+      .from(autoReorderRules)
+      .where(eq(autoReorderRules.tenantId, tenantId))
+      .orderBy(desc(autoReorderRules.createdAt));
+    return results;
+  }
+
+  async updateAutoReorderRule(id: number, updates: Partial<AutoReorderRule>, tenantId: string): Promise<AutoReorderRule | undefined> {
+    const [result] = await db.update(autoReorderRules)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(autoReorderRules.id, id), eq(autoReorderRules.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  // ============================================================================
+  // INTEGRATION FRAMEWORK METHODS (Phase 7-11)
+  // ============================================================================
+
+  // Integration Partners
+  async createIntegrationPartner(partner: InsertIntegrationPartner): Promise<IntegrationPartner> {
+    const [result] = await db.insert(integrationPartners).values(partner).returning();
+    return result;
+  }
+
+  async getIntegrationPartners(type?: string): Promise<IntegrationPartner[]> {
+    if (type) {
+      return await db.select().from(integrationPartners)
+        .where(eq(integrationPartners.type, type as any))
+        .orderBy(desc(integrationPartners.createdAt));
+    }
+    return await db.select().from(integrationPartners).orderBy(desc(integrationPartners.createdAt));
+  }
+
+  async getIntegrationPartner(id: string): Promise<IntegrationPartner | undefined> {
+    const [result] = await db.select().from(integrationPartners).where(eq(integrationPartners.id, id));
+    return result;
+  }
+
+  async updateIntegrationPartner(id: string, updates: Partial<IntegrationPartner>): Promise<IntegrationPartner | undefined> {
+    const [result] = await db.update(integrationPartners)
+      .set(updates)
+      .where(eq(integrationPartners.id, id))
+      .returning();
+    return result;
+  }
+
+  // Insurance Eligibility Checks
+  async createInsuranceEligibilityCheck(check: InsertInsuranceEligibilityCheck): Promise<InsuranceEligibilityCheck> {
+    const [result] = await db.insert(insuranceEligibilityChecks).values(check).returning();
+    return result;
+  }
+
+  async getInsuranceEligibilityChecks(tenantId: string, patientId?: string): Promise<InsuranceEligibilityCheck[]> {
+    const conditions = [eq(insuranceEligibilityChecks.tenantId, tenantId)];
+    if (patientId) {
+      conditions.push(eq(insuranceEligibilityChecks.patientId, patientId));
+    }
+    return await db.select().from(insuranceEligibilityChecks)
+      .where(and(...conditions))
+      .orderBy(desc(insuranceEligibilityChecks.checkDate));
+  }
+
+  async getInsuranceEligibilityCheck(id: string, tenantId: string): Promise<InsuranceEligibilityCheck | undefined> {
+    const [result] = await db.select().from(insuranceEligibilityChecks)
+      .where(and(eq(insuranceEligibilityChecks.id, id), eq(insuranceEligibilityChecks.tenantId, tenantId)));
+    return result;
+  }
+
+  // E-Prescription Transactions
+  async createEPrescriptionTransaction(transaction: InsertEPrescriptionTransaction): Promise<EPrescriptionTransaction> {
+    const [result] = await db.insert(ePrescriptionTransactions).values(transaction).returning();
+    return result;
+  }
+
+  async getEPrescriptionTransactions(tenantId: string, filters?: { prescriptionId?: string; status?: string }): Promise<EPrescriptionTransaction[]> {
+    const conditions = [eq(ePrescriptionTransactions.tenantId, tenantId)];
+    if (filters?.prescriptionId) {
+      conditions.push(eq(ePrescriptionTransactions.prescriptionId, filters.prescriptionId));
+    }
+    if (filters?.status) {
+      conditions.push(eq(ePrescriptionTransactions.status, filters.status as any));
+    }
+    return await db.select().from(ePrescriptionTransactions)
+      .where(and(...conditions))
+      .orderBy(desc(ePrescriptionTransactions.sentAt));
+  }
+
+  async getEPrescriptionTransaction(id: string, tenantId: string): Promise<EPrescriptionTransaction | undefined> {
+    const [result] = await db.select().from(ePrescriptionTransactions)
+      .where(and(eq(ePrescriptionTransactions.id, id), eq(ePrescriptionTransactions.tenantId, tenantId)));
+    return result;
+  }
+
+  async updateEPrescriptionTransaction(id: string, updates: Partial<EPrescriptionTransaction>, tenantId: string): Promise<EPrescriptionTransaction | undefined> {
+    const [result] = await db.update(ePrescriptionTransactions)
+      .set(updates)
+      .where(and(eq(ePrescriptionTransactions.id, id), eq(ePrescriptionTransactions.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  // HL7 Messages
+  async createHl7Message(message: InsertHl7Message): Promise<Hl7Message> {
+    const [result] = await db.insert(hl7Messages).values(message).returning();
+    return result;
+  }
+
+  async getHl7Messages(tenantId: string, filters?: { direction?: string; messageType?: string; status?: string }): Promise<Hl7Message[]> {
+    const conditions = [eq(hl7Messages.tenantId, tenantId)];
+    if (filters?.direction) {
+      conditions.push(eq(hl7Messages.direction, filters.direction as any));
+    }
+    if (filters?.messageType) {
+      conditions.push(eq(hl7Messages.messageType, filters.messageType as any));
+    }
+    if (filters?.status) {
+      conditions.push(eq(hl7Messages.status, filters.status));
+    }
+    return await db.select().from(hl7Messages)
+      .where(and(...conditions))
+      .orderBy(desc(hl7Messages.processedAt));
+  }
+
+  async getHl7Message(id: string, tenantId: string): Promise<Hl7Message | undefined> {
+    const [result] = await db.select().from(hl7Messages)
+      .where(and(eq(hl7Messages.id, id), eq(hl7Messages.tenantId, tenantId)));
+    return result;
+  }
+
+  async updateHl7Message(id: string, updates: Partial<Hl7Message>, tenantId: string): Promise<Hl7Message | undefined> {
+    const [result] = await db.update(hl7Messages)
+      .set(updates)
+      .where(and(eq(hl7Messages.id, id), eq(hl7Messages.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  // Device Readings
+  async createDeviceReading(reading: InsertDeviceReading): Promise<DeviceReading> {
+    const [result] = await db.insert(deviceReadings).values(reading).returning();
+    return result;
+  }
+
+  async getDeviceReadings(tenantId: string, filters?: { patientId?: string; deviceType?: string; startDate?: Date; endDate?: Date }): Promise<DeviceReading[]> {
+    const conditions = [eq(deviceReadings.tenantId, tenantId)];
+    if (filters?.patientId) {
+      conditions.push(eq(deviceReadings.patientId, filters.patientId));
+    }
+    if (filters?.deviceType) {
+      conditions.push(eq(deviceReadings.deviceType, filters.deviceType as any));
+    }
+    if (filters?.startDate) {
+      conditions.push(gte(deviceReadings.timestamp, filters.startDate));
+    }
+    if (filters?.endDate) {
+      conditions.push(lte(deviceReadings.timestamp, filters.endDate));
+    }
+    return await db.select().from(deviceReadings)
+      .where(and(...conditions))
+      .orderBy(desc(deviceReadings.timestamp));
+  }
+
+  async getDeviceReading(id: string, tenantId: string): Promise<DeviceReading | undefined> {
+    const [result] = await db.select().from(deviceReadings)
+      .where(and(eq(deviceReadings.id, id), eq(deviceReadings.tenantId, tenantId)));
+    return result;
+  }
+
+  async getPatientDeviceReadings(patientId: string, tenantId: string, deviceType?: string): Promise<DeviceReading[]> {
+    const conditions = [
+      eq(deviceReadings.patientId, patientId),
+      eq(deviceReadings.tenantId, tenantId)
+    ];
+    if (deviceType) {
+      conditions.push(eq(deviceReadings.deviceType, deviceType as any));
+    }
+    return await db.select().from(deviceReadings)
+      .where(and(...conditions))
+      .orderBy(desc(deviceReadings.timestamp));
+  }
+
+  // Quality Metrics
+  async createQualityMetric(metric: InsertQualityMetric): Promise<QualityMetric> {
+    const [result] = await db.insert(qualityMetrics).values(metric).returning();
+    return result;
+  }
+
+  async getQualityMetrics(tenantId: string, filters?: { metricType?: string; measurementPeriod?: string }): Promise<QualityMetric[]> {
+    const conditions = [eq(qualityMetrics.tenantId, tenantId)];
+    if (filters?.metricType) {
+      conditions.push(eq(qualityMetrics.metricType, filters.metricType as any));
+    }
+    if (filters?.measurementPeriod) {
+      conditions.push(eq(qualityMetrics.measurementPeriod, filters.measurementPeriod));
+    }
+    return await db.select().from(qualityMetrics)
+      .where(and(...conditions))
+      .orderBy(desc(qualityMetrics.calculatedAt));
+  }
+
+  async getQualityMetric(id: string, tenantId: string): Promise<QualityMetric | undefined> {
+    const [result] = await db.select().from(qualityMetrics)
+      .where(and(eq(qualityMetrics.id, id), eq(qualityMetrics.tenantId, tenantId)));
+    return result;
+  }
+
+  async updateQualityMetric(id: string, updates: Partial<QualityMetric>, tenantId: string): Promise<QualityMetric | undefined> {
+    const [result] = await db.update(qualityMetrics)
+      .set(updates)
+      .where(and(eq(qualityMetrics.id, id), eq(qualityMetrics.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  // Patient Engagement (Phase 12)
+  // Education Content
+  async createEducationContent(content: InsertEducationContent): Promise<EducationContent> {
+    const [result] = await db.insert(educationContent).values(content).returning();
+    return result;
+  }
+
+  async getEducationContent(tenantId: string, filters?: { category?: string }): Promise<EducationContent[]> {
+    const conditions = [eq(educationContent.tenantId, tenantId), eq(educationContent.isActive, true)];
+    if (filters?.category) {
+      conditions.push(eq(educationContent.category, filters.category as any));
+    }
+    return await db.select().from(educationContent)
+      .where(and(...conditions))
+      .orderBy(desc(educationContent.publishedAt));
+  }
+
+  async getEducationContentById(id: string, tenantId: string): Promise<EducationContent | undefined> {
+    const [result] = await db.select().from(educationContent)
+      .where(and(eq(educationContent.id, id), eq(educationContent.tenantId, tenantId)));
+    return result;
+  }
+
+  async incrementEducationViewCount(id: string, tenantId: string): Promise<EducationContent | undefined> {
+    const [result] = await db.update(educationContent)
+      .set({ viewCount: sql`${educationContent.viewCount} + 1`, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(educationContent.id, id), eq(educationContent.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  // Patient Reminders
+  async createPatientReminder(reminder: InsertPatientReminder): Promise<PatientReminder> {
+    const [result] = await db.insert(patientReminders).values(reminder).returning();
+    return result;
+  }
+
+  async getPatientReminders(patientId: string, tenantId: string): Promise<PatientReminder[]> {
+    return await db.select().from(patientReminders)
+      .where(and(eq(patientReminders.patientId, patientId), eq(patientReminders.tenantId, tenantId)))
+      .orderBy(desc(patientReminders.scheduledFor));
+  }
+
+  async getPatientReminderById(id: string, tenantId: string): Promise<PatientReminder | undefined> {
+    const [result] = await db.select().from(patientReminders)
+      .where(and(eq(patientReminders.id, id), eq(patientReminders.tenantId, tenantId)));
+    return result;
+  }
+
+  async updatePatientReminder(id: string, updates: Partial<PatientReminder>, tenantId: string): Promise<PatientReminder | undefined> {
+    const [result] = await db.update(patientReminders)
+      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(patientReminders.id, id), eq(patientReminders.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async acknowledgePatientReminder(id: string, tenantId: string): Promise<PatientReminder | undefined> {
+    const [result] = await db.update(patientReminders)
+      .set({ status: 'acknowledged', updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(and(eq(patientReminders.id, id), eq(patientReminders.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async deletePatientReminder(id: string, tenantId: string): Promise<boolean> {
+    const result = await db.delete(patientReminders)
+      .where(and(eq(patientReminders.id, id), eq(patientReminders.tenantId, tenantId)));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Health Surveys
+  async createHealthSurvey(survey: InsertHealthSurvey): Promise<HealthSurvey> {
+    const [result] = await db.insert(healthSurveys).values(survey).returning();
+    return result;
+  }
+
+  async getHealthSurveys(tenantId: string, filters?: { isActive?: boolean }): Promise<HealthSurvey[]> {
+    const conditions = [eq(healthSurveys.tenantId, tenantId)];
+    if (filters?.isActive !== undefined) {
+      conditions.push(eq(healthSurveys.isActive, filters.isActive));
+    }
+    return await db.select().from(healthSurveys)
+      .where(and(...conditions))
+      .orderBy(desc(healthSurveys.createdAt));
+  }
+
+  async getHealthSurveyById(id: string, tenantId: string): Promise<HealthSurvey | undefined> {
+    const [result] = await db.select().from(healthSurveys)
+      .where(and(eq(healthSurveys.id, id), eq(healthSurveys.tenantId, tenantId)));
+    return result;
+  }
+
+  // Survey Responses
+  async createSurveyResponse(response: InsertSurveyResponse): Promise<SurveyResponse> {
+    const [result] = await db.insert(surveyResponses).values(response).returning();
+    return result;
+  }
+
+  async getSurveyResponses(surveyId: string, tenantId: string): Promise<SurveyResponse[]> {
+    return await db.select().from(surveyResponses)
+      .where(and(eq(surveyResponses.surveyId, surveyId), eq(surveyResponses.tenantId, tenantId)))
+      .orderBy(desc(surveyResponses.submittedAt));
+  }
+
+  async getPatientSurveyResponses(patientId: string, tenantId: string): Promise<SurveyResponse[]> {
+    return await db.select().from(surveyResponses)
+      .where(and(eq(surveyResponses.patientId, patientId), eq(surveyResponses.tenantId, tenantId)))
+      .orderBy(desc(surveyResponses.submittedAt));
+  }
+
+  // API Documentation System (Phase 16)
+  // API Keys Management
+  async createApiKey(apiKey: InsertApiKey): Promise<ApiKey> {
+    const [result] = await db.insert(apiKeys).values(apiKey).returning();
+    return result;
+  }
+
+  async getApiKeys(tenantId: string): Promise<ApiKey[]> {
+    return await db.select().from(apiKeys)
+      .where(eq(apiKeys.tenantId, tenantId))
+      .orderBy(desc(apiKeys.createdAt));
+  }
+
+  async getApiKeyById(id: string, tenantId: string): Promise<ApiKey | undefined> {
+    const [result] = await db.select().from(apiKeys)
+      .where(and(eq(apiKeys.id, id), eq(apiKeys.tenantId, tenantId)));
+    return result;
+  }
+
+  async getApiKeyByHash(keyHash: string): Promise<ApiKey | undefined> {
+    const [result] = await db.select().from(apiKeys)
+      .where(and(
+        eq(apiKeys.keyHash, keyHash),
+        eq(apiKeys.isActive, true)
+      ));
+    return result;
+  }
+
+  async findApiKeyByValue(keyValue: string): Promise<ApiKey | null> {
+    const bcrypt = await import('bcrypt');
+    
+    const allActiveKeys = await db.select().from(apiKeys)
+      .where(eq(apiKeys.isActive, true));
+    
+    for (const key of allActiveKeys) {
+      const isMatch = await bcrypt.compare(keyValue, key.keyHash);
+      if (isMatch) {
+        return key;
+      }
+    }
+    
+    return null;
+  }
+
+  async updateApiKey(id: string, updates: Partial<ApiKey>, tenantId: string): Promise<ApiKey | undefined> {
+    const [result] = await db.update(apiKeys)
+      .set(updates)
+      .where(and(eq(apiKeys.id, id), eq(apiKeys.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async deleteApiKey(id: string, tenantId: string): Promise<boolean> {
+    const result = await db.delete(apiKeys)
+      .where(and(eq(apiKeys.id, id), eq(apiKeys.tenantId, tenantId)));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async updateApiKeyLastUsed(id: string): Promise<void> {
+    await db.update(apiKeys)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(apiKeys.id, id));
+  }
+
+  // API Usage Logs
+  async createApiUsageLog(log: InsertApiUsageLog): Promise<ApiUsageLog> {
+    const [result] = await db.insert(apiUsageLogs).values(log).returning();
+    return result;
+  }
+
+  async getApiUsageLogs(tenantId: string, filters?: { apiKeyId?: string; startDate?: Date; endDate?: Date; endpoint?: string }): Promise<ApiUsageLog[]> {
+    const conditions = [eq(apiUsageLogs.tenantId, tenantId)];
+    
+    if (filters?.apiKeyId) {
+      conditions.push(eq(apiUsageLogs.apiKeyId, filters.apiKeyId));
+    }
+    if (filters?.startDate) {
+      conditions.push(gte(apiUsageLogs.timestamp, filters.startDate));
+    }
+    if (filters?.endDate) {
+      conditions.push(lte(apiUsageLogs.timestamp, filters.endDate));
+    }
+    if (filters?.endpoint) {
+      conditions.push(eq(apiUsageLogs.endpoint, filters.endpoint));
+    }
+
+    return await db.select().from(apiUsageLogs)
+      .where(and(...conditions))
+      .orderBy(desc(apiUsageLogs.timestamp))
+      .limit(1000);
+  }
+
+  async getApiUsageStats(tenantId: string, apiKeyId?: string): Promise<{
+    totalRequests: number;
+    requestsByEndpoint: { endpoint: string; count: number }[];
+    avgResponseTime: number;
+    errorRate: number;
+  }> {
+    const conditions = [eq(apiUsageLogs.tenantId, tenantId)];
+    if (apiKeyId) {
+      conditions.push(eq(apiUsageLogs.apiKeyId, apiKeyId));
+    }
+
+    const logs = await db.select().from(apiUsageLogs)
+      .where(and(...conditions));
+
+    const totalRequests = logs.length;
+    const endpointCounts = logs.reduce((acc, log) => {
+      acc[log.endpoint] = (acc[log.endpoint] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const requestsByEndpoint = Object.entries(endpointCounts)
+      .map(([endpoint, count]) => ({ endpoint, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    const avgResponseTime = logs.length > 0
+      ? logs.reduce((sum, log) => sum + (log.responseTime || 0), 0) / logs.length
+      : 0;
+
+    const errorCount = logs.filter(log => log.statusCode >= 400).length;
+    const errorRate = totalRequests > 0 ? (errorCount / totalRequests) * 100 : 0;
+
+    return {
+      totalRequests,
+      requestsByEndpoint,
+      avgResponseTime: Math.round(avgResponseTime),
+      errorRate: Math.round(errorRate * 100) / 100
+    };
+  }
+
+  // Webhook Endpoints
+  async createWebhookEndpoint(webhook: InsertWebhookEndpoint): Promise<WebhookEndpoint> {
+    const [result] = await db.insert(webhookEndpoints).values(webhook).returning();
+    return result;
+  }
+
+  async getWebhookEndpoints(tenantId: string): Promise<WebhookEndpoint[]> {
+    return await db.select().from(webhookEndpoints)
+      .where(eq(webhookEndpoints.tenantId, tenantId))
+      .orderBy(desc(webhookEndpoints.createdAt));
+  }
+
+  async getWebhookEndpointById(id: string, tenantId: string): Promise<WebhookEndpoint | undefined> {
+    const [result] = await db.select().from(webhookEndpoints)
+      .where(and(eq(webhookEndpoints.id, id), eq(webhookEndpoints.tenantId, tenantId)));
+    return result;
+  }
+
+  async updateWebhookEndpoint(id: string, updates: Partial<WebhookEndpoint>, tenantId: string): Promise<WebhookEndpoint | undefined> {
+    const [result] = await db.update(webhookEndpoints)
+      .set(updates)
+      .where(and(eq(webhookEndpoints.id, id), eq(webhookEndpoints.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async deleteWebhookEndpoint(id: string, tenantId: string): Promise<boolean> {
+    const result = await db.delete(webhookEndpoints)
+      .where(and(eq(webhookEndpoints.id, id), eq(webhookEndpoints.tenantId, tenantId)));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async incrementWebhookFailureCount(id: string, tenantId: string): Promise<void> {
+    await db.update(webhookEndpoints)
+      .set({ failureCount: sql`${webhookEndpoints.failureCount} + 1` })
+      .where(and(eq(webhookEndpoints.id, id), eq(webhookEndpoints.tenantId, tenantId)));
+  }
+
+  async updateWebhookLastTriggered(id: string, tenantId: string): Promise<void> {
+    await db.update(webhookEndpoints)
+      .set({ lastTriggered: new Date(), failureCount: 0 })
+      .where(and(eq(webhookEndpoints.id, id), eq(webhookEndpoints.tenantId, tenantId)));
   }
 }
 

@@ -26,6 +26,8 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { sendEmail } from "./email-service";
 import { navimedAI } from "./navimed-ai-service";
+import { inventoryService } from "./inventory-service";
+import { generateOpenAPISpec, apiEndpoints as docEndpoints } from "./api-docs-generator";
 import multer from "multer";
 import csv from "csv-parser";
 import { Readable } from "stream";
@@ -6712,6 +6714,756 @@ to the patient and authorized healthcare providers.
       res.status(500).json({ message: 'Failed to fetch templates' });
     }
   });
+
+  // ========================================
+  // INVENTORY MANAGEMENT ROUTES
+  // ========================================
+  console.log('📦 Registering inventory management routes...');
+
+  // Get all inventory items
+  app.get('/api/inventory', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const items = await storage.getInventoryItems(tenantId);
+      res.json(items);
+    } catch (error) {
+      console.error('Get inventory error:', error);
+      res.status(500).json({ message: 'Failed to fetch inventory items' });
+    }
+  });
+
+  // Scan barcode to look up item
+  app.post('/api/inventory/scan-barcode', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { barcode } = req.body;
+
+      if (!barcode) {
+        return res.status(400).json({ message: 'Barcode is required' });
+      }
+
+      const item = await inventoryService.scanBarcode(barcode, tenantId);
+      
+      if (!item) {
+        return res.status(404).json({ message: 'Item not found' });
+      }
+
+      res.json(item);
+    } catch (error) {
+      console.error('Scan barcode error:', error);
+      res.status(500).json({ message: 'Failed to scan barcode' });
+    }
+  });
+
+  // Get items expiring soon
+  app.get('/api/inventory/expiring', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const daysThreshold = parseInt(req.query.days as string) || 30;
+      const items = await inventoryService.checkExpiringItems(tenantId, daysThreshold);
+      res.json(items);
+    } catch (error) {
+      console.error('Get expiring items error:', error);
+      res.status(500).json({ message: 'Failed to fetch expiring items' });
+    }
+  });
+
+  // Get expired items
+  app.get('/api/inventory/expired', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const items = await inventoryService.checkExpiredItems(tenantId);
+      res.json(items);
+    } catch (error) {
+      console.error('Get expired items error:', error);
+      res.status(500).json({ message: 'Failed to fetch expired items' });
+    }
+  });
+
+  // Get items with low stock
+  app.get('/api/inventory/low-stock', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const items = await inventoryService.checkLowStock(tenantId);
+      res.json(items);
+    } catch (error) {
+      console.error('Get low stock items error:', error);
+      res.status(500).json({ message: 'Failed to fetch low stock items' });
+    }
+  });
+
+  // Create new inventory batch
+  app.post('/api/inventory/batch', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const batchData = { ...req.body, tenantId };
+      const batch = await storage.createInventoryBatch(batchData);
+      res.status(201).json(batch);
+    } catch (error) {
+      console.error('Create batch error:', error);
+      res.status(500).json({ message: 'Failed to create inventory batch' });
+    }
+  });
+
+  // Get batches for specific item
+  app.get('/api/inventory/:id/batches', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const itemId = parseInt(req.params.id);
+      const batches = await storage.getInventoryBatches(itemId, tenantId);
+      res.json(batches);
+    } catch (error) {
+      console.error('Get batches error:', error);
+      res.status(500).json({ message: 'Failed to fetch batches' });
+    }
+  });
+
+  // Mark batch as recalled
+  app.post('/api/inventory/batch/recall', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { batchId, itemId } = req.body;
+
+      const batch = await storage.updateInventoryBatch(batchId, { status: 'recalled' }, tenantId);
+      
+      if (!batch) {
+        return res.status(404).json({ message: 'Batch not found' });
+      }
+
+      // Create recall alert
+      await inventoryService.createAlert(
+        tenantId,
+        itemId,
+        'recall',
+        'emergency',
+        `Batch ${batch.batchNumber} has been recalled`
+      );
+
+      res.json(batch);
+    } catch (error) {
+      console.error('Recall batch error:', error);
+      res.status(500).json({ message: 'Failed to recall batch' });
+    }
+  });
+
+  // Create inventory audit
+  app.post('/api/inventory/audit', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId, userId } = req.user;
+      const auditData = {
+        ...req.body,
+        tenantId,
+        auditedBy: userId
+      };
+      const audit = await storage.createInventoryAudit(auditData);
+      res.status(201).json(audit);
+    } catch (error) {
+      console.error('Create audit error:', error);
+      res.status(500).json({ message: 'Failed to create audit' });
+    }
+  });
+
+  // Get inventory audits with filtering
+  app.get('/api/inventory/audits', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { status, startDate, endDate } = req.query;
+
+      const filters: any = {};
+      if (status) filters.status = status as string;
+      if (startDate) filters.startDate = new Date(startDate as string);
+      if (endDate) filters.endDate = new Date(endDate as string);
+
+      const audits = await storage.getInventoryAudits(tenantId, filters);
+      res.json(audits);
+    } catch (error) {
+      console.error('Get audits error:', error);
+      res.status(500).json({ message: 'Failed to fetch audits' });
+    }
+  });
+
+  // Complete inventory audit
+  app.patch('/api/inventory/audits/:id/complete', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId, userId } = req.user;
+      const auditId = parseInt(req.params.id);
+      const { actualQuantity, notes } = req.body;
+
+      const audit = await storage.completeInventoryAudit(auditId, actualQuantity, notes || null, userId, tenantId);
+      
+      if (!audit) {
+        return res.status(404).json({ message: 'Audit not found' });
+      }
+
+      res.json(audit);
+    } catch (error) {
+      console.error('Complete audit error:', error);
+      res.status(500).json({ message: 'Failed to complete audit' });
+    }
+  });
+
+  // Get inventory alerts
+  app.get('/api/inventory/alerts', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { acknowledged, alertType } = req.query;
+
+      const filters: any = {};
+      if (acknowledged !== undefined) filters.acknowledged = acknowledged === 'true';
+      if (alertType) filters.alertType = alertType as string;
+
+      const alerts = await storage.getInventoryAlerts(tenantId, filters);
+      res.json(alerts);
+    } catch (error) {
+      console.error('Get alerts error:', error);
+      res.status(500).json({ message: 'Failed to fetch alerts' });
+    }
+  });
+
+  // Acknowledge inventory alert
+  app.post('/api/inventory/alerts/:id/acknowledge', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId, userId } = req.user;
+      const alertId = parseInt(req.params.id);
+
+      const alert = await storage.acknowledgeInventoryAlert(alertId, userId, tenantId);
+      
+      if (!alert) {
+        return res.status(404).json({ message: 'Alert not found' });
+      }
+
+      res.json(alert);
+    } catch (error) {
+      console.error('Acknowledge alert error:', error);
+      res.status(500).json({ message: 'Failed to acknowledge alert' });
+    }
+  });
+
+  // Configure auto-reorder rule
+  app.post('/api/inventory/auto-reorder/configure', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const ruleData = { ...req.body, tenantId };
+      const rule = await storage.createAutoReorderRule(ruleData);
+      res.status(201).json(rule);
+    } catch (error) {
+      console.error('Configure auto-reorder error:', error);
+      res.status(500).json({ message: 'Failed to configure auto-reorder rule' });
+    }
+  });
+
+  // Get auto-reorder rules
+  app.get('/api/inventory/auto-reorder/rules', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const rules = await storage.getAutoReorderRules(tenantId);
+      res.json(rules);
+    } catch (error) {
+      console.error('Get auto-reorder rules error:', error);
+      res.status(500).json({ message: 'Failed to fetch auto-reorder rules' });
+    }
+  });
+
+  // Manually trigger auto-reorder check
+  app.post('/api/inventory/auto-reorder/trigger', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const suggestions = await inventoryService.generateReorderSuggestions(tenantId);
+      res.json({
+        message: 'Reorder check completed',
+        suggestions
+      });
+    } catch (error) {
+      console.error('Trigger reorder error:', error);
+      res.status(500).json({ message: 'Failed to trigger reorder check' });
+    }
+  });
+
+  console.log('✅ Inventory management routes registered successfully');
+
+  // ============================================================
+  // PATIENT ENGAGEMENT ROUTES (Phase 12)
+  // ============================================================
+
+  console.log('📚 Registering patient engagement routes...');
+
+  // Education Content Routes
+  // GET /api/patient-education - Get education content with filtering
+  app.get('/api/patient-education', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { category } = req.query;
+      const filters = category ? { category } : undefined;
+      const content = await storage.getEducationContent(tenantId, filters);
+      res.json(content);
+    } catch (error) {
+      console.error('Get education content error:', error);
+      res.status(500).json({ message: 'Failed to fetch education content' });
+    }
+  });
+
+  // GET /api/patient-education/:id - Get specific article
+  app.get('/api/patient-education/:id', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { id } = req.params;
+      const content = await storage.getEducationContentById(id, tenantId);
+      if (!content) {
+        return res.status(404).json({ message: 'Education content not found' });
+      }
+      res.json(content);
+    } catch (error) {
+      console.error('Get education content by ID error:', error);
+      res.status(500).json({ message: 'Failed to fetch education content' });
+    }
+  });
+
+  // POST /api/patient-education - Create new education content (staff only)
+  app.post('/api/patient-education', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId, userId } = req.user;
+      const contentData = { ...req.body, tenantId, authorId: userId };
+      const content = await storage.createEducationContent(contentData);
+      res.status(201).json(content);
+    } catch (error) {
+      console.error('Create education content error:', error);
+      res.status(500).json({ message: 'Failed to create education content' });
+    }
+  });
+
+  // PATCH /api/patient-education/:id/view - Increment view count
+  app.patch('/api/patient-education/:id/view', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { id } = req.params;
+      const content = await storage.incrementEducationViewCount(id, tenantId);
+      if (!content) {
+        return res.status(404).json({ message: 'Education content not found' });
+      }
+      res.json(content);
+    } catch (error) {
+      console.error('Increment view count error:', error);
+      res.status(500).json({ message: 'Failed to increment view count' });
+    }
+  });
+
+  // Patient Reminders Routes
+  // POST /api/patient-reminders - Create reminder
+  app.post('/api/patient-reminders', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const reminderData = { ...req.body, tenantId };
+      const reminder = await storage.createPatientReminder(reminderData);
+      res.status(201).json(reminder);
+    } catch (error) {
+      console.error('Create patient reminder error:', error);
+      res.status(500).json({ message: 'Failed to create reminder' });
+    }
+  });
+
+  // GET /api/patient-reminders/:patientId - Get patient reminders
+  app.get('/api/patient-reminders/:patientId', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { patientId } = req.params;
+      const reminders = await storage.getPatientReminders(patientId, tenantId);
+      res.json(reminders);
+    } catch (error) {
+      console.error('Get patient reminders error:', error);
+      res.status(500).json({ message: 'Failed to fetch reminders' });
+    }
+  });
+
+  // PATCH /api/patient-reminders/:id/acknowledge - Acknowledge reminder
+  app.patch('/api/patient-reminders/:id/acknowledge', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { id } = req.params;
+      const reminder = await storage.acknowledgePatientReminder(id, tenantId);
+      if (!reminder) {
+        return res.status(404).json({ message: 'Reminder not found' });
+      }
+      res.json(reminder);
+    } catch (error) {
+      console.error('Acknowledge reminder error:', error);
+      res.status(500).json({ message: 'Failed to acknowledge reminder' });
+    }
+  });
+
+  // DELETE /api/patient-reminders/:id - Delete reminder
+  app.delete('/api/patient-reminders/:id', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { id } = req.params;
+      const deleted = await storage.deletePatientReminder(id, tenantId);
+      if (!deleted) {
+        return res.status(404).json({ message: 'Reminder not found' });
+      }
+      res.json({ message: 'Reminder deleted successfully' });
+    } catch (error) {
+      console.error('Delete reminder error:', error);
+      res.status(500).json({ message: 'Failed to delete reminder' });
+    }
+  });
+
+  // POST /api/patient-reminders/bulk - Create multiple reminders
+  app.post('/api/patient-reminders/bulk', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { reminders } = req.body;
+      
+      if (!Array.isArray(reminders)) {
+        return res.status(400).json({ message: 'Reminders must be an array' });
+      }
+
+      const createdReminders = await Promise.all(
+        reminders.map(reminder => storage.createPatientReminder({ ...reminder, tenantId }))
+      );
+
+      res.status(201).json(createdReminders);
+    } catch (error) {
+      console.error('Create bulk reminders error:', error);
+      res.status(500).json({ message: 'Failed to create reminders' });
+    }
+  });
+
+  // Health Surveys Routes
+  // GET /api/surveys - List available surveys
+  app.get('/api/surveys', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { isActive } = req.query;
+      const filters = isActive !== undefined ? { isActive: isActive === 'true' } : undefined;
+      const surveys = await storage.getHealthSurveys(tenantId, filters);
+      res.json(surveys);
+    } catch (error) {
+      console.error('Get surveys error:', error);
+      res.status(500).json({ message: 'Failed to fetch surveys' });
+    }
+  });
+
+  // GET /api/surveys/:id - Get survey with questions
+  app.get('/api/surveys/:id', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { id } = req.params;
+      const survey = await storage.getHealthSurveyById(id, tenantId);
+      if (!survey) {
+        return res.status(404).json({ message: 'Survey not found' });
+      }
+      res.json(survey);
+    } catch (error) {
+      console.error('Get survey by ID error:', error);
+      res.status(500).json({ message: 'Failed to fetch survey' });
+    }
+  });
+
+  // POST /api/surveys - Create survey (staff only)
+  app.post('/api/surveys', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId, userId } = req.user;
+      const surveyData = { ...req.body, tenantId, createdBy: userId };
+      const survey = await storage.createHealthSurvey(surveyData);
+      res.status(201).json(survey);
+    } catch (error) {
+      console.error('Create survey error:', error);
+      res.status(500).json({ message: 'Failed to create survey' });
+    }
+  });
+
+  // POST /api/surveys/:id/respond - Submit survey response
+  app.post('/api/surveys/:id/respond', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId, userId } = req.user;
+      const { id: surveyId } = req.params;
+      const { responses, patientId, score } = req.body;
+      
+      // Verify survey exists
+      const survey = await storage.getHealthSurveyById(surveyId, tenantId);
+      if (!survey) {
+        return res.status(404).json({ message: 'Survey not found' });
+      }
+
+      const responseData = {
+        tenantId,
+        surveyId,
+        patientId,
+        responses,
+        score
+      };
+
+      const response = await storage.createSurveyResponse(responseData);
+      res.status(201).json(response);
+    } catch (error) {
+      console.error('Submit survey response error:', error);
+      res.status(500).json({ message: 'Failed to submit survey response' });
+    }
+  });
+
+  // GET /api/surveys/:id/results - Get aggregated survey results (staff only)
+  app.get('/api/surveys/:id/results', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { id: surveyId } = req.params;
+      
+      // Verify survey exists
+      const survey = await storage.getHealthSurveyById(surveyId, tenantId);
+      if (!survey) {
+        return res.status(404).json({ message: 'Survey not found' });
+      }
+
+      const responses = await storage.getSurveyResponses(surveyId, tenantId);
+      
+      // Calculate aggregated results
+      const totalResponses = responses.length;
+      const averageScore = responses.reduce((sum, r) => sum + (r.score || 0), 0) / (totalResponses || 1);
+
+      res.json({
+        survey,
+        totalResponses,
+        averageScore,
+        responses
+      });
+    } catch (error) {
+      console.error('Get survey results error:', error);
+      res.status(500).json({ message: 'Failed to fetch survey results' });
+    }
+  });
+
+  console.log('✅ Patient engagement routes registered successfully');
+
+  // ======================
+  // Developer Portal Routes (Phase 16)
+  // ======================
+  console.log('🔧 Registering developer portal routes...');
+
+  // POST /api/developer/api-keys - Generate new API key
+  app.post('/api/developer/api-keys', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId, userId } = req.user;
+      const { keyName, permissions, rateLimit } = req.body;
+
+      // Validate input
+      if (!keyName || !permissions || !Array.isArray(permissions)) {
+        return res.status(400).json({ message: 'Key name and permissions are required' });
+      }
+
+      // Generate a secure API key
+      const plainKey = `nvmd_${nanoid(32)}`;
+      const keyHash = await bcrypt.hash(plainKey, 10);
+
+      const apiKeyData = {
+        tenantId,
+        keyName,
+        keyHash,
+        permissions,
+        isActive: true,
+        createdBy: userId,
+        rateLimit: rateLimit || 1000
+      };
+
+      const apiKey = await storage.createApiKey(apiKeyData);
+
+      // Return the plain key only once
+      res.status(201).json({
+        ...apiKey,
+        plainKey, // Only shown once!
+        keyHash: undefined // Don't send hash to client
+      });
+    } catch (error) {
+      console.error('Create API key error:', error);
+      res.status(500).json({ message: 'Failed to create API key' });
+    }
+  });
+
+  // GET /api/developer/api-keys - List API keys for tenant
+  app.get('/api/developer/api-keys', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const keys = await storage.getApiKeys(tenantId);
+      
+      // Remove sensitive hash data
+      const safeKeys = keys.map(k => ({
+        ...k,
+        keyHash: undefined
+      }));
+
+      res.json(safeKeys);
+    } catch (error) {
+      console.error('Get API keys error:', error);
+      res.status(500).json({ message: 'Failed to fetch API keys' });
+    }
+  });
+
+  // DELETE /api/developer/api-keys/:id - Revoke API key
+  app.delete('/api/developer/api-keys/:id', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { id } = req.params;
+
+      const deleted = await storage.deleteApiKey(id, tenantId);
+      if (!deleted) {
+        return res.status(404).json({ message: 'API key not found' });
+      }
+
+      res.json({ message: 'API key revoked successfully' });
+    } catch (error) {
+      console.error('Delete API key error:', error);
+      res.status(500).json({ message: 'Failed to revoke API key' });
+    }
+  });
+
+  // GET /api/developer/usage-stats - Get API usage statistics
+  app.get('/api/developer/usage-stats', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { apiKeyId } = req.query;
+
+      const stats = await storage.getApiUsageStats(tenantId, apiKeyId as string | undefined);
+      res.json(stats);
+    } catch (error) {
+      console.error('Get usage stats error:', error);
+      res.status(500).json({ message: 'Failed to fetch usage statistics' });
+    }
+  });
+
+  // POST /api/developer/webhooks - Register webhook endpoint
+  app.post('/api/developer/webhooks', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { url, events } = req.body;
+
+      if (!url || !events || !Array.isArray(events)) {
+        return res.status(400).json({ message: 'URL and events are required' });
+      }
+
+      // Generate a webhook secret for signature verification
+      const secret = nanoid(32);
+
+      const webhookData = {
+        tenantId,
+        url,
+        events,
+        secret,
+        isActive: true,
+        failureCount: 0
+      };
+
+      const webhook = await storage.createWebhookEndpoint(webhookData);
+      res.status(201).json(webhook);
+    } catch (error) {
+      console.error('Create webhook error:', error);
+      res.status(500).json({ message: 'Failed to create webhook' });
+    }
+  });
+
+  // GET /api/developer/webhooks - List webhooks
+  app.get('/api/developer/webhooks', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const webhooks = await storage.getWebhookEndpoints(tenantId);
+      res.json(webhooks);
+    } catch (error) {
+      console.error('Get webhooks error:', error);
+      res.status(500).json({ message: 'Failed to fetch webhooks' });
+    }
+  });
+
+  // PATCH /api/developer/webhooks/:id - Update webhook
+  app.patch('/api/developer/webhooks/:id', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { id } = req.params;
+      const updates = req.body;
+
+      const webhook = await storage.updateWebhookEndpoint(id, updates, tenantId);
+      if (!webhook) {
+        return res.status(404).json({ message: 'Webhook not found' });
+      }
+
+      res.json(webhook);
+    } catch (error) {
+      console.error('Update webhook error:', error);
+      res.status(500).json({ message: 'Failed to update webhook' });
+    }
+  });
+
+  // DELETE /api/developer/webhooks/:id - Delete webhook
+  app.delete('/api/developer/webhooks/:id', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { id } = req.params;
+
+      const deleted = await storage.deleteWebhookEndpoint(id, tenantId);
+      if (!deleted) {
+        return res.status(404).json({ message: 'Webhook not found' });
+      }
+
+      res.json({ message: 'Webhook deleted successfully' });
+    } catch (error) {
+      console.error('Delete webhook error:', error);
+      res.status(500).json({ message: 'Failed to delete webhook' });
+    }
+  });
+
+  // POST /api/developer/webhooks/:id/test - Send test webhook
+  app.post('/api/developer/webhooks/:id/test', authenticateToken, setTenantContext, requireTenant, async (req: any, res) => {
+    try {
+      const { tenantId } = req.user;
+      const { id } = req.params;
+
+      const webhook = await storage.getWebhookEndpointById(id, tenantId);
+      if (!webhook) {
+        return res.status(404).json({ message: 'Webhook not found' });
+      }
+
+      // Send test payload (in production, use a proper webhook delivery service)
+      const testPayload = {
+        event: 'test.webhook',
+        timestamp: new Date().toISOString(),
+        data: {
+          message: 'This is a test webhook event from NaviMED'
+        }
+      };
+
+      // Note: In production, implement proper webhook delivery with retry logic
+      // For now, just acknowledge the test request
+      res.json({ 
+        message: 'Test webhook event sent',
+        payload: testPayload
+      });
+    } catch (error) {
+      console.error('Test webhook error:', error);
+      res.status(500).json({ message: 'Failed to send test webhook' });
+    }
+  });
+
+  // GET /api/developer/docs - Get complete API documentation
+  app.get('/api/developer/docs', async (req, res) => {
+    try {
+      res.json({
+        endpoints: docEndpoints,
+        totalEndpoints: docEndpoints.length,
+        categories: [...new Set(docEndpoints.flatMap(e => e.tags))]
+      });
+    } catch (error) {
+      console.error('Get docs error:', error);
+      res.status(500).json({ message: 'Failed to fetch documentation' });
+    }
+  });
+
+  // GET /api/developer/openapi.json - OpenAPI 3.0 specification
+  app.get('/api/developer/openapi.json', async (req, res) => {
+    try {
+      const spec = generateOpenAPISpec();
+      res.json(spec);
+    } catch (error) {
+      console.error('Get OpenAPI spec error:', error);
+      res.status(500).json({ message: 'Failed to generate OpenAPI specification' });
+    }
+  });
+
+  console.log('✅ Developer portal routes registered successfully');
 
   // Register analytics routes
   console.log('📊 Registering analytics routes...');
