@@ -92,7 +92,7 @@ export default function HealthRecommendations() {
 
   const generateAnalysisMutation = useMutation({
     mutationFn: (patientId: string) => 
-      apiRequest("POST", `/api/health-analyses/generate/${patientId}`),
+      apiRequest(`/api/health-analyses/generate/${patientId}`, { method: "POST" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/health-recommendations/patient", selectedPatient] });
       queryClient.invalidateQueries({ queryKey: ["/api/health-analyses/patient", selectedPatient, "latest"] });
@@ -102,7 +102,7 @@ export default function HealthRecommendations() {
 
   const acknowledgeMutation = useMutation({
     mutationFn: (recommendationId: string) =>
-      apiRequest("PATCH", `/api/health-recommendations/${recommendationId}/acknowledge`),
+      apiRequest(`/api/health-recommendations/${recommendationId}/acknowledge`, { method: "PATCH" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/health-recommendations/patient", selectedPatient] });
       refetchRecommendations();
