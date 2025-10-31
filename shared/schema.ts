@@ -588,6 +588,118 @@ export const apiPermissionEnum = pgEnum("api_permission", [
   "admin"
 ]);
 
+// DICOM Medical Imaging System Enums (Phase 15)
+export const dicomModalityEnum = pgEnum("dicom_modality", [
+  "CT",
+  "MRI",
+  "X_RAY",
+  "ULTRASOUND",
+  "MAMMOGRAPHY",
+  "PET",
+  "SPECT",
+  "CR",
+  "DR",
+  "NM",
+  "MG",
+  "US",
+  "DX",
+  "XA",
+  "RF"
+]);
+
+export const studyStatusEnum = pgEnum("study_status", [
+  "pending",
+  "available",
+  "archived",
+  "deleted"
+]);
+
+export const imagingReportStatusEnum = pgEnum("imaging_report_status", [
+  "draft",
+  "preliminary",
+  "final",
+  "amended",
+  "cancelled"
+]);
+
+export const imagingReportPriorityEnum = pgEnum("imaging_report_priority", [
+  "routine",
+  "urgent",
+  "stat"
+]);
+
+export const dicomAnnotationTypeEnum = pgEnum("dicom_annotation_type", [
+  "measurement",
+  "arrow",
+  "circle",
+  "text",
+  "roi",
+  "angle",
+  "ellipse",
+  "rectangle"
+]);
+
+export const pacsProtocolEnum = pgEnum("pacs_protocol", [
+  "DICOM",
+  "DICOMWEB",
+  "DICOMTLS"
+]);
+
+// Advanced Analytics & BI Enums (Phase 13)
+export const metricTypeEnum = pgEnum("metric_type", [
+  "revenue",
+  "patient_outcomes",
+  "operational",
+  "quality",
+  "resource_utilization"
+]);
+
+export const metricPeriodEnum = pgEnum("metric_period", [
+  "daily",
+  "weekly",
+  "monthly",
+  "quarterly",
+  "yearly"
+]);
+
+export const predictiveModelTypeEnum = pgEnum("predictive_model_type", [
+  "readmission_risk",
+  "appointment_no_show",
+  "inventory_demand",
+  "revenue_forecast"
+]);
+
+export const reportFormatEnum = pgEnum("report_format", [
+  "pdf",
+  "excel",
+  "html",
+  "csv",
+  "json"
+]);
+
+export const reportScheduleEnum = pgEnum("report_schedule", [
+  "once",
+  "daily",
+  "weekly",
+  "monthly",
+  "quarterly"
+]);
+
+export const widgetTypeEnum = pgEnum("widget_type", [
+  "chart",
+  "kpi",
+  "table",
+  "gauge",
+  "list"
+]);
+
+export const exportStatusEnum = pgEnum("export_status", [
+  "pending",
+  "processing",
+  "completed",
+  "failed"
+]);
+
 // Currency Configuration Table
 export const currencies = pgTable("currencies", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -4538,6 +4650,213 @@ export const quoteRequests = pgTable("quote_requests", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// ===================================
+// DICOM Medical Imaging System Tables (Phase 15)
+// ===================================
+
+// DICOM Studies - Top level imaging study container
+export const dicomStudies = pgTable("dicom_studies", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  studyInstanceUID: text("study_instance_uid").notNull().unique(), // Unique DICOM identifier
+  studyDate: text("study_date"), // YYYYMMDD format
+  studyTime: text("study_time"), // HHMMSS format
+  studyDescription: text("study_description"),
+  modality: dicomModalityEnum("modality").notNull(),
+  bodyPart: text("body_part"), // Body part examined
+  numberOfSeries: integer("number_of_series").default(0),
+  numberOfImages: integer("number_of_images").default(0),
+  referringPhysician: text("referring_physician"),
+  institutionName: text("institution_name"),
+  status: studyStatusEnum("status").default("pending").notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull()
+}, (table) => ({
+  tenantIdx: index("dicom_studies_tenant_idx").on(table.tenantId),
+  patientIdx: index("dicom_studies_patient_idx").on(table.patientId),
+  studyUIDIdx: index("dicom_studies_uid_idx").on(table.studyInstanceUID),
+  statusIdx: index("dicom_studies_status_idx").on(table.status)
+}));
+
+// DICOM Series - Collection of images within a study
+export const dicomSeries = pgTable("dicom_series", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  studyId: uuid("study_id").references(() => dicomStudies.id, { onDelete: "cascade" }).notNull(),
+  seriesInstanceUID: text("series_instance_uid").notNull().unique(), // Unique series identifier
+  seriesNumber: integer("series_number"),
+  seriesDescription: text("series_description"),
+  modality: dicomModalityEnum("modality").notNull(),
+  numberOfImages: integer("number_of_images").default(0),
+  seriesDate: text("series_date"), // YYYYMMDD format
+  seriesTime: text("series_time"), // HHMMSS format
+  protocolName: text("protocol_name"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull()
+}, (table) => ({
+  studyIdx: index("dicom_series_study_idx").on(table.studyId),
+  seriesUIDIdx: index("dicom_series_uid_idx").on(table.seriesInstanceUID)
+}));
+
+// DICOM Images - Individual medical images
+export const dicomImages = pgTable("dicom_images", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  seriesId: uuid("series_id").references(() => dicomSeries.id, { onDelete: "cascade" }).notNull(),
+  sopInstanceUID: text("sop_instance_uid").notNull().unique(), // Unique image identifier
+  instanceNumber: integer("instance_number"),
+  imageType: text("image_type"), // PRIMARY, SECONDARY, etc.
+  rows: integer("rows"), // Image height in pixels
+  columns: integer("columns"), // Image width in pixels
+  bitsAllocated: integer("bits_allocated"), // 8, 16, etc.
+  acquisitionDate: text("acquisition_date"), // YYYYMMDD format
+  acquisitionTime: text("acquisition_time"), // HHMMSS format
+  filePath: text("file_path").notNull(), // Storage path to DICOM file
+  fileSize: integer("file_size"), // File size in bytes
+  thumbnailPath: text("thumbnail_path"), // Path to thumbnail image
+  isKeyImage: boolean("is_key_image").default(false),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull()
+}, (table) => ({
+  seriesIdx: index("dicom_images_series_idx").on(table.seriesId),
+  sopUIDIdx: index("dicom_images_sop_uid_idx").on(table.sopInstanceUID),
+  filePathIdx: index("dicom_images_file_path_idx").on(table.filePath)
+}));
+
+// PACS Connections - Configuration for external PACS systems
+export const pacsConnections = pgTable("pacs_connections", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  pacsName: text("pacs_name").notNull(),
+  aeTitle: text("ae_title").notNull(), // Application Entity Title
+  host: text("host").notNull(), // IP address or hostname
+  port: integer("port").notNull().default(11112), // DICOM port (typically 104 or 11112)
+  protocol: pacsProtocolEnum("protocol").default("DICOM").notNull(),
+  isActive: boolean("is_active").default(true),
+  lastSync: timestamp("last_sync"),
+  credentialsEncrypted: jsonb("credentials_encrypted"), // Encrypted credentials if needed
+  queryRetrieveLevel: text("query_retrieve_level").default("STUDY"), // PATIENT, STUDY, SERIES, IMAGE
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  tenantIdx: index("pacs_connections_tenant_idx").on(table.tenantId),
+  isActiveIdx: index("pacs_connections_active_idx").on(table.isActive)
+}));
+
+// Imaging Reports - Radiology reports for studies
+export const imagingReports = pgTable("imaging_reports", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  studyId: uuid("study_id").references(() => dicomStudies.id, { onDelete: "cascade" }).notNull(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  reportedBy: uuid("reported_by").references(() => users.id).notNull(), // Radiologist
+  reportDate: timestamp("report_date").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  clinicalIndication: text("clinical_indication"), // Reason for study
+  technique: text("technique"), // Imaging technique used
+  findings: text("findings").notNull(), // Detailed findings
+  impression: text("impression").notNull(), // Summary/conclusion
+  recommendations: text("recommendations"), // Follow-up recommendations
+  status: imagingReportStatusEnum("status").default("draft").notNull(),
+  priority: imagingReportPriorityEnum("priority").default("routine").notNull(),
+  signedAt: timestamp("signed_at"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+}, (table) => ({
+  studyIdx: index("imaging_reports_study_idx").on(table.studyId),
+  tenantIdx: index("imaging_reports_tenant_idx").on(table.tenantId),
+  reportedByIdx: index("imaging_reports_reported_by_idx").on(table.reportedBy),
+  statusIdx: index("imaging_reports_status_idx").on(table.status)
+}));
+
+// DICOM Annotations - User annotations on images
+export const dicomAnnotations = pgTable("dicom_annotations", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  imageId: uuid("image_id").references(() => dicomImages.id, { onDelete: "cascade" }).notNull(),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  annotationType: dicomAnnotationTypeEnum("annotation_type").notNull(),
+  annotationData: jsonb("annotation_data").notNull(), // Coordinates, measurements, etc.
+  description: text("description"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull()
+}, (table) => ({
+  imageIdx: index("dicom_annotations_image_idx").on(table.imageId),
+  tenantIdx: index("dicom_annotations_tenant_idx").on(table.tenantId),
+  userIdx: index("dicom_annotations_user_idx").on(table.userId)
+}));
+
+// ===================================
+// Advanced Analytics & BI Tables (Phase 13)
+// ===================================
+
+export const analyticsMetrics = pgTable("analytics_metrics", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  metricType: metricTypeEnum("metric_type").notNull(),
+  metricName: text("metric_name").notNull(),
+  value: decimal("value", { precision: 15, scale: 2 }).notNull(),
+  unit: text("unit"), // %, $, patients, hours, etc.
+  period: metricPeriodEnum("period").notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  metadata: jsonb("metadata"), // Additional context like department, service type, etc.
+  calculatedAt: timestamp("calculated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const predictiveModels = pgTable("predictive_models", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  modelName: text("model_name").notNull(),
+  modelType: predictiveModelTypeEnum("model_type").notNull(),
+  algorithm: text("algorithm").notNull(), // logistic_regression, random_forest, etc.
+  accuracy: decimal("accuracy", { precision: 5, scale: 2 }), // Model accuracy percentage
+  lastTrained: timestamp("last_trained"),
+  predictions: jsonb("predictions"), // Store latest predictions
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const biReports = pgTable("bi_reports", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  reportName: text("report_name").notNull(),
+  reportType: reportTypeEnum("report_type").notNull(),
+  parameters: jsonb("parameters"), // Filters, date ranges, departments, etc.
+  schedule: reportScheduleEnum("schedule").default("once"),
+  lastGenerated: timestamp("last_generated"),
+  recipients: jsonb("recipients"), // Array of email addresses
+  format: reportFormatEnum("format").default("pdf"),
+  filePath: text("file_path"), // Path to generated file
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const dashboardWidgets = pgTable("dashboard_widgets", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  widgetType: widgetTypeEnum("widget_type").notNull(),
+  configuration: jsonb("configuration").notNull(), // Chart config, data source, filters, etc.
+  position: integer("position").default(0), // Order on dashboard
+  size: text("size").default("medium"), // small, medium, large, full
+  isVisible: boolean("is_visible").default(true),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
+export const dataExports = pgTable("data_exports", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  exportName: text("export_name").notNull(),
+  dataSource: text("data_source").notNull(), // patients, appointments, prescriptions, etc.
+  filters: jsonb("filters"), // Query filters
+  format: reportFormatEnum("format").notNull(),
+  status: exportStatusEnum("status").default("pending").notNull(),
+  filePath: text("file_path"),
+  requestedBy: uuid("requested_by").references(() => users.id).notNull(),
+  requestedAt: timestamp("requested_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  completedAt: timestamp("completed_at"),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 // Marketplace Relations
 export const marketplaceProductsRelations = relations(marketplaceProducts, ({ one, many }) => ({
   supplierTenant: one(tenants, {
@@ -5090,3 +5409,103 @@ export type InsertApiUsageLog = z.infer<typeof insertApiUsageLogSchema>;
 
 export type WebhookEndpoint = typeof webhookEndpoints.$inferSelect;
 export type InsertWebhookEndpoint = z.infer<typeof insertWebhookEndpointSchema>;
+
+// Advanced Analytics & BI Insert Schemas (Phase 13)
+export const insertAnalyticsMetricSchema = createInsertSchema(analyticsMetrics).omit({
+  id: true,
+  calculatedAt: true,
+  createdAt: true
+});
+
+export const insertPredictiveModelSchema = createInsertSchema(predictiveModels).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertBiReportSchema = createInsertSchema(biReports).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertDashboardWidgetSchema = createInsertSchema(dashboardWidgets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertDataExportSchema = createInsertSchema(dataExports).omit({
+  id: true,
+  requestedAt: true,
+  createdAt: true
+});
+
+// Advanced Analytics & BI Types
+export type AnalyticsMetric = typeof analyticsMetrics.$inferSelect;
+export type InsertAnalyticsMetric = z.infer<typeof insertAnalyticsMetricSchema>;
+
+export type PredictiveModel = typeof predictiveModels.$inferSelect;
+export type InsertPredictiveModel = z.infer<typeof insertPredictiveModelSchema>;
+
+export type BiReport = typeof biReports.$inferSelect;
+export type InsertBiReport = z.infer<typeof insertBiReportSchema>;
+
+export type DashboardWidget = typeof dashboardWidgets.$inferSelect;
+export type InsertDashboardWidget = z.infer<typeof insertDashboardWidgetSchema>;
+
+export type DataExport = typeof dataExports.$inferSelect;
+export type InsertDataExport = z.infer<typeof insertDataExportSchema>;
+
+// DICOM Medical Imaging System Insert Schemas (Phase 15)
+export const insertDicomStudySchema = createInsertSchema(dicomStudies).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertDicomSeriesSchema = createInsertSchema(dicomSeries).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertDicomImageSchema = createInsertSchema(dicomImages).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertPacsConnectionSchema = createInsertSchema(pacsConnections).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertImagingReportSchema = createInsertSchema(imagingReports).omit({
+  id: true,
+  reportDate: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertDicomAnnotationSchema = createInsertSchema(dicomAnnotations).omit({
+  id: true,
+  createdAt: true
+});
+
+// DICOM Medical Imaging System Types
+export type DicomStudy = typeof dicomStudies.$inferSelect;
+export type InsertDicomStudy = z.infer<typeof insertDicomStudySchema>;
+
+export type DicomSeries = typeof dicomSeries.$inferSelect;
+export type InsertDicomSeries = z.infer<typeof insertDicomSeriesSchema>;
+
+export type DicomImage = typeof dicomImages.$inferSelect;
+export type InsertDicomImage = z.infer<typeof insertDicomImageSchema>;
+
+export type PacsConnection = typeof pacsConnections.$inferSelect;
+export type InsertPacsConnection = z.infer<typeof insertPacsConnectionSchema>;
+
+export type ImagingReport = typeof imagingReports.$inferSelect;
+export type InsertImagingReport = z.infer<typeof insertImagingReportSchema>;
+
+export type DicomAnnotation = typeof dicomAnnotations.$inferSelect;
+export type InsertDicomAnnotation = z.infer<typeof insertDicomAnnotationSchema>;

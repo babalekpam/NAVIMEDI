@@ -269,7 +269,25 @@ import {
   type ApiUsageLog,
   type InsertApiUsageLog,
   type WebhookEndpoint,
-  type InsertWebhookEndpoint
+  type InsertWebhookEndpoint,
+  dicomStudies,
+  dicomSeries,
+  dicomImages,
+  pacsConnections,
+  imagingReports,
+  dicomAnnotations,
+  type DicomStudy,
+  type InsertDicomStudy,
+  type DicomSeries,
+  type InsertDicomSeries,
+  type DicomImage,
+  type InsertDicomImage,
+  type PacsConnection,
+  type InsertPacsConnection,
+  type ImagingReport,
+  type InsertImagingReport,
+  type DicomAnnotation,
+  type InsertDicomAnnotation
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, like, or, isNull, gt, ilike, gte, lte, lt, ne, inArray, asc, isNotNull } from "drizzle-orm";
@@ -921,6 +939,50 @@ export interface IStorage {
   deleteWebhookEndpoint(id: string, tenantId: string): Promise<boolean>;
   incrementWebhookFailureCount(id: string, tenantId: string): Promise<void>;
   updateWebhookLastTriggered(id: string, tenantId: string): Promise<void>;
+
+  // DICOM Medical Imaging System (Phase 15)
+  // DICOM Studies
+  createDicomStudy(study: InsertDicomStudy): Promise<DicomStudy>;
+  getDicomStudies(tenantId: string, filters?: { patientId?: string; modality?: string; status?: string; fromDate?: string; toDate?: string }): Promise<DicomStudy[]>;
+  getDicomStudyById(id: string, tenantId: string): Promise<DicomStudy | undefined>;
+  getDicomStudyByUID(studyInstanceUID: string, tenantId: string): Promise<DicomStudy | undefined>;
+  updateDicomStudy(id: string, updates: Partial<DicomStudy>, tenantId: string): Promise<DicomStudy | undefined>;
+  deleteDicomStudy(id: string, tenantId: string): Promise<boolean>;
+  
+  // DICOM Series
+  createDicomSeries(series: InsertDicomSeries): Promise<DicomSeries>;
+  getDicomSeriesByStudy(studyId: string, tenantId: string): Promise<DicomSeries[]>;
+  getDicomSeriesById(id: string, tenantId: string): Promise<DicomSeries | undefined>;
+  updateDicomSeries(id: string, updates: Partial<DicomSeries>, tenantId: string): Promise<DicomSeries | undefined>;
+  
+  // DICOM Images
+  createDicomImage(image: InsertDicomImage): Promise<DicomImage>;
+  getDicomImagesBySeries(seriesId: string, tenantId: string): Promise<DicomImage[]>;
+  getDicomImageById(id: string, tenantId: string): Promise<DicomImage | undefined>;
+  getDicomImageByUID(sopInstanceUID: string, tenantId: string): Promise<DicomImage | undefined>;
+  updateDicomImage(id: string, updates: Partial<DicomImage>, tenantId: string): Promise<DicomImage | undefined>;
+  
+  // PACS Connections
+  createPacsConnection(connection: InsertPacsConnection): Promise<PacsConnection>;
+  getPacsConnections(tenantId: string): Promise<PacsConnection[]>;
+  getPacsConnectionById(id: string, tenantId: string): Promise<PacsConnection | undefined>;
+  updatePacsConnection(id: string, updates: Partial<PacsConnection>, tenantId: string): Promise<PacsConnection | undefined>;
+  deletePacsConnection(id: string, tenantId: string): Promise<boolean>;
+  
+  // Imaging Reports
+  createImagingReport(report: InsertImagingReport): Promise<ImagingReport>;
+  getImagingReports(tenantId: string, filters?: { status?: string; priority?: string; fromDate?: Date; toDate?: Date }): Promise<ImagingReport[]>;
+  getImagingReportById(id: string, tenantId: string): Promise<ImagingReport | undefined>;
+  getImagingReportByStudy(studyId: string, tenantId: string): Promise<ImagingReport | undefined>;
+  updateImagingReport(id: string, updates: Partial<ImagingReport>, tenantId: string): Promise<ImagingReport | undefined>;
+  finalizeImagingReport(id: string, tenantId: string): Promise<ImagingReport | undefined>;
+  
+  // DICOM Annotations
+  createDicomAnnotation(annotation: InsertDicomAnnotation): Promise<DicomAnnotation>;
+  getDicomAnnotationsByImage(imageId: string, tenantId: string): Promise<DicomAnnotation[]>;
+  getDicomAnnotationById(id: string, tenantId: string): Promise<DicomAnnotation | undefined>;
+  updateDicomAnnotation(id: string, updates: Partial<DicomAnnotation>, tenantId: string): Promise<DicomAnnotation | undefined>;
+  deleteDicomAnnotation(id: string, tenantId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -7894,6 +7956,277 @@ export class DatabaseStorage implements IStorage {
     await db.update(webhookEndpoints)
       .set({ lastTriggered: new Date(), failureCount: 0 })
       .where(and(eq(webhookEndpoints.id, id), eq(webhookEndpoints.tenantId, tenantId)));
+  }
+
+  // ===================================
+  // DICOM Medical Imaging System (Phase 15)
+  // ===================================
+
+  // DICOM Studies
+  async createDicomStudy(study: InsertDicomStudy): Promise<DicomStudy> {
+    const [result] = await db.insert(dicomStudies).values(study).returning();
+    return result;
+  }
+
+  async getDicomStudies(tenantId: string, filters?: { patientId?: string; modality?: string; status?: string; fromDate?: string; toDate?: string }): Promise<DicomStudy[]> {
+    const conditions = [eq(dicomStudies.tenantId, tenantId)];
+    
+    if (filters?.patientId) {
+      conditions.push(eq(dicomStudies.patientId, filters.patientId));
+    }
+    if (filters?.modality) {
+      conditions.push(eq(dicomStudies.modality, filters.modality as any));
+    }
+    if (filters?.status) {
+      conditions.push(eq(dicomStudies.status, filters.status as any));
+    }
+    if (filters?.fromDate) {
+      conditions.push(gte(dicomStudies.studyDate, filters.fromDate));
+    }
+    if (filters?.toDate) {
+      conditions.push(lte(dicomStudies.studyDate, filters.toDate));
+    }
+
+    return await db.select().from(dicomStudies)
+      .where(and(...conditions))
+      .orderBy(desc(dicomStudies.studyDate));
+  }
+
+  async getDicomStudyById(id: string, tenantId: string): Promise<DicomStudy | undefined> {
+    const [result] = await db.select().from(dicomStudies)
+      .where(and(eq(dicomStudies.id, id), eq(dicomStudies.tenantId, tenantId)));
+    return result;
+  }
+
+  async getDicomStudyByUID(studyInstanceUID: string, tenantId: string): Promise<DicomStudy | undefined> {
+    const [result] = await db.select().from(dicomStudies)
+      .where(and(eq(dicomStudies.studyInstanceUID, studyInstanceUID), eq(dicomStudies.tenantId, tenantId)));
+    return result;
+  }
+
+  async updateDicomStudy(id: string, updates: Partial<DicomStudy>, tenantId: string): Promise<DicomStudy | undefined> {
+    const [result] = await db.update(dicomStudies)
+      .set(updates)
+      .where(and(eq(dicomStudies.id, id), eq(dicomStudies.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async deleteDicomStudy(id: string, tenantId: string): Promise<boolean> {
+    // Soft delete by archiving the study
+    const result = await db.update(dicomStudies)
+      .set({ status: 'archived' })
+      .where(and(eq(dicomStudies.id, id), eq(dicomStudies.tenantId, tenantId)));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // DICOM Series
+  async createDicomSeries(series: InsertDicomSeries): Promise<DicomSeries> {
+    const [result] = await db.insert(dicomSeries).values(series).returning();
+    return result;
+  }
+
+  async getDicomSeriesByStudy(studyId: string, tenantId: string): Promise<DicomSeries[]> {
+    // Join with studies table to enforce tenant isolation
+    return await db.select({ series: dicomSeries })
+      .from(dicomSeries)
+      .innerJoin(dicomStudies, eq(dicomSeries.studyId, dicomStudies.id))
+      .where(and(eq(dicomSeries.studyId, studyId), eq(dicomStudies.tenantId, tenantId)))
+      .then(results => results.map(r => r.series))
+      .then(series => series.sort((a, b) => (a.seriesNumber || 0) - (b.seriesNumber || 0)));
+  }
+
+  async getDicomSeriesById(id: string, tenantId: string): Promise<DicomSeries | undefined> {
+    const results = await db.select({ series: dicomSeries })
+      .from(dicomSeries)
+      .innerJoin(dicomStudies, eq(dicomSeries.studyId, dicomStudies.id))
+      .where(and(eq(dicomSeries.id, id), eq(dicomStudies.tenantId, tenantId)))
+      .limit(1);
+    return results[0]?.series;
+  }
+
+  async updateDicomSeries(id: string, updates: Partial<DicomSeries>, tenantId: string): Promise<DicomSeries | undefined> {
+    // Verify tenant access through study
+    const series = await this.getDicomSeriesById(id, tenantId);
+    if (!series) return undefined;
+    
+    const [result] = await db.update(dicomSeries)
+      .set(updates)
+      .where(eq(dicomSeries.id, id))
+      .returning();
+    return result;
+  }
+
+  // DICOM Images
+  async createDicomImage(image: InsertDicomImage): Promise<DicomImage> {
+    const [result] = await db.insert(dicomImages).values(image).returning();
+    return result;
+  }
+
+  async getDicomImagesBySeries(seriesId: string, tenantId: string): Promise<DicomImage[]> {
+    // Join through series and studies for tenant isolation
+    return await db.select({ image: dicomImages })
+      .from(dicomImages)
+      .innerJoin(dicomSeries, eq(dicomImages.seriesId, dicomSeries.id))
+      .innerJoin(dicomStudies, eq(dicomSeries.studyId, dicomStudies.id))
+      .where(and(eq(dicomImages.seriesId, seriesId), eq(dicomStudies.tenantId, tenantId)))
+      .then(results => results.map(r => r.image))
+      .then(images => images.sort((a, b) => (a.instanceNumber || 0) - (b.instanceNumber || 0)));
+  }
+
+  async getDicomImageById(id: string, tenantId: string): Promise<DicomImage | undefined> {
+    const results = await db.select({ image: dicomImages })
+      .from(dicomImages)
+      .innerJoin(dicomSeries, eq(dicomImages.seriesId, dicomSeries.id))
+      .innerJoin(dicomStudies, eq(dicomSeries.studyId, dicomStudies.id))
+      .where(and(eq(dicomImages.id, id), eq(dicomStudies.tenantId, tenantId)))
+      .limit(1);
+    return results[0]?.image;
+  }
+
+  async getDicomImageByUID(sopInstanceUID: string, tenantId: string): Promise<DicomImage | undefined> {
+    const results = await db.select({ image: dicomImages })
+      .from(dicomImages)
+      .innerJoin(dicomSeries, eq(dicomImages.seriesId, dicomSeries.id))
+      .innerJoin(dicomStudies, eq(dicomSeries.studyId, dicomStudies.id))
+      .where(and(eq(dicomImages.sopInstanceUID, sopInstanceUID), eq(dicomStudies.tenantId, tenantId)))
+      .limit(1);
+    return results[0]?.image;
+  }
+
+  async updateDicomImage(id: string, updates: Partial<DicomImage>, tenantId: string): Promise<DicomImage | undefined> {
+    // Verify tenant access
+    const image = await this.getDicomImageById(id, tenantId);
+    if (!image) return undefined;
+    
+    const [result] = await db.update(dicomImages)
+      .set(updates)
+      .where(eq(dicomImages.id, id))
+      .returning();
+    return result;
+  }
+
+  // PACS Connections
+  async createPacsConnection(connection: InsertPacsConnection): Promise<PacsConnection> {
+    const [result] = await db.insert(pacsConnections).values(connection).returning();
+    return result;
+  }
+
+  async getPacsConnections(tenantId: string): Promise<PacsConnection[]> {
+    return await db.select().from(pacsConnections)
+      .where(eq(pacsConnections.tenantId, tenantId))
+      .orderBy(desc(pacsConnections.createdAt));
+  }
+
+  async getPacsConnectionById(id: string, tenantId: string): Promise<PacsConnection | undefined> {
+    const [result] = await db.select().from(pacsConnections)
+      .where(and(eq(pacsConnections.id, id), eq(pacsConnections.tenantId, tenantId)));
+    return result;
+  }
+
+  async updatePacsConnection(id: string, updates: Partial<PacsConnection>, tenantId: string): Promise<PacsConnection | undefined> {
+    const [result] = await db.update(pacsConnections)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(pacsConnections.id, id), eq(pacsConnections.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async deletePacsConnection(id: string, tenantId: string): Promise<boolean> {
+    const result = await db.delete(pacsConnections)
+      .where(and(eq(pacsConnections.id, id), eq(pacsConnections.tenantId, tenantId)));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Imaging Reports
+  async createImagingReport(report: InsertImagingReport): Promise<ImagingReport> {
+    const [result] = await db.insert(imagingReports).values(report).returning();
+    return result;
+  }
+
+  async getImagingReports(tenantId: string, filters?: { status?: string; priority?: string; fromDate?: Date; toDate?: Date }): Promise<ImagingReport[]> {
+    const conditions = [eq(imagingReports.tenantId, tenantId)];
+    
+    if (filters?.status) {
+      conditions.push(eq(imagingReports.status, filters.status as any));
+    }
+    if (filters?.priority) {
+      conditions.push(eq(imagingReports.priority, filters.priority as any));
+    }
+    if (filters?.fromDate) {
+      conditions.push(gte(imagingReports.reportDate, filters.fromDate));
+    }
+    if (filters?.toDate) {
+      conditions.push(lte(imagingReports.reportDate, filters.toDate));
+    }
+
+    return await db.select().from(imagingReports)
+      .where(and(...conditions))
+      .orderBy(desc(imagingReports.reportDate));
+  }
+
+  async getImagingReportById(id: string, tenantId: string): Promise<ImagingReport | undefined> {
+    const [result] = await db.select().from(imagingReports)
+      .where(and(eq(imagingReports.id, id), eq(imagingReports.tenantId, tenantId)));
+    return result;
+  }
+
+  async getImagingReportByStudy(studyId: string, tenantId: string): Promise<ImagingReport | undefined> {
+    const [result] = await db.select().from(imagingReports)
+      .where(and(eq(imagingReports.studyId, studyId), eq(imagingReports.tenantId, tenantId)));
+    return result;
+  }
+
+  async updateImagingReport(id: string, updates: Partial<ImagingReport>, tenantId: string): Promise<ImagingReport | undefined> {
+    const [result] = await db.update(imagingReports)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(imagingReports.id, id), eq(imagingReports.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async finalizeImagingReport(id: string, tenantId: string): Promise<ImagingReport | undefined> {
+    const [result] = await db.update(imagingReports)
+      .set({ 
+        status: 'final',
+        signedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(and(eq(imagingReports.id, id), eq(imagingReports.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  // DICOM Annotations
+  async createDicomAnnotation(annotation: InsertDicomAnnotation): Promise<DicomAnnotation> {
+    const [result] = await db.insert(dicomAnnotations).values(annotation).returning();
+    return result;
+  }
+
+  async getDicomAnnotationsByImage(imageId: string, tenantId: string): Promise<DicomAnnotation[]> {
+    return await db.select().from(dicomAnnotations)
+      .where(and(eq(dicomAnnotations.imageId, imageId), eq(dicomAnnotations.tenantId, tenantId)))
+      .orderBy(desc(dicomAnnotations.createdAt));
+  }
+
+  async getDicomAnnotationById(id: string, tenantId: string): Promise<DicomAnnotation | undefined> {
+    const [result] = await db.select().from(dicomAnnotations)
+      .where(and(eq(dicomAnnotations.id, id), eq(dicomAnnotations.tenantId, tenantId)));
+    return result;
+  }
+
+  async updateDicomAnnotation(id: string, updates: Partial<DicomAnnotation>, tenantId: string): Promise<DicomAnnotation | undefined> {
+    const [result] = await db.update(dicomAnnotations)
+      .set(updates)
+      .where(and(eq(dicomAnnotations.id, id), eq(dicomAnnotations.tenantId, tenantId)))
+      .returning();
+    return result;
+  }
+
+  async deleteDicomAnnotation(id: string, tenantId: string): Promise<boolean> {
+    const result = await db.delete(dicomAnnotations)
+      .where(and(eq(dicomAnnotations.id, id), eq(dicomAnnotations.tenantId, tenantId)));
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 }
 

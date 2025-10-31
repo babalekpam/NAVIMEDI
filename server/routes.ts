@@ -28,6 +28,7 @@ import { sendEmail } from "./email-service";
 import { navimedAI } from "./navimed-ai-service";
 import { inventoryService } from "./inventory-service";
 import { generateOpenAPISpec, apiEndpoints as docEndpoints } from "./api-docs-generator";
+import * as dicomService from "./dicom-service";
 import multer from "multer";
 import csv from "csv-parser";
 import { Readable } from "stream";
@@ -7468,6 +7469,515 @@ to the patient and authorized healthcare providers.
   // Register analytics routes
   console.log('📊 Registering analytics routes...');
   registerAnalyticsRoutes(app);
+
+  // ===================================
+  // DICOM MEDICAL IMAGING SYSTEM (Phase 15)
+  // ===================================
+  console.log('🏥 Registering DICOM medical imaging routes...');
+
+  // DICOM Study Management
+  // GET /api/dicom/studies - List DICOM studies with filtering
+  app.get('/api/dicom/studies', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const { patientId, modality, status, fromDate, toDate } = req.query;
+      const studies = await storage.getDicomStudies(req.tenantId, {
+        patientId,
+        modality,
+        status,
+        fromDate,
+        toDate
+      });
+      
+      res.json(studies);
+    } catch (error) {
+      console.error('Get DICOM studies error:', error);
+      res.status(500).json({ message: 'Failed to fetch DICOM studies' });
+    }
+  });
+
+  // GET /api/dicom/studies/:id - Get study details with series
+  app.get('/api/dicom/studies/:id', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const study = await storage.getDicomStudyById(req.params.id, req.tenantId);
+      if (!study) {
+        return res.status(404).json({ message: 'Study not found' });
+      }
+      
+      const series = await storage.getDicomSeriesByStudy(study.id, req.tenantId);
+      
+      res.json({ ...study, series });
+    } catch (error) {
+      console.error('Get DICOM study error:', error);
+      res.status(500).json({ message: 'Failed to fetch study details' });
+    }
+  });
+
+  // POST /api/dicom/studies/upload - Upload DICOM files
+  app.post('/api/dicom/studies/upload', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      // TODO: Integrate with dcmjs/Orthanc for real DICOM file parsing
+      // For now, accept metadata in request body as a placeholder
+      const { patientId, studyInstanceUID, studyDescription, modality, bodyPart } = req.body;
+      
+      const study = await storage.createDicomStudy({
+        tenantId: req.tenantId,
+        patientId,
+        studyInstanceUID: studyInstanceUID || dicomService.generateDicomUID(),
+        studyDate: new Date().toISOString().split('T')[0],
+        studyTime: new Date().toTimeString().split(' ')[0],
+        studyDescription: studyDescription || 'Uploaded Study',
+        modality: modality || 'CT',
+        bodyPart: bodyPart || 'CHEST',
+        numberOfSeries: 0,
+        numberOfImages: 0,
+        status: 'pending'
+      });
+      
+      res.status(201).json(study);
+    } catch (error) {
+      console.error('Upload DICOM study error:', error);
+      res.status(500).json({ message: 'Failed to upload DICOM study' });
+    }
+  });
+
+  // GET /api/dicom/studies/:id/series - Get all series for study
+  app.get('/api/dicom/studies/:id/series', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const series = await storage.getDicomSeriesByStudy(req.params.id, req.tenantId);
+      res.json(series);
+    } catch (error) {
+      console.error('Get study series error:', error);
+      res.status(500).json({ message: 'Failed to fetch study series' });
+    }
+  });
+
+  // GET /api/dicom/studies/:id/download - Download study as ZIP
+  app.get('/api/dicom/studies/:id/download', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const study = await storage.getDicomStudyById(req.params.id, req.tenantId);
+      if (!study) {
+        return res.status(404).json({ message: 'Study not found' });
+      }
+      
+      // TODO: Implement ZIP file creation with DICOM files
+      res.status(501).json({ message: 'Study download not yet implemented' });
+    } catch (error) {
+      console.error('Download study error:', error);
+      res.status(500).json({ message: 'Failed to download study' });
+    }
+  });
+
+  // DELETE /api/dicom/studies/:id - Archive/delete study
+  app.delete('/api/dicom/studies/:id', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const deleted = await storage.deleteDicomStudy(req.params.id, req.tenantId);
+      if (!deleted) {
+        return res.status(404).json({ message: 'Study not found' });
+      }
+      
+      res.json({ message: 'Study archived successfully' });
+    } catch (error) {
+      console.error('Delete study error:', error);
+      res.status(500).json({ message: 'Failed to archive study' });
+    }
+  });
+
+  // DICOM Image Management
+  // GET /api/dicom/images/:id - Get image metadata
+  app.get('/api/dicom/images/:id', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const image = await storage.getDicomImageById(req.params.id, req.tenantId);
+      if (!image) {
+        return res.status(404).json({ message: 'Image not found' });
+      }
+      
+      res.json(image);
+    } catch (error) {
+      console.error('Get DICOM image error:', error);
+      res.status(500).json({ message: 'Failed to fetch image metadata' });
+    }
+  });
+
+  // GET /api/dicom/images/:id/view - View DICOM image (converted to web format)
+  app.get('/api/dicom/images/:id/view', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const image = await storage.getDicomImageById(req.params.id, req.tenantId);
+      if (!image) {
+        return res.status(404).json({ message: 'Image not found' });
+      }
+      
+      // TODO: Integrate with dcmjs to convert DICOM to viewable format
+      // For now, return placeholder data
+      res.json({
+        imageId: image.id,
+        format: 'jpeg',
+        dataUrl: 'data:image/jpeg;base64,/9j/4AAQSkZJRg...',
+        width: image.columns,
+        height: image.rows
+      });
+    } catch (error) {
+      console.error('View DICOM image error:', error);
+      res.status(500).json({ message: 'Failed to render image' });
+    }
+  });
+
+  // GET /api/dicom/images/:id/download - Download original DICOM file
+  app.get('/api/dicom/images/:id/download', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const image = await storage.getDicomImageById(req.params.id, req.tenantId);
+      if (!image) {
+        return res.status(404).json({ message: 'Image not found' });
+      }
+      
+      // TODO: Serve actual DICOM file from storage
+      res.status(501).json({ message: 'DICOM download not yet implemented' });
+    } catch (error) {
+      console.error('Download DICOM error:', error);
+      res.status(500).json({ message: 'Failed to download DICOM file' });
+    }
+  });
+
+  // GET /api/dicom/images/:id/thumbnail - Get thumbnail image
+  app.get('/api/dicom/images/:id/thumbnail', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const image = await storage.getDicomImageById(req.params.id, req.tenantId);
+      if (!image) {
+        return res.status(404).json({ message: 'Image not found' });
+      }
+      
+      // TODO: Serve thumbnail from storage
+      res.json({
+        thumbnailUrl: image.thumbnailPath || '/placeholder-dicom-thumbnail.jpg'
+      });
+    } catch (error) {
+      console.error('Get thumbnail error:', error);
+      res.status(500).json({ message: 'Failed to fetch thumbnail' });
+    }
+  });
+
+  // GET /api/dicom/series/:id/images - Get all images for series
+  app.get('/api/dicom/series/:id/images', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const images = await storage.getDicomImagesBySeries(req.params.id, req.tenantId);
+      res.json(images);
+    } catch (error) {
+      console.error('Get series images error:', error);
+      res.status(500).json({ message: 'Failed to fetch series images' });
+    }
+  });
+
+  // PACS Integration
+  // GET /api/pacs/connections - List configured PACS connections
+  app.get('/api/pacs/connections', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const connections = await storage.getPacsConnections(req.tenantId);
+      res.json(connections);
+    } catch (error) {
+      console.error('Get PACS connections error:', error);
+      res.status(500).json({ message: 'Failed to fetch PACS connections' });
+    }
+  });
+
+  // POST /api/pacs/connections - Add PACS connection
+  app.post('/api/pacs/connections', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const { pacsName, aeTitle, host, port, protocol } = req.body;
+      
+      const connection = await storage.createPacsConnection({
+        tenantId: req.tenantId,
+        pacsName,
+        aeTitle,
+        host,
+        port: parseInt(port),
+        protocol: protocol || 'DICOM',
+        isActive: true,
+        credentialsEncrypted: '{}',
+        queryRetrieveLevel: 'STUDY'
+      });
+      
+      res.status(201).json(connection);
+    } catch (error) {
+      console.error('Create PACS connection error:', error);
+      res.status(500).json({ message: 'Failed to create PACS connection' });
+    }
+  });
+
+  // PATCH /api/pacs/connections/:id - Update PACS connection
+  app.patch('/api/pacs/connections/:id', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const connection = await storage.updatePacsConnection(req.params.id, req.body, req.tenantId);
+      if (!connection) {
+        return res.status(404).json({ message: 'PACS connection not found' });
+      }
+      
+      res.json(connection);
+    } catch (error) {
+      console.error('Update PACS connection error:', error);
+      res.status(500).json({ message: 'Failed to update PACS connection' });
+    }
+  });
+
+  // DELETE /api/pacs/connections/:id - Delete PACS connection
+  app.delete('/api/pacs/connections/:id', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const deleted = await storage.deletePacsConnection(req.params.id, req.tenantId);
+      if (!deleted) {
+        return res.status(404).json({ message: 'PACS connection not found' });
+      }
+      
+      res.json({ message: 'PACS connection deleted successfully' });
+    } catch (error) {
+      console.error('Delete PACS connection error:', error);
+      res.status(500).json({ message: 'Failed to delete PACS connection' });
+    }
+  });
+
+  // POST /api/pacs/query - Query PACS for studies (C-FIND)
+  app.post('/api/pacs/query', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const { connectionId, patientName, patientId, studyDate, modality } = req.body;
+      
+      const connection = await storage.getPacsConnectionById(connectionId, req.tenantId);
+      if (!connection) {
+        return res.status(404).json({ message: 'PACS connection not found' });
+      }
+      
+      // TODO: Integrate with dcm4che/Orthanc for real DICOM C-FIND
+      const mockResults = await dicomService.queryPacs(connection, {
+        patientName,
+        patientId,
+        studyDate,
+        modality
+      });
+      
+      res.json({ results: mockResults });
+    } catch (error) {
+      console.error('PACS query error:', error);
+      res.status(500).json({ message: 'Failed to query PACS' });
+    }
+  });
+
+  // POST /api/pacs/retrieve - Retrieve study from PACS (C-MOVE)
+  app.post('/api/pacs/retrieve', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const { connectionId, studyInstanceUID } = req.body;
+      
+      const connection = await storage.getPacsConnectionById(connectionId, req.tenantId);
+      if (!connection) {
+        return res.status(404).json({ message: 'PACS connection not found' });
+      }
+      
+      // TODO: Integrate with dcm4che/Orthanc for real DICOM C-MOVE
+      const result = await dicomService.retrieveStudy(connection, studyInstanceUID);
+      
+      res.json({ message: 'Study retrieval initiated', result });
+    } catch (error) {
+      console.error('PACS retrieve error:', error);
+      res.status(500).json({ message: 'Failed to retrieve study from PACS' });
+    }
+  });
+
+  // POST /api/pacs/send - Send study to PACS (C-STORE)
+  app.post('/api/pacs/send', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const { connectionId, studyId } = req.body;
+      
+      const connection = await storage.getPacsConnectionById(connectionId, req.tenantId);
+      if (!connection) {
+        return res.status(404).json({ message: 'PACS connection not found' });
+      }
+      
+      const study = await storage.getDicomStudyById(studyId, req.tenantId);
+      if (!study) {
+        return res.status(404).json({ message: 'Study not found' });
+      }
+      
+      // TODO: Integrate with dcm4che/Orthanc for real DICOM C-STORE
+      const result = await dicomService.storeStudy(connection, '/path/to/study');
+      
+      res.json({ message: 'Study sent to PACS successfully', result });
+    } catch (error) {
+      console.error('PACS send error:', error);
+      res.status(500).json({ message: 'Failed to send study to PACS' });
+    }
+  });
+
+  // POST /api/pacs/test-connection - Test PACS connectivity
+  app.post('/api/pacs/test-connection', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const { connectionId } = req.body;
+      
+      const connection = await storage.getPacsConnectionById(connectionId, req.tenantId);
+      if (!connection) {
+        return res.status(404).json({ message: 'PACS connection not found' });
+      }
+      
+      // TODO: Integrate with real DICOM echo (C-ECHO)
+      const isConnected = await dicomService.testPacsConnection(connection);
+      
+      res.json({ 
+        connected: isConnected,
+        message: isConnected ? 'PACS connection successful' : 'PACS connection failed'
+      });
+    } catch (error) {
+      console.error('Test PACS connection error:', error);
+      res.status(500).json({ message: 'Failed to test PACS connection' });
+    }
+  });
+
+  // Imaging Reports
+  // GET /api/imaging-reports - List radiology reports
+  app.get('/api/imaging-reports', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const { status, priority, fromDate, toDate } = req.query;
+      const reports = await storage.getImagingReports(req.tenantId, {
+        status,
+        priority,
+        fromDate: fromDate ? new Date(fromDate) : undefined,
+        toDate: toDate ? new Date(toDate) : undefined
+      });
+      
+      res.json(reports);
+    } catch (error) {
+      console.error('Get imaging reports error:', error);
+      res.status(500).json({ message: 'Failed to fetch imaging reports' });
+    }
+  });
+
+  // GET /api/imaging-reports/:id - Get report details
+  app.get('/api/imaging-reports/:id', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const report = await storage.getImagingReportById(req.params.id, req.tenantId);
+      if (!report) {
+        return res.status(404).json({ message: 'Report not found' });
+      }
+      
+      res.json(report);
+    } catch (error) {
+      console.error('Get imaging report error:', error);
+      res.status(500).json({ message: 'Failed to fetch report details' });
+    }
+  });
+
+  // POST /api/imaging-reports - Create new report
+  app.post('/api/imaging-reports', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const { studyId, findings, impression, recommendations, priority } = req.body;
+      
+      const report = await storage.createImagingReport({
+        studyId,
+        tenantId: req.tenantId,
+        reportedBy: req.userId,
+        reportDate: new Date(),
+        findings: findings || '',
+        impression: impression || '',
+        recommendations: recommendations || '',
+        status: 'draft',
+        priority: priority || 'routine'
+      });
+      
+      res.status(201).json(report);
+    } catch (error) {
+      console.error('Create imaging report error:', error);
+      res.status(500).json({ message: 'Failed to create imaging report' });
+    }
+  });
+
+  // PATCH /api/imaging-reports/:id - Update report
+  app.patch('/api/imaging-reports/:id', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const report = await storage.updateImagingReport(req.params.id, req.body, req.tenantId);
+      if (!report) {
+        return res.status(404).json({ message: 'Report not found' });
+      }
+      
+      res.json(report);
+    } catch (error) {
+      console.error('Update imaging report error:', error);
+      res.status(500).json({ message: 'Failed to update imaging report' });
+    }
+  });
+
+  // POST /api/imaging-reports/:id/finalize - Finalize report (draft → final)
+  app.post('/api/imaging-reports/:id/finalize', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const report = await storage.finalizeImagingReport(req.params.id, req.tenantId);
+      if (!report) {
+        return res.status(404).json({ message: 'Report not found' });
+      }
+      
+      res.json(report);
+    } catch (error) {
+      console.error('Finalize imaging report error:', error);
+      res.status(500).json({ message: 'Failed to finalize imaging report' });
+    }
+  });
+
+  // DICOM Annotations
+  // GET /api/dicom/images/:id/annotations - Get annotations for image
+  app.get('/api/dicom/images/:id/annotations', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const annotations = await storage.getDicomAnnotationsByImage(req.params.id, req.tenantId);
+      res.json(annotations);
+    } catch (error) {
+      console.error('Get annotations error:', error);
+      res.status(500).json({ message: 'Failed to fetch annotations' });
+    }
+  });
+
+  // POST /api/dicom/annotations - Create annotation
+  app.post('/api/dicom/annotations', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const { imageId, annotationType, annotationData, description } = req.body;
+      
+      const annotation = await storage.createDicomAnnotation({
+        imageId,
+        tenantId: req.tenantId,
+        userId: req.userId,
+        annotationType,
+        annotationData: JSON.stringify(annotationData),
+        description: description || '',
+        createdAt: new Date()
+      });
+      
+      res.status(201).json(annotation);
+    } catch (error) {
+      console.error('Create annotation error:', error);
+      res.status(500).json({ message: 'Failed to create annotation' });
+    }
+  });
+
+  // PATCH /api/dicom/annotations/:id - Update annotation
+  app.patch('/api/dicom/annotations/:id', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const annotation = await storage.updateDicomAnnotation(req.params.id, req.body, req.tenantId);
+      if (!annotation) {
+        return res.status(404).json({ message: 'Annotation not found' });
+      }
+      
+      res.json(annotation);
+    } catch (error) {
+      console.error('Update annotation error:', error);
+      res.status(500).json({ message: 'Failed to update annotation' });
+    }
+  });
+
+  // DELETE /api/dicom/annotations/:id - Delete annotation
+  app.delete('/api/dicom/annotations/:id', authenticateToken, requireTenant, async (req: any, res) => {
+    try {
+      const deleted = await storage.deleteDicomAnnotation(req.params.id, req.tenantId);
+      if (!deleted) {
+        return res.status(404).json({ message: 'Annotation not found' });
+      }
+      
+      res.json({ message: 'Annotation deleted successfully' });
+    } catch (error) {
+      console.error('Delete annotation error:', error);
+      res.status(500).json({ message: 'Failed to delete annotation' });
+    }
+  });
+
+  console.log('✅ DICOM medical imaging routes registered successfully');
 
   // Global error handler middleware (must be after all routes)
   app.use((err: any, req: any, res: any, next: any) => {

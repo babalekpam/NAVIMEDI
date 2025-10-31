@@ -177,6 +177,16 @@ import StaffScheduling from "@/pages/staff-scheduling";
 import TimeTracking from "@/pages/time-tracking";
 import LeaveManagement from "@/pages/leave-management";
 
+// Advanced Analytics & BI (Phase 13)
+import AnalyticsDashboard from "@/pages/analytics-dashboard";
+import BiReports from "@/pages/bi-reports";
+import PredictiveAnalytics from "@/pages/predictive-analytics";
+
+// DICOM Medical Imaging
+import DicomViewer from "@/pages/dicom-viewer";
+import PacsManagement from "@/pages/pacs-management";
+import RadiologyReports from "@/pages/radiology-reports";
+
 
 function AppContent() {
   // Supplier authentication now handled by direct HTML pages
@@ -563,6 +573,90 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6">
                   <Reports />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
+        <Route path="/analytics-dashboard">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <AnalyticsDashboard />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
+        <Route path="/bi-reports">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <BiReports />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
+        <Route path="/predictive-analytics">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PredictiveAnalytics />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
+        <Route path="/dicom-viewer">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <DicomViewer />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
+        <Route path="/pacs-management">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <PacsManagement />
+                </main>
+              </div>
+            </div>
+          </ProtectedRoute>
+        </Route>
+
+        <Route path="/radiology-reports">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto p-6">
+                  <RadiologyReports />
                 </main>
               </div>
             </div>
