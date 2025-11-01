@@ -53,7 +53,8 @@ export const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps)
   }
 
   // Properly handle tenant context
-  if (!tenant && user && !tenantLoading) {
+  // Super admin is platform-level and doesn't need a tenant
+  if (!tenant && user && !tenantLoading && user.role !== 'super_admin') {
     console.log('ProtectedRoute: User exists but no tenant data available');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
