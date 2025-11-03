@@ -348,7 +348,19 @@ async function initializePlatform() {
     // Wait a moment for database to be fully ready
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // Create platform tenant (ARGILETTE)
+    // CRITICAL: Initialize countries FIRST (tenants require countryId)
+    log("🌍 Initializing countries first...");
+    await initializeDefaultCountries();
+    
+    // Get Nigeria country for platform tenant
+    const nigeriaCountry = await db.select().from(countries).where(eq(countries.code, 'NG')).limit(1);
+    if (nigeriaCountry.length === 0) {
+      throw new Error("Nigeria country not found - countries initialization failed");
+    }
+    const countryId = nigeriaCountry[0].id;
+    log(`✓ Using Nigeria (${countryId}) as platform tenant country`);
+    
+    // Create platform tenant (ARGILETTE) with countryId
     const existingTenant = await db.select().from(tenants).where(eq(tenants.subdomain, 'argilette')).limit(1);
     
     let platformTenant;
@@ -358,6 +370,7 @@ async function initializePlatform() {
         name: "ARGILETTE Platform",
         type: "hospital",
         subdomain: "argilette",
+        countryId: countryId,
         settings: {
           isPlatformOwner: true,
           features: ["super_admin", "tenant_management", "multi_tenant"]
@@ -393,9 +406,6 @@ async function initializePlatform() {
     } else {
       log("✓ Super admin already exists");
     }
-    
-    // Initialize default countries
-    await initializeDefaultCountries();
     
     platformInitialized = true;
     log("✓ Platform initialization complete");
