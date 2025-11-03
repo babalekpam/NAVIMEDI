@@ -3011,7 +3011,7 @@ export const userStats = pgTable("user_stats", {
 export const leaderboards = pgTable("leaderboards", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
-  userId: uuid("user_id").references(() => users.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
   userName: text("user_name").notNull(),
   position: integer("position").notNull(),
   points: integer("points").notNull(),
@@ -3026,7 +3026,7 @@ export const leaderboards = pgTable("leaderboards", {
 
 export const activityLogs = pgTable("activity_logs", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid("user_id").references(() => users.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
   tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
   activityType: text("activity_type").notNull(), // lab_test_completed, achievement_earned, streak_milestone, etc.
   points: integer("points").default(0),
