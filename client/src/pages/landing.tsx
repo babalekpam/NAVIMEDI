@@ -253,15 +253,16 @@ export default function LandingPage() {
               {/* Enhanced Glassmorphism backdrop with better effects */}
               <div className="glass-hero rounded-3xl -m-12 shadow-2xl" style={{transform: 'translate(0, 20px)'}}></div>
               <div className="relative z-10 p-12">
-              {/* Modern Trust Badge with glassmorphism */}
-              <div className="mb-8 animate-fade-in-up">
-                <Badge className="bg-white/60 backdrop-blur-md text-emerald-700 border border-emerald-200/50 hover:bg-white/70 hover:shadow-lg px-6 py-3 text-sm font-medium shadow-lg transition-all duration-300 hover:scale-105">
-              <Award className="w-4 h-4 mr-2" />
-              HIPAA Compliant • SOC 2 Type II • FDA 21 CFR Part 11
-            </Badge>
-            
-              {/* Enhanced Main Headline with advanced gradient effects */}
-              <div className="animate-fade-in-up animate-stagger-2">
+                {/* Modern Trust Badge with glassmorphism */}
+                <div className="mb-8 animate-fade-in-up">
+                  <Badge className="bg-white/60 backdrop-blur-md text-emerald-700 border border-emerald-200/50 hover:bg-white/70 hover:shadow-lg px-6 py-3 text-sm font-medium shadow-lg transition-all duration-300 hover:scale-105">
+                    <Award className="w-4 h-4 mr-2" />
+                    HIPAA Compliant • SOC 2 Type II • FDA 21 CFR Part 11
+                  </Badge>
+                </div>
+              
+                {/* Enhanced Main Headline with advanced gradient effects */}
+                <div className="animate-fade-in-up animate-stagger-2">
                 <h1 className="text-6xl md:text-7xl lg:text-8xl font-black mb-10 tracking-tight leading-tight">
                   <span className="bg-gradient-to-r from-slate-900 via-emerald-600 via-teal-500 to-blue-600 bg-clip-text text-transparent animate-gradient-diagonal bg-[length:400%_400%] animate-text-glow">
                     Reduce Healthcare
@@ -408,9 +409,10 @@ export default function LandingPage() {
                   </div>
                 </div>
               )}
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
         {/* Modern Advertisement Marketplace Section */}
         <section className="py-20 relative overflow-hidden">
@@ -1707,6 +1709,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 }

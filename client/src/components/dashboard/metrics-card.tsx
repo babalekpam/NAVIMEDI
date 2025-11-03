@@ -96,18 +96,3 @@ export const MetricsCard = ({
     </Card>
   );
 };
-            {trend && (
-              <p className={cn("text-sm flex items-center", trendDirection && trendClasses[trendDirection])}>
-                {getTrendIcon()}
-                {trend}
-              </p>
-            )}
-          </div>
-          <div className={cn("p-3 rounded-lg", colorClasses[color])}>
-            <Icon className="h-6 w-6" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
