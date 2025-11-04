@@ -1,0 +1,70 @@
+
+# Verify the file is there
+ls -lh navimed-release.tgz
+
+# Extract the new release
+echo "Extracting..."
+tar xzf navimed-release.tgz
+echo "✅ Extracted!"
+
+# Install only runtime dependencies (not dev dependencies)
+echo "Installing dependencies..."
+npm ci --omit=dev
+
+# Check the CSS file size (should be ~239KB, not 76KB!)
+echo ""
+echo "=== CHECKING CSS SIZE ==="
+ls -lh dist/public/assets/index-*.css
+echo ""
+
+# Restart the application
+echo "Restarting application..."
+pm2 restart navimed
+
+echo ""
+echo "✅ DEPLOYMENT COMPLETE!"
+echo "Check your site now at: https://navimedi.org"
+ls: cannot access 'navimed-release.tgz': No such file or directory
+Extracting...
+tar (child): navimed-release.tgz: Cannot open: No such file or directory
+tar (child): Error is not recoverable: exiting now
+tar: Child returned status 2
+tar: Error is not recoverable: exiting now
+✅ Extracted!
+Installing dependencies...
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated csurf@1.11.0: This package is archived and no longer maintained. For support, visit https://github.com/expressjs/express/discussions
+npm warn deprecated rimraf@2.7.1: Rimraf versions prior to v4 are no longer supported
+npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated fstream@1.0.12: This package is no longer supported.
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+
+added 808 packages, and audited 809 packages in 8s
+
+85 packages are looking for funding
+  run `npm fund` for details
+
+2 low severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+=== CHECKING CSS SIZE ===
+ls: cannot access 'dist/public/assets/index-*.css': No such file or directory
+
+Restarting application...
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1170271  │ 0s     │ 21   │ online    │ 0%       │ 17.9mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+
+✅ DEPLOYMENT COMPLETE!
+Check your site now at: https://navimedi.org
+[root@wizardly-swirles NaviMed]# 
