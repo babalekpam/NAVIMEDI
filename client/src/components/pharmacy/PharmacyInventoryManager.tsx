@@ -108,65 +108,7 @@ export function PharmacyInventoryManager() {
 
   // Fetch inventory items
   const { data: inventory = [], isLoading } = useQuery<InventoryItem[]>({
-    queryKey: ['/api/pharmacy/inventory'],
-    initialData: [
-      {
-        id: '1',
-        name: 'Metformin',
-        genericName: 'Metformin Hydrochloride',
-        brandName: 'Glucophage',
-        strength: '500mg',
-        dosageForm: 'Tablet',
-        currentStock: 150,
-        minStock: 50,
-        maxStock: 500,
-        reorderPoint: 75,
-        unitCost: 0.25,
-        sellingPrice: 0.85,
-        supplier: 'PharmaCorp',
-        batchNumber: 'MET2024001',
-        manufacturingDate: '2024-01-15',
-        expiryDate: '2026-01-15',
-        location: 'A-12-3',
-        category: 'Diabetes',
-        therapeuticClass: 'Antidiabetic',
-        controlledSubstance: false,
-        ndcNumber: '12345-678-90',
-        barcode: '123456789012',
-        status: 'active',
-        stockStatus: 'in_stock',
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z'
-      },
-      {
-        id: '2',
-        name: 'Lisinopril',
-        genericName: 'Lisinopril',
-        brandName: 'Prinivil',
-        strength: '10mg',
-        dosageForm: 'Tablet',
-        currentStock: 25,
-        minStock: 30,
-        maxStock: 200,
-        reorderPoint: 40,
-        unitCost: 0.15,
-        sellingPrice: 0.65,
-        supplier: 'MedSupply Inc.',
-        batchNumber: 'LIS2024002',
-        manufacturingDate: '2024-02-01',
-        expiryDate: '2025-12-20',
-        location: 'B-05-2',
-        category: 'Cardiovascular',
-        therapeuticClass: 'ACE Inhibitor',
-        controlledSubstance: false,
-        ndcNumber: '54321-876-09',
-        barcode: '210987654321',
-        status: 'active',
-        stockStatus: 'low_stock',
-        createdAt: '2024-01-15T00:00:00Z',
-        updatedAt: '2024-01-15T00:00:00Z'
-      }
-    ]
+    queryKey: ['/api/pharmacy/inventory']
   });
 
   // Fetch stock movements

@@ -31,97 +31,9 @@ export default function LaboratoryBilling() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
 
-  // Mock data for laboratory billing
+  // Fetch laboratory billing data from API
   const { data: billingData = [], isLoading } = useQuery({
     queryKey: ["/api/laboratory/billing"],
-    queryFn: () => Promise.resolve([
-      {
-        id: '1',
-        transactionDate: '2025-01-29',
-        patientName: 'Malia Nkawula',
-        testOrderId: 'LAB001',
-        testName: 'Comprehensive Metabolic Panel (CMP)',
-        insuranceProvider: 'Blue Cross Blue Shield',
-        insuranceClaim: 125.50,
-        patientCopay: 25.00,
-        totalAmount: 150.50,
-        paymentMethod: 'card' as const,
-        status: 'completed' as const,
-        claimStatus: 'approved' as const,
-        notes: 'Fasting test completed'
-      },
-      {
-        id: '2',
-        transactionDate: '2025-01-29',
-        patientName: 'Lekpam Nkawula',
-        testOrderId: 'LAB002',
-        testName: 'Thyroid Function Tests',
-        insuranceProvider: 'Aetna',
-        insuranceClaim: 89.75,
-        patientCopay: 20.00,
-        totalAmount: 109.75,
-        paymentMethod: 'insurance' as const,
-        status: 'pending' as const,
-        claimStatus: 'processing' as const
-      },
-      {
-        id: '3',
-        transactionDate: '2025-01-28',
-        patientName: 'Sarah Lee',
-        testOrderId: 'LAB003',
-        testName: 'Complete Blood Count (CBC)',
-        insuranceProvider: 'UnitedHealth',
-        insuranceClaim: 45.20,
-        patientCopay: 15.00,
-        totalAmount: 60.20,
-        paymentMethod: 'card' as const,
-        status: 'completed' as const,
-        claimStatus: 'approved' as const
-      },
-      {
-        id: '4',
-        transactionDate: '2025-01-28',
-        patientName: 'John Smith',
-        testOrderId: 'LAB004',
-        testName: 'Lipid Panel',
-        insuranceProvider: 'Humana',
-        insuranceClaim: 78.30,
-        patientCopay: 12.00,
-        totalAmount: 90.30,
-        paymentMethod: 'cash' as const,
-        status: 'completed' as const,
-        claimStatus: 'approved' as const,
-        notes: 'Patient preferred cash payment'
-      },
-      {
-        id: '5',
-        transactionDate: '2025-01-27',
-        patientName: 'Emily Davis',
-        testOrderId: 'LAB005',
-        testName: 'Hemoglobin A1C',
-        totalAmount: 65.80,
-        patientCopay: 65.80,
-        insuranceClaim: 0,
-        paymentMethod: 'card' as const,
-        status: 'completed' as const,
-        notes: 'No insurance coverage'
-      },
-      {
-        id: '6',
-        transactionDate: '2025-01-26',
-        patientName: 'Michael Johnson',
-        testOrderId: 'LAB006',
-        testName: 'Liver Function Panel',
-        insuranceProvider: 'Cigna',
-        insuranceClaim: 95.40,
-        patientCopay: 18.00,
-        totalAmount: 113.40,
-        paymentMethod: 'insurance' as const,
-        status: 'failed' as const,
-        claimStatus: 'denied' as const,
-        notes: 'Prior authorization required'
-      }
-    ]),
     staleTime: 30000,
   });
 

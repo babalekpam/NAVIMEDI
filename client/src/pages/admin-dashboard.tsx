@@ -301,72 +301,23 @@ export default function AdminDashboard({ activeTab = "overview" }: AdminDashboar
   // Loading state
   const isLoading = isLoadingAdmin || isLoadingTenant;
   
-  // Generate fallback data structure for when API is loading or has errors
+  // Empty fallback data structure for new accounts
   const getFallbackAnalytics = () => ({
     operational: {
-      volumeData: [
-        { period: "Jan", value: 1245, target: 1200, type: "patients" },
-        { period: "Feb", value: 1367, target: 1250, type: "patients" },
-        { period: "Mar", value: 1512, target: 1300, type: "patients" },
-        { period: "Apr", value: 1443, target: 1350, type: "patients" },
-        { period: "May", value: 1678, target: 1400, type: "patients" },
-        { period: "Jun", value: 1789, target: 1450, type: "patients" }
-      ],
-      statusDistribution: [
-        { name: "Active Patients", value: 1789, color: "#22c55e" },
-        { name: "Scheduled", value: 567, color: "#3b82f6" },
-        { name: "Discharged", value: 234, color: "#6b7280" },
-        { name: "Emergency", value: 45, color: "#ef4444" }
-      ]
+      volumeData: [],
+      statusDistribution: []
     },
     performance: {
-      metrics: [
-        { metric: "Bed Occupancy", current: 87.5, target: 90, previous: 85.2, unit: "%", trend: "up" },
-        { metric: "Average Stay", current: 3.2, target: 3.5, previous: 3.4, unit: "days", trend: "down" },
-        { metric: "Patient Satisfaction", current: 4.7, target: 4.5, previous: 4.6, unit: "/5", trend: "up" },
-        { metric: "Staff Efficiency", current: 92.3, target: 90, previous: 91.1, unit: "%", trend: "up" }
-      ],
-      completionRates: [
-        { period: "Mon", value: 89, target: 85 },
-        { period: "Tue", value: 92, target: 85 },
-        { period: "Wed", value: 87, target: 85 },
-        { period: "Thu", value: 94, target: 85 },
-        { period: "Fri", value: 96, target: 85 },
-        { period: "Sat", value: 88, target: 80 },
-        { period: "Sun", value: 85, target: 80 }
-      ]
+      metrics: [],
+      completionRates: []
     },
     resources: {
-      staffUtilization: [
-        { resource: "Doctors", utilized: 24, capacity: 28, efficiency: 85.7 },
-        { resource: "Nurses", utilized: 67, capacity: 75, efficiency: 89.3 },
-        { resource: "Support Staff", utilized: 45, capacity: 50, efficiency: 90.0 },
-        { resource: "Administration", utilized: 12, capacity: 15, efficiency: 80.0 }
-      ],
-      departmentMetrics: [
-        { period: "Emergency", value: 234, target: 200 },
-        { period: "Surgery", value: 89, target: 100 },
-        { period: "Cardiology", value: 156, target: 150 },
-        { period: "Pediatrics", value: 123, target: 120 },
-        { period: "Orthopedics", value: 98, target: 110 }
-      ]
+      staffUtilization: [],
+      departmentMetrics: []
     },
     financial: {
-      revenueData: [
-        { period: "Jan", revenue: 45000, expenses: 32000, profit: 13000, budget: 50000 },
-        { period: "Feb", revenue: 52000, expenses: 34000, profit: 18000, budget: 55000 },
-        { period: "Mar", revenue: 48000, expenses: 33000, profit: 15000, budget: 52000 },
-        { period: "Apr", revenue: 56000, expenses: 35000, profit: 21000, budget: 58000 },
-        { period: "May", revenue: 61000, expenses: 37000, profit: 24000, budget: 62000 },
-        { period: "Jun", revenue: 58000, expenses: 36000, profit: 22000, budget: 60000 }
-      ],
-      costAnalysis: [
-        { period: "Staff", value: 25000 },
-        { period: "Equipment", value: 8000 },
-        { period: "Supplies", value: 5000 },
-        { period: "Facilities", value: 4000 },
-        { period: "Other", value: 2000 }
-      ]
+      revenueData: [],
+      costAnalysis: []
     }
   });
 

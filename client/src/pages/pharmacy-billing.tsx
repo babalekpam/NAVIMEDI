@@ -30,97 +30,9 @@ export default function PharmacyBilling() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
 
-  // Mock data for pharmacy billing
+  // Fetch pharmacy billing data from API
   const { data: billingData = [], isLoading } = useQuery({
     queryKey: ["/api/pharmacy/billing"],
-    queryFn: () => Promise.resolve([
-      {
-        id: '1',
-        transactionDate: '2025-01-29',
-        customerName: 'John Doe',
-        prescriptionId: 'RX001',
-        medicationName: 'Amoxicillin 500mg',
-        insuranceProvider: 'Blue Cross Blue Shield',
-        insuranceClaim: 45.50,
-        patientCopay: 10.00,
-        totalAmount: 55.50,
-        paymentMethod: 'card' as const,
-        status: 'completed' as const,
-        claimStatus: 'approved' as const,
-        notes: 'Generic substitution applied'
-      },
-      {
-        id: '2',
-        transactionDate: '2025-01-29',
-        customerName: 'Jane Smith',
-        prescriptionId: 'RX002',
-        medicationName: 'Lisinopril 10mg',
-        insuranceProvider: 'Aetna',
-        insuranceClaim: 25.75,
-        patientCopay: 15.00,
-        totalAmount: 40.75,
-        paymentMethod: 'insurance' as const,
-        status: 'pending' as const,
-        claimStatus: 'processing' as const
-      },
-      {
-        id: '3',
-        transactionDate: '2025-01-28',
-        customerName: 'Mike Johnson',
-        prescriptionId: 'RX003',
-        medicationName: 'Metformin 850mg',
-        insuranceProvider: 'UnitedHealth',
-        insuranceClaim: 18.20,
-        patientCopay: 5.00,
-        totalAmount: 23.20,
-        paymentMethod: 'card' as const,
-        status: 'completed' as const,
-        claimStatus: 'approved' as const
-      },
-      {
-        id: '4',
-        transactionDate: '2025-01-28',
-        customerName: 'Sarah Davis',
-        prescriptionId: 'RX004',
-        medicationName: 'Atorvastatin 40mg',
-        insuranceProvider: 'Humana',
-        insuranceClaim: 62.30,
-        patientCopay: 20.00,
-        totalAmount: 82.30,
-        paymentMethod: 'cash' as const,
-        status: 'completed' as const,
-        claimStatus: 'approved' as const,
-        notes: 'Patient preferred cash payment'
-      },
-      {
-        id: '5',
-        transactionDate: '2025-01-27',
-        customerName: 'Robert Wilson',
-        prescriptionId: 'RX005',
-        medicationName: 'Omeprazole 20mg',
-        totalAmount: 35.80,
-        patientCopay: 35.80,
-        insuranceClaim: 0,
-        paymentMethod: 'card' as const,
-        status: 'completed' as const,
-        notes: 'No insurance coverage'
-      },
-      {
-        id: '6',
-        transactionDate: '2025-01-26',
-        customerName: 'Lisa Brown',
-        prescriptionId: 'RX006',
-        medicationName: 'Hydrochlorothiazide 25mg',
-        insuranceProvider: 'Cigna',
-        insuranceClaim: 28.40,
-        patientCopay: 12.00,
-        totalAmount: 40.40,
-        paymentMethod: 'insurance' as const,
-        status: 'failed' as const,
-        claimStatus: 'denied' as const,
-        notes: 'Prior authorization required'
-      }
-    ]),
     staleTime: 30000,
   });
 

@@ -89,69 +89,17 @@ export function PharmacyPOS() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Sample data
+  // Fetch ready prescriptions
   const { data: readyPrescriptions = [] } = useQuery({
-    queryKey: ['/api/pharmacy/prescriptions/ready'],
-    initialData: [
-      {
-        id: '1',
-        patientName: 'Sarah Johnson',
-        medicationName: 'Metformin 500mg',
-        quantity: 90,
-        copay: 10.00,
-        totalPrice: 10.00,
-        insuranceCovered: true
-      },
-      {
-        id: '2',
-        patientName: 'Michael Brown',
-        medicationName: 'Lisinopril 10mg',
-        quantity: 30,
-        copay: 15.00,
-        totalPrice: 15.00,
-        insuranceCovered: true
-      }
-    ]
+    queryKey: ['/api/pharmacy/prescriptions/ready']
   });
 
   const { data: otcProducts = [] } = useQuery({
-    queryKey: ['/api/pharmacy/otc-products'],
-    initialData: [
-      { id: '1', name: 'Acetaminophen 500mg', category: 'Pain Relief', price: 8.99, stock: 50 },
-      { id: '2', name: 'Ibuprofen 200mg', category: 'Pain Relief', price: 12.49, stock: 30 },
-      { id: '3', name: 'Vitamin D3 1000IU', category: 'Vitamins', price: 15.99, stock: 25 },
-      { id: '4', name: 'First Aid Kit', category: 'Medical Supplies', price: 24.99, stock: 10 }
-    ]
+    queryKey: ['/api/pharmacy/otc-products']
   });
 
   const { data: customers = [] } = useQuery<Customer[]>({
-    queryKey: ['/api/pharmacy/customers'],
-    initialData: [
-      {
-        id: '1',
-        name: 'Sarah Johnson',
-        phone: '(555) 123-4567',
-        email: 'sarah.johnson@email.com',
-        address: '123 Main St, New York, NY 10001',
-        insuranceInfo: {
-          provider: 'Blue Cross Blue Shield',
-          policyNumber: 'BC123456789',
-          copay: 10
-        }
-      },
-      {
-        id: '2',
-        name: 'Michael Brown',
-        phone: '(555) 987-6543',
-        email: 'michael.brown@email.com',
-        address: '456 Oak Ave, Los Angeles, CA 90210',
-        insuranceInfo: {
-          provider: 'Aetna',
-          policyNumber: 'AET987654321',
-          copay: 15
-        }
-      }
-    ]
+    queryKey: ['/api/pharmacy/customers']
   });
 
   // Process sale mutation

@@ -173,109 +173,37 @@ export default function PharmacyDashboard() {
     }
   }, [analyticsData]);
 
-  // Generate fallback data for loading/error states
+  // Empty fallback data structure for new accounts
   const getFallbackPharmacyAnalytics = () => ({
     today: {
-      prescriptionsReceived: 45,
-      prescriptionsProcessed: 38,
-      prescriptionsReady: 12,
-      prescriptionsDispensed: 34,
-      averageProcessingTime: 28,
-      insuranceVerifications: 42
+      prescriptionsReceived: 0,
+      prescriptionsProcessed: 0,
+      prescriptionsReady: 0,
+      prescriptionsDispensed: 0,
+      averageProcessingTime: 0,
+      insuranceVerifications: 0
     },
     workflow: {
-      queueStatus: [
-        { name: "Received", value: 45, percentage: 32.4, color: "#3b82f6" },
-        { name: "Processing", value: 23, percentage: 16.5, color: "#f59e0b" },
-        { name: "Ready", value: 34, percentage: 24.5, color: "#22c55e" },
-        { name: "Dispensed", value: 37, percentage: 26.6, color: "#6b7280" }
-      ],
-      processingTimes: [
-        { timestamp: "Mon", value: 25, target: 30 },
-        { timestamp: "Tue", value: 28, target: 30 },
-        { timestamp: "Wed", value: 32, target: 30 },
-        { timestamp: "Thu", value: 27, target: 30 },
-        { timestamp: "Fri", value: 24, target: 30 },
-        { timestamp: "Sat", value: 29, target: 30 },
-        { timestamp: "Sun", value: 26, target: 30 }
-      ],
-      workflowStages: [
-        { stage: "Receive", count: 45, averageTime: 2 },
-        { stage: "Verify Insurance", count: 42, averageTime: 8 },
-        { stage: "Fill Prescription", count: 38, averageTime: 15 },
-        { stage: "Quality Check", count: 37, averageTime: 5 },
-        { stage: "Ready for Pickup", count: 34, averageTime: 0 }
-      ]
+      queueStatus: [],
+      processingTimes: [],
+      workflowStages: []
     },
     inventory: {
-      stockLevels: [
-        { medication: "Amoxicillin 500mg", currentStock: 150, reorderLevel: 50, maxStock: 300, status: "normal" },
-        { medication: "Lisinopril 10mg", currentStock: 25, reorderLevel: 40, maxStock: 200, status: "low" },
-        { medication: "Metformin 850mg", currentStock: 8, reorderLevel: 30, maxStock: 250, status: "critical" },
-        { medication: "Atorvastatin 40mg", currentStock: 89, reorderLevel: 35, maxStock: 180, status: "normal" }
-      ],
-      reorderAlerts: [
-        { medication: "Metformin 850mg", currentStock: 8, reorderLevel: 30, daysLeft: 2, priority: "high" },
-        { medication: "Lisinopril 10mg", currentStock: 25, reorderLevel: 40, daysLeft: 7, priority: "medium" }
-      ],
-      turnoverRates: [
-        { period: "Jan", turnover: 8.2, target: 8 },
-        { period: "Feb", turnover: 7.8, target: 8 },
-        { period: "Mar", turnover: 8.5, target: 8 },
-        { period: "Apr", turnover: 8.9, target: 8 },
-        { period: "May", turnover: 9.1, target: 8 },
-        { period: "Jun", turnover: 8.7, target: 8 }
-      ]
+      stockLevels: [],
+      reorderAlerts: [],
+      turnoverRates: []
     },
     performance: {
-      processingEfficiency: [
-        { name: "Fill Rate", current: 94.2, previous: 92.8, target: 95, unit: "%", trend: "up", changePercent: 1.5 },
-        { name: "Processing Time", current: 28, previous: 32, target: 30, unit: "min", trend: "down", changePercent: -12.5 },
-        { name: "Customer Satisfaction", current: 4.7, previous: 4.5, target: 4.5, unit: "/5", trend: "up", changePercent: 4.4 }
-      ],
-      insuranceVerificationRates: [
-        { period: "Mon", rate: 96, processed: 45, target: 95 },
-        { period: "Tue", rate: 94, processed: 48, target: 95 },
-        { period: "Wed", rate: 97, processed: 52, target: 95 },
-        { period: "Thu", rate: 93, processed: 47, target: 95 },
-        { period: "Fri", rate: 98, processed: 55, target: 95 },
-        { period: "Sat", rate: 95, processed: 38, target: 95 },
-        { period: "Sun", rate: 96, processed: 32, target: 95 }
-      ]
+      processingEfficiency: [],
+      insuranceVerificationRates: []
     },
     financial: {
-      revenueData: [
-        { period: "Jan", revenue: 48600, prescriptions: 38900, otc: 9700, target: 50000 },
-        { period: "Feb", revenue: 52300, prescriptions: 41800, otc: 10500, target: 52000 },
-        { period: "Mar", revenue: 49800, prescriptions: 39600, otc: 10200, target: 51000 },
-        { period: "Apr", revenue: 54100, prescriptions: 43300, otc: 10800, target: 53000 },
-        { period: "May", revenue: 56700, prescriptions: 45400, otc: 11300, target: 55000 },
-        { period: "Jun", revenue: 58200, prescriptions: 46600, otc: 11600, target: 57000 }
-      ],
-      costAnalysis: [
-        { category: "Medications", amount: 28900, percentage: 58.2 },
-        { category: "Staff", amount: 12400, percentage: 25.0 },
-        { category: "Equipment", amount: 4200, percentage: 8.5 },
-        { category: "Facilities", amount: 2800, percentage: 5.6 },
-        { category: "Other", amount: 1400, percentage: 2.7 }
-      ]
+      revenueData: [],
+      costAnalysis: []
     },
     quality: {
-      accuracyRates: [
-        { period: "Jan", rate: 99.2, errors: 12, target: 99.5 },
-        { period: "Feb", rate: 99.4, errors: 9, target: 99.5 },
-        { period: "Mar", rate: 99.6, errors: 6, target: 99.5 },
-        { period: "Apr", rate: 99.3, errors: 11, target: 99.5 },
-        { period: "May", rate: 99.7, errors: 4, target: 99.5 },
-        { period: "Jun", rate: 99.5, errors: 7, target: 99.5 }
-      ],
-      errorTracking: [
-        { type: "Dosage Error", count: 15, color: "#ef4444" },
-        { type: "Wrong Medication", count: 8, color: "#f59e0b" },
-        { type: "Patient Mix-up", count: 5, color: "#3b82f6" },
-        { type: "Insurance Issue", count: 12, color: "#8b5cf6" },
-        { type: "Other", count: 9, color: "#06b6d4" }
-      ]
+      accuracyRates: [],
+      errorTracking: []
     }
   });
 
