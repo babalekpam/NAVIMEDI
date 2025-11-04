@@ -1,0 +1,405 @@
+httpd.service - The Apache HTTP Server
+     Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; preset: disabled)
+    Drop-In: /usr/lib/systemd/system/httpd.service.d
+             └─php-fpm.conf, respawn.conf
+     Active: active (running) since Tue 2025-11-04 05:31:55 UTC; 1s ago
+       Docs: man:httpd.service(8)
+   Main PID: 1095474 (httpd)
+     Status: "Started, listening on: 127.0.0.1 port 7081, ..."
+      Tasks: 128 (limit: 48448)
+     Memory: 159.7M
+● nginx.service - Startup script for nginx service
+     Loaded: loaded (/usr/lib/systemd/system/nginx.service; enabled; preset: disabled)
+    Drop-In: /usr/lib/systemd/system/nginx.service.d
+             └─php-fpm.conf, respawn.conf
+     Active: active (running) since Tue 2025-11-04 05:31:56 UTC; 460ms ago
+    Process: 1095648 ExecStartPre=/bin/sh -c [ '${NGINX_ENABLED}' = 'yes' ] || { echo Not starting nginx as it is disabled in Plesk. Run \'plesk sbin nginxmng -e\' to enable nginx in Plesk.; exit 1; } (code=exited, status=0/SUCCESS)
+    Process: 1095649 ExecStartPre=/usr/sbin/nginx -t (code=exited, status=0/SUCCESS)
+    Process: 1095650 ExecStart=/usr/sbin/nginx (code=exited, status=0/SUCCESS)
+   Main PID: 1095670 (nginx)
+      Tasks: 26 (limit: 48448)
+[root@wizardly-swirles NaviMed]# # 1. Find which config is handling navimedi.org
+grep -r "navimedi.org" /etc/httpd/conf.d/ /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ 2>/dev/null
+
+# 2. Check if there's a Plesk config
+ls -la /var/www/vhosts/system/navimedi.org/conf/
+
+# 3. Temporarily bypass web server - access Node directly
+echo "Visit this URL in your browser: http://74.208.166.77:5000"
+total 48
+drwxr-x---. 2 root psaserv 4096 Nov  1 03:21 .
+drwx--x--x. 6 root psaserv   59 Oct  7 14:15 ..
+-rw-------. 1 root apache  5582 Oct 13 02:44 httpd.conf
+-rw-------. 1 root apache  5582 Oct 13 02:44 httpd.conf.bak
+lrwxrwxrwx. 1 root root      10 Oct 13 02:44 last_httpd.conf -> httpd.conf
+lrwxrwxrwx. 1 root root      10 Oct 13 02:44 last_nginx.conf -> nginx.conf
+-rw-------. 1 root nginx    149 Oct 13 02:44 modsecurity_nginx.conf
+-rw-------. 1 root nginx    149 Oct 13 02:44 modsecurity_nginx.conf.bak
+-rw-------. 1 root nginx   4012 Oct 13 02:44 nginx.conf
+-rw-------. 1 root nginx   3709 Oct 13 02:44 nginx.conf.bak
+-rw-r--r--. 1 root root       0 Nov  1 03:21 prev_month.found
+-rw-r--r--. 1 root root       2 Nov  4 03:19 stat_ttl.conf
+-rw-------. 1 root apache   116 Oct  7 22:57 vhost.conf
+-rw-------. 1 root apache   116 Oct  7 22:57 vhost_ssl.conf
+Visit this URL in your browser: http://74.208.166.77:5000
+[root@wizardly-swirles NaviMed]# # 1. Check the Nginx config (likely the issue)
+cat /var/www/vhosts/system/navimedi.org/conf/nginx.conf
+
+# 2. Check the Apache config
+cat /var/www/vhosts/system/navimedi.org/conf/httpd.conf
+
+# 3. Check if there's a custom vhost config
+cat /var/www/vhosts/system/navimedi.org/conf/vhost.conf
+cat /var/www/vhosts/system/navimedi.org/conf/vhost_ssl.conf
+#ATTENTION!
+#
+#DO NOT MODIFY THIS FILE BECAUSE IT WAS GENERATED AUTOMATICALLY,
+#SO ALL YOUR CHANGES WILL BE LOST THE NEXT TIME THE FILE IS GENERATED.
+
+server {
+        listen 74.208.166.77:443 ssl;
+        http2 on;
+
+        server_name navimedi.org;
+        server_name www.navimedi.org;
+        server_name ipv4.navimedi.org;
+
+        ssl_certificate             /usr/local/psa/var/certificates/scf060avssugu5v3Ia8BTJ;
+        ssl_certificate_key         /usr/local/psa/var/certificates/scf060avssugu5v3Ia8BTJ;
+
+        client_max_body_size 134217728;
+
+        # mailconfig
+        location ~* ^/autodiscover/autodiscover\.xml$ {
+                try_files $uri @mad;
+        }
+        location ~* ^(/\.well-known/autoconfig)?/mail/config\-v1\.1\.xml$ {
+                try_files $uri @mad;
+        }
+
+        location  ~* ^/email\.mobileconfig$ {
+                try_files $uri @mad;
+        }
+
+        location @mad {
+                rewrite ^(.*)$ /mailconfig/ break;
+
+                proxy_pass                          http://127.0.0.1:8880;
+                proxy_set_header X-Host             $host;
+                proxy_set_header X-Request-URI      $request_uri;
+        }
+        # mailconfig
+
+        access_log "/var/www/vhosts/system/navimedi.org/logs/proxy_access_ssl_log";
+        error_log "/var/www/vhosts/system/navimedi.org/logs/proxy_error_log";
+
+        root "/var/www/vhosts/navimedi.org/httpdocs";
+
+        #extension performance-booster begin
+        # Additional directives added by Plesk Optimization Settings
+        open_file_cache max=1000 inactive=20s;
+        open_file_cache_valid 30s;
+        open_file_cache_min_uses 2;
+        open_file_cache_errors on;
+        gzip on;
+        gzip_http_version 1.0;
+        gzip_proxied any;
+        gzip_min_length 1024;
+        gzip_comp_level 2;
+        gzip_types text/plain text/css application/x-javascript text/xml application/xml application/xml+rss text/javascript application/javascript application/json;
+
+        brotli_comp_level 3;
+        brotli_min_length 1024;
+        # Additional directives added by Plesk Optimization Settings
+        #extension performance-booster end
+
+        #extension sslit begin
+
+        #extension sslit end
+
+        #extension letsencrypt begin
+        location ^~ /.well-known/acme-challenge/ {
+                root /var/www/vhosts/default/htdocs;
+
+                types { }
+                default_type text/plain;
+
+                satisfy any;
+                auth_basic off;
+                allow all;
+
+                location ~ ^/\.well-known/acme-challenge.*/\. {
+                        deny all;
+                }
+        }
+        #extension letsencrypt end
+
+        #extension sectigo begin
+        location ^~ /.well-known/pki-validation/fileauth.txt {
+                try_files $uri $uri/ =404;
+        }
+
+        location ^~ /.well-known/pki-validation/ {
+                root /var/www/vhosts/default/htdocs;
+
+                types { }
+                default_type text/plain;
+
+                satisfy any;
+                auth_basic off;
+                allow all;
+
+                location ~ ^/\.well-known/pki-validation.*/\. {
+                        deny all;
+                }
+        }
+        #extension sectigo end
+
+        location / {
+                proxy_pass https://127.0.0.1:7081;
+                proxy_hide_header upgrade;
+                proxy_ssl_server_name on;
+                proxy_ssl_name $host;
+                proxy_ssl_session_reuse off;
+                proxy_set_header Host             $host;
+                proxy_set_header X-Real-IP        $remote_addr;
+                proxy_set_header X-Forwarded-For  $proxy_add_x_forwarded_for;
+                proxy_set_header X-Accel-Internal /internal-nginx-static-location;
+                access_log off;
+
+        }
+
+        location ^~ /internal-nginx-static-location/ {
+                alias /var/www/vhosts/navimedi.org/httpdocs/;
+                internal;
+        }
+
+        disable_symlinks if_not_owner "from=/var/www/vhosts/navimedi.org";
+
+        add_header X-Powered-By PleskLin;
+
+}
+
+server {
+        listen 74.208.166.77:80;
+
+        server_name navimedi.org;
+        server_name www.navimedi.org;
+        server_name ipv4.navimedi.org;
+
+        client_max_body_size 134217728;
+
+        # mailconfig
+        location ~* ^/autodiscover/autodiscover\.xml$ {
+                try_files $uri @mad;
+        }
+        location ~* ^(/\.well-known/autoconfig)?/mail/config\-v1\.1\.xml$ {
+                try_files $uri @mad;
+        }
+
+        location  ~* ^/email\.mobileconfig$ {
+                try_files $uri @mad;
+        }
+
+        location @mad {
+                rewrite ^(.*)$ /mailconfig/ break;
+
+                proxy_pass                          http://127.0.0.1:8880;
+                proxy_set_header X-Host             $host;
+                proxy_set_header X-Request-URI      $request_uri;
+        }
+        # mailconfig
+
+        access_log "/var/www/vhosts/system/navimedi.org/logs/proxy_access_log";
+        error_log "/var/www/vhosts/system/navimedi.org/logs/proxy_error_log";
+
+        location / {
+                return 301 https://$host$request_uri;
+        }
+}#ATTENTION!
+#
+#DO NOT MODIFY THIS FILE BECAUSE IT WAS GENERATED AUTOMATICALLY,
+#SO ALL YOUR CHANGES WILL BE LOST THE NEXT TIME THE FILE IS GENERATED.
+#IF YOU REQUIRE TO APPLY CUSTOM MODIFICATIONS, PERFORM THEM IN THE FOLLOWING FILES:
+#/var/www/vhosts/system/navimedi.org/conf/vhost.conf
+#/var/www/vhosts/system/navimedi.org/conf/vhost_ssl.conf
+<IfModule mod_ssl.c>
+
+        <VirtualHost 127.0.0.1:7081 >
+                ServerName "navimedi.org"
+                ServerAlias "www.navimedi.org"
+                ServerAlias "ipv4.navimedi.org"
+                UseCanonicalName Off
+
+                CustomLog /var/www/vhosts/system/navimedi.org/logs/access_ssl_log plesklog
+                ErrorLog "/var/www/vhosts/system/navimedi.org/logs/error_log"
+
+                # mailconfig
+                <IfModule mod_proxy_http.c>
+                        <IfModule mod_rewrite.c>
+                                RewriteEngine On
+                                RewriteCond %{REQUEST_URI} ^/autodiscover/autodiscover\.xml$ [NC,OR]
+                                RewriteCond %{REQUEST_URI} ^(/\.well-known/autoconfig)?/mail/config\-v1\.1\.xml$ [NC,OR]
+                                RewriteCond %{REQUEST_URI} ^/email\.mobileconfig$ [NC]
+                                RewriteRule ^(.*)$ http://127.0.0.1:8880/mailconfig/ [P,QSA,L,E=REQUEST_URI:%{REQUEST_URI},E=HOST:%{HTTP_HOST}]
+                        </IfModule>
+                        <Proxy "http://127.0.0.1:8880/mailconfig/">
+                                RequestHeader set X-Host "%{HOST}e"
+                                RequestHeader set X-Request-URI "%{REQUEST_URI}e"
+                        </Proxy>
+                </IfModule>
+                # mailconfig
+
+                DocumentRoot "/var/www/vhosts/navimedi.org/httpdocs"
+
+                <IfModule mod_suexec.c>
+                        SuexecUserGroup "administrator" "psacln"
+                </IfModule>
+
+                <IfModule mod_userdir.c>
+                        UserDir "/var/www/vhosts/navimedi.org/web_users/*"
+                </IfModule>
+
+                <IfModule mod_sysenv.c>
+                        SetSysEnv PP_VHOST_ID "6ba14a94-ed64-4c5f-8df9-f99a43064ec6"
+                </IfModule>
+
+                SSLEngine on
+                SSLVerifyClient none
+                SSLCertificateFile /usr/local/psa/var/certificates/scf060avssugu5v3Ia8BTJ
+                SSLCACertificateFile /usr/local/psa/var/certificates/scfh04mr7lsdaobdnjCVxT
+
+                <Directory /var/www/vhosts/navimedi.org/httpdocs>
+
+                        <IfModule mod_php4.c>
+                                php_admin_flag engine off
+                        </IfModule>
+
+                        <IfModule mod_php5.c>
+                                php_admin_flag engine off
+                        </IfModule>
+
+                        <IfModule mod_php7.c>
+                                php_admin_flag engine off
+                        </IfModule>
+                        <IfModule mod_fcgid.c>
+                                <Files ~ (\.fcgi$)>
+                                        SetHandler fcgid-script
+                                        Options +ExecCGI
+                                </Files>
+                        </IfModule>
+
+                        SSLRequireSSL
+
+                        Options -Includes -ExecCGI
+
+                </Directory>
+
+                Alias /error_docs /var/www/vhosts/navimedi.org/error_docs
+                ErrorDocument 400 /error_docs/bad_request.html
+                ErrorDocument 401 /error_docs/unauthorized.html
+                ErrorDocument 403 /error_docs/forbidden.html
+                ErrorDocument 404 /error_docs/not_found.html
+                ErrorDocument 500 /error_docs/internal_server_error.html
+                ErrorDocument 405 /error_docs/method_not_allowed.html
+                ErrorDocument 406 /error_docs/not_acceptable.html
+                ErrorDocument 407 /error_docs/proxy_authentication_required.html
+                ErrorDocument 412 /error_docs/precondition_failed.html
+                ErrorDocument 414 /error_docs/request_uri_too_long.html
+                ErrorDocument 415 /error_docs/unsupported_media_type.html
+                ErrorDocument 501 /error_docs/not_implemented.html
+                ErrorDocument 502 /error_docs/bad_gateway.html
+                ErrorDocument 503 /error_docs/maintenance.html
+
+                DirectoryIndex "index.html" "index.cgi" "index.pl" "index.php" "index.xhtml" "index.htm" "index.shtml"
+
+                Include "/var/www/vhosts/system/navimedi.org/conf/vhost_ssl.conf"
+
+                <Directory /var/www/vhosts/navimedi.org>
+                        Options -FollowSymLinks
+                        AllowOverride AuthConfig FileInfo Indexes Limit Options=Indexes,SymLinksIfOwnerMatch,MultiViews,ExecCGI,Includes,IncludesNOEXEC
+                </Directory>
+
+                #extension sslit begin
+
+                #extension sslit end
+
+                #extension letsencrypt begin
+                Alias /.well-known/acme-challenge "/var/www/vhosts/default/htdocs/.well-known/acme-challenge"
+
+                <Location /.well-known/acme-challenge/>
+                        # Require all granted
+                        Order Deny,Allow
+                        Allow from all
+                        Satisfy any
+                </Location>
+
+                <LocationMatch "^/.well-known/acme-challenge/(.*/|)\.">
+                        # Require all denied
+                        Order Allow,Deny
+                        Deny from all
+                </LocationMatch>
+                #extension letsencrypt end
+
+                #extension sectigo begin
+                AliasMatch "^/.well-known/pki-validation/(?!fileauth.txt)$" "/var/www/vhosts/default/htdocs/.well-known/pki-validation/$1"
+
+                <Location /.well-known/pki-validation/>
+                        # Require all granted
+                        Order Deny,Allow
+                        Allow from all
+                        Satisfy any
+                </Location>
+
+                <LocationMatch "^/.well-known/pki-validation/(.*/|)\.">
+                        # Require all denied
+                        Order Allow,Deny
+                        Deny from all
+                </LocationMatch>
+                #extension sectigo end
+        </VirtualHost>
+
+</IfModule>
+
+<VirtualHost 127.0.0.1:7080 >
+        ServerName "navimedi.org"
+        ServerAlias "www.navimedi.org"
+        ServerAlias "ipv4.navimedi.org"
+        UseCanonicalName Off
+
+        CustomLog /var/www/vhosts/system/navimedi.org/logs/access_log plesklog
+        ErrorLog "/var/www/vhosts/system/navimedi.org/logs/error_log"
+
+        # mailconfig
+        <IfModule mod_proxy_http.c>
+                <IfModule mod_rewrite.c>
+                        RewriteEngine On
+                        RewriteCond %{REQUEST_URI} ^/autodiscover/autodiscover\.xml$ [NC,OR]
+                        RewriteCond %{REQUEST_URI} ^(/\.well-known/autoconfig)?/mail/config\-v1\.1\.xml$ [NC,OR]
+                        RewriteCond %{REQUEST_URI} ^/email\.mobileconfig$ [NC]
+                        RewriteRule ^(.*)$ http://127.0.0.1:8880/mailconfig/ [P,QSA,L,E=REQUEST_URI:%{REQUEST_URI},E=HOST:%{HTTP_HOST}]
+                </IfModule>
+                <Proxy "http://127.0.0.1:8880/mailconfig/">
+                        RequestHeader set X-Host "%{HOST}e"
+                        RequestHeader set X-Request-URI "%{REQUEST_URI}e"
+                </Proxy>
+        </IfModule>
+        # mailconfig
+
+        Include "/var/www/vhosts/system/navimedi.org/conf/vhost.conf"
+
+        <IfModule mod_rewrite.c>
+                RewriteEngine On
+                RewriteCond %{HTTPS} off
+                RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L,QSA]
+        </IfModule>
+</VirtualHost>
+ProxyRequests Off
+ProxyPreserveHost On
+ProxyPass / http://localhost:5000/
+ProxyPassReverse / http://localhost:5000/
+ProxyRequests Off
+ProxyPreserveHost On
+ProxyPass / http://localhost:5000/
+ProxyPassReverse / http://localhost:5000/
+[root@wizardly-swirles NaviMed]# 
