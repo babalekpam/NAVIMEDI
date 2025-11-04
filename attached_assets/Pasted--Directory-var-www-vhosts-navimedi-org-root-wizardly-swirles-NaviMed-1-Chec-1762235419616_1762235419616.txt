@@ -1,0 +1,118 @@
+
+                <Directory /var/www/vhosts/navimedi.org>
+[root@wizardly-swirles NaviMed]# # 1. Check what's in the old DocumentRoot
+ls -la /var/www/vhosts/navimedi.org/httpdocs/ | head -20
+
+# 2. Check PM2 logs to see if requests are reaching Node.js
+pm2 logs navimed --lines 20 --nostream | grep "GET /"
+
+# 3. Test from VPS - does it serve from Node or static files?
+curl -I https://navimedi.org/ 2>&1 | head -20
+
+# 4. Check if there's an old index.html blocking the proxy
+ls -lh /var/www/vhosts/navimedi.org/httpdocs/index.html 2>&1
+total 35408
+drwxr-x---. 3 administrator psaserv       37 Nov  4 01:41 .
+drwx--x---. 7 administrator psaserv      121 Oct 31 03:35 ..
+-rw-r--r--. 1 administrator psacln  36252443 Nov  4 01:41 dist.zip
+drwxr-xr-x. 8 root          root        4096 Nov  4 05:25 NaviMed
+0|navimed  | 5:43:20 AM [express] GET /api/admin/platform-stats 200 in 240ms :: {"totalTenants":2,"totalUsers":2,…
+0|navimed  | 5:43:20 AM [express] GET /api/admin/platform-stats 200 in 262ms :: {"success":true,"data":{"tenants"…
+0|navimed  | 5:43:21 AM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 5:43:21 AM [express] GET /api/admin/platform-stats 200 in 76ms :: {"success":true,"data":{"tenants":…
+0|navimed  | 5:43:21 AM [express] GET /api/admin/platform-stats 200 in 145ms :: {"totalTenants":2,"totalUsers":2,…
+0|navimed  | 5:43:21 AM [express] GET /api/admin/tenants 200 in 163ms :: [{"id":"15b85353-0985-4fec-bd4d-7bc236e1…
+0|navimed  | 5:43:21 AM [express] GET /api/admin/stripe-revenue 503 in 75ms :: {"success":false,"message":"Stripe…
+0|navimed  | 5:43:22 AM [express] GET /api/tenant/current 200 in 2147ms :: {"id":"15b85353-0985-4fec-bd4d-7bc236e…
+0|navimed  | 5:43:22 AM [express] GET /api/admin/suppliers 200 in 2186ms :: []
+0|navimed  | 5:43:22 AM [express] GET /api/tenant/current 200 in 77ms :: {"id":"15b85353-0985-4fec-bd4d-7bc236e19…
+0|navimed  | 5:43:22 AM [express] GET /api/admin/suppliers 200 in 95ms :: []
+0|navimed  | 5:43:22 AM [express] GET /api/tenant/current 200 in 78ms :: {"id":"15b85353-0985-4fec-bd4d-7bc236e19…
+0|navimed  | 5:45:10 AM [express] GET /api/platform/stats 200 in 0ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 5:46:05 AM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 5:46:07 AM [express] GET /api/platform/stats 200 in 0ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 5:46:07 AM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 5:46:07 AM [express] GET /api/user/language-preference 404 in 174ms :: {"message":"API endpoint not …
+0|navimed  | 5:46:07 AM [express] GET /api/tenant/current 200 in 185ms :: {"id":"15b85353-0985-4fec-bd4d-7bc236e1…
+0|navimed  | 5:46:33 AM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 5:46:33 AM [express] GET /api/user/language-preference 404 in 128ms :: {"message":"API endpoint not …
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0 10075    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+HTTP/2 200 
+server: nginx
+date: Tue, 04 Nov 2025 05:46:46 GMT
+content-type: text/html; charset=UTF-8
+content-length: 10075
+content-security-policy: default-src 'self';style-src 'self' 'unsafe-inline';script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com;img-src 'self' data: https: blob:;connect-src 'self' ws: wss: http: https: https://api.stripe.com;font-src 'self' data:;object-src 'none';media-src 'self';frame-src 'self' https://js.stripe.com https://hooks.stripe.com;base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests
+cross-origin-opener-policy: same-origin
+cross-origin-resource-policy: same-origin
+origin-agent-cluster: ?1
+referrer-policy: strict-origin-when-cross-origin
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-dns-prefetch-control: off
+x-download-options: noopen
+x-frame-options: DENY
+x-permitted-cross-domain-policies: none
+x-xss-protection: 1; mode=block
+ls: cannot access '/var/www/vhosts/navimedi.org/httpdocs/index.html': No such file or directory
+[root@wizardly-swirles NaviMed]# # 1. What CSS file does the HTML reference?
+curl -s https://navimedi.org/ | grep -o 'href="[^"]*\.css"'
+
+# 2. Can you access the CSS through the domain?
+curl -I https://navimedi.org/assets/index-DNVWZ_LA.css
+
+# 3. What's in the old httpdocs that might interfere?
+ls -la /var/www/vhosts/navimedi.org/httpdocs/
+
+# 4. Is there old NaviMed folder with files?
+ls -la /var/www/vhosts/navimedi.org/httpdocs/NaviMed/ 2>&1 | head -10
+href="/assets/index-DNVWZ_LA.css"
+HTTP/2 200 
+server: nginx
+date: Tue, 04 Nov 2025 05:49:33 GMT
+content-type: text/css; charset=UTF-8
+content-length: 76502
+cache-control: no-cache, no-store, must-revalidate, private
+expires: 0
+content-security-policy: default-src 'self';style-src 'self' 'unsafe-inline';script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com;img-src 'self' data: https: blob:;connect-src 'self' ws: wss: http: https: https://api.stripe.com;font-src 'self' data:;object-src 'none';media-src 'self';frame-src 'self' https://js.stripe.com https://hooks.stripe.com;base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests
+cross-origin-opener-policy: same-origin
+cross-origin-resource-policy: same-origin
+origin-agent-cluster: ?1
+referrer-policy: strict-origin-when-cross-origin
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-dns-prefetch-control: off
+x-download-options: noopen
+x-frame-options: DENY
+x-permitted-cross-domain-policies: none
+x-xss-protection: 1; mode=block
+pragma: no-cache
+x-ssl-protection: enforce-tls12-plus
+x-cipher-policy: gcm-only-no-cbc
+x-tls-version: min-tls-1.2
+x-cipher-security: no-cbc-ciphers
+x-vulnerability-protection: lucky13-mitigated
+accept-ranges: bytes
+last-modified: Tue, 04 Nov 2025 05:25:34 GMT
+etag: W/"12ad6-19a4d53e480"
+vary: Accept-Encoding
+x-powered-by: PleskLin
+
+total 35408
+drwxr-x---. 3 administrator psaserv       37 Nov  4 01:41 .
+drwx--x---. 7 administrator psaserv      121 Oct 31 03:35 ..
+-rw-r--r--. 1 administrator psacln  36252443 Nov  4 01:41 dist.zip
+drwxr-xr-x. 8 root          root        4096 Nov  4 05:25 NaviMed
+total 35936
+drwxr-xr-x.   8 root          root        4096 Nov  4 05:25 .
+drwxr-x---.   3 administrator psaserv       37 Nov  4 01:41 ..
+drwxr-xr-x.   4 root          root       12288 Nov  4 05:04 attached_assets
+drwxr-xr-x.   4 root          root          68 Nov  4 05:01 client
+drwxr-xr-x.   3 root          root          36 Nov  4 05:25 dist
+-rw-r--r--.   1 root          root         325 Nov  4 02:41 drizzle.config.ts
+-rw-r--r--.   1 root          root         494 Nov  4 02:54 ecosystem.config.cjs
+-rw-r--r--.   1 root          root         208 Nov  4 01:56 .env
+-rw-r--r--.   1 root          root    36180855 Nov  4 01:50 navimed-dist.tar.gz
+[root@wizardly-swirles NaviMed]# 
