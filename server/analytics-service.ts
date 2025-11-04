@@ -625,100 +625,55 @@ export class AnalyticsService {
           percentage: Number(item.percentage) || 0,
           color: item.color || '#3b82f6'
         })),
-        // Generate time-series data for turnaround times from test volume
-        turnaroundTimes: testVolumeData.length > 0 ? [
-          { timestamp: new Date(Date.now() - 6*24*60*60*1000).toISOString(), value: 3.8 },
-          { timestamp: new Date(Date.now() - 5*24*60*60*1000).toISOString(), value: 4.1 },
-          { timestamp: new Date(Date.now() - 4*24*60*60*1000).toISOString(), value: 3.9 },
-          { timestamp: new Date(Date.now() - 3*24*60*60*1000).toISOString(), value: 4.3 },
-          { timestamp: new Date(Date.now() - 2*24*60*60*1000).toISOString(), value: 3.7 },
-          { timestamp: new Date(Date.now() - 1*24*60*60*1000).toISOString(), value: 4.0 },
-          { timestamp: new Date().toISOString(), value: processingMetrics.averageTurnaroundTime || 4.2 }
-        ] : [],
-        // Generate test volume trends from current data as proper TimeSeriesPoint array
-        testVolumeTrends: testVolumeData.length > 0 ? [
-          { timestamp: new Date(Date.now() - 6*24*60*60*1000).toISOString(), value: 189 },
-          { timestamp: new Date(Date.now() - 5*24*60*60*1000).toISOString(), value: 201 },
-          { timestamp: new Date(Date.now() - 4*24*60*60*1000).toISOString(), value: 224 },
-          { timestamp: new Date(Date.now() - 3*24*60*60*1000).toISOString(), value: 198 },
-          { timestamp: new Date(Date.now() - 2*24*60*60*1000).toISOString(), value: 215 },
-          { timestamp: new Date(Date.now() - 1*24*60*60*1000).toISOString(), value: 203 },
-          { timestamp: new Date().toISOString(), value: processingMetrics.resultsCompleted || 192 }
-        ] : [],
-        // Quality control results from real data
+        // Let real data populate time-series - no hardcoded values
+        turnaroundTimes: [],
+        // Let real data populate test volume trends - no hardcoded values
+        testVolumeTrends: [],
+        // Quality control results from real data - no fallback mock values
         qualityControlResults: [
-          { name: 'Accuracy Rate', current: Number(processingMetrics.resultsCompleted) / Number(processingMetrics.testsInProgress) * 100 || 99.1, previous: 98.9, target: 99.5, unit: '%', trend: 'up', changePercent: 0.2 },
-          { name: 'Precision', current: Number(processingMetrics.samplesCollected) / Number(processingMetrics.ordersReceived) * 100 || 98.7, previous: 98.4, target: 99.0, unit: '%', trend: 'up', changePercent: 0.3 }
+          { name: 'Accuracy Rate', current: Number(processingMetrics.resultsCompleted) / Number(processingMetrics.testsInProgress) * 100 || 0, previous: 0, target: 99.5, unit: '%', trend: 'stable' as const, changePercent: 0 },
+          { name: 'Precision', current: Number(processingMetrics.samplesCollected) / Number(processingMetrics.ordersReceived) * 100 || 0, previous: 0, target: 99.0, unit: '%', trend: 'stable' as const, changePercent: 0 }
         ]
       },
       samples: {
         collectionEfficiency: {
           name: 'Collection Efficiency',
-          current: Number(processingMetrics.ordersReceived) / 100 || 96.8,
-          previous: 96.2,
+          current: Number(processingMetrics.ordersReceived) / 100 || 0,
+          previous: 0,
           target: 97.0,
           unit: '%',
-          trend: 'up',
-          changePercent: 0.6
+          trend: 'stable' as const,
+          changePercent: 0
         },
         sampleQuality: [
-          { name: 'Sample Integrity', current: Number(processingMetrics.samplesCollected) / 10 || 98.9, previous: 98.7, target: 98.5, unit: '%', trend: 'up', changePercent: 0.2 },
-          { name: 'Collection Standards', current: 97.3, previous: 96.8, target: 97.0, unit: '%', trend: 'up', changePercent: 0.5 }
+          { name: 'Sample Integrity', current: Number(processingMetrics.samplesCollected) / 10 || 0, previous: 0, target: 98.5, unit: '%', trend: 'stable' as const, changePercent: 0 },
+          { name: 'Collection Standards', current: 0, previous: 0, target: 97.0, unit: '%', trend: 'stable' as const, changePercent: 0 }
         ],
-        storageUtilization: [
-          { resource: 'Refrigerated Storage', utilized: 67, capacity: 100, percentage: 67, efficiency: 92, status: 'optimal' as const },
-          { resource: 'Frozen Storage', utilized: 23, capacity: 40, percentage: 58, efficiency: 88, status: 'optimal' as const },
-          { resource: 'Room Temperature', utilized: 134, capacity: 200, percentage: 67, efficiency: 85, status: 'optimal' as const }
-        ],
+        storageUtilization: [],
         rejectionRate: {
           name: 'Sample Rejection Rate',
-          current: Number(processingMetrics.criticalResults) / Number(processingMetrics.samplesCollected) * 100 || 2.1,
-          previous: 2.3,
+          current: Number(processingMetrics.criticalResults) / Number(processingMetrics.samplesCollected) * 100 || 0,
+          previous: 0,
           target: 2.0,
           unit: '%',
-          trend: 'down',
-          changePercent: -8.7
+          trend: 'stable' as const,
+          changePercent: 0
         }
       },
       equipment: {
-        utilization: [
-          { resource: 'Analyzer A', utilized: 78, capacity: 100, percentage: 78.5, efficiency: 88.2, status: 'optimal' as const },
-          { resource: 'Centrifuge Bank', utilized: 65, capacity: 100, percentage: 65.8, efficiency: 82.1, status: 'warning' as const }
-        ],
-        maintenanceSchedule: testVolumeData.length > 0 ? testVolumeData.map((item: any, index: number) => ({
-          equipmentId: `eq-${index + 1}`,
-          name: `Equipment ${index + 1}`,
-          nextMaintenance: new Date(Date.now() + (90 - (index + 1) * 7) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          status: index < 2 ? 'operational' as const : 'maintenance' as const
-        })) : [],
-        downtime: [
-          { timestamp: new Date(Date.now() - 5*24*60*60*1000).toISOString(), value: 2.1 },
-          { timestamp: new Date(Date.now() - 4*24*60*60*1000).toISOString(), value: 1.8 },
-          { timestamp: new Date(Date.now() - 3*24*60*60*1000).toISOString(), value: 2.3 },
-          { timestamp: new Date(Date.now() - 2*24*60*60*1000).toISOString(), value: 1.9 },
-          { timestamp: new Date(Date.now() - 1*24*60*60*1000).toISOString(), value: 2.0 },
-          { timestamp: new Date().toISOString(), value: 1.7 }
-        ]
+        utilization: [],
+        maintenanceSchedule: [],
+        downtime: []
       },
       quality: {
         accuracyMetrics: [
-          { name: 'Overall Accuracy', current: Number(processingMetrics.resultsCompleted) / Number(processingMetrics.testsInProgress) * 100 || 98.7, previous: 98.5, target: 99.0, unit: '%', trend: 'up', changePercent: 0.2 }
+          { name: 'Overall Accuracy', current: Number(processingMetrics.resultsCompleted) / Number(processingMetrics.testsInProgress) * 100 || 0, previous: 0, target: 99.0, unit: '%', trend: 'stable' as const, changePercent: 0 }
         ],
         proficiencyTests: [
-          { name: 'External QC', current: 99.1, previous: 99.0, target: 99.5, unit: '%', trend: 'up', changePercent: 0.1 }
+          { name: 'External QC', current: 0, previous: 0, target: 99.5, unit: '%', trend: 'stable' as const, changePercent: 0 }
         ],
-        calibrationStatus: [
-          { name: 'In Calibration', value: 85, percentage: 85, color: '#22c55e' },
-          { name: 'Needs Calibration', value: 15, percentage: 15, color: '#f97316' }
-        ],
-        errorRates: [
-          { timestamp: new Date(Date.now() - 5*24*60*60*1000).toISOString(), value: 1.8 },
-          { timestamp: new Date(Date.now() - 4*24*60*60*1000).toISOString(), value: 1.5 },
-          { timestamp: new Date(Date.now() - 3*24*60*60*1000).toISOString(), value: 1.9 },
-          { timestamp: new Date(Date.now() - 2*24*60*60*1000).toISOString(), value: 1.3 },
-          { timestamp: new Date(Date.now() - 1*24*60*60*1000).toISOString(), value: 1.2 },
-          { timestamp: new Date().toISOString(), value: Number(processingMetrics.criticalResults) / 10 || 1.3 }
-        ]
+        calibrationStatus: [],
+        errorRates: []
       }
     };
 

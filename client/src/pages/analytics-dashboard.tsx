@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TrendChart, DistributionChart, MetricCard } from "@/components/charts";
-import { Download, TrendingUp, Users, Calendar, Activity, DollarSign, AlertTriangle, Clock } from "lucide-react";
+import { Download, TrendingUp, TrendingDown, Minus, Users, Calendar, Activity, DollarSign, AlertTriangle, Clock } from "lucide-react";
 import { useState } from "react";
 import {
   LineChart,
@@ -54,37 +54,37 @@ export default function AnalyticsDashboard() {
   const isLoading = authLoading || overviewLoading || revenueLoading || patientLoading || operationsLoading;
 
   // Extract real data from API responses
-  const overviewData = overview?.data || overview;
-  const revenueData = revenueResponse?.data || revenueResponse;
-  const patientData = patientResponse?.data || patientResponse;
-  const operationsData = operationsResponse?.data || operationsResponse;
+  const overviewData = (overview as any)?.data || overview;
+  const revenueData = (revenueResponse as any)?.data || revenueResponse;
+  const patientData = (patientResponse as any)?.data || patientResponse;
+  const operationsData = (operationsResponse as any)?.data || operationsResponse;
 
-  // Format KPI data from real backend data
+  // Format KPI data from real backend data - use API trends if available, default to neutral for new accounts
   const kpiData = {
     monthlyRevenue: {
       value: overviewData?.kpis?.monthlyRevenue 
         ? `$${overviewData.kpis.monthlyRevenue.toLocaleString()}` 
         : "$0",
-      change: 12.5,
-      trend: "up" as const,
+      change: overviewData?.kpis?.monthlyRevenueChange || 0,
+      trend: (overviewData?.kpis?.monthlyRevenueTrend || "stable") as "up" | "down" | "stable",
       data: overviewData?.revenueTrend || []
     },
     activePatients: {
       value: overviewData?.kpis?.activePatients?.toLocaleString() || "0",
-      change: 8.2,
-      trend: "up" as const
+      change: overviewData?.kpis?.activePatientsChange || 0,
+      trend: (overviewData?.kpis?.activePatientsTrend || "stable") as "up" | "down" | "stable"
     },
     appointmentsToday: {
       value: overviewData?.kpis?.todayAppointments?.toString() || "0",
-      change: -3.5,
-      trend: "down" as const
+      change: overviewData?.kpis?.todayAppointmentsChange || 0,
+      trend: (overviewData?.kpis?.todayAppointmentsTrend || "stable") as "up" | "down" | "stable"
     },
     occupancyRate: {
       value: overviewData?.kpis?.bedOccupancy 
         ? `${Math.round(overviewData.kpis.bedOccupancy)}%` 
         : "0%",
-      change: 4.1,
-      trend: "up" as const
+      change: overviewData?.kpis?.bedOccupancyChange || 0,
+      trend: (overviewData?.kpis?.bedOccupancyTrend || "stable") as "up" | "down" | "stable"
     }
   };
 
@@ -118,7 +118,7 @@ export default function AnalyticsDashboard() {
     },
     { 
       name: "Equipment Usage", 
-      value: 0, // Real data from API, 0 for new accounts
+      value: Math.round(overviewData?.operationalMetrics?.equipmentUsage || 0),
       fill: "#f59e0b" 
     },
     { 
@@ -245,8 +245,22 @@ export default function AnalyticsDashboard() {
           <CardContent>
             <div className="text-2xl font-bold" data-testid="value-revenue">{kpiData.monthlyRevenue.value}</div>
             <p className="text-xs text-muted-foreground flex items-center mt-1">
-              <TrendingUp className="mr-1 h-3 w-3 text-green-600" />
-              <span className="text-green-600">+{kpiData.monthlyRevenue.change}%</span> from last month
+              {kpiData.monthlyRevenue.trend === "up" && kpiData.monthlyRevenue.change > 0 ? (
+                <>
+                  <TrendingUp className="mr-1 h-3 w-3 text-green-600" />
+                  <span className="text-green-600">+{kpiData.monthlyRevenue.change}%</span> from last month
+                </>
+              ) : kpiData.monthlyRevenue.trend === "down" && kpiData.monthlyRevenue.change < 0 ? (
+                <>
+                  <TrendingDown className="mr-1 h-3 w-3 text-red-600" />
+                  <span className="text-red-600">{kpiData.monthlyRevenue.change}%</span> from last month
+                </>
+              ) : (
+                <>
+                  <Minus className="mr-1 h-3 w-3 text-gray-400" />
+                  <span className="text-gray-400">No change from last month</span>
+                </>
+              )}
             </p>
           </CardContent>
         </Card>
@@ -259,8 +273,22 @@ export default function AnalyticsDashboard() {
           <CardContent>
             <div className="text-2xl font-bold" data-testid="value-patients">{kpiData.activePatients.value}</div>
             <p className="text-xs text-muted-foreground flex items-center mt-1">
-              <TrendingUp className="mr-1 h-3 w-3 text-green-600" />
-              <span className="text-green-600">+{kpiData.activePatients.change}%</span> from last month
+              {kpiData.activePatients.trend === "up" && kpiData.activePatients.change > 0 ? (
+                <>
+                  <TrendingUp className="mr-1 h-3 w-3 text-green-600" />
+                  <span className="text-green-600">+{kpiData.activePatients.change}%</span> from last month
+                </>
+              ) : kpiData.activePatients.trend === "down" && kpiData.activePatients.change < 0 ? (
+                <>
+                  <TrendingDown className="mr-1 h-3 w-3 text-red-600" />
+                  <span className="text-red-600">{kpiData.activePatients.change}%</span> from last month
+                </>
+              ) : (
+                <>
+                  <Minus className="mr-1 h-3 w-3 text-gray-400" />
+                  <span className="text-gray-400">No change from last month</span>
+                </>
+              )}
             </p>
           </CardContent>
         </Card>
@@ -273,7 +301,22 @@ export default function AnalyticsDashboard() {
           <CardContent>
             <div className="text-2xl font-bold" data-testid="value-appointments">{kpiData.appointmentsToday.value}</div>
             <p className="text-xs text-muted-foreground flex items-center mt-1">
-              <span className="text-gray-600">{Math.abs(kpiData.appointmentsToday.change)}%</span> vs average
+              {kpiData.appointmentsToday.trend === "up" && kpiData.appointmentsToday.change > 0 ? (
+                <>
+                  <TrendingUp className="mr-1 h-3 w-3 text-green-600" />
+                  <span className="text-green-600">+{kpiData.appointmentsToday.change}%</span> vs average
+                </>
+              ) : kpiData.appointmentsToday.trend === "down" && kpiData.appointmentsToday.change < 0 ? (
+                <>
+                  <TrendingDown className="mr-1 h-3 w-3 text-red-600" />
+                  <span className="text-red-600">{kpiData.appointmentsToday.change}%</span> vs average
+                </>
+              ) : (
+                <>
+                  <Minus className="mr-1 h-3 w-3 text-gray-400" />
+                  <span className="text-gray-400">No change vs average</span>
+                </>
+              )}
             </p>
           </CardContent>
         </Card>
@@ -286,8 +329,22 @@ export default function AnalyticsDashboard() {
           <CardContent>
             <div className="text-2xl font-bold" data-testid="value-occupancy">{kpiData.occupancyRate.value}</div>
             <p className="text-xs text-muted-foreground flex items-center mt-1">
-              <TrendingUp className="mr-1 h-3 w-3 text-green-600" />
-              <span className="text-green-600">+{kpiData.occupancyRate.change}%</span> from last month
+              {kpiData.occupancyRate.trend === "up" && kpiData.occupancyRate.change > 0 ? (
+                <>
+                  <TrendingUp className="mr-1 h-3 w-3 text-green-600" />
+                  <span className="text-green-600">+{kpiData.occupancyRate.change}%</span> from last month
+                </>
+              ) : kpiData.occupancyRate.trend === "down" && kpiData.occupancyRate.change < 0 ? (
+                <>
+                  <TrendingDown className="mr-1 h-3 w-3 text-red-600" />
+                  <span className="text-red-600">{kpiData.occupancyRate.change}%</span> from last month
+                </>
+              ) : (
+                <>
+                  <Minus className="mr-1 h-3 w-3 text-gray-400" />
+                  <span className="text-gray-400">No change from last month</span>
+                </>
+              )}
             </p>
           </CardContent>
         </Card>
