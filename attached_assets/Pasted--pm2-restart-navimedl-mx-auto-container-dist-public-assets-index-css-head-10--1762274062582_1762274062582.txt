@@ -1,0 +1,68 @@
+        },
+pm2 restart navimedl|\.mx-auto|\.container" dist/public/assets/index-*.css | head -10
+../dist/public/assets/hospital-billing-RfI_E7NU.js                 21.87 kB │ gzip:   4.47 kB
+../dist/public/assets/lab-test-management-8PXeJAmW.js              24.11 kB │ gzip:   4.83 kB
+../dist/public/assets/lab-results-reporting-DqgpDdSe.js            25.21 kB │ gzip:   6.20 kB
+../dist/public/assets/system-admin-training-B1YPeQnX.js            25.49 kB │ gzip:   5.40 kB
+../dist/public/assets/lab-inventory-management-DOXXL0py.js         26.19 kB │ gzip:   5.58 kB
+../dist/public/assets/profile-settings-GY78kp9y.js                 27.64 kB │ gzip:   6.28 kB
+../dist/public/assets/documentation-BzrwZR0C.js                    29.12 kB │ gzip:   7.35 kB
+../dist/public/assets/currency-management-CdIxFUaT.js              43.67 kB │ gzip:  12.11 kB
+../dist/public/assets/lab-analytics-dashboard-CwHiGHz2.js          44.60 kB │ gzip:  11.11 kB
+../dist/public/assets/index-CItiWITF.js                         4,052.25 kB │ gzip: 920.58 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 11.64s
+
+  dist/index.js  1003.0kb
+
+⚡ Done in 38ms
+
+=== Checking for layout classes ===
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1163785  │ 0s     │ 16   │ online    │ 0%       │ 13.8mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[root@wizardly-swirles NaviMed]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+
+# Download the working CSS from Replit
+curl "https://rest-express-1-0--jaeikuxk.repl.co/assets/index-poczJ29H.css" -o dist/public/assets/index-WORKING.css
+
+# Verify it downloaded (should be ~240KB)
+ls -lh dist/public/assets/index-WORKING.css
+
+# Update index.html to use the working CSS
+sed -i 's|/assets/index-DNVWZ_LA.css|/assets/index-WORKING.css|g' dist/public/index.html
+
+# Verify the change
+grep "index-WORKING.css" dist/public/index.html
+
+# Restart
+pm2 restart navimed
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+curl: (60) SSL: no alternative certificate subject name matches target host name 'rest-express-1-0--jaeikuxk.repl.co'
+More details here: https://curl.se/docs/sslcerts.html
+
+curl failed to verify the legitimacy of the server and therefore could not
+establish a secure connection to it. To learn more about this situation and
+how to fix it, please visit the web page mentioned above.
+ls: cannot access 'dist/public/assets/index-WORKING.css': No such file or directory
+    <link rel="stylesheet" crossorigin href="/assets/index-WORKING.css">
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1164009  │ 0s     │ 17   │ online    │ 0%       │ 17.8mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[root@wizardly-swirles NaviMed]# 
