@@ -1,0 +1,165 @@
+Provider initialised
+injected.js:1 Provider initialised
+injected.js:1 Provider initialised
+injected.js:1 Deprecation warning: tabReply will be removed
+(anonymous) @ content.js:1
+reply @ content.js:1
+(anonymous) @ content.js:1
+await in (anonymous)
+i.emit @ content.js:1
+(anonymous) @ content.js:1
+send @ injected.js:1
+send @ injected.js:1
+getProviderInitData @ injected.js:1
+initSelectedAddress @ injected.js:1
+initEthereumProvider @ injected.js:1
+init @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+injected.js:1 Deprecation warning: tabReply will be removed
+(anonymous) @ content.js:1
+reply @ content.js:1
+(anonymous) @ content.js:1
+await in (anonymous)
+i.emit @ content.js:1
+(anonymous) @ content.js:1
+send @ injected.js:1
+send @ injected.js:1
+getProviderInitData @ injected.js:1
+getInitTronWeb @ injected.js:1
+initTronProvider @ injected.js:1
+init @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+injected.js:1 Deprecation warning: tabReply will be removed
+(anonymous) @ content.js:1
+reply @ content.js:1
+(anonymous) @ content.js:1
+await in (anonymous)
+i.emit @ content.js:1
+(anonymous) @ content.js:1
+send @ injected.js:1
+send @ injected.js:1
+_initRequest @ injected.js:1
+init @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+injected.js:1 TronLink initiated
+index-BPEY8QdF.js:8233 Tenant context: No auth data, skipping tenant fetch
+index-BPEY8QdF.js:8233 Successfully restored auth state for user: abel_admin
+index-BPEY8QdF.js:9574 User authenticated, showing app content for: abel_admin
+index-BPEY8QdF.js:8233 Tenant context: Fetching tenant with token preview: eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...
+index-BPEY8QdF.js:48  GET https://navimedi.org/api/user/language-preference 404 (Not Found)
+(anonymous) @ index-BPEY8QdF.js:48
+i @ index-BPEY8QdF.js:48
+x @ index-BPEY8QdF.js:48
+start @ index-BPEY8QdF.js:48
+fetch @ index-BPEY8QdF.js:48
+Ev @ index-BPEY8QdF.js:48
+setOptions @ index-BPEY8QdF.js:48
+(anonymous) @ index-BPEY8QdF.js:48
+iH @ index-BPEY8QdF.js:40
+x1 @ index-BPEY8QdF.js:40
+(anonymous) @ index-BPEY8QdF.js:40
+j @ index-BPEY8QdF.js:25
+E @ index-BPEY8QdF.js:25
+index-BPEY8QdF.js:8233 Tenant context: Response status: 200 true
+index-BPEY8QdF.js:8233 Tenant context: Raw response data: {id: '15b85353-0985-4fec-bd4d-7bc236e190cd', name: 'ARGILETTE', type: 'platform', subdomain: 'argilette', countryId: null, …}
+index-BPEY8QdF.js:8233 Tenant context: Successfully fetched tenant: ARGILETTE
+index-BPEY8QdF.js:8233 Tenant context: State updated successfully
+The script has an unsupported MIME type ('text/html').
+index-BPEY8QdF.js:9574 [PWA] Service Worker registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://navimedi.org/') with script ('https://navimedi.org/service-worker.js'): The script has an unsupported MIME type ('text/html').
+(anonymous) @ index-BPEY8QdF.js:9574
+Promise.catch
+(anonymous) @ index-BPEY8QdF.js:9574
+manifest.json:1 Manifest: Line: 1, column: 1, Syntax error.
+(index):1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+injected.js:1 Provider initialised
+injected.js:1 Provider initialised
+injected.js:1 Provider initialised
+injected.js:1 Deprecation warning: tabReply will be removed
+(anonymous) @ content.js:1
+reply @ content.js:1
+(anonymous) @ content.js:1
+await in (anonymous)
+i.emit @ content.js:1
+(anonymous) @ content.js:1
+send @ injected.js:1
+send @ injected.js:1
+getProviderInitData @ injected.js:1
+initSelectedAddress @ injected.js:1
+initEthereumProvider @ injected.js:1
+init @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+injected.js:1 Deprecation warning: tabReply will be removed
+(anonymous) @ content.js:1
+reply @ content.js:1
+(anonymous) @ content.js:1
+await in (anonymous)
+i.emit @ content.js:1
+(anonymous) @ content.js:1
+send @ injected.js:1
+send @ injected.js:1
+getProviderInitData @ injected.js:1
+getInitTronWeb @ injected.js:1
+initTronProvider @ injected.js:1
+init @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+injected.js:1 Deprecation warning: tabReply will be removed
+(anonymous) @ content.js:1
+reply @ content.js:1
+(anonymous) @ content.js:1
+await in (anonymous)
+i.emit @ content.js:1
+(anonymous) @ content.js:1
+send @ injected.js:1
+send @ injected.js:1
+_initRequest @ injected.js:1
+init @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+injected.js:1 TronLink initiated
+injected.js:1 Provider initialised
+injected.js:1 Provider initialised
+injected.js:1 Provider initialised
+injected.js:1 Deprecation warning: tabReply will be removed
+(anonymous) @ content.js:1
+reply @ content.js:1
+(anonymous) @ content.js:1
+await in (anonymous)
+i.emit @ content.js:1
+(anonymous) @ content.js:1
+send @ injected.js:1
+send @ injected.js:1
+getProviderInitData @ injected.js:1
+initSelectedAddress @ injected.js:1
+initEthereumProvider @ injected.js:1
+init @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+injected.js:1 Deprecation warning: tabReply will be removed
+(anonymous) @ content.js:1
+reply @ content.js:1
+(anonymous) @ content.js:1
+await in (anonymous)
+i.emit @ content.js:1
+(anonymous) @ content.js:1
+send @ injected.js:1
+send @ injected.js:1
+getProviderInitData @ injected.js:1
+getInitTronWeb @ injected.js:1
+initTronProvider @ injected.js:1
+init @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+(anonymous) @ injected.js:1
+injected.js:1 Deprecation warning: tabReply will be removed
