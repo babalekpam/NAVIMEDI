@@ -1,0 +1,31 @@
+# 3. Download a simple update script I'll create
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ navimed            │ fork     │ 0    │ online    │ 0%       │ 228.2mb  │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[root@wizardly-swirles NaviMed]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+cp -r dist dist-backup-$(date +%Y%m%d-%H%M)
+[root@wizardly-swirles NaviMed]# # Check if you have the original deployment archive
+ls -lh navimed-dist.tar.gz
+-rw-r--r--. 1 root root 35M Nov  4 01:50 navimed-dist.tar.gz
+[root@wizardly-swirles NaviMed]# tar -xzf navimed-dist.tar.gz --strip-components=0
+ls -la
+total 35908
+drwxr-xr-x.   6 root          root        4096 Nov  4 04:50  .
+drwxr-x---.   3 administrator psaserv       37 Nov  4 01:41  ..
+drwxr-xr-x.   3          1000 psaadm        86 Sep  6 06:54  dist
+drwxr-xr-x.   3 root          root          86 Nov  4 04:50  dist-backup-20251104-0450
+-rw-r--r--.   1 root          root         325 Nov  4 02:41  drizzle.config.ts
+-rw-r--r--.   1 root          root         494 Nov  4 02:54  ecosystem.config.cjs
+-rw-r--r--.   1 root          root         208 Nov  4 01:56  .env
+-rw-r--r--.   1 root          root    36180855 Nov  4 01:50  navimed-dist.tar.gz
+-rw-r--r--.   1 root          root        7480 Nov  4 01:43  navimed-release.tar.gz
+-rw-r--r--.   1 root          root        7480 Nov  4 01:15  navimed-vps-release.tar.gz
+drwxr-xr-x. 539 root          root       16384 Nov  4 04:23  node_modules
+-rw-r--r--.   1 root          root        4702 Nov  4 02:04  package.json
+-rw-r--r--.   1 root          root      501586 Nov  4 04:23  package-lock.json
+-rw-r--r--.   1 root          root        1036 Nov  4 01:24  seed-database.sql
+-rw-r--r--.   1 root          root         671 Nov  4 02:12 'SESSION_SECRET=navimed-session-secret-2025-secure'
+drwxr-xr-x.   2 root          root          23 Nov  4 02:23  shared
+-rw-r--r--.   1 root          root     
