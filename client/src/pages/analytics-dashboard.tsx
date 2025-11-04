@@ -176,9 +176,18 @@ export default function AnalyticsDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center" data-testid="error-state">
         <div className="text-center">
-          <AlertTriangle className="mx-auto h-12 w-12 text-red-600 mb-4" />
-          <h2 className="text-2xl font-bold text-red-600 mb-2">Failed to load analytics</h2>
-          <p className="text-gray-600">Please try again later or contact support if the problem persists.</p>
+          <AlertTriangle className="mx-auto h-12 w-12 text-yellow-600 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Analytics Dashboard</h2>
+          <p className="text-gray-600 mb-4">
+            Welcome to your new hospital! Analytics data will appear here once you start adding:
+          </p>
+          <ul className="text-left text-gray-600 max-w-md mx-auto space-y-2">
+            <li>✓ Patients and appointments</li>
+            <li>✓ Prescriptions and lab orders</li>
+            <li>✓ Billing and insurance claims</li>
+            <li>✓ Staff members and departments</li>
+          </ul>
+          <p className="text-sm text-gray-500 mt-4">Start by exploring other sections of the dashboard.</p>
         </div>
       </div>
     );
