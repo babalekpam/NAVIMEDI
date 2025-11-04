@@ -8476,6 +8476,17 @@ to the patient and authorized healthcare providers.
     });
   });
 
+  // Download complete package.json for VPS
+  app.get('/download-package-json', (req, res) => {
+    const filePath = '/tmp/complete-package.json';
+    res.download(filePath, 'package.json', (err) => {
+      if (err) {
+        console.error('Download error:', err);
+        res.status(500).send('Download failed');
+      }
+    });
+  });
+
   // Global error handler middleware (must be after all routes)
   app.use((err: any, req: any, res: any, next: any) => {
     console.error('Unhandled error:', err);
