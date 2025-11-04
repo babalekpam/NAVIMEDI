@@ -429,6 +429,17 @@ async function initializePlatform() {
   // Register simple test routes FIRST (no dependencies, should always work)
   registerSimpleTestRoutes(app);
   
+  // VPS Deployment Release Download Endpoint
+  app.get('/download/vps-release', (req, res) => {
+    const filePath = path.join(import.meta.dirname, 'public', 'releases', 'navimed-vps-release.tar.gz');
+    res.download(filePath, 'navimed-vps-release.tar.gz', (err) => {
+      if (err) {
+        console.error('Release download error:', err);
+        res.status(404).send('Release file not found');
+      }
+    });
+  });
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
