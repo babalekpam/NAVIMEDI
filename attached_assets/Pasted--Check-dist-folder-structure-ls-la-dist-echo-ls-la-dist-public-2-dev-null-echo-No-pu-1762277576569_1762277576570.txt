@@ -1,0 +1,43 @@
+# Check dist folder structure
+ls -la dist/
+echo "---"
+ls -la dist/public/ 2>/dev/null || echo "No public folder!"
+echo "---"
+ls -la dist/*.js 2>/dev/null || echo "No server file!"
+total 10264
+drwxr-xr-x. 3 1000 psaadm      86 Sep  6 06:54 .
+drwxr-xr-x. 8 root root      4096 Nov  4 17:28 ..
+-rw-r--r--. 1 1000 psaadm 1025667 Nov  4 17:16 index.js
+-rw-r--r--. 1 1000 psaadm 8881289 Sep  6 06:54 navimed-deployment.tar.gz
+drwxr-xr-x. 4 1000 psaadm    4096 Nov  4 17:16 public
+-rw-r--r--. 1 1000 psaadm  585886 Aug 23 20:51 server.js
+---
+total 104
+drwxr-xr-x. 4 1000 psaadm  4096 Nov  4 17:16 .
+drwxr-xr-x. 3 1000 psaadm    86 Sep  6 06:54 ..
+-rw-r--r--. 1 1000 psaadm  1601 Nov  4 17:16 android-chrome-192x192.png
+-rw-r--r--. 1 1000 psaadm  1601 Nov  4 17:16 android-chrome-512x512.png
+-rw-r--r--. 1 1000 psaadm  1601 Nov  4 17:16 apple-touch-icon-114x114.png
+-rw-r--r--. 1 1000 psaadm  1601 Nov  4 17:16 apple-touch-icon-120x120.png
+-rw-r--r--. 1 1000 psaadm  1601 Nov  4 17:16 apple-touch-icon-144x144.png
+-rw-r--r--. 1 1000 psaadm  1601 Nov  4 17:16 apple-touch-icon-152x152.png
+-rw-r--r--. 1 1000 psaadm  1601 Nov  4 17:16 apple-touch-icon-180x180.png
+-rw-r--r--. 1 1000 psaadm  1601 Nov  4 17:16 apple-touch-icon-57x57.png
+-rw-r--r--. 1 1000 psaadm  1601 Nov  4 17:16 apple-touch-icon-60x60.png
+-rw-r--r--. 1 1000 psaadm  1601 Nov  4 17:16 apple-touch-icon-72x72.png
+-rw-r--r--. 1 1000 psaadm  1601 Nov  4 17:16 apple-touch-icon-76x76.png
+-rw-r--r--. 1 1000 psaadm  1601 Nov  4 17:16 apple-touch-icon.png
+drwxr-xr-x. 2 1000 psaadm  4096 Nov  4 17:16 assets
+-rw-r--r--. 1 1000 psaadm  1601 Nov  4 17:16 favicon-16x16.png
+-rw-r--r--. 1 1000 psaadm  1601 Nov  4 17:16 favicon-32x32.png
+-rw-r--r--. 1 1000 psaadm  1601 Nov  4 17:16 favicon.ico
+-rw-r--r--. 1 1000 psaadm    53 Nov  4 17:16 google2ae759b1998ec13b.html
+-rw-r--r--. 1 1000 psaadm 10075 Nov  4 17:16 index.html
+-rw-r--r--. 1 1000 psaadm   529 Nov  4 17:16 robots.txt
+-rw-r--r--. 1 1000 psaadm  9780 Nov  4 17:16 sitemap.xml
+-rw-r--r--. 1 1000 psaadm   707 Nov  4 17:16 site.webmanifest
+drwxr-xr-x. 3 1000 psaadm    28 Nov  4 17:16 .well-known
+---
+-rw-r--r--. 1 1000 psaadm 1025667 Nov  4 17:16 dist/index.js
+-rw-r--r--. 1 1000 psaadm  585886 Aug 23 20:51 dist/server.js
+[root@wizardly-swirles NaviMed]# 
