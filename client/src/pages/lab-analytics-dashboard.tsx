@@ -119,7 +119,7 @@ export default function LabAnalyticsDashboard() {
   });
 
   // Extract real data from API response
-  const apiData: any = realAnalyticsData?.data || {};
+  const apiData: any = (realAnalyticsData as any)?.data || {};
 
   // Always construct real data metrics - no mock data fallback
   const realMetrics: AnalyticsMetric[] = [
@@ -360,7 +360,7 @@ export default function LabAnalyticsDashboard() {
 
   // Show welcome message for new laboratories with no data
   // Show when: (a) API error OR (b) API success but no data exists
-  if (analyticsError || !realAnalyticsData || !realAnalyticsData.success || !hasAnyData) {
+  if (analyticsError || !realAnalyticsData || !(realAnalyticsData as any).success || !hasAnyData) {
     return (
       <div className="min-h-screen flex items-center justify-center" data-testid="empty-state">
         <div className="text-center max-w-2xl mx-auto p-8">
