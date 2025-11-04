@@ -1,0 +1,140 @@
+[root@wizardly-swirles NaviMed]# # 1. Check if CSS file exists
+cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+ls -lh dist/public/assets/*.css
+
+# 2. Check the index.html file for CSS reference
+grep -i "\.css" dist/public/index.html
+
+# 3. Check if all assets are there
+ls -lh dist/public/assets/ | head -20
+
+# 4. Check PM2 logs for errors
+pm2 logs navimed --lines 50 --nostream
+-rw-r--r--. 1 root root 75K Nov  4 05:25 dist/public/assets/index-DNVWZ_LA.css
+    <link rel="stylesheet" crossorigin href="/assets/index-DNVWZ_LA.css">
+total 13M
+-rw-r--r--. 1 root root  13K Nov  4 05:25 achievements-Td7moy8U.js
+-rw-r--r--. 1 root root 9.5K Nov  4 05:25 api-docs-CZn-fWDu.js
+-rw-r--r--. 1 root root 7.5K Nov  4 05:25 api-docs-Do5USE8l.js
+-rw-r--r--. 1 root root 6.6K Nov  4 05:25 appointment-scheduling-CxX5WzcR.js
+-rw-r--r--. 1 root root  13K Nov  4 05:25 aws-integration-DASI-Tvl.js
+-rw-r--r--. 1 root root 4.1K Nov  4 05:25 billing-insurance-vcu8RZ-H.js
+-rw-r--r--. 1 root root 7.6K Nov  4 05:25 billing-management-uHpGCrcK.js
+-rw-r--r--. 1 root root 2.2K Nov  4 05:25 checkout-BXQqn55W.js
+-rw-r--r--. 1 root root 3.0K Nov  4 05:25 checkout-simple-CpDB1AlF.js
+-rw-r--r--. 1 root root 4.8K Nov  4 05:25 clinical-documentation-C_lBCmhb.js
+-rw-r--r--. 1 root root 4.2K Nov  4 05:25 clinics-B9NMguL0.js
+-rw-r--r--. 1 root root  22K Nov  4 05:25 comprehensive-user-training-kTnrYZA4.js
+-rw-r--r--. 1 root root 5.0K Nov  4 05:25 contact-CaujNwNa.js
+-rw-r--r--. 1 root root  43K Nov  4 05:25 currency-management-zD4WGR1b.js
+-rw-r--r--. 1 root root  29K Nov  4 05:25 documentation-ogNrrji1.js
+-rw-r--r--. 1 root root 4.7K Nov  4 05:25 electronic-health-records-D0gtwBlo.js
+-rw-r--r--. 1 root root  20K Nov  4 05:25 first-patient-registration-CwYfWHhk.js
+-rw-r--r--. 1 root root 5.8K Nov  4 05:25 getting-started-Cu0JhJYU.js
+-rw-r--r--. 1 root root 4.8K Nov  4 05:25 help-center-CB0dnuz0.js
+[TAILING] Tailing last 50 lines for [navimed] process (change the value with --lines option)
+/root/.pm2/logs/navimed-error-0.log last 50 lines:
+0|navimed  |   status: 404
+0|navimed  | }
+0|navimed  | Unhandled error: [Error: ENOENT: no such file or directory, stat '/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/public/sitemap.xml'] {
+0|navimed  |   errno: -2,
+0|navimed  |   code: 'ENOENT',
+0|navimed  |   syscall: 'stat',
+0|navimed  |   path: '/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/public/sitemap.xml',
+0|navimed  |   expose: false,
+0|navimed  |   statusCode: 404,
+0|navimed  |   status: 404
+0|navimed  | }
+0|navimed  | Unhandled error: [Error: ENOENT: no such file or directory, stat '/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/public/robots.txt'] {
+0|navimed  |   errno: -2,
+0|navimed  |   code: 'ENOENT',
+0|navimed  |   syscall: 'stat',
+0|navimed  |   path: '/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/public/robots.txt',
+0|navimed  |   expose: false,
+0|navimed  |   statusCode: 404,
+0|navimed  |   status: 404
+0|navimed  | }
+0|navimed  | Unhandled error: [Error: ENOENT: no such file or directory, stat '/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/public/robots.txt'] {
+0|navimed  |   errno: -2,
+0|navimed  |   code: 'ENOENT',
+0|navimed  |   syscall: 'stat',
+0|navimed  |   path: '/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/public/robots.txt',
+0|navimed  |   expose: false,
+0|navimed  |   statusCode: 404,
+0|navimed  |   status: 404
+0|navimed  | }
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+
+/root/.pm2/logs/navimed-out-0.log last 50 lines:
+0|navimed  | 5:23:32 AM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 5:23:32 AM [express] GET /api/tenant/current 200 in 81ms :: {"id":"15b85353-0985-4fec-bd4d-7bc236e19…
+0|navimed  | 5:23:32 AM [express] GET /api/user/language-preference 404 in 55ms :: {"message":"API endpoint not f…
+0|navimed  | 5:23:32 AM [express] GET /api/tenant/current 200 in 163ms :: {"id":"15b85353-0985-4fec-bd4d-7bc236e1…
+0|navimed  | 5:23:32 AM [express] GET /api/admin/stripe-revenue 503 in 184ms :: {"success":false,"message":"Strip…
+0|navimed  | 5:23:32 AM [express] GET /api/admin/suppliers 200 in 186ms :: []
+0|navimed  | 5:23:32 AM [express] GET /api/admin/tenants 200 in 221ms :: [{"id":"15b85353-0985-4fec-bd4d-7bc236e1…
+0|navimed  | 5:23:32 AM [express] GET /api/admin/platform-stats 200 in 233ms :: {"success":true,"data":{"tenants"…
+0|navimed  | 5:23:32 AM [express] GET /api/admin/platform-stats 200 in 266ms :: {"totalTenants":2,"totalUsers":2,…
+0|navimed  | 5:23:33 AM [express] GET /api/admin/stripe-revenue 503 in 85ms :: {"success":false,"message":"Stripe…
+0|navimed  | 🧪 Registering simple test routes...
+0|navimed  | ✅ Simple test routes registered successfully
+0|navimed  | 🔒 Applying security middleware for BREACH protection...
+0|navimed  | 📦 Registering inventory management routes...
+0|navimed  | ✅ Inventory management routes registered successfully
+0|navimed  | 📚 Registering patient engagement routes...
+0|navimed  | ✅ Patient engagement routes registered successfully
+0|navimed  | 🔧 Registering developer portal routes...
+0|navimed  | ✅ Developer portal routes registered successfully
+0|navimed  | 📊 Registering analytics routes...
+0|navimed  | 📊 Skipping duplicate platform-stats registration (exists in routes.ts)
+0|navimed  | ✅ Analytics routes registered successfully
+0|navimed  | 🏥 Registering DICOM medical imaging routes...
+0|navimed  | ✅ DICOM medical imaging routes registered successfully
+0|navimed  | ✅ BI Reports endpoints registered successfully
+0|navimed  | Server running on port 5000
+0|navimed  | 5:25:37 AM [express] serving on port 5000
+0|navimed  | 5:25:41 AM [express] ✓ Platform tenant already exists
+0|navimed  | 5:25:41 AM [express] ✓ Super admin already exists
+0|navimed  | 🌍 Initializing default countries...
+0|navimed  | ✓ Comprehensive countries already initialized
+0|navimed  | 5:25:42 AM [express] ✓ Platform initialization complete
+0|navimed  | 5:25:47 AM [express] GET /api/user/language-preference 404 in 128ms :: {"message":"API endpoint not …
+0|navimed  | 5:25:47 AM [express] GET /api/admin/stripe-revenue 503 in 176ms :: {"success":false,"message":"Strip…
+0|navimed  | 5:25:47 AM [express] GET /api/admin/platform-stats 200 in 223ms :: {"success":true,"data":{"tenants"…
+0|navimed  | 5:25:48 AM [express] GET /api/admin/stripe-revenue 503 in 83ms :: {"success":false,"message":"Stripe…
+0|navimed  | 5:25:49 AM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 5:25:49 AM [express] GET /api/admin/suppliers 200 in 2204ms :: []
+0|navimed  | 5:25:49 AM [express] GET /api/admin/platform-stats 200 in 2228ms :: {"totalTenants":2,"totalUsers":2…
+0|navimed  | 5:25:49 AM [express] GET /api/admin/tenants 200 in 2214ms :: [{"id":"15b85353-0985-4fec-bd4d-7bc236e…
+0|navimed  | 5:25:49 AM [express] GET /api/user/language-preference 404 in 55ms :: {"message":"API endpoint not f…
+0|navimed  | 5:25:49 AM [express] GET /api/admin/platform-stats 200 in 68ms :: {"success":true,"data":{"tenants":…
+0|navimed  | 5:25:49 AM [express] GET /api/admin/stripe-revenue 503 in 80ms :: {"success":false,"message":"Stripe…
+0|navimed  | 5:25:49 AM [express] GET /api/admin/suppliers 200 in 105ms :: []
+0|navimed  | 5:25:49 AM [express] GET /api/admin/tenants 200 in 125ms :: [{"id":"15b85353-0985-4fec-bd4d-7bc236e1…
+0|navimed  | 5:25:49 AM [express] GET /api/admin/platform-stats 200 in 140ms :: {"totalTenants":2,"totalUsers":2,…
+0|navimed  | 5:25:49 AM [express] GET /api/tenant/current 200 in 145ms :: {"id":"15b85353-0985-4fec-bd4d-7bc236e1…
+0|navimed  | 5:25:50 AM [express] GET /api/admin/stripe-revenue 503 in 70ms :: {"success":false,"message":"Stripe…
+0|navimed  | 5:26:03 AM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 5:26:03 AM [express] GET /api/user/language-preference 404 in 146ms :: {"message":"API endpoint not …
+
+[root@wizardly-swirles NaviMed]# 
