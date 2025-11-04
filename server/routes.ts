@@ -8487,6 +8487,28 @@ to the patient and authorized healthcare providers.
     });
   });
 
+  // Download drizzle config
+  app.get('/download-drizzle-config', (req, res) => {
+    const filePath = '/tmp/drizzle.config.ts';
+    res.download(filePath, 'drizzle.config.ts', (err) => {
+      if (err) {
+        console.error('Download error:', err);
+        res.status(500).send('Download failed');
+      }
+    });
+  });
+
+  // Download schema file
+  app.get('/download-schema', (req, res) => {
+    const filePath = '/tmp/schema.ts';
+    res.download(filePath, 'schema.ts', (err) => {
+      if (err) {
+        console.error('Download error:', err);
+        res.status(500).send('Download failed');
+      }
+    });
+  });
+
   // Global error handler middleware (must be after all routes)
   app.use((err: any, req: any, res: any, next: any) => {
     console.error('Unhandled error:', err);
