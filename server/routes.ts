@@ -6,7 +6,6 @@ import { authenticateToken, requireRole } from "./middleware/auth";
 import { setTenantContext, requireTenant } from "./middleware/tenant";
 import { securityMiddleware } from "./middleware/security";
 import { csrfProtection, getCSRFToken } from "./middleware/csrf";
-import { compressionMitigation } from "./middleware/compression";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { AnalyticsService } from "./analytics-service";

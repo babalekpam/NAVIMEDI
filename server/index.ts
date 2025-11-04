@@ -9,8 +9,6 @@ import { tenants, users, countries, countryMedicalCodes } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { trialSuspensionService } from "./trial-suspension-service";
-import { createTestHospital } from "./create-test-hospital";
 
 const app = express();
 

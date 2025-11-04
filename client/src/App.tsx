@@ -1,5 +1,5 @@
 import React, { Suspense, startTransition } from "react";
-import { Switch, Route, Redirect, useLocation } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -8,7 +8,6 @@ import { TenantProvider } from "@/contexts/tenant-context";
 import { TranslationProvider } from "@/contexts/translation-context";
 import { AuthProvider } from "@/contexts/auth-context";
 import { useAuth } from "@/contexts/auth-context";
-import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TabsNavigation } from "@/components/layout/tabs-navigation";
 import { ProtectedRoute } from "@/components/layout/protected-route";
@@ -31,29 +30,6 @@ const LoadingPage = () => (
     </div>
   </div>
 );
-
-// Lazy Route wrapper that uses startTransition
-const LazyRoute = ({ component: Component, ...props }: any) => {
-  const [location] = useLocation();
-  
-  React.useEffect(() => {
-    // Pre-load the component using startTransition to prevent suspension
-    if (location === props.path) {
-      startTransition(() => {
-        // This will trigger the lazy loading without suspension
-        Component.preload?.();
-      });
-    }
-  }, [location, props.path, Component]);
-
-  return (
-    <Route {...props}>
-      <Suspense fallback={<LoadingPage />}>
-        <Component />
-      </Suspense>
-    </Route>
-  );
-};
 
 import Dashboard from "@/pages/dashboard";
 import Patients from "@/pages/patients";
