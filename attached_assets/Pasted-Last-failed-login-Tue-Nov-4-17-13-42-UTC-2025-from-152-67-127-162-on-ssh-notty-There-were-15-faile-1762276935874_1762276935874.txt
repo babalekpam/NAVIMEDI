@@ -1,0 +1,47 @@
+Last failed login: Tue Nov  4 17:13:42 UTC 2025 from 152.67.127.162 on ssh:notty
+There were 15 failed login attempts since the last successful login.
+Last login: Tue Nov  4 16:47:29 2025 from 127.0.0.1
+
+This server is powered by Plesk.
+
+Run the 'plesk login' command and log in by browsing either of the links received in the output.
+Use the 'plesk' command to manage the server. Run 'plesk help' for more info.
+
+[root@wizardly-swirles ~]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+
+# STEP A: Backup your old deployment
+echo "Creating backup..."
+tar czf backup-old-deployment-$(date +%Y%m%d).tgz dist node_modules package.json package-lock.json 2>/dev/null
+echo "✅ Backup created"
+
+# STEP B: Remove old files
+echo "Removing old files..."
+rm -rf dist node_modules
+
+# STEP C: Ready for new deployment
+echo "✅ Ready for new files!"
+ls -lh
+Creating backup...
+✅ Backup created
+Removing old files...
+✅ Ready for new files!
+total 145M
+drwxr-xr-x. 4 root root  12K Nov  4 05:04  attached_assets
+-rw-r--r--. 1 root root 110M Nov  4 17:21  backup-old-deployment-20251104.tgz
+drwxr-xr-x. 4 root root   68 Nov  4 06:09  client
+-rw-r--r--. 1 root root  325 Nov  4 02:41  drizzle.config.ts
+-rw-r--r--. 1 root root  494 Nov  4 02:54  ecosystem.config.cjs
+-rw-r--r--. 1 root root  35M Nov  4 01:50  navimed-dist.tar.gz
+-rw-r--r--. 1 root root 7.4K Nov  4 01:43  navimed-release.tar.gz
+-rw-r--r--. 1 root root 7.4K Nov  4 01:15  navimed-vps-release.tar.gz
+-rw-r--r--. 1 root root 4.6K Nov  4 02:04  package.json
+-rw-r--r--. 1 root root 490K Nov  4 04:23  package-lock.json
+-rw-r--r--. 1 root root 1.1K Nov  4 01:24  seed-database.sql
+drwxr-xr-x. 3 root root 4.0K Nov  4 05:01  server
+-rw-r--r--. 1 root root  671 Nov  4 02:12 'SESSION_SECRET=navimed-session-secret-2025-secure'
+drwxr-xr-x. 2 root root   23 Nov  4 02:23  shared
+-rw-r--r--. 1 root root    0 Nov  4 01:43  source.tar.gz
+-rw-r--r--. 1 root root  450 Nov  4 16:37  tailwind.config.ts
+-rw-r--r--. 1 root root  697 Nov  4 05:03  tsconfig.json
+-rw-r--r--. 1 root root  971 Nov  4 05:03  vite.config.ts
+[root@wizardly-swirles NaviMed]# 
