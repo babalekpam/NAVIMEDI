@@ -428,14 +428,44 @@ async function initializePlatform() {
   registerSimpleTestRoutes(app);
   
   // VPS Deployment Release Download Endpoint
-  app.get('/download/vps-release', (req, res) => {
-    const filePath = path.join(import.meta.dirname, 'public', 'releases', 'navimed-vps-release.tar.gz');
-    res.download(filePath, 'navimed-vps-release.tar.gz', (err) => {
-      if (err) {
-        console.error('Release download error:', err);
-        res.status(404).send('Release file not found');
+  app.get('/download/vps-release', async (req, res) => {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      // Try multiple possible locations
+      const possiblePaths = [
+        path.join(process.cwd(), 'server', 'public', 'releases', 'navimed-vps-release.tar.gz'),
+        path.join(import.meta.dirname, 'public', 'releases', 'navimed-vps-release.tar.gz'),
+        path.join(process.cwd(), 'dist', 'public', 'releases', 'navimed-vps-release.tar.gz'),
+      ];
+      
+      let filePath = null;
+      for (const testPath of possiblePaths) {
+        if (fs.existsSync(testPath)) {
+          filePath = testPath;
+          console.log(`✅ Found release file at: ${testPath}`);
+          break;
+        }
       }
-    });
+      
+      if (!filePath) {
+        console.error('❌ Release file not found in any location');
+        return res.status(404).send('Release file not found');
+      }
+      
+      res.download(filePath, 'navimed-vps-release.tar.gz', (err) => {
+        if (err) {
+          console.error('Release download error:', err);
+          if (!res.headersSent) {
+            res.status(500).send('Download failed');
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Release endpoint error:', error);
+      res.status(500).send('Internal server error');
+    }
   });
   
   const server = await registerRoutes(app);
