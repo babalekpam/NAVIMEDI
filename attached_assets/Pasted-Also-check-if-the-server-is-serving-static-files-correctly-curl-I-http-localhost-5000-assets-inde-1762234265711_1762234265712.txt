@@ -1,0 +1,118 @@
+Also check if the server is serving static files correctly
+curl -I http://localhost:5000/assets/index-DNVWZ_LA.css
+module.exports = {
+  apps: [{
+    name: 'navimed',
+    script: './dist/index.js',
+    instances: 1,
+    exec_mode: 'fork',
+    env: {
+      NODE_ENV: 'production',
+      PORT: '5000',
+      DATABASE_URL: 'postgresql://neondb_owner:npg_vMTokQ6w9fey@ep-square-moon-aexpu2wb.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require',
+      JWT_SECRET: 'your-super-secret-jwt-key-change-in-production-12345',
+      SESSION_SECRET: 'your-super-secret-session-key-change-in-production-67890'
+    }
+  }]
+};
+HTTP/1.1 200 OK
+Cache-Control: no-cache, no-store, must-revalidate, private
+Expires: 0
+Content-Security-Policy: default-src 'self';style-src 'self' 'unsafe-inline';script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com;img-src 'self' data: https: blob:;connect-src 'self' ws: wss: http: https: https://api.stripe.com;font-src 'self' data:;object-src 'none';media-src 'self';frame-src 'self' https://js.stripe.com https://hooks.stripe.com;base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+Pragma: no-cache
+X-SSL-Protection: enforce-tls12-plus
+X-Cipher-Policy: gcm-only-no-cbc
+X-TLS-Version: min-tls-1.2
+X-Cipher-Security: no-cbc-ciphers
+X-Vulnerability-Protection: lucky13-mitigated
+Accept-Ranges: bytes
+Last-Modified: Tue, 04 Nov 2025 05:25:34 GMT
+ETag: W/"12ad6-19a4d53e480"
+Content-Type: text/css; charset=UTF-8
+Content-Length: 76502
+Vary: Accept-Encoding
+Date: Tue, 04 Nov 2025 05:27:16 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+[root@wizardly-swirles NaviMed]# # 1. Check your ecosystem config
+cat /var/www/vhosts/navimedi.org/httpdocs/NaviMed/ecosystem.config.cjs
+
+# 2. Test if CSS is accessible locally
+curl -I http://localhost:5000/assets/index-DNVWZ_LA.css
+
+# 3. Check what's actually serving the site (Apache/Nginx?)
+ps aux | grep -E 'apache|nginx|httpd'
+
+# 4. Check if there's a web server config for navimedi.org
+ls -la /var/www/vhosts/navimedi.org/conf/
+module.exports = {
+  apps: [{
+    name: 'navimed',
+    script: './dist/index.js',
+    instances: 1,
+    exec_mode: 'fork',
+    env: {
+      NODE_ENV: 'production',
+      PORT: '5000',
+      DATABASE_URL: 'postgresql://neondb_owner:npg_vMTokQ6w9fey@ep-square-moon-aexpu2wb.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require',
+      JWT_SECRET: 'your-super-secret-jwt-key-change-in-production-12345',
+      SESSION_SECRET: 'your-super-secret-session-key-change-in-production-67890'
+    }
+  }]
+};
+HTTP/1.1 200 OK
+Cache-Control: no-cache, no-store, must-revalidate, private
+Expires: 0
+Content-Security-Policy: default-src 'self';style-src 'self' 'unsafe-inline';script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com;img-src 'self' data: https: blob:;connect-src 'self' ws: wss: http: https: https://api.stripe.com;font-src 'self' data:;object-src 'none';media-src 'self';frame-src 'self' https://js.stripe.com https://hooks.stripe.com;base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+Pragma: no-cache
+X-SSL-Protection: enforce-tls12-plus
+X-Cipher-Policy: gcm-only-no-cbc
+X-TLS-Version: min-tls-1.2
+X-Cipher-Security: no-cbc-ciphers
+X-Vulnerability-Protection: lucky13-mitigated
+Accept-Ranges: bytes
+Last-Modified: Tue, 04 Nov 2025 05:25:34 GMT
+ETag: W/"12ad6-19a4d53e480"
+Content-Type: text/css; charset=UTF-8
+Content-Length: 76502
+Vary: Accept-Encoding
+Date: Tue, 04 Nov 2025 05:30:22 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+nginx     462233  0.0  0.1  24532 14128 ?        S    Oct31   0:32 nginx: worker process
+apache   1029899  0.0  1.5 241904 120284 ?       S    00:00   0:00 /usr/sbin/httpd -DFOREGROUND
+apache   1029900  0.0  1.5 243080 119520 ?       S    00:00   0:00 /usr/sbin/httpd -DFOREGROUND
+apache   1029928  0.0  1.9 2307644 151596 ?      Sl   00:00   0:07 /usr/sbin/httpd -DFOREGROUND
+apache   1029945  0.0  1.9 2176508 150340 ?      Sl   00:00   0:06 /usr/sbin/httpd -DFOREGROUND
+apache   1029992  0.0  1.9 2176508 151680 ?      Sl   00:00   0:07 /usr/sbin/httpd -DFOREGROUND
+apache   1056607  0.0  1.9 2176508 151340 ?      Sl   03:03   0:08 /usr/sbin/httpd -DFOREGROUND
+root     1094787  3.0  2.8 11894856 219356 ?     Ssl  05:25   0:08 node /var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/in
+root     1095284  0.0  0.0   6412  2432 pts/1    S+   05:30   0:00 grep --color=auto -E apache|nginx|httpd
+root     2111807  0.0  0.1  20220 13192 ?        S    Oct14   0:00 nginx: master process /usr/sbin/nginx
+root     2437830  0.0  1.6 241060 133140 ?       Ssl  Oct16   1:27 /usr/sbin/httpd -DFOREGROUND
+ls: cannot access '/var/www/vhosts/navimedi.org/conf/': No such file or directory
+[root@wizardly-swirles NaviMed]# 
