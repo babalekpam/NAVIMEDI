@@ -1,0 +1,68 @@
+ast failed login: Tue Nov  4 18:50:59 UTC 2025 from 103.216.116.183 on ssh:notty
+There were 5 failed login attempts since the last successful login.
+Last login: Tue Nov  4 18:50:11 2025 from 127.0.0.1
+
+This server is powered by Plesk.
+
+Run the 'plesk login' command and log in by browsing either of the links received in the output.
+Use the 'plesk' command to manage the server. Run 'plesk help' for more info.
+
+[root@wizardly-swirles ~]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+
+# View the .env file (without showing passwords)
+echo "=== Current .env file ==="
+cat .env
+echo ""
+
+# Restart PM2 to load new environment variables
+echo "Restarting application..."
+pm2 restart navimed
+
+# Wait a moment for restart
+sleep 5
+
+# Check if SMTP warning is gone
+echo ""
+echo "=== CHECKING SMTP STATUS ==="
+pm2 logs navimed --lines 30 --nostream | grep -i smtp || echo "✅ No SMTP warnings - configuration looks good!"
+echo ""
+
+# Check server started successfully
+echo "=== SERVER STATUS ==="
+pm2 logs navimed --lines 10 --nostream | tail -5
+=== Current .env file ===
+NODE_ENV=production
+PORT=5000
+DATABASE_URL=postgresql://navimed_user:NaviMed2025!Secure@localhost:5432/navimed
+JWT_SECRET=navimed-prod-jwt-secret-2025-secure
+SESSION_SECRET=navimed-session-secret-2025-secure
+SMTP_HOST=smtp.ionos.com
+SMTP_PORT=587
+SMTP_USER=your_email@navimedi.org
+SMTP_PASS=your_password
+
+Restarting application...
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1179558  │ 0s     │ 25   │ online    │ 0%       │ 17.3mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+
+=== CHECKING SMTP STATUS ===
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+
+=== SERVER STATUS ===
+0|navimed  | 6:51:44 PM [express] ✓ Using Nigeria (b50f15cb-f548-4b9c-98ab-de565e05b70c) as platform tenant country
+0|navimed  | 6:51:44 PM [express] ✓ Platform tenant already exists
+0|navimed  | 6:51:44 PM [express] ✓ Super admin already exists
+0|navimed  | 6:51:44 PM [express] ✓ Platform initialization complete
+
+[root@wizardly-swirles NaviMed]# 
