@@ -1,0 +1,54 @@
+Cloning into 'navimed-source'...
+remote: Enumerating objects: 14256, done.
+remote: Counting objects: 100% (418/418), done.
+remote: Compressing objects: 100% (167/167), done.
+remote: Total 14256 (delta 267), reused 365 (delta 246), pack-reused 13838 (from 1)
+Receiving objects: 100% (14256/14256), 167.25 MiB | 63.83 MiB/s, done.
+Resolving deltas: 100% (10865/10865), done.
+total 692
+drwxr-xr-x. 13 root root   4096 Nov  4 05:00 .
+drwxrwxrwt. 34 root root   8192 Nov  4 05:00 ..
+-rw-r--r--.  1 root root   8006 Nov  4 05:00 app.js
+drwxr-xr-x.  4 root root  12288 Nov  4 05:00 attached_assets
+-rwxr-xr-x.  1 root root    437 Nov  4 05:00 build.sh
+-rw-r--r--.  1 root root    247 Nov  4 05:00 clear-supplier-session.js
+drwxr-xr-x.  4 root root     68 Nov  4 05:00 client
+-rw-r--r--.  1 root root    459 Nov  4 05:00 components.json
+-rw-r--r--.  1 root root    131 Nov  4 05:00 cookies.txt
+-rw-r--r--.  1 root root   1619 Nov  4 05:00 create-patient-fix.ts
+-rw-r--r--.  1 root root  11187 Nov  4 05:00 DASHBOARD_CHARTS_TEST_REPORT.md
+drwxr-xr-x.  2 root root   4096 Nov  4 05:00 deployment
+-rw-r--r--.  1 root root   2734 Nov  4 05:00 DEPLOYMENT.md
+drwxr-xr-x.  2 root root     32 Nov  4 05:00 docs
+-rw-r--r--.  1 root root    325 Nov  4 05:00 drizzle.config.ts
+-rw-r--r--.  1 root root    167 Nov  4 05:00 force-clear.html
+drwxr-xr-x.  8 root root    163 Nov  4 05:00 .git
+-rw-r--r--.  1 root root     67 Nov  4 05:00 .gitignore
+-rw-r--r--.  1 root root   2251 Nov  4 05:00 .htaccess
+-rw-r--r--.  1 root root   2903 Nov  4 05:00 .htaccess-passenger
+-rw-r--r--.  1 root root   7710 Nov  4 05:00 index.js
+drwxr-xr-x.  3 root root     85 Nov  4 05:00 migrations
+drwxr-xr-x.  2 root root    141 Nov  4 05:00 mobile-patient-portal
+-rw-r--r--.  1 root root   4702 Nov  4 05:00 package.json
+-rw-r--r--.  1 root root 494942 Nov  4 05:00 package-lock.json
+-rw-r--r--.  1 root root   1305 Nov  4 05:00 package-production.json
+-rw-r--r--.  1 root root    998 Nov  4 05:00 passenger_wsgi.py
+-rw-r--r--.  1 root root     80 Nov  4 05:00 postcss.config.js
+-rw-r--r--.  1 root root   2253 Nov  4 05:00 production-start.js
+drwxr-xr-x.  2 root root     47 Nov  4 05:00 public
+-rw-r--r--.  1 root root   1262 Nov  4 05:00 .replit
+-rw-r--r--.  1 root root  13919 Nov  4 05:00 replit.md
+-rw-r--r--.  1 root root   5791 Nov  4 05:00 SECURITY_ANALYSIS.md
+drwxr-xr-x.  3 root root   4096 Nov  4 05:00 server
+drwxr-xr-x.  2 root root     23 Nov  4 05:00 shared
+-rw-r--r--.  1 root root   1273 Nov  4 05:00 SUPPLIER_AUTHENTICATION_GUIDE.md
+-rw-r--r--.  1 root root   2627 Nov  4 05:00 tailwind.config.ts
+-rw-r--r--.  1 root root   1593 Nov  4 05:00 temp_carousel.tsx
+-rw-r--r--.  1 root root    535 Nov  4 05:00 test-pharmacy-dashboard.html
+-rw-r--r--.  1 root root   2103 Nov  4 05:00 test-role-update.html
+-rw-r--r--.  1 root root   8291 Nov  4 05:00 test-supplier-management.html
+-rw-r--r--.  1 root root    534 Nov  4 05:00 test_translation.js
+-rw-r--r--.  1 root root    697 Nov  4 05:00 tsconfig.json
+-rw-r--r--.  1 root root    971 Nov  4 05:00 vite.config.ts
+drwxr-xr-x.  2 root root    148 Nov  4 05:00 vps-upload
+[root@wizardly-swirles navimed-source]# 
