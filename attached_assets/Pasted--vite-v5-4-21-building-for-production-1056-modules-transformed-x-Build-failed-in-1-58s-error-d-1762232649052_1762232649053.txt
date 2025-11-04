@@ -1,0 +1,98 @@
+
+vite v5.4.21 building for production...
+✓ 1056 modules transformed.
+x Build failed in 1.58s
+error during build:
+[vite:asset] Could not load /var/www/vhosts/navimedi.org/httpdocs/NaviMed/attached_assets/JPG_1753663321927.jpg (imported by client/src/pages/forgot-password.tsx): ENOENT: no such file or directory, open '/var/www/vhosts/navimedi.org/httpdocs/NaviMed/attached_assets/JPG_1753663321927.jpg'
+    at async open (node:internal/fs/promises:639:25)
+    at async Object.readFile (node:internal/fs/promises:1246:14)
+    at async fileToBuiltUrl (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:20428:19)
+    at async Object.load (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:20328:17)
+    at async PluginDriver.hookFirstAndGetPlugin (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/rollup/dist/es/shared/node-entry.js:22308:28)
+    at async file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/rollup/dist/es/shared/node-entry.js:21308:33
+    at async Queue.work (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/rollup/dist/es/shared/node-entry.js:22536:32)
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ navimed            │ fork     │ 1    │ online    │ 0%       │ 18.3mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ navimed            │ fork     │ 1    │ online    │ 0%       │ 62.8mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[TAILING] Tailing last 20 lines for [navimed] process (change the value with --lines option)
+/root/.pm2/logs/navimed-error-0.log last 20 lines:
+0|navimed  |   status: 404
+0|navimed  | }
+0|navimed  | Unhandled error: [Error: ENOENT: no such file or directory, stat '/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/public/robots.txt'] {
+0|navimed  |   errno: -2,
+0|navimed  |   code: 'ENOENT',
+0|navimed  |   syscall: 'stat',
+0|navimed  |   path: '/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/public/robots.txt',
+0|navimed  |   expose: false,
+0|navimed  |   statusCode: 404,
+0|navimed  |   status: 404
+0|navimed  | }
+0|navimed  | Unhandled error: [Error: ENOENT: no such file or directory, stat '/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/public/robots.txt'] {
+0|navimed  |   errno: -2,
+0|navimed  |   code: 'ENOENT',
+0|navimed  |   syscall: 'stat',
+0|navimed  |   path: '/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/public/robots.txt',
+0|navimed  |   expose: false,
+0|navimed  |   statusCode: 404,
+0|navimed  |   status: 404
+0|navimed  | }
+
+/root/.pm2/logs/navimed-out-0.log last 20 lines:
+0|navimed  | Password validation result: true
+0|navimed  | 4:16:07 AM [express] POST /api/auth/login 200 in 191ms :: {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX…
+0|navimed  | 4:16:07 AM [express] GET /api/tenant/current 200 in 69ms :: {"id":"27ec4d0a-776b-42a9-82d2-bd5b8349c…
+0|navimed  | 4:16:07 AM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 4:16:07 AM [express] GET /api/user/language-preference 404 in 48ms :: {"message":"API endpoint not f…
+0|navimed  | 4:16:07 AM [express] GET /api/tenant/current 200 in 161ms :: {"id":"27ec4d0a-776b-42a9-82d2-bd5b8349…
+0|navimed  | 4:16:08 AM [express] GET /api/analytics/tenant/27ec4d0a-776b-42a9-82d2-bd5b8349cea1/%5Bobject%20Obje…
+0|navimed  | 4:16:08 AM [express] GET /api/analytics/admin/%5Bobject%20Object%5D 404 in 54ms :: {"message":"API e…
+0|navimed  | 4:16:08 AM [express] GET /api/tenant/current 200 in 78ms :: {"id":"27ec4d0a-776b-42a9-82d2-bd5b8349c…
+0|navimed  | 4:16:08 AM [express] GET /api/tenant/current 200 in 79ms :: {"id":"27ec4d0a-776b-42a9-82d2-bd5b8349c…
+0|navimed  | 4:16:09 AM [express] GET /api/analytics/tenant/27ec4d0a-776b-42a9-82d2-bd5b8349cea1/%5Bobject%20Obje…
+0|navimed  | 4:16:09 AM [express] GET /api/analytics/admin/%5Bobject%20Object%5D 404 in 51ms :: {"message":"API e…
+0|navimed  | 4:16:11 AM [express] GET /api/analytics/tenant/27ec4d0a-776b-42a9-82d2-bd5b8349cea1/%5Bobject%20Obje…
+0|navimed  | 4:16:11 AM [express] GET /api/analytics/admin/%5Bobject%20Object%5D 404 in 53ms :: {"message":"API e…
+0|navimed  | 4:16:14 AM [express] GET /api/analytics/laboratory-test 200 in 53ms :: {"success":true,"data":{"tena…
+0|navimed  | 4:21:42 AM [express] GET /api/analytics/laboratory-test 200 in 669ms :: {"success":true,"data":{"ten…
+0|navimed  | 4:21:44 AM [express] GET /api/user/language-preference 404 in 2142ms :: {"message":"API endpoint not…
+0|navimed  | 4:50:47 AM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 4:58:24 AM [express] GET /api/user/language-preference 404 in 150ms :: {"message":"API endpoint not …
+0|navimed  | 4:58:24 AM [express] GET /api/analytics/laboratory-test 200 in 233ms :: {"success":true,"data":{"ten…
+
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | 🧪 Registering simple test routes...
+0|navimed  | ✅ Simple test routes registered successfully
+0|navimed  | 🔒 Applying security middleware for BREACH protection...
+0|navimed  | 📦 Registering inventory management routes...
+0|navimed  | ✅ Inventory management routes registered successfully
+0|navimed  | 📚 Registering patient engagement routes...
+0|navimed  | ✅ Patient engagement routes registered successfully
+0|navimed  | 🔧 Registering developer portal routes...
+0|navimed  | ✅ Developer portal routes registered successfully
+0|navimed  | 📊 Registering analytics routes...
+0|navimed  | 📊 Skipping duplicate platform-stats registration (exists in routes.ts)
+0|navimed  | ✅ Analytics routes registered successfully
+0|navimed  | 🏥 Registering DICOM medical imaging routes...
+0|navimed  | ✅ DICOM medical imaging routes registered successfully
+0|navimed  | ✅ BI Reports endpoints registered successfully
+0|navimed  | Server running on port 5000
+0|navimed  | 5:03:32 AM [express] serving on port 5000
+0|navimed  | 5:03:35 AM [express] 🌍 Initializing countries first...
+0|navimed  | 🌍 Initializing default countries...
+0|navimed  | ✓ Comprehensive countries already initialized
+0|navimed  | 5:03:35 AM [express] ✓ Using Nigeria (b50f15cb-f548-4b9c-98ab-de565e05b70c) as platform tenant country
+0|navimed  | 5:03:35 AM [express] ✓ Platform tenant already exists
+0|navimed  | 5:03:35 AM [express] ✓ Super admin already exists
+0|navimed  | 5:03:35 AM [express] ✓ Platform initialization complete
