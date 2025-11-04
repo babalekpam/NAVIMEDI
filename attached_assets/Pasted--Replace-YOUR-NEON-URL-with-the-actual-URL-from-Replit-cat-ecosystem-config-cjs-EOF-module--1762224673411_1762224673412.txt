@@ -1,0 +1,171 @@
+
+# Replace YOUR_NEON_URL with the actual URL from Replit
+cat > ecosystem.config.cjs << 'EOF'
+module.exports = {
+  apps: [{
+    name: 'navimed',
+    script: './dist/index.js',
+    instances: 1,
+    exec_mode: 'fork',
+    env: {
+      NODE_ENV: 'production',
+      PORT: '5000',
+      DATABASE_URL: 'YOUR_NEON_URL_HERE',
+      JWT_SECRET: 'your-super-secret-jwt-key-change-in-production-12345',
+      SESSION_SECRET: 'your-super-secret-session-key-change-in-production-67890'
+    }
+  }]
+};
+EOF
+
+pm2 start ecosystem.config.cjs
+pm2 save
+
+sleep 10
+
+pm2 logs navimed --lines 30
+[PM2] Applying action stopProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 0        │ 0      │ 0    │ stopped   │ 0%       │ 0b       │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1054954  │ 0s     │ 0    │ online    │ 0%       │ 16.0mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2] Saving current process list...
+[PM2] Successfully saved in /root/.pm2/dump.pm2
+[TAILING] Tailing last 30 lines for [navimed] process (change the value with --lines option)
+/root/.pm2/logs/navimed-out-0.log last 30 lines:
+0|navimed  | 2:50:13 AM [express] 🌍 Initializing countries first...
+0|navimed  | 🌍 Initializing default countries...
+0|navimed  | 2:50:13 AM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+0|navimed  | 2:50:23 AM [express] 🔄 Retrying platform initialization...
+0|navimed  | 2:50:25 AM [express] 🌍 Initializing countries first...
+0|navimed  | 🌍 Initializing default countries...
+0|navimed  | 2:50:25 AM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+0|navimed  | 🧪 Registering simple test routes...
+0|navimed  | ✅ Simple test routes registered successfully
+0|navimed  | 🔒 Applying security middleware for BREACH protection...
+0|navimed  | 📦 Registering inventory management routes...
+0|navimed  | ✅ Inventory management routes registered successfully
+0|navimed  | 📚 Registering patient engagement routes...
+0|navimed  | ✅ Patient engagement routes registered successfully
+0|navimed  | 🔧 Registering developer portal routes...
+0|navimed  | ✅ Developer portal routes registered successfully
+0|navimed  | 📊 Registering analytics routes...
+0|navimed  | 📊 Skipping duplicate platform-stats registration (exists in routes.ts)
+0|navimed  | ✅ Analytics routes registered successfully
+0|navimed  | 🏥 Registering DICOM medical imaging routes...
+0|navimed  | ✅ DICOM medical imaging routes registered successfully
+0|navimed  | ✅ BI Reports endpoints registered successfully
+0|navimed  | Server running on port 5000
+0|navimed  | 2:50:36 AM [express] serving on port 5000
+0|navimed  | 2:50:38 AM [express] 🌍 Initializing countries first...
+0|navimed  | 🌍 Initializing default countries...
+0|navimed  | 2:50:38 AM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+
+/root/.pm2/logs/navimed-error-0.log last 30 lines:
+0|navimed  |   }
+0|navimed  | }
+0|navimed  | Platform initialization error: DrizzleQueryError: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+0|navimed  |     at NeonPreparedQuery.queryWithCache (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/session.js:41:15)
+0|navimed  |     at async NeonPreparedQuery.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:109:20)
+0|navimed  |     at async initializePlatform (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23805:28) {
+0|navimed  |   query: 'select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2',
+0|navimed  |   params: [ 'NG', 1 ],
+0|navimed  |   cause: TypeError: Invalid URL
+0|navimed  |       at new URL (node:internal/url:806:29)
+0|navimed  |       at Object.parse (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:431:121)
+0|navimed  |       at parse (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:752:66)
+0|navimed  |       at new ConnectionParameters (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:769:49)
+0|navimed  |       at new Client (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:991:1)
+0|navimed  |       at new NeonClient (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1308:193)
+0|navimed  |       at Un.newClient (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1115:52)
+0|navimed  |       at Un.connect (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1115:1)
+0|navimed  |       at Un.query (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1139:1)
+0|navimed  |       at Un.query (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1352:96)
+0|navimed  |       at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:110:27
+0|navimed  |       at NeonPreparedQuery.queryWithCache (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/session.js:39:22)
+0|navimed  |       at NeonPreparedQuery.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:109:31)
+0|navimed  |       at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/query-builders/select.js:797:30
+0|navimed  |       at Object.startActiveSpan (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/tracing.js:8:14)
+0|navimed  |       at PgSelectBase.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/query-builders/select.js:796:19) {
+0|navimed  |     code: 'ERR_INVALID_URL',
+0|navimed  |     input: 'YOUR_NEON_URL_HERE'
+0|navimed  |   }
+0|navimed  | }
+
+0|navimed  | 2:50:48 AM [express] 🔄 Retrying platform initialization...
+0|navimed  | 2:50:50 AM [express] 🌍 Initializing countries first...
+0|navimed  | 🌍 Initializing default countries...
+0|navimed  | ❌ Error initializing default countries: DrizzleQueryError: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+0|navimed  |     at NeonPreparedQuery.queryWithCache (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/session.js:41:15)
+0|navimed  |     at async NeonPreparedQuery.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:109:20)
+0|navimed  |     at async initializeDefaultCountries (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23696:29)
+0|navimed  |     at async initializePlatform (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23804:5) {
+0|navimed  |   query: 'select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2',
+0|navimed  |   params: [ 'NG', 1 ],
+0|navimed  |   cause: TypeError: Invalid URL
+0|navimed  |       at new URL (node:internal/url:806:29)
+0|navimed  |       at Object.parse (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:431:121)
+0|navimed  |       at parse (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:752:66)
+0|navimed  |       at new ConnectionParameters (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:769:49)
+0|navimed  |       at new Client (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:991:1)
+0|navimed  |       at new NeonClient (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1308:193)
+0|navimed  |       at Un.newClient (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1115:52)
+0|navimed  |       at Un.connect (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1115:1)
+0|navimed  |       at Un.query (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1139:1)
+0|navimed  |       at Un.query (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1352:96)
+0|navimed  |       at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:110:27
+0|navimed  |       at NeonPreparedQuery.queryWithCache (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/session.js:39:22)
+0|navimed  |       at NeonPreparedQuery.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:109:31)
+0|navimed  |       at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/query-builders/select.js:797:30
+0|navimed  |       at Object.startActiveSpan (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/tracing.js:8:14)
+0|navimed  |       at PgSelectBase.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/query-builders/select.js:796:19) {
+0|navimed  |     code: 'ERR_INVALID_URL',
+0|navimed  |     input: 'YOUR_NEON_URL_HERE'
+0|navimed  |   }
+0|navimed  | }
+0|navimed  | 2:50:50 AM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+0|navimed  | Platform initialization error: DrizzleQueryError: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+0|navimed  |     at NeonPreparedQuery.queryWithCache (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/session.js:41:15)
+0|navimed  |     at async NeonPreparedQuery.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:109:20)
+0|navimed  |     at async initializePlatform (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23805:28) {
+0|navimed  |   query: 'select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2',
+0|navimed  |   params: [ 'NG', 1 ],
+0|navimed  |   cause: TypeError: Invalid URL
+0|navimed  |       at new URL (node:internal/url:806:29)
+0|navimed  |       at Object.parse (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:431:121)
+0|navimed  |       at parse (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:752:66)
+0|navimed  |       at new ConnectionParameters (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:769:49)
+0|navimed  |       at new Client (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:991:1)
+0|navimed  |       at new NeonClient (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1308:193)
+0|navimed  |       at Un.newClient (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1115:52)
+0|navimed  |       at Un.connect (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1115:1)
+0|navimed  |       at Un.query (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1139:1)
+0|navimed  |       at Un.query (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1352:96)
+0|navimed  |       at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:110:27
+0|navimed  |       at NeonPreparedQuery.queryWithCache (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/session.js:39:22)
+0|navimed  |       at NeonPreparedQuery.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:109:31)
+0|navimed  |       at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/query-builders/select.js:797:30
+0|navimed  |       at Object.startActiveSpan (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/tracing.js:8:14)
+0|navimed  |       at PgSelectBase.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/query-builders/select.js:796:19) {
+0|navimed  |     code: 'ERR_INVALID_URL',
+0|navimed  |     input: 'YOUR_NEON_URL_HERE'
+0|navimed  |   }
+0|navimed  | }
+^C
+[root@wizardly-swirles NaviMed]# 
