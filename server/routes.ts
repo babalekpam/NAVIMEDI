@@ -8465,6 +8465,17 @@ to the patient and authorized healthcare providers.
 
   console.log('✅ BI Reports endpoints registered successfully');
 
+  // Simple download endpoint for VPS deployment
+  app.get('/download-dist', (req, res) => {
+    const filePath = '/tmp/navimed-dist.tar.gz';
+    res.download(filePath, 'navimed-dist.tar.gz', (err) => {
+      if (err) {
+        console.error('Download error:', err);
+        res.status(500).send('Download failed');
+      }
+    });
+  });
+
   // Global error handler middleware (must be after all routes)
   app.use((err: any, req: any, res: any, next: any) => {
     console.error('Unhandled error:', err);
