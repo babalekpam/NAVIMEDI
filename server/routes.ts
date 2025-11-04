@@ -1133,7 +1133,7 @@ sectigo.com
                 code: code.trim(),
                 description: description.trim(),
                 category: category?.trim() || null,
-                amount: amount ? parseFloat(amount) : null,
+                amount: amount ? parseFloat(amount).toString() : null,
                 source: 'csv_upload',
                 uploadedBy: (req as any).user.id
               };
@@ -3272,27 +3272,8 @@ The NaviMED Security Team
       const quantityMatch = notes.match(/Quantity: ([^,]+)/);
       const daysSupplyMatch = notes.match(/Days Supply: ([^,]+)/);
       
-      // Create comprehensive claim data with real patient information
-      const claimWithPatient = {
-        id: claim.id,
-        claimNumber: claim.claimNumber,
-        medicationName: medicationName,
-        dosage: dosageMatch?.[1] || 'N/A',
-        quantity: quantityMatch?.[1] || 'N/A',
-        daysSupply: daysSupplyMatch?.[1] || 'N/A',
-        totalAmount: claim.totalAmount || '0.00',
-        totalPatientCopay: claim.totalPatientCopay || '0.00', 
-        totalInsuranceAmount: claim.totalInsuranceAmount || '0.00',
-        status: claim.status,
-        submittedDate: claim.submittedDate,
-        patientFirstName: claim.patientFirstName,
-        patientLastName: claim.patientLastName,
-        patientMrn: claim.patientMrn,
-        patientId: claim.patientId
-      };
-
-      // Generate professional document content
-      const documentContent = generateInsuranceClaimDocument(claimWithPatient);
+      // Generate professional document content (pass claim data as-is)
+      const documentContent = generateInsuranceClaimDocument(claim as any);
       
       // Set headers for text document download
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
@@ -3611,11 +3592,11 @@ The NaviMED Security Team
       }
 
       // Update prescription with pharmacy routing information
-      const updatedPrescription = await storage.updatePrescription(prescriptionId, tenantId, {
+      const updatedPrescription = await storage.updatePrescription(prescriptionId, {
         pharmacyTenantId,
         status: 'sent_to_pharmacy',
         sentToPharmacyDate: new Date()
-      });
+      }, tenantId);
       
       // Invalidate prescription cache for real-time analytics
       invalidatePrescriptionCache(tenantId);
@@ -4386,7 +4367,9 @@ Please attach all required supporting documentation.
           
           if (subscription.latest_invoice && typeof subscription.latest_invoice === 'object') {
             const latestInvoice = subscription.latest_invoice as Stripe.Invoice;
-            const paymentIntent = latestInvoice.payment_intent as Stripe.PaymentIntent | null;
+            // Access payment_intent safely - it's an expanded field
+            const paymentIntentRef = (latestInvoice as any).payment_intent;
+            const paymentIntent = typeof paymentIntentRef === 'string' ? null : paymentIntentRef as Stripe.PaymentIntent | null;
             
             if (paymentIntent && typeof paymentIntent === 'object') {
               return res.json({
@@ -4429,10 +4412,7 @@ Please attach all required supporting documentation.
         items: [{
           price_data: {
             currency: 'usd',
-            product_data: {
-              name: `NaviMED ${selectedPlan.name} Plan`,
-              description: `${selectedPlan.description} - ${selectedPlan.features.join(', ')}`,
-            },
+            product: `NaviMED ${selectedPlan.name} Plan`,
             unit_amount: unitAmount,
             recurring: {
               interval: intervalType,
@@ -4453,7 +4433,9 @@ Please attach all required supporting documentation.
       await storage.updateUserStripeInfo(user.id, stripeCustomerId, subscription.id);
 
       const latestInvoice = subscription.latest_invoice as Stripe.Invoice | null;
-      const paymentIntent = latestInvoice && typeof latestInvoice === 'object' ? (latestInvoice.payment_intent as Stripe.PaymentIntent | null) : null;
+      // Access payment_intent safely - it's an expanded field
+      const paymentIntentRef = latestInvoice && typeof latestInvoice === 'object' ? (latestInvoice as any).payment_intent : null;
+      const paymentIntent = paymentIntentRef && typeof paymentIntentRef === 'string' ? null : paymentIntentRef as Stripe.PaymentIntent | null;
       const clientSecret = paymentIntent && typeof paymentIntent === 'object' ? paymentIntent.client_secret : null;
 
       console.log(`✅ SUBSCRIPTION - Successfully created ${selectedPlan.name} subscription for ${user.email}`);
@@ -4554,7 +4536,9 @@ Please attach all required supporting documentation.
 
         case 'invoice.payment_succeeded': {
           const invoice = event.data.object as Stripe.Invoice;
-          const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id;
+          // Access subscription safely - it can be string or expanded object
+          const subscriptionRef = (invoice as any).subscription;
+          const subscriptionId = typeof subscriptionRef === 'string' ? subscriptionRef : subscriptionRef?.id;
 
           if (subscriptionId) {
             const tenant = await db.select()
@@ -4580,7 +4564,9 @@ Please attach all required supporting documentation.
 
         case 'invoice.payment_failed': {
           const invoice = event.data.object as Stripe.Invoice;
-          const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id;
+          // Access subscription safely - it can be string or expanded object
+          const subscriptionRef = (invoice as any).subscription;
+          const subscriptionId = typeof subscriptionRef === 'string' ? subscriptionRef : subscriptionRef?.id;
 
           if (subscriptionId) {
             const tenant = await db.select()
@@ -4988,7 +4974,7 @@ to the patient and authorized healthcare providers.
 
         res.json(stats);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching platform stats:', error);
       res.status(500).json({ 
         success: false,
@@ -5019,30 +5005,33 @@ to the patient and authorized healthcare providers.
       // Use auto-pagination to get ALL subscriptions (fixes pagination issue)
       // Remove created filter to include all subscriptions regardless of creation date
       // MRR calculation will determine which were active in each month
-      const allSubscriptions: any[] = [];
-      for await (const subscription of stripe.subscriptions.list({
+      const allSubscriptions: Stripe.Subscription[] = [];
+      const subscriptionList = stripe.subscriptions.list({
         status: 'all',
         expand: ['data.latest_invoice', 'data.customer']
         // No created filter - include all subscriptions for accurate MRR calculation
-      }).autoPagingEach()) {
+      });
+      for await (const subscription of subscriptionList) {
         allSubscriptions.push(subscription);
       }
 
       // Use auto-pagination to get ALL customers (fixes pagination issue)
-      const allCustomers: any[] = [];
-      for await (const customer of stripe.customers.list().autoPagingEach()) {
+      const allCustomers: Stripe.Customer[] = [];
+      const customerList = stripe.customers.list();
+      for await (const customer of customerList) {
         allCustomers.push(customer);
       }
 
       // Get ALL invoices for accurate revenue calculation (fixes revenue misattribution)
-      const allInvoices: any[] = [];
-      for await (const invoice of stripe.invoices.list({
+      const allInvoices: Stripe.Invoice[] = [];
+      const invoiceList = stripe.invoices.list({
         created: { 
           gte: Math.floor(startDate.getTime() / 1000),
           lte: Math.floor(endDate.getTime() / 1000)
         },
         status: 'paid'
-      }).autoPagingEach()) {
+      });
+      for await (const invoice of invoiceList) {
         allInvoices.push(invoice);
       }
 
@@ -5337,7 +5326,7 @@ to the patient and authorized healthcare providers.
           tenantId
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching tenant analytics:', error);
       res.status(500).json({
         success: false,
@@ -5368,7 +5357,7 @@ to the patient and authorized healthcare providers.
           tenantId
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching receptionist analytics:', error);
       res.status(500).json({
         success: false,
@@ -5399,7 +5388,7 @@ to the patient and authorized healthcare providers.
           tenantId
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching pharmacy analytics:', error);
       res.status(500).json({
         success: false,
@@ -5416,7 +5405,7 @@ to the patient and authorized healthcare providers.
       const startTime = Date.now();
       
       const analyticsService = new AnalyticsService();
-      const analytics = await analyticsService.getLaboratoryAnalytics(tenantId, {});
+      const analytics = await analyticsService.getLaboratoryAnalytics(tenantId, { interval: 'month' });
       const queryTime = Date.now() - startTime;
 
       res.json({
@@ -5444,7 +5433,7 @@ to the patient and authorized healthcare providers.
     try {
       const tenantId = 'ad97f863-d247-4b1c-af94-e8bedfb98bf6'; // Your lab tenant
       const startTime = Date.now();
-      const queryParams = {}; // Default params
+      const queryParams = { interval: 'month' as const }; // Default params with proper type
 
       const analyticsService = new AnalyticsService();
       const analytics = await analyticsService.getLaboratoryAnalytics(tenantId, queryParams);
@@ -5465,7 +5454,7 @@ to the patient and authorized healthcare providers.
       res.status(500).json({
         success: false,
         message: 'Failed to fetch laboratory analytics',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+        error: process.env.NODE_ENV === 'development' ? (error as any).message : 'Internal server error'
       });
     }
   });
@@ -5491,7 +5480,7 @@ to the patient and authorized healthcare providers.
           tenantId
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching admin analytics:', error);
       res.status(500).json({
         success: false,
@@ -5568,7 +5557,7 @@ to the patient and authorized healthcare providers.
           tenantId
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching analytics overview:', error);
       res.status(500).json({
         success: false,
@@ -5621,7 +5610,7 @@ to the patient and authorized healthcare providers.
           tenantId
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching revenue analytics:', error);
       res.status(500).json({
         success: false,
@@ -5656,7 +5645,7 @@ to the patient and authorized healthcare providers.
           tenantId
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching patient analytics:', error);
       res.status(500).json({
         success: false,
@@ -5693,7 +5682,7 @@ to the patient and authorized healthcare providers.
           tenantId
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching operational analytics:', error);
       res.status(500).json({
         success: false,
@@ -5735,7 +5724,7 @@ to the patient and authorized healthcare providers.
           message: 'Invalid request: tenantId required for tenant admins' 
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error invalidating analytics cache:', error);
       res.status(500).json({
         success: false,
@@ -5763,7 +5752,7 @@ to the patient and authorized healthcare providers.
         success: true,
         data: healthStatus
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Analytics health check failed:', error);
       res.status(500).json({
         success: false,
@@ -5792,7 +5781,7 @@ to the patient and authorized healthcare providers.
         success: true,
         predictions 
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error predicting readmission risk:', error);
       res.status(500).json({ 
         success: false,
@@ -5813,7 +5802,7 @@ to the patient and authorized healthcare providers.
         success: true,
         predictions 
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error predicting no-show probability:', error);
       res.status(500).json({ 
         success: false,
@@ -5834,7 +5823,7 @@ to the patient and authorized healthcare providers.
         success: true,
         forecasts 
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error forecasting inventory demand:', error);
       res.status(500).json({ 
         success: false,
@@ -5858,7 +5847,7 @@ to the patient and authorized healthcare providers.
         success: true,
         forecast 
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error forecasting revenue:', error);
       res.status(500).json({ 
         success: false,
@@ -6213,7 +6202,7 @@ to the patient and authorized healthcare providers.
         await objectStorageService.downloadObject(objectFile, res);
         console.log('✅ Download completed successfully');
         
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ Error downloading report file:', error);
         console.error('📋 Report details:', { reportId, fileName, fileUrl: report.fileUrl });
         res.status(404).json({ message: 'Report file not found', details: error.message });
@@ -7742,7 +7731,7 @@ to the patient and authorized healthcare providers.
       res.json({
         endpoints: docEndpoints,
         totalEndpoints: docEndpoints.length,
-        categories: [...new Set(docEndpoints.flatMap(e => e.tags))]
+        categories: Array.from(new Set(docEndpoints.flatMap(e => e.tags)))
       });
     } catch (error) {
       console.error('Get docs error:', error);
@@ -8065,7 +8054,7 @@ to the patient and authorized healthcare providers.
       }
       
       // TODO: Integrate with dcm4che/Orthanc for real DICOM C-MOVE
-      const result = await dicomService.retrieveStudy(connection, studyInstanceUID);
+      const result = await dicomService.retrieveStudy(connection, studyInstanceUID, req.tenantId);
       
       res.json({ message: 'Study retrieval initiated', result });
     } catch (error) {
