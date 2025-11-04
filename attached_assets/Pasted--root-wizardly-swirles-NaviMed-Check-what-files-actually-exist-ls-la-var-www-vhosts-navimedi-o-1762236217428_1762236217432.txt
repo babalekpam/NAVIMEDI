@@ -1,0 +1,56 @@
+[root@wizardly-swirles NaviMed]# # Check what files actually exist
+ls -la /var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/public/ | head -20
+
+# Test what the domain actually returns
+curl -s https://navimedi.org/ | head -30
+total 104
+drwxr-xr-x. 4 root root  4096 Nov  4 05:25 .
+drwxr-xr-x. 3 root root    36 Nov  4 05:25 ..
+-rw-r--r--. 1 root root  1601 Nov  4 05:25 android-chrome-192x192.png
+-rw-r--r--. 1 root root  1601 Nov  4 05:25 android-chrome-512x512.png
+-rw-r--r--. 1 root root  1601 Nov  4 05:25 apple-touch-icon-114x114.png
+-rw-r--r--. 1 root root  1601 Nov  4 05:25 apple-touch-icon-120x120.png
+-rw-r--r--. 1 root root  1601 Nov  4 05:25 apple-touch-icon-144x144.png
+-rw-r--r--. 1 root root  1601 Nov  4 05:25 apple-touch-icon-152x152.png
+-rw-r--r--. 1 root root  1601 Nov  4 05:25 apple-touch-icon-180x180.png
+-rw-r--r--. 1 root root  1601 Nov  4 05:25 apple-touch-icon-57x57.png
+-rw-r--r--. 1 root root  1601 Nov  4 05:25 apple-touch-icon-60x60.png
+-rw-r--r--. 1 root root  1601 Nov  4 05:25 apple-touch-icon-72x72.png
+-rw-r--r--. 1 root root  1601 Nov  4 05:25 apple-touch-icon-76x76.png
+-rw-r--r--. 1 root root  1601 Nov  4 05:25 apple-touch-icon.png
+drwxr-xr-x. 2 root root  4096 Nov  4 05:25 assets
+-rw-r--r--. 1 root root  1601 Nov  4 05:25 favicon-16x16.png
+-rw-r--r--. 1 root root  1601 Nov  4 05:25 favicon-32x32.png
+-rw-r--r--. 1 root root  1601 Nov  4 05:25 favicon.ico
+-rw-r--r--. 1 root root    53 Nov  4 05:25 google2ae759b1998ec13b.html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=0.5, maximum-scale=5.0" />
+    
+    <!-- Preconnect to external domains for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- DNS prefetch for performance -->
+    <link rel="dns-prefetch" href="//www.google-analytics.com">
+    <link rel="dns-prefetch" href="//js.stripe.com">
+    
+    <!-- Resource hints for critical assets -->
+    <link rel="prefetch" href="/api/platform/stats">
+    
+    <!-- Critical CSS inlining hint -->
+    <style>
+      /* Critical above-the-fold CSS */
+      body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+      .loading-spinner { animation: spin 1s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+    <title>NaviMED - Healthcare Platform for Hospitals & Pharmacies</title>
+    <meta name="description" content="Transform your healthcare practice with NaviMED - the leading multi-tenant platform for hospitals, pharmacies & laboratories. HIPAA compliant, multilingual support, real-time patient management. Start your free trial today!">
+    <meta name="keywords" content="healthcare management software, hospital management system, pharmacy management platform, laboratory information system, medical records software, prescription management, patient portal, telemedicine, healthcare technology, HIPAA compliant healthcare software, medical practice management, clinical workflow automation, electronic health records, healthcare billing software, medical inventory management, patient scheduling software, healthcare analytics, multi-tenant healthcare platform, African healthcare software, global healthcare solutions">
+    <meta name="author" content="ARGILETTE Healthcare Solutions">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="google-site-verification" content="your-google-verification-code-here">
+[root@wizardly-swirles NaviMed]# 
