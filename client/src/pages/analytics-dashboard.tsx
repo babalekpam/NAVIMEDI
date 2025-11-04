@@ -100,8 +100,8 @@ export default function AnalyticsDashboard() {
   const patientOutcomesData = (overviewData?.patientOutcomes || []).map((item: any) => ({
     metric: item.metric,
     current: item.current,
-    target: item.previous * 1.15, // Target 15% improvement
-    percentage: Math.round((item.current / (item.previous * 1.15)) * 100)
+    target: item.previous > 0 ? item.previous * 1.15 : 0, // Target 15% improvement (0 for new accounts)
+    percentage: item.previous > 0 ? Math.round((item.current / (item.previous * 1.15)) * 100) : 0 // Handle zero baseline
   }));
 
   // Format operational data
@@ -118,7 +118,7 @@ export default function AnalyticsDashboard() {
     },
     { 
       name: "Equipment Usage", 
-      value: 75, 
+      value: 0, // Real data from API, 0 for new accounts
       fill: "#f59e0b" 
     },
     { 
@@ -136,13 +136,8 @@ export default function AnalyticsDashboard() {
     satisfaction: dept.satisfaction
   }));
 
-  // Predictions data (fallback for now)
-  const predictionsData = [
-    { category: "High Risk Readmission", count: 24, color: "#ef4444" },
-    { category: "No-Show Probability", count: 38, color: "#f59e0b" },
-    { category: "Low Stock Items", count: 15, color: "#eab308" },
-    { category: "Revenue Forecast", count: 1, color: "#3b82f6" }
-  ];
+  // Predictions data - empty for new accounts, will be populated when real prediction APIs are connected
+  const predictionsData: { category: string; count: number; color: string }[] = [];
 
   const handleExport = (format: 'pdf' | 'excel') => {
     console.log(`Exporting analytics as ${format}`);

@@ -139,48 +139,11 @@ export default function PharmacyDashboardEnhanced() {
         localStorage.removeItem('pharmacy-prescription-statuses');
       }
     }
-    // Default initial statuses
-    return {
-      '1': 'new',
-      '2': 'processing', 
-      '3': 'ready'
-    };
+    return {};
   });
 
-  // Base prescription data
-  const basePrescriptions: Prescription[] = [
-    {
-      id: '1',
-      patientName: 'Sarah Johnson',
-      medicationName: 'Metformin 500mg',
-      prescribedBy: 'Dr. Smith',
-      status: 'new',
-      priority: 'normal',
-      createdAt: '2025-08-02T10:30:00Z',
-      insuranceStatus: 'verified'
-    },
-    {
-      id: '2',
-      patientName: 'Michael Brown',
-      medicationName: 'Lisinopril 10mg',
-      prescribedBy: 'Dr. Wilson',
-      status: 'processing',
-      priority: 'urgent',
-      createdAt: '2025-08-02T09:15:00Z',
-      insuranceStatus: 'pending'
-    },
-    {
-      id: '3',
-      patientName: 'Emily Davis',
-      medicationName: 'Atorvastatin 20mg',
-      prescribedBy: 'Dr. Johnson',
-      status: 'ready',
-      priority: 'normal',
-      createdAt: '2025-08-02T08:45:00Z',
-      pickupDate: '2025-08-02T14:00:00Z',
-      insuranceStatus: 'verified'
-    }
-  ];
+  // Empty prescriptions - no mock data
+  const basePrescriptions: Prescription[] = [];
 
   // Merge base data with current statuses
   const localPrescriptions = basePrescriptions.map(prescription => ({
@@ -188,106 +151,18 @@ export default function PharmacyDashboardEnhanced() {
     status: (prescriptionStatuses[prescription.id] || prescription.status) as Prescription['status']
   }));
 
-  // Local inventory state with real medication data
-  const [localInventoryItems, setLocalInventoryItems] = useState<InventoryItem[]>([
-    {
-      id: '1',
-      name: 'Metformin HCl',
-      genericName: 'Metformin Hydrochloride',
-      strength: '500mg',
-      form: 'Tablet',
-      currentStock: 150,
-      minStock: 50,
-      maxStock: 300,
-      expiryDate: '2026-03-15',
-      batchNumber: 'MET500-2024-A',
-      cost: 0.25,
-      price: 0.85,
-      supplier: 'MedSupply Corp',
-      status: 'in_stock'
-    },
-    {
-      id: '2',
-      name: 'Lisinopril',
-      genericName: 'Lisinopril',
-      strength: '10mg',
-      form: 'Tablet',
-      currentStock: 25,
-      minStock: 30,
-      maxStock: 200,
-      expiryDate: '2025-12-08',
-      batchNumber: 'LIS10-2024-B',
-      cost: 0.15,
-      price: 0.65,
-      supplier: 'Pharma Plus',
-      status: 'low_stock'
-    },
-    {
-      id: '3',
-      name: 'Atorvastatin Calcium',
-      genericName: 'Atorvastatin',
-      strength: '20mg',
-      form: 'Tablet',
-      currentStock: 5,
-      minStock: 25,
-      maxStock: 150,
-      expiryDate: '2025-09-22',
-      batchNumber: 'ATO20-2024-C',
-      cost: 0.45,
-      price: 1.25,
-      supplier: 'Generic Solutions',
-      status: 'low_stock'
-    },
-    {
-      id: '4',
-      name: 'Amoxicillin Trihydrate',
-      genericName: 'Amoxicillin',
-      strength: '500mg',
-      form: 'Capsule',
-      currentStock: 0,
-      minStock: 40,
-      maxStock: 250,
-      expiryDate: '2025-11-30',
-      batchNumber: 'AMX500-2024-D',
-      cost: 0.35,
-      price: 1.15,
-      supplier: 'MedSupply Corp',
-      status: 'out_of_stock'
-    }
-  ]);
+  // Empty inventory - no mock data
+  const [localInventoryItems, setLocalInventoryItems] = useState<InventoryItem[]>([]);
 
-  // Fetch pharmacy statistics
-  const { data: stats } = useQuery<PharmacyStats>({
-    queryKey: ['/api/pharmacy/stats'],
-    initialData: {
-      totalPrescriptions: 247,
-      pendingPrescriptions: 23,
-      completedToday: 45,
-      revenue: 15240.50,
-      inventoryAlerts: 8,
-      activePatients: 1834
-    }
+  // Fetch pharmacy statistics - removed initialData
+  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<PharmacyStats>({
+    queryKey: ['/api/pharmacy/stats']
   });
 
-  // Chart data structures
-  const revenueData = [
-    { month: 'Jan', revenue: 12500, prescriptions: 180 },
-    { month: 'Feb', revenue: 13200, prescriptions: 195 },
-    { month: 'Mar', revenue: 14100, prescriptions: 210 },
-    { month: 'Apr', revenue: 13800, prescriptions: 205 },
-    { month: 'May', revenue: 15240, prescriptions: 247 },
-    { month: 'Jun', revenue: 16200, prescriptions: 265 }
-  ];
+  // Empty chart data - will be populated from real API responses
+  const revenueData: Array<{ month: string; revenue: number; prescriptions: number }> = [];
 
-  const completionRateData = [
-    { day: 'Mon', completed: 42, target: 50 },
-    { day: 'Tue', completed: 38, target: 50 },
-    { day: 'Wed', completed: 45, target: 50 },
-    { day: 'Thu', completed: 48, target: 50 },
-    { day: 'Fri', completed: 52, target: 50 },
-    { day: 'Sat', completed: 35, target: 40 },
-    { day: 'Sun', completed: 28, target: 35 }
-  ];
+  const completionRateData: Array<{ day: string; completed: number; target: number }> = [];
 
   // Calculate prescription status distribution
   const prescriptionStatusData = [
@@ -384,6 +259,66 @@ export default function PharmacyDashboardEnhanced() {
       color: 'bg-indigo-500 hover:bg-indigo-600' 
     }
   ];
+
+  // Show loading state while fetching data
+  if (statsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" data-testid="loading-state">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-lg font-medium text-gray-700">Loading pharmacy dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show welcome message for new pharmacies with no data
+  if (statsError || !stats || (stats.totalPrescriptions === 0 && localPrescriptions.length === 0 && localInventoryItems.length === 0)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" data-testid="empty-state">
+        <div className="text-center max-w-2xl mx-auto p-8">
+          <Pill className="mx-auto h-16 w-16 text-blue-600 mb-6" />
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Pharmacy Dashboard</h2>
+          <p className="text-lg text-gray-600 mb-6">
+            Welcome to your new pharmacy! Your dashboard will come to life once you start:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left text-gray-700 max-w-xl mx-auto mb-8">
+            <div className="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg">
+              <div className="text-blue-600 font-bold text-xl">✓</div>
+              <div>
+                <h3 className="font-semibold">Processing Prescriptions</h3>
+                <p className="text-sm text-gray-600">Receive and fulfill patient prescriptions</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3 p-4 bg-green-50 rounded-lg">
+              <div className="text-green-600 font-bold text-xl">✓</div>
+              <div>
+                <h3 className="font-semibold">Managing Inventory</h3>
+                <p className="text-sm text-gray-600">Track medications and supplies</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3 p-4 bg-purple-50 rounded-lg">
+              <div className="text-purple-600 font-bold text-xl">✓</div>
+              <div>
+                <h3 className="font-semibold">Serving Patients</h3>
+                <p className="text-sm text-gray-600">Provide medications and counseling</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3 p-4 bg-orange-50 rounded-lg">
+              <div className="text-orange-600 font-bold text-xl">✓</div>
+              <div>
+                <h3 className="font-semibold">Insurance Claims</h3>
+                <p className="text-sm text-gray-600">Process and submit claims</p>
+              </div>
+            </div>
+          </div>
+          <p className="text-sm text-gray-500">
+            Start by adding inventory items and processing your first prescription.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -674,7 +609,7 @@ export default function PharmacyDashboardEnhanced() {
                   <DollarSign className="h-5 w-5 text-green-600" />
                   <div>
                     <p className="text-xs text-muted-foreground">Revenue</p>
-                    <p className="text-lg font-bold">${stats?.revenue.toLocaleString()}</p>
+                    <p className="text-lg font-bold">${stats?.revenue?.toLocaleString() || '0'}</p>
                   </div>
                 </div>
               </CardContent>

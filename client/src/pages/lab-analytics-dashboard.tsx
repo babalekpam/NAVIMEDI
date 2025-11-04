@@ -118,23 +118,26 @@ export default function LabAnalyticsDashboard() {
     refetchOnReconnect: true,
   });
 
-  // Always construct real data metrics - no fallback to mock data
+  // Extract real data from API response
+  const apiData: any = realAnalyticsData?.data || {};
+
+  // Always construct real data metrics - no mock data fallback
   const realMetrics: AnalyticsMetric[] = [
     {
       id: "1",
       name: "Total Tests This Month",
-      value: realAnalyticsData?.success && realAnalyticsData?.data?.today?.ordersReceived || 0, // Always show real database value
-      change: 12.5,
-      trend: "up" as const,
+      value: apiData?.today?.ordersReceived || 0,
+      change: 0,
+      trend: "neutral" as const,
       period: "vs last month", 
-      status: "excellent" as const
+      status: "good" as const
     },
     {
       id: "2", 
       name: "Average TAT",
-      value: realAnalyticsData?.success && realAnalyticsData?.data?.today?.averageTurnaroundTime || 0, // Always show real database value
-      change: -8.3,
-      trend: "down" as const,
+      value: apiData?.today?.averageTurnaroundTime || 0,
+      change: 0,
+      trend: "neutral" as const,
       period: "hours",
       unit: "h",
       status: "good" as const
@@ -142,137 +145,77 @@ export default function LabAnalyticsDashboard() {
     {
       id: "3",
       name: "Quality Score", 
-      value: realAnalyticsData?.success && realAnalyticsData?.data?.quality?.accuracyMetrics?.[0]?.current || 0, // Always show real database value
-      change: 2.1,
-      trend: "up" as const,
+      value: apiData?.quality?.accuracyMetrics?.[0]?.current || 0,
+      change: 0,
+      trend: "neutral" as const,
       period: "vs last month",
       unit: "%",
-      status: "excellent" as const
+      status: "good" as const
     },
     {
       id: "4",
       name: "Critical Values",
-      value: realAnalyticsData?.success && realAnalyticsData?.data?.today?.criticalResults || 0, // Real database value
-      change: -15.2,
-      trend: "down" as const,
+      value: apiData?.today?.criticalResults || 0,
+      change: 0,
+      trend: "neutral" as const,
       period: "this month",
       status: "good" as const
     },
     {
       id: "5",
       name: "Samples Collected",
-      value: realAnalyticsData?.success && realAnalyticsData?.data?.today?.samplesCollected || 0, // Real database value
-      change: 8.3,
-      trend: "up" as const,
+      value: apiData?.today?.samplesCollected || 0,
+      change: 0,
+      trend: "neutral" as const,
       period: "this month",
-      status: "excellent" as const
+      status: "good" as const
     },
     {
       id: "6",
       name: "Tests In Progress",
-      value: realAnalyticsData?.success && realAnalyticsData?.data?.today?.testsInProgress || 0, // Real database value
-      change: 5.2,
-      trend: "up" as const,
+      value: apiData?.today?.testsInProgress || 0,
+      change: 0,
+      trend: "neutral" as const,
       period: "currently",
       status: "good" as const
     }
   ];
 
-  // Mock data for demonstration (fallback if no real data)
-  const mockMetrics: AnalyticsMetric[] = [
-    {
-      id: "1",
-      name: "Total Tests This Month",
-      value: "2,847",
-      change: 12.5,
-      trend: "up",
-      period: "vs last month",
-      status: "excellent"
-    },
-    {
-      id: "2", 
-      name: "Average TAT",
-      value: 4.2,
-      change: -8.3,
-      trend: "down",
-      period: "hours",
-      unit: "h",
-      target: 4.5,
-      status: "excellent"
-    },
-    {
-      id: "3",
-      name: "Quality Score",
-      value: 98.7,
-      change: 2.1,
-      trend: "up",
-      period: "%",
-      unit: "%",
-      target: 95,
-      status: "excellent"
-    },
-    {
-      id: "4",
-      name: "Critical Values",
-      value: 23,
-      change: -15.2,
-      trend: "down",
-      period: "this month",
-      status: "good"
-    },
-    {
-      id: "5",
-      name: "Revenue",
-      value: "$127,450",
-      change: 18.7,
-      trend: "up",
-      period: "this month",
-      status: "excellent"
-    },
-    {
-      id: "6",
-      name: "Equipment Uptime",
-      value: 99.2,
-      change: 0.8,
-      trend: "up",
-      period: "%",
-      unit: "%",
-      target: 98,
-      status: "excellent"
-    }
-  ];
+  // Real volume data from API (empty array if no data)
+  const realVolumeData: VolumeData[] = apiData?.volume?.weeklyData || [];
 
-  const mockVolumeData: VolumeData[] = [
-    { period: "Week 1", tests: 687, samples: 523, reports: 612, criticalValues: 8 },
-    { period: "Week 2", tests: 721, samples: 567, reports: 698, criticalValues: 12 },
-    { period: "Week 3", tests: 695, samples: 541, reports: 673, criticalValues: 6 },
-    { period: "Week 4", tests: 744, samples: 598, reports: 729, criticalValues: 9 }
-  ];
+  // Real turnaround data from API (empty array if no data)
+  const realTurnaroundData: TurnaroundData[] = apiData?.turnaround?.byTestType || [];
 
-  const mockTurnaroundData: TurnaroundData[] = [
-    { testType: "Complete Blood Count", averageTAT: 2.1, target: 2.5, variance: -0.4, performance: "excellent" },
-    { testType: "Basic Metabolic Panel", averageTAT: 3.2, target: 3.0, variance: 0.2, performance: "good" },
-    { testType: "Lipid Panel", averageTAT: 4.8, target: 4.0, variance: 0.8, performance: "warning" },
-    { testType: "Liver Function Tests", averageTAT: 3.9, target: 4.0, variance: -0.1, performance: "excellent" },
-    { testType: "Thyroid Panel", averageTAT: 6.2, target: 5.0, variance: 1.2, performance: "poor" },
-    { testType: "Urinalysis", averageTAT: 1.8, target: 2.0, variance: -0.2, performance: "excellent" }
-  ];
+  // Real quality metrics from API (empty array if no data)
+  const realQualityMetrics: QualityMetric[] = apiData?.quality?.metrics || [];
 
-  const mockQualityMetrics: QualityMetric[] = [
-    { id: "1", metric: "QC Pass Rate", value: 98.7, target: 95, unit: "%", status: "pass", trend: "improving" },
-    { id: "2", metric: "Critical Value Alert Rate", value: 2.1, target: 3.0, unit: "%", status: "pass", trend: "stable" },
-    { id: "3", metric: "Sample Rejection Rate", value: 1.3, target: 2.0, unit: "%", status: "pass", trend: "improving" },
-    { id: "4", metric: "Repeat Test Rate", value: 2.8, target: 3.5, unit: "%", status: "pass", trend: "stable" },
-    { id: "5", metric: "Equipment Downtime", value: 0.8, target: 2.0, unit: "%", status: "pass", trend: "improving" },
-    { id: "6", metric: "Staff Productivity", value: 95.2, target: 90, unit: "%", status: "pass", trend: "improving" }
-  ];
+  // Real financial data from API (empty array if no data)
+  const realFinancialData: FinancialData[] = apiData?.financial?.monthlyData || [];
 
-  const mockFinancialData: FinancialData[] = [
-    { period: "January", revenue: 98500, costs: 67200, margin: 31.8, testsPerformed: 2341, revenuePerTest: 42.08 },
-    { period: "February", revenue: 105200, costs: 69800, margin: 33.7, testsPerformed: 2456, revenuePerTest: 42.84 },
-    { period: "March", revenue: 118600, costs: 73400, margin: 38.1, testsPerformed: 2687, revenuePerTest: 44.14 },
-    { period: "April", revenue: 127450, costs: 76200, margin: 40.2, testsPerformed: 2847, revenuePerTest: 44.77 }
-  ];
+  // Real test distribution from API (empty array if no data)
+  const realTestDistributionData = apiData?.distribution?.byCategory || [];
+
+  // Real quality trends from API (empty array if no data)
+  const realQualityTrendsData = apiData?.quality?.trends || [];
+
+  // Real equipment data from API (empty array if no data)
+  const realEquipmentData = apiData?.equipment?.utilization || [];
+
+  // Real system performance from API (empty array if no data)
+  const realSystemPerformanceData = apiData?.system?.performance || [];
+
+  // Check if all data is empty
+  const hasAnyData = 
+    realMetrics.some(m => typeof m.value === 'number' ? m.value > 0 : false) ||
+    realVolumeData.length > 0 ||
+    realTurnaroundData.length > 0 ||
+    realQualityMetrics.length > 0 ||
+    realFinancialData.length > 0 ||
+    realTestDistributionData.length > 0 ||
+    realQualityTrendsData.length > 0 ||
+    realEquipmentData.length > 0 ||
+    realSystemPerformanceData.length > 0;
 
   // Chart configurations
   const volumeChartConfig = {
@@ -317,14 +260,6 @@ export default function LabAnalyticsDashboard() {
     },
   } satisfies ChartConfig;
 
-  const testDistributionData = [
-    { category: "hematology", count: 892, percentage: 31, fill: "var(--color-hematology)" },
-    { category: "chemistry", count: 745, percentage: 26, fill: "var(--color-chemistry)" },
-    { category: "microbiology", count: 524, percentage: 18, fill: "var(--color-microbiology)" },
-    { category: "molecular", count: 398, percentage: 14, fill: "var(--color-molecular)" },
-    { category: "immunology", count: 288, percentage: 11, fill: "var(--color-immunology)" }
-  ];
-
   const turnaroundChartConfig = {
     actual: {
       label: "Actual Time",
@@ -335,13 +270,6 @@ export default function LabAnalyticsDashboard() {
       color: "hsl(var(--chart-2))",
     },
   } satisfies ChartConfig;
-
-  const qualityTrendsData = [
-    { month: "January", score: 96.2 },
-    { month: "February", score: 97.1 },
-    { month: "March", score: 98.3 },
-    { month: "April", score: 98.7 }
-  ];
 
   const qualityChartConfig = {
     score: {
@@ -368,20 +296,6 @@ export default function LabAnalyticsDashboard() {
       color: "hsl(271, 91%, 65%)",
     },
   } satisfies ChartConfig;
-
-  const equipmentUtilizationData = [
-    { equipment: "Hematology Analyzer", utilization: 87, uptime: 99.2, status: "excellent" },
-    { equipment: "Chemistry Analyzer", utilization: 93, uptime: 98.8, status: "excellent" },
-    { equipment: "Molecular Platform", utilization: 76, uptime: 97.5, status: "good" },
-    { equipment: "Microscopy Station", utilization: 65, uptime: 99.8, status: "good" }
-  ];
-
-  const systemPerformanceData = [
-    { metric: "Network Connectivity", value: 99.9, unit: "%", status: "excellent" },
-    { metric: "Database Performance", value: 98.5, unit: "%", status: "excellent" },
-    { metric: "Storage Utilization", value: 67, unit: "%", status: "good" },
-    { metric: "CPU Usage", value: 45, unit: "%", status: "excellent" }
-  ];
 
   const equipmentChartConfig = {
     utilization: {
@@ -431,6 +345,67 @@ export default function LabAnalyticsDashboard() {
       default: return "bg-gray-100 text-gray-800";
     }
   };
+
+  // Show loading state
+  if (analyticsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" data-testid="data-loading">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-lg font-medium text-gray-700">Loading analytics...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show welcome message for new laboratories with no data
+  // Show when: (a) API error OR (b) API success but no data exists
+  if (analyticsError || !realAnalyticsData || !realAnalyticsData.success || !hasAnyData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" data-testid="empty-state">
+        <div className="text-center max-w-2xl mx-auto p-8">
+          <BarChart3 className="mx-auto h-16 w-16 text-blue-600 mb-6" />
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Laboratory Analytics Dashboard</h2>
+          <p className="text-lg text-gray-600 mb-6">
+            Welcome to your new laboratory! Analytics data will appear here once you start processing:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left text-gray-700 max-w-xl mx-auto mb-8">
+            <div className="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg">
+              <div className="text-blue-600 font-bold text-xl">✓</div>
+              <div>
+                <h3 className="font-semibold">Lab Orders</h3>
+                <p className="text-sm text-gray-600">Receive and process test orders</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3 p-4 bg-green-50 rounded-lg">
+              <div className="text-green-600 font-bold text-xl">✓</div>
+              <div>
+                <h3 className="font-semibold">Sample Collection</h3>
+                <p className="text-sm text-gray-600">Track samples and specimens</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3 p-4 bg-purple-50 rounded-lg">
+              <div className="text-purple-600 font-bold text-xl">✓</div>
+              <div>
+                <h3 className="font-semibold">Test Results</h3>
+                <p className="text-sm text-gray-600">Generate and deliver results</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3 p-4 bg-orange-50 rounded-lg">
+              <div className="text-orange-600 font-bold text-xl">✓</div>
+              <div>
+                <h3 className="font-semibold">Quality Metrics</h3>
+                <p className="text-sm text-gray-600">Monitor performance and quality</p>
+              </div>
+            </div>
+          </div>
+          <p className="text-sm text-gray-500">
+            Start by exploring the Lab Orders and Sample Management sections of your dashboard.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6" data-testid="lab-analytics-dashboard">
@@ -539,7 +514,7 @@ export default function LabAnalyticsDashboard() {
                 <ChartContainer config={volumeChartConfig} className="h-[350px]">
                   <AreaChart
                     accessibilityLayer
-                    data={mockVolumeData}
+                    data={realVolumeData}
                     margin={{
                       left: 12,
                       right: 12,
@@ -628,7 +603,7 @@ export default function LabAnalyticsDashboard() {
                       content={<ChartTooltipContent hideLabel />}
                     />
                     <Pie
-                      data={testDistributionData}
+                      data={realTestDistributionData}
                       dataKey="count"
                       nameKey="category"
                       innerRadius={60}
@@ -649,7 +624,7 @@ export default function LabAnalyticsDashboard() {
                                   y={viewBox.cy}
                                   className="fill-foreground text-3xl font-bold"
                                 >
-                                  {testDistributionData.reduce((a, b) => a + b.count, 0).toLocaleString()}
+                                  {realTestDistributionData.reduce((a: number, b: any) => a + (b.count || 0), 0).toLocaleString()}
                                 </tspan>
                                 <tspan
                                   x={viewBox.cx}
@@ -686,7 +661,7 @@ export default function LabAnalyticsDashboard() {
               <ChartContainer config={turnaroundChartConfig} className="h-[400px]">
                 <BarChart
                   accessibilityLayer
-                  data={mockTurnaroundData.map(item => ({
+                  data={realTurnaroundData.map(item => ({
                     testType: item.testType.replace(/\s+/g, '\n'),
                     actual: item.averageTAT,
                     target: item.target,
@@ -736,7 +711,7 @@ export default function LabAnalyticsDashboard() {
                     name="target"
                   />
                   <Bar dataKey="actual" name="actual">
-                    {mockTurnaroundData.map((entry, index) => {
+                    {realTurnaroundData.map((entry, index) => {
                       const performance = entry.performance;
                       let fillColor;
                       switch (performance) {
@@ -783,7 +758,7 @@ export default function LabAnalyticsDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-6">
-                  {mockQualityMetrics.slice(0, 4).map((metric) => {
+                  {realQualityMetrics.slice(0, 4).map((metric) => {
                     const percentage = (metric.value / metric.target) * 100;
                     const cappedPercentage = Math.min(percentage, 100);
                     const radialData = [{ value: cappedPercentage, fill: 
@@ -857,7 +832,7 @@ export default function LabAnalyticsDashboard() {
                 <ChartContainer config={qualityChartConfig} className="h-[300px]">
                   <LineChart
                     accessibilityLayer
-                    data={qualityTrendsData}
+                    data={realQualityTrendsData}
                     margin={{
                       left: 12,
                       right: 12,
@@ -919,7 +894,7 @@ export default function LabAnalyticsDashboard() {
                 <ChartContainer config={financialChartConfig} className="h-[300px]">
                   <AreaChart
                     accessibilityLayer
-                    data={mockFinancialData}
+                    data={realFinancialData}
                     margin={{
                       left: 12,
                       right: 12,
@@ -1006,7 +981,7 @@ export default function LabAnalyticsDashboard() {
                 <ChartContainer config={financialChartConfig} className="h-[300px]">
                   <ComposedChart
                     accessibilityLayer
-                    data={mockFinancialData}
+                    data={realFinancialData}
                     margin={{
                       left: 12,
                       right: 12,
@@ -1085,7 +1060,7 @@ export default function LabAnalyticsDashboard() {
                 <ChartContainer config={equipmentChartConfig} className="h-[350px]">
                   <BarChart
                     accessibilityLayer
-                    data={equipmentUtilizationData.map(item => ({
+                    data={realEquipmentData.map((item: any) => ({
                       equipment: item.equipment.replace(/\s+/g, '\n'),
                       utilization: item.utilization,
                       uptime: item.uptime,
@@ -1150,7 +1125,7 @@ export default function LabAnalyticsDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-6">
-                  {systemPerformanceData.map((metric, index) => {
+                  {realSystemPerformanceData.map((metric: any, index: number) => {
                     const radialData = [{ value: metric.value, fill: 
                       metric.status === 'excellent' ? 'hsl(142, 76%, 36%)' : 
                       metric.status === 'good' ? 'hsl(220, 98%, 61%)' : 'hsl(346, 87%, 43%)'

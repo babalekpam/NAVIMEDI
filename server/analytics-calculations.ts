@@ -226,12 +226,12 @@ export async function calculateReadmissionRate(
 
     const total = Number(totalResult[0]?.count || 0);
     
-    // For now, use industry average of 8.5% if we don't have readmission tracking
+    // Return 0 for new accounts with no data
     // In production, you'd query actual readmission data
-    return 8.5;
+    return 0;
   } catch (error) {
     console.error('Error calculating readmission rate:', error);
-    return 8.5; // Industry average
+    return 0;
   }
 }
 
@@ -240,12 +240,12 @@ export async function calculateReadmissionRate(
  */
 export async function calculatePatientSatisfactionScore(tenantId: string): Promise<number> {
   try {
-    // For now, return healthcare industry average of 84%
+    // Return 0 for new accounts with no data
     // In production, you'd query actual survey/feedback data
-    return 84.0;
+    return 0;
   } catch (error) {
     console.error('Error calculating patient satisfaction:', error);
-    return 84.0;
+    return 0;
   }
 }
 
@@ -264,17 +264,17 @@ export async function getPatientOutcomesTrend(
       {
         metric: 'Total Patients',
         current: currentPatients,
-        previous: Math.round(currentPatients * 0.92) // -8% from previous period
+        previous: 0 // No previous data for new accounts
       },
       {
         metric: 'Satisfaction Score',
         current: currentSatisfaction,
-        previous: 81.5
+        previous: 0 // No previous data for new accounts
       },
       {
         metric: 'Readmission Rate',
         current: currentReadmission,
-        previous: 9.2
+        previous: 0 // No previous data for new accounts
       }
     ];
   } catch (error) {
