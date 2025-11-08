@@ -1,0 +1,84 @@
+
+../dist/public/index.html                                          10.08 kB │ gzip:   2.93 kB
+../dist/public/assets/JPG_1753663321927-DgkMhBd3.jpg               55.42 kB
+../dist/public/assets/image_1754352650858-BnYJl1Ml.png             96.44 kB
+../dist/public/assets/image_1754352725355-BnK0MoBJ.png            117.79 kB
+../dist/public/assets/image_1754352574197-4KYOPGEO.png            185.50 kB
+../dist/public/assets/image_1754352599331-Dgf1L21r.png            203.98 kB
+../dist/public/assets/image_1754352626174-D1C0mYbb.png            207.51 kB
+../dist/public/assets/image_1754352767570-D0Cxo8da.png          6,887.79 kB
+../dist/public/assets/index-_3cpZFTB.css                          250.74 kB │ gzip:  35.75 kB
+../dist/public/assets/payment-success-VkssXIUE.js                   1.49 kB │ gzip:   0.65 kB
+../dist/public/assets/subscription-success-BxB_d2K1.js              2.09 kB │ gzip:   0.83 kB
+../dist/public/assets/checkout-simple-B4SQlc1N.js                   3.23 kB │ gzip:   1.47 kB
+../dist/public/assets/laboratories-CK56f-Qr.js                      3.64 kB │ gzip:   1.34 kB
+../dist/public/assets/checkout-BMjaV2dl.js                          3.79 kB │ gzip:   1.48 kB
+../dist/public/assets/platform-overview-DTPO2WP0.js                 3.84 kB │ gzip:   1.25 kB
+../dist/public/assets/billing-insurance-BDW3rIk7.js                 4.06 kB │ gzip:   1.24 kB
+../dist/public/assets/laboratory-order-processing-B1rzl-mU.js       4.16 kB │ gzip:   1.29 kB
+../dist/public/assets/clinics-DY-K3Fl8.js                           4.28 kB │ gzip:   1.51 kB
+../dist/public/assets/security-compliance-IEYz8pOo.js               4.57 kB │ gzip:   1.35 kB
+../dist/public/assets/organization-setup-D1Tf6Xg_.js                4.62 kB │ gzip:   1.42 kB
+../dist/public/assets/electronic-health-records-BYufWaYr.js         4.73 kB │ gzip:   1.45 kB
+../dist/public/assets/prescription-management-Bk-3TLp_.js           4.74 kB │ gzip:   1.44 kB
+../dist/public/assets/clinical-documentation-B82aa3I0.js            4.80 kB │ gzip:   1.43 kB
+../dist/public/assets/help-center-BLd6tpC7.js                       4.85 kB │ gzip:   1.71 kB
+../dist/public/assets/subscribe-9kWbU1t5.js                         5.03 kB │ gzip:   2.07 kB
+../dist/public/assets/contact-twfEbYS5.js                           5.08 kB │ gzip:   1.38 kB
+../dist/public/assets/payment-demo-BMAR64R6.js                      5.14 kB │ gzip:   1.33 kB
+../dist/public/assets/status-DHFqLHaW.js                            5.59 kB │ gzip:   1.55 kB
+../dist/public/assets/getting-started-CVFqMZSZ.js                   5.93 kB │ gzip:   1.51 kB
+../dist/public/assets/appointment-scheduling-CMWH0Fux.js            6.60 kB │ gzip:   1.75 kB
+../dist/public/assets/patient-management-uq2r-80d.js                6.64 kB │ gzip:   1.84 kB
+../dist/public/assets/pharmacy-billing-D2ELb_Aw.js                  6.86 kB │ gzip:   1.86 kB
+../dist/public/assets/video-integration-options-B2_67iNw.js         7.49 kB │ gzip:   1.91 kB
+../dist/public/assets/pharmacy-inventory-BrkCBWbX.js                7.51 kB │ gzip:   2.12 kB
+../dist/public/assets/api-docs-Bm6o-jeo.js                          7.59 kB │ gzip:   2.14 kB
+../dist/public/assets/billing-management-CBLBfXff.js                7.71 kB │ gzip:   2.13 kB
+../dist/public/assets/youtube-integration-DnzcG4o8.js               7.97 kB │ gzip:   2.24 kB
+../dist/public/assets/inventory-audits-D-Q7q7LH.js                  8.04 kB │ gzip:   2.49 kB
+../dist/public/assets/trial-status-CtW7DJGT.js                      8.15 kB │ gzip:   2.20 kB
+../dist/public/assets/laboratory-billing-BdBf49w9.js                8.66 kB │ gzip:   2.62 kB
+../dist/public/assets/integrations-q2HFva5a.js                      9.10 kB │ gzip:   2.92 kB
+../dist/public/assets/hospitals-1I4vi67i.js                         9.69 kB │ gzip:   2.68 kB
+../dist/public/assets/api-docs-B6Rkjj2m.js                          9.70 kB │ gzip:   2.77 kB
+../dist/public/assets/vimeo-integration-Du9-Emln.js                10.01 kB │ gzip:   2.40 kB
+../dist/public/assets/aws-integration-QRTY6MYV.js                  12.36 kB │ gzip:   2.82 kB
+../dist/public/assets/achievements-DVmxlIzc.js                     12.60 kB │ gzip:   2.56 kB
+../dist/public/assets/prescription-archives-CGKpPP0q.js            13.28 kB │ gzip:   3.34 kB
+../dist/public/assets/user-account-configuration-thLt-iJ_.js       14.00 kB │ gzip:   3.37 kB
+../dist/public/assets/troubleshooting-guide-3vaNV8PX.js            14.13 kB │ gzip:   4.11 kB
+../dist/public/assets/video-player-BRAHJiF0.js                     16.26 kB │ gzip:   4.42 kB
+../dist/public/assets/initial-system-configuration-CiZHDp-L.js     17.47 kB │ gzip:   3.79 kB
+../dist/public/assets/quick-reference-guide-eyO5ewE-.js            17.63 kB │ gzip:   3.92 kB
+../dist/public/assets/pharmacy-customers-Ds7W1XWd.js               19.30 kB │ gzip:   4.76 kB
+../dist/public/assets/workflow-training-modules-DFGVd6JU.js        19.31 kB │ gzip:   4.29 kB
+../dist/public/assets/role-based-access-setup-eBQX_MCs.js          19.72 kB │ gzip:   4.30 kB
+../dist/public/assets/laboratory-registration-gP3MdGq3.js          20.05 kB │ gzip:   4.58 kB
+../dist/public/assets/first-patient-registration-4BpsN6Op.js       20.25 kB │ gzip:   4.19 kB
+../dist/public/assets/medication-insurance-claims-Ba9CBZl8.js      20.67 kB │ gzip:   5.05 kB
+../dist/public/assets/lab-sample-management-B0SYshpE.js            21.59 kB │ gzip:   4.45 kB
+../dist/public/assets/hospital-billing-J1xFQW8h.js                 21.87 kB │ gzip:   4.47 kB
+../dist/public/assets/lab-test-management-C5HHmsTF.js              24.09 kB │ gzip:   4.82 kB
+../dist/public/assets/lab-results-reporting-DGi5Xd7G.js            25.20 kB │ gzip:   6.18 kB
+../dist/public/assets/system-admin-training-Qq0SW6g4.js            25.49 kB │ gzip:   5.44 kB
+../dist/public/assets/lab-inventory-management-eoNPBD6Y.js         26.18 kB │ gzip:   5.55 kB
+../dist/public/assets/comprehensive-user-training-B2NLF8HF.js      26.65 kB │ gzip:   6.17 kB
+../dist/public/assets/profile-settings-DxxxDyS1.js                 27.64 kB │ gzip:   6.25 kB
+../dist/public/assets/documentation-Bq-PDZJV.js                    29.12 kB │ gzip:   7.33 kB
+../dist/public/assets/currency-management-Cx4b7e80.js              43.66 kB │ gzip:  12.06 kB
+../dist/public/assets/lab-analytics-dashboard-BDlgDFQj.js          44.75 kB │ gzip:  10.82 kB
+../dist/public/assets/index-D3Lsh0RA.js                         4,077.18 kB │ gzip: 924.63 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 22.98s
+
+  dist/index.js  1009.8kb
+
+⚡ Done in 103ms
+pm2: command not installed, but was located via Nix.
+package: pm2  5.3.1  Node.js production process manager with a built-in load balancer
+Would you like to run pm2 from Nix and add it to your project? [Yn]: 
