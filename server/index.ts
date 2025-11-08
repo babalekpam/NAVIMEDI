@@ -528,8 +528,8 @@ async function initializePlatform() {
       res.sendFile(path.resolve(distPath, "index.html"));
     });
     
-    // Catch-all handler for SPA routing
-    app.use("*", (_req, res) => {
+    // Catch-all handler for SPA routing - serves index.html for all non-API, non-static routes
+    app.get('*', (req, res) => {
       res.sendFile(path.resolve(distPath, "index.html"));
     });
   }
