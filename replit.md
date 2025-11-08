@@ -10,6 +10,40 @@ NaviMED is a multi-tenant healthcare platform connecting independent pharmacies 
 
 ## Recent Changes (November 2025)
 
+### Training Enrollment System Implementation
+**Date:** November 8, 2025
+**Goal:** Enable users to enroll in NaviMED training programs directly from the website
+
+**Changes Implemented:**
+1. **Database Schema:**
+   - Created `training_enrollments` table with fields: fullName, email, phone, organization, jobRole, trainingLevel, status
+   - Added `training_level` enum: foundation, intermediate, advanced, all_levels
+   - Added `training_status` enum: enrolled, in_progress, completed, cancelled
+
+2. **Backend API:**
+   - POST `/api/training/enroll` - Public enrollment endpoint with Zod validation
+   - GET `/api/training/enrollments` - Admin-only endpoint (requires super_admin or tenant_admin)
+   - Automatic confirmation email sent to enrollees with training details and next steps
+   - Security: No PII logging, admin-protected enrollment viewing
+
+3. **Frontend Components:**
+   - Created `TrainingEnrollmentForm` component with react-hook-form and Zod validation
+   - Modal dialog with fields: Full Name, Email, Phone, Organization, Job Role, Training Level
+   - Integrated into landing page "Start Training" button
+   - Added enrollment button to comprehensive user training documentation page
+
+4. **Email Confirmation:**
+   - Professional HTML email template sent after enrollment
+   - Includes enrollment details, training level, next steps
+   - Support contact: +1 (615) 482-6768
+   - Graceful degradation if email fails (enrollment still succeeds)
+
+**Impact:**
+- Users can now enroll in training programs from the landing page and training documentation
+- Automated email confirmations improve user experience
+- Admin can view all enrollments securely
+- Production-ready with proper security and validation
+
 ### Landing Page Overhaul - Highlighting Unique Differentiators
 **Date:** November 8, 2025
 **Goal:** Update landing page to accurately reflect NaviMED's unique AI-powered features and hospital-pharmacy connectivity
