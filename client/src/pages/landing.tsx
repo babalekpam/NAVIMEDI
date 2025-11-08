@@ -50,7 +50,8 @@ import {
   ShoppingCart,
   Package,
   Laptop,
-  BarChart3
+  BarChart3,
+  BookOpen
 } from "lucide-react";
 
 // Professional healthcare platform branding
@@ -1698,6 +1699,121 @@ export default function LandingPage() {
                 <CheckCircle className="w-8 h-8 text-emerald-200 group-hover:scale-125 transition-transform duration-300" />
                 <span className="font-bold text-xl">Cancel Anytime</span>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Comprehensive Training & Support Section */}
+      <section className="py-24 bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 relative overflow-hidden">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16 animate-fade-in-up">
+            <Badge className="mb-6 bg-white/60 backdrop-blur-md text-emerald-700 border border-emerald-200/50 hover:bg-white/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3">
+              <BookOpen className="w-4 h-4 mr-2" />
+              Training & Documentation
+            </Badge>
+            <h2 className="text-5xl md:text-6xl font-black mb-6 text-slate-900 leading-tight">
+              Comprehensive <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Training & Support</span>
+            </h2>
+            <p className="text-2xl text-slate-600 max-w-4xl mx-auto leading-relaxed font-semibold">
+              Get your team up and running quickly with our extensive training programs, documentation, and 24/7 support.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+              <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-blue-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden h-full" data-testid="card-user-training">
+                <CardContent className="p-8 relative">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-400/20 to-cyan-400/20 rounded-full blur-xl"></div>
+                  <div className="flex items-center gap-4 mb-6 relative z-10">
+                    <div className="p-4 bg-gradient-to-br from-blue-100/80 to-blue-200/60 group-hover:from-blue-200/90 group-hover:to-blue-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                      <BookOpen className="w-7 h-7 text-blue-600 group-hover:scale-110 transition-transform" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-900 group-hover:text-blue-700 transition-colors">User Training Programs</h3>
+                  </div>
+                  <p className="text-slate-600 leading-relaxed text-lg font-medium mb-6">
+                    Foundation, Intermediate, and Advanced training levels for all healthcare staff with role-specific modules.
+                  </p>
+                  <Link href="/docs/comprehensive-user-training">
+                    <Button variant="outline" className="w-full group-hover:bg-blue-50 transition-all" data-testid="button-start-training">
+                      Start Training
+                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+              <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-emerald-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden h-full" data-testid="card-complete-docs">
+                <CardContent className="p-8 relative">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-full blur-xl"></div>
+                  <div className="flex items-center gap-4 mb-6 relative z-10">
+                    <div className="p-4 bg-gradient-to-br from-emerald-100/80 to-emerald-200/60 group-hover:from-emerald-200/90 group-hover:to-emerald-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                      <FileText className="w-7 h-7 text-emerald-600 group-hover:scale-110 transition-transform" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">Complete Documentation</h3>
+                  </div>
+                  <p className="text-slate-600 leading-relaxed text-lg font-medium mb-6">
+                    Comprehensive guides, API documentation, workflow tutorials, and quick reference materials.
+                  </p>
+                  <Link href="/support/documentation">
+                    <Button variant="outline" className="w-full group-hover:bg-emerald-50 transition-all" data-testid="button-view-docs">
+                      View Docs
+                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+              <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-purple-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden h-full" data-testid="card-expert-support">
+                <CardContent className="p-8 relative">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-xl"></div>
+                  <div className="flex items-center gap-4 mb-6 relative z-10">
+                    <div className="p-4 bg-gradient-to-br from-purple-100/80 to-purple-200/60 group-hover:from-purple-200/90 group-hover:to-purple-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                      <Headphones className="w-7 h-7 text-purple-600 group-hover:scale-110 transition-transform" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-900 group-hover:text-purple-700 transition-colors">24/7 Expert Support</h3>
+                  </div>
+                  <p className="text-slate-600 leading-relaxed text-lg font-medium mb-4">
+                    Get instant help from healthcare IT specialists with troubleshooting guides and direct support access.
+                  </p>
+                  <div className="flex items-center gap-2 mb-4 text-purple-600 font-semibold">
+                    <Phone className="w-5 h-5" />
+                    <a href="tel:+16154826768" className="hover:text-purple-700 transition-colors">+1 (615) 482-6768</a>
+                  </div>
+                  <Link href="/support/help-center">
+                    <Button variant="outline" className="w-full group-hover:bg-purple-50 transition-all" data-testid="button-get-help">
+                      Get Help
+                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Quick Access Links */}
+          <div className="mt-12 text-center animate-fade-in-up" style={{animationDelay: '0.8s'}}>
+            <p className="text-slate-600 font-medium mb-4">Quick Access:</p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link href="/docs/system-admin-training">
+                <Badge className="bg-white/60 backdrop-blur-md hover:bg-white/80 px-4 py-2 cursor-pointer transition-all hover:scale-105">
+                  System Admin Training
+                </Badge>
+              </Link>
+              <Link href="/docs/workflow-training-modules">
+                <Badge className="bg-white/60 backdrop-blur-md hover:bg-white/80 px-4 py-2 cursor-pointer transition-all hover:scale-105">
+                  Workflow Modules
+                </Badge>
+              </Link>
+              <Link href="/docs/quick-reference-guide">
+                <Badge className="bg-white/60 backdrop-blur-md hover:bg-white/80 px-4 py-2 cursor-pointer transition-all hover:scale-105">
+                  Quick Reference Guides
+                </Badge>
+              </Link>
             </div>
           </div>
         </div>
