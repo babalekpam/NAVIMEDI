@@ -96,28 +96,51 @@ export const tokenRandomization = (req: Request, res: Response, next: NextFuncti
   next();
 };
 
-// CSRF protection configuration
+// CSRF protection configuration with proper validation
 export const csrfProtection = (req: Request, res: Response, next: NextFunction) => {
-  // Generate CSRF token for each request
-  const csrfToken = crypto.randomBytes(32).toString('hex');
+  // Skip CSRF for certain public endpoints
+  const skipCSRF = req.path.includes('/api/health') ||
+                  req.path.includes('/api/auth/login') ||
+                  req.path.includes('/api/auth/refresh') ||
+                  req.path.includes('/public/') ||
+                  req.path.includes('/.well-known/');
   
-  // Add CSRF token to response headers
-  res.set('X-CSRF-Token', csrfToken);
+  if (skipCSRF) {
+    return next();
+  }
   
-  // For POST, PUT, DELETE requests, verify CSRF token
+  // Ensure session exists
+  if (!req.session) {
+    return res.status(500).json({ error: 'Session not initialized' });
+  }
+  
+  // Generate and store CSRF token in session if not present
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+  }
+  
+  // Always send the token in response headers for GET requests
+  res.set('X-CSRF-Token', req.session.csrfToken);
+  
+  // For state-changing requests, verify CSRF token
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
-    const clientToken = req.headers['x-csrf-token'] || req.body._csrf;
+    const clientToken = req.headers['x-csrf-token'] as string || req.body?._csrf;
+    const serverToken = req.session.csrfToken;
     
-    // Skip CSRF for certain public endpoints
-    const skipCSRF = req.path.includes('/api/health') ||
-                    req.path.includes('/api/auth/login') ||
-                    req.path.includes('/public/') ||
-                    req.path.includes('/.well-known/');
-    
-    if (!skipCSRF && !clientToken) {
+    // Token must be present
+    if (!clientToken) {
       return res.status(403).json({ 
-        error: 'CSRF token missing',
-        csrfToken: csrfToken 
+        error: 'CSRF token missing. Please include X-CSRF-Token header.'
+      });
+    }
+    
+    // Token must match server-issued token (constant-time comparison to prevent timing attacks)
+    if (!serverToken || !crypto.timingSafeEqual(
+      Buffer.from(clientToken, 'utf8'),
+      Buffer.from(serverToken, 'utf8')
+    )) {
+      return res.status(403).json({ 
+        error: 'CSRF token validation failed. Token mismatch.'
       });
     }
   }
