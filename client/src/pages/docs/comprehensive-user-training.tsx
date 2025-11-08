@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
+import { TrainingEnrollmentForm } from "@/components/training-enrollment-form";
 
 export default function ComprehensiveUserTraining() {
   const trainingModules = [
@@ -84,7 +85,7 @@ export default function ComprehensiveUserTraining() {
               </Button>
             </Link>
             <h1 className="text-4xl font-bold text-gray-900 mb-4">Comprehensive User Training Program</h1>
-            <div className="flex items-center gap-4 text-sm text-gray-600">
+            <div className="flex items-center gap-4 text-sm text-gray-600 mb-6">
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
                 <span>Full Program: 20-40 hours</span>
@@ -96,6 +97,10 @@ export default function ComprehensiveUserTraining() {
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 Comprehensive Program
               </Badge>
+            </div>
+            
+            <div className="mb-8">
+              <TrainingEnrollmentForm />
             </div>
           </div>
 

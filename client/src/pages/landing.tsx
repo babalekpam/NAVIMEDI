@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PublicHeader } from "@/components/layout/public-header";
+import { TrainingEnrollmentForm } from "@/components/training-enrollment-form";
 import navimedLogo from "@assets/JPG_1753663321927.jpg";
 import surgicalTeam from "@assets/stock_images/professional_healthc_f68a0efd.jpg";
 import brainScanAnalysis from "@assets/stock_images/medical_imaging_doct_b8bd9edc.jpg";
@@ -1734,12 +1735,14 @@ export default function LandingPage() {
                   <p className="text-slate-600 leading-relaxed text-lg font-medium mb-6">
                     Foundation, Intermediate, and Advanced training levels for all healthcare staff with role-specific modules.
                   </p>
-                  <Link href="/docs/comprehensive-user-training">
-                    <Button variant="outline" className="w-full group-hover:bg-blue-50 transition-all" data-testid="button-start-training">
-                      Start Training
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
+                  <TrainingEnrollmentForm 
+                    trigger={
+                      <Button variant="outline" className="w-full group-hover:bg-blue-50 transition-all" data-testid="button-enroll-training">
+                        Start Training
+                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    }
+                  />
                 </CardContent>
               </Card>
             </div>

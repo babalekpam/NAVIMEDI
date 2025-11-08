@@ -700,6 +700,21 @@ export const exportStatusEnum = pgEnum("export_status", [
   "failed"
 ]);
 
+// Training Enrollment Enums
+export const trainingLevelEnum = pgEnum("training_level", [
+  "foundation",
+  "intermediate",
+  "advanced",
+  "all_levels"
+]);
+
+export const trainingStatusEnum = pgEnum("training_status", [
+  "enrolled",
+  "in_progress",
+  "completed",
+  "cancelled"
+]);
+
 // Currency Configuration Table
 export const currencies = pgTable("currencies", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -743,6 +758,24 @@ export const sessions = pgTable(
     expireIdx: index("IDX_session_expire").on(table.expire),
   }),
 );
+
+// Training Enrollments Table
+export const trainingEnrollments = pgTable("training_enrollments", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  fullName: varchar("full_name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  organization: varchar("organization", { length: 255 }),
+  jobRole: varchar("job_role", { length: 100 }),
+  trainingLevel: trainingLevelEnum("training_level").notNull().default("foundation"),
+  status: trainingStatusEnum("status").notNull().default("enrolled"),
+  enrollmentDate: timestamp("enrollment_date").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  startDate: timestamp("start_date"),
+  completionDate: timestamp("completion_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`)
+});
 
 // Countries/Regions table for global medical code isolation
 export const countries = pgTable("countries", {
@@ -5512,3 +5545,15 @@ export type InsertImagingReport = z.infer<typeof insertImagingReportSchema>;
 
 export type DicomAnnotation = typeof dicomAnnotations.$inferSelect;
 export type InsertDicomAnnotation = z.infer<typeof insertDicomAnnotationSchema>;
+
+// Training Enrollments Insert Schemas
+export const insertTrainingEnrollmentSchema = createInsertSchema(trainingEnrollments).omit({
+  id: true,
+  enrollmentDate: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+// Training Enrollments Types
+export type TrainingEnrollment = typeof trainingEnrollments.$inferSelect;
+export type InsertTrainingEnrollment = z.infer<typeof insertTrainingEnrollmentSchema>;
