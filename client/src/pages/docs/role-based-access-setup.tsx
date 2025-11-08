@@ -1,11 +1,11 @@
-import { ArrowLeft, Clock, Users, Lock, CheckCircle, Settings, Download, Shield, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Clock, Users, Lock, CheckCircle, Settings, Printer, Shield, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 
 export function RoleBasedAccessSetup() {
-  const handleDownloadPDF = () => {
+  const handlePrint = () => {
     window.print();
   };
 
@@ -37,9 +37,9 @@ export function RoleBasedAccessSetup() {
                   </Badge>
                 </div>
               </div>
-              <Button onClick={handleDownloadPDF} variant="outline" className="gap-2">
-                <Download className="w-4 h-4" />
-                Download PDF
+              <Button onClick={handlePrint} variant="outline" className="gap-2">
+                <Printer className="w-4 h-4" />
+                Print Page
               </Button>
             </div>
           </div>
