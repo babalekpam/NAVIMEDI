@@ -265,18 +265,19 @@ export default function LandingPage() {
                 <div className="animate-fade-in-up animate-stagger-2">
                 <h1 className="text-6xl md:text-7xl lg:text-8xl font-black mb-10 tracking-tight leading-tight">
                   <span className="bg-gradient-to-r from-slate-900 via-emerald-600 via-teal-500 to-blue-600 bg-clip-text text-transparent animate-gradient-diagonal bg-[length:400%_400%] animate-text-glow">
-                    Reduce Healthcare
+                    AI-Powered Healthcare
                   </span>
                   <br />
-                  <span className="bg-gradient-to-r from-emerald-700 via-blue-700 to-slate-900 bg-clip-text text-transparent drop-shadow-xl">Admin Burden by 40%</span>
+                  <span className="bg-gradient-to-r from-emerald-700 via-blue-700 to-slate-900 bg-clip-text text-transparent drop-shadow-xl">With Automated Insurance</span>
                 </h1>
               </div>
             
               {/* Enhanced Subheading with better styling */}
               <div className="animate-fade-in-up animate-stagger-3">
                 <p className="text-2xl md:text-3xl text-slate-700 mb-10 leading-relaxed max-w-4xl mx-auto font-semibold">
-                  Streamline hospital operations with NaviMED's complete healthcare management platform. 
-                  <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent font-bold">HIPAA-compliant</span> solution trusted by <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold">200+</span> healthcare facilities worldwide.
+                  Complete hospital-pharmacy platform with <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent font-bold">NaviMED AI</span> health analysis, 
+                  <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent font-bold"> automated insurance verification</span>, and seamless prescription flow. 
+                  <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold">HIPAA-compliant</span> solution trusted by 200+ facilities worldwide.
                 </p>
               </div>
 
@@ -409,6 +410,320 @@ export default function LandingPage() {
                   </div>
                 </div>
               )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* NaviMED AI Section - Flagship Feature */}
+        <section className="py-24 relative overflow-hidden">
+          {/* Premium gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-50 via-pink-50/30 to-blue-50">
+            <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-r from-purple-400/15 to-pink-400/15 rounded-full blur-3xl animate-float"></div>
+            <div className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-blue-400/15 to-purple-400/15 rounded-full blur-3xl animate-float" style={{animationDelay: '2s'}}></div>
+          </div>
+          
+          <div className="container mx-auto px-6 relative z-10">
+            <div className="text-center mb-16 animate-fade-in-up">
+              <Badge className="mb-6 bg-gradient-to-r from-purple-100 to-pink-100 backdrop-blur-md text-purple-700 border border-purple-200/50 hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3">
+                <Brain className="w-4 h-4 mr-2" />
+                Powered by OpenAI
+              </Badge>
+              <h2 className="text-5xl md:text-6xl font-black mb-6 text-slate-900 leading-tight">
+                Meet <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent animate-gradient-x bg-[length:200%_auto]">NaviMED AI</span>
+              </h2>
+              <p className="text-2xl text-slate-600 max-w-4xl mx-auto leading-relaxed font-semibold">
+                Your intelligent healthcare assistant powered by advanced AI. Get instant health analysis, 
+                diagnostic support, and predictive insights to improve patient outcomes.
+              </p>
+            </div>
+
+            {/* AI Feature Cards */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              <div className="animate-fade-in-up" style={{animationDelay: '0.1s'}}>
+                <Card className="group bg-white/80 backdrop-blur-md border border-purple-200/50 hover:border-purple-400/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden h-full" data-testid="card-health-analysis">
+                  <CardContent className="p-6">
+                    <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform">
+                      <Brain className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-purple-700 transition-colors">Health Analysis</h3>
+                    <p className="text-slate-600 leading-relaxed">
+                      AI-powered analysis of patient symptoms, medical history, and lab results for comprehensive health insights.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+                <Card className="group bg-white/80 backdrop-blur-md border border-pink-200/50 hover:border-pink-400/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden h-full" data-testid="card-diagnostic-support">
+                  <CardContent className="p-6">
+                    <div className="w-14 h-14 bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform">
+                      <Activity className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-pink-700 transition-colors">Diagnostic Support</h3>
+                    <p className="text-slate-600 leading-relaxed">
+                      Real-time diagnostic assistance with differential diagnosis suggestions based on symptoms and clinical data.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="animate-fade-in-up" style={{animationDelay: '0.3s'}}>
+                <Card className="group bg-white/80 backdrop-blur-md border border-blue-200/50 hover:border-blue-400/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden h-full" data-testid="card-risk-prediction">
+                  <CardContent className="p-6">
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform">
+                      <TrendingUp className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-700 transition-colors">Risk Prediction</h3>
+                    <p className="text-slate-600 leading-relaxed">
+                      Predictive analytics for readmission risk, no-show probability, and patient health deterioration alerts.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+                <Card className="group bg-white/80 backdrop-blur-md border border-purple-200/50 hover:border-purple-400/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden h-full" data-testid="card-treatment-recommendations">
+                  <CardContent className="p-6">
+                    <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform">
+                      <Rocket className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-purple-700 transition-colors">Smart Recommendations</h3>
+                    <p className="text-slate-600 leading-relaxed">
+                      Evidence-based treatment suggestions and medication recommendations tailored to patient profiles.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* AI Stats Showcase */}
+            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto animate-fade-in-up" style={{animationDelay: '0.5s'}}>
+              <div className="glass-card rounded-3xl p-8 text-center hover-lift">
+                <div className="text-5xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-3">95%</div>
+                <div className="text-slate-700 font-semibold">Diagnostic Accuracy</div>
+              </div>
+              <div className="glass-card rounded-3xl p-8 text-center hover-lift">
+                <div className="text-5xl font-black bg-gradient-to-r from-pink-600 to-blue-600 bg-clip-text text-transparent mb-3">30%</div>
+                <div className="text-slate-700 font-semibold">Faster Diagnosis</div>
+              </div>
+              <div className="glass-card rounded-3xl p-8 text-center hover-lift">
+                <div className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">50+</div>
+                <div className="text-slate-700 font-semibold">Medical Specialties</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works - Hospital-Pharmacy Flow */}
+        <section className="py-24 bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 relative overflow-hidden">
+          <div className="container mx-auto px-6">
+            <div className="text-center mb-16 animate-fade-in-up">
+              <Badge className="mb-6 bg-white/60 backdrop-blur-md text-blue-700 border border-blue-200/50 hover:bg-white/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3">
+                <Bolt className="w-4 h-4 mr-2" />
+                Seamless Integration
+              </Badge>
+              <h2 className="text-5xl md:text-6xl font-black mb-6 text-slate-900 leading-tight">
+                How <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">It Works</span>
+              </h2>
+              <p className="text-2xl text-slate-600 max-w-4xl mx-auto font-semibold">
+                From doctor's prescription to patient's hands — fully automated with insurance verification
+              </p>
+            </div>
+
+            {/* Flow Steps */}
+            <div className="max-w-6xl mx-auto">
+              <div className="grid md:grid-cols-4 gap-6">
+                <div className="text-center animate-fade-in-up" style={{animationDelay: '0.1s'}}>
+                  <div className="relative mb-6">
+                    <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl flex items-center justify-center mx-auto shadow-xl hover:scale-110 transition-transform">
+                      <Stethoscope className="w-10 h-10 text-white" />
+                    </div>
+                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-emerald-600 text-white rounded-full flex items-center justify-center font-bold text-lg">1</div>
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">Doctor Prescribes</h3>
+                  <p className="text-slate-600">
+                    Physician creates digital prescription in NaviMED system with patient details
+                  </p>
+                </div>
+
+                <div className="text-center animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+                  <div className="relative mb-6">
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl flex items-center justify-center mx-auto shadow-xl hover:scale-110 transition-transform">
+                      <Shield className="w-10 h-10 text-white" />
+                    </div>
+                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg">2</div>
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">Auto Insurance Check</h3>
+                  <p className="text-slate-600">
+                    NaviMED automatically verifies insurance coverage and calculates patient copay
+                  </p>
+                </div>
+
+                <div className="text-center animate-fade-in-up" style={{animationDelay: '0.3s'}}>
+                  <div className="relative mb-6">
+                    <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-teal-600 rounded-3xl flex items-center justify-center mx-auto shadow-xl hover:scale-110 transition-transform">
+                      <Pill className="w-10 h-10 text-white" />
+                    </div>
+                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center font-bold text-lg">3</div>
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">Pharmacy Receives</h3>
+                  <p className="text-slate-600">
+                    Patient's chosen pharmacy instantly receives prescription with insurance info
+                  </p>
+                </div>
+
+                <div className="text-center animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+                  <div className="relative mb-6">
+                    <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-blue-500 rounded-3xl flex items-center justify-center mx-auto shadow-xl hover:scale-110 transition-transform">
+                      <CheckCircle className="w-10 h-10 text-white" />
+                    </div>
+                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-emerald-600 text-white rounded-full flex items-center justify-center font-bold text-lg">4</div>
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">Patient Picks Up</h3>
+                  <p className="text-slate-600">
+                    Medication ready with pre-calculated copay — no surprises, no delays
+                  </p>
+                </div>
+              </div>
+
+              {/* Key Benefits Bar */}
+              <div className="mt-12 p-8 glass-card rounded-3xl animate-fade-in-up" style={{animationDelay: '0.5s'}}>
+                <div className="grid md:grid-cols-3 gap-6 text-center">
+                  <div>
+                    <div className="text-3xl font-black bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-2">60%</div>
+                    <div className="text-slate-600 font-semibold">Faster Prescription Processing</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">100%</div>
+                    <div className="text-slate-600 font-semibold">Insurance Verification Rate</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-black bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent mb-2">Zero</div>
+                    <div className="text-slate-600 font-semibold">Medication Errors</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Telemedicine & Patient Portal Section */}
+        <section className="py-24 relative overflow-hidden">
+          {/* Animated background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 via-teal-50/60 to-cyan-50/80">
+            <div className="absolute top-20 right-10 w-96 h-96 bg-gradient-to-r from-cyan-400/10 to-blue-400/10 rounded-full blur-3xl animate-float"></div>
+            <div className="absolute bottom-20 left-20 w-80 h-80 bg-gradient-to-r from-blue-400/10 to-teal-400/10 rounded-full blur-3xl animate-float" style={{animationDelay: '3s'}}></div>
+          </div>
+          
+          <div className="container mx-auto px-6 relative z-10">
+            <div className="text-center mb-16 animate-fade-in-up">
+              <Badge className="mb-6 bg-white/60 backdrop-blur-md text-blue-700 border border-blue-200/50 hover:bg-white/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3">
+                <Monitor className="w-4 h-4 mr-2" />
+                Modern Patient Care
+              </Badge>
+              <h2 className="text-5xl md:text-6xl font-black mb-6 text-slate-900 leading-tight">
+                Telemedicine & <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Patient Portal</span>
+              </h2>
+              <p className="text-2xl text-slate-600 max-w-4xl mx-auto leading-relaxed font-semibold">
+                Empower patients with 24/7 access to their health records, virtual consultations, 
+                and appointment booking from any device.
+              </p>
+            </div>
+
+            {/* Telemedicine Features */}
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-blue-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden h-full" data-testid="card-video-consultations">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-400/20 to-cyan-400/20 rounded-full blur-xl"></div>
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className="p-4 bg-gradient-to-br from-blue-100/80 to-blue-200/60 group-hover:from-blue-200/90 group-hover:to-blue-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                        <Monitor className="w-7 h-7 text-blue-600 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-blue-700 transition-colors">Virtual Consultations</h3>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed text-lg font-medium mb-4">
+                      High-quality video appointments with secure, HIPAA-compliant conferencing for remote patient care.
+                    </p>
+                    <ul className="space-y-2 text-slate-600">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-blue-500" />
+                        HD video & audio quality
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-blue-500" />
+                        Screen sharing for imaging
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-blue-500" />
+                        End-to-end encryption
+                      </li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-teal-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden h-full" data-testid="card-online-booking">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-teal-400/20 to-cyan-400/20 rounded-full blur-xl"></div>
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className="p-4 bg-gradient-to-br from-teal-100/80 to-teal-200/60 group-hover:from-teal-200/90 group-hover:to-teal-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                        <Calendar className="w-7 h-7 text-teal-600 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-teal-700 transition-colors">Online Appointment Booking</h3>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed text-lg font-medium mb-4">
+                      Patients can book, reschedule, and manage appointments 24/7 with real-time availability.
+                    </p>
+                    <ul className="space-y-2 text-slate-600">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-teal-500" />
+                        Real-time calendar sync
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-teal-500" />
+                        Automated reminders (SMS/Email)
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-teal-500" />
+                        Multi-provider scheduling
+                      </li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-cyan-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden h-full" data-testid="card-patient-records">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-cyan-400/20 to-blue-400/20 rounded-full blur-xl"></div>
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className="p-4 bg-gradient-to-br from-cyan-100/80 to-cyan-200/60 group-hover:from-cyan-200/90 group-hover:to-cyan-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                        <FileText className="w-7 h-7 text-cyan-600 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-cyan-700 transition-colors">Health Records Access</h3>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed text-lg font-medium mb-4">
+                      Patients view prescriptions, lab results, medical history, and imaging reports anytime, anywhere.
+                    </p>
+                    <ul className="space-y-2 text-slate-600">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-cyan-500" />
+                        Complete medical history
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-cyan-500" />
+                        Lab results & imaging
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-cyan-500" />
+                        Downloadable reports (PDF)
+                      </li>
+                    </ul>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>
@@ -602,18 +917,32 @@ export default function LandingPage() {
               </div>
 
               <div className="animate-fade-in-up" style={{animationDelay: '0.6s'}}>
-                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-emerald-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden" data-testid="card-ai-insights">
+                <Card className="group bg-white/70 backdrop-blur-md border border-white/20 hover:border-purple-300/50 hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-3xl overflow-hidden" data-testid="card-ai-insights">
                   <CardContent className="p-8 relative">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-400/20 to-emerald-400/20 rounded-full blur-xl"></div>
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-xl"></div>
                     <div className="flex items-center gap-4 mb-6 relative z-10">
-                      <div className="p-4 bg-gradient-to-br from-purple-100/80 to-emerald-200/60 group-hover:from-purple-200/90 group-hover:to-emerald-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
-                        <Brain className="w-7 h-7 text-emerald-600 group-hover:scale-110 transition-transform" />
+                      <div className="p-4 bg-gradient-to-br from-purple-100/80 to-pink-200/60 group-hover:from-purple-200/90 group-hover:to-pink-300/70 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-lg backdrop-blur-sm">
+                        <BarChart3 className="w-7 h-7 text-purple-600 group-hover:scale-110 transition-transform" />
                       </div>
-                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">AI-Powered Insights</h3>
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-purple-700 transition-colors leading-tight">Predictive Analytics & Drug Interactions</h3>
                     </div>
-                    <p className="text-slate-600 leading-relaxed text-lg font-medium">
-                      Advanced analytics and predictive insights for patient care optimization, resource planning, and clinical decision support.
+                    <p className="text-slate-600 leading-relaxed text-lg font-medium mb-4">
+                      Real-time drug interaction warnings, readmission risk alerts, no-show probability predictions, and revenue forecasting for data-driven decisions.
                     </p>
+                    <ul className="space-y-2 text-slate-600">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-purple-500" />
+                        Drug interaction & allergy alerts
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-purple-500" />
+                        Patient readmission risk scoring
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-purple-500" />
+                        Inventory demand forecasting
+                      </li>
+                    </ul>
                   </CardContent>
                 </Card>
               </div>
