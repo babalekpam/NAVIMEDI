@@ -1,0 +1,80 @@
+✅ Clean files restored + Tailwind 1600px config preserved!
+[root@wizardly-swirles NaviMed]#cd /var/www/vhosts/navimedi.org/httpdocs/NaviMedd
+
+# 1. Check what's inside the archive
+echo "=== Checking archive structure ==="
+tar -tzf navimed-release.tgz | head -20
+
+# 2. Extract to temp
+tar -xzf navimed-release.tgz -C /tmp/clean-navimed
+
+# 3. Find the actual directory name
+echo -e "\n=== Finding extracted directory ==="
+ls -la /tmp/clean-navimed/
+
+# 4. Set the correct path and restore
+CLEAN_DIR=$(ls /tmp/clean-navimed/ | head -1)
+echo "Using directory: $CLEAN_DIR"
+
+# 5. Restore broken .tsx files
+cp -r /tmp/clean-navimed/$CLEAN_DIR/client/src/pages/*.tsx client/src/pages/
+cp -r /tmp/clean-navimed/$CLEAN_DIR/client/src/components/ client/src/components/
+
+# 6. Test build
+npm run build 2>&1 | grep -i "error" && echo "❌ BUILD FAILED" || echo "✅ BUILD SUCCESS!"
+
+bash post-build.sh
+pm2 restart navimed
+
+echo "✅ Files restored from archive!"
+=== Checking archive structure ===
+dist/
+dist/public/
+dist/public/.well-known/
+dist/public/.well-known/pki-validation/
+dist/public/.well-known/pki-validation/AEE904F2EBE36AC8DA5D83A4DBC6675D.txt
+dist/public/android-chrome-192x192.png
+dist/public/android-chrome-512x512.png
+dist/public/apple-touch-icon-114x114.png
+dist/public/apple-touch-icon-120x120.png
+dist/public/apple-touch-icon-144x144.png
+dist/public/apple-touch-icon-152x152.png
+dist/public/apple-touch-icon-180x180.png
+dist/public/apple-touch-icon-57x57.png
+dist/public/apple-touch-icon-60x60.png
+dist/public/apple-touch-icon-72x72.png
+dist/public/apple-touch-icon-76x76.png
+dist/public/apple-touch-icon.png
+dist/public/favicon-16x16.png
+dist/public/favicon-32x32.png
+dist/public/favicon.ico
+
+=== Finding extracted directory ===
+total 504
+drwxr-xr-x.  3 root root       63 Nov  9 19:11 .
+drwxrwxrwt. 45 root root     8192 Nov  9 19:10 ..
+drwxr-xr-x.  3 1000 psaadm     86 Sep  6 06:54 dist
+-rw-r--r--.  1 1000 psaadm   4702 Oct 22 09:49 package.json
+-rw-r--r--.  1 1000 psaadm 494942 Oct 22 09:49 package-lock.json
+Using directory: dist
+cp: cannot stat '/tmp/clean-navimed/dist/client/src/pages/*.tsx': No such file or directory
+cp: cannot stat '/tmp/clean-navimed/dist/client/src/components/': No such file or directory
+error during build:
+[vite:esbuild] Transform failed with 1 error:
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/lab-orders.tsx:609:53: ERROR: Expected ">" but found "\">\n              <TestTube className=\""
+    at failureErrorWithLog (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
+❌ BUILD FAILED
+📦 Syncing built assets from dist/public to server/public...
+✅ Assets synced successfully with rsync!
+   dist/public → server/public
+   21 files synced
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1920817  │ 0s     │ 40   │ online    │ 0%       │ 16.3mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+✅ Files restored from archive!
+[root@wizardly-swirles NaviMed]# 
