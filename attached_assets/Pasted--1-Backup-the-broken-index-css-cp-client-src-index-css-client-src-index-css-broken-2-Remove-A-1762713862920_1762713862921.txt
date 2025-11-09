@@ -1,0 +1,54 @@
+
+# 1. Backup the broken index.css
+cp client/src/index.css client/src/index.css.broken
+
+# 2. Remove ALL the broken custom CSS we added (everything after line 700)
+head -700 client/src/index.css.broken > client/src/index.css
+
+# 3. Modify Tailwind config to make container 1600px
+sed -i "s/'2xl': '6rem',/'2xl': '6rem',\n      },\n      screens: {\n        sm: '640px',\n        md: '768px',\n        lg: '1024px',\n        xl: '1280px',\n        '2xl': '1600px',/" tailwind.config.ts
+
+# 4. Verify the change
+echo "=== Tailwind container config ==="
+grep -A 15 "container:" tailwind.config.ts
+
+# 5. Rebuild with clean CSS
+npm run build 2>&1 | grep -i "syntax-error" && echo "❌ STILL HAS ERRORS" || echo "✅ NO SYNTAX ERRORS!"
+
+bash post-build.sh
+pm2 restart navimed
+
+echo "✅ Tailwind config updated - container now allows 1600px!"
+=== Tailwind container config ===
+    container: {
+      center: true,
+      padding: {
+        DEFAULT: '1.5rem',
+        sm: '2rem',
+        lg: '4rem',
+        xl: '5rem',
+        '2xl': '6rem',
+      },
+      screens: {
+        sm: '640px',
+        md: '768px',
+        lg: '1024px',
+        xl: '1280px',
+        '2xl': '1600px',
+      },
+▲ [WARNING] Expected "}" to go with "{" [css-syntax-error]
+❌ STILL HAS ERRORS
+📦 Syncing built assets from dist/public to server/public...
+✅ Assets synced successfully with rsync!
+   dist/public → server/public
+   21 files synced
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1916530  │ 0s     │ 29   │ online    │ 0%       │ 17.9mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+✅ Tailwind config updated - container now allows 1600px!
+[root@wizardly-swirles NaviMed]# 
