@@ -1,0 +1,72 @@
+npm run build
+bash post-build.sh  
+pm2 restart navimed
+
+echo "✅ Fixed Tailwind 1600px AND removed ALL container/max-w classes!"
+=== Current Tailwind container config ===
+        sm: '640px',
+        md: '768px',
+        lg: '1024px',
+        xl: '1280px',
+        '2xl': '1600px',
+      },
+    },
+    extend: {
+17:        '2xl': '1600px',
+24:        '2xl': '1600px',
+31:        '2xl': '1600px',
+
+=== Verifying 2xl is now 1600px ===
+        '2xl': '1600px',
+        '2xl': '1600px',
+        '2xl': '1600px',
+
+=== Finding ALL container/max-w classes ===
+
+=== Verifying removal ===
+0
+0
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.19 building for production...
+✓ 25 modules transformed.
+x Build failed in 254ms
+error during build:
+[vite:esbuild] Transform failed with 1 error:
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/appointments.tsx:660:53: ERROR: Expected ">" but found "\">\n              <Eye className=\""
+file: /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/appointments.tsx:660:53
+
+Expected ">" but found "\">\n              <Eye className=\""
+658|          <DialogContent className=">
+659|            <DialogHeader>
+660|              <DialogTitle className="flex items-center">
+   |                                                       ^
+661|                <Eye className="h-5 w-5 mr-2" />
+662|                Appointment Details
+
+    at failureErrorWithLog (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
+    at /var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:755:50
+    at responseCallbacks.<computed> (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:622:9)
+    at handleIncomingPacket (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:677:12)
+    at Socket.readFromStdout (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:600:7)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+📦 Syncing built assets from dist/public to server/public...
+✅ Assets synced successfully with rsync!
+   dist/public → server/public
+   21 files synced
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1919813  │ 0s     │ 37   │ online    │ 0%       │ 18.1mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+✅ Fixed Tailwind 1600px AND removed ALL container/max-w classes!
+[root@wizardly-swirles NaviMed]# 
