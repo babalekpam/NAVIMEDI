@@ -1,0 +1,60 @@
+Last failed login: Sun Nov  9 17:48:35 UTC 2025 from 40.83.182.122 on ssh:notty
+There were 10 failed login attempts since the last successful login.
+Last login: Sun Nov  9 17:34:36 2025 from 127.0.0.1
+
+This server is powered by Plesk.
+
+Run the 'plesk login' command and log in by browsing either of the links received in the output.
+Use the 'plesk' command to manage the server. Run 'plesk help' for more info.
+
+[root@wizardly-swirles ~]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+
+# 1. Check Tailwind config for container settings
+echo "=== Checking Tailwind config for container ==="
+grep -A 10 "container" tailwind.config.ts
+
+# 2. Check what's actually in the built CSS for container/max-width
+echo -e "\n=== Checking built CSS for container class definition ==="
+grep -o '\.container[^{]*{[^}]*}' dist/public/assets/index-*.css | head -3
+
+# 3. Check for any max-width rules in the built CSS
+echo -e "\n=== Checking all max-width rules in built CSS ==="
+grep -o 'max-width:[^;]*' dist/public/assets/index-*.css | sort -u | grep -E '1280|1536|1600'
+
+# 4. Check if PublicHeader is wrapping content with constraints
+echo -e "\n=== Checking PublicHeader structure ==="
+head -50 client/src/components/layout/public-header.tsx | grep -A 3 "return"
+=== Checking Tailwind config for container ===
+    container: {
+      center: true,
+      padding: {
+        DEFAULT: '1.5rem',
+        sm: '2rem',
+        lg: '4rem',
+        xl: '5rem',
+        '2xl': '6rem',
+      },
+      screens: {
+        sm: '640px',
+
+=== Checking built CSS for container class definition ===
+
+=== Checking all max-width rules in built CSS ===
+max-width:1600px
+max-width:1600px!important}.mx-auto{padding-left:1rem!important
+
+=== Checking PublicHeader structure ===
+  return (
+    <header className={`fixed top-0 w-full z-50 border-b border-white/10 backdrop-blur-xl bg-white/80 supports-[backdrop-filter]:bg-white/60 ${className}`}>
+      <div className="container mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
+[root@wizardly-swirles NaviMed]# Last failed login: Sun Nov  9 17:52:01 UTC 2025 from 197.5.145.8 on ssh:notty
+There were 8 failed login attempts since the last successful login.
+Last login: Sun Nov  9 17:48:40 2025 from 127.0.0.1
+
+This server is powered by Plesk.
+
+Run the 'plesk login' command and log in by browsing either of the links received in the output.
+Use the 'plesk' command to manage the server. Run 'plesk help' for more info.
+
+[root@wizardly-swirles ~]# 
