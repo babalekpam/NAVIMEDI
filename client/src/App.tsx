@@ -180,7 +180,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <Dashboard />
                 </main>
               </div>
@@ -193,7 +193,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <Patients />
                 </main>
               </div>
@@ -207,7 +207,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <Patients />
                 </main>
               </div>
@@ -220,7 +220,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <PatientMedicalRecords />
                 </main>
               </div>
@@ -233,7 +233,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <Appointments />
                 </main>
               </div>
@@ -246,7 +246,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <Prescriptions />
                 </main>
               </div>
@@ -259,7 +259,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <PrescriptionArchives />
                 </main>
               </div>
@@ -273,7 +273,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <AllergyManagement />
                 </main>
               </div>
@@ -287,7 +287,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <StaffScheduling />
                 </main>
               </div>
@@ -301,7 +301,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <TimeTracking />
                 </main>
               </div>
@@ -315,7 +315,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <LeaveManagement />
                 </main>
               </div>
@@ -329,7 +329,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <LabOrders />
                 </main>
               </div>
@@ -342,7 +342,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <PostLabResults />
                 </main>
               </div>
@@ -355,7 +355,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <LaboratoryBilling />
                 </main>
               </div>
@@ -368,7 +368,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <Achievements />
                 </main>
               </div>
@@ -381,7 +381,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <PatientAccessManagement />
                 </main>
               </div>
@@ -415,7 +415,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <Billing />
                 </main>
               </div>
@@ -428,7 +428,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <DocumentManagement />
                 </main>
               </div>
@@ -441,7 +441,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <TenantManagement />
                 </main>
               </div>
@@ -454,7 +454,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <AuditLogs />
                 </main>
               </div>
@@ -467,7 +467,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <AdminDashboard />
                 </main>
               </div>
@@ -480,7 +480,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <AdminMedicalCodesWorking />
                 </main>
               </div>
@@ -493,7 +493,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <SuperAdminDashboard />
                 </main>
               </div>
@@ -521,7 +521,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <AdminCounterReset />
                 </main>
               </div>
@@ -534,7 +534,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <UserRoles />
                 </main>
               </div>
@@ -547,7 +547,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <Reports />
                 </main>
               </div>
@@ -561,7 +561,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <AnalyticsDashboard />
                 </main>
               </div>
@@ -575,7 +575,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <BiReports />
                 </main>
               </div>
@@ -589,7 +589,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <PredictiveAnalytics />
                 </main>
               </div>
@@ -603,7 +603,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <DicomViewer />
                 </main>
               </div>
@@ -617,7 +617,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <PacsManagement />
                 </main>
               </div>
@@ -631,7 +631,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <RadiologyReports />
                 </main>
               </div>
@@ -645,7 +645,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <MedicalCommunications />
                 </main>
               </div>
@@ -658,7 +658,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <HealthRecommendations />
                 </main>
               </div>
@@ -672,7 +672,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <PatientEducation />
                 </main>
               </div>
@@ -686,7 +686,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <HealthReminders />
                 </main>
               </div>
@@ -700,7 +700,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <HealthSurveys />
                 </main>
               </div>
@@ -714,7 +714,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <DeveloperPortal />
                 </main>
               </div>
@@ -728,7 +728,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <ApiDocumentation />
                 </main>
               </div>
@@ -742,7 +742,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <LaboratoryDashboard />
                 </main>
               </div>
@@ -770,7 +770,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <PharmacyDashboard />
                 </main>
               </div>
@@ -784,7 +784,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <PharmacyDashboardEnhanced />
                 </main>
               </div>
@@ -798,7 +798,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <PharmacyInventory />
                 </main>
               </div>
@@ -812,7 +812,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <PharmacyCustomers />
                 </main>
               </div>
@@ -826,7 +826,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <PharmacyBilling />
                 </main>
               </div>
@@ -840,7 +840,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <InventoryAudits />
                 </main>
               </div>
@@ -854,7 +854,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <MedicationInsuranceClaims />
                 </main>
               </div>
@@ -868,7 +868,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <ReceptionistDashboard />
                 </main>
               </div>
@@ -957,7 +957,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <ServicePricingManagement />
                 </main>
               </div>
@@ -970,7 +970,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <CurrencyManagementPage />
                 </main>
               </div>
@@ -983,7 +983,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <WhiteLabelSettingsPage />
                 </main>
               </div>
@@ -996,7 +996,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <OfflineModePage />
                 </main>
               </div>
@@ -1009,7 +1009,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <TrialStatusPage />
                 </main>
               </div>
@@ -1022,7 +1022,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <ProfileSettingsPage />
                 </main>
               </div>
@@ -1035,7 +1035,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <ConsultationHistory />
                 </main>
               </div>
@@ -1048,7 +1048,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <Advertisements />
                 </main>
               </div>
@@ -1062,7 +1062,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <LabResults />
                 </main>
               </div>
@@ -1075,7 +1075,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <LaboratoryBilling />
                 </main>
               </div>
@@ -1088,7 +1088,7 @@ function AppContent() {
               <TabsNavigation />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                   <HospitalBilling />
                 </main>
               </div>
@@ -1295,7 +1295,7 @@ function Router() {
                 <TabsNavigation />
                 <div className="flex flex-1 overflow-hidden">
                   <Sidebar />
-                  <main className="flex-1 overflow-y-auto p-6">
+                  <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
                     <MedicationInsuranceClaims />
                   </main>
                 </div>

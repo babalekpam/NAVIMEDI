@@ -130,11 +130,19 @@
 
   /* Layout utilities */
   .layout-wide {
-    @apply max-w-7xl mx-auto px-6;
+    @apply max-w-full mx-auto px-4 md:px-6 lg:px-8 xl:px-12;
   }
   
   .layout-narrow {
     @apply max-w-4xl mx-auto px-6;
+  }
+  
+  .layout-full {
+    @apply w-full px-4 md:px-6 lg:px-8;
+  }
+  
+  .layout-container {
+    @apply max-w-screen-2xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12;
   }
 
   /* Professional medical form styling */
