@@ -1,4 +1,4 @@
-import { ArrowLeft, Clock, Users, Download, Search, Keyboard, User, Calendar, FileText, Pill, TestTube, CreditCard, Settings } from "lucide-react";
+import { ArrowLeft, Clock, Users, Download, Search, Keyboard, User, Calendar, FileText, Pill, TestTube, CreditCard, Settings, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
 
 export default function QuickReferenceGuide() {
+  const handlePrint = () => {
+    window.print();
+  };
+
   const keyboardShortcuts = [
     { action: "Quick Search", shortcut: "Ctrl + K", description: "Open global search dialog" },
     { action: "New Patient", shortcut: "Ctrl + N", description: "Create new patient record" },
@@ -377,44 +381,44 @@ export default function QuickReferenceGuide() {
                         <div className="flex items-center justify-between p-3 border rounded-lg">
                           <div>
                             <span className="font-medium text-sm">Keyboard Shortcuts Card</span>
-                            <p className="text-xs text-gray-600">Printable reference card (PDF)</p>
+                            <p className="text-xs text-gray-600">Print this page to save as PDF</p>
                           </div>
-                          <Button size="sm" variant="outline">
-                            <Download className="w-3 h-3 mr-1" />
-                            PDF
+                          <Button size="sm" variant="outline" onClick={handlePrint} data-testid="print-shortcuts">
+                            <Printer className="w-3 h-3 mr-1" />
+                            Print
                           </Button>
                         </div>
                         
                         <div className="flex items-center justify-between p-3 border rounded-lg">
                           <div>
                             <span className="font-medium text-sm">Common Medical Codes</span>
-                            <p className="text-xs text-gray-600">ICD-10 & CPT reference (PDF)</p>
+                            <p className="text-xs text-gray-600">Print this page to save as PDF</p>
                           </div>
-                          <Button size="sm" variant="outline">
-                            <Download className="w-3 h-3 mr-1" />
-                            PDF
+                          <Button size="sm" variant="outline" onClick={handlePrint} data-testid="print-codes">
+                            <Printer className="w-3 h-3 mr-1" />
+                            Print
                           </Button>
                         </div>
                         
                         <div className="flex items-center justify-between p-3 border rounded-lg">
                           <div>
                             <span className="font-medium text-sm">Quick Actions Flowchart</span>
-                            <p className="text-xs text-gray-600">Visual workflow guide (PDF)</p>
+                            <p className="text-xs text-gray-600">Print this page to save as PDF</p>
                           </div>
-                          <Button size="sm" variant="outline">
-                            <Download className="w-3 h-3 mr-1" />
-                            PDF
+                          <Button size="sm" variant="outline" onClick={handlePrint} data-testid="print-flowchart">
+                            <Printer className="w-3 h-3 mr-1" />
+                            Print
                           </Button>
                         </div>
                         
                         <div className="flex items-center justify-between p-3 border rounded-lg">
                           <div>
                             <span className="font-medium text-sm">Troubleshooting Checklist</span>
-                            <p className="text-xs text-gray-600">Problem-solving guide (PDF)</p>
+                            <p className="text-xs text-gray-600">Print this page to save as PDF</p>
                           </div>
-                          <Button size="sm" variant="outline">
-                            <Download className="w-3 h-3 mr-1" />
-                            PDF
+                          <Button size="sm" variant="outline" onClick={handlePrint} data-testid="print-troubleshooting">
+                            <Printer className="w-3 h-3 mr-1" />
+                            Print
                           </Button>
                         </div>
                       </div>
@@ -429,9 +433,9 @@ export default function QuickReferenceGuide() {
                             <span className="font-medium text-sm">Physician Quick Reference</span>
                             <p className="text-xs text-gray-600">Clinical workflow shortcuts</p>
                           </div>
-                          <Button size="sm" variant="outline">
-                            <Download className="w-3 h-3 mr-1" />
-                            PDF
+                          <Button size="sm" variant="outline" onClick={handlePrint} data-testid="print-physician">
+                            <Printer className="w-3 h-3 mr-1" />
+                            Print
                           </Button>
                         </div>
                         
@@ -440,9 +444,9 @@ export default function QuickReferenceGuide() {
                             <span className="font-medium text-sm">Nurse Station Guide</span>
                             <p className="text-xs text-gray-600">Patient care workflows</p>
                           </div>
-                          <Button size="sm" variant="outline">
-                            <Download className="w-3 h-3 mr-1" />
-                            PDF
+                          <Button size="sm" variant="outline" onClick={handlePrint} data-testid="print-nurse">
+                            <Printer className="w-3 h-3 mr-1" />
+                            Print
                           </Button>
                         </div>
                         
@@ -451,9 +455,9 @@ export default function QuickReferenceGuide() {
                             <span className="font-medium text-sm">Administrative Staff Guide</span>
                             <p className="text-xs text-gray-600">Registration & billing</p>
                           </div>
-                          <Button size="sm" variant="outline">
-                            <Download className="w-3 h-3 mr-1" />
-                            PDF
+                          <Button size="sm" variant="outline" onClick={handlePrint} data-testid="print-admin">
+                            <Printer className="w-3 h-3 mr-1" />
+                            Print
                           </Button>
                         </div>
                         
@@ -462,9 +466,9 @@ export default function QuickReferenceGuide() {
                             <span className="font-medium text-sm">Pharmacy Quick Reference</span>
                             <p className="text-xs text-gray-600">Prescription workflows</p>
                           </div>
-                          <Button size="sm" variant="outline">
-                            <Download className="w-3 h-3 mr-1" />
-                            PDF
+                          <Button size="sm" variant="outline" onClick={handlePrint} data-testid="print-pharmacy">
+                            <Printer className="w-3 h-3 mr-1" />
+                            Print
                           </Button>
                         </div>
                       </div>
@@ -496,9 +500,13 @@ export default function QuickReferenceGuide() {
                   </div>
 
                   <div className="mt-4 flex justify-center">
-                    <Button className="bg-blue-600 hover:bg-blue-700">
-                      <Download className="w-4 h-4 mr-2" />
-                      Download Complete Reference Pack
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={handlePrint}
+                      data-testid="print-complete-guide"
+                    >
+                      <Printer className="w-4 h-4 mr-2" />
+                      Print This Page
                     </Button>
                   </div>
                 </CardContent>
