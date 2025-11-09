@@ -42,12 +42,14 @@ export async function apiRequest(
     method?: string;
     body?: unknown;
     headers?: Record<string, string>;
+    auth?: boolean; // Whether to send auth token (default: true)
   }
 ): Promise<any> {
-  const token = localStorage.getItem("auth_token");
+  const shouldAuth = options?.auth !== false; // Default to true if not specified
+  const token = shouldAuth ? localStorage.getItem("auth_token") : null;
   
-  // Clear corrupted tokens
-  if (token && (token === 'undefined' || token === 'null' || token.length < 10)) {
+  // Clear corrupted tokens (only if we're checking auth)
+  if (shouldAuth && token && (token === 'undefined' || token === 'null' || token.length < 10)) {
     console.warn('Clearing corrupted token:', token?.substring(0, 20));
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_user");
@@ -57,6 +59,11 @@ export async function apiRequest(
   
   const method = options?.method || 'GET';
   const data = options?.body;
+  
+  // Log when skipping auth for debugging
+  if (!shouldAuth) {
+    console.log(`🔓 Public endpoint request (no auth): ${method} ${url}`);
+  }
   
   const headers: Record<string, string> = {
     ...(data ? { "Content-Type": "application/json" } : {}),

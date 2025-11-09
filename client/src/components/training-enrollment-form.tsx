@@ -85,9 +85,11 @@ export function TrainingEnrollmentForm({ trigger, onSuccess }: TrainingEnrollmen
         throw new Error("CSRF token not available. Please try again.");
       }
       
+      // Public endpoint - don't send auth token
       return apiRequest("/api/training/enroll", {
         method: "POST",
         body: data,
+        auth: false, // Skip authorization header for public endpoint
         headers: {
           "X-CSRF-Token": csrfToken,
         },
