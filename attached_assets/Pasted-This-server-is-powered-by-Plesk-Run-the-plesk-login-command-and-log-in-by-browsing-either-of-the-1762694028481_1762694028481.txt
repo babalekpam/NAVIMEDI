@@ -1,0 +1,53 @@
+This server is powered by Plesk.
+
+Run the 'plesk login' command and log in by browsing either of the links received in the output.
+Use the 'plesk' command to manage the server. Run 'plesk help' for more info.
+
+[root@wizardly-swirles ~]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+
+# I'll create the corrected file directly using a script
+cat > /tmp/fix-width.sh << 'ENDSCRIPT'
+#!/bin/bash
+cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+
+# Replace all narrow widths with wider ones in landing-fixed.tsx
+perl -i -pe 's/className="max-w-6xl/className="max-w-7xl/g' client/src/pages/landing-fixed.tsx
+perl -i -pe 's/className="max-w-4xl/className="max-w-6xl/g' client/src/pages/landing-fixed.tsx  
+perl -i -pe 's/className="max-w-3xl/className="max-w-5xl/g' client/src/pages/landing-fixed.tsx
+perl -i -pe 's/className="max-w-2xl/className="max-w-4xl/g' client/src/pages/landing-fixed.tsx
+
+echo "Width fixes applied successfully!"
+ENDSCRIPT
+
+# Run the script
+chmod +x /tmp/fix-width.sh
+/tmp/fix-width.sh
+
+# Clean rebuild
+rm -rf dist
+npm run build
+pm2 restart navimed
+-bash: cd: /var/www/vhosts/navimedi.org/httpdocs/NaviMed: No such file or directory
+/tmp/fix-width.sh: line 2: cd: /var/www/vhosts/navimedi.org/httpdocs/NaviMed: No such file or directory
+Can't open client/src/pages/landing-fixed.tsx: No such file or directory.
+Can't open client/src/pages/landing-fixed.tsx: No such file or directory.
+Can't open client/src/pages/landing-fixed.tsx: No such file or directory.
+Can't open client/src/pages/landing-fixed.tsx: No such file or directory.
+Width fixes applied successfully!
+npm error code ENOENT
+npm error syscall open
+npm error path /root/package.json
+npm error errno -2
+npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/root/package.json'
+npm error enoent This is related to npm not being able to find a file.
+npm error enoent
+npm error A complete log of this run can be found in: /root/.npm/_logs/2025-11-09T13_13_20_009Z-debug-0.log
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ N/A     │ fork    │ N/A      │ 0s     │ 59   │ online    │ 0%       │ 0b       │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[root@wizardly-swirles ~]# 
