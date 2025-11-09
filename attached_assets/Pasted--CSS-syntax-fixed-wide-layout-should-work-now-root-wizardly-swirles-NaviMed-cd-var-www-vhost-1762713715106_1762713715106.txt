@@ -1,0 +1,139 @@
+✅ CSS syntax fixed - wide layout should work now!
+[root@wizardly-swirles NaviMed]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+
+# Find any unclosed braces or malformed CSS in index.css
+echo "=== Checking for unclosed braces in index.css ==="
+tail -100 client/src/index.css
+
+# Count opening vs closing braces to find imbalance
+echo -e "\n=== Counting braces ==="
+echo "Opening braces: $(grep -o '{' client/src/index.css | wc -l)"
+echo "Closing braces: $(grep -o '}' client/src/index.css | wc -l)"
+
+# Show lines around any @media rules to find the broken one
+echo -e "\n=== Checking @media rules ==="
+grep -n "@media" client/src/index.css | tail -20
+=== Checking for unclosed braces in index.css ===
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+@media (min-width: 768px) {
+  .layout-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+@media (min-width: 1024px) {
+  .layout-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+@media (min-width: 1280px) {
+  .layout-container {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+/* Force wider layout for all max-w containers */
+.max-w-6xl,
+.max-w-7xl {
+  max-width: 1600px !important;
+/* Add responsive padding to all mx-auto containers */
+.mx-auto {
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+@media (min-width: 768px) {
+  .mx-auto {
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+  }
+@media (min-width: 1024px) {
+  .mx-auto {
+    padding-left: 3rem !important;
+    padding-right: 3rem !important;
+  }
+@media (min-width: 1280px) {
+  .mx-auto {
+    padding-left: 4rem !important;
+    padding-right: 4rem !important;
+  }
+/* Force wider layout for all max-w containers */
+.max-w-6xl,
+.max-w-7xl {
+  max-width: 1600px !important;
+/* Add responsive padding to all mx-auto containers */
+.mx-auto {
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+@media (min-width: 768px) {
+  .mx-auto {
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+  }
+@media (min-width: 1024px) {
+  .mx-auto {
+    padding-left: 3rem !important;
+    padding-right: 3rem !important;
+  }
+@media (min-width: 1280px) {
+  .mx-auto {
+    padding-left: 4rem !important;
+    padding-right: 4rem !important;
+  }
+@media (min-width: 640px) {
+  .container { max-width: 1600px !important; }
+@media (min-width: 768px) {
+  .container { max-width: 1600px !important; }
+@media (min-width: 1024px) {
+  .container { max-width: 1600px !important; }
+@media (min-width: 1280px) {
+  .container { max-width: 1600px !important; }
+@media (min-width: 1536px) {
+  .container { max-width: 1600px !important; }
+}
+
+@media (min-width: 640px) { .container { max-width: 1600px !important; } }
+@media (min-width: 768px) { .container { max-width: 1600px !important; } }
+@media (min-width: 1024px) { .container { max-width: 1600px !important; } }
+@media (min-width: 1280px) { .container { max-width: 1600px !important; } }
+@media (min-width: 1536px) { .container { max-width: 1600px !important; } }
+
+/* Container override - MUST be last! */
+.container { max-width: 1600px !important; }
+@media (min-width: 640px) { 
+  .container { max-width: 1600px !important; } 
+}
+@media (min-width: 768px) { 
+  .container { max-width: 1600px !important; } 
+}
+@media (min-width: 1024px) { 
+  .container { max-width: 1600px !important; } 
+}
+@media (min-width: 1280px) { 
+  .container { max-width: 1600px !important; } 
+}
+@media (min-width: 1536px) { 
+  .container { max-width: 1600px !important; } 
+}
+
+=== Counting braces ===
+Opening braces: 195
+Closing braces: 170
+
+=== Checking @media rules ===
+701:@media (min-width: 1024px) {
+706:@media (min-width: 1280px) {
+719:@media (min-width: 768px) {
+724:@media (min-width: 1024px) {
+729:@media (min-width: 1280px) {
+734:@media (min-width: 640px) {
+736:@media (min-width: 768px) {
+738:@media (min-width: 1024px) {
+740:@media (min-width: 1280px) {
+742:@media (min-width: 1536px) {
+746:@media (min-width: 640px) { .container { max-width: 1600px !important; } }
+747:@media (min-width: 768px) { .container { max-width: 1600px !important; } }
+748:@media (min-width: 1024px) { .container { max-width: 1600px !important; } }
+749:@media (min-width: 1280px) { .container { max-width: 1600px !important; } }
+750:@media (min-width: 1536px) { .container { max-width: 1600px !important; } }
+754:@media (min-width: 640px) {                                                           :0}.uppy-Dashboard-FileCard-preview img.uppy-Dashboard-Item-previewImg{border-radius:3px;box-shadow:0 3px 20px #00000026;flex:0 0 auto;max-height:90%;max-width:90%;object-fit:cover}.uppy-Dashboard-FileCard-edit{background-color:#00000080;border-radius:50px;color:#fff;font-size:13px;inset-inline-end:10px;padding:7px 15px;position:absolute;top:10px}.uppy-Dashb
+[root@wizardly-swirles NaviMed]# 
