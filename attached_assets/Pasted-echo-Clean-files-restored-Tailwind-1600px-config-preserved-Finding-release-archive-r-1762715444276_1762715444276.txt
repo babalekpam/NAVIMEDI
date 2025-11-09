@@ -1,0 +1,73 @@
+echo "✅ Clean files restored + Tailwind 1600px config preserved!"
+=== Finding release archive ===
+-rw-r--r--. 1 root root 110M Nov  9 13:50 backup-old-deployment-20251104.tgz
+-rw-r--r--. 1 root root  18M Nov  9 13:50 navimed-release.tgz
+
+=== Extracting clean files ===
+
+=== Restoring broken files ===
+sending incremental file list
+rsync: [sender] change_dir "/tmp/clean-navimed/*/client/src/pages" failed: No such file or directory (2)
+
+sent 19 bytes  received 12 bytes  62.00 bytes/sec
+total size is 0  speedup is 0.00
+rsync error: some files/attrs were not transferred (see previous errors) (code 23) at main.c(1327) [sender=3.2.5]
+sending incremental file list
+rsync: [sender] change_dir "/tmp/clean-navimed/*/client/src/components" failed: No such file or directory (2)
+
+sent 19 bytes  received 12 bytes  62.00 bytes/sec
+total size is 0  speedup is 0.00
+rsync error: some files/attrs were not transferred (see previous errors) (code 23) at main.c(1327) [sender=3.2.5]
+
+=== Testing build with clean files ===
+error during build:
+[vite:esbuild] Transform failed with 1 error:
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/lab-orders.tsx:609:53: ERROR: Expected ">" but found "\">\n              <TestTube className=\""
+    at failureErrorWithLog (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
+❌ STILL BROKEN
+
+=== Reapplying targeted width fixes ===
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.19 building for production...
+✓ 25 modules transformed.
+x Build failed in 256ms
+error during build:
+[vite:esbuild] Transform failed with 1 error:
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/tenant-management.tsx:142:79: ERROR: Expected ">" but found "\">\n                <div className=\""
+file: /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/tenant-management.tsx:142:79
+
+Expected ">" but found "\">\n                <div className=\""
+140|              </DialogHeader>
+141|              <Form {...form}>
+142|                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+   |                                                                                 ^
+143|                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+144|                    <FormField
+
+    at failureErrorWithLog (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
+    at /var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:755:50
+    at responseCallbacks.<computed> (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:622:9)
+    at handleIncomingPacket (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:677:12)
+    at Socket.readFromStdout (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:600:7)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+📦 Syncing built assets from dist/public to server/public...
+✅ Assets synced successfully with rsync!
+   dist/public → server/public
+   21 files synced
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1920611  │ 0s     │ 39   │ online    │ 0%       │ 17.1mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+✅ Clean files restored + Tailwind 1600px config preserved!
+[root@wizardly-swirles NaviMed]# 
