@@ -1,0 +1,58 @@
+[root@wizardly-swirles ~]# pm2 info navimed
+ Describing process with id 0 - name navimed 
+┌───────────────────┬─────────────────────────────────────────────────────────────┐
+│ status            │ online                                                      │
+│ name              │ navimed                                                     │
+│ namespace         │ default                                                     │
+│ version           │ 1.0.0                                                       │
+│ restarts          │ 45                                                          │
+│ uptime            │ 97s                                                         │
+│ script path       │ /var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js │
+│ script args       │ N/A                                                         │
+│ error log path    │ /root/.pm2/logs/navimed-error-0.log                         │
+│ out log path      │ /root/.pm2/logs/navimed-out-0.log                           │
+│ pid path          │ /root/.pm2/pids/navimed-0.pid                               │
+│ interpreter       │ node                                                        │
+│ interpreter args  │ N/A                                                         │
+│ script id         │ 0                                                           │
+│ exec cwd          │ /var/www/vhosts/navimedi.org/httpdocs/NaviMed               │
+│ exec mode         │ fork_mode                                                   │
+│ node.js version   │ 20.19.5                                                     │
+│ node env          │ production                                                  │
+│ watch & reload    │ ✘                                                           │
+│ unstable restarts │ 0                                                           │
+│ created at        │ 2025-11-09T05:51:08.820Z                                    │
+└───────────────────┴─────────────────────────────────────────────────────────────┘
+ Actions available 
+┌────────────────────────┐
+│ km:heapdump            │
+│ km:cpu:profiling:start │
+│ km:cpu:profiling:stop  │
+│ km:heap:sampling:start │
+│ km:heap:sampling:stop  │
+└────────────────────────┘
+ Trigger via: pm2 trigger navimed <action_name>
+
+ Code metrics value 
+┌────────────────────────┬───────────┐
+│ Used Heap Size         │ 65.55 MiB │
+│ Heap Usage             │ 94.25 %   │
+│ Heap Size              │ 69.55 MiB │
+│ Event Loop Latency p95 │ 1.63 ms   │
+│ Event Loop Latency     │ 0.69 ms   │
+│ Active handles         │ 4         │
+│ Active requests        │ 0         │
+└────────────────────────┴───────────┘
+ Divergent env variables from local env 
+┌────────────────┬───────────────────────────────────────────────┐
+│ PWD            │ /var/www/vhosts/navimedi.org/httpdocs/NaviMed │
+│ SSH_CONNECTION │ 127.0.0.1 59168 127.0.0.1 22                  │
+│ XDG_SESSION_ID │ 20115                                         │
+│ SSH_CLIENT     │ 127.0.0.1 59168 22                            │
+└────────────────┴───────────────────────────────────────────────┘
+
+ Add your own code metrics: http://bit.ly/code-metrics
+ Use `pm2 logs navimed [--lines 1000]` to display logs
+ Use `pm2 env 0` to display environment variables
+ Use `pm2 monit` to monitor CPU and Memory usage navimed
+[root@wizardly-swirles ~]# 
