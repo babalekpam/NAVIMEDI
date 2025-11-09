@@ -154,6 +154,13 @@ export function TrainingEnrollmentForm({ trigger, onSuccess }: TrainingEnrollmen
     enrollMutation.mutate(data as InsertTrainingEnrollment);
   };
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    console.log("🔍 Form submit attempted");
+    console.log("🔍 Form errors:", form.formState.errors);
+    console.log("🔍 Form values:", form.getValues());
+    form.handleSubmit(onSubmit)(e);
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -177,7 +184,7 @@ export function TrainingEnrollmentForm({ trigger, onSuccess }: TrainingEnrollmen
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+          <form onSubmit={handleFormSubmit} className="space-y-4 mt-4">
             {/* Full Name */}
             <FormField
               control={form.control}
