@@ -277,7 +277,7 @@ export default function LandingPage() {
       <PublicHeader />
       
       {/* Hero Section with Professional Healthcare Carousel */}
-      <section className="pt-20 pb-16 px-4">
+      <section className="pt-20 pb-16 px-4 md:px-6 lg:px-8 xl:px-12">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             {/* Trust Badge */}
@@ -389,7 +389,7 @@ export default function LandingPage() {
       {/* Real-time Platform Statistics */}
       {stats && (
         <section className="py-16 bg-white/50 backdrop-blur-sm">
-          <div className="max-w-6xl mx-auto px-4">
+          <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12">
             <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">
               Trusted by 500+ Healthcare Organizations Worldwide
             </h2>
@@ -437,7 +437,7 @@ export default function LandingPage() {
 
       {/* Customer Success Stories */}
       <section className="py-24 bg-gradient-to-br from-emerald-50 to-blue-50">
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 xl:px-12">
           <div className="text-center mb-16">
             <Badge className="mb-6 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
               <TrendingUp className="w-4 h-4 mr-2" />
@@ -523,7 +523,7 @@ export default function LandingPage() {
 
       {/* Product Screenshots Section */}
       <section className="py-20 bg-white">
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 xl:px-12">
           <div className="text-center mb-16">
             <Badge className="mb-6 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100">
               <Monitor className="w-4 h-4 mr-2" />
@@ -690,7 +690,7 @@ export default function LandingPage() {
 
       {/* Key Features */}
       <section className="py-16 bg-gradient-to-r from-blue-50 to-purple-50">
-        <div className="max-w-6xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12">
           <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">
             Enterprise Features
           </h2>
@@ -729,7 +729,7 @@ export default function LandingPage() {
 
       {/* Training & Documentation Section */}
       <section className="py-16 bg-gray-50">
-        <div className="max-w-6xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4 text-gray-900">Comprehensive Training & Support</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -839,7 +839,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-6xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-xl font-bold mb-4">{brandName}</h3>
