@@ -1,0 +1,107 @@
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+✅ All broken CSS removed - relying on Tailwind config with 1600px container!
+[root@wizardly-swirles NaviMed]# echo "y" | head -680 client/src/index.css.broken > client/src/index.css
+[root@wizardly-swirles NaviMed]# 
+[root@wizardly-swirles NaviMed]# # Verify the file is clean
+[root@wizardly-swirles NaviMed]# echo "=== Verifying CSS is clean ==="
+=== Verifying CSS is clean ===
+[root@wizardly-swirles NaviMed]# tail -20 client/src/index.css
+  }
+@media (min-width: 1280px) {
+  .layout-wide {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+.layout-container {
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+@media (min-width: 768px) {
+  .layout-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+@media (min-width: 1024px) {
+  .layout-container {
+    padding-left: 2rem;
+[root@wizardly-swirles NaviMed]# 
+[root@wizardly-swirles NaviMed]# # Build with CLEAN CSS
+[root@wizardly-swirles NaviMed]# npm run build 2>&1 | grep -i "syntax-error" && echo "❌ STILL BROKEN" || echo "✅ CSS CLEAN!"
+▲ [WARNING] Expected "}" to go with "{" [css-syntax-error]
+❌ STILL BROKEN
+[root@wizardly-swirles NaviMed]# 
+[root@wizardly-swirles NaviMed]# bash post-build.sh
+📦 Syncing built assets from dist/public to server/public...
+✅ Assets synced successfully with rsync!
+   dist/public → server/public
+   21 files synced
+[root@wizardly-swirles NaviMed]# pm2 restart navimed
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1918095  │ 0s     │ 33   │ online    │ 0%       │ 17.4mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[root@wizardly-swirles NaviMed]# 
+[root@wizardly-swirles NaviMed]# echo "✅ All broken CSS removed - container width now 1600px from Tailwind config!"
+✅ All broken CSS removed - container width now 1600px from Tailwind config!
+[root@wizardly-swirles NaviMed]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+
+# 1. Find where the layout-wide and layout-container classes start (these are our broken additions)
+echo "=== Finding where broken CSS starts ==="
+grep -n "layout-wide\|layout-container" client/src/index.css | head -1
+
+# 2. Get the line number and cut BEFORE it
+BROKEN_LINE=$(grep -n "layout-wide\|layout-container" client/src/index.css | head -1 | cut -d: -f1)
+CLEAN_LINE=$((BROKEN_LINE - 1))
+echo "Cutting at line: $CLEAN_LINE"
+
+# 3. Keep only the clean part
+head -n $CLEAN_LINE client/src/index.css.broken > client/src/index.css
+
+# 4. Verify it's clean
+echo -e "\n=== Last 10 lines of clean CSS ==="
+tail -10 client/src/index.css
+
+# 5. Rebuild
+npm run build 2>&1 | grep -i "syntax-error" && echo "❌ STILL BROKEN" || echo "✅ FINALLY CLEAN!"
+
+bash post-build.sh
+pm2 restart navimed
+
+echo "✅ CSS cleaned - now using Tailwind's 1600px container from config!"
+=== Finding where broken CSS starts ===
+120:  .layout-wide {
+Cutting at line: 119
+
+=== Last 10 lines of clean CSS ===
+    background-color: hsl(var(--warning-amber));
+    color: hsl(var(--warning-amber-foreground));
+  }
+
+  .error-red {
+    background-color: hsl(var(--error-red));
+    color: hsl(var(--error-red-foreground));
+  }
+
+  /* Layout utilities */
+▲ [WARNING] Expected "}" to go with "{" [css-syntax-error]
+❌ STILL BROKEN
+📦 Syncing built assets from dist/public to server/public...
+✅ Assets synced successfully with rsync!
+   dist/public → server/public
+   21 files synced
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1918330  │ 0s     │ 34   │ online    │ 0%       │ 17.6mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+✅ CSS cleaned - now using Tailwind's 1600px container from config!
+[root@wizardly-swirles NaviMed]# 
