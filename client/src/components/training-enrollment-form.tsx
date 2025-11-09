@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -20,6 +20,7 @@ interface TrainingEnrollmentFormProps {
 
 export function TrainingEnrollmentForm({ trigger, onSuccess }: TrainingEnrollmentFormProps) {
   const [open, setOpen] = useState(false);
+  const [csrfToken, setCsrfToken] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -47,14 +48,44 @@ export function TrainingEnrollmentForm({ trigger, onSuccess }: TrainingEnrollmen
     },
   });
 
+  // Fetch CSRF token when dialog opens
+  useEffect(() => {
+    if (open && !csrfToken) {
+      fetch('/api/csrf-token')
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`Failed to fetch CSRF token: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then(data => {
+          console.log('🔐 CSRF token fetched:', data.csrfToken ? 'Yes' : 'No');
+          setCsrfToken(data.csrfToken);
+        })
+        .catch(err => {
+          console.error('❌ Failed to fetch CSRF token:', err);
+          toast({
+            title: "Security Setup Failed",
+            description: "Please close and reopen this form to try again.",
+            variant: "destructive",
+          });
+        });
+    }
+  }, [open, csrfToken, toast]);
+
   // Mutation for enrolling in training
   const enrollMutation = useMutation({
     mutationFn: async (data: InsertTrainingEnrollment) => {
+      if (!csrfToken) {
+        throw new Error("CSRF token not available. Please try again.");
+      }
+      
       return apiRequest("/api/training/enroll", {
         method: "POST",
         body: JSON.stringify(data),
         headers: {
           "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
         },
       });
     },
@@ -80,14 +111,41 @@ export function TrainingEnrollmentForm({ trigger, onSuccess }: TrainingEnrollmen
         onSuccess();
       }
     },
-    onError: (error: any) => {
+    onError: async (error: any) => {
       console.error("❌ Training enrollment failed:", error);
       
-      toast({
-        title: "Enrollment Failed",
-        description: error.message || "Failed to enroll in training program. Please try again.",
-        variant: "destructive",
-      });
+      // Check if it's a CSRF error (403)
+      if (error.status === 403 || error.message?.includes('CSRF')) {
+        console.log('🔄 CSRF error detected, refetching token and retrying...');
+        
+        try {
+          // Refetch CSRF token
+          const res = await fetch('/api/csrf-token');
+          if (!res.ok) {
+            throw new Error('Failed to refetch CSRF token');
+          }
+          const data = await res.json();
+          setCsrfToken(data.csrfToken);
+          
+          toast({
+            title: "Security Token Refreshed",
+            description: "Please submit the form again.",
+          });
+        } catch (refetchError) {
+          console.error('❌ Failed to refetch CSRF token:', refetchError);
+          toast({
+            title: "Security Error",
+            description: "Please close and reopen this form to try again.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Enrollment Failed",
+          description: error.message || "Failed to enroll in training program. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -273,7 +331,7 @@ export function TrainingEnrollmentForm({ trigger, onSuccess }: TrainingEnrollmen
               </Button>
               <Button
                 type="submit"
-                disabled={enrollMutation.isPending}
+                disabled={enrollMutation.isPending || !csrfToken}
                 className="gap-2"
                 data-testid="button-submit-enrollment"
               >
