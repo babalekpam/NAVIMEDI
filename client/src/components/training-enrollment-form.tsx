@@ -24,13 +24,18 @@ export function TrainingEnrollmentForm({ trigger, onSuccess }: TrainingEnrollmen
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Define form schema with enhanced validation
-  const formSchema = insertTrainingEnrollmentSchema.extend({
-    email: z.string().email("Please enter a valid email address"),
+  // Define form schema with validation
+  const formSchema = z.object({
     fullName: z.string().min(2, "Full name must be at least 2 characters"),
+    email: z.string().email("Please enter a valid email address"),
     phone: z.string().optional(),
     organization: z.string().optional(),
     jobRole: z.string().optional(),
+    trainingLevel: z.enum(["foundation", "intermediate", "advanced", "all_levels"]),
+    status: z.enum(["enrolled", "in_progress", "completed", "cancelled"]).default("enrolled"),
+    startDate: z.string().optional(),
+    completionDate: z.string().optional(),
+    notes: z.string().optional(),
   });
 
   type FormData = z.infer<typeof formSchema>;
