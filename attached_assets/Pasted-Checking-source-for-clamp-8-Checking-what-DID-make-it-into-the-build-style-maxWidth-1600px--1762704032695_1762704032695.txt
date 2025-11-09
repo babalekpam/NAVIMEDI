@@ -1,0 +1,35 @@
+Checking source for clamp...
+8
+Checking what DID make it into the build...
+style:{maxWidth:"1600px",margin:"0 auto",paddingLeft:"clamp(1rem, 5vw, 5rem)",paddingRight:"clamp(1rem, 5vw, 5rem)"}
+style:{maxWidth:"1600px",margin:"0 auto",paddingLeft:"clamp(1rem, 5vw, 5rem)",paddingRight:"clamp(1rem, 5vw, 5rem)"}
+style:{maxWidth:"1600px",margin:"0 auto",paddingLeft:"clamp(1rem, 5vw, 5rem)",paddingRight:"clamp(1rem, 5vw, 5rem)"}
+[root@wizardly-swirles NaviMed]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+
+# Show me the actual structure of one section to see the problem
+echo "=== Showing first section structure ==="
+head -300 client/src/pages/landing-fixed.tsx | tail -100 | grep -A 10 "section"
+
+# Check if sections have their own container that's blocking the width
+echo -e "\n=== Checking for section-level width constraints ==="
+grep -n 'section.*className=' client/src/pages/landing-fixed.tsx | head -5
+=== Showing first section structure ===
+      <section className="pt-20 pb-16 px-4 md:px-6 lg:px-8 xl:px-12 md:px-4 md:px-6 lg:px-8 xl:px-12 lg:px-8 xl:px-12">
+        <div style={{maxWidth: "1600px", margin: "0 auto", paddingLeft: "clamp(1rem, 5vw, 5rem)", paddingRight: "clamp(1rem, 5vw, 5rem)"}} className="w-full">
+          <div className="text-center mb-12">
+            {/* Trust Badge */}
+            <Badge className="mb-8 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 px-4 md:px-4 md:px-6 lg:px-8 xl:px-12 lg:px-8 xl:px-12 py-2">
+              <Award className="w-4 h-4 mr-2" />
+              HIPAA Compliant • SOC 2 Type II • FDA 21 CFR Part 11
+            </Badge>
+            
+            {/* Main Headline - Benefit-Focused */}
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 tracking-tight">
+
+=== Checking for section-level width constraints ===
+280:      <section className="pt-20 pb-16 px-4 md:px-6 lg:px-8 xl:px-12 md:px-4 md:px-6 lg:px-8 xl:px-12 lg:px-8 xl:px-12">
+391:        <section className="py-16 bg-white/50 backdrop-blur-sm">
+439:      <section className="py-24 bg-gradient-to-br from-emerald-50 to-blue-50">
+525:      <section className="py-20 bg-white">
+634:      <section className="py-16 px-4 md:px-4 md:px-6 lg:px-8 xl:px-12 lg:px-8 xl:px-12">
+[root@wizardly-swirles NaviMed]# 
