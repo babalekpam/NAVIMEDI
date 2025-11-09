@@ -1962,7 +1962,7 @@ The NaviMED Security Team
 
   // Apply authentication middleware to all /api routes except public ones
   app.use('/api', (req, res, next) => {
-    const publicRoutes = ['/api/auth/login', '/api/register-organization', '/api/create-setup-intent', '/api/health', '/api/healthz', '/api/status', '/api/ping', '/api/platform/stats', '/api/test-post', '/api/insurance-claims-test', '/api/marketplace/products', '/api/marketplace/quote-requests', '/api/advertisements', '/api/placeholder-image/'];
+    const publicRoutes = ['/api/auth/login', '/api/register-organization', '/api/create-setup-intent', '/api/health', '/api/healthz', '/api/status', '/api/ping', '/api/platform/stats', '/api/test-post', '/api/insurance-claims-test', '/api/marketplace/products', '/api/marketplace/quote-requests', '/api/advertisements', '/api/placeholder-image/', '/api/csrf-token', '/api/training/enroll'];
     
     // Construct full path since req.path is relative to mount point
     const fullPath = (req.baseUrl || '') + (req.path || '');
