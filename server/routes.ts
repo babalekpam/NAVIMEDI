@@ -1967,14 +1967,15 @@ The NaviMED Security Team
     // Construct full path since req.path is relative to mount point
     const fullPath = (req.baseUrl || '') + (req.path || '');
     
-    // Debug logging for insurance claims requests
-    if (fullPath.includes('/api/insurance-claims')) {
+    // Debug logging for training and insurance claims requests
+    if (fullPath.includes('/api/training') || fullPath.includes('/api/insurance-claims')) {
       console.log(`🔐 AUTH CHECK - ${req.method} ${fullPath}`);
+      console.log('🔐 Public route?', publicRoutes.some(route => fullPath.startsWith(route)));
       console.log('🔐 Headers:', req.headers.authorization ? 'Token present' : 'No token');
-      console.log('🔐 User agent:', req.headers['user-agent']);
     }
     
     if (publicRoutes.some(route => fullPath.startsWith(route))) {
+      console.log(`✅ PUBLIC ROUTE - Skipping auth for ${fullPath}`);
       return next();
     }
     return authenticateToken(req, res, next);
