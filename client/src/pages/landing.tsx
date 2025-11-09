@@ -126,7 +126,7 @@ function ImageCarousel() {
   }, [healthcareImages.length]);
 
   return (
-    <div className="relative max-w-6xl mx-auto">
+    <div className="relative mx-auto">
       {/* Main Image Display */}
       <div className="relative h-96 rounded-2xl overflow-hidden shadow-2xl">
         {healthcareImages.map((image, index) => (
@@ -250,8 +250,8 @@ export default function LandingPage() {
 
         {/* Modern Hero Section */}
         <section className="pt-32 pb-20 px-6 relative">
-          <div className="container mx-auto">
-            <div className="text-center max-w-6xl mx-auto relative">
+          <div className="mx-auto px-6" style={{maxWidth: '1600px'}}>
+            <div className="text-center mx-auto relative">
               {/* Enhanced Glassmorphism backdrop with better effects */}
               <div className="glass-hero rounded-3xl -m-12 shadow-2xl" style={{transform: 'translate(0, 20px)'}}></div>
               <div className="relative z-10 p-12">
@@ -276,7 +276,7 @@ export default function LandingPage() {
             
               {/* Enhanced Subheading with better styling */}
               <div className="animate-fade-in-up animate-stagger-3">
-                <p className="text-2xl md:text-3xl text-slate-700 mb-10 leading-relaxed max-w-4xl mx-auto font-semibold">
+                <p className="text-2xl md:text-3xl text-slate-700 mb-10 leading-relaxed mx-auto font-semibold">
                   Complete hospital-pharmacy platform with <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent font-bold">NaviMED AI</span> health analysis, 
                   <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent font-bold"> automated insurance verification</span>, and seamless prescription flow. 
                   <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold">HIPAA-compliant</span> solution trusted by 200+ facilities worldwide.
@@ -285,7 +285,7 @@ export default function LandingPage() {
 
               {/* Enhanced Social Proof with advanced glassmorphism cards */}
               <div className="animate-fade-in-up animate-stagger-4">
-                <div className="grid grid-cols-3 gap-8 mb-16 max-w-4xl mx-auto">
+                <div className="grid grid-cols-3 gap-8 mb-16 mx-auto">
                   <div className="glass-card rounded-3xl p-8 hover-lift hover-glow group transform transition-all duration-500">
                     <div className="text-4xl font-black bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500 bg-clip-text text-transparent mb-3 group-hover:scale-110 transition-transform duration-300 animate-text-glow">200+</div>
                     <div className="text-base text-slate-700 font-semibold">Healthcare facilities</div>
@@ -425,7 +425,7 @@ export default function LandingPage() {
             <div className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-blue-400/15 to-purple-400/15 rounded-full blur-3xl animate-float" style={{animationDelay: '2s'}}></div>
           </div>
           
-          <div className="container mx-auto px-6 relative z-10">
+          <div className="mx-auto px-6 relative z-10" style={{maxWidth: '1600px'}}>
             <div className="text-center mb-16 animate-fade-in-up">
               <Badge className="mb-6 bg-gradient-to-r from-purple-100 to-pink-100 backdrop-blur-md text-purple-700 border border-purple-200/50 hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3">
                 <Brain className="w-4 h-4 mr-2" />
@@ -434,7 +434,7 @@ export default function LandingPage() {
               <h2 className="text-5xl md:text-6xl font-black mb-6 text-slate-900 leading-tight">
                 Meet <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent animate-gradient-x bg-[length:200%_auto]">NaviMED AI</span>
               </h2>
-              <p className="text-2xl text-slate-600 max-w-4xl mx-auto leading-relaxed font-semibold">
+              <p className="text-2xl text-slate-600 mx-auto leading-relaxed font-semibold">
                 Your intelligent healthcare assistant powered by advanced AI. Get instant health analysis, 
                 diagnostic support, and predictive insights to improve patient outcomes.
               </p>
@@ -500,7 +500,7 @@ export default function LandingPage() {
             </div>
 
             {/* AI Stats Showcase */}
-            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto animate-fade-in-up" style={{animationDelay: '0.5s'}}>
+            <div className="grid md:grid-cols-3 gap-8 mx-auto animate-fade-in-up" style={{animationDelay: '0.5s'}}>
               <div className="glass-card rounded-3xl p-8 text-center hover-lift">
                 <div className="text-5xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-3">95%</div>
                 <div className="text-slate-700 font-semibold">Diagnostic Accuracy</div>
@@ -519,7 +519,7 @@ export default function LandingPage() {
 
         {/* How It Works - Hospital-Pharmacy Flow */}
         <section className="py-24 bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 relative overflow-hidden">
-          <div className="container mx-auto px-6">
+          <div className="mx-auto px-6" style={{maxWidth: '1600px'}}>
             <div className="text-center mb-16 animate-fade-in-up">
               <Badge className="mb-6 bg-white/60 backdrop-blur-md text-blue-700 border border-blue-200/50 hover:bg-white/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3">
                 <Bolt className="w-4 h-4 mr-2" />
@@ -528,13 +528,13 @@ export default function LandingPage() {
               <h2 className="text-5xl md:text-6xl font-black mb-6 text-slate-900 leading-tight">
                 How <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">It Works</span>
               </h2>
-              <p className="text-2xl text-slate-600 max-w-4xl mx-auto font-semibold">
+              <p className="text-2xl text-slate-600 mx-auto font-semibold">
                 From doctor's prescription to patient's hands — fully automated with insurance verification
               </p>
             </div>
 
             {/* Flow Steps */}
-            <div className="max-w-6xl mx-auto">
+            <div className="mx-auto">
               <div className="grid md:grid-cols-4 gap-6">
                 <div className="text-center animate-fade-in-up" style={{animationDelay: '0.1s'}}>
                   <div className="relative mb-6">
@@ -618,7 +618,7 @@ export default function LandingPage() {
             <div className="absolute bottom-20 left-20 w-80 h-80 bg-gradient-to-r from-blue-400/10 to-teal-400/10 rounded-full blur-3xl animate-float" style={{animationDelay: '3s'}}></div>
           </div>
           
-          <div className="container mx-auto px-6 relative z-10">
+          <div className="mx-auto px-6 relative z-10" style={{maxWidth: '1600px'}}>
             <div className="text-center mb-16 animate-fade-in-up">
               <Badge className="mb-6 bg-white/60 backdrop-blur-md text-blue-700 border border-blue-200/50 hover:bg-white/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3">
                 <Monitor className="w-4 h-4 mr-2" />
@@ -627,7 +627,7 @@ export default function LandingPage() {
               <h2 className="text-5xl md:text-6xl font-black mb-6 text-slate-900 leading-tight">
                 Telemedicine & <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Patient Portal</span>
               </h2>
-              <p className="text-2xl text-slate-600 max-w-4xl mx-auto leading-relaxed font-semibold">
+              <p className="text-2xl text-slate-600 mx-auto leading-relaxed font-semibold">
                 Empower patients with 24/7 access to their health records, virtual consultations, 
                 and appointment booking from any device.
               </p>
@@ -739,7 +739,7 @@ export default function LandingPage() {
             <div className="absolute bottom-20 left-20 w-80 h-80 bg-gradient-to-r from-emerald-400/10 to-blue-400/10 rounded-full blur-3xl animate-float" style={{animationDelay: '3s'}}></div>
           </div>
           
-          <div className="container mx-auto px-6 relative z-10">
+          <div className="mx-auto px-6 relative z-10" style={{maxWidth: '1600px'}}>
             <div className="text-center mb-16 animate-fade-in-up">
               <Badge className="mb-6 bg-white/60 backdrop-blur-md text-emerald-700 border border-emerald-200/50 hover:bg-white/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3">
                 <Megaphone className="w-4 h-4 mr-2" />
@@ -748,7 +748,7 @@ export default function LandingPage() {
               <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900 leading-tight">
                 Medical Device <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Advertisement Marketplace</span>
               </h2>
-              <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-medium">
+              <p className="text-xl text-slate-600 mx-auto leading-relaxed font-medium">
                 Discover and showcase cutting-edge medical devices, healthcare services, and innovative solutions 
                 from trusted vendors and service providers.
               </p>
@@ -844,12 +844,12 @@ export default function LandingPage() {
             <div className="absolute bottom-20 right-20 w-96 h-96 bg-gradient-to-r from-blue-400/5 to-teal-400/5 rounded-full blur-3xl animate-float" style={{animationDelay: '4s'}}></div>
           </div>
           
-          <div className="container mx-auto px-6 relative z-10">
+          <div className="mx-auto px-6 relative z-10" style={{maxWidth: '1600px'}}>
             <div className="text-center mb-16 animate-fade-in-up">
               <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900 leading-tight">
                 Trusted by Healthcare <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Professionals Worldwide</span>
               </h2>
-              <p className="text-xl text-slate-600 max-w-3xl mx-auto font-medium">
+              <p className="text-xl text-slate-600 mx-auto font-medium">
                 See how healthcare organizations are transforming patient care with our platform
               </p>
             </div>
@@ -867,7 +867,7 @@ export default function LandingPage() {
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-teal-400/5 to-emerald-400/5 rounded-full blur-3xl animate-pulse"></div>
           </div>
           
-          <div className="container mx-auto px-6 relative z-10">
+          <div className="mx-auto px-6 relative z-10" style={{maxWidth: '1600px'}}>
             <div className="text-center mb-20 animate-fade-in-up">
               <Badge className="mb-6 bg-white/60 backdrop-blur-md text-blue-700 border border-blue-200/50 hover:bg-white/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3">
                 <Brain className="w-4 h-4 mr-2" />
@@ -876,7 +876,7 @@ export default function LandingPage() {
               <h2 className="text-5xl md:text-6xl font-bold mb-6 text-slate-900 leading-tight">
                 Enterprise-Grade <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent animate-gradient-x bg-[length:200%_auto]">Healthcare Platform</span>
               </h2>
-              <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-medium">
+              <p className="text-xl text-slate-600 mx-auto leading-relaxed font-medium">
                 Complete healthcare management ecosystem with Advanced insights, real-time translation, 
                 and military-grade security for modern healthcare organizations.
               </p>
@@ -1012,7 +1012,7 @@ export default function LandingPage() {
             <div className="absolute top-1/2 right-1/4 w-64 h-64 bg-gradient-to-r from-teal-400/6 to-emerald-400/6 rounded-full blur-3xl animate-pulse"></div>
           </div>
           
-          <div className="container mx-auto px-6 relative z-10">
+          <div className="mx-auto px-6 relative z-10" style={{maxWidth: '1600px'}}>
             <div className="text-center mb-16 animate-fade-in-up">
               <Badge className="mb-6 bg-white/60 backdrop-blur-md text-emerald-700 border border-emerald-200/50 hover:bg-white/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3">
                 <TrendingUp className="w-4 h-4 mr-2" />
@@ -1021,7 +1021,7 @@ export default function LandingPage() {
               <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900 leading-tight">
                 Real Results from Healthcare <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent animate-gradient-x bg-[length:200%_auto]">Leaders</span>
               </h2>
-              <p className="text-xl text-slate-600 max-w-3xl mx-auto font-medium">
+              <p className="text-xl text-slate-600 mx-auto font-medium">
                 See how healthcare organizations achieved measurable improvements with NaviMED
               </p>
             </div>
@@ -1108,7 +1108,7 @@ export default function LandingPage() {
 
       {/* Product Screenshots Section */}
       <section className="py-20 bg-white">
-        <div className="container mx-auto px-6">
+        <div className="mx-auto px-6" style={{maxWidth: '1600px'}}>
           <div className="text-center mb-16">
             <Badge className="mb-6 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100">
               <Monitor className="w-4 h-4 mr-2" />
@@ -1117,12 +1117,12 @@ export default function LandingPage() {
             <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900">
               See NaviMED in <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Action</span>
             </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+            <p className="text-xl text-slate-600 mx-auto">
               Explore our intuitive dashboard designed for healthcare professionals
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 mx-auto">
             {/* Dashboard Screenshot */}
             <Card className="group border-slate-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-500">
               <CardContent className="p-0">
@@ -1217,12 +1217,12 @@ export default function LandingPage() {
 
       {/* Trust Section */}
       <section className="py-24 bg-white">
-        <div className="container mx-auto px-6">
+        <div className="mx-auto px-6" style={{maxWidth: '1600px'}}>
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-6 text-slate-900">
               Trusted by Healthcare Organizations Worldwide
             </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+            <p className="text-xl text-slate-600 mx-auto">
               Join thousands of healthcare professionals who rely on our platform for secure, efficient patient care.
             </p>
           </div>
@@ -1269,7 +1269,7 @@ export default function LandingPage() {
 
       {/* Healthcare Solutions */}
       <section id="solutions" className="py-24 bg-slate-50">
-        <div className="container mx-auto px-4">
+        <div className="mx-auto px-4" style={{maxWidth: '1600px'}}>
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-slate-100">
               Comprehensive Healthcare Ecosystem
@@ -1366,7 +1366,7 @@ export default function LandingPage() {
 
       {/* Security & Compliance */}
       <section id="security" className="py-20 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm">
-        <div className="container mx-auto px-4">
+        <div className="mx-auto px-4" style={{maxWidth: '1600px'}}>
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-slate-100">
               Enterprise-Grade Security
@@ -1418,14 +1418,14 @@ export default function LandingPage() {
         <div className="absolute top-10 left-10 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-float"></div>
         <div className="absolute bottom-10 right-10 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-float-reverse"></div>
         
-        <div className="container mx-auto px-6 text-center relative z-10">
+        <div className="mx-auto px-6 text-center relative z-10" style={{maxWidth: '1600px'}}>
           <div className="animate-fade-in-up">
             <h2 className="text-6xl md:text-7xl font-black mb-8 text-white animate-text-glow leading-tight">
               Ready to Transform Your Healthcare Organization?
             </h2>
           </div>
           <div className="animate-fade-in-up animate-stagger-2">
-            <p className="text-2xl text-emerald-100 mb-16 max-w-5xl mx-auto font-semibold leading-relaxed">
+            <p className="text-2xl text-emerald-100 mb-16 mx-auto font-semibold leading-relaxed">
               Join leading healthcare organizations using NAVIMED to deliver better patient care 
               with secure, multilingual, and compliant healthcare management.
             </p>
@@ -1465,17 +1465,17 @@ export default function LandingPage() {
 
       {/* Independent Organizations Registration */}
       <section className="py-20 bg-gradient-to-br from-purple-50 via-green-50 to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-        <div className="container mx-auto px-4">
+        <div className="mx-auto px-4" style={{maxWidth: '1600px'}}>
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-slate-100">
               Register as Independent Organization
             </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
+            <p className="text-xl text-slate-600 dark:text-slate-300 mx-auto">
               Join the NAVIMED network as an independent healthcare service provider and expand your reach
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 mx-auto">
             <Card className="glass-card rounded-3xl hover-lift hover-glow transition-all duration-500 bg-gradient-to-br from-green-50/80 to-emerald-50/80 dark:from-green-900/30 dark:to-emerald-900/30">
               <CardContent className="p-10">
                 <div className="flex items-center gap-4 mb-8">
@@ -1551,17 +1551,17 @@ export default function LandingPage() {
 
       {/* Medical Device Marketplace */}
       <section className="py-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-        <div className="container mx-auto px-4">
+        <div className="mx-auto px-4" style={{maxWidth: '1600px'}}>
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-slate-100">
               Medical Device Marketplace
             </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
+            <p className="text-xl text-slate-600 dark:text-slate-300 mx-auto">
               Browse certified medical equipment from approved suppliers with transparent pricing and seamless ordering
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mx-auto mb-12">
             <Card className="border-blue-200 hover:border-blue-300 transition-all duration-300 hover:shadow-lg bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -1618,7 +1618,7 @@ export default function LandingPage() {
           </div>
 
           <div className="text-center">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 mx-auto">
               <h3 className="text-2xl font-bold mb-4 text-slate-900 dark:text-slate-100">
                 For Medical Device Suppliers
               </h3>
@@ -1659,8 +1659,8 @@ export default function LandingPage() {
         <div className="absolute top-20 left-20 w-96 h-96 gradient-orb animate-morph animate-float-slow opacity-30 blur-3xl"></div>
         <div className="absolute bottom-20 right-20 w-72 h-72 bg-gradient-to-r from-white/20 to-white/10 rounded-full blur-3xl animate-float animate-scale-pulse"></div>
         
-        <div className="container mx-auto px-8 relative z-10">
-          <div className="text-center max-w-6xl mx-auto">
+        <div className="mx-auto px-8 relative z-10" style={{maxWidth: '1600px'}}>
+          <div className="text-center mx-auto">
             <div className="animate-fade-in-up">
               <h2 className="text-7xl md:text-8xl font-black mb-12 text-white animate-text-glow leading-tight">
                 Ready to Transform Your Healthcare Operations?
@@ -1707,7 +1707,7 @@ export default function LandingPage() {
 
       {/* Comprehensive Training & Support Section */}
       <section className="py-24 bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 relative overflow-hidden">
-        <div className="container mx-auto px-6">
+        <div className="mx-auto px-6" style={{maxWidth: '1600px'}}>
           <div className="text-center mb-16 animate-fade-in-up">
             <Badge className="mb-6 bg-white/60 backdrop-blur-md text-emerald-700 border border-emerald-200/50 hover:bg-white/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3">
               <BookOpen className="w-4 h-4 mr-2" />
@@ -1716,7 +1716,7 @@ export default function LandingPage() {
             <h2 className="text-5xl md:text-6xl font-black mb-6 text-slate-900 leading-tight">
               Comprehensive <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Training & Support</span>
             </h2>
-            <p className="text-2xl text-slate-600 max-w-4xl mx-auto leading-relaxed font-semibold">
+            <p className="text-2xl text-slate-600 mx-auto leading-relaxed font-semibold">
               Get your team up and running quickly with our extensive training programs, documentation, and 24/7 support.
             </p>
           </div>
@@ -1830,7 +1830,7 @@ export default function LandingPage() {
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full blur-3xl animate-float-reverse"></div>
         </div>
         
-        <div className="container mx-auto px-8 relative z-10">
+        <div className="mx-auto px-8 relative z-10" style={{maxWidth: '1600px'}}>
           <div className="grid lg:grid-cols-2 gap-20 items-center">
             <div className="animate-fade-in-left">
               <h2 className="text-6xl font-black mb-8 bg-gradient-to-r from-white via-emerald-200 to-blue-200 bg-clip-text text-transparent animate-text-glow">
@@ -1927,12 +1927,12 @@ export default function LandingPage() {
 
       {/* Explore Platform Section - Strategic Internal Links */}
       <section className="py-24 bg-slate-50">
-        <div className="container mx-auto px-6">
+        <div className="mx-auto px-6" style={{maxWidth: '1600px'}}>
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900">
               Explore Our <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Complete Platform</span>
             </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+            <p className="text-xl text-slate-600 mx-auto">
               Discover comprehensive resources, documentation, and specialized solutions designed for healthcare professionals
             </p>
           </div>
@@ -2101,7 +2101,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-300 py-12">
-        <div className="container mx-auto px-4">
+        <div className="mx-auto px-4" style={{maxWidth: '1600px'}}>
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-3 mb-4">
