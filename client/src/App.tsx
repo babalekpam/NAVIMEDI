@@ -1269,6 +1269,14 @@ function Router() {
             <Route path="/docs/initial-system-configuration" component={InitialSystemConfiguration} />
             <Route path="/docs/first-patient-registration" component={FirstPatientRegistration} />
             <Route path="/docs/role-based-access-setup" component={RoleBasedAccessSetup} />
+            <Route path="/docs/patient-management" component={PatientManagement} />
+            <Route path="/docs/appointment-scheduling" component={AppointmentScheduling} />
+            <Route path="/docs/electronic-health-records" component={ElectronicHealthRecords} />
+            <Route path="/docs/prescription-management" component={PrescriptionManagement} />
+            <Route path="/docs/laboratory-order-processing" component={LaboratoryOrderProcessing} />
+            <Route path="/docs/clinical-documentation" component={ClinicalDocumentation} />
+            <Route path="/docs/billing-insurance" component={BillingInsurance} />
+            <Route path="/docs/security-compliance" component={SecurityCompliance} />
           
             {/* Training Materials - Public Access */}
             <Route path="/docs/comprehensive-user-training" component={ComprehensiveUserTraining} />
