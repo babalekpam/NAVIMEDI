@@ -1,0 +1,23 @@
+[root@wizardly-swirles navimedi.org]# grep -A 2 "patient-management.*PatientManagement" /var/www/navimedi.org/client/src/App.tsx | head -5
+const PatientManagement = React.lazy(() => import("@/pages/docs/patient-management").then(m => ({ default: m.PatientManagement })));
+const ApiDocsPage = React.lazy(() => import("@/pages/docs/api-docs").then(m => ({ default: m.ApiDocs })));
+const AppointmentScheduling = React.lazy(() => import("@/pages/docs/appointment-scheduling").then(m => ({ default: m.AppointmentScheduling })));
+--
+        <Route path="/docs/patient-management" component={PatientManagement} />
+[root@wizardly-swirles navimedi.org]# grep -B 5 -A 2 'Route path="/docs/patient-management"' /var/www/navimedi.org/client/src/App.tsx | head -15
+        <Route path="/docs/organization-setup" component={OrganizationSetup} />
+        <Route path="/docs/user-account-configuration" component={UserAccountConfiguration} />
+        <Route path="/docs/initial-system-configuration" component={InitialSystemConfiguration} />
+        <Route path="/docs/first-patient-registration" component={FirstPatientRegistration} />
+        <Route path="/docs/role-based-access-setup" component={RoleBasedAccessSetup} />
+        <Route path="/docs/patient-management" component={PatientManagement} />
+        <Route path="/docs/appointment-scheduling" component={AppointmentScheduling} />
+        <Route path="/docs/electronic-health-records" component={ElectronicHealthRecords} />
+--
+            <Route path="/docs/organization-setup" component={OrganizationSetup} />
+            <Route path="/docs/user-account-configuration" component={UserAccountConfiguration} />
+            <Route path="/docs/initial-system-configuration" component={InitialSystemConfiguration} />
+            <Route path="/docs/first-patient-registration" component={FirstPatientRegistration} />
+            <Route path="/docs/role-based-access-setup" component={RoleBasedAccessSetup} />
+            <Route path="/docs/patient-management" component={PatientManagement} />
+[root@wizardly-swirles navimedi.org]# 
