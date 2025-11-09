@@ -1,0 +1,57 @@
+# Stop PM2
+pm2 stop navimed
+
+# Load the environment variables from .env file
+export $(cat .env | grep -v '^#' | xargs)
+
+# Start PM2 with the loaded environment
+pm2 start dist/index.js --name navimed
+
+# Check if it's running
+pm2 logs navimed --lines 10
+[PM2] Applying action stopProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 0        │ 0      │ 2    │ stopped   │ 0%       │ 0b       │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+[PM2] Process successfully started
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1883804  │ 0s     │ 2    │ online    │ 0%       │ 12.3mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[TAILING] Tailing last 10 lines for [navimed] process (change the value with --lines option)
+/root/.pm2/logs/navimed-out.log last 10 lines:
+0|navimed  | om_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+0|navimed  | 11:45:23 PM [express] 🔄 Retrying platform initialization...
+0|navimed  | 11:45:25 PM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "name", "type", "subdomain", "country_id", "settings", "is_active", "parent_tenant_id", "organization_type", "brand_name", "logo_url", "primary_color", "secondary_color", "custom_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+0|navimed  | 11:45:35 PM [express] 🔄 Retrying platform initialization...
+0|navimed  | 11:45:37 PM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "name", "type", "subdomain", "country_id", "settings", "is_active", "parent_tenant_id", "organization_type", "brand_name", "logo_url", "primary_color", "secondary_color", "custom_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+
+/root/.pm2/logs/navimed-error.log last 10 lines:
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at server/db.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5263:13)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at server/storage.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5479:5)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:12155:1
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at server/db.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5263:13)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at server/storage.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5479:5)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:12155:1
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
