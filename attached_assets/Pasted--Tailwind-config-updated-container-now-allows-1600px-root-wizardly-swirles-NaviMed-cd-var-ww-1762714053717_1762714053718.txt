@@ -1,0 +1,137 @@
+✅ Tailwind config updated - container now allows 1600px!
+[root@wizardly-swirles NaviMed]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+
+# 1. Find a clean version of index.css from git or regenerate
+echo "=== Checking if git has a clean version ==="
+git log --oneline client/src/index.css | head -5
+
+# 2. If git exists, restore clean index.css
+git checkout HEAD -- client/src/index.css 2>/dev/null && echo "✅ Restored clean index.css from git" || echo "No git - will need manual fix"
+
+# 3. Verify NO container classes in landing or layout files
+echo -e "\n=== Checking for container classes ==="
+grep -r "className=.*container" client/src/pages/landing.tsx client/src/components/layout/*.tsx
+
+# 4. If any found, remove them
+find client/src -name "*.tsx" -exec sed -i 's/className="[^"]*container[^"]*"/className=""/g' {} \;
+find client/src -name "*.tsx" -exec sed -i 's/ container / /g' {} \;
+
+# 5. Build and check for errors
+npm run build 2>&1 | tee /tmp/build.log
+grep -i "syntax-error" /tmp/build.log && echo "❌ CSS STILL BROKEN" || echo "✅ CSS CLEAN!"
+=== Checking if git has a clean version ===
+fatal: not a git repository (or any of the parent directories): .git
+No git - will need manual fix
+
+=== Checking for container classes ===
+client/src/components/layout/public-header.tsx:      <div className="container mx-auto px-6 py-4">
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.19 building for production...
+transforming...
+✓ 3668 modules transformed.
+rendering chunks...
+warnings when minifying css:
+▲ [WARNING] Expected "}" to go with "{" [css-syntax-error]
+
+    <stdin>:703:0:
+      703 │ 
+          │ ^
+          ╵ }
+
+  The unbalanced "{" is here:
+
+    <stdin>:698:26:
+      698 │ @media (min-width: 768px) {
+          ╵                           ^
+
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/lib/queryClient.ts is dynamically imported by /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/components/communication/communication-viewer.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/components/communication/language-manager.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/components/communication/language-manager.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/lab-orders.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/lab-results-reporting.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/lab-results.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/medical-communications.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/medical-communications.tsx but also statically imported by /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/App.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/components/admin/AdminPermissionsManager.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/components/dashboard/department-management.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/components/forms/change-password-form.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/components/forms/visit-summary-form.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/components/forms/vital-signs-form.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/components/hospital/HospitalUserRoleManagement.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/components/patient/PatientAccessRequestManager.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/components/pharmacy/UserRolesManagement.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/components/ui/currency-settings.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/hooks/useCurrency.ts, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/lib/dashboard-invalidation.ts, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/lib/enhanced-mutations.ts, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/admin-counter-reset.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/admin-medical-codes-simple.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/advertisements.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/allergy-management.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/appointments.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/bi-reports.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/billing-management.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/billing.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/checkout-simple.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/checkout.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/developer-portal.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/doctor-calendar.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/document-management.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/forgot-password.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/health-recommendations.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/health-reminders.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/health-surveys.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/hospital-billing.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/inventory-audits.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/lab-orders.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/laboratory-dashboard.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/leave-management.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/login.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/medication-insurance-claims.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/patient-education.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/patient-login.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/patient-portal.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/patients.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/pharmacy-customers.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/post-lab-results.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/prescriptions.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/profile-settings.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/receptionist-dashboard.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/reports.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/reset-password.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/service-pricing-management.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/staff-scheduling.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/subscribe.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/super-admin-client-management.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/super-admin-dashboard.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/supplier-portal.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/supplier-signup.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/time-tracking.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/user-roles.tsx, /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/white-label-settings.tsx, dynamic import will not move module into another chunk.
+
+computing gzip size...
+../dist/public/index.html                                          10.03 kB │ gzip:   2.90 kB
+../dist/public/assets/JPG_1753663321927-DgkMhBd3.jpg               55.42 kB
+../dist/public/assets/image_1754352650858-BnYJl1Ml.png             96.44 kB
+../dist/public/assets/image_1754352725355-BnK0MoBJ.png            117.79 kB
+../dist/public/assets/image_1754352574197-4KYOPGEO.png            185.50 kB
+../dist/public/assets/image_1754352599331-Dgf1L21r.png            203.98 kB
+../dist/public/assets/image_1754352626174-D1C0mYbb.png            207.51 kB
+../dist/public/assets/image_1754352767570-D0Cxo8da.png          6,887.79 kB
+../dist/public/assets/index-CbysR3mA.css                           78.98 kB │ gzip:  13.05 kB
+../dist/public/assets/payment-success-BtDwS_r-.js                   1.47 kB │ gzip:   0.63 kB
+../dist/public/assets/subscription-success-DdKRZWId.js              2.06 kB │ gzip:   0.82 kB
+../dist/public/assets/checkout-BKiNbq9p.js                          2.09 kB │ gzip:   0.75 kB
+../dist/public/assets/checkout-simple-BriQkjUA.js                   2.98 kB │ gzip:   1.34 kB
+../dist/public/assets/subscribe-DJfSdQuE.js                         3.33 kB │ gzip:   1.33 kB
+../dist/public/assets/laboratories-C-XypDPM.js                      3.56 kB │ gzip:   1.31 kB
+../dist/public/assets/platform-overview-C1Tg2zjI.js                 3.84 kB │ gzip:   1.24 kB
+../dist/public/assets/billing-insurance-Bu7JYjqs.js                 4.06 kB │ gzip:   1.23 kB
+../dist/public/assets/laboratory-order-processing-eATK2Fb3.js       4.16 kB │ gzip:   1.28 kB
+../dist/public/assets/clinics-vRp9ixYh.js                           4.16 kB │ gzip:   1.48 kB
+../dist/public/assets/security-compliance-BMLMDxmD.js               4.57 kB │ gzip:   1.34 kB
+../dist/public/assets/organization-setup-Cnvw7ESa.js                4.62 kB │ gzip:   1.40 kB
+../dist/public/assets/electronic-health-records-amyWd-CW.js         4.73 kB │ gzip:   1.43 kB
+../dist/public/assets/prescription-management-BF8CttF9.js           4.74 kB │ gzip:   1.42 kB
+../dist/public/assets/help-center-Dt8ZjIvw.js                       4.76 kB │ gzip:   1.67 kB
+../dist/public/assets/clinical-documentation-TlUcQ-Hq.js            4.80 kB │ gzip:   1.41 kB
+../dist/public/assets/contact-PNUsDnnz.js                           5.03 kB │ gzip:   1.35 kB
+../dist/public/assets/payment-demo-qsjJRXdJ.js                      5.49 kB │ gzip:   1.46 kB
+../dist/public/assets/status-Z7zbH4Tp.js                            5.54 kB │ gzip:   1.53 kB
+../dist/public/assets/getting-started-BLPOME9N.js                   5.93 kB │ gzip:   1.48 kB
+../dist/public/assets/appointment-scheduling-vIHv7dHU.js            6.60 kB │ gzip:   1.73 kB
+../dist/public/assets/patient-management-ZyThheh2.js                6.64 kB │ gzip:   1.81 kB
+../dist/public/assets/video-integration-options-CRTmp5y_.js         7.49 kB │ gzip:   1.89 kB
+../dist/public/assets/pharmacy-inventory-Dyhwercf.js                7.51 kB │ gzip:   2.12 kB
+../dist/public/assets/api-docs-D2VHTArI.js                          7.59 kB │ gzip:   2.13 kB
+../dist/public/assets/billing-management-pUc6sgPX.js                7.63 kB │ gzip:   2.11 kB
+../dist/public/assets/youtube-integration-BCfgflGd.js               7.97 kB │ gzip:   2.22 kB
+../dist/public/assets/inventory-audits-Z7Srg1T2.js                  8.04 kB │ gzip:   2.49 kB
+../dist/public/assets/trial-status-DLwXuy4G.js                      8.15 kB │ gzip:   2.19 kB
+../dist/public/assets/pharmacy-billing-Cicsf__A.js                  8.60 kB │ gzip:   2.35 kB
+../dist/public/assets/integrations-Ci8K774Q.js                      8.96 kB │ gzip:   2.89 kB
+../dist/public/assets/hospitals-B6kzlfXV.js                         9.54 kB │ gzip:   2.64 kB
+../dist/public/assets/api-docs-DdBX6Nhw.js                          9.59 kB │ gzip:   2.73 kB
+../dist/public/assets/vimeo-integration-B0lv8N0j.js                10.01 kB │ gzip:   2.39 kB
+../dist/public/assets/laboratory-billing-0-ToFIGA.js               10.38 kB │ gzip:   3.13 kB
+../dist/public/assets/aws-integration-C8Qj7Eco.js                  12.36 kB │ gzip:   2.80 kB
+../dist/public/assets/achievements-KQv68_rU.js                     12.57 kB │ gzip:   2.53 kB
+../dist/public/assets/prescription-archives-CC9CxBrv.js            13.28 kB │ gzip:   3.34 kB
+../dist/public/assets/user-account-configuration-NzlCkIJR.js       14.00 kB │ gzip:   3.33 kB
+../dist/public/assets/troubleshooting-guide-C9Q9Zzo6.js            14.13 kB │ gzip:   4.10 kB
+../dist/public/assets/video-player-CjliKVhR.js                     16.26 kB │ gzip:   4.41 kB
+../dist/public/assets/initial-system-configuration-dcYV3l_Q.js     17.47 kB │ gzip:   3.75 kB
+../dist/public/assets/quick-reference-guide-BA-zqw8Q.js            17.63 kB │ gzip:   3.89 kB
+../dist/public/assets/pharmacy-customers-DA7VqDcC.js               19.30 kB │ gzip:   4.75 kB
+../dist/public/assets/workflow-training-modules-BJGNpQfV.js        19.31 kB │ gzip:   4.26 kB
+../dist/public/assets/role-based-access-setup-Ciy0h-wg.js          19.72 kB │ gzip:   4.24 kB
+../dist/public/assets/laboratory-registration-CiR8adTQ.js          20.05 kB │ gzip:   4.56 kB
+../dist/public/assets/first-patient-registration-CYiSCbs0.js       20.25 kB │ gzip:   4.14 kB
+../dist/public/assets/medication-insurance-claims-Im5QezGn.js      20.63 kB │ gzip:   5.04 kB
+../dist/public/assets/comprehensive-user-training-CLW21ElG.js      21.46 kB │ gzip:   4.49 kB
+../dist/public/assets/lab-sample-management-C4vxl0tu.js            21.59 kB │ gzip:   4.44 kB
+../dist/public/assets/hospital-billing-DeoTSl4h.js                 21.87 kB │ gzip:   4.47 kB
+../dist/public/assets/lab-test-management-D06LFMKY.js              24.09 kB │ gzip:   4.81 kB
+../dist/public/assets/lab-results-reporting-DrJmqegW.js            25.20 kB │ gzip:   6.19 kB
+../dist/public/assets/system-admin-training-DLMOoBrg.js            25.49 kB │ gzip:   5.40 kB
+../dist/public/assets/lab-inventory-management-Cei_iCEm.js         26.18 kB │ gzip:   5.57 kB
+../dist/public/assets/profile-settings-CflleW0v.js                 27.61 kB │ gzip:   6.27 kB
+../dist/public/assets/documentation-D-KWBxCo.js                    29.04 kB │ gzip:   7.32 kB
+../dist/public/assets/currency-management-wUzAF5jz.js              43.63 kB │ gzip:  12.10 kB
+../dist/public/assets/lab-analytics-dashboard-c-nronBn.js          44.68 kB │ gzip:  11.09 kB
+../dist/public/assets/index-GpXW0Pmy.js                         4,056.09 kB │ gzip: 921.86 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 14.35s
+
+  dist/index.js  1003.0kb
+
+⚡ Done in 52ms
+▲ [WARNING] Expected "}" to go with "{" [css-syntax-error]
+❌ CSS STILL BROKEN
+[root@wizardly-swirles NaviMed]# 
