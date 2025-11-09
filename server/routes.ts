@@ -1317,7 +1317,7 @@ sectigo.com
         console.log('❌ Validation failed');
         return res.status(400).json({ 
           error: 'Validation failed',
-          details: validationResult.error.errors 
+          details: validationResult.error.issues 
         });
       }
 
@@ -1331,6 +1331,7 @@ sectigo.com
       // Send confirmation email in background (non-blocking)
       sendEmail({
         to: enrollment.email,
+        from: 'NaviMED Training <training@navimedi.org>',
         subject: 'Training Enrollment Confirmation - NaviMED',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

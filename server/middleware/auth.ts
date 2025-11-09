@@ -9,6 +9,7 @@ export interface JWTPayload {
   role: string;
   username: string;
   exp?: number;
+  iat?: number;
 }
 
 export interface AuthenticatedRequest extends Request {
