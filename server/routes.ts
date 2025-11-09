@@ -1328,50 +1328,49 @@ sectigo.com
 
       console.log('✅ Training enrollment created successfully:', enrollment.id);
       
-      // Send confirmation email
-      try {
-        await sendEmail({
-          to: enrollment.email,
-          subject: 'Training Enrollment Confirmation - NaviMED',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #2563eb;">Training Enrollment Confirmed!</h2>
-              <p>Dear ${enrollment.fullName},</p>
-              <p>Thank you for enrolling in the NaviMED training program. We're excited to have you join us!</p>
-              
-              <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="margin-top: 0;">Enrollment Details:</h3>
-                <p><strong>Training Level:</strong> ${enrollment.trainingLevel.charAt(0).toUpperCase() + enrollment.trainingLevel.slice(1)}</p>
-                <p><strong>Enrollment Date:</strong> ${new Date(enrollment.enrollmentDate).toLocaleDateString()}</p>
-                ${enrollment.organization ? `<p><strong>Organization:</strong> ${enrollment.organization}</p>` : ''}
-                ${enrollment.jobRole ? `<p><strong>Job Role:</strong> ${enrollment.jobRole}</p>` : ''}
-              </div>
-              
-              <p>Our training team will contact you within 24-48 hours with access instructions and your personalized training schedule.</p>
-              
-              <h3>What's Next?</h3>
-              <ul>
-                <li>Check your email for training materials and login credentials</li>
-                <li>Review the pre-training checklist we'll send</li>
-                <li>Prepare any questions you'd like to discuss</li>
-              </ul>
-              
-              <p>If you have any questions, please contact our support team at <strong>+1 (615) 482-6768</strong> or reply to this email.</p>
-              
-              <p>Best regards,<br>
-              NaviMED Training Team</p>
-              
-              <hr style="margin-top: 30px; border: none; border-top: 1px solid #e5e7eb;">
-              <p style="font-size: 12px; color: #6b7280;">This is an automated confirmation email from NaviMED Healthcare Platform.</p>
+      // Send confirmation email in background (non-blocking)
+      sendEmail({
+        to: enrollment.email,
+        subject: 'Training Enrollment Confirmation - NaviMED',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2563eb;">Training Enrollment Confirmed!</h2>
+            <p>Dear ${enrollment.fullName},</p>
+            <p>Thank you for enrolling in the NaviMED training program. We're excited to have you join us!</p>
+            
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0;">Enrollment Details:</h3>
+              <p><strong>Training Level:</strong> ${enrollment.trainingLevel.charAt(0).toUpperCase() + enrollment.trainingLevel.slice(1)}</p>
+              <p><strong>Enrollment Date:</strong> ${new Date(enrollment.enrollmentDate).toLocaleDateString()}</p>
+              ${enrollment.organization ? `<p><strong>Organization:</strong> ${enrollment.organization}</p>` : ''}
+              ${enrollment.jobRole ? `<p><strong>Job Role:</strong> ${enrollment.jobRole}</p>` : ''}
             </div>
-          `
-        });
+            
+            <p>Our training team will contact you within 24-48 hours with access instructions and your personalized training schedule.</p>
+            
+            <h3>What's Next?</h3>
+            <ul>
+              <li>Check your email for training materials and login credentials</li>
+              <li>Review the pre-training checklist we'll send</li>
+              <li>Prepare any questions you'd like to discuss</li>
+            </ul>
+            
+            <p>If you have any questions, please contact our support team at <strong>+1 (615) 482-6768</strong> or reply to this email.</p>
+            
+            <p>Best regards,<br>
+            NaviMED Training Team</p>
+            
+            <hr style="margin-top: 30px; border: none; border-top: 1px solid #e5e7eb;">
+            <p style="font-size: 12px; color: #6b7280;">This is an automated confirmation email from NaviMED Healthcare Platform.</p>
+          </div>
+        `
+      }).then(() => {
         console.log('✅ Confirmation email sent to:', enrollment.email);
-      } catch (emailError) {
+      }).catch((emailError) => {
         console.error('⚠️ Failed to send confirmation email:', emailError);
-        // Don't fail the enrollment if email fails
-      }
+      });
       
+      // Respond immediately without waiting for email
       res.status(201).json(enrollment);
     } catch (error: any) {
       console.error('❌ Training enrollment error:', error);
