@@ -1,0 +1,116 @@
+[TAILING] Tailing last 50 lines for [navimed] process (change the value with --lines option)
+/root/.pm2/logs/navimed-out.log last 50 lines:
+0|navimed  | tialization failed: Error: Failed query: select "id", "name", "type", "subdomain", "country_id", "settings", "is_active", "parent_tenant_id", "organization_type", "brand_name", "logo_url", "primary_color", "secondary_color", "custom_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+0|navimed  | 11:43:23 PM [express] 🔄 Retrying platform initialization...
+0|navimed  | 11:43:25 PM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "name", "type", "subdomain", "country_id", "settings", "is_active", "parent_tenant_id", "organization_type", "brand_name", "logo_url", "primary_color", "secondary_color", "custom_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+0|navimed  | 11:43:35 PM [express] 🔄 Retrying platform initialization...
+0|navimed  | 11:43:37 PM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "name", "type", "subdomain", "country_id", "settings", "is_active", "parent_tenant_id", "organization_type", "brand_name", "logo_url", "primary_color", "secondary_color", "custom_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+0|navimed  | 11:43:47 PM [express] 🔄 Retrying platform initialization...
+0|navimed  | 11:43:49 PM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "name", "type", "subdomain", "country_id", "settings", "is_active", "parent_tenant_id", "organization_type", "brand_name", "logo_url", "primary_color", "secondary_color", "custom_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+0|navimed  | 11:43:59 PM [express] 🔄 Retrying platform initialization...
+0|navimed  | 11:44:01 PM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "name", "type", "subdomain", "country_id", "settings", "is_active", "parent_tenant_id", "organization_type", "brand_name", "logo_url", "primary_color", "secondary_color", "custom_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+0|navimed  | 11:44:11 PM [express] 🔄 Retrying platform initialization...
+0|navimed  | 11:44:13 PM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "name", "type", "subdomain", "country_id", "settings", "is_active", "parent_tenant_id", "organization_type", "brand_name", "logo_url", "primary_color", "secondary_color", "custom_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+0|navimed  | 11:44:23 PM [express] 🔄 Retrying platform initialization...
+0|navimed  | 11:44:25 PM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "name", "type", "subdomain", "country_id", "settings", "is_active", "parent_tenant_id", "organization_type", "brand_name", "logo_url", "primary_color", "secondary_color", "custom_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+0|navimed  | 11:44:35 PM [express] 🔄 Retrying platform initialization...
+0|navimed  | 11:44:37 PM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "name", "type", "subdomain", "country_id", "settings", "is_active", "parent_tenant_id", "organization_type", "brand_name", "logo_url", "primary_color", "secondary_color", "custom_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+0|navimed  | 11:44:47 PM [express] 🔄 Retrying platform initialization...
+0|navimed  | 11:44:49 PM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "name", "type", "subdomain", "country_id", "settings", "is_active", "parent_tenant_id", "organization_type", "brand_name", "logo_url", "primary_color", "secondary_color", "custom_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+0|navimed  | 11:44:59 PM [express] 🔄 Retrying platform initialization...
+0|navimed  | 11:45:01 PM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "name", "type", "subdomain", "country_id", "settings", "is_active", "parent_tenant_id", "organization_type", "brand_name", "logo_url", "primary_color", "secondary_color", "custom_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+0|navimed  | 11:45:11 PM [express] 🔄 Retrying platform initialization...
+0|navimed  | 11:45:13 PM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "name", "type", "subdomain", "country_id", "settings", "is_active", "parent_tenant_id", "organization_type", "brand_name", "logo_url", "primary_color", "secondary_color", "custom_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+0|navimed  | 11:45:23 PM [express] 🔄 Retrying platform initialization...
+0|navimed  | 11:45:25 PM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "name", "type", "subdomain", "country_id", "settings", "is_active", "parent_tenant_id", "organization_type", "brand_name", "logo_url", "primary_color", "secondary_color", "custom_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+0|navimed  | 11:45:35 PM [express] 🔄 Retrying platform initialization...
+0|navimed  | 11:45:37 PM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "name", "type", "subdomain", "country_id", "settings", "is_active", "parent_tenant_id", "organization_type", "brand_name", "logo_url", "primary_color", "secondary_color", "custom_domain", "custom_css", "default_language", "supported_languages", "base_currency", "supported_currencies", "offline_enabled", "offline_storage_mb", "sync_frequency_minutes", "trial_start_date", "trial_end_date", "subscription_status", "last_suspension_check", "suspended_at", "suspension_reason", "phone_number", "address", "description", "created_at", "updated_at" from "tenants" where "tenants"."subdomain" = $1 limit $2
+0|navimed  | params: argilette,1
+
+/root/.pm2/logs/navimed-error.log last 50 lines:
+0|navimed  | 
+0|navimed  | Node.js v20.19.5
+0|navimed  | /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/db.ts:9
+0|navimed  |   throw new Error(
+0|navimed  |         ^
+0|navimed  | 
+0|navimed  | 
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at <anonymous> (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/db.ts:9:9)
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|navimed  | 
+0|navimed  | Node.js v20.19.5
+0|navimed  | /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/db.ts:9
+0|navimed  |   throw new Error(
+0|navimed  |         ^
+0|navimed  | 
+0|navimed  | 
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at <anonymous> (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/db.ts:9:9)
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|navimed  | 
+0|navimed  | Node.js v20.19.5
+0|navimed  | /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/db.ts:9
+0|navimed  |   throw new Error(
+0|navimed  |         ^
+0|navimed  | 
+0|navimed  | 
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at <anonymous> (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/db.ts:9:9)
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|navimed  | 
+0|navimed  | Node.js v20.19.5
+0|navimed  | /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/db.ts:9
+0|navimed  |   throw new Error(
+0|navimed  |         ^
+0|navimed  | 
+0|navimed  | 
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at <anonymous> (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/db.ts:9:9)
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|navimed  | 
+0|navimed  | Node.js v20.19.5
+
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ N/A     │ fork    │ 1888751  │ 0s     │ 33   │ online    │ 0%       │ 18.1mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2] Starting /var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js in fork_mode (1 instance)
+[PM2] Done.
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ N/A     │ fork    │ 1888751  │ 0s     │ 33   │ online    │ 0%       │ 63.2mb   │ root     │ disabled │
+│ 1  │ navimed    │ default     │ 1.0.0   │ fork    │ 1888776  │ 0s     │ 0    │ online    │ 0%       │ 9.8mb    │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ N/A     │ fork    │ 1888751  │ 0s     │ 33   │ online    │ 0%       │ 63.3mb   │ root     │ disabled │
+│ 1  │ navimed    │ default     │ 1.0.0   │ fork    │ 1888776  │ 0s     │ 0    │ online    │ 0%       │ 62.5mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[root@wizardly-swirles NaviMed]# 
