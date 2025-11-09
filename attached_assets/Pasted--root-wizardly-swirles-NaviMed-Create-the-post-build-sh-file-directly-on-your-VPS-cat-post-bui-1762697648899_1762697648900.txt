@@ -1,0 +1,50 @@
+[root@wizardly-swirles NaviMed]# # Create the post-build.sh file directly on your VPS
+cat > post-build.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+
+# Post-build script: Copy built assets to server/public for VPS deployment
+# This ensures CSS/JS files are in the correct location for production
+
+echo "📦 Syncing built assets from dist/public to server/public..."
+
+# Create server/public if it doesn't exist
+mkdir -p server/public
+
+# Use rsync to sync files and delete stale assets (prevents old CSS/JS caching issues)
+if command -v rsync &> /dev/null; then
+  rsync -a --delete dist/public/ server/public/
+  echo "✅ Assets synced successfully with rsync!"
+else
+  # Fallback to cp if rsync not available
+  echo "⚠️  rsync not found, using cp (may leave stale files)"
+  rm -rf server/public/*
+  cp -r dist/public/. server/public/
+  echo "✅ Assets copied successfully with cp!"
+fi
+
+echo "   dist/public → server/public"
+echo "   $(ls -1 server/public | wc -l) files synced"
+EOF
+
+# Make it executable
+chmod +x post-build.sh
+
+# Run it now to copy the CSS files
+bash post-build.sh
+
+# Restart your application
+pm2 restart navimed
+📦 Syncing built assets from dist/public to server/public...
+✅ Assets synced successfully with rsync!
+   dist/public → server/public
+   21 files synced
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1887402  │ 0s     │ 3    │ online    │ 0%       │ 17.1mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[root@wizardly-swirles NaviMed]# 
