@@ -1,0 +1,36 @@
+[root@wizardly-swirles NaviMed]# cd /var/www/vhosts/navimedi.org/httpdocs/
+mv NaviMed NaviMed_backup
+unzip your-downloaded-file.zip
+mv extracted-folder-name NaviMed
+cd NaviMed
+npm install
+npm run build
+pm2 restart navimed
+unzip:  cannot find or open your-downloaded-file.zip, your-downloaded-file.zip.zip or your-downloaded-file.zip.ZIP.
+mv: cannot stat 'extracted-folder-name': No such file or directory
+-bash: cd: NaviMed: No such file or directory
+npm error code ENOENT
+npm error syscall open
+npm error path /var/www/vhosts/navimedi.org/httpdocs/package.json
+npm error errno -2
+npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/var/www/vhosts/navimedi.org/httpdocs/package.json'
+npm error enoent This is related to npm not being able to find a file.
+npm error enoent
+npm error A complete log of this run can be found in: /root/.npm/_logs/2025-11-09T06_07_59_714Z-debug-0.log
+npm error code ENOENT
+npm error syscall open
+npm error path /var/www/vhosts/navimedi.org/httpdocs/package.json
+npm error errno -2
+npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/var/www/vhosts/navimedi.org/httpdocs/package.json'
+npm error enoent This is related to npm not being able to find a file.
+npm error enoent
+npm error A complete log of this run can be found in: /root/.npm/_logs/2025-11-09T06_08_00_076Z-debug-0.log
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ N/A     │ fork    │ N/A      │ 0s     │ 49   │ online    │ 0%       │ 0b       │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[root@wizardly-swirles httpdocs]# 
