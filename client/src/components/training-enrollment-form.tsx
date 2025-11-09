@@ -87,9 +87,8 @@ export function TrainingEnrollmentForm({ trigger, onSuccess }: TrainingEnrollmen
       
       return apiRequest("/api/training/enroll", {
         method: "POST",
-        body: JSON.stringify(data),
+        body: data,
         headers: {
-          "Content-Type": "application/json",
           "X-CSRF-Token": csrfToken,
         },
       });
