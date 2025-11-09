@@ -1,0 +1,78 @@
+✅ Fixed broken file - Tailwind has 1600px config, all constraints removed!
+[root@wizardly-swirles NaviMed]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+
+# Find all files with broken className patterns
+echo "=== Finding all broken className patterns ==="
+grep -rn 'className=""' client/src/pages/*.tsx | head -20
+
+# Fix the pattern: restore className="" to className="space-y-6" and similar
+# This is tricky without backups, so let's try a different approach:
+
+# Revert our changes by checking out clean versions of the broken files
+# Since we don't have git, let's rebuild from the minimal needed changes
+
+# For now, let's just fix the immediate build blockers
+sed -i '1204s/className="/className="space-y-6"/' client/src/pages/billing.tsx
+
+# Try to build again and see what else is broken
+npm run build 2>&1 | tee /tmp/build-errors.log
+
+# Show any new errors
+grep -A 3 "ERROR:" /tmp/build-errors.log | head -20
+=== Finding all broken className patterns ===
+client/src/pages/achievements.tsx:7:    <div className="">
+client/src/pages/admin-counter-reset.tsx:55:    <div className="">
+client/src/pages/allergy-management.tsx:206:    <div className="">
+client/src/pages/analytics-dashboard.tsx:188:    <div className="" data-testid="analytics-dashboard">
+client/src/pages/api-docs.tsx:62:        <div className="">
+client/src/pages/api-docs.tsx:82:        <div className="">
+client/src/pages/api-docs.tsx:98:        <div className="">
+client/src/pages/api-docs.tsx:312:        <div className="">
+client/src/pages/api-documentation.tsx:569:    <div className="" data-testid="page-api-documentation">
+client/src/pages/billing-management.tsx:118:      <div className="">
+client/src/pages/billing-management.tsx:140:      <div className="">
+client/src/pages/billing-management.tsx:156:    <div className="">
+client/src/pages/bi-reports.tsx:169:    <div className="" data-testid="bi-reports-page">
+client/src/pages/blog-post.tsx:861:          <div className="">
+client/src/pages/blog-post.tsx:926:        <div className="">
+client/src/pages/blog-post.tsx:939:        <div className="">
+client/src/pages/blog-post.tsx:1002:        <div className="">
+client/src/pages/blog-post.tsx:1029:        <div className="">
+client/src/pages/blog-post.tsx:1052:          <div className="">
+client/src/pages/blog-post.tsx:1071:        <div className="">
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.19 building for production...
+transforming...
+✓ 17 modules transformed.
+x Build failed in 276ms
+error during build:
+[vite:esbuild] Transform failed with 1 error:
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/tenant-management.tsx:142:79: ERROR: Expected ">" but found "\">\n                <div className=\""
+file: /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/tenant-management.tsx:142:79
+
+Expected ">" but found "\">\n                <div className=\""
+140|              </DialogHeader>
+141|              <Form {...form}>
+142|                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+   |                                                                                 ^
+143|                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+144|                    <FormField
+
+    at failureErrorWithLog (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
+    at /var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:755:50
+    at responseCallbacks.<computed> (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:622:9)
+    at handleIncomingPacket (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:677:12)
+    at Socket.readFromStdout (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:600:7)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/tenant-management.tsx:142:79: ERROR: Expected ">" but found "\">\n                <div className=\""
+file: /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/tenant-management.tsx:142:79
+
+Expected ">" but found "\">\n                <div className=\""
+[root@wizardly-swirles NaviMed]# 
