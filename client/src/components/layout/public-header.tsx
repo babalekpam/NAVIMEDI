@@ -11,7 +11,7 @@ export const PublicHeader = ({ className = "" }: PublicHeaderProps) => {
 
   return (
     <header className={`fixed top-0 w-full z-50 border-b border-white/10 backdrop-blur-xl bg-white/80 supports-[backdrop-filter]:bg-white/60 ${className}`}>
-      <div className="container mx-auto px-6 py-4">
+      <div className="container py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/">

@@ -76,7 +76,7 @@ export default function Documentation() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50">
       <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-4">
+        <div className="container">
           <div className="flex items-center justify-between">
             <Link href="/">
               <div className="flex items-center gap-3">
@@ -90,7 +90,7 @@ export default function Documentation() {
       </header>
 
       <section className="py-20">
-        <div className="container mx-auto px-6 text-center">
+        <div className="container text-center">
           <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-emerald-600 rounded-lg flex items-center justify-center mx-auto mb-6">
             <FileText className="w-8 h-8 text-white" />
           </div>
@@ -108,7 +108,7 @@ export default function Documentation() {
       </section>
 
       <section className="py-16">
-        <div className="container mx-auto px-6">
+        <div className="container">
           <Tabs defaultValue="guides" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="guides">User Guides</TabsTrigger>
