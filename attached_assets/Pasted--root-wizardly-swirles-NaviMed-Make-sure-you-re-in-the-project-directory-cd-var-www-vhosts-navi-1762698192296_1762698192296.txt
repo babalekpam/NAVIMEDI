@@ -1,0 +1,88 @@
+[root@wizardly-swirles NaviMed]# # Make sure you're in the project directory
+cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+
+# Start the BUILT version (not source)
+pm2 start dist/index.js --name navimed
+
+# Save PM2 configuration
+pm2 save
+[PM2][ERROR] Script already launched, add -f option to force re-execution
+[PM2] Saving current process list...
+[PM2] Successfully saved in /root/.pm2/dump.pm2
+[root@wizardly-swirles NaviMed]# # First, stop the crashing app
+pm2 stop navimed
+
+# Create a .env file with your database credentials
+# Replace the values below with YOUR actual database details
+cat > .env << 'EOF'
+DATABASE_URL=postgresql://YOUR_DB_USER:YOUR_DB_PASSWORD@YOUR_DB_HOST:5432/YOUR_DB_NAME
+NODE_ENV=production
+EOF
+
+# Install dotenv-cli if needed to load .env files
+npm install -g dotenv-cli
+
+# Start the app with environment variables loaded
+pm2 delete navimed
+pm2 start dist/index.js --name navimed --env production
+
+# OR use ecosystem file approach (better):
+cat > ecosystem.config.js << 'EOF'
+module.exports = {
+  apps: [{
+    name: 'navimed',
+    script: 'dist/index.js',
+    env: {
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://YOUR_DB_USER:YOUR_DB_PASSWORD@YOUR_DB_HOST:5432/YOUR_DB_NAME'
+    }
+  }]
+}
+EOF
+
+# Start with ecosystem file
+pm2 start ecosystem.config.js
+pm2 save
+[PM2] Applying action stopProcessId on app [navimed](ids: [ 0, 1 ])
+[PM2] [navimed](0) ✓
+[PM2] [navimed](1) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ N/A     │ fork    │ 0        │ 0      │ 136  │ stopped   │ 0%       │ 0b       │ root     │ disabled │
+│ 1  │ navimed    │ default     │ 1.0.0   │ fork    │ 0        │ 0      │ 0    │ stopped   │ 0%       │ 0b       │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+
+added 11 packages in 710ms
+
+4 packages are looking for funding
+  run `npm fund` for details
+[PM2] Applying action deleteProcessId on app [navimed](ids: [ 0, 1 ])
+[PM2] [navimed](0) ✓
+[PM2] [navimed](1) ✓
+┌────┬───────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name      │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+└────┴───────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2] Starting /var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js in fork_mode (1 instance)
+[PM2] Done.
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1891442  │ 0s     │ 0    │ online    │ 0%       │ 13.4mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][ERROR] File ecosystem.config.js malformated
+ReferenceError: module is not defined in ES module scope
+This file is being treated as an ES module because it has a '.js' file extension and '/var/www/vhosts/navimedi.org/httpdocs/NaviMed/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.
+    at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/ecosystem.config.js:1:1
+    at ModuleJobSync.runSync (node:internal/modules/esm/module_job:437:37)
+    at ModuleLoader.importSyncForRequire (node:internal/modules/esm/loader:389:47)
+    at loadESMFromCJS (node:internal/modules/cjs/loader:1363:24)
+    at Module._compile (node:internal/modules/cjs/loader:1503:5)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Module.require (node:internal/modules/cjs/loader:1289:19)
+    at require (node:internal/modules/helpers:182:18)
+[PM2] Saving current process list...
+[PM2] Successfully saved in /root/.pm2/dump.pm2
+[root@wizardly-swirles NaviMed]# 
