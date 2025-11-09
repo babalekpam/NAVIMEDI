@@ -1,0 +1,66 @@
+import type { Config } from "tailwindcss";
+
+export default {
+  darkMode: ["class"],
+  content: [
+    "./client/**/*.{html,js,jsx,ts,tsx}",
+    "./client/index.html"
+  ],
+  theme: {
+    container: {
+      center: true,
+      padding: {
+        DEFAULT: '1.5rem',
+        sm: '2rem',
+        lg: '4rem',
+        xl: '5rem',
+        '2xl': '6rem',
+      },
+      screens: {
+        sm: '640px',
+        md: '768px',
+        lg: '1024px',
+        xl: '1280px',
+            height: "": {--radix-accordion-content-height)",und)",",
+> ^C
+[root@wizardly-swirles NaviMed]# nano tailwind.config.ts
+-bash: nano: command not found
+[root@wizardly-swirles NaviMed]# sed -i "s/'2xl': '1440px'/'2xl': '1600px'/g" tailwind.config.ts
+[root@wizardly-swirles NaviMed]# sed -i 's/<div className="container py-4">/<div className="mx-auto px-6 py-4" style={{maxWidth: '\''1600px'\''}}>/' client/src/components/layout/public-header.tsx
+[root@wizardly-swirles NaviMed]# sed -i 's/className="container mx-auto px-6"/className="mx-auto px-6" style={{maxWidth: '\''1600px'\''}}/g' client/src/pages/landing.tsx
+[root@wizardly-swirles NaviMed]# sed -i 's/max-w-6xl //g' client/src/pages/landing.tsx
+[root@wizardly-swirles NaviMed]# sed -i 's/max-w-4xl //g' client/src/pages/landing.tsx
+[root@wizardly-swirles NaviMed]# sed -i 's/max-w-7xl //g' client/src/pages/landing.tsx
+[root@wizardly-swirles NaviMed]# sed -i 's/max-w-3xl //g' client/src/pages/landing.tsx
+[root@wizardly-swirles NaviMed]# npm run build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.19 building for production...
+✓ 24 modules transformed.
+x Build failed in 329ms
+error during build:
+[vite:esbuild] Transform failed with 1 error:
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/tenant-management.tsx:142:79: ERROR: Expected ">" but found "\">\n                <div className=\""
+file: /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/tenant-management.tsx:142:79
+
+Expected ">" but found "\">\n                <div className=\""
+140|              </DialogHeader>
+141|              <Form {...form}>
+142|                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+   |                                                                                 ^
+143|                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+144|                    <FormField
+
+    at failureErrorWithLog (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
+    at /var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:755:50
+    at responseCallbacks.<computed> (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:622:9)
+    at handleIncomingPacket (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:677:12)
+    at Socket.readFromStdout (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:600:7)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+[root@wizardly-swirles NaviMed]# 
