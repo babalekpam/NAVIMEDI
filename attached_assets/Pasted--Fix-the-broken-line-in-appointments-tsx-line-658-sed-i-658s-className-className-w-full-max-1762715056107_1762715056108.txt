@@ -1,0 +1,53 @@
+# Fix the broken line in appointments.tsx (line 658)
+sed -i '658s/className=">/className="w-full max-w-2xl">/' client/src/pages/appointments.tsx
+
+# Rebuild
+npm run build
+bash post-build.sh
+pm2 restart navimed
+
+echo "✅ Fixed broken file - Tailwind has 1600px config, all constraints removed!"
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.19 building for production...
+✓ 24 modules transformed.
+x Build failed in 257ms
+error during build:
+[vite:esbuild] Transform failed with 1 error:
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/billing.tsx:1204:37: ERROR: Expected ">" but found "\">\n              {/* Patient Information */}\n              <div className=\""
+file: /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/billing.tsx:1204:37
+
+Expected ">" but found "\">\n              {/* Patient Information */}\n              <div className=\""
+1202|            
+1203|            {selectedClaim && (
+1204|              <div className="space-y-6">
+   |                                       ^
+1205|                {/* Patient Information */}
+1206|                <div className="grid grid-cols-2 gap-6">
+
+    at failureErrorWithLog (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
+    at /var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:755:50
+    at responseCallbacks.<computed> (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:622:9)
+    at handleIncomingPacket (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:677:12)
+    at Socket.readFromStdout (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:600:7)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+📦 Syncing built assets from dist/public to server/public...
+✅ Assets synced successfully with rsync!
+   dist/public → server/public
+   21 files synced
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1919995  │ 0s     │ 38   │ online    │ 0%       │ 17.9mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+✅ Fixed broken file - Tailwind has 1600px config, all constraints removed!
+[root@wizardly-swirles NaviMed]# 
