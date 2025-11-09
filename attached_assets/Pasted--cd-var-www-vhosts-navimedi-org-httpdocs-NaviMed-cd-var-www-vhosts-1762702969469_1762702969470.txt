@@ -1,0 +1,41 @@
+ cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+                                cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+# First, undo the mess - restore from backup
+# First, undo the mess - restore from backuplient/src/pages/landing-fixed.tsx
+cp client/src/pages/landing-fixed.tsx.bak2 client/src/pages/landing-fixed.tsx
+# Now apply a PROPER fix: Add a wide wrapper class to ALL sections
+# Now apply a PROPER fix: Add a wide wrapper class to ALL sectionsper
+# Replace every <section with a section that has a wide inner wrapper
+cat > /tmp/fix-landing.sh << 'FIXSCRIPT'
+#!/bin/bashpt adds proper wide containers to the landing page
+# This script adds proper wide containers to the landing page
+FILE="client/src/pages/landing-fixed.tsx"
+FILE="client/src/pages/landing-fixed.tsx"
+# Read the file and add wide container to each section's first child div
+# Read the file and add wide container to each section's first child div
+perl -i -pe 'ee a section opening tag, set a flag
+  # When we see a section opening tag, set a flag
+  if (/<section/) {;
+    $in_section = 1;
+  } When we find the first div inside a section with className
+  # When we find the first div inside a section with classNameiner[^"]*)"/) {
+  if ($in_section && /^(\s+)<div className="(max-w-[^"]*|container[^"]*)"/) {
+    # Replace with wide styling{maxWidth: "1600px", margin: "0 auto", paddingLeft: "clamp(1rem, 5vw, 5rem)", paddingRight: "clamp(1rem, 5vw, 5rem)"}} c
+    s/className="[^"]*"/style={{maxWidth: "1600px", margin: "0 auto", paddingLeft: "clamp(1rem, 5vw, 5rem)", paddingRight: "clamp(1rem, 5vw, 5rem)"}} className="w-full"/;;
+    $in_section = 0;
+  }$FILE"
+' "$FILE"
+echo "Fixed landing page with responsive wide layout"
+echo "Fixed landing page with responsive wide layout"
+FIXSCRIPT
+chmod +x /tmp/fix-landing.sh
+chmod +x /tmp/fix-landing.sh
+/tmp/fix-landing.sh
+# Rebuild
+# Rebuilduild
+npm run buildld.sh
+bash post-build.shd
+pm2 restart navimed
+echo "✅ Applied proper wide layout with responsive padding!"
+echo "✅ Applied proper wide layout with responsive padding!"
+cp: overwrite 'client/src/pages/landing-fixed.tsx'? 
