@@ -1,0 +1,56 @@
+# Create a brand new, minimal, working index.css
+cat > client/src/index.css << 'EOF'
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+  }
+}
+EOF
+
+# Verify it's clean
+echo "=== New clean index.css ===" 
+cat client/src/index.css
+
+# Build - should have NO syntax errors!
+npm run build 2>&1 | grep -i "syntax-error" && echo "❌ STILL BROKEN" || echo "✅ FINALLY CLEAN!!!"
+
+bash post-build.sh
+pm2 restart navimed
+
+echo "✅ Brand new clean CSS + Tailwind config (1600px) should work now!"
+=== New clean index.css ===
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+  }
+}
+npm run build 2>&1 | grep -i "syntax-error" && echo "❌ STILL BROKEN" || echo "✅ FINALLY CLEAN# Build - should have NO syntax errors!!"
+✅ FINALLY CLEAN# Build - should have NO syntax errors!!
+📦 Syncing built assets from dist/public to server/public...
+✅ Assets synced successfully with rsync!
+   dist/public → server/public
+   21 files synced
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1918543  │ 0s     │ 35   │ online    │ 0%       │ 13.4mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+✅ Brand new clean CSS + Tailwind config (1600px) should work now!
+[root@wizardly-swirles NaviMed]# 
