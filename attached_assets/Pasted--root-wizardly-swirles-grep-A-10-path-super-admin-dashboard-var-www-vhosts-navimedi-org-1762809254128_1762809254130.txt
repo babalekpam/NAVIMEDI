@@ -1,0 +1,77 @@
+[root@wizardly-swirles ~]# grep -A 10 "path=\"/super-admin-dashboard\"" /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/App.tsx
+        <Route path="/super-admin-dashboard">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
+                  <SuperAdminDashboard />
+                </main>
+              </div>
+            </div>
+[root@wizardly-swirles ~]# ls -lh /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/*.js
+-rw-r--r--. 1 root root  13K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/achievements-Da8XZZQO.js
+-rw-r--r--. 1 root root 9.5K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/api-docs-5_kO4xA0.js
+-rw-r--r--. 1 root root 7.5K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/api-docs-BU3nacIN.js
+-rw-r--r--. 1 root root 6.6K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/appointment-scheduling-La6Z2s3m.js
+-rw-r--r--. 1 root root  13K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/aws-integration-BCiKa23j.js
+-rw-r--r--. 1 root root 4.1K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/billing-insurance-Dv5F3RVF.js
+-rw-r--r--. 1 root root 7.6K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/billing-management-Dn6sctxz.js
+-rw-r--r--. 1 root root 2.2K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/checkout-DwHuE94M.js
+-rw-r--r--. 1 root root 3.0K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/checkout-simple-CYBayokp.js
+-rw-r--r--. 1 root root 4.8K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/clinical-documentation-BZ6WmPf_.js
+-rw-r--r--. 1 root root 4.2K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/clinics-CJmtUEhb.js
+-rw-r--r--. 1 root root  28K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/comprehensive-user-training-x_SKYa4x.js
+-rw-r--r--. 1 root root 5.0K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/contact-CcgY2mN6.js
+-rw-r--r--. 1 root root  43K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/currency-management-BzWuY-PB.js
+-rw-r--r--. 1 root root  29K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/documentation-D8E5vfkQ.js
+-rw-r--r--. 1 root root 4.7K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/electronic-health-records-Bu4tiPBI.js
+-rw-r--r--. 1 root root  20K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/first-patient-registration-C0OPaxw2.js
+-rw-r--r--. 1 root root 5.8K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/getting-started-DmcUG987.js
+-rw-r--r--. 1 root root 4.8K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/help-center-C54EApD_.js
+-rw-r--r--. 1 root root  22K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/hospital-billing-DrWoZYBu.js
+-rw-r--r--. 1 root root 9.5K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/hospitals-C90yrUUT.js
+-rw-r--r--. 1 root root 3.9M Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/index-CNLWd-7r.js
+-rw-r--r--. 1 root root  18K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/initial-system-configuration-B1fK2xE7.js
+-rw-r--r--. 1 root root 8.9K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/integrations-DtOCXopu.js
+-rw-r--r--. 1 root root 7.9K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/inventory-audits-Lzt4uSwv.js
+-rw-r--r--. 1 root root  44K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/lab-analytics-dashboard-B49JLqa1.js
+-rw-r--r--. 1 root root  26K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/lab-inventory-management-IESbqAJM.js
+-rw-r--r--. 1 root root 3.6K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/laboratories-DvuxPhbm.js
+-rw-r--r--. 1 root root 8.5K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/laboratory-billing-BLBqxxcK.js
+-rw-r--r--. 1 root root 4.1K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/laboratory-order-processing-39qT3Z9L.js
+-rw-r--r--. 1 root root  20K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/laboratory-registration-2uOTpXsn.js
+-rw-r--r--. 1 root root  25K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/lab-results-reporting-C8O-eyLH.js
+-rw-r--r--. 1 root root  22K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/lab-sample-management-DjYtdi25.js
+-rw-r--r--. 1 root root  24K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/lab-test-management-BPhYQu50.js
+-rw-r--r--. 1 root root  21K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/medication-insurance-claims-BsHe1At0.js
+-rw-r--r--. 1 root root 4.6K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/organization-setup-CatkpvW1.js
+-rw-r--r--. 1 root root 6.6K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/patient-management-DSbKgIJs.js
+-rw-r--r--. 1 root root 5.5K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/payment-demo-D0Lmnhls.js
+-rw-r--r--. 1 root root 1.5K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/payment-success-BZllIcBg.js
+-rw-r--r--. 1 root root 6.8K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/pharmacy-billing-UaxJAF06.js
+-rw-r--r--. 1 root root  19K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/pharmacy-customers-C53oAmyE.js
+-rw-r--r--. 1 root root 7.4K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/pharmacy-inventory-Q4q7Mf47.js
+-rw-r--r--. 1 root root 3.8K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/platform-overview-DpJrcQBV.js
+-rw-r--r--. 1 root root  13K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/prescription-archives-BXuPNp34.js
+-rw-r--r--. 1 root root 4.7K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/prescription-management-qOVJMA4v.js
+-rw-r--r--. 1 root root  28K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/profile-settings-QyAqn8ey.js
+-rw-r--r--. 1 root root  18K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/quick-reference-guide-DGO4wHT2.js
+-rw-r--r--. 1 root root  20K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/role-based-access-setup-CqZ_HTsj.js
+-rw-r--r--. 1 root root 4.6K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/security-compliance-DIeokc5X.js
+-rw-r--r--. 1 root root 5.5K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/status-BVbuEF11.js
+-rw-r--r--. 1 root root 3.3K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/subscribe-C9nFsyf0.js
+-rw-r--r--. 1 root root 2.1K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/subscription-success-BJyYQEfj.js
+-rw-r--r--. 1 root root  26K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/system-admin-training-CBqTV4Mc.js
+-rw-r--r--. 1 root root 8.0K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/trial-status-Bm8AZWMx.js
+-rw-r--r--. 1 root root  14K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/troubleshooting-guide-eGtTiauL.js
+-rw-r--r--. 1 root root  14K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/user-account-configuration-C4N30JIB.js
+-rw-r--r--. 1 root root 7.4K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/video-integration-options-DcZfLmmB.js
+-rw-r--r--. 1 root root  16K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/video-player-CIvoLrzY.js
+-rw-r--r--. 1 root root 9.8K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/vimeo-integration-9xmNxKeI.js
+-rw-r--r--. 1 root root  19K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/workflow-training-modules-BUIU0AoH.js
+-rw-r--r--. 1 root root 7.8K Nov 10 20:11 /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/assets/youtube-integration-C-qtl1hx.js
+[root@wizardly-swirles ~]# cat /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/index.html | grep -o 'index-[^"]*\.js'
+index-CNLWd-7r.js
+[root@wizardly-swirles ~]# 
