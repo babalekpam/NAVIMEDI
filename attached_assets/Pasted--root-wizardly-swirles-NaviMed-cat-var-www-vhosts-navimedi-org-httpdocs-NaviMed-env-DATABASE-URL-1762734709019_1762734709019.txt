@@ -1,0 +1,40 @@
+[root@wizardly-swirles NaviMed]# cat /var/www/vhosts/navimedi.org/httpdocs/NaviMed/.env
+DATABASE_URL=postgresql://neondb_owner:npg_C8zBN1aW2BW0@ep-cold-star-a5zqz8k7-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require
+NODE_ENV=production
+SESSION_SECRET=navimed-ultra-secure-session-key-2024-production
+JWT_SECRET=navimed-jwt-secret-key-ultra-secure-2024
+
+SMTP_HOST=mail.navimedi.org
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=no-reply@navimedi.org
+SMTP_PASS=Serrega1208@!!
+SMTP_FROM=no-reply@navimedi.org
+[root@wizardly-swirles NaviMed]# cat > /var/www/vhosts/navimedi.org/httpdocs/NaviMed/ecosystem.config.cjs << 'EOF'
+module.exports = {
+  apps: [{
+    name: 'navimed',
+    script: './dist/index.js',
+    instances: 1,
+    exec_mode: 'fork',
+    env_file: './.env',
+    env: {
+      NODE_ENV: 'production'
+    }
+  }]
+};
+EOF
+[root@wizardly-swirles NaviMed]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed && pm2 delete navimed && pm2 start ecosystem.config.cjs
+[PM2] Applying action deleteProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬───────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name      │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+└────┴───────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Applications navimed not running, starting...
+[PM2] App [navimed] launched (1 instances)
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1948759  │ 0s     │ 0    │ online    │ 0%       │ 14.9mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[root@wizardly-swirles NaviMed]# 
