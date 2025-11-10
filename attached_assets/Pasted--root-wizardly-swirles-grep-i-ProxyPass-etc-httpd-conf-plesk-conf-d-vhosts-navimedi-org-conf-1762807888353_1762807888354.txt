@@ -1,0 +1,31 @@
+[root@wizardly-swirles ~]# grep -i "ProxyPass" /etc/httpd/conf/plesk.conf.d/vhosts/navimedi.org.conf
+[root@wizardly-swirles ~]# cat /etc/httpd/conf/plesk.conf.d/vhosts/navimedi.org.conf | grep -n "Include.*vhost" -A 2 -B 2
+96-             DirectoryIndex "index.html" "index.cgi" "index.pl" "index.php" "index.xhtml" "index.htm" "index.shtml"
+97-
+98:             Include "/var/www/vhosts/system/navimedi.org/conf/vhost_ssl.conf"
+99-
+100-            <Directory /var/www/vhosts/navimedi.org>
+--
+169-    # mailconfig
+170-
+171:    Include "/var/www/vhosts/system/navimedi.org/conf/vhost.conf"
+172-
+173-    <IfModule mod_rewrite.c>
+[root@wizardly-swirles ~]# httpd -t -D DUMP_VHOSTS 2>&1 | grep -A 10 "navimedi.org"
+         port 7081 namevhost webmail.navimedi.org (/etc/httpd/conf/plesk.conf.d/webmails/navimedi.org_webmail.conf:47)
+         port 7081 namevhost navimedi.org (/etc/httpd/conf/plesk.conf.d/vhosts/navimedi.org.conf:10)
+                 alias www.navimedi.org
+                 alias ipv4.navimedi.org
+127.0.0.1:7080         is a NameVirtualHost
+         default server default (/etc/httpd/conf/plesk.conf.d/server.conf:67)
+         port 7080 namevhost default (/etc/httpd/conf/plesk.conf.d/server.conf:67)
+         port 7080 namevhost plesk-service.localdomain (/etc/httpd/conf/plesk.conf.d/server.conf:150)
+         port 7080 namevhost webmail.navimedi.org (/etc/httpd/conf/plesk.conf.d/webmails/navimedi.org_webmail.conf:5)
+         port 7080 namevhost navimedi.org (/etc/httpd/conf/plesk.conf.d/vhosts/navimedi.org.conf:146)
+                 alias www.navimedi.org
+                 alias ipv4.navimedi.org
+[root@wizardly-swirles ~]# ls -la /var/www/vhosts/system/navimedi.org/conf/vhost*.conf
+-rw-------. 1 root apache 299 Nov 10 20:40 /var/www/vhosts/system/navimedi.org/conf/vhost.conf
+-rw-------. 1 root nginx    1 Nov 10 18:42 /var/www/vhosts/system/navimedi.org/conf/vhost_nginx.conf
+-rw-------. 1 root apache 299 Nov 10 20:46 /var/www/vhosts/system/navimedi.org/conf/vhost_ssl.conf
+[root@wizardly-swirles ~]# 
