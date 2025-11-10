@@ -1,0 +1,210 @@
+[root@wizardly-swirles NaviMed]# curl http://127.0.0.1:5000/super-admin-dashboard
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=0.5, maximum-scale=5.0" />
+    
+    <!-- Preconnect to external domains for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- DNS prefetch for performance -->
+    <link rel="dns-prefetch" href="//www.google-analytics.com">
+    <link rel="dns-prefetch" href="//js.stripe.com">
+    
+    <!-- Resource hints for critical assets -->
+    <link rel="prefetch" href="/api/platform/stats">
+    
+    <!-- Critical CSS inlining hint -->
+    <style>
+      /* Critical above-the-fold CSS */
+      body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+      .loading-spinner { animation: spin 1s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+    <title>NaviMED - Healthcare Platform for Hospitals & Pharmacies</title>
+    <meta name="description" content="Transform your healthcare practice with NaviMED - the leading multi-tenant platform for hospitals, pharmacies & laboratories. HIPAA compliant, multilingual support, real-time patient management. Start your free trial today!">
+    <meta name="keywords" content="healthcare management software, hospital management system, pharmacy management platform, laboratory information system, medical records software, prescription management, patient portal, telemedicine, healthcare technology, HIPAA compliant healthcare software, medical practice management, clinical workflow automation, electronic health records, healthcare billing software, medical inventory management, patient scheduling software, healthcare analytics, multi-tenant healthcare platform, African healthcare software, global healthcare solutions">
+    <meta name="author" content="ARGILETTE Healthcare Solutions">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="google-site-verification" content="your-google-verification-code-here">
+    <link rel="canonical" href="https://navimedi.org/">
+    <!-- Standard favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+    
+    <!-- Apple Touch Icons for iOS devices -->
+    <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    
+    <!-- Standard favicons for different sizes -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png">
+    
+    <!-- Web App Manifest for PWA support -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Enhanced Open Graph Tags -->
+    <meta property="og:title" content="NaviMED - Healthcare Platform for Hospitals & Pharmacies">
+    <meta property="og:description" content="Transform your healthcare practice with NaviMED's enterprise-grade platform. HIPAA compliant, multilingual support, and seamless integration for hospitals, pharmacies & laboratories worldwide.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://navimedi.org/">
+    <meta property="og:image" content="https://navimedi.org/images/navimed-healthcare-platform-og.jpg">
+    <meta property="og:image:alt" content="NaviMED Healthcare Management Platform Dashboard">
+    <meta property="og:site_name" content="NaviMED">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Enhanced Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@NaviMED">
+    <meta name="twitter:creator" content="@NaviMED">
+    <meta name="twitter:title" content="NaviMED - Healthcare Platform for Hospitals & Pharmacies">
+    <meta name="twitter:description" content="Enterprise-grade healthcare platform for hospitals, pharmacies & laboratories. HIPAA compliant with global multilingual support.">
+    <meta name="twitter:image" content="https://navimedi.org/images/navimed-healthcare-platform-twitter.jpg">
+    
+    <!-- Additional SEO Meta Tags -->
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="msapplication-TileColor" content="#059669">
+    <meta name="application-name" content="NaviMED">
+    <meta name="apple-mobile-web-app-title" content="NaviMED">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <!-- Geo and Language Tags -->
+    <meta name="geo.region" content="GLOBAL">
+    <meta name="geo.placename" content="Global Healthcare Platform">
+    <meta name="language" content="en-US">
+    <link rel="alternate" hreflang="en" href="https://navimedi.com/">
+    <link rel="alternate" hreflang="es" href="https://navimedi.com/es/">
+    <link rel="alternate" hreflang="fr" href="https://navimedi.com/fr/">
+    <link rel="alternate" hreflang="de" href="https://navimedi.com/de/">
+    <link rel="alternate" hreflang="sw" href="https://navimedi.com/sw/">
+    <link rel="alternate" hreflang="ar" href="https://navimedi.com/ar/">
+    
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "NaviMED Healthcare Management Platform",
+      "applicationCategory": "HealthApplication",
+      "applicationSubCategory": "Healthcare Management",
+      "operatingSystem": "Web Browser",
+      "description": "Comprehensive healthcare management platform for hospitals, pharmacies, and laboratories with HIPAA compliance and multilingual support.",
+      "url": "https://navimedi.com",
+      "offers": {
+        "@type": "Offer",
+        "price": "29.99",
+        "priceCurrency": "USD",
+        "priceSpecification": {
+          "@type": "UnitPriceSpecification",
+          "price": "29.99",
+          "priceCurrency": "USD",
+          "billingIncrement": "P1M"
+        }
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "500",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "featureList": [
+        "Hospital Management System",
+        "Pharmacy Management",
+        "Laboratory Information System",
+        "Patient Portal",
+        "Prescription Management",
+        "Medical Records",
+        "Multilingual Support",
+        "HIPAA Compliance",
+        "Real-time Analytics",
+        "Telemedicine Integration"
+      ],
+      "provider": {
+        "@type": "Organization",
+        "name": "ARGILETTE Healthcare Solutions",
+        "url": "https://navimedi.com"
+      }
+    }
+    </script>
+    <script type="module" crossorigin src="/assets/index-CNLWd-7r.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-IX5zQT7q.css">
+  </head>
+  <body>
+    <div id="root">
+      <!-- Fallback content for search engines and JavaScript-disabled browsers -->
+      <noscript>
+        <div style="padding: 40px; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <h1>NaviMED - Healthcare Management Platform</h1>
+          <p>Streamline your medical practice with NaviMED's comprehensive healthcare management platform.</p>
+          <p>Our secure, multi-tenant solution connects hospitals, pharmacies, and laboratories for better healthcare delivery.</p>
+          <p>Please enable JavaScript to access the full platform.</p>
+        </div>
+      </noscript>
+      <!-- Loading content for SEO crawlers -->
+      <div id="seo-content" style="position: absolute; left: -9999px; top: -9999px;">
+        <h1>NaviMED Healthcare Management Platform</h1>
+        <h2>Streamline Your Medical Practice</h2>
+        <p>NaviMED is a comprehensive healthcare management platform that connects hospitals, pharmacies, and laboratories. Our secure, multi-tenant solution helps healthcare providers streamline prescriptions, manage patient records, and improve healthcare delivery.</p>
+        
+        <h3>Key Features</h3>
+        <ul>
+          <li>Hospital Management System</li>
+          <li>Pharmacy Management</li>
+          <li>Laboratory Information System</li>
+          <li>Patient Portal</li>
+          <li>Prescription Management</li>
+          <li>Medical Records</li>
+          <li>Multilingual Support</li>
+          <li>HIPAA Compliant</li>
+        </ul>
+        
+        <h3>For Healthcare Providers</h3>
+        <p>Manage your healthcare facility with our integrated platform that supports hospitals, clinics, pharmacies, and laboratories.</p>
+        
+        <h3>For Patients</h3>
+        <p>Access your medical records, prescriptions, lab results, and communicate with your healthcare team securely.</p>
+        
+        <h3>Security & Compliance</h3>
+        <p>HIPAA compliant platform with enterprise-grade security, multi-factor authentication, and secure data handling.</p>
+      </div>
+    </div>
+  </body>
+</html>[root@wizardly-swirles Navpm2 logs navimed --lines 50 --nostream | grep -i "super-admin\|GET /"|GET /"
+0|navimed  | 6:18:06 PM [express] GET /api/platform/stats 200 in 3ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:21:05 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:21:13 PM [express] GET /api/platform/stats 200 in 2ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:23:01 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:23:02 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:23:29 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:24:01 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:24:03 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:24:56 PM [express] GET /api/platform/stats 200 in 0ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:25:01 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:25:04 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:25:16 PM [express] GET /api/csrf-token 200 in 1ms :: {"csrfToken":"cda2f50b65568aac5eb0cb9c2d43b40…
+0|navimed  | 6:25:19 PM [express] GET /api/tenant/current 401 in 3ms :: {"message":"Invalid token","code":"TOKEN_…
+0|navimed  | 6:25:19 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:28:25 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:31:35 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:31:37 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:31:40 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:32:09 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:32:12 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:32:40 PM [express] GET /api/platform/stats 200 in 0ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:33:09 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 6:33:11 PM [express] GET /api/platform/stats 200 in 2ms :: {"platform":"NaviMED Healthcare Platform"…
+[root@wizardly-swirles NaviMed]# 
