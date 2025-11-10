@@ -1,0 +1,38 @@
+[root@wizardly-swirles NaviMed]# sed -i 's/SMTP_HOST=mail.navimedi.org/SMTP_HOST=navimedi.org/' /var/www/vhosts/navimedi.org/httpdocs/NaviMed/.env
+[root@wizardly-swirles NaviMed]# cat /var/www/vhosts/navimedi.org/httpdocs/NaviMed/.env | grep SMTP
+# SMTP Email Configuration - REAL CREDENTIALS
+SMTP_HOST=navimedi.org
+SMTP_PORT=465
+SMTP_USER=no-reply@navimedi.org
+SMTP_PASS=Serrega1208@
+[root@wizardly-swirles NaviMed]# pm2 restart navimed --update-env
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ N/A     │ fork    │ 1959701  │ 0s     │ 68   │ online    │ 0%       │ 17.8mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[root@wizardly-swirles NaviMed]# pm2 logs navimed --lines 20 --err
+[TAILING] Tailing last 20 lines for [navimed] process (change the value with --lines option)
+/root/.pm2/logs/navimed-error-0.log last 20 lines:
+0|navimed  |   command: 'AUTH PLAIN'
+0|navimed  | }
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP connection error: Error: Invalid login: 535 5.7.8 Error: authentication failed: authentication failure
+0|navimed  |     at SMTPConnection._formatError (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/nodemailer/lib/smtp-connection/index.js:809:19)
+0|navimed  |     at SMTPConnection._actionAUTHComplete (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/nodemailer/lib/smtp-connection/index.js:1595:34)
+0|navimed  |     at SMTPConnection.<anonymous> (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/nodemailer/lib/smtp-connection/index.js:556:26)
+0|navimed  |     at SMTPConnection._processResponse (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/nodemailer/lib/smtp-connection/index.js:993:20)
+0|navimed  |     at SMTPConnection._onData (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/nodemailer/lib/smtp-connection/index.js:774:14)
+0|navimed  |     at SMTPConnection._onSocketData (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/nodemailer/lib/smtp-connection/index.js:195:44)
+0|navimed  |     at TLSSocket.emit (node:events:524:28)
+0|navimed  |     at addChunk (node:internal/streams/readable:561:12)
+0|navimed  |     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+0|navimed  |     at Readable.push (node:internal/streams/readable:392:5)
+0|navimed  |     at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23) {
+0|navimed  |   code: 'EAUTH',
+0|navimed  |   response: '535 5.7.8 Error: authentication failed: authentication failure',
+0|navimed  |   responseCode: 535,
+0|navimed  |   command: 'AUTH PLAIN'
+0|navimed  | }
