@@ -10,6 +10,37 @@ NaviMED is a multi-tenant healthcare platform connecting independent pharmacies 
 
 ## Recent Changes (November 2025)
 
+### Production Deployment - JWT Authentication Fix
+**Date:** November 10, 2025
+**Goal:** Resolve JWT authentication issues preventing Super Admin Dashboard access on production VPS (navimedi.org)
+
+**Problem:**
+- Users could log in but received "Invalid JWT token: invalid signature" errors
+- Super Admin Dashboard returned 404 errors after authentication
+- Apache reverse proxy modules were disabled
+
+**Solutions Implemented:**
+1. **JWT Secret Configuration:**
+   - Added `JWT_SECRET` to production `.env` file using `openssl rand -base64 32`
+   - Restarted PM2 service to load new environment variable
+   
+2. **Apache Proxy Configuration:**
+   - Enabled `mod_proxy` and `mod_proxy_http` in `/etc/httpd/conf.modules.d/00-proxy.conf`
+   - Restarted Apache (`systemctl restart httpd`) to activate modules
+   
+3. **Request Flow Verified:**
+   - Browser → Nginx (port 443) → Apache (port 7081) → Node.js (port 5000)
+   - SPA routing working correctly for all dashboard routes
+
+**Impact:**
+- ✅ Login functionality fully operational at https://navimedi.org/login
+- ✅ Super Admin Dashboard accessible at https://navimedi.org/super-admin-dashboard
+- ✅ JWT authentication working correctly across all protected routes
+- ✅ Production deployment stable and secure
+
+**Known Issues:**
+- SMTP email service experiencing intermittent authentication failures (graceful degradation in place)
+
 ### Training Enrollment System Implementation
 **Date:** November 8, 2025
 **Goal:** Enable users to enroll in NaviMED training programs directly from the website
