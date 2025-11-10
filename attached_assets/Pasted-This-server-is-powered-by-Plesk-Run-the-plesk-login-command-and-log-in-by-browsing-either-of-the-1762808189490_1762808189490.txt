@@ -1,0 +1,46 @@
+This server is powered by Plesk.
+
+Run the 'plesk login' command and log in by browsing either of the links received in the output.
+Use the 'plesk' command to manage the server. Run 'plesk help' for more info.
+
+[root@wizardly-swirles ~]# apachectl configtest
+Syntax OK
+[root@wizardly-swirles ~]# apachectl -t -D DUMP_RUN_CFG 2>&1 | grep -i proxy | head -20
+[root@wizardly-swirles ~]# curl -I https://navimedi.org/super-admin-dashboard 2>&1 | head -15
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0 10075    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+HTTP/2 200 
+server: nginx
+date: Mon, 10 Nov 2025 20:56:03 GMT
+content-type: text/html; charset=UTF-8
+content-length: 10075
+content-security-policy: default-src 'self';style-src 'self' 'unsafe-inline';script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com;img-src 'self' data: https: blob:;connect-src 'self' ws: wss: http: https: https://api.stripe.com;font-src 'self' data:;object-src 'none';media-src 'self';frame-src 'self' https://js.stripe.com https://hooks.stripe.com;base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests
+cross-origin-opener-policy: same-origin
+cross-origin-resource-policy: same-origin
+origin-agent-cluster: ?1
+referrer-policy: strict-origin-when-cross-origin
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-content-type-options: nosniff
+[root@wizardly-swirles ~]# tail -20 /var/log/httpd/access_log
+212.127.78.122 - - [10/Nov/2025:20:06:45 +0000] "GET /public/index.php?s=/index/\\think\\app/invokefunction&function=call_user_func_array&vars[0]=md5&vars[1][]=Hello HTTP/1.0" 404 196 "-" "libredtail-http"
+212.127.78.122 - - [10/Nov/2025:20:06:45 +0000] "GET /index.php?lang=../../../../../../../../usr/local/lib/php/pearcmd&+config-create+/&/<?echo(md5(\"hi\"));?>+/tmp/index1.php HTTP/1.0" 404 196 "-" "libredtail-http"
+212.127.78.122 - - [10/Nov/2025:20:06:46 +0000] "GET /index.php?lang=../../../../../../../../tmp/index1 HTTP/1.0" 404 196 "-" "libredtail-http"
+212.127.78.122 - - [10/Nov/2025:20:06:46 +0000] "GET /containers/json HTTP/1.0" 404 196 "-" "libredtail-http"
+193.142.147.209 - - [10/Nov/2025:20:14:52 +0000] "GET /cgi-bin/luci/;stok=/locale HTTP/1.0" 404 196 "-" "-"
+51.158.54.10 - - [10/Nov/2025:20:31:26 +0000] "GET / HTTP/1.0" 200 1658 "-" "ivre-masscan/1.3 https://github.com/robertdavidgraham/"
+127.0.0.1 - - [10/Nov/2025:20:31:49 +0000] "HEAD / HTTP/1.1" 200 - "-" "-"
+78.153.140.178 - - [10/Nov/2025:20:32:01 +0000] "GET /.env HTTP/1.0" 403 199 "-" "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 3.0.4506.2152; .NET CLR 3.5.30729; .NET4.0C; .NET4.0E)"
+78.153.140.178 - - [10/Nov/2025:20:32:01 +0000] "GET /api/.env HTTP/1.0" 403 199 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; Touch; LCJB; rv:11.0) like Gecko"
+78.153.140.178 - - [10/Nov/2025:20:32:01 +0000] "GET /backend/.env HTTP/1.0" 403 199 "-" "Mozilla/5.0 (Linux; U; Android 4.4.2; en-us; LGMS323 Build/KOT49I.MS32310b) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/30.0.1599.103 Mobile Safari/537.36"
+78.153.140.178 - - [10/Nov/2025:20:32:02 +0000] "GET /admin/.env HTTP/1.0" 403 199 "-" "Dalvik/1.6.0 (Linux; U; Android 4.4.2; SM-T210 Build/KOT49H)"
+78.153.140.178 - - [10/Nov/2025:20:32:02 +0000] "GET /.env.example HTTP/1.0" 403 199 "-" "Mozilla/5.0 (Linux; U; Android 2.3.6; pt-br; GT-S5302B Build/GINGERBREAD) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1"
+127.0.0.1 - - [10/Nov/2025:20:33:58 +0000] "HEAD / HTTP/1.1" 200 - "-" "-"
+85.204.89.150 - - [10/Nov/2025:20:36:04 +0000] "GET / HTTP/1.0" 200 1658 "-" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36"
+85.204.89.150 - - [10/Nov/2025:20:36:04 +0000] "GET / HTTP/1.0" 200 1658 "-" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
+85.204.89.150 - - [10/Nov/2025:20:36:04 +0000] "GET / HTTP/1.0" 200 1658 "-" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
+127.0.0.1 - - [10/Nov/2025:20:42:12 +0000] "HEAD / HTTP/1.1" 200 - "-" "-"
+127.0.0.1 - - [10/Nov/2025:20:46:14 +0000] "HEAD / HTTP/1.1" 200 - "-" "-"
+127.0.0.1 - - [10/Nov/2025:20:49:37 +0000] "HEAD / HTTP/1.1" 200 - "-" "-"
+38.107.84.127 - - [10/Nov/2025:20:51:51 +0000] "GET / HTTP/1.0" 200 1658 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0.2 Safari/605.1.15"
+[root@wizardly-swirles ~]# 
