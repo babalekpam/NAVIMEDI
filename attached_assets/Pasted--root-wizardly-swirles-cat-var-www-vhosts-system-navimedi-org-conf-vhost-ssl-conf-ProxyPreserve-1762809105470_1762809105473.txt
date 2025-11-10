@@ -1,0 +1,208 @@
+[root@wizardly-swirles ~]# cat /var/www/vhosts/system/navimedi.org/conf/vhost_ssl.conf
+ProxyPreserveHost On
+ProxyPass / http://127.0.0.1:5000/
+ProxyPassReverse / http://127.0.0.1:5000/
+
+<IfModule mod_rewrite.c>
+  RewriteEngine on
+  RewriteCond %{HTTP:Upgrade} websocket [NC]
+  RewriteCond %{HTTP:Connection} upgrade [NC]
+  RewriteRule ^/?(.*) "ws://127.0.0.1:5000/$1" [P,L]
+</IfModule>
+[root@wizardly-swirles ~]# grep "super-admin-dashboard" /var/log/httpd/access_log | tail -5
+[root@wizardly-swirles ~]# pm2 logs navimed --lines 20 --nostream | grep "super-admin-dashboard"
+[root@wizardly-swirles ~]# netstat -tlnp | grep :7081
+-bash: netstat: command not found
+[root@wizardly-swirles ~]# ss -tlnp | grep :7081
+LISTEN 0      511                        127.0.0.1:7081       0.0.0.0:*    users:(("httpd",pid=2068241,fd=4),("httpd",pid=2067209,fd=4),("httpd",pid=2067180,fd=4),("httpd",pid=2067162,fd=4),("httpd",pid=2067133,fd=4),("httpd",pid=2067101,fd=4))
+[root@wizardly-swirles ~]# curl -Ik https://127.0.0.1:7081/
+tail -30 /var/www/vhosts/system/navimedi.org/logs/proxy_error_log
+tail -30 /var/log/httpd/error_log
+HTTP/1.1 200 OK
+Date: Mon, 10 Nov 2025 21:10:15 GMT
+Server: Apache
+Last-Modified: Thu, 21 Aug 2025 09:35:29 GMT
+ETag: "67a-63cdccf521a40"
+Accept-Ranges: bytes
+Content-Length: 1658
+Content-Type: text/html
+
+2025/10/08 16:25:19 [crit] 942291#0: *2888 SSL_read() failed (SSL: error:0A000119:SSL routines::decryption failed or bad record mac error:0A000139:SSL routines::record layer failure error:0A000139:SSL routines::record layer failure) while waiting for request, client: 45.148.10.160, server: 74.208.166.77:443
+2025/10/12 21:30:25 [error] 1690848#0: *15428 openat() "/var/www/vhosts/default/htdocs/.well-known/pki-validation/index.php" failed (2: No such file or directory), client: 172.192.52.1, server: navimedi.org, request: "GET /.well-known/pki-validation/index.php HTTP/1.1", host: "navimedi.org"
+2025/10/12 21:30:31 [error] 1690848#0: *15428 openat() "/var/www/vhosts/default/htdocs/.well-known/pki-validation/dropdown.php" failed (2: No such file or directory), client: 172.192.52.1, server: navimedi.org, request: "GET /.well-known/pki-validation/dropdown.php HTTP/1.1", host: "navimedi.org"
+2025/10/12 22:07:54 [error] 1811633#0: *5 peer closed connection in SSL handshake (104: Connection reset by peer) while SSL handshaking to upstream, client: 24.216.176.253, server: navimedi.org, request: "GET /assets/image_1754352650858-BnYJl1Ml.png HTTP/2.0", upstream: "https://127.0.0.1:7081/assets/image_1754352650858-BnYJl1Ml.png", host: "navimedi.org", referrer: "https://navimedi.org/"
+2025/10/15 01:05:16 [error] 2111832#0: *2678 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/preflight" failed (2: No such file or directory), client: 192.0.80.124, server: navimedi.org, request: "GET /.well-known/acme-challenge/preflight HTTP/1.1", host: "www.navimedi.org", referrer: "https://www.navimedi.org/.well-known/acme-challenge/preflight"
+2025/10/15 01:05:57 [error] 2111832#0: *2683 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/preflight" failed (2: No such file or directory), client: 192.0.80.124, server: navimedi.org, request: "GET /.well-known/acme-challenge/preflight HTTP/1.1", host: "navimedi.org", referrer: "https://navimedi.org/.well-known/acme-challenge/preflight"
+2025/10/22 01:05:29 [error] 2111832#0: *28481 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/preflight" failed (2: No such file or directory), client: 192.0.80.124, server: navimedi.org, request: "GET /.well-known/acme-challenge/preflight HTTP/1.1", host: "www.navimedi.org", referrer: "https://www.navimedi.org/.well-known/acme-challenge/preflight"
+2025/10/22 01:06:05 [error] 2111832#0: *28488 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/preflight" failed (2: No such file or directory), client: 192.0.80.124, server: navimedi.org, request: "GET /.well-known/acme-challenge/preflight HTTP/1.1", host: "navimedi.org", referrer: "https://navimedi.org/.well-known/acme-challenge/preflight"
+2025/10/22 10:39:13 [crit] 2111832#0: *29680 SSL_read() failed (SSL: error:0A000119:SSL routines::decryption failed or bad record mac error:0A000139:SSL routines::record layer failure) while keepalive, client: 45.148.10.159, server: 74.208.166.77:443
+2025/10/24 14:39:42 [error] 2111832#0: *37227 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/about.php" failed (2: No such file or directory), client: 52.178.223.71, server: navimedi.org, request: "GET /.well-known/acme-challenge/about.php HTTP/1.1", host: "www.navimedi.org"
+2025/10/25 20:19:19 [error] 2111832#0: *40299 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/index.php" failed (2: No such file or directory), client: 52.178.193.251, server: navimedi.org, request: "GET /.well-known/acme-challenge/index.php HTTP/1.1", host: "navimedi.org"
+2025/10/25 20:19:21 [error] 2111832#0: *40299 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/admin.php" failed (2: No such file or directory), client: 52.178.193.251, server: navimedi.org, request: "GET /.well-known/acme-challenge/admin.php HTTP/1.1", host: "navimedi.org"
+2025/10/26 15:16:57 [crit] 2111832#0: *48037 SSL_read() failed (SSL: error:0A000119:SSL routines::decryption failed or bad record mac error:0A000139:SSL routines::record layer failure error:0A000139:SSL routines::record layer failure) while waiting for request, client: 45.148.10.115, server: 74.208.166.77:443
+2025/10/26 15:17:03 [crit] 2111832#0: *48038 SSL_read() failed (SSL: error:0A000119:SSL routines::decryption failed or bad record mac error:0A000139:SSL routines::record layer failure error:0A000139:SSL routines::record layer failure) while waiting for request, client: 45.148.10.115, server: 74.208.166.77:443
+2025/10/26 18:11:17 [crit] 2111832#0: *48954 SSL_read() failed (SSL: error:0A000119:SSL routines::decryption failed or bad record mac error:0A000139:SSL routines::record layer failure error:0A000139:SSL routines::record layer failure) while waiting for request, client: 45.148.10.143, server: 74.208.166.77:443
+2025/10/26 18:11:22 [crit] 2111832#0: *48955 SSL_read() failed (SSL: error:0A000119:SSL routines::decryption failed or bad record mac error:0A000139:SSL routines::record layer failure error:0A000139:SSL routines::record layer failure) while waiting for request, client: 45.148.10.143, server: 74.208.166.77:443
+2025/10/26 18:11:35 [crit] 2111832#0: *48961 SSL_read() failed (SSL: error:0A000119:SSL routines::decryption failed or bad record mac error:0A000139:SSL routines::record layer failure error:0A000139:SSL routines::record layer failure) while waiting for request, client: 45.148.10.143, server: 74.208.166.77:443
+2025/10/28 16:33:57 [error] 2111832#0: *56491 openat() "/var/www/vhosts/default/htdocs/.well-known/pki-validation/dropdown.php" failed (2: No such file or directory), client: 172.190.142.176, server: navimedi.org, request: "GET /.well-known/pki-validation/dropdown.php HTTP/1.1", host: "navimedi.org"
+2025/10/28 16:57:56 [error] 2111832#0: *56630 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/about.php" failed (2: No such file or directory), client: 74.176.186.150, server: navimedi.org, request: "GET /.well-known/acme-challenge/about.php HTTP/1.1", host: "navimedi.org"
+2025/11/02 20:22:40 [crit] 462233#0: *79757 SSL_read() failed (SSL: error:0A000119:SSL routines::decryption failed or bad record mac error:0A000139:SSL routines::record layer failure error:0A000139:SSL routines::record layer failure) while waiting for request, client: 195.178.110.157, server: 74.208.166.77:443
+2025/11/04 05:42:29 [error] 1096663#0: *88 peer closed connection in SSL handshake (104: Connection reset by peer) while SSL handshaking to upstream, client: 24.216.176.253, server: navimedi.org, request: "GET /assets/image_1754352650858-BnYJl1Ml.png HTTP/2.0", upstream: "https://127.0.0.1:7081/assets/image_1754352650858-BnYJl1Ml.png", host: "navimedi.org", referrer: "https://navimedi.org/"
+2025/11/04 05:43:58 [error] 1097848#0: *1 peer closed connection in SSL handshake (104: Connection reset by peer) while SSL handshaking to upstream, client: 24.216.176.253, server: navimedi.org, request: "GET /assets/image_1754352626174-D1C0mYbb.png HTTP/2.0", upstream: "https://127.0.0.1:7081/assets/image_1754352626174-D1C0mYbb.png", host: "navimedi.org", referrer: "https://navimedi.org/"
+2025/11/06 16:57:52 [error] 1098074#0: *15005 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/about.php" failed (2: No such file or directory), client: 4.216.107.25, server: navimedi.org, request: "GET /.well-known/acme-challenge/about.php HTTP/1.1", host: "navimedi.org"
+2025/11/06 23:57:58 [error] 1098074#0: *17248 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/OaYWcLnBHa9noZ3y-VYudMeMN1F52N0EixEEE3NFrFo" failed (2: No such file or directory), client: 23.178.112.105, server: navimedi.org, request: "GET /.well-known/acme-challenge/OaYWcLnBHa9noZ3y-VYudMeMN1F52N0EixEEE3NFrFo HTTP/1.1", host: "navimedi.org", referrer: "http://navimedi.org/.well-known/acme-challenge/OaYWcLnBHa9noZ3y-VYudMeMN1F52N0EixEEE3NFrFo"
+2025/11/06 23:59:02 [error] 1098074#0: *17250 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/R2wlcAPIE9ZXjkydfNhtnd3MuxxvYAErszAR5InuUZ0" failed (2: No such file or directory), client: 23.178.112.104, server: navimedi.org, request: "GET /.well-known/acme-challenge/R2wlcAPIE9ZXjkydfNhtnd3MuxxvYAErszAR5InuUZ0 HTTP/1.1", host: "navimedi.org", referrer: "http://navimedi.org/.well-known/acme-challenge/R2wlcAPIE9ZXjkydfNhtnd3MuxxvYAErszAR5InuUZ0"
+2025/11/07 00:01:08 [error] 1098074#0: *17254 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/uBDZWhRnwNadYLxUP_9M7OywHga82b6uSt7cywOjDKo" failed (2: No such file or directory), client: 23.178.112.104, server: navimedi.org, request: "GET /.well-known/acme-challenge/uBDZWhRnwNadYLxUP_9M7OywHga82b6uSt7cywOjDKo HTTP/1.1", host: "navimedi.org", referrer: "http://navimedi.org/.well-known/acme-challenge/uBDZWhRnwNadYLxUP_9M7OywHga82b6uSt7cywOjDKo"
+2025/11/07 00:05:13 [error] 1098074#0: *17262 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/wopzk0EUSU0iQ4zE8D8Gkeu9Xdgf0YaKlrrLdgPxwFM" failed (2: No such file or directory), client: 23.178.112.213, server: navimedi.org, request: "GET /.well-known/acme-challenge/wopzk0EUSU0iQ4zE8D8Gkeu9Xdgf0YaKlrrLdgPxwFM HTTP/1.1", host: "navimedi.org", referrer: "http://navimedi.org/.well-known/acme-challenge/wopzk0EUSU0iQ4zE8D8Gkeu9Xdgf0YaKlrrLdgPxwFM"
+2025/11/07 00:13:17 [error] 1098074#0: *17264 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/YjAGwGaeAuj7KY2D-h7WtabXk0iKhymqlazeWQFPmGg" failed (2: No such file or directory), client: 23.178.112.219, server: navimedi.org, request: "GET /.well-known/acme-challenge/YjAGwGaeAuj7KY2D-h7WtabXk0iKhymqlazeWQFPmGg HTTP/1.1", host: "navimedi.org", referrer: "http://navimedi.org/.well-known/acme-challenge/YjAGwGaeAuj7KY2D-h7WtabXk0iKhymqlazeWQFPmGg"
+2025/11/09 14:12:53 [error] 1797979#0: *31501 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/mariju.php" failed (2: No such file or directory), client: 20.222.66.73, server: navimedi.org, request: "GET /.well-known/acme-challenge/mariju.php HTTP/1.1", host: "navimedi.org"
+2025/11/09 14:12:54 [error] 1797979#0: *31501 openat() "/var/www/vhosts/default/htdocs/.well-known/acme-challenge/index.php" failed (2: No such file or directory), client: 20.222.66.73, server: navimedi.org, request: "GET /.well-known/acme-challenge/index.php HTTP/1.1", host: "navimedi.org"
+[Mon Nov 10 20:46:20.435354 2025] [ssl:warn] [pid 2066256:tid 2066256] AH01909: default-74-208-166-77:443:0 server certificate does NOT include an ID which matches the server name
+[Mon Nov 10 20:46:20.435512 2025] [lbmethod_heartbeat:notice] [pid 2066256:tid 2066256] AH02282: No slotmem from mod_heartmonitor
+[Mon Nov 10 20:46:20.521798 2025] [mpm_event:notice] [pid 2066256:tid 2066256] AH00489: Apache/2.4.62 (AlmaLinux) OpenSSL/3.2.2 mod_fcgid/2.3.9 Phusion_Passenger/6.0.27 configured -- resuming normal operations
+[Mon Nov 10 20:46:20.522396 2025] [core:notice] [pid 2066256:tid 2066256] AH00094: Command line: '/usr/sbin/httpd -D FOREGROUND'
+[Mon Nov 10 20:49:34.437644 2025] [mpm_event:notice] [pid 2066256:tid 2066256] AH00493: SIGUSR1 received.  Doing graceful restart
+
+[Mon Nov 10 20:49:37.659506 2025] [ssl:warn] [pid 2066256:tid 2066256] AH01909: webmail.navimedi.org:443:0 server certificate does NOT include an ID which matches the server name
+[Mon Nov 10 20:49:37.660113 2025] [ssl:warn] [pid 2066256:tid 2066256] AH01909: default-74-208-166-77:443:0 server certificate does NOT include an ID which matches the server name
+[Mon Nov 10 20:49:37.660286 2025] [lbmethod_heartbeat:notice] [pid 2066256:tid 2066256] AH02282: No slotmem from mod_heartmonitor
+[Mon Nov 10 20:49:37.714101 2025] [mpm_event:notice] [pid 2066256:tid 2066256] AH00489: Apache/2.4.62 (AlmaLinux) OpenSSL/3.2.2 mod_fcgid/2.3.9 Phusion_Passenger/6.0.27 configured -- resuming normal operations
+[Mon Nov 10 20:49:37.714139 2025] [core:notice] [pid 2066256:tid 2066256] AH00094: Command line: '/usr/sbin/httpd -D FOREGROUND'
+[Mon Nov 10 20:49:38.713162 2025] [mpm_event:notice] [pid 2066256:tid 2066256] AH00492: caught SIGWINCH, shutting down gracefully
+
+[Mon Nov 10 20:49:43.051621 2025] [core:notice] [pid 2067101:tid 2067101] SELinux policy enabled; httpd running as context system_u:system_r:httpd_t:s0
+[Mon Nov 10 20:49:43.052727 2025] [suexec:notice] [pid 2067101:tid 2067101] AH01232: suEXEC mechanism enabled (wrapper: /usr/sbin/suexec)
+[Mon Nov 10 20:49:43.055681 2025] [ssl:warn] [pid 2067101:tid 2067101] AH01909: webmail.navimedi.org:443:0 server certificate does NOT include an ID which matches the server name
+[Mon Nov 10 20:49:43.056280 2025] [ssl:warn] [pid 2067101:tid 2067101] AH01909: default-74-208-166-77:443:0 server certificate does NOT include an ID which matches the server name
+[Mon Nov 10 20:49:43.056532 2025] [security2:notice] [pid 2067101:tid 2067101] ModSecurity for Apache/2.9.12 (http://www.modsecurity.org/) configured.
+[Mon Nov 10 20:49:43.056540 2025] [security2:notice] [pid 2067101:tid 2067101] ModSecurity: APR compiled version="1.7.0"; loaded version="1.7.0"
+[Mon Nov 10 20:49:43.056544 2025] [security2:notice] [pid 2067101:tid 2067101] ModSecurity: PCRE compiled version="8.44 "; loaded version="8.44 2020-02-12"
+[Mon Nov 10 20:49:43.056558 2025] [security2:notice] [pid 2067101:tid 2067101] ModSecurity: LUA compiled version="Lua 5.4"
+[Mon Nov 10 20:49:43.056562 2025] [security2:notice] [pid 2067101:tid 2067101] ModSecurity: YAJL compiled version="2.1.0"
+[Mon Nov 10 20:49:43.056565 2025] [security2:notice] [pid 2067101:tid 2067101] ModSecurity: LIBXML compiled version="2.9.13"
+[Mon Nov 10 20:49:43.056568 2025] [security2:notice] [pid 2067101:tid 2067101] ModSecurity: Status engine is currently disabled, enable it by set SecStatusEngine to On.
+
+[Mon Nov 10 20:49:43.258375 2025] [ssl:warn] [pid 2067101:tid 2067101] AH01909: webmail.navimedi.org:443:0 server certificate does NOT include an ID which matches the server name
+[Mon Nov 10 20:49:43.258999 2025] [ssl:warn] [pid 2067101:tid 2067101] AH01909: default-74-208-166-77:443:0 server certificate does NOT include an ID which matches the server name
+[Mon Nov 10 20:49:43.259148 2025] [lbmethod_heartbeat:notice] [pid 2067101:tid 2067101] AH02282: No slotmem from mod_heartmonitor
+[Mon Nov 10 20:49:43.320524 2025] [mpm_event:notice] [pid 2067101:tid 2067101] AH00489: Apache/2.4.62 (AlmaLinux) OpenSSL/3.2.2 mod_fcgid/2.3.9 Phusion_Passenger/6.0.27 configured -- resuming normal operations
+[Mon Nov 10 20:49:43.321060 2025] [core:notice] [pid 2067101:tid 2067101] AH00094: Command line: '/usr/sbin/httpd -D FOREGROUND'
+[root@wizardly-swirles ~]# pm2 logs navimed --lines 50 --nostream
+[TAILING] Tailing last 50 lines for [navimed] process (change the value with --lines option)
+/root/.pm2/logs/navimed-error-0.log last 50 lines:
+0|navimed  | SMTP connection error: Error: connect ECONNREFUSED 74.208.166.77:587
+0|navimed  |     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+0|navimed  |   errno: -111,
+0|navimed  |   code: 'ESOCKET',
+0|navimed  |   syscall: 'connect',
+0|navimed  |   address: '74.208.166.77',
+0|navimed  |   port: 587,
+0|navimed  |   command: 'CONN'
+0|navimed  | }
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP connection error: Error: connect ECONNREFUSED 74.208.166.77:587
+0|navimed  |     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+0|navimed  |   errno: -111,
+0|navimed  |   code: 'ESOCKET',
+0|navimed  |   syscall: 'connect',
+0|navimed  |   address: '74.208.166.77',
+0|navimed  |   port: 587,
+0|navimed  |   command: 'CONN'
+0|navimed  | }
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+
+/root/.pm2/logs/navimed-out-0.log last 50 lines:
+0|navimed  | 8:31:50 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:31:51 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:31:53 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:31:56 PM [express] GET /api/csrf-token 200 in 1ms :: {"csrfToken":"a9dc53ded8f0a5b152fb78e7117de33…
+0|navimed  | 🔐 Login attempt: { email: 'abel@argilette.com', tenantId: undefined, hasPassword: true }
+0|navimed  | Super admin login detected
+0|navimed  | Super admin lookup result: true
+0|navimed  | ✅ User found: 8a4b6998-8b08-40fa-adda-f3a90b69e7ba abel@argilette.com has password: true
+0|navimed  | Password validation result: true
+0|navimed  | 8:31:56 PM [express] POST /api/auth/login 200 in 214ms :: {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX…
+0|navimed  | 8:31:56 PM [express] GET /api/tenant/current 401 in 2ms :: {"message":"Invalid token","code":"TOKEN_…
+0|navimed  | 8:31:56 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:33:16 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:33:19 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:37:31 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:37:35 PM [express] GET /api/csrf-token 200 in 1ms :: {"csrfToken":"a9dc53ded8f0a5b152fb78e7117de33…
+0|navimed  | 🔐 Login attempt: { email: 'abel@argilette.com', tenantId: undefined, hasPassword: true }
+0|navimed  | Super admin login detected
+0|navimed  | Super admin lookup result: true
+0|navimed  | ✅ User found: 8a4b6998-8b08-40fa-adda-f3a90b69e7ba abel@argilette.com has password: true
+0|navimed  | Password validation result: true
+0|navimed  | 8:37:36 PM [express] POST /api/auth/login 200 in 584ms :: {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX…
+0|navimed  | 8:37:36 PM [express] GET /api/tenant/current 401 in 2ms :: {"message":"Invalid token","code":"TOKEN_…
+0|navimed  | 8:37:36 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:59:27 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:59:28 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:59:30 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:59:30 PM [express] GET /api/platform/stats 200 in 0ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:59:35 PM [express] GET /api/csrf-token 200 in 1ms :: {"csrfToken":"a9dc53ded8f0a5b152fb78e7117de33…
+0|navimed  | 🔐 Login attempt: { email: 'abel@argilette.com', tenantId: undefined, hasPassword: true }
+0|navimed  | Super admin login detected
+0|navimed  | Super admin lookup result: true
+0|navimed  | ✅ User found: 8a4b6998-8b08-40fa-adda-f3a90b69e7ba abel@argilette.com has password: true
+0|navimed  | Password validation result: true
+0|navimed  | 8:59:35 PM [express] POST /api/auth/login 200 in 235ms :: {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX…
+0|navimed  | 8:59:35 PM [express] GET /api/tenant/current 401 in 2ms :: {"message":"Invalid token","code":"TOKEN_…
+0|navimed  | 8:59:36 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 9:01:01 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 9:01:04 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 9:01:10 PM [express] GET /api/platform/stats 200 in 0ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 9:01:13 PM [express] GET /api/csrf-token 200 in 0ms :: {"csrfToken":"a9dc53ded8f0a5b152fb78e7117de33…
+0|navimed  | 🔐 Login attempt: { email: 'abel@argilette.com', tenantId: undefined, hasPassword: true }
+0|navimed  | Super admin login detected
+0|navimed  | Super admin lookup result: true
+0|navimed  | ✅ User found: 8a4b6998-8b08-40fa-adda-f3a90b69e7ba abel@argilette.com has password: true
+0|navimed  | Password validation result: true
+0|navimed  | 9:01:14 PM [express] POST /api/auth/login 200 in 647ms :: {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX…
+0|navimed  | 9:01:14 PM [express] GET /api/tenant/current 401 in 2ms :: {"message":"Invalid token","code":"TOKEN_…
+0|navimed  | 9:01:14 PM [express] GET /api/platform/stats 200 in 0ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 9:05:28 PM [express] GET /api137.php 200 in 2ms
+
+[root@wizardly-swirles ~]# grep -A 10 "path=\"/super-admin-dashboard\"" /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/App.tsx
+        <Route path="/super-admin-dashboard">
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
+                  <SuperAdminDashboard />
+                </main>
+              </div>
+            </div>
+[root@wizardly-swirles ~]# 
