@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
-import { Building2, Users, Activity, Database, CheckCircle, XCircle, Clock, Mail, Phone, MapPin, Calendar, Crown, Edit3, TrendingUp, BarChart3, PieChart } from "lucide-react";
+import { Building2, Users, Activity, Database, CheckCircle, XCircle, Clock, Mail, Phone, MapPin, Calendar, Crown, Edit3, TrendingUp, BarChart3, PieChart, GraduationCap } from "lucide-react";
+import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
@@ -1024,6 +1025,27 @@ export default function SuperAdminDashboard() {
               </Card>
             </div>
           )}
+
+          {/* Quick Actions */}
+          <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5 text-blue-600" />
+                Training Enrollments
+              </CardTitle>
+              <CardDescription>
+                View and manage NaviMED training program enrollments
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/training-enrollments">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700" data-testid="button-view-training-enrollments">
+                  <GraduationCap className="h-4 w-4 mr-2" />
+                  View All Training Enrollments
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
 
           {/* Platform Analytics Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

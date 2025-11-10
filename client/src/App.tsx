@@ -41,6 +41,7 @@ import Billing from "@/pages/billing";
 import TenantManagement from "@/pages/tenant-management";
 import SuperAdminDashboard from "@/pages/super-admin-dashboard";
 import SuperAdminClientManagement from "@/pages/super-admin-client-management";
+import TrainingEnrollments from "@/pages/training-enrollments";
 import AuditLogs from "@/pages/audit-logs";
 import UserRoles from "@/pages/user-roles";
 import Reports from "@/pages/reports";
@@ -498,6 +499,11 @@ function AppContent() {
                 </main>
               </div>
             </div>
+          </ProtectedRoute>
+        </Route>
+        <Route path="/training-enrollments">
+          <ProtectedRoute>
+            <TrainingEnrollments />
           </ProtectedRoute>
         </Route>
         {/* Supplier routes now handled by direct HTML pages */}
