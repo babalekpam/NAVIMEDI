@@ -1,0 +1,144 @@
+[PM2] Saving current process list...
+[PM2] Successfully saved in /root/.pm2/dump.pm2
+[root@wizardly-swirles NaviMed]# pm2 logs navimed --lines 30
+[TAILING] Tailing last 30 lines for [navimed] process (change the value with --lines option)
+/root/.pm2/logs/navimed-error-0.log last 30 lines:
+0|navimed  |       at async initializePlatform (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23978:28) {
+0|navimed  |     length: 75,
+0|navimed  |     severity: 'ERROR',
+0|navimed  |     code: 'XX000',
+0|navimed  |     detail: undefined,
+0|navimed  |     hint: undefined,
+0|navimed  |     position: undefined,
+0|navimed  |     internalPosition: undefined,
+0|navimed  |     internalQuery: undefined,
+0|navimed  |     where: undefined,
+0|navimed  |     schema: undefined,
+0|navimed  |     table: undefined,
+0|navimed  |     column: undefined,
+0|navimed  |     dataType: undefined,
+0|navimed  |     constraint: undefined,
+0|navimed  |     file: undefined,
+0|navimed  |     line: undefined,
+0|navimed  |     routine: undefined
+0|navimed  |   }
+0|navimed  | }
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP connection error: Error: connect ECONNREFUSED 74.208.166.77:587
+0|navimed  |     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+0|navimed  |   errno: -111,
+0|navimed  |   code: 'ESOCKET',
+0|navimed  |   syscall: 'connect',
+0|navimed  |   address: '74.208.166.77',
+0|navimed  |   port: 587,
+0|navimed  |   command: 'CONN'
+0|navimed  | }
+
+/root/.pm2/logs/navimed-out-0.log last 30 lines:
+0|navimed  | ✅ Analytics routes registered successfully
+0|navimed  | 🏥 Registering DICOM medical imaging routes...
+0|navimed  | ✅ DICOM medical imaging routes registered successfully
+0|navimed  | ✅ BI Reports endpoints registered successfully
+0|navimed  | Server running on port 5000
+0|navimed  | 12:41:10 AM [express] serving on port 5000
+0|navimed  | 12:41:12 AM [express] 🌍 Initializing countries first...
+0|navimed  | 🌍 Initializing default countries...
+0|navimed  | ✓ Comprehensive countries already initialized
+0|navimed  | 12:41:13 AM [express] ✓ Using Nigeria (b50f15cb-f548-4b9c-98ab-de565e05b70c) as platform tenant country
+0|navimed  | 12:41:13 AM [express] ✓ Platform tenant already exists
+0|navimed  | 12:41:13 AM [express] ✓ Super admin already exists
+0|navimed  | 12:41:13 AM [express] ✓ Platform initialization complete
+0|navimed  | 12:41:46 AM [express] GET /api/csrf-token 200 in 6ms :: {"csrfToken":"f162ecae9e07cdb6018834a7d731b0a…
+0|navimed  | 🔐 Login attempt: { email: 'abel@argilette.com', tenantId: undefined, hasPassword: true }
+0|navimed  | Super admin login detected
+0|navimed  | Super admin lookup result: true
+0|navimed  | ✅ User found: 8a4b6998-8b08-40fa-adda-f3a90b69e7ba abel@argilette.com has password: true
+0|navimed  | Password validation result: true
+0|navimed  | 12:41:48 AM [express] POST /api/auth/login 200 in 2201ms :: {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6Ikp…
+0|navimed  | 12:41:48 AM [express] GET /api/tenant/current 200 in 75ms :: {"id":"15b85353-0985-4fec-bd4d-7bc236e19…
+0|navimed  | 12:41:48 AM [express] GET /api/platform/stats 200 in 2ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 12:41:49 AM [express] GET /api/user/language-preference 404 in 52ms :: {"message":"API endpoint not f…
+0|navimed  | 12:41:49 AM [express] GET /api/admin/stripe-revenue 503 in 164ms :: {"success":false,"message":"Strip…
+0|navimed  | 12:41:49 AM [express] GET /api/tenant/current 200 in 168ms :: {"id":"15b85353-0985-4fec-bd4d-7bc236e1…
+0|navimed  | 12:41:49 AM [express] GET /api/admin/suppliers 200 in 187ms :: []
+0|navimed  | 12:41:49 AM [express] GET /api/admin/tenants 200 in 213ms :: [{"id":"15b85353-0985-4fec-bd4d-7bc236e1…
+0|navimed  | 12:41:49 AM [express] GET /api/admin/platform-stats 200 in 237ms :: {"totalTenants":2,"totalUsers":2,…
+0|navimed  | 12:41:49 AM [express] GET /api/admin/platform-stats 200 in 283ms :: {"success":true,"data":{"tenants"…
+0|navimed  | 12:41:50 AM [express] GET /api/admin/stripe-revenue 503 in 93ms :: {"success":false,"message":"Stripe…
+
+^C
+[root@wizardly-swirles NaviMed]# cat > /var/www/vhosts/navimedi.org/httpdocs/NaviMed/.env << 'EOF'
+DATABASE_URL=postgresql://neondb_owner:npg_vMTokQ6w9fey@ep-square-moon-aexpu2wb.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require
+NODE_ENV=production
+SESSION_SECRET=navimed-ultra-secure-session-key-2024-production
+JWT_SECRET=navimed-jwt-secret-key-ultra-secure-2024
+SMTP_HOST=mail.navimedi.org
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=no-reply@navimedi.org
+SMTP_PASS=Serrega1208@!!
+SMTP_FROM=no-reply@navimedi.org
+EOF
+[root@wizardly-swirles NaviMed]# pm2 restart navimed
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ N/A     │ fork    │ 1949826  │ 0s     │ 1    │ online    │ 0%       │ 17.4mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[root@wizardly-swirles NaviMed]# pm2 restart navimed --update-env && sleep 3 && pm2 logs navimed --lines 20 --nostream
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ N/A     │ fork    │ 1949915  │ 0s     │ 2    │ online    │ 0%       │ 14.4mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[TAILING] Tailing last 20 lines for [navimed] process (change the value with --lines option)
+/root/.pm2/logs/navimed-error-0.log last 20 lines:
+0|navimed  |     column: undefined,
+0|navimed  |     dataType: undefined,
+0|navimed  |     constraint: undefined,
+0|navimed  |     file: undefined,
+0|navimed  |     line: undefined,
+0|navimed  |     routine: undefined
+0|navimed  |   }
+0|navimed  | }
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP connection error: Error: connect ECONNREFUSED 74.208.166.77:587
+0|navimed  |     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+0|navimed  |   errno: -111,
+0|navimed  |   code: 'ESOCKET',
+0|navimed  |   syscall: 'connect',
+0|navimed  |   address: '74.208.166.77',
+0|navimed  |   port: 587,
+0|navimed  |   command: 'CONN'
+0|navimed  | }
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+
+/root/.pm2/logs/navimed-out-0.log last 20 lines:
+0|navimed  | 12:43:45 AM [express] ✓ Super admin already exists
+0|navimed  | 12:43:45 AM [express] ✓ Platform initialization complete
+0|navimed  | 🧪 Registering simple test routes...
+0|navimed  | ✅ Simple test routes registered successfully
+0|navimed  | 🔒 Applying security middleware for BREACH protection...
+0|navimed  | 📦 Registering inventory management routes...
+0|navimed  | ✅ Inventory management routes registered successfully
+0|navimed  | 📚 Registering patient engagement routes...
+0|navimed  | ✅ Patient engagement routes registered successfully
+0|navimed  | 🔧 Registering developer portal routes...
+0|navimed  | ✅ Developer portal routes registered successfully
+0|navimed  | 📊 Registering analytics routes...
+0|navimed  | 📊 Skipping duplicate platform-stats registration (exists in routes.ts)
+0|navimed  | ✅ Analytics routes registered successfully
+0|navimed  | 🏥 Registering DICOM medical imaging routes...
+0|navimed  | ✅ DICOM medical imaging routes registered successfully
+0|navimed  | ✅ BI Reports endpoints registered successfully
+0|navimed  | Server running on port 5000
+0|navimed  | 12:44:28 AM [express] serving on port 5000
+0|navimed  | ✅ SMTP server ready to send emails
+
+[root@wizardly-swirles NaviMed]# 
