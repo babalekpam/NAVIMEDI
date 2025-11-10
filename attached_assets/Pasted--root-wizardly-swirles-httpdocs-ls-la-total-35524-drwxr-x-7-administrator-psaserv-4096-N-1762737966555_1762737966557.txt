@@ -1,0 +1,32 @@
+[root@wizardly-swirles httpdocs]# ls -la
+total 35524
+drwxr-x---.  7 administrator psaserv     4096 Nov 10 01:17 .
+drwx--x---.  7 administrator psaserv      121 Oct 31 03:35 ..
+-rw-r--r--.  1 root          root        1601 Nov  9 03:57 android-chrome-192x192.png
+-rw-r--r--.  1 root          root        1601 Nov  9 03:57 android-chrome-512x512.png
+-rw-r--r--.  1 root          root        1601 Nov  9 03:57 apple-touch-icon-114x114.png
+-rw-r--r--.  1 root          root        1601 Nov  9 03:57 apple-touch-icon-120x120.png
+-rw-r--r--.  1 root          root        1601 Nov  9 03:57 apple-touch-icon-144x144.png
+-rw-r--r--.  1 root          root        1601 Nov  9 03:57 apple-touch-icon-152x152.png
+-rw-r--r--.  1 root          root        1601 Nov  9 03:57 apple-touch-icon-180x180.png
+-rw-r--r--.  1 root          root        1601 Nov  9 03:57 apple-touch-icon-57x57.png
+-rw-r--r--.  1 root          root        1601 Nov  9 03:57 apple-touch-icon-60x60.png
+-rw-r--r--.  1 root          root        1601 Nov  9 03:57 apple-touch-icon-72x72.png
+-rw-r--r--.  1 root          root        1601 Nov  9 03:57 apple-touch-icon-76x76.png
+-rw-r--r--.  1 root          root        1601 Nov  9 03:57 apple-touch-icon.png
+drwxr-xr-x.  2 root          root        4096 Nov  9 03:57 assets
+-rw-r--r--.  1 administrator psacln  36252443 Nov  4 01:41 dist.zip
+-rw-r--r--.  1 root          root        1601 Nov  9 03:57 favicon-16x16.png
+-rw-r--r--.  1 root          root        1601 Nov  9 03:57 favicon-32x32.png
+-rw-r--r--.  1 root          root        1601 Nov  9 03:57 favicon.ico
+-rw-r--r--.  1 root          root          53 Nov  9 03:57 google2ae759b1998ec13b.html
+-rw-r--r--.  1 root          root       10075 Nov  9 03:57 index.html
+drwxr-xr-x. 20 root          root        4096 Nov 10 00:31 NaviMed_backup
+drwxr-xr-x.  8 root          root        4096 Nov  9 23:25 NaviMed.corrupted.backup
+drwxr-xr-x.  8 root          root        4096 Nov  9 12:47 NaviMed_old_backup
+-rw-r--r--.  1 root          root          87 Nov  9 06:07 package-lock.json
+-rw-r--r--.  1 root          root         529 Nov  9 03:57 robots.txt
+-rw-r--r--.  1 root          root        9780 Nov  9 03:57 sitemap.xml
+-rw-r--r--.  1 root          root         707 Nov  9 03:57 site.webmanifest
+drwxr-xr-x.  3 root          root          28 Nov  9 03:57 .well-known
+[root@wizardly-swirles httpdocs]# 
