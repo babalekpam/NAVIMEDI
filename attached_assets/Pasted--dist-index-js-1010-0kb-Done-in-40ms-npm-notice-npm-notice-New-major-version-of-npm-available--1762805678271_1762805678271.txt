@@ -1,0 +1,122 @@
+
+  dist/index.js  1010.0kb
+
+⚡ Done in 40ms
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.6.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.2
+npm notice To update run: npm install -g npm@11.6.2
+npm notice
+📦 Syncing built assets from dist/public to server/public...
+✅ Assets synced successfully with rsync!
+   dist/public → server/public
+   22 files synced
+[PM2] Applying action restartProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ N/A     │ fork    │ 2060229  │ 0s     │ 77   │ online    │ 0%       │ 14.4mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[root@wizardly-swirles NaviMed]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+grep -c 'super-admin-dashboard' server/public/assets/index-CNLWd-7r.js
+6
+[root@wizardly-swirles NaviMed]# curl -I http://127.0.0.1:5000/super-admin-dashboard
+HTTP/1.1 200 OK
+Content-Security-Policy: default-src 'self';style-src 'self' 'unsafe-inline';script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com;img-src 'self' data: https: blob:;connect-src 'self' ws: wss: http: https: https://api.stripe.com;font-src 'self' data:;object-src 'none';media-src 'self';frame-src 'self' https://js.stripe.com https://hooks.stripe.com;base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+Cache-Control: no-cache, no-store, must-revalidate, private
+Pragma: no-cache
+Expires: 0
+X-SSL-Protection: enforce-tls12-plus
+X-Cipher-Policy: gcm-only-no-cbc
+X-TLS-Version: min-tls-1.2
+X-Cipher-Security: no-cbc-ciphers
+X-Vulnerability-Protection: lucky13-mitigated
+X-CSRF-Token: 4c7788d84090d0d73595e54cedd91920a62db2ff6d0da88e7ee190f85d5c477f
+Accept-Ranges: bytes
+Last-Modified: Mon, 10 Nov 2025 20:11:16 GMT
+ETag: W/"275b-19a6f64eb02"
+Content-Type: text/html; charset=UTF-8
+Content-Length: 10075
+Vary: Accept-Encoding
+Date: Mon, 10 Nov 2025 20:14:05 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+[root@wizardly-swirles NaviMed]# pm2 logs navimed --lines 30
+[TAILING] Tailing last 30 lines for [navimed] process (change the value with --lines option)
+/root/.pm2/logs/navimed-error-0.log last 30 lines:
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP connection error: Error: connect ECONNREFUSED 74.208.166.77:587
+0|navimed  |     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+0|navimed  |   errno: -111,
+0|navimed  |   code: 'ESOCKET',
+0|navimed  |   syscall: 'connect',
+0|navimed  |   address: '74.208.166.77',
+0|navimed  |   port: 587,
+0|navimed  |   command: 'CONN'
+0|navimed  | }
+0|navimed  | Invalid JWT token: invalid signature
+
+/root/.pm2/logs/navimed-out-0.log last 30 lines:
+0|navimed  | 🔧 Registering developer portal routes...
+0|navimed  | ✅ Developer portal routes registered successfully
+0|navimed  | 📊 Registering analytics routes...
+0|navimed  | 📊 Skipping duplicate platform-stats registration (exists in routes.ts)
+0|navimed  | ✅ Analytics routes registered successfully
+0|navimed  | 🏥 Registering DICOM medical imaging routes...
+0|navimed  | ✅ DICOM medical imaging routes registered successfully
+0|navimed  | ✅ BI Reports endpoints registered successfully
+0|navimed  | Server running on port 5000
+0|navimed  | 8:11:18 PM [express] serving on port 5000
+0|navimed  | 8:11:20 PM [express] 🌍 Initializing countries first...
+0|navimed  | 🌍 Initializing default countries...
+0|navimed  | ✓ Comprehensive countries already initialized
+0|navimed  | 8:11:21 PM [express] ✓ Using Nigeria (b50f15cb-f548-4b9c-98ab-de565e05b70c) as platform tenant country
+0|navimed  | 8:11:21 PM [express] ✓ Platform tenant already exists
+0|navimed  | 8:11:21 PM [express] ✓ Super admin already exists
+0|navimed  | 8:11:21 PM [express] ✓ Platform initialization complete
+0|navimed  | 8:11:48 PM [express] GET /api/platform/stats 200 in 4ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:11:50 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:11:51 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:11:55 PM [express] GET /api/csrf-token 200 in 1ms :: {"csrfToken":"a9dc53ded8f0a5b152fb78e7117de33…
+0|navimed  | 🔐 Login attempt: { email: 'abel@argilette.com', tenantId: undefined, hasPassword: true }
+0|navimed  | Super admin login detected
+0|navimed  | Super admin lookup result: true
+0|navimed  | ✅ User found: 8a4b6998-8b08-40fa-adda-f3a90b69e7ba abel@argilette.com has password: true
+0|navimed  | Password validation result: true
+0|navimed  | 8:11:55 PM [express] POST /api/auth/login 200 in 218ms :: {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX…
+0|navimed  | 8:11:56 PM [express] GET /api/tenant/current 401 in 3ms :: {"message":"Invalid token","code":"TOKEN_…
+0|navimed  | 8:11:56 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 8:11:59 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+
