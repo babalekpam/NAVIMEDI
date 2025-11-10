@@ -1,0 +1,164 @@
+[root@wizardly-swirles NaviMed]# pm2 logs navimed --lines 20
+[TAILING] Tailing last 20 lines for [navimed] process (change the value with --lines option)
+/root/.pm2/logs/navimed-out-0.log last 20 lines:
+0|navimed  | ✅ User found: 8a4b6998-8b08-40fa-adda-f3a90b69e7ba abel@argilette.com has password: true
+0|navimed  | Password validation result: true
+0|navimed  | 12:56:29 AM [express] POST /api/auth/login 200 in 730ms :: {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX…
+0|navimed  | 12:56:29 AM [express] GET /api/tenant/current 200 in 74ms :: {"id":"15b85353-0985-4fec-bd4d-7bc236e19…
+0|navimed  | 12:56:29 AM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 12:56:30 AM [express] GET /api/user/language-preference 404 in 52ms :: {"message":"API endpoint not f…
+0|navimed  | 12:56:30 AM [express] GET /api/admin/platform-stats 200 in 153ms :: {"success":true,"data":{"tenants"…
+0|navimed  | 12:56:30 AM [express] GET /api/admin/stripe-revenue 503 in 173ms :: {"success":false,"message":"Strip…
+0|navimed  | 12:56:30 AM [express] GET /api/admin/tenants 200 in 207ms :: [{"id":"15b85353-0985-4fec-bd4d-7bc236e1…
+0|navimed  | 12:56:30 AM [express] GET /api/admin/suppliers 200 in 207ms :: []
+0|navimed  | 12:56:31 AM [express] GET /api/admin/stripe-revenue 503 in 82ms :: {"success":false,"message":"Stripe…
+0|navimed  | 12:56:32 AM [express] GET /api/tenant/current 200 in 2180ms :: {"id":"15b85353-0985-4fec-bd4d-7bc236e…
+0|navimed  | 12:56:32 AM [express] GET /api/admin/platform-stats 200 in 2273ms :: {"totalTenants":2,"totalUsers":2…
+0|navimed  | 1:27:36 AM [express] GET /api/user/language-preference 404 in 159ms :: {"message":"API endpoint not …
+0|navimed  | 1:27:36 AM [express] GET /api/admin/stripe-revenue 503 in 186ms :: {"success":false,"message":"Strip…
+0|navimed  | 1:27:36 AM [express] GET /api/admin/suppliers 200 in 192ms :: []
+0|navimed  | 1:27:36 AM [express] GET /api/admin/tenants 200 in 232ms :: [{"id":"15b85353-0985-4fec-bd4d-7bc236e1…
+0|navimed  | 1:27:36 AM [express] GET /api/admin/platform-stats 200 in 269ms :: {"success":true,"data":{"tenants"…
+0|navimed  | 1:27:36 AM [express] GET /api/admin/platform-stats 200 in 273ms :: {"totalTenants":2,"totalUsers":2,…
+0|navimed  | 1:27:37 AM [express] GET /api/admin/stripe-revenue 503 in 84ms :: {"success":false,"message":"Stripe…
+
+/root/.pm2/logs/navimed-error-0.log last 20 lines:
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|navimed  | 
+0|navimed  | Node.js v20.19.5
+0|navimed  | file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301
+0|navimed  |       throw new Error(
+0|navimed  |             ^
+0|navimed  | 
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at server/db.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301:13)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at server/storage.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5517:5)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:12193:1
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|navimed  | 
+0|navimed  | Node.js v20.19.5
+
+0|navimed  | file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301
+0|navimed  |       throw new Error(
+0|navimed  |             ^
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at server/db.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301:13)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at server/storage.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5517:5)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:12193:1
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|navimed  | Node.js v20.19.5
+0|navimed  | file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301
+0|navimed  |       throw new Error(
+0|navimed  |             ^
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at server/db.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301:13)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at server/storage.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5517:5)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:12193:1
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|navimed  | Node.js v20.19.5
+0|navimed  | file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301
+0|navimed  |       throw new Error(
+0|navimed  |             ^
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at server/db.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301:13)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at server/storage.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5517:5)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:12193:1
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|navimed  | Node.js v20.19.5
+0|navimed  | file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301
+0|navimed  |       throw new Error(
+0|navimed  |             ^
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at server/db.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301:13)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at server/storage.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5517:5)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:12193:1
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|navimed  | Node.js v20.19.5
+0|navimed  | file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301
+0|navimed  |       throw new Error(
+0|navimed  |             ^
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at server/db.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301:13)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at server/storage.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5517:5)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:12193:1
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|navimed  | Node.js v20.19.5
+0|navimed  | file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301
+0|navimed  |       throw new Error(
+0|navimed  |             ^
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at server/db.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301:13)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at server/storage.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5517:5)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:12193:1
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|navimed  | Node.js v20.19.5
+0|navimed  | file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301
+0|navimed  |       throw new Error(
+0|navimed  |             ^
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at server/db.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301:13)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at server/storage.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5517:5)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:12193:1
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|navimed  | Node.js v20.19.5
+0|navimed  | file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301
+0|navimed  |       throw new Error(
+0|navimed  |             ^
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at server/db.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301:13)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at server/storage.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5517:5)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:12193:1
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|navimed  | Node.js v20.19.5
+0|navimed  | file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301
+0|navimed  |       throw new Error(
+0|navimed  |             ^
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at server/db.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301:13)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at server/storage.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5517:5)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:12193:1
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|navimed  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|navimed  | Node.js v20.19.5
+0|nav
