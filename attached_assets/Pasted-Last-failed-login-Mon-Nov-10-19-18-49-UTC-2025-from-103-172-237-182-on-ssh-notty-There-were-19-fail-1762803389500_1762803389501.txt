@@ -1,0 +1,56 @@
+Last failed login: Mon Nov 10 19:18:49 UTC 2025 from 103.172.237.182 on ssh:notty
+There were 19 failed login attempts since the last successful login.
+Last login: Mon Nov 10 19:01:38 2025 from 127.0.0.1
+
+This server is powered by Plesk.
+
+Run the 'plesk login' command and log in by browsing either of the links received in the output.
+Use the 'plesk' command to manage the server. Run 'plesk help' for more info.
+
+[root@wizardly-swirles ~]# Tenant context: No auth data, skipping tenant fetch
+No authentication found, displaying public routes
+-bash: Tenant: command not found
+-bash: No: command not found
+[root@wizardly-swirles ~]# find /var/www/vhosts/navimedi.org -name "index.html" -type f 2>/dev/null
+/var/www/vhosts/navimedi.org/httpdocs/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed_old_backup/client/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed_old_backup/client/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed_old_backup/server/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed_old_backup/node_modules/png-js/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed_old_backup/node_modules/pngjs/coverage/lcov-report/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed_old_backup/dist/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed.corrupted.backup/server/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed.corrupted.backup/dist/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed.corrupted.backup/node_modules/png-js/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed.corrupted.backup/node_modules/pngjs/coverage/lcov-report/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed.corrupted.backup/client/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed.corrupted.backup/client/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed_backup/client/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed_backup/client/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed_backup/deployment-package/dist/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed_backup/dist/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed_backup/server/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed_backup/vps-deploy/dist/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed_backup/node_modules/png-js/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed_backup/node_modules/pngjs/coverage/lcov-report/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/vps-deploy/dist/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/deployment-package/dist/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/public/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/png-js/index.html
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/pngjs/coverage/lcov-report/index.html
+[root@wizardly-swirles ~]# cd /var/www/vhosts/navimedi.org
+ls -la
+total 20
+drwx--x---. 7 administrator psaserv  121 Oct 31 03:35 .
+drwxr-xr-x. 8 root          root     104 Oct 31 10:23 ..
+drwxr-xr-x. 2 administrator psacln  4096 Oct 12 00:10 error_docs
+drwxr-xr-x. 2 administrator psacln     6 Oct  7 14:05 git
+drwxr-x---. 8 administrator psaserv 4096 Nov 10 01:45 httpdocs
+-rw-rw----. 1 administrator psaserv  106 Oct  6 20:29 .imunify_patch_id
+drwx------. 2 administrator root    4096 Nov 10 03:41 logs
+-rw-rw----. 1 administrator psaserv  102 Oct 31 03:35 .myimunify_id
+drwxr-xr-x. 2 administrator psacln    38 Oct  7 13:57 .ssh
+[root@wizardly-swirles navimedi.org]# 
