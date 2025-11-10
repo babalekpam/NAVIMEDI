@@ -1,0 +1,92 @@
+ Check current document root in Apache config
+grep -i "documentroot" /etc/httpd/conf/plesk.conf.d/vhosts/navimedi.org.conf 2>/dev/null || grep -i "documentroot" /etc/httpd/conf.d/vhost*.conf 2>/dev/null
+
+# Check what PM2 is seeing (last 30 lines)
+pm2 logs navimed --lines 30 --nostream
+● httpd.service - The Apache HTTP Server
+     Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; preset: disabled)
+    Drop-In: /usr/lib/systemd/system/httpd.service.d
+             └─php-fpm.conf, respawn.conf
+     Active: active (running) since Tue 2025-11-04 05:43:58 UTC; 6 days ago
+       Docs: man:httpd.service(8)
+    Process: 2054198 ExecReload=/usr/sbin/httpd $OPTIONS -k graceful (code=exited, status=0/SUCCESS)
+   Main PID: 1097870 (httpd)
+     Status: "Total requests: 24502; Idle/Busy workers 100/0;Requests/sec: 0.0431; Bytes served/sec:  23KB/sec"
+      Tasks: 155 (limit: 48448)
+     Memory: 238.5M
+        CPU: 13min 56.662s
+     CGroup: /system.slice/httpd.service
+             ├─1097870 /usr/sbin/httpd -DFOREGROUND
+             ├─2054296 /usr/sbin/httpd -DFOREGROUND
+             ├─2054297 /usr/sbin/httpd -DFOREGROUND
+             ├─2054299 "Passenger watchdog"
+             ├─2054303 "Passenger core"
+             ├─2054325 /usr/sbin/httpd -DFOREGROUND
+             ├─2054328 /usr/sbin/httpd -DFOREGROUND
+                DocumentRoot "/var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public"
+[TAILING] Tailing last 30 lines for [navimed] process (change the value with --lines option)
+/root/.pm2/logs/navimed-error-0.log last 30 lines:
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP connection error: Error: connect ECONNREFUSED 74.208.166.77:587
+0|navimed  |     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+0|navimed  |   errno: -111,
+0|navimed  |   code: 'ESOCKET',
+0|navimed  |   syscall: 'connect',
+0|navimed  |   address: '74.208.166.77',
+0|navimed  |   port: 587,
+0|navimed  |   command: 'CONN'
+0|navimed  | }
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP connection error: Error: connect ECONNREFUSED 74.208.166.77:587
+0|navimed  |     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+0|navimed  |   errno: -111,
+0|navimed  |   code: 'ESOCKET',
+0|navimed  |   syscall: 'connect',
+0|navimed  |   address: '74.208.166.77',
+0|navimed  |   port: 587,
+0|navimed  |   command: 'CONN'
+0|navimed  | }
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+0|navimed  | Invalid JWT token: invalid signature
+
+/root/.pm2/logs/navimed-out-0.log last 30 lines:
+0|navimed  | Super admin lookup result: true
+0|navimed  | ✅ User found: 8a4b6998-8b08-40fa-adda-f3a90b69e7ba abel@argilette.com has password: true
+0|navimed  | Password validation result: true
+0|navimed  | 7:29:09 PM [express] POST /api/auth/login 200 in 203ms :: {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX…
+0|navimed  | 7:29:09 PM [express] GET /api/tenant/current 401 in 2ms :: {"message":"Invalid token","code":"TOKEN_…
+0|navimed  | 7:29:10 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 7:29:30 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 7:36:42 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 7:36:44 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 7:39:10 PM [express] GET /api/csrf-token 200 in 1ms :: {"csrfToken":"2c8d37f52c3edd8996e817c4b6f482f…
+0|navimed  | 🔐 Login attempt: { email: 'abel@argilette.com', tenantId: undefined, hasPassword: true }
+0|navimed  | Super admin login detected
+0|navimed  | Super admin lookup result: true
+0|navimed  | ✅ User found: 8a4b6998-8b08-40fa-adda-f3a90b69e7ba abel@argilette.com has password: true
+0|navimed  | Password validation result: true
+0|navimed  | 7:39:11 PM [express] POST /api/auth/login 200 in 297ms :: {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX…
+0|navimed  | 7:39:11 PM [express] GET /api/tenant/current 401 in 2ms :: {"message":"Invalid token","code":"TOKEN_…
+0|navimed  | 7:39:11 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 7:39:38 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 7:39:39 PM [express] GET /api/platform/stats 200 in 0ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 7:39:42 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+0|navimed  | 7:39:46 PM [express] GET /api/csrf-token 200 in 1ms :: {"csrfToken":"2c8d37f52c3edd8996e817c4b6f482f…
+0|navimed  | 🔐 Login attempt: { email: 'abel@argilette.com', tenantId: undefined, hasPassword: true }
+0|navimed  | Super admin login detected
+0|navimed  | Super admin lookup result: true
+0|navimed  | ✅ User found: 8a4b6998-8b08-40fa-adda-f3a90b69e7ba abel@argilette.com has password: true
+0|navimed  | Password validation result: true
+0|navimed  | 7:39:46 PM [express] POST /api/auth/login 200 in 202ms :: {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX…
+0|navimed  | 7:39:46 PM [express] GET /api/tenant/current 401 in 1ms :: {"message":"Invalid token","code":"TOKEN_…
+0|navimed  | 7:39:46 PM [express] GET /api/platform/stats 200 in 1ms :: {"platform":"NaviMED Healthcare Platform"…
+
+[root@wizardly-swirles httpdocs]# 
