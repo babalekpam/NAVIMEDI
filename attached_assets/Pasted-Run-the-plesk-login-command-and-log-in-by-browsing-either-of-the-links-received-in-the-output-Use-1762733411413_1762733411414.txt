@@ -1,0 +1,171 @@
+Run the 'plesk login' command and log in by browsing either of the links received in the output.
+Use the 'plesk' command to manage the server. Run 'plesk help' for more info.
+
+[root@wizardly-swirles ~]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+[root@wizardly-swirles NaviMed]# cp tailwind.config.ts tailwind.config.ts.backup.$(date +%Y%m%d_%H%M%S)
+[root@wizardly-swirles NaviMed]# cp client/src/components/layout/public-header.tsx client/src/components/layout/public-header.tsx.backup
+[root@wizardly-swirles NaviMed]# cp client/src/pages/landing.tsx client/src/pages/landing.tsx.backup
+[root@wizardly-swirles NaviMed]# cat > tailwind.config.ts << 'EOF'
+import type { Config } from "tailwindcss";
+
+export default {
+  darkMode: ["class"],
+  content: [
+    "./client/**/*.{html,js,jsx,ts,tsx}",
+    "./client/index.html"
+  ],
+  theme: {
+    container: {
+      center: true,
+      padding: {
+        DEFAULT: '1.5rem',
+        sm: '2rem',
+        lg: '4rem',
+        xl: '5rem',
+        '2xl': '6rem',
+      },
+      screens: {
+        sm: '640px',
+        md: '768px',
+        lg: '1024px',
+        xl: '1280px',
+            height: "": {--radix-accordion-content-height)",und)",",
+> ^C
+[root@wizardly-swirles NaviMed]# nano tailwind.config.ts
+-bash: nano: command not found
+[root@wizardly-swirles NaviMed]# sed -i "s/'2xl': '1440px'/'2xl': '1600px'/g" tailwind.config.ts
+[root@wizardly-swirles NaviMed]# sed -i 's/<div className="container py-4">/<div className="mx-auto px-6 py-4" style={{maxWidth: '\''1600px'\''}}>/' client/src/components/layout/public-header.tsx
+[root@wizardly-swirles NaviMed]# sed -i 's/className="container mx-auto px-6"/className="mx-auto px-6" style={{maxWidth: '\''1600px'\''}}/g' client/src/pages/landing.tsx
+[root@wizardly-swirles NaviMed]# sed -i 's/max-w-6xl //g' client/src/pages/landing.tsx
+[root@wizardly-swirles NaviMed]# sed -i 's/max-w-4xl //g' client/src/pages/landing.tsx
+[root@wizardly-swirles NaviMed]# sed -i 's/max-w-7xl //g' client/src/pages/landing.tsx
+[root@wizardly-swirles NaviMed]# sed -i 's/max-w-3xl //g' client/src/pages/landing.tsx
+[root@wizardly-swirles NaviMed]# npm run build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.19 building for production...
+✓ 24 modules transformed.
+x Build failed in 329ms
+error during build:
+[vite:esbuild] Transform failed with 1 error:
+/var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/tenant-management.tsx:142:79: ERROR: Expected ">" but found "\">\n                <div className=\""
+file: /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/pages/tenant-management.tsx:142:79
+
+Expected ">" but found "\">\n                <div className=\""
+140|              </DialogHeader>
+141|              <Form {...form}>
+142|                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+   |                                                                                 ^
+143|                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+144|                    <FormField
+
+    at failureErrorWithLog (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
+    at /var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:755:50
+    at responseCallbacks.<computed> (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:622:9)
+    at handleIncomingPacket (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:677:12)
+    at Socket.readFromStdout (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/vite/node_modules/esbuild/lib/main.js:600:7)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+[root@wizardly-swirles NaviMed]# sed -n '140,145p' client/src/pages/tenant-management.tsx
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+[root@wizardly-swirles NaviMed]# ls -la client/src/pages/tenant-management.tsx*
+-rw-r--r--. 1 root root 22723 Nov  9 19:01 client/src/pages/tenant-management.tsx
+[root@wizardly-swirles NaviMed]# curl -o /tmp/tenant-management.tsx https://raw.githubusercontent.com/your-repo/main/client/src/pages/tenant-management.tsx
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    14  100    14    0     0    250      0 --:--:-- --:--:-- --:--:--   250
+[root@wizardly-swirles NaviMed]# cd /root/parallels && unzip -q "NaviMed (2).zip"
+unzip:  cannot find or open NaviMed (2).zip, NaviMed (2).zip.zip or NaviMed (2).zip.ZIP.
+[root@wizardly-swirles parallels]# ls -la
+total 912
+drwxr-xr-x. 11 root root   4096 Nov  9 03:22 .
+dr-xr-x---.  8 root root   4096 Nov  9 23:59 ..
+-rw-r--r--.  1 root root   1591 Nov  9 03:22 apache.inf3
+-rw-r--r--.  1 root root  99843 Nov  9 03:22 billing.inf3
+-rw-r--r--.  1 root root   2742 Nov  9 03:22 mysql.inf3
+-rw-r--r--.  1 root root  34119 Nov  9 03:22 nginx.inf3
+-rw-r--r--.  1 root root   5407 Nov  9 03:22 php52.inf3
+-rw-r--r--.  1 root root   5408 Nov  9 03:22 php53.inf3
+-rw-r--r--.  1 root root   5408 Nov  9 03:22 php54.inf3
+-rw-r--r--.  1 root root   5407 Nov  9 03:22 php55.inf3
+drwxr-xr-x.  2 root root     37 Nov  9 03:22 PHP56_17
+-rw-r--r--.  1 root root   6688 Nov  9 03:22 php56.inf3
+drwxr-xr-x.  2 root root     37 Nov  9 03:22 PHP70_17
+-rw-r--r--.  1 root root   6400 Nov  9 03:22 php70.inf3
+-rw-r--r--.  1 root root   3845 Nov  9 03:22 php71.inf3
+-rw-r--r--.  1 root root   3722 Nov  9 03:22 php72.inf3
+-rw-r--r--.  1 root root   3708 Nov  9 03:22 php73.inf3
+drwxr-xr-x.  2 root root     57 Nov  9 03:22 PHP74_17
+-rw-r--r--.  1 root root   1999 Nov  9 03:22 php74.inf3
+drwxr-xr-x.  2 root root     57 Nov  9 03:22 PHP80_17
+-rw-r--r--.  1 root root    839 Nov  9 03:22 php80.inf3
+drwxr-xr-x.  2 root root     57 Nov  9 03:22 PHP81_17
+-rw-r--r--.  1 root root   1124 Nov  9 03:22 php81.inf3
+drwxr-xr-x.  2 root root     57 Nov  9 03:22 PHP82_17
+-rw-r--r--.  1 root root    706 Nov  9 03:22 php82.inf3
+drwxr-xr-x.  2 root root     57 Nov  9 03:22 PHP83_17
+-rw-r--r--.  1 root root    544 Nov  9 03:22 php83.inf3
+drwxr-xr-x.  2 root root     57 Nov  9 03:22 PHP84_17
+-rw-r--r--.  1 root root 222586 Nov  9 03:22 plesk.inf3
+-rw-r--r--.  1 root root   3782 Nov  9 03:22 pmm.inf3
+drwxr-xr-x. 15 root root   4096 Oct 14 03:40 pool
+-rw-r--r--.  1 root root  44615 Nov  9 03:22 pp-sitebuilder.inf3
+-rw-r--r--.  1 root root   3685 Nov  9 03:22 products.inf3
+-rw-r--r--.  1 root root 392395 Oct 28 03:42 report-update
+-rw-r--r--.  1 root root   5851 Nov  9 03:22 setemplates.inf3
+-rw-r--r--.  1 root root  11376 Nov  9 03:22 sitebuilder.inf3
+[root@wizardly-swirles parallels]# find /root -name "NaviMed*.zip" -type f 2>/dev/null
+/root/NaviMed (2).zip
+[root@wizardly-swirles parallels]# cd /root && unzip -q "NaviMed (2).zip"
+[root@wizardly-swirles ~]# ls -la /root | grep -i navimed
+drwxr-xr-x. 19 root root       4096 Nov 10 00:06 NaviMed
+-rw-r--r--.  1 root root 1242341584 Nov 10 00:03 NaviMed (2).zip
+[root@wizardly-swirles ~]# pm2 stop navimed
+[PM2] Applying action stopProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 0        │ 0      │ 40   │ stopped   │ 0%       │ 0b       │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[root@wizardly-swirles ~]# mv /var/www/vhosts/navimedi.org/httpdocs/NaviMed /var/www/vhosts/navimedi.org/httpdocs/NaviMed.corrupted.backup
+[root@wizardly-swirles ~]# cp -r /root/NaviMed /var/www/vhosts/navimedi.org/httpdocs/NaviMed
+[root@wizardly-swirles ~]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed && npm ci
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated native-or-bluebird@1.1.2: 'native-or-bluebird' is deprecated. Please use 'any-promise' instead.
+npm warn deprecated rimraf@2.7.1: Rimraf versions prior to v4 are no longer supported
+npm warn deprecated csurf@1.2.2: This package is archived and no longer maintained. For support, visit https://github.com/expressjs/express/discussions
+npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+npm warn deprecated scmp@0.0.3: scmp v2 uses improved core crypto comparison since Node v6.6.0
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated glob@8.1.0: Glob versions prior to v9 are no longer supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated fstream@1.0.12: This package is no longer supported.
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+
+added 911 packages, and audited 912 packages in 9s
+
+97 packages are looking for funding
+  run `npm fund` for details
+
+8 vulnerabilities (4 moderate, 4 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+[root@wizardly-swirles NaviMed]# 
