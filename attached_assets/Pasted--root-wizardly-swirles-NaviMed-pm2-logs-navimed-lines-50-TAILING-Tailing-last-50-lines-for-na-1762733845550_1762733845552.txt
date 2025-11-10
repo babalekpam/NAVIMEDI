@@ -1,0 +1,53 @@
+[root@wizardly-swirles NaviMed]# pm2 logs navimed --lines 50
+[TAILING] Tailing last 50 lines for [navimed] process (change the value with --lines option)
+/root/.pm2/logs/navimed-error-0.log last 50 lines:
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
