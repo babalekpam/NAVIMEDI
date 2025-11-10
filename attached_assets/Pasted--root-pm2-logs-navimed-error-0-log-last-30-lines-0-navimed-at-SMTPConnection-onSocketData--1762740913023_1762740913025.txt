@@ -1,0 +1,31 @@
+/root/.pm2/logs/navimed-error-0.log last 30 lines:
+0|navimed  |     at SMTPConnection._onSocketData (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/nodemailer/lib/smtp-connection/index.js:195:44)
+0|navimed  |     at TLSSocket.emit (node:events:524:28)
+0|navimed  |     at addChunk (node:internal/streams/readable:561:12)
+0|navimed  |     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+0|navimed  |     at Readable.push (node:internal/streams/readable:392:5)
+0|navimed  |     at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23) {
+0|navimed  |   code: 'EAUTH',
+0|navimed  |   response: '535 5.7.8 Error: authentication failed: authentication failure',
+0|navimed  |   responseCode: 535,
+0|navimed  |   command: 'AUTH PLAIN'
+0|navimed  | }
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP connection error: Error: Invalid login: 535 5.7.8 Error: authentication failed: authentication failure
+0|navimed  |     at SMTPConnection._formatError (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/nodemailer/lib/smtp-connection/index.js:809:19)
+0|navimed  |     at SMTPConnection._actionAUTHComplete (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/nodemailer/lib/smtp-connection/index.js:1595:34)
+0|navimed  |     at SMTPConnection.<anonymous> (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/nodemailer/lib/smtp-connection/index.js:556:26)
+0|navimed  |     at SMTPConnection._processResponse (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/nodemailer/lib/smtp-connection/index.js:993:20)
+0|navimed  |     at SMTPConnection._onData (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/nodemailer/lib/smtp-connection/index.js:774:14)
+0|navimed  |     at SMTPConnection._onSocketData (/var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/nodemailer/lib/smtp-connection/index.js:195:44)
+0|navimed  |     at TLSSocket.emit (node:events:524:28)
+0|navimed  |     at addChunk (node:internal/streams/readable:561:12)
+0|navimed  |     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+0|navimed  |     at Readable.push (node:internal/streams/readable:392:5)
+0|navimed  |     at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23) {
+0|navimed  |   code: 'EAUTH',
+0|navimed  |   response: '535 5.7.8 Error: authentication failed: authentication failure',
+0|navimed  |   responseCode: 535,
+0|navimed  |   command: 'AUTH PLAIN'
+0|navimed  | }
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
