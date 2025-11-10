@@ -1,0 +1,255 @@
+/root/.pm2/logs/navimed-error-0.log last 20 lines:
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | SMTP environment variables not set. Email functionality will be disabled.
+0|navimed  | Required: SMTP_HOST, SMTP_USER, SMTP_PASS
+0|navimed  | ⚠️ Stripe not initialized: STRIPE_SECRET_KEY must start with 'sk_'. Current key format: undefined
+0|navimed  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|navimed  |     at server/db.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5301:13)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at server/storage.ts (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:5517:5)
+0|navimed  |     at __init (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:4:56)
+0|navimed  |     at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:12193:1
+0|navimed  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|navimed  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+
+^C
+[root@wizardly-swirles NaviMed]# 
+[root@wizardly-swirles NaviMed]# cat > /var/www/vhosts/navimedi.org/httpdocs/NaviMed/ecosystem.config.cjs << 'EOF'
+module.exports = {
+  apps: [{
+    name: 'navimed',
+    script: './dist/index.js',
+    instances: 1,
+    exec_mode: 'fork',
+    env: {
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://neondb_owner:npg_C8zBN1aW2BW0@ep-cold-star-a5zqz8k7-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require',
+      SESSION_SECRET: 'navimed-ultra-secure-session-key-2024-production',
+      JWT_SECRET: 'navimed-jwt-secret-key-ultra-secure-2024',
+      SMTP_HOST: 'mail.navimedi.org',
+      SMTP_PORT: '587',
+      SMTP_SECURE: 'false',
+      SMTP_USER: 'no-reply@navimedi.org',
+      SMTP_PASS: 'Serrega1208@!!',
+      SMTP_FROM: 'no-reply@navimedi.org'
+    }
+  }]
+};
+EOF
+[root@wizardly-swirles NaviMed]# cd /var/www/vhosts/navimedi.org/httpdocs/NaviMed && pm2 delete navimed && pm2 start ecosystem.config.cjs
+[PM2] Applying action deleteProcessId on app [navimed](ids: [ 0 ])
+[PM2] [navimed](0) ✓
+┌────┬───────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name      │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+└────┴───────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2][WARN] Applications navimed not running, starting...
+[PM2] App [navimed] launched (1 instances)
+┌────┬────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ navimed    │ default     │ 1.0.0   │ fork    │ 1949102  │ 0s     │ 0    │ online    │ 0%       │ 16.1mb   │ root     │ disabled │
+└────┴────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[root@wizardly-swirles NaviMed]# pm2 logs navimed --lines 20
+[TAILING] Tailing last 20 lines for [navimed] process (change the value with --lines option)
+/root/.pm2/logs/navimed-out-0.log last 20 lines:
+0|navimed  | 12:36:13 AM [express] 🔄 Retrying platform initialization...
+0|navimed  | 12:36:15 AM [express] 🌍 Initializing countries first...
+0|navimed  | 🌍 Initializing default countries...
+0|navimed  | 12:36:16 AM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+0|navimed  | 12:36:26 AM [express] 🔄 Retrying platform initialization...
+0|navimed  | 12:36:28 AM [express] 🌍 Initializing countries first...
+0|navimed  | 🌍 Initializing default countries...
+0|navimed  | 12:36:28 AM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+0|navimed  | 12:36:38 AM [express] 🔄 Retrying platform initialization...
+0|navimed  | 12:36:40 AM [express] 🌍 Initializing countries first...
+0|navimed  | 🌍 Initializing default countries...
+0|navimed  | 12:36:40 AM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+0|navimed  | 12:36:50 AM [express] 🔄 Retrying platform initialization...
+0|navimed  | 12:36:52 AM [express] 🌍 Initializing countries first...
+0|navimed  | 🌍 Initializing default countries...
+0|navimed  | 12:36:52 AM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+
+/root/.pm2/logs/navimed-error-0.log last 20 lines:
+0|navimed  |       at async initializePlatform (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23978:28) {
+0|navimed  |     length: 75,
+0|navimed  |     severity: 'ERROR',
+0|navimed  |     code: 'XX000',
+0|navimed  |     detail: undefined,
+0|navimed  |     hint: undefined,
+0|navimed  |     position: undefined,
+0|navimed  |     internalPosition: undefined,
+0|navimed  |     internalQuery: undefined,
+0|navimed  |     where: undefined,
+0|navimed  |     schema: undefined,
+0|navimed  |     table: undefined,
+0|navimed  |     column: undefined,
+0|navimed  |     dataType: undefined,
+0|navimed  |     constraint: undefined,
+0|navimed  |     file: undefined,
+0|navimed  |     line: undefined,
+0|navimed  |     routine: undefined
+0|navimed  |   }
+0|navimed  | }
+
+0|navimed  | 12:37:02 AM [express] 🔄 Retrying platform initialization...
+0|navimed  | 12:37:04 AM [express] 🌍 Initializing countries first...
+0|navimed  | 🌍 Initializing default countries...
+0|navimed  | ❌ Error initializing default countries: DrizzleQueryError: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+0|navimed  |     at NeonPreparedQuery.queryWithCache (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/session.js:41:15)
+0|navimed  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|navimed  |     at async NeonPreparedQuery.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:109:20)
+0|navimed  |     at async initializeDefaultCountries (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23869:29)
+0|navimed  |     at async initializePlatform (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23977:5) {
+0|navimed  |   query: 'select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2',
+0|navimed  |   params: [ 'NG', 1 ],
+0|navimed  |   cause: error: password authentication failed for user 'neondb_owner'
+0|navimed  |       at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1087:33
+0|navimed  |       at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|navimed  |       at async file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:110:14
+0|navimed  |       at async NeonPreparedQuery.queryWithCache (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/session.js:39:16)
+0|navimed  |       at async NeonPreparedQuery.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:109:20)
+0|navimed  |       at async initializeDefaultCountries (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23869:29)
+0|navimed  |       at async initializePlatform (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23977:5) {
+0|navimed  |     length: 75,
+0|navimed  |     severity: 'ERROR',
+0|navimed  |     code: 'XX000',
+0|navimed  |     detail: undefined,
+0|navimed  |     hint: undefined,
+0|navimed  |     position: undefined,
+0|navimed  |     internalPosition: undefined,
+0|navimed  |     internalQuery: undefined,
+0|navimed  |     where: undefined,
+0|navimed  |     schema: undefined,
+0|navimed  |     table: undefined,
+0|navimed  |     column: undefined,
+0|navimed  |     dataType: undefined,
+0|navimed  |     constraint: undefined,
+0|navimed  |     file: undefined,
+0|navimed  |     line: undefined,
+0|navimed  |     routine: undefined
+0|navimed  |   }
+0|navimed  | }
+0|navimed  | 12:37:04 AM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+0|navimed  | Platform initialization error: DrizzleQueryError: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+0|navimed  |     at NeonPreparedQuery.queryWithCache (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/session.js:41:15)
+0|navimed  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|navimed  |     at async NeonPreparedQuery.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:109:20)
+0|navimed  |     at async initializePlatform (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23978:28) {
+0|navimed  |   query: 'select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2',
+0|navimed  |   params: [ 'NG', 1 ],
+0|navimed  |   cause: error: password authentication failed for user 'neondb_owner'
+0|navimed  |       at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1087:33
+0|navimed  |       at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|navimed  |       at async file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:110:14
+0|navimed  |       at async NeonPreparedQuery.queryWithCache (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/session.js:39:16)
+0|navimed  |       at async NeonPreparedQuery.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:109:20)
+0|navimed  |       at async initializePlatform (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23978:28) {
+0|navimed  |     length: 75,
+0|navimed  |     severity: 'ERROR',
+0|navimed  |     code: 'XX000',
+0|navimed  |     detail: undefined,
+0|navimed  |     hint: undefined,
+0|navimed  |     position: undefined,
+0|navimed  |     internalPosition: undefined,
+0|navimed  |     internalQuery: undefined,
+0|navimed  |     where: undefined,
+0|navimed  |     schema: undefined,
+0|navimed  |     table: undefined,
+0|navimed  |     column: undefined,
+0|navimed  |     dataType: undefined,
+0|navimed  |     constraint: undefined,
+0|navimed  |     file: undefined,
+0|navimed  |     line: undefined,
+0|navimed  |     routine: undefined
+0|navimed  |   }
+0|navimed  | }
+0|navimed  | 12:37:14 AM [express] 🔄 Retrying platform initialization...
+0|navimed  | 12:37:16 AM [express] 🌍 Initializing countries first...
+0|navimed  | 🌍 Initializing default countries...
+0|navimed  | ❌ Error initializing default countries: DrizzleQueryError: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+0|navimed  |     at NeonPreparedQuery.queryWithCache (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/session.js:41:15)
+0|navimed  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|navimed  |     at async NeonPreparedQuery.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:109:20)
+0|navimed  |     at async initializeDefaultCountries (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23869:29)
+0|navimed  |     at async initializePlatform (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23977:5) {
+0|navimed  |   query: 'select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2',
+0|navimed  |   params: [ 'NG', 1 ],
+0|navimed  |   cause: error: password authentication failed for user 'neondb_owner'
+0|navimed  |       at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1087:33
+0|navimed  |       at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|navimed  |       at async file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:110:14
+0|navimed  |       at async NeonPreparedQuery.queryWithCache (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/session.js:39:16)
+0|navimed  |       at async NeonPreparedQuery.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:109:20)
+0|navimed  |       at async initializeDefaultCountries (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23869:29)
+0|navimed  |       at async initializePlatform (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23977:5) {
+0|navimed  |     length: 75,
+0|navimed  |     severity: 'ERROR',
+0|navimed  |     code: 'XX000',
+0|navimed  |     detail: undefined,
+0|navimed  |     hint: undefined,
+0|navimed  |     position: undefined,
+0|navimed  |     internalPosition: undefined,
+0|navimed  |     internalQuery: undefined,
+0|navimed  |     where: undefined,
+0|navimed  |     schema: undefined,
+0|navimed  |     table: undefined,
+0|navimed  |     column: undefined,
+0|navimed  |     dataType: undefined,
+0|navimed  |     constraint: undefined,
+0|navimed  |     file: undefined,
+0|navimed  |     line: undefined,
+0|navimed  |     routine: undefined
+0|navimed  |   }
+0|navimed  | }
+0|navimed  | 12:37:17 AM [express] ❌ Platform initialization failed: Error: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+0|navimed  | Platform initialization error: DrizzleQueryError: Failed query: select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2
+0|navimed  | params: NG,1
+0|navimed  |     at NeonPreparedQuery.queryWithCache (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/session.js:41:15)
+0|navimed  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|navimed  |     at async NeonPreparedQuery.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:109:20)
+0|navimed  |     at async initializePlatform (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23978:28) {
+0|navimed  |   query: 'select "id", "code", "name", "region", "is_active", "cpt_code_system", "icd10_code_system", "pharmaceutical_code_system", "currency_code", "date_format", "time_zone", "created_at", "updated_at" from "countries" where "countries"."code" = $1 limit $2',
+0|navimed  |   params: [ 'NG', 1 ],
+0|navimed  |   cause: error: password authentication failed for user 'neondb_owner'
+0|navimed  |       at file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/@neondatabase/serverless/index.mjs:1087:33
+0|navimed  |       at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|navimed  |       at async file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:110:14
+0|navimed  |       at async NeonPreparedQuery.queryWithCache (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/pg-core/session.js:39:16)
+0|navimed  |       at async NeonPreparedQuery.execute (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/node_modules/drizzle-orm/neon-serverless/session.js:109:20)
+0|navimed  |       at async initializePlatform (file:///var/www/vhosts/navimedi.org/httpdocs/NaviMed/dist/index.js:23978:28) {
+0|navimed  |     length: 75,
+0|navimed  |     severity: 'ERROR',
+0|navimed  |     code: 'XX000',
+0|navimed  |     detail: undefined,
+0|navimed  |     hint: undefined,
+0|navimed  |     position: undefined,
+0|navimed  |     internalPosition: undefined,
+0|navimed  |     internalQuery: undefined,
+0|navimed  |     where: undefined,
+0|navimed  |     schema: undefined,
+0|navimed  |     table: undefined,
+0|navimed  |     column: undefined,
+0|navimed  |     dataType: undefined,
+0|navimed  |     constraint: undefined,
+0|navimed  |     file: undefined,
+0|navimed  |     line: undefined,
+0|navimed  |     routine: undefined
+0|navimed  |   }
+0|navimed  | }
