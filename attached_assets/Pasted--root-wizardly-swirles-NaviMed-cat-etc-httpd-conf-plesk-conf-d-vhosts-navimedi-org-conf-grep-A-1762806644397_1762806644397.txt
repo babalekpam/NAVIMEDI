@@ -1,0 +1,43 @@
+[root@wizardly-swirles NaviMed]# cat /etc/httpd/conf/plesk.conf.d/vhosts/navimedi.org.conf | grep -A 30 "DocumentRoot\|ProxyPass"
+                DocumentRoot "/var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public"
+
+                <IfModule mod_suexec.c>
+                        SuexecUserGroup "administrator" "psacln"
+                </IfModule>
+
+                <IfModule mod_userdir.c>
+                        UserDir "/var/www/vhosts/navimedi.org/web_users/*"
+                </IfModule>
+
+                <IfModule mod_sysenv.c>
+                        SetSysEnv PP_VHOST_ID "6ba14a94-ed64-4c5f-8df9-f99a43064ec6"
+                </IfModule>
+
+                SSLEngine on
+                SSLVerifyClient none
+                SSLCertificateFile /usr/local/psa/var/certificates/scf060avssugu5v3Ia8BTJ
+                SSLCACertificateFile /usr/local/psa/var/certificates/scfh04mr7lsdaobdnjCVxT
+
+                <Directory /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public>
+
+                        <IfModule mod_php4.c>
+                                php_admin_flag engine off
+                        </IfModule>
+
+                        <IfModule mod_php5.c>
+                                php_admin_flag engine off
+                        </IfModule>
+
+                        <IfModule mod_php7.c>
+                                php_admin_flag engine off
+[root@wizardly-swirles NaviMed]# systemctl status nginx | grep -A 3 "Active:"
+systemctl status httpd | grep -A 3 "Active:"
+     Active: active (running) since Mon 2025-11-10 20:27:55 UTC; 2min 19s ago
+    Process: 2061544 ExecStartPre=/bin/sh -c [ '${NGINX_ENABLED}' = 'yes' ] || { echo Not starting nginx as it is disabled in Plesk. Run \'plesk sbin nginxmng -e\' to enable nginx in Plesk.; exit 1; } (code=exited, status=0/SUCCESS)
+    Process: 2061545 ExecStartPre=/usr/sbin/nginx -t (code=exited, status=0/SUCCESS)
+    Process: 2061546 ExecStart=/usr/sbin/nginx (code=exited, status=0/SUCCESS)
+     Active: active (running) since Mon 2025-11-10 20:28:00 UTC; 2min 14s ago
+       Docs: man:httpd.service(8)
+   Main PID: 2061588 (httpd)
+     Status: "Total requests: 106; Idle/Busy workers 100/0;Requests/sec: 0.822; Bytes served/sec:  28KB/sec"
+[root@wizardly-swirles NaviMed]# 
