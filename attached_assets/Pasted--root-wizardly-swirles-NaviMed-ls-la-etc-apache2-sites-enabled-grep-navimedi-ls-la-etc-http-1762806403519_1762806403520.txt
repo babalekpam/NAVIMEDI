@@ -1,0 +1,112 @@
+[root@wizardly-swirles NaviMed]# ls -la /etc/apache2/sites-enabled/ | grep navimedi
+ls -la /etc/httpd/conf.d/ | grep navimedi
+find /etc -name "*.conf" 2>/dev/null | xargs grep -l "navimedi.org" | head -5
+ls: cannot access '/etc/apache2/sites-enabled/': No such file or directory
+/etc/dovecot/conf.d/14-plesk-sni-navimedi.org.conf
+/etc/dovecot/conf.d/14-plesk-sni-mail.navimedi.org.conf
+/etc/httpd/conf/plesk.conf.d/vhosts/navimedi.org.conf
+/etc/httpd/conf/plesk.conf.d/webmails/navimedi.org_webmail.conf
+/etc/nginx/plesk.conf.d/vhosts/navimedi.org.conf
+[root@wizardly-swirles NaviMed]# /usr/sbin/plesk bin domain --list
+/usr/sbin/plesk bin site --info navimedi.org
+navimedi.org
+
+General
+=============================
+Domain ID:                              1
+Domain name:                            navimedi.org
+Owner's contact name:                   Abel (Administrator)
+Domain status:                          OK
+Creation date:                          Oct 6, 2025
+Expiration date:                        Unlimited
+Disk space limit:                       Unlimited
+Size:                                   94.4 MB
+Total size of backup files in local storage:0 B
+Traffic limit:                          Unlimited
+Traffic:                                14.2 GB/Month
+Description:                            
+Description for the administrator:      
+External ID:                            
+
+Hosting
+=============================
+Hosting type:                           Physical hosting
+IP Address:                             74.208.166.77
+FTP Login:                              administrator
+FTP Password:                           ************
+SSH access to the server shell under the subscription's system user:/bin/false
+Hard disk quota:                        Unlimited (not supported)
+Disk space used by httpdocs:            52.4 MB
+Disk space used by Log files and statistical reports:41.8 MB
+Certificate:                            Lets Encrypt navimedi.org
+SSL/TLS support:                        On
+Permanent SEO-safe 301 redirect from HTTP to HTTPS:On
+SSI support:                            No
+PHP support:                            No
+CGI support:                            No
+Perl support:                           No
+Python support:                         No
+FastCGI support:                        Yes
+Custom error documents:                 Yes
+Web statistics:                         None
+Anonymous FTP:                          No
+Disk space used by Anonymous FTP:       0 B
+
+Web Users
+=============================
+Total :                                 0
+SSI support:                            0
+PHP support:                            0
+CGI support:                            0
+Perl support:                           0
+Python support:                         0
+FastCGI support:                        0
+Total size:                             0 B
+
+Mail Accounts
+=============================
+Mail service:                           Enabled
+Total :                                 6
+Access to Plesk:                        0
+Mailboxes:                              6
+Mail forwardings:                       0
+Auto-replies:                           0
+Total size:                             168 KB
+Mail autodiscover:                      On
+
+Mailing Lists
+=============================
+Mailing list service:                   Off
+Total :                                 0
+Total size:                             0 B
+
+Databases
+=============================
+Total :                                 0
+Total size:                             0 B
+
+Web Applications
+=============================
+Total :                                 0
+
+
+Logrotation info
+==============================
+Log rotation status:                    On
+Log rotation condition:                 204800KB (by size)
+Maximum number of log files:            1
+Compress log files:                     true
+Send processed log files to email:      
+
+
+--WWW-Root--: /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public
+
+
+Subscription Information
+==============================
+The domain is subscribed to the service plan "Unlimited" of Abel.
+The subscription is locked for syncing.
+
+
+SUCCESS: Gathering information for 'navimedi.org' completed.
+[root@wizardly-swirles NaviMed]# 
