@@ -1,0 +1,167 @@
+DO NOT MODIFY THIS FILE BECAUSE IT WAS GENERATED AUTOMATICALLY,
+#SO ALL YOUR CHANGES WILL BE LOST THE NEXT TIME THE FILE IS GENERATED.
+
+server {
+        listen 74.208.166.77:443 ssl;
+        http2 on;
+
+        server_name navimedi.org;
+        server_name www.navimedi.org;
+        server_name ipv4.navimedi.org;
+
+        ssl_certificate             /usr/local/psa/var/certificates/scf060avssugu5v3Ia8BTJ;
+        ssl_certificate_key         /usr/local/psa/var/certificates/scf060avssugu5v3Ia8BTJ;
+
+        client_max_body_size 134217728;
+
+        # mailconfig
+        location ~* ^/autodiscover/autodiscover\.xml$ {
+                try_files $uri @mad;
+        }
+        location ~* ^(/\.well-known/autoconfig)?/mail/config\-v1\.1\.xml$ {
+                try_files $uri @mad;
+        }
+
+        location  ~* ^/email\.mobileconfig$ {
+                try_files $uri @mad;
+        }
+
+        location @mad {
+                rewrite ^(.*)$ /mailconfig/ break;
+
+                proxy_pass                          http://127.0.0.1:8880;
+                proxy_set_header X-Host             $host;
+                proxy_set_header X-Request-URI      $request_uri;
+        }
+        # mailconfig
+
+        access_log "/var/www/vhosts/system/navimedi.org/logs/proxy_access_ssl_log";
+        error_log "/var/www/vhosts/system/navimedi.org/logs/proxy_error_log";
+
+        root "/var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public";
+
+        #extension performance-booster begin
+        # Additional directives added by Plesk Optimization Settings
+        open_file_cache max=1000 inactive=20s;
+        open_file_cache_valid 30s;
+        open_file_cache_min_uses 2;
+        open_file_cache_errors on;
+        gzip on;
+        gzip_http_version 1.0;
+        gzip_proxied any;
+        gzip_min_length 1024;
+        gzip_comp_level 2;
+        gzip_types text/plain text/css application/x-javascript text/xml application/xml application/xml+rss text/javascript application/javascript application/json;
+
+        brotli_comp_level 3;
+        brotli_min_length 1024;
+        # Additional directives added by Plesk Optimization Settings
+        #extension performance-booster end
+
+        #extension sslit begin
+
+        #extension sslit end
+
+        #extension letsencrypt begin
+        location ^~ /.well-known/acme-challenge/ {
+                root /var/www/vhosts/default/htdocs;
+
+                types { }
+                default_type text/plain;
+
+                satisfy any;
+                auth_basic off;
+                allow all;
+
+                location ~ ^/\.well-known/acme-challenge.*/\. {
+                        deny all;
+                }
+        }
+        #extension letsencrypt end
+
+        #extension sectigo begin
+        location ^~ /.well-known/pki-validation/fileauth.txt {
+                try_files $uri $uri/ =404;
+        }
+
+        location ^~ /.well-known/pki-validation/ {
+                root /var/www/vhosts/default/htdocs;
+
+                types { }
+                default_type text/plain;
+
+                satisfy any;
+                auth_basic off;
+                allow all;
+
+                location ~ ^/\.well-known/pki-validation.*/\. {
+                        deny all;
+                }
+        }
+        #extension sectigo end
+
+        location / {
+                proxy_pass https://127.0.0.1:7081;
+                proxy_hide_header upgrade;
+                proxy_ssl_server_name on;
+                proxy_ssl_name $host;
+                proxy_ssl_session_reuse off;
+                proxy_set_header Host             $host;
+                proxy_set_header X-Real-IP        $remote_addr;
+                proxy_set_header X-Forwarded-For  $proxy_add_x_forwarded_for;
+                proxy_set_header X-Accel-Internal /internal-nginx-static-location;
+                access_log off;
+
+        }
+
+        location ^~ /internal-nginx-static-location/ {
+                alias /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/;
+                internal;
+        }
+
+        disable_symlinks if_not_owner "from=/var/www/vhosts/navimedi.org";
+
+        add_header X-Powered-By PleskLin;
+
+        include "/var/www/vhosts/system/navimedi.org/conf/vhost_nginx.conf";
+}
+
+server {
+        listen 74.208.166.77:80;
+
+        server_name navimedi.org;
+        server_name www.navimedi.org;
+        server_name ipv4.navimedi.org;
+
+        client_max_body_size 134217728;
+
+        # mailconfig
+        location ~* ^/autodiscover/autodiscover\.xml$ {
+                try_files $uri @mad;
+        }
+        location ~* ^(/\.well-known/autoconfig)?/mail/config\-v1\.1\.xml$ {
+                try_files $uri @mad;
+        }
+
+        location  ~* ^/email\.mobileconfig$ {
+                try_files $uri @mad;
+        }
+
+        location @mad {
+                rewrite ^(.*)$ /mailconfig/ break;
+
+                proxy_pass                          http://127.0.0.1:8880;
+                proxy_set_header X-Host             $host;
+                proxy_set_header X-Request-URI      $request_uri;
+        }
+        # mailconfig
+
+        access_log "/var/www/vhosts/system/navimedi.org/logs/proxy_access_log";
+        error_log "/var/www/vhosts/system/navimedi.org/logs/proxy_error_log";
+
+        location / {
+                return 301 https://$host$request_uri;
+        }
+}[root@wizardly-swirles NaviMed]#systemctl restart nginxx
+systemctl restart httpd
+[root@wizardly-swirles NaviMed]# 
