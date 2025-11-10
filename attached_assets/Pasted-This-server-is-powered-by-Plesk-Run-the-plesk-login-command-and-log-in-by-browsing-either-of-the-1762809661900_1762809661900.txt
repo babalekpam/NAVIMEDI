@@ -1,0 +1,41 @@
+This server is powered by Plesk.
+
+Run the 'plesk login' command and log in by browsing either of the links received in the output.
+Use the 'plesk' command to manage the server. Run 'plesk help' for more info.
+
+[root@wizardly-swirles ~]# find /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public -name ".*" -type f
+[root@wizardly-swirles ~]# cat /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/.htaccess 2>/dev/null || echo "No .htaccess found"
+No .htaccess found
+[root@wizardly-swirles ~]# grep -r "service.*worker\|registerSW\|workbox" /var/www/vhosts/navimedi.org/httpdocs/NaviMed/server/public/ 2>/dev/null | head -5
+[root@wizardly-swirles ~]# grep -A 20 "ProtectedRoute" /var/www/vhosts/navimedi.org/httpdocs/NaviMed/client/src/App.tsx | head -30
+import { ProtectedRoute } from "@/components/layout/protected-route";
+
+
+// Critical pages loaded immediately (public pages users see first)
+import LandingPage from "@/pages/landing-fixed";
+import NotFound from "@/pages/not-found";
+import Login from "@/pages/login";
+import RegisterOrganization from "@/pages/register-organization";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
+
+// Loading component
+const LoadingPage = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="text-center">
+      <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+      <p className="text-lg font-medium text-gray-700">Loading...</p>
+    </div>
+  </div>
+);
+
+--
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen bg-gray-50">
+              <TabsNavigation />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8 xl:px-12">
+                  <Dashboard />
+                </main>
+[root@wizardly-swirles ~]# 
