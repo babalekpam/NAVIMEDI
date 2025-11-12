@@ -1,0 +1,55 @@
+Last failed login: Wed Nov 12 01:35:58 UTC 2025 from 45.78.198.43 on ssh:notty
+There were 28 failed login attempts since the last successful login.
+Last login: Wed Nov 12 01:19:43 2025 from 127.0.0.1
+
+This server is powered by Plesk.
+
+Run the 'plesk login' command and log in by browsing either of the links received in the output.
+Use the 'plesk' command to manage the server. Run 'plesk help' for more info.
+
+[root@wizardly-swirles ~]# cat /var/www/vhosts/system/navimedi.org/conf/vhost_ssl.conf
+ProxyPreserveHost On
+ProxyPass / http://127.0.0.1:5000/
+ProxyPassReverse / http://127.0.0.1:5000/
+
+<IfModule mod_rewrite.c>
+  RewriteEngine on
+  RewriteCond %{HTTP:Upgrade} websocket [NC]
+  RewriteCond %{HTTP:Connection} upgrade [NC]
+  RewriteRule ^/?(.*) "ws://127.0.0.1:5000/$1" [P,L]
+</IfModule>
+[root@wizardly-swirles ~]# cat /etc/nginx/nginx.conf | grep -A 20 "navimedi.org"
+[root@wizardly-swirles ~]# curl -I https://navimedi.org/register
+HTTP/2 200 
+server: nginx
+date: Wed, 12 Nov 2025 01:37:28 GMT
+content-type: text/html; charset=UTF-8
+content-length: 10075
+content-security-policy: default-src 'self';style-src 'self' 'unsafe-inline';script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com;img-src 'self' data: https: blob:;connect-src 'self' ws: wss: http: https: https://api.stripe.com;font-src 'self' data:;object-src 'none';media-src 'self';frame-src 'self' https://js.stripe.com https://hooks.stripe.com;base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests
+cross-origin-opener-policy: same-origin
+cross-origin-resource-policy: same-origin
+origin-agent-cluster: ?1
+referrer-policy: strict-origin-when-cross-origin
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-dns-prefetch-control: off
+x-download-options: noopen
+x-frame-options: DENY
+x-permitted-cross-domain-policies: none
+x-xss-protection: 1; mode=block
+cache-control: no-cache, no-store, must-revalidate, private
+pragma: no-cache
+expires: 0
+x-ssl-protection: enforce-tls12-plus
+x-cipher-policy: gcm-only-no-cbc
+x-tls-version: min-tls-1.2
+x-cipher-security: no-cbc-ciphers
+x-vulnerability-protection: lucky13-mitigated
+x-csrf-token: bd9f3ad4f1cd240452ca65b0fdbd8dcc12c6ba515bef7e6ae451b2cea2bb02f6
+accept-ranges: bytes
+last-modified: Mon, 10 Nov 2025 20:11:16 GMT
+etag: W/"275b-19a6f64eb02"
+vary: Accept-Encoding
+x-powered-by: PleskLin
+
+[root@wizardly-swirles ~]# 
